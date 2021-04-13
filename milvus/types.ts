@@ -40,7 +40,7 @@ export enum IndexType {
   ANNOY = 12,
 }
 
-interface RowRecord {
+export interface RowRecord {
   float_data?: number[];
   binary_data?: number[];
 }

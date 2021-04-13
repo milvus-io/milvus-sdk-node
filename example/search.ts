@@ -7,7 +7,7 @@ import {
   DIMENSION,
   INDEX_FILE_SIZE,
   PARTITION_TAG,
-} from "./Const";
+} from "./const";
 /**
  * 1. connect to milvus
  * 2. create collection
@@ -40,7 +40,6 @@ const test = async () => {
   console.log("--- partitions ---", partitions);
 
   const vectors = generateVectors(DIMENSION);
-  console.log(vectors);
   const insertRes = await milvusClient.insert({
     collection_name: COLLECTION_NAME,
     partition_tag: PARTITION_TAG,
