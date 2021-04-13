@@ -2,7 +2,7 @@
   "name": "milvus-node-sdk",
   "scripts": {
     "build": "tsc --declaration",
-    "example": "npx ts-node example/Collection.ts",
+    "example": "npx ts-node",
     "doc": "npx typedoc milvus"
   },
   "dependencies": {

@@ -40,6 +40,16 @@ export enum IndexType {
   ANNOY = 12,
 }
 
+interface RowRecord {
+  float_data?: number[];
+  binary_data?: number[];
+}
+
+interface KeyValuePairs {
+  key: string;
+  value: string;
+}
+
 export type CollectionSchema = {
   // collection name
   collection_name: string;
@@ -49,7 +59,7 @@ export type CollectionSchema = {
   index_file_size: number;
   // metric type
   metric_type: MetricType;
-  extra_params?: [{ [key: string]: number | string }];
+  extra_params?: KeyValuePairs[];
 };
 
 export type CollectionName = {
@@ -65,7 +75,7 @@ export type PreloadCollectionParam = {
 export type IndexParam = {
   collection_name: string;
   index_type: IndexType;
-  extra_params?: [{ [key: string]: number | string }];
+  extra_params: KeyValuePairs[];
 };
 
 export type PartitionParam = {
@@ -79,9 +89,9 @@ export type InsertParam = {
   // partition tag
   partition_tag: string;
   // raw entities array
-  row_record_array: any;
+  row_record_array: RowRecord[];
   row_id_array?: number[];
-  extra_params?: [{ [key: string]: number | string }];
+  extra_params?: KeyValuePairs[];
 };
 
 export type VectorsParam = {
@@ -98,10 +108,10 @@ export type SearchParam = {
   // collection name
   collection_name: string;
   // partition tag array
-  partition_tag_array: string[];
-  query_record_array?: { [x: string]: number[] }[];
+  partition_tag_array?: string[];
+  query_record_array: RowRecord[];
   topk: number;
-  extra_params: { [x: string]: any }[];
+  extra_params: KeyValuePairs[];
 };
 
 export type SearchByIDParam = SearchParam & {

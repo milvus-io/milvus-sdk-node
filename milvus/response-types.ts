@@ -1,3 +1,5 @@
+import { RowRecord } from "./types";
+
 export enum ErrorCode {
   SUCCESS = "SUCCESS",
   UNEXPECTED_ERROR = "UNEXPECTED_ERROR",
@@ -33,11 +35,6 @@ export interface Status {
 interface StatusReply {
   status: Status;
 }
-interface RowRecord {
-  float_data: number[];
-  binary_data: number[];
-}
-
 export interface BoolReply extends StatusReply {
   bool_reply: boolean;
 }

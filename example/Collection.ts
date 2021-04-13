@@ -1,14 +1,14 @@
 import { MilvusNode } from "../milvus/index";
+import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "./Const";
 
-const IP = "127.0.0.1:19530";
 const milvusClient = new MilvusNode(IP);
 
 const test = async () => {
   const createRes = await milvusClient.createCollection({
-    collection_name: "test_01",
-    dimension: 128,
+    collection_name: COLLECTION_NAME,
+    dimension: DIMENSION,
     metric_type: 1,
-    index_file_size: 1024,
+    index_file_size: INDEX_FILE_SIZE,
   });
   console.log("--- create collection ---", createRes);
 
@@ -21,17 +21,17 @@ const test = async () => {
   console.log("--- has collection ---", hasCollection);
 
   const discribeCollection = await milvusClient.describeCollection({
-    collection_name: "test_01",
+    collection_name: COLLECTION_NAME,
   });
   console.log("--- discribe collection ---", discribeCollection);
 
   const countCollection = await milvusClient.countCollection({
-    collection_name: "test_01",
+    collection_name: COLLECTION_NAME,
   });
   console.log("--- count collection ---", countCollection);
 
   const dropCollection = await milvusClient.dropCollection({
-    collection_name: "test_01",
+    collection_name: COLLECTION_NAME,
   });
   console.log("--- drop collection ---", dropCollection);
 };
