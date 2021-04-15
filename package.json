@@ -3,13 +3,14 @@
   "scripts": {
     "build": "tsc --declaration",
     "example": "npx ts-node",
-    "doc": "npx typedoc milvus"
+    "doc": "npx typedoc milvus --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.2.12",
     "@grpc/proto-loader": "^0.6.0",
     "ts-node": "^9.1.1",
     "typedoc": "^0.20.35",
+    "typedoc-neo-theme": "^1.1.0",
     "typescript": "^4.2.4"
   }
 }
