@@ -11,7 +11,8 @@ const test = async () => {
     index_file_size: INDEX_FILE_SIZE,
   });
   console.log("--- create collection ---", createRes);
-
+  const indexType = milvusClient.getIndexType();
+  console.log("---- index type ---", indexType);
   const collections = await milvusClient.showCollections();
   console.log("--- collections ---", collections);
 

@@ -45,10 +45,15 @@ export interface RowRecord {
   binary_data?: number[];
 }
 
-interface KeyValuePairs {
-  key: string;
-  value: string;
+export interface Record {
+  id?: number;
+  value: number[];
 }
+
+// interface KeyValuePairs {
+//   key: string;
+//   value: string;
+// }
 
 export type CollectionSchema = {
   // collection name
@@ -59,7 +64,7 @@ export type CollectionSchema = {
   index_file_size: number;
   // metric type
   metric_type: MetricType;
-  extra_params?: KeyValuePairs[];
+  // extra_params?: KeyValuePairs[];
 };
 
 export type CollectionName = {
@@ -75,7 +80,7 @@ export type PreloadCollectionParam = {
 export type IndexParam = {
   collection_name: string;
   index_type: IndexType;
-  extra_params: KeyValuePairs[];
+  extra_params: { [x: string]: number };
 };
 
 export type PartitionParam = {
@@ -89,9 +94,10 @@ export type InsertParam = {
   // partition tag
   partition_tag: string;
   // raw entities array
-  row_record_array: RowRecord[];
-  row_id_array?: number[];
-  extra_params?: KeyValuePairs[];
+  // row_record_array: RowRecord[];
+  records: Record[];
+  // row_id_array?: number[];
+  // extra_params?: KeyValuePairs[];
 };
 
 export type VectorsParam = {
@@ -111,7 +117,7 @@ export type SearchParam = {
   partition_tag_array?: string[];
   query_record_array: RowRecord[];
   topk: number;
-  extra_params: KeyValuePairs[];
+  extra_params: { [x: string]: number };
 };
 
 export type SearchByIDParam = SearchParam & {

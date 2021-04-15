@@ -4,6 +4,7 @@ import {
   CollectionInfo,
   CollectionNameList,
   CollectionRowCount,
+  ErrorCode,
   PartitionList,
   Status,
   TopKQueryResult,
@@ -15,7 +16,9 @@ import {
   CollectionSchema,
   FlushParam,
   IndexParam,
+  IndexType,
   InsertParam,
+  MetricType,
   PartitionParam,
   SearchByIDParam,
   SearchParam,
@@ -52,6 +55,38 @@ export class MilvusNode {
     this.milvusClient = client;
   }
 
+  /**
+   *
+   * @returns Get Index type to map grpc index type
+   */
+  getIndexType() {
+    return {
+      FLAT: IndexType.FLAT,
+      IVF_FLAT: IndexType.IVFFLAT,
+      IVF_SQ8: IndexType.IVFSQ8,
+      RNSG: IndexType.RNSG,
+      IVF_SQ8h: IndexType.IVFSQ8H,
+      IVF_PQ: IndexType.IVFPQ,
+      HNSW: IndexType.HNSW,
+      ANNOY: IndexType.ANNOY,
+    };
+  }
+
+  /**
+   *
+   * @returns Get Index type to map grpc metric type
+   */
+  getMetricType() {
+    return {
+      L2: MetricType.L2,
+      IP: MetricType.IP,
+      HAMMING: MetricType.HAMMING,
+      JACCARD: MetricType.JACCARD,
+      TANIMOTO: MetricType.TANIMOTO,
+      SUBSTRUCTURE: MetricType.SUBSTRUCTURE,
+      SUPERSTRUCTURE: MetricType.SUPERSTRUCTURE,
+    };
+  }
   /**
    * @brief This method is used to create collection
    *
@@ -157,7 +192,16 @@ export class MilvusNode {
    * @return Status
    */
   async createIndex(data: IndexParam): Promise<Status> {
-    const promise = promisify(this.milvusClient, "CreateIndex", data);
+    const { extra_params } = data;
+    const promise = promisify(this.milvusClient, "CreateIndex", {
+      ...data,
+      extra_params: [
+        {
+          key: "params",
+          value: JSON.stringify(extra_params),
+        },
+      ],
+    });
     return promise;
   }
 
@@ -241,7 +285,16 @@ export class MilvusNode {
    * @return VectorIds
    */
   async insert(data: InsertParam): Promise<VectorIds> {
-    const promise = promisify(this.milvusClient, "Insert", data);
+    const { records } = data;
+    const ids = records.map((v) => v.id);
+
+    const promise = promisify(this.milvusClient, "Insert", {
+      ...data,
+      row_record_array: records.map((v) => ({
+        float_data: v.value,
+      })),
+      row_id_array: ids.filter((v) => v && v >= 0),
+    });
     return promise;
   }
 
@@ -265,8 +318,48 @@ export class MilvusNode {
    * @return TopKQueryResult
    */
   async search(data: SearchParam): Promise<TopKQueryResult> {
-    const promise = promisify(this.milvusClient, "Search", data);
-    return promise;
+    const { extra_params, topk } = data;
+    const result = await promisify(this.milvusClient, "Search", {
+      ...data,
+      extra_params: [
+        {
+          key: "params",
+          value: JSON.stringify(extra_params),
+        },
+      ],
+    });
+
+    /**
+     *  Match id and distance by topk and row number
+     */
+    if (result.status.error_code === ErrorCode.SUCCESS) {
+      let rowNum = Number(result.row_num);
+      const ids = result.ids;
+      const distances = result.distances;
+
+      let position = 0;
+      const formatResult = [];
+      while (rowNum > 0) {
+        const rowIds = ids.filter(
+          (v: string, i: number) => i < position + topk && i >= position
+        );
+        const rowDistances = distances.filter(
+          (v: number, i: number) => i < position + topk && i >= position
+        );
+        formatResult.push(
+          rowIds.map((v: string, i: number) => {
+            return {
+              id: v,
+              distance: rowDistances[i],
+            };
+          })
+        );
+        position += topk;
+        rowNum--;
+      }
+      result.data = formatResult;
+    }
+    return result;
   }
 
   /**

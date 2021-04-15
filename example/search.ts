@@ -20,10 +20,11 @@ import {
 const milvusClient = new MilvusNode(IP);
 
 const test = async () => {
+  const metricType = milvusClient.getMetricType();
   const createColRes = await milvusClient.createCollection({
     collection_name: COLLECTION_NAME,
     dimension: DIMENSION,
-    metric_type: 1,
+    metric_type: metricType.IP,
     index_file_size: INDEX_FILE_SIZE,
   });
   console.log("--- create collection ---", createColRes);
@@ -40,28 +41,26 @@ const test = async () => {
   console.log("--- partitions ---", partitions);
 
   const vectors = generateVectors(DIMENSION);
+
   const insertRes = await milvusClient.insert({
     collection_name: COLLECTION_NAME,
     partition_tag: PARTITION_TAG,
-    row_record_array: vectors.map((v) => ({
-      float_data: v,
+    records: vectors.map((v, i) => ({
+      id: i + 1,
+      value: v,
     })),
   });
   console.log("--- insert ---", insertRes);
 
   const indexParams = {
     nlist: 1024,
+    m: 1,
   };
 
   const createIndexRes = await milvusClient.createIndex({
     collection_name: COLLECTION_NAME,
     index_type: IndexType.IVFFLAT,
-    extra_params: [
-      {
-        key: "params",
-        value: JSON.stringify(indexParams),
-      },
-    ],
+    extra_params: indexParams,
   });
 
   console.log("--- create index ---", createIndexRes);
@@ -75,17 +74,12 @@ const test = async () => {
   const searchRes = await milvusClient.search({
     collection_name: COLLECTION_NAME,
     topk: 2,
-    extra_params: [
-      {
-        key: "params",
-        value: JSON.stringify({ nprobe: 16 }),
-      },
-    ],
-    query_record_array: vectors.splice(0, 1).map((v) => ({
+    extra_params: { nprobe: 16 },
+    query_record_array: vectors.splice(0, 3).map((v) => ({
       float_data: v,
     })),
   });
-  console.log("--- vector search ---", searchRes);
+  console.log("--- vector search ---", searchRes, searchRes.data);
 
   await milvusClient.dropCollection({
     collection_name: COLLECTION_NAME,

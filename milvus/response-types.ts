@@ -67,4 +67,5 @@ export interface TopKQueryResult extends StatusReply {
   row_num: number;
   ids: number[];
   distances: number[];
+  data: { id: string; distance: number[] }[];
 }
