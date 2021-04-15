@@ -7,7 +7,7 @@ import {
   DIMENSION,
   INDEX_FILE_SIZE,
   PARTITION_TAG,
-} from "./const";
+} from "../const";
 /**
  * 1. connect to milvus
  * 2. create collection

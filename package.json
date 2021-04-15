@@ -2,12 +2,19 @@
   "name": "milvus-node-sdk",
   "scripts": {
     "build": "tsc --declaration",
+    "test": "jest",
     "example": "npx ts-node",
     "doc": "npx typedoc milvus --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.2.12",
-    "@grpc/proto-loader": "^0.6.0",
+    "@grpc/proto-loader": "^0.6.0"
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.13.8",
+    "@types/jest": "^26.0.22",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.4",
     "ts-node": "^9.1.1",
     "typedoc": "^0.20.35",
     "typedoc-neo-theme": "^1.1.0",

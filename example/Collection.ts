@@ -1,5 +1,5 @@
 import { MilvusNode } from "../milvus/index";
-import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "./const";
+import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "../const";
 
 const milvusClient = new MilvusNode(IP);
 

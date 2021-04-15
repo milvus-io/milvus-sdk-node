@@ -248,7 +248,7 @@ export class MilvusNode {
    *
    * @return BoolReply
    */
-  async hasPartition(data: PartitionParam): Promise<Status> {
+  async hasPartition(data: PartitionParam): Promise<BoolReply> {
     const promise = promisify(this.milvusClient, "HasPartition", data);
     return promise;
   }
