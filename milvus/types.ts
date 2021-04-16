@@ -115,13 +115,11 @@ export type SearchParam = {
   collection_name: string;
   // partition tag array
   partition_tag_array?: string[];
-  query_record_array: RowRecord[];
+  query_record_array?: RowRecord[];
+  id_array?: number[];
+
   topk: number;
   extra_params: { [x: string]: number };
-};
-
-export type SearchByIDParam = SearchParam & {
-  id_array: number[];
 };
 
 export type DeleteByIDParam = {

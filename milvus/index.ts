@@ -14,13 +14,13 @@ import {
 import {
   CollectionName,
   CollectionSchema,
+  DeleteByIDParam,
   FlushParam,
   IndexParam,
   IndexType,
   InsertParam,
   MetricType,
   PartitionParam,
-  SearchByIDParam,
   SearchParam,
   VectorsIdentity,
 } from "./types";
@@ -306,7 +306,7 @@ export class MilvusNode {
    * @return VectorsData
    */
   async getVectorsByID(data: VectorsIdentity): Promise<VectorsData> {
-    const promise = promisify(this.milvusClient, "GetVectorIDs", data);
+    const promise = promisify(this.milvusClient, "GetVectorsByID", data);
     return promise;
   }
 
@@ -318,16 +318,20 @@ export class MilvusNode {
    * @return TopKQueryResult
    */
   async search(data: SearchParam): Promise<TopKQueryResult> {
-    const { extra_params, topk } = data;
-    const result = await promisify(this.milvusClient, "Search", {
-      ...data,
-      extra_params: [
-        {
-          key: "params",
-          value: JSON.stringify(extra_params),
-        },
-      ],
-    });
+    const { extra_params, topk, id_array } = data;
+    const result = await promisify(
+      this.milvusClient,
+      id_array ? "SearchByID" : "Search",
+      {
+        ...data,
+        extra_params: [
+          {
+            key: "params",
+            value: JSON.stringify(extra_params),
+          },
+        ],
+      }
+    );
 
     /**
      *  Match id and distance by topk and row number
@@ -363,25 +367,13 @@ export class MilvusNode {
   }
 
   /**
-   * @brief This method is used to query vector by id.
-   *
-   * @param SearchByIDParam, search parameters.
-   *
-   * @return TopKQueryResult
-   */
-  async searchByID(data: SearchByIDParam): Promise<TopKQueryResult> {
-    const promise = promisify(this.milvusClient, "SearchByID", data);
-    return promise;
-  }
-
-  /**
    * @brief This method is used to delete vector by id
    *
    * @param DeleteByIDParam, delete parameters.
    *
    * @return status
    */
-  async deleteByIds(data: SearchByIDParam): Promise<TopKQueryResult> {
+  async deleteByIds(data: DeleteByIDParam): Promise<Status> {
     const promise = promisify(this.milvusClient, "DeleteByID", data);
     return promise;
   }

@@ -52,6 +52,11 @@ const test = async () => {
   });
   console.log("--- insert ---", insertRes);
 
+  const flushRes = await milvusClient.flush({
+    collection_name_array: [COLLECTION_NAME],
+  });
+  console.log("flush", flushRes);
+
   const indexParams = {
     nlist: 1024,
     m: 1,
@@ -70,6 +75,18 @@ const test = async () => {
   });
 
   console.log("--- collection index ---", descIndexRes);
+
+  const getVectorsRes = await milvusClient.getVectorsByID({
+    collection_name: COLLECTION_NAME,
+    id_array: [1, 2],
+  });
+
+  console.log("--- get vector by ids ---", getVectorsRes);
+
+  const collectionInfo = await milvusClient.showCollectionsInfo({
+    collection_name: COLLECTION_NAME,
+  });
+  console.log("--- collection info ---", collectionInfo);
 
   const searchRes = await milvusClient.search({
     collection_name: COLLECTION_NAME,

@@ -10,7 +10,9 @@ import {
 import { ErrorCode } from "../milvus/response-types";
 
 let milvusClient = new MilvusNode(IP);
-describe("Partition Crud", () => {
+let IndexType = milvusClient.getIndexType();
+
+describe("Index Crud", () => {
   beforeAll(async () => {
     await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
@@ -26,34 +28,33 @@ describe("Partition Crud", () => {
     });
   });
 
-  it("Create Partitions", async () => {
-    const res = await milvusClient.createPartition({
+  it("Create Index", async () => {
+    const indexParams = {
+      nlist: 1024,
+    };
+
+    const res = await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
-      tag: PARTITION_TAG,
+      index_type: IndexType.IVF_FLAT,
+      extra_params: indexParams,
     });
+
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it("Has Partitions", async () => {
-    const res = await milvusClient.hasPartition({
-      tag: PARTITION_TAG,
+  it("Desc Index", async () => {
+    const res = await milvusClient.describeIndex({
       collection_name: COLLECTION_NAME,
     });
-    expect(res.bool_reply).toBeTruthy();
+
+    expect(res.index_type).toEqual(IndexType.IVF_FLAT);
   });
 
-  it("Show Partitions", async () => {
-    const res = await milvusClient.showPartitions({
+  it("Drop Index", async () => {
+    const res = await milvusClient.dropIndex({
       collection_name: COLLECTION_NAME,
     });
-    expect(res.partition_tag_array).toContain(PARTITION_TAG);
-  });
 
-  it("Drop Partitions", async () => {
-    const res = await milvusClient.dropPartition({
-      collection_name: COLLECTION_NAME,
-      tag: PARTITION_TAG,
-    });
-    expect(res.error_code).toContain(ErrorCode.SUCCESS);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });
