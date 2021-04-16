@@ -1,12 +1,6 @@
 import { MilvusNode } from "../milvus/index";
 
-import {
-  COLLECTION_NAME,
-  DIMENSION,
-  INDEX_FILE_SIZE,
-  IP,
-  PARTITION_TAG,
-} from "../const";
+import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "../const";
 import { ErrorCode } from "../milvus/response-types";
 
 let milvusClient = new MilvusNode(IP);

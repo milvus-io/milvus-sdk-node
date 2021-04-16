@@ -96,6 +96,7 @@ export type InsertParam = {
   // raw entities array
   // row_record_array: RowRecord[];
   records: Record[];
+  record_type: "binary" | "float";
   // row_id_array?: number[];
   // extra_params?: KeyValuePairs[];
 };

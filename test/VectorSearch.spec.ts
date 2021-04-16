@@ -46,6 +46,7 @@ describe("Vector Test", () => {
         id: i + 1,
         value: v,
       })),
+      record_type: "float",
     });
 
     expect(res.vector_id_array).toEqual([

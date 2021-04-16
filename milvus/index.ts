@@ -285,13 +285,13 @@ export class MilvusNode {
    * @return VectorIds
    */
   async insert(data: InsertParam): Promise<VectorIds> {
-    const { records } = data;
+    const { records, record_type } = data;
     const ids = records.map((v) => v.id);
 
     const promise = promisify(this.milvusClient, "Insert", {
       ...data,
       row_record_array: records.map((v) => ({
-        float_data: v.value,
+        [record_type === "binary" ? "binary_data" : "float_data"]: v.value,
       })),
       row_id_array: ids.filter((v) => v && v >= 0),
     });
