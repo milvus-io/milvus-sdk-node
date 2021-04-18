@@ -1,5 +1,8 @@
 {
-  "name": "milvus-node-sdk",
+  "name": "milvus-test-nodes",
+  "author": "nameczz@126.com",
+  "version": "0.2.0",
+  "main": "dist/milvus",
   "scripts": {
     "build": "tsc --declaration",
     "test": "jest",
@@ -8,7 +11,8 @@
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.2.12",
-    "@grpc/proto-loader": "^0.6.0"
+    "@grpc/proto-loader": "^0.6.0",
+    "milvus-test-nodes": "^0.2.0"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.13.8",

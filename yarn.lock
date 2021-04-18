@@ -2848,6 +2848,23 @@ micromatch@^4.0.2:
     braces "^3.0.1"
     picomatch "^2.2.3"
 
+milvus-test-nodes@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/milvus-test-nodes/-/milvus-test-nodes-0.1.0.tgz#97629f5d88c2eb2759636e4b22776cbf2fff7e39"
+  integrity sha512-jPCfHTEX79aNpRDFI0WeFlAdMOYLrJ8Ovc5MGnJ5kCwsSLb6MbeGA8SgUFIQY+AouQcayaal3fpVf28GL9UBlg==
+  dependencies:
+    "@grpc/grpc-js" "^1.2.12"
+    "@grpc/proto-loader" "^0.6.0"
+
+milvus-test-nodes@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/milvus-test-nodes/-/milvus-test-nodes-0.2.0.tgz#3e0947b6a66c04bb7eca0720ff32a5db0da68352"
+  integrity sha512-Vlxlyksp3HBTDmhLxrE8AJPmP06TlBvtQlgdLlYXViM4XijPzLzUKqIZS/gdgS6o9nnFt89rYR0OxWTLIbjaiA==
+  dependencies:
+    "@grpc/grpc-js" "^1.2.12"
+    "@grpc/proto-loader" "^0.6.0"
+    milvus-test-nodes "^0.1.0"
+
 mime-db@1.47.0:
   version "1.47.0"
   resolved "https://registry.yarnpkg.com/mime-db/-/mime-db-1.47.0.tgz#8cb313e59965d3c05cfbf898915a267af46a335c"

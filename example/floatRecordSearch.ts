@@ -1,4 +1,4 @@
-import { MilvusNode } from "../milvus/index";
+import { MilvusNode } from "milvus-test-nodes";
 import { IndexType } from "../milvus/types";
 import { generateVectors } from "../utils";
 import {
@@ -49,6 +49,7 @@ const test = async () => {
       id: i + 1,
       value: v,
     })),
+    record_type: "float",
   });
   console.log("--- insert ---", insertRes);
 
