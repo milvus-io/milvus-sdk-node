@@ -77,6 +77,11 @@ const test = async () => {
 
   console.log("--- collection index ---", descIndexRes);
 
+  const count = await milvusClient.countCollection({
+    collection_name: COLLECTION_NAME,
+  });
+  console.log("--- count collection ---", count);
+
   const getVectorsRes = await milvusClient.getVectorsByID({
     collection_name: COLLECTION_NAME,
     id_array: [1, 2],
@@ -98,6 +103,11 @@ const test = async () => {
     })),
   });
   console.log("--- vector search ---", searchRes, searchRes.data);
+
+  await milvusClient.dropPartition({
+    collection_name: COLLECTION_NAME,
+    tag: PARTITION_TAG,
+  });
 
   await milvusClient.dropCollection({
     collection_name: COLLECTION_NAME,

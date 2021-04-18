@@ -4,10 +4,11 @@ import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "../const";
 const milvusClient = new MilvusNode(IP);
 
 const test = async () => {
+  const metricTypes = milvusClient.getMetricType();
   const createRes = await milvusClient.createCollection({
     collection_name: COLLECTION_NAME,
     dimension: DIMENSION,
-    metric_type: 1,
+    metric_type: metricTypes.IP,
     index_file_size: INDEX_FILE_SIZE,
   });
   console.log("--- create collection ---", createRes);
