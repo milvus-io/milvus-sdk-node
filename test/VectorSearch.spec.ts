@@ -24,7 +24,7 @@ describe("Vector Test", () => {
     });
   });
 
-  it("Create Index", async () => {
+  it("Create Index should be success", async () => {
     const indexParams = {
       nlist: 1024,
     };
@@ -36,6 +36,15 @@ describe("Vector Test", () => {
     });
 
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it("Create Index should be throw error", async () => {
+    const res = await milvusClient.createIndex({
+      collection_name: COLLECTION_NAME,
+      index_type: IndexType.IVF_FLAT,
+      extra_params: {},
+    });
+    expect(res.error_code).toEqual(ErrorCode.ILLEGAL_ARGUMENT);
   });
 
   it("Insert Record", async () => {
