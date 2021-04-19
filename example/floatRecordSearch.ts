@@ -45,7 +45,7 @@ const test = async () => {
     collection_name: COLLECTION_NAME,
     partition_tag: PARTITION_TAG,
     records: vectors.map((v, i) => ({
-      id: i + 1,
+      // id: i + 1,
       value: v,
     })),
     record_type: "float",
@@ -103,6 +103,12 @@ const test = async () => {
     })),
   });
   console.log("--- vector search ---", searchRes, searchRes.data);
+
+  const deleteIdsRes = await milvusClient.deleteByIds({
+    id_array: [1, 2],
+    collection_name: COLLECTION_NAME,
+  });
+  console.log("--- delete ids ---", deleteIdsRes);
 
   await milvusClient.dropPartition({
     collection_name: COLLECTION_NAME,

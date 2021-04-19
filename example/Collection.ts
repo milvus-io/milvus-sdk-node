@@ -27,6 +27,11 @@ const test = async () => {
   });
   console.log("--- discribe collection ---", discribeCollection);
 
+  const collectionInfo = await milvusClient.showCollectionsInfo({
+    collection_name: COLLECTION_NAME,
+  });
+  console.log("--- collection info ---", collectionInfo);
+
   const countCollection = await milvusClient.countCollection({
     collection_name: COLLECTION_NAME,
   });

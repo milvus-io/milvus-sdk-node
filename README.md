@@ -51,7 +51,11 @@ Now let's create a new collection. Before we start, we can list all the collecti
 
 ```javascript
 const collections = await milvusClient.showCollections();
-console.log("--- collections ---", collections);
+// return data
+// {
+//   collection_names: [ 'test_01' ],
+//   status: { error_code: 'SUCCESS', reason: 'OK' }
+// }
 ```
 
 ## Create Collection
@@ -82,7 +86,7 @@ const res = await milvusClient.createCollection({
   metric_type: metricTypes.IP,
   index_file_size: 1024,
 });
-console.log("--- create collection ---", res);
+// { error_code: 'SUCCESS', reason: 'OK' }
 ```
 
 Then you can list collections and 'demo_film_tutorial' will be in the result.
@@ -93,7 +97,10 @@ You can also get info of the collection.
 const collectionInfo = await milvusClient.showCollectionsInfo({
   collection_name: COLLECTION_NAME,
 });
-console.log("--- collection info ---", collectionInfo);
+// {
+//   status: { error_code: 'SUCCESS', reason: 'OK' },
+//   json_info: '{"partitions":[{"row_count":0,"segments":null,"tag":"_default"}],"row_count":0}'
+// }
 ```
 
 This tutorial is a basic intro tutorial, building index won't be covered by this tutorial.
@@ -111,7 +118,10 @@ If you don't create a partition, there will be a default one called "`_default`"
 const partitions = await milvusClient.showPartitions({
   collection_name: COLLECTION_NAME,
 });
-console.log("--- partitions ---", partitions);
+// {
+//   partition_tag_array: [ '_default' ],
+//   status: { error_code: 'SUCCESS', reason: 'OK' }
+// }
 ```
 
 You can provide a partition tag to create a new partition.
@@ -121,7 +131,7 @@ const res = await milvusClient.createPartition({
   collection_name: COLLECTION_NAME,
   tag: PARTITION_TAG,
 });
-console.log("--- create partition ---", res);
+// { error_code: 'SUCCESS', reason: 'OK' }
 ```
 
 ## Entities
@@ -146,6 +156,14 @@ const res = await milvusClient.insert({
   })),
   record_type: "float",
 });
+// {
+//   vector_id_array: [
+//     '1618818108058974000',
+//     '1618818108058974001',
+//     '1618818108058974002'
+//   ],
+//   status: { error_code: 'SUCCESS', reason: 'OK' }
+// }
 ```
 
 Or you can also provide entity ids
@@ -160,6 +178,14 @@ const res = await milvusClient.insert({
   })),
   record_type: "float",
 });
+// {
+//   vector_id_array: [
+//     '1',
+//     '2',
+//     '3'
+//   ],
+//   status: { error_code: 'SUCCESS', reason: 'OK' }
+// }
 ```
 
 ### Warning:
@@ -171,7 +197,7 @@ If the first time when `insert()` is invoked `id` is not passed into this method
 If `partition_tag` isn't provided, these entities will be inserted into the "`_default`" partition.
 otherwise, them will be inserted into specified partition.
 
-# Flush
+## Flush
 
 After successfully inserting 3 entities into Milvus, we can `Flush` data from memory to disk so that we can retrieve them. Milvus also performs an automatic flush with a fixed interval(configurable, default 1 second),
 see [Data Flushing](https://milvus.io/docs/flush_python.md)
@@ -182,7 +208,7 @@ You can flush multiple collections at one time, so be aware the parameter is a l
 const res = await milvusClient.flush({
   collection_name_array: [COLLECTION_NAME],
 });
-console.log("flush", res);
+// { error_code: 'SUCCESS', reason: 'OK' }
 ```
 
 # Count Entities
@@ -193,7 +219,10 @@ We can also count how many entities are there in the collection.
 const count = await milvusClient.countCollection({
   collection_name: COLLECTION_NAME,
 });
-console.log("--- count collection ---", count);
+// {
+//   status: { error_code: 'SUCCESS', reason: 'OK' },
+//   collection_row_count: '6'
+// }
 ```
 
 ## Get Entities by ID
@@ -232,13 +261,33 @@ const films_a = new Array(2).fill(new Array(8).fill(Math.random() * 100));
 ```javascript
 const res = await milvusClient.search({
   collection_name: COLLECTION_NAME,
-  topk: 2,
+  topk: 1,
   extra_params: { nprobe: 16 },
   query_record_array: films_a.map((v) => ({
     float_data: v,
   })),
 });
-console.log("--- vector search ---", res, res.data);
+// {
+//   ids: [
+//     '1618819557627387001',
+//     '1618819557627387000',
+
+//   ],
+//   distances: [
+//     7.619400501251221,
+//     7.619400501251221,
+//   ],
+//   status: { error_code: 'SUCCESS', reason: 'OK' },
+//   row_num: '2',
+//   data: [
+//    [
+//      { id: '1618819557627387001', distance: 7.619400501251221 },
+//    ],
+//    [
+//      { id: '1618819557627387000', distance: 7.619400501251221 }
+//    ],
+//   ]
+// }
 ```
 
 ## Deletion
@@ -255,6 +304,7 @@ const res = await milvusClient.deleteByIds({
   id_array: [1, 2],
   collection_name: COLLECTION_NAME,
 });
+// { error_code: 'SUCCESS', reason: 'OK' }
 ```
 
 ### Note
@@ -275,6 +325,7 @@ const res = await milvusClient.dropPartition({
   collection_name: COLLECTION_NAME,
   tag: PARTITION_TAG,
 });
+// { error_code: 'SUCCESS', reason: 'OK' }
 ```
 
 ## Drop a Collection
@@ -289,4 +340,5 @@ Once you drop a collection, all the data in this collection will be deleted too.
 await milvusClient.dropCollection({
   collection_name: COLLECTION_NAME,
 });
+// { error_code: 'SUCCESS', reason: 'OK' }
 ```
