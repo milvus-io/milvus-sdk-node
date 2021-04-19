@@ -1,5 +1,4 @@
 import { MilvusNode } from "../milvus/index";
-import { IndexType } from "../milvus/types";
 import { generateVectors } from "../utils";
 import {
   IP,
@@ -73,9 +72,10 @@ const test = async () => {
     m: 1,
   };
 
+  const indexTypes = milvusClient.getIndexType();
   const createIndexRes = await milvusClient.createIndex({
     collection_name: COLLECTION_NAME,
-    index_type: IndexType.IVFFLAT,
+    index_type: indexTypes.IVF_FLAT,
     extra_params: indexParams,
   });
 
