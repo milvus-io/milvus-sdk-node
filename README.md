@@ -2,6 +2,11 @@
 
 This is a basic introduction to Milvus by Milvus-Node-SDK.
 
+## Dependencies
+
+Milvus: v1.0.0
+Node: v14+
+
 ## Installation
 
 ```javascript

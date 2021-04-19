@@ -10,6 +10,7 @@ import {
   TopKQueryResult,
   VectorIds,
   VectorsData,
+  CollectionResult,
 } from "./response-types";
 import {
   CollectionName,
@@ -117,7 +118,7 @@ export class MilvusNode {
    * @return CollectionSchema
    */
 
-  async describeCollection(data: CollectionName): Promise<CollectionSchema> {
+  async describeCollection(data: CollectionName): Promise<CollectionResult> {
     const promise = promisify(this.milvusClient, "DescribeCollection", data);
     return promise;
   }

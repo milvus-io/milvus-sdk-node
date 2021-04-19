@@ -3,12 +3,9 @@ import { MilvusNode } from "../milvus/index";
 import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "../const";
 import { ErrorCode } from "../milvus/response-types";
 
-let milvusClient: any = null;
+let milvusClient = new MilvusNode(IP);
 describe("Collection Crud", () => {
-  beforeAll(() => {
-    milvusClient = new MilvusNode(IP);
-  });
-  it(`Create Collection `, async () => {
+  it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
       dimension: DIMENSION,
@@ -18,19 +15,36 @@ describe("Collection Crud", () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`Create Collection Collection Name Error`, async () => {
+    const res = await milvusClient.createCollection({
+      collection_name: COLLECTION_NAME,
+      dimension: DIMENSION,
+      metric_type: 1,
+      index_file_size: INDEX_FILE_SIZE,
+    });
+    expect(res.error_code).toEqual(ErrorCode.ILLEGAL_COLLECTION_NAME);
+  });
+
   it("Show Collections", async () => {
     const res = await milvusClient.showCollections();
     expect(res.collection_names).toEqual([COLLECTION_NAME]);
   });
 
-  it("Has Collection ", async function () {
+  it("Has Collection should return true ", async function () {
     const res = await milvusClient.hasCollection({
       collection_name: COLLECTION_NAME,
     });
     expect(res.bool_reply).toBe(true);
   });
 
-  it("Describe Collection", async function () {
+  it("Has Collection should return false ", async function () {
+    const res = await milvusClient.hasCollection({
+      collection_name: "not_exist",
+    });
+    expect(res.bool_reply).toBeFalsy();
+  });
+
+  it("Describe Collection should return collection info", async function () {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
@@ -38,6 +52,13 @@ describe("Collection Crud", () => {
     expect(Number(res.dimension)).toEqual(DIMENSION);
     expect(Number(res.index_file_size)).toEqual(INDEX_FILE_SIZE);
     expect(res.metric_type).toEqual(1);
+  });
+
+  it("Describe Collection should throw error", async function () {
+    const res = await milvusClient.describeCollection({
+      collection_name: "not_exist",
+    });
+    expect(res.status.error_code).toEqual(ErrorCode.COLLECTION_NOT_EXISTS);
   });
 
   it("Count Collection", async function () {

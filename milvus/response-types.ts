@@ -1,4 +1,4 @@
-import { RowRecord } from "./types";
+import { MetricType, RowRecord } from "./types";
 
 export enum ErrorCode {
   SUCCESS = "SUCCESS",
@@ -68,4 +68,16 @@ export interface TopKQueryResult extends StatusReply {
   ids: number[];
   distances: number[];
   data: { id: string; distance: number[] }[];
+}
+
+export interface CollectionResult extends StatusReply {
+  // collection name
+  collection_name: string;
+  // dimension
+  dimension: number;
+  // index file size
+  index_file_size: number;
+  // metric type
+  metric_type: MetricType;
+  // extra_params?: KeyValuePairs[];
 }
