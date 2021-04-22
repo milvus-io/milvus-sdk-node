@@ -1,8 +1,11 @@
 {
-  "name": "milvus-test-nodes",
-  "author": "nameczz@126.com",
+  "name": "milvus-node-sdk",
+  "author": "zizhao.chen@zilliz.com",
   "version": "0.2.0",
   "main": "dist/milvus",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc --declaration",
     "test": "jest",
