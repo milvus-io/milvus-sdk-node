@@ -6,6 +6,11 @@
   "files": [
     "dist"
   ],
+  "release": {
+    "branches": [
+      "main"
+    ]
+  },
   "scripts": {
     "build": "tsc --declaration",
     "test": "jest",
