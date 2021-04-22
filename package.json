@@ -7,7 +7,8 @@
     "build": "tsc --declaration",
     "test": "jest",
     "example": "npx ts-node",
-    "doc": "npx typedoc milvus --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme"
+    "doc": "npx typedoc milvus --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme",
+    "doc-json": "npx typedoc milvus --json"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.2.12",

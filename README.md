@@ -1,6 +1,7 @@
 # Tutorial
 
 This is a basic introduction to Milvus by Milvus-Node-SDK.
+The all functions will return a promise, so we can use async await to get the result.
 
 ## Dependencies
 
@@ -28,7 +29,7 @@ Make sure that:
 
 ## Connect to Milvus
 
-1. First of all, we need to import Milvus-Node-Sk.
+1. First of all, we need to import Milvus-Node-Sdk.
 
 ```javascript
 import { MilvusNode } from "milvus-test-nodes";
