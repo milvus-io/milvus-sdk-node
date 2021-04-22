@@ -116,6 +116,7 @@ export class MilvusNode {
    * @param CollectionName, target collection name.
    *
    * @return CollectionSchema
+   *
    */
 
   async describeCollection(data: CollectionName): Promise<CollectionResult> {

@@ -14,9 +14,9 @@ Node: v14+
    npm install milvus-node-sdk
 ```
 
-## Example
+<!-- ## Example
 
-Here we use float vectors as example vector field data, if you want to learn example about binary vectors, see xxx
+Here we use float vectors as example vector field data, if you want to learn example about binary vectors, see xxx -->
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ Before we start, there are some prerequisites.
 Make sure that:
 
 - You have a running Milvus instance.
-- Milvus-Node-SDK is correctly installed.
+- milvus-node-sdk is correctly installed.
 
 ## Connect to Milvus
 
