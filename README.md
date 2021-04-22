@@ -1,6 +1,6 @@
 # Tutorial
 
-This is a basic introduction to Milvus by Milvus-Node-SDK.
+This is a basic introduction to Milvus by milvus-sdk-node.
 The all functions will return a promise, so we can use async await to get the result.
 
 ## Dependencies
@@ -11,7 +11,7 @@ Node: v14+
 ## Installation
 
 ```javascript
-   npm install milvus-node-sdk
+   npm install milvus-sdk-node
 ```
 
 <!-- ## Example
@@ -25,14 +25,14 @@ Before we start, there are some prerequisites.
 Make sure that:
 
 - You have a running Milvus instance.
-- milvus-node-sdk is correctly installed.
+- milvus-sdk-node is correctly installed.
 
 ## Connect to Milvus
 
-1. First of all, we need to import Milvus-Node-Sdk.
+1. First of all, we need to import milvus-sdk-node.
 
 ```javascript
-import { MilvusNode } from "milvus-test-nodes";
+import { MilvusNode } from "milvus-sdk-node";
 ```
 
 2. Then, we can make connection with Milvus server.
@@ -253,7 +253,7 @@ const films_a = new Array(2).fill(new Array(8).fill(Math.random() * 100));
 ### Note
 
 1. If the collection is index-built, user need to specify search param, and pass parameter `params` like: `milvusClient.search(..., params={...})`.
-   You can refer to [Index params](https://pymilvus.readthedocs.io/en/1.0/param.html) for more details.
+   <!-- You can refer to [Index params](https://pymilvus.readthedocs.io/en/1.0/param.html) for more details. -->
 
 2. If parameter `partition_tags` is specified, milvus executes search request on these partition instead of whole collection.
 

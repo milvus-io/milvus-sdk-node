@@ -1,5 +1,5 @@
 {
-  "name": "milvus-node-sdk",
+  "name": "@zilliz/milvus-sdk-node",
   "author": "zizhao.chen@zilliz.com",
   "version": "0.2.0",
   "main": "dist/milvus",
