@@ -15,8 +15,6 @@ jobs:
       - name: Build app
         run: |
           yarn build
-          rm package.json
-          mv package-npm.json package.json
       - name: Semantic release
         env:
           GITHUB_TOKEN: ${{ secrets.G_TOKEN }}
