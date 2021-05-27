@@ -1,11 +1,14 @@
-# Tutorial
+[![license](https://img.shields.io/hexpm/l/plug.svg?color=green)](https://github.com/milvus-io/pymilvus/blob/master/LICENSE)
+[![typescript](./src/typescript.svg)](https://badges.aleen42.com/src/typescript.svg) A badge used for projects that coded with TypeScript
+
+# Milvus-sdk-node
 
 This is a basic introduction to Milvus by milvus-sdk-node.
 The all functions will return a promise, so we can use async await to get the result.
 
 ## Dependencies
 
-Milvus: v1.0.0
+Milvus: v1.x
 Node: v14+
 
 ## Installation
