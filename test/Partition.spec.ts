@@ -1,7 +1,7 @@
 import { MilvusNode } from "../milvus/index";
 
 import {
-  COLLECTION_NAME,
+  GENERATE_COLLECTION_NAME,
   DIMENSION,
   INDEX_FILE_SIZE,
   IP,
@@ -10,6 +10,8 @@ import {
 import { ErrorCode } from "../milvus/response-types";
 
 let milvusClient = new MilvusNode(IP);
+const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
+
 describe("Partition Crud", () => {
   beforeAll(async () => {
     await milvusClient.createCollection({

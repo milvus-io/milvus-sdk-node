@@ -1,12 +1,18 @@
 import { MilvusNode } from "../milvus/index";
 
-import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "../const";
+import {
+  GENERATE_COLLECTION_NAME,
+  DIMENSION,
+  INDEX_FILE_SIZE,
+  IP,
+} from "../const";
 import { ErrorCode } from "../milvus/response-types";
 import { generateVectors } from "../utils";
 
 let milvusClient = new MilvusNode(IP);
 let IndexType = milvusClient.getIndexType();
 const vectors = generateVectors(DIMENSION);
+const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
 
 describe("Vector Test", () => {
   beforeAll(async () => {
@@ -50,14 +56,16 @@ describe("Vector Test", () => {
   it("Insert Record", async () => {
     const res = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
-      partition_tag: "_default",
+      partition_tag: "",
       records: vectors.map((v, i) => ({
         id: i + 1,
         value: v,
       })),
       record_type: "float",
     });
+    await milvusClient.flush({ collection_name_array: [COLLECTION_NAME] });
 
+    // if error_code is not success , id array will still return.
     expect(res.vector_id_array).toEqual([
       "1",
       "2",
@@ -70,6 +78,7 @@ describe("Vector Test", () => {
       "9",
       "10",
     ]);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it("Delete Vectors", async () => {
@@ -85,6 +94,7 @@ describe("Vector Test", () => {
       collection_name: COLLECTION_NAME,
       id_array: [1, 2],
     });
+    console.log(res);
     expect(res.vectors_data.length).toEqual(2);
   });
 
@@ -97,6 +107,7 @@ describe("Vector Test", () => {
         float_data: v,
       })),
     });
+
     expect(res.row_num).toEqual("3");
     expect(res.ids.length).toEqual(6); // topk * query_record_array.length
   });

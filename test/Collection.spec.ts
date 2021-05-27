@@ -1,15 +1,23 @@
 import { MilvusNode } from "../milvus/index";
 
-import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "../const";
+import {
+  GENERATE_COLLECTION_NAME,
+  DIMENSION,
+  INDEX_FILE_SIZE,
+  IP,
+} from "../const";
 import { ErrorCode } from "../milvus/response-types";
 
 let milvusClient = new MilvusNode(IP);
+let metricTypes = milvusClient.getMetricType();
+const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
+
 describe("Collection Crud", () => {
   it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
       dimension: DIMENSION,
-      metric_type: 1,
+      metric_type: metricTypes.L2,
       index_file_size: INDEX_FILE_SIZE,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -27,7 +35,7 @@ describe("Collection Crud", () => {
 
   it("Show Collections", async () => {
     const res = await milvusClient.showCollections();
-    expect(res.collection_names).toEqual([COLLECTION_NAME]);
+    expect(res.collection_names).toContain(COLLECTION_NAME);
   });
 
   it("Has Collection should return true ", async function () {
@@ -51,7 +59,7 @@ describe("Collection Crud", () => {
     expect(res.collection_name).toEqual(COLLECTION_NAME);
     expect(Number(res.dimension)).toEqual(DIMENSION);
     expect(Number(res.index_file_size)).toEqual(INDEX_FILE_SIZE);
-    expect(res.metric_type).toEqual(1);
+    expect(res.metric_type).toEqual(metricTypes.L2);
   });
 
   it("Describe Collection should throw error", async function () {

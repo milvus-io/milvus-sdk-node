@@ -1,10 +1,16 @@
 import { MilvusNode } from "../milvus/index";
 
-import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "../const";
+import {
+  GENERATE_COLLECTION_NAME,
+  DIMENSION,
+  INDEX_FILE_SIZE,
+  IP,
+} from "../const";
 import { ErrorCode } from "../milvus/response-types";
 
 let milvusClient = new MilvusNode(IP);
 let IndexType = milvusClient.getIndexType();
+const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
 
 describe("Index Crud", () => {
   beforeAll(async () => {
