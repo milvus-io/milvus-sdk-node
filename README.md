@@ -8,7 +8,7 @@ The all functions will return a promise, so we can use async await to get the re
 
 ## Dependencies
 
-Milvus: v1.0.0
+Milvus: v1.x
 Node: v14+
 
 ## Installation
