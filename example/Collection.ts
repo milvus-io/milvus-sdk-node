@@ -1,7 +1,13 @@
-import { MilvusNode } from "milvus-test-nodes";
-import { COLLECTION_NAME, DIMENSION, INDEX_FILE_SIZE, IP } from "../const";
+import { MilvusNode } from "@zilliz/milvus-sdk-node";
+import {
+  GENERATE_COLLECTION_NAME,
+  DIMENSION,
+  INDEX_FILE_SIZE,
+  IP,
+} from "../const";
 
 const milvusClient = new MilvusNode(IP);
+const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
 
 const test = async () => {
   const metricTypes = milvusClient.getMetricType();

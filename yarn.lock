@@ -694,6 +694,15 @@
   dependencies:
     "@types/yargs-parser" "*"
 
+"@zilliz/milvus-sdk-node@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@zilliz/milvus-sdk-node/-/milvus-sdk-node-1.1.0.tgz#15642b070292e9c082deb6b055e005d56d453dc1"
+  integrity sha512-lYKhzQWql+bq9QAEoyj2NkFpbFuyJk2dLGssQeqgErsppcKQZ/8DsVYx0kRPfZdBg1uV1RdwA6XsheGNLyeoTg==
+  dependencies:
+    "@grpc/grpc-js" "^1.2.12"
+    "@grpc/proto-loader" "^0.6.0"
+    milvus-test-nodes "^0.2.0"
+
 abab@^2.0.3, abab@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/abab/-/abab-2.0.5.tgz#c0b678fb32d60fc1219c784d6a826fe385aeb79a"

@@ -1,8 +1,8 @@
 Arguments: 
-  /usr/local/bin/node /usr/local/bin/yarn add milvus-test-node
+  /usr/local/bin/node /usr/local/bin/yarn add @zilliz/milvus-sdk-node
 
 PATH: 
-  /usr/local/go/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin
+  /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin
 
 Yarn version: 
   1.22.10
@@ -14,33 +14,38 @@ Platform:
   darwin x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/milvus-test-node: Not found
-      at Request.params.callback [as _callback] (/usr/local/lib/node_modules/yarn/lib/cli.js:66988:18)
-      at Request.self.callback (/usr/local/lib/node_modules/yarn/lib/cli.js:140662:22)
-      at Request.emit (events.js:315:20)
-      at Request.<anonymous> (/usr/local/lib/node_modules/yarn/lib/cli.js:141634:10)
-      at Request.emit (events.js:315:20)
-      at IncomingMessage.<anonymous> (/usr/local/lib/node_modules/yarn/lib/cli.js:141556:12)
-      at Object.onceWrapper (events.js:421:28)
-      at IncomingMessage.emit (events.js:327:22)
-      at endReadableNT (internal/streams/readable.js:1327:12)
-      at processTicksAndRejections (internal/process/task_queues.js:80:21)
+  SyntaxError: /Users/nameczz/Working/milvus-node-sdk/package.json: Unexpected token } in JSON at position 601
+      at JSON.parse (<anonymous>)
+      at /usr/local/lib/node_modules/yarn/lib/cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (/usr/local/lib/node_modules/yarn/lib/cli.js:310:30)
+      at /usr/local/lib/node_modules/yarn/lib/cli.js:321:13
 
 npm manifest: 
   {
-    "name": "milvus-test-nodes",
-    "author": "nameczz@126.com",
-    "version": "0.1.0",
+    "name": "@zilliz/milvus-sdk-node",
+    "author": "zizhao.chen@zilliz.com",
+    "version": "0.2.0",
     "main": "dist/milvus",
+    "files": [
+      "dist"
+    ],
+    "release": {
+      "branches": [
+        "main"
+      ]
+    },
     "scripts": {
       "build": "tsc --declaration",
       "test": "jest",
+      "coverage": "jest --coverage=true",
       "example": "npx ts-node",
-      "doc": "npx typedoc milvus --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme"
+      "doc": "npx typedoc milvus --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme",
+      "doc-json": "npx typedoc milvus --json"
     },
     "dependencies": {
       "@grpc/grpc-js": "^1.2.12",
-      "@grpc/proto-loader": "^0.6.0"
+      "@grpc/proto-loader": "^0.6.0",
     },
     "devDependencies": {
       "@babel/plugin-transform-modules-commonjs": "^7.13.8",
@@ -51,6 +56,9 @@ npm manifest:
       "typedoc": "^0.20.35",
       "typedoc-neo-theme": "^1.1.0",
       "typescript": "^4.2.4"
+    },
+    "publishConfig": {
+      "access": "public"
     }
   }
 
@@ -2907,6 +2915,23 @@ Lockfile:
     dependencies:
       braces "^3.0.1"
       picomatch "^2.2.3"
+  
+  milvus-test-nodes@^0.1.0:
+    version "0.1.0"
+    resolved "https://registry.yarnpkg.com/milvus-test-nodes/-/milvus-test-nodes-0.1.0.tgz#97629f5d88c2eb2759636e4b22776cbf2fff7e39"
+    integrity sha512-jPCfHTEX79aNpRDFI0WeFlAdMOYLrJ8Ovc5MGnJ5kCwsSLb6MbeGA8SgUFIQY+AouQcayaal3fpVf28GL9UBlg==
+    dependencies:
+      "@grpc/grpc-js" "^1.2.12"
+      "@grpc/proto-loader" "^0.6.0"
+  
+  milvus-test-nodes@^0.2.0:
+    version "0.2.0"
+    resolved "https://registry.yarnpkg.com/milvus-test-nodes/-/milvus-test-nodes-0.2.0.tgz#3e0947b6a66c04bb7eca0720ff32a5db0da68352"
+    integrity sha512-Vlxlyksp3HBTDmhLxrE8AJPmP06TlBvtQlgdLlYXViM4XijPzLzUKqIZS/gdgS6o9nnFt89rYR0OxWTLIbjaiA==
+    dependencies:
+      "@grpc/grpc-js" "^1.2.12"
+      "@grpc/proto-loader" "^0.6.0"
+      milvus-test-nodes "^0.1.0"
   
   mime-db@1.47.0:
     version "1.47.0"

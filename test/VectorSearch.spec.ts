@@ -94,7 +94,6 @@ describe("Vector Test", () => {
       collection_name: COLLECTION_NAME,
       id_array: [1, 2],
     });
-    console.log(res);
     expect(res.vectors_data.length).toEqual(2);
   });
 

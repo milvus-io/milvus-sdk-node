@@ -1,8 +1,8 @@
-import { MilvusNode } from "milvus-test-nodes";
+import { MilvusNode } from "@zilliz/milvus-sdk-node";
 import { generateVectors } from "../utils";
 import {
   IP,
-  COLLECTION_NAME,
+  GENERATE_COLLECTION_NAME,
   DIMENSION,
   INDEX_FILE_SIZE,
   PARTITION_TAG,
@@ -17,6 +17,7 @@ import {
  */
 
 const milvusClient = new MilvusNode(IP);
+const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
 
 const test = async () => {
   const metricType = milvusClient.getMetricType();

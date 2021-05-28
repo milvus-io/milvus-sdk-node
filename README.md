@@ -1,5 +1,7 @@
 [![license](https://img.shields.io/hexpm/l/plug.svg?color=green)](https://github.com/milvus-io/pymilvus/blob/master/LICENSE)
-[![typescript](./src/typescript.svg)](https://badges.aleen42.com/src/typescript.svg) A badge used for projects that coded with TypeScript
+[![typescript](https://badges.aleen42.com/src/typescript.svg)](https://badges.aleen42.com/src/typescript.svg)
+[![downloads](https://img.shields.io/npm/dw/@zilliz/milvus-sdk-node)](https://img.shields.io/npm/dw/@zilliz/milvus-sdk-node)
+[![coverage](https://img.shields.io/coveralls/github/badges/shields)](https://coveralls.io/github/badges/shields)
 
 # Milvus-sdk-node
 
@@ -14,7 +16,7 @@ Node: v14+
 ## Installation
 
 ```javascript
-   npm install milvus-sdk-node
+   npm install @zilliz/milvus-sdk-node
 ```
 
 <!-- ## Example
@@ -32,10 +34,10 @@ Make sure that:
 
 ## Connect to Milvus
 
-1. First of all, we need to import milvus-sdk-node.
+1. First of all, we need to import @zilliz/milvus-sdk-node.
 
 ```javascript
-import { MilvusNode } from "milvus-sdk-node";
+import { MilvusNode } from "@zilliz/milvus-sdk-node";
 ```
 
 2. Then, we can make connection with Milvus server.
