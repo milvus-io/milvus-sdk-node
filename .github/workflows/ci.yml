@@ -19,10 +19,6 @@ jobs:
         run: |
           yarn build
 
-      - uses: olegtarasov/get-tag@v2.1
-        id: tagName
-
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
-          tag: ${{ steps.tagName.outputs.tag }}
