@@ -1,4 +1,4 @@
-name: Semantic release
+name: Node sdk 1.x release
 
 on:
   release:
