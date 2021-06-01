@@ -1,4 +1,4 @@
-import { MilvusNode } from "@zilliz/milvus-sdk-node";
+import { MilvusNode } from "../milvus/index";
 import { generateVectors } from "../utils";
 import {
   IP,

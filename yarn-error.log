@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/local/bin/node /usr/local/bin/yarn add @zilliz/milvus-sdk-node
+  /usr/local/bin/node /usr/local/bin/yarn example example/collection.ts
 
 PATH: 
   /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin
@@ -14,7 +14,7 @@ Platform:
   darwin x64
 
 Trace: 
-  SyntaxError: /Users/nameczz/Working/milvus-node-sdk/package.json: Unexpected token } in JSON at position 601
+  SyntaxError: /Users/nameczz/Working/milvus-node-sdk/package.json: Unexpected token } in JSON at position 562
       at JSON.parse (<anonymous>)
       at /usr/local/lib/node_modules/yarn/lib/cli.js:1625:59
       at Generator.next (<anonymous>)
@@ -25,18 +25,13 @@ npm manifest:
   {
     "name": "@zilliz/milvus-sdk-node",
     "author": "zizhao.chen@zilliz.com",
-    "version": "0.2.0",
+    "version": "1.0.0",
     "main": "dist/milvus",
     "files": [
       "dist"
     ],
-    "release": {
-      "branches": [
-        "main"
-      ]
-    },
     "scripts": {
-      "build": "tsc --declaration",
+      "build": "tsc --declaration && node helper.js",
       "test": "jest",
       "coverage": "jest --coverage=true",
       "example": "npx ts-node",
@@ -761,6 +756,24 @@ Lockfile:
     integrity sha512-kQ5JNTrbDv3Rp5X2n/iUu37IJBDU2gsZ5R/g1/KHOOEc5IKfUFjXT6DENPGduh08I/pamwtEq4oul7gUqKTQDQ==
     dependencies:
       "@types/yargs-parser" "*"
+  
+  "@zilliz/milvus-sdk-node@0.2.0":
+    version "0.2.0"
+    resolved "https://registry.yarnpkg.com/@zilliz/milvus-sdk-node/-/milvus-sdk-node-0.2.0.tgz#2cf7b48070948b772ee20d71d5eeef4ece801048"
+    integrity sha512-BEzkYksyvU5TShLYXlQoZe/02mEtw6xKiT9N72xq2tmrVezPB1Drp/0NcJ8iFpWxbxzJqx0ihBSg0FJzzj+JWw==
+    dependencies:
+      "@grpc/grpc-js" "^1.2.12"
+      "@grpc/proto-loader" "^0.6.0"
+      "@zilliz/milvus-sdk-node" "^1.1.0"
+  
+  "@zilliz/milvus-sdk-node@^1.1.0":
+    version "1.1.0"
+    resolved "https://registry.yarnpkg.com/@zilliz/milvus-sdk-node/-/milvus-sdk-node-1.1.0.tgz#15642b070292e9c082deb6b055e005d56d453dc1"
+    integrity sha512-lYKhzQWql+bq9QAEoyj2NkFpbFuyJk2dLGssQeqgErsppcKQZ/8DsVYx0kRPfZdBg1uV1RdwA6XsheGNLyeoTg==
+    dependencies:
+      "@grpc/grpc-js" "^1.2.12"
+      "@grpc/proto-loader" "^0.6.0"
+      milvus-test-nodes "^0.2.0"
   
   abab@^2.0.3, abab@^2.0.5:
     version "2.0.5"
