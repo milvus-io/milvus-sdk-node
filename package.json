@@ -12,7 +12,7 @@
     ]
   },
   "scripts": {
-    "build": "tsc --declaration",
+    "build": "tsc --declaration && node helper.js",
     "test": "jest",
     "coverage": "jest --coverage=true",
     "example": "npx ts-node",

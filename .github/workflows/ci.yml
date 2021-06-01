@@ -1,6 +1,9 @@
 name: Semantic release
 
-on: push
+on:
+  release:
+    types: [published]
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -15,8 +18,7 @@ jobs:
       - name: Build app
         run: |
           yarn build
-      - name: Semantic release
-        env:
-          GITHUB_TOKEN: ${{ secrets.G_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          tag: ${GITHUB_REF#refs/tags/}
