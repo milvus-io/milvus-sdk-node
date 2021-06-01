@@ -1,16 +1,11 @@
 {
   "name": "@zilliz/milvus-sdk-node",
   "author": "zizhao.chen@zilliz.com",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "main": "dist/milvus",
   "files": [
     "dist"
   ],
-  "release": {
-    "branches": [
-      "main"
-    ]
-  },
   "scripts": {
     "build": "tsc --declaration && node helper.js",
     "test": "jest",
@@ -22,7 +17,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.2.12",
     "@grpc/proto-loader": "^0.6.0",
-    "@zilliz/milvus-sdk-node": "^1.1.0"
+    "@zilliz/milvus-sdk-node": "0.2.0"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.13.8",
