@@ -100,6 +100,12 @@ export enum MsgType {
   SegmentFlushDone = 1207,
 }
 
+export interface MsgBase {
+  base?: {
+    msg_type: MsgType; // required
+  };
+}
+
 /**
  * @brief Field data type
  */

@@ -1,11 +1,11 @@
 import { MilvusNode } from "../milvus/index";
 
-import { GENERATE_COLLECTION_NAME, IP } from "../const";
+import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 
 let milvusClient = new MilvusNode(IP);
-const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
+const COLLECTION_NAME = GENERATE_NAME();
 
 describe("Collection Api", () => {
   it(`Create Collection Successful`, async () => {

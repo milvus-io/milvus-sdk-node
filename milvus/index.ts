@@ -16,10 +16,19 @@ import * as protobuf from "protobufjs";
 import {
   BoolResponse,
   DescribeCollectionResponse,
-  GetCollectionStatisticsResponse,
   ResStatus,
   ShowCollectionsResponse,
+  ShowPartitionsResponse,
+  StatisticsResponse,
 } from "./types/Response";
+import {
+  CreatePartitionReq,
+  DropPartitionReq,
+  GetPartitionStatisticsReq,
+  HasPartitionReq,
+  LoadPartitionsReq,
+  ShowPartitionsReq,
+} from "./types/Partition";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -170,7 +179,7 @@ export class MilvusNode {
 
   async getCollectionStatistics(
     data: GetCollectionStatisticsReq
-  ): Promise<GetCollectionStatisticsResponse> {
+  ): Promise<StatisticsResponse> {
     const promise = await promisify(
       this.milvusClient,
       "GetCollectionStatistics",
@@ -198,5 +207,50 @@ export class MilvusNode {
     return promise;
   }
 
-  // async createCollection(data:)
+  async createPartition(data: CreatePartitionReq): Promise<ResStatus> {
+    const promise = await promisify(this.milvusClient, "CreatePartition", data);
+    return promise;
+  }
+
+  async hasPartition(data: HasPartitionReq): Promise<BoolResponse> {
+    const promise = await promisify(this.milvusClient, "HasPartition", data);
+    return promise;
+  }
+
+  async showPartitions(
+    data: ShowPartitionsReq
+  ): Promise<ShowPartitionsResponse> {
+    const promise = await promisify(this.milvusClient, "ShowPartitions", data);
+    return promise;
+  }
+
+  async getPartitionStatistics(
+    data: GetPartitionStatisticsReq
+  ): Promise<StatisticsResponse> {
+    const promise = await promisify(
+      this.milvusClient,
+      "GetPartitionStatistics",
+      data
+    );
+    return promise;
+  }
+
+  async loadPartitions(data: LoadPartitionsReq): Promise<ResStatus> {
+    const promise = await promisify(this.milvusClient, "LoadPartitions", data);
+    return promise;
+  }
+
+  async releasePartitions(data: LoadPartitionsReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.milvusClient,
+      "ReleasePartitions",
+      data
+    );
+    return promise;
+  }
+
+  async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
+    const promise = await promisify(this.milvusClient, "DropPartition", data);
+    return promise;
+  }
 }

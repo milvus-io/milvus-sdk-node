@@ -63,7 +63,13 @@ export interface DescribeCollectionResponse {
   physical_channel_names: string[]; // not useful for now
 }
 
-export interface GetCollectionStatisticsResponse {
+export interface StatisticsResponse {
   status: ResStatus;
   stats: KeyValuePair[];
+}
+
+export interface ShowPartitionsResponse {
+  status: ResStatus;
+  partition_names: string[];
+  partitionIDs: number[];
 }

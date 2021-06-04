@@ -1,9 +1,4 @@
-import { DataType, KeyValuePair, MsgType } from "./Common";
-export interface MsgBase {
-  base?: {
-    msg_type: MsgType; // required
-  };
-}
+import { DataType, KeyValuePair } from "./Common";
 
 export interface FieldType {
   name: string;
