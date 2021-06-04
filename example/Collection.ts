@@ -19,6 +19,10 @@ const test = async () => {
             key: "dim",
             value: "128",
           },
+          {
+            key: "metric_type",
+            value: "L2",
+          },
         ],
       },
     ],
@@ -46,8 +50,8 @@ const test = async () => {
   res = await milvusClient.describeCollection({
     collection_name: COLLECTION_NAME,
   });
+  console.log(res);
   console.log(res.schema.fields);
-  console.log(res.schema.fields[0].type_params);
 
   res = await milvusClient.releaseCollection({
     collection_name: COLLECTION_NAME,
