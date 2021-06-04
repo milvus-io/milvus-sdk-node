@@ -662,6 +662,11 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.37.tgz#a3dd8da4eb84a996c36e331df98d82abd76b516e"
   integrity sha512-XYmBiy+ohOR4Lh5jE379fV2IU+6Jn4g5qASinhitfyO71b/sCo6MKsMLF5tc7Zf2CE8hViVQyYSobJNke8OvUw==
 
+"@types/node@>=13.7.0":
+  version "15.9.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.9.0.tgz#0b7f6c33ca5618fe329a9d832b478b4964d325a8"
+  integrity sha512-AR1Vq1Ei1GaA5FjKL5PBqblTZsL5M+monvGSZwe6sSIdGiuu7Xr/pNwWJY+0ZQuN8AapD/XMB5IzBAyYRFbocA==
+
 "@types/node@^13.7.0":
   version "13.13.48"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.13.48.tgz#46a3df718aed5217277f2395a682e055a487e341"
@@ -693,24 +698,6 @@
   integrity sha512-kQ5JNTrbDv3Rp5X2n/iUu37IJBDU2gsZ5R/g1/KHOOEc5IKfUFjXT6DENPGduh08I/pamwtEq4oul7gUqKTQDQ==
   dependencies:
     "@types/yargs-parser" "*"
-
-"@zilliz/milvus-sdk-node@0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@zilliz/milvus-sdk-node/-/milvus-sdk-node-0.2.0.tgz#2cf7b48070948b772ee20d71d5eeef4ece801048"
-  integrity sha512-BEzkYksyvU5TShLYXlQoZe/02mEtw6xKiT9N72xq2tmrVezPB1Drp/0NcJ8iFpWxbxzJqx0ihBSg0FJzzj+JWw==
-  dependencies:
-    "@grpc/grpc-js" "^1.2.12"
-    "@grpc/proto-loader" "^0.6.0"
-    "@zilliz/milvus-sdk-node" "^1.1.0"
-
-"@zilliz/milvus-sdk-node@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@zilliz/milvus-sdk-node/-/milvus-sdk-node-1.1.0.tgz#15642b070292e9c082deb6b055e005d56d453dc1"
-  integrity sha512-lYKhzQWql+bq9QAEoyj2NkFpbFuyJk2dLGssQeqgErsppcKQZ/8DsVYx0kRPfZdBg1uV1RdwA6XsheGNLyeoTg==
-  dependencies:
-    "@grpc/grpc-js" "^1.2.12"
-    "@grpc/proto-loader" "^0.6.0"
-    milvus-test-nodes "^0.2.0"
 
 abab@^2.0.3, abab@^2.0.5:
   version "2.0.5"
@@ -2866,23 +2853,6 @@ micromatch@^4.0.2:
     braces "^3.0.1"
     picomatch "^2.2.3"
 
-milvus-test-nodes@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/milvus-test-nodes/-/milvus-test-nodes-0.1.0.tgz#97629f5d88c2eb2759636e4b22776cbf2fff7e39"
-  integrity sha512-jPCfHTEX79aNpRDFI0WeFlAdMOYLrJ8Ovc5MGnJ5kCwsSLb6MbeGA8SgUFIQY+AouQcayaal3fpVf28GL9UBlg==
-  dependencies:
-    "@grpc/grpc-js" "^1.2.12"
-    "@grpc/proto-loader" "^0.6.0"
-
-milvus-test-nodes@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/milvus-test-nodes/-/milvus-test-nodes-0.2.0.tgz#3e0947b6a66c04bb7eca0720ff32a5db0da68352"
-  integrity sha512-Vlxlyksp3HBTDmhLxrE8AJPmP06TlBvtQlgdLlYXViM4XijPzLzUKqIZS/gdgS6o9nnFt89rYR0OxWTLIbjaiA==
-  dependencies:
-    "@grpc/grpc-js" "^1.2.12"
-    "@grpc/proto-loader" "^0.6.0"
-    milvus-test-nodes "^0.1.0"
-
 mime-db@1.47.0:
   version "1.47.0"
   resolved "https://registry.yarnpkg.com/mime-db/-/mime-db-1.47.0.tgz#8cb313e59965d3c05cfbf898915a267af46a335c"
@@ -3269,6 +3239,25 @@ protobufjs@^6.10.0:
     "@protobufjs/utf8" "^1.1.0"
     "@types/long" "^4.0.1"
     "@types/node" "^13.7.0"
+    long "^4.0.0"
+
+protobufjs@^6.11.2:
+  version "6.11.2"
+  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-6.11.2.tgz#de39fabd4ed32beaa08e9bb1e30d08544c1edf8b"
+  integrity sha512-4BQJoPooKJl2G9j3XftkIXjoC9C0Av2NOrWmbLWT1vH32GcSUHjM0Arra6UfTsVyfMAuFzaLucXn1sadxJydAw==
+  dependencies:
+    "@protobufjs/aspromise" "^1.1.2"
+    "@protobufjs/base64" "^1.1.2"
+    "@protobufjs/codegen" "^2.0.4"
+    "@protobufjs/eventemitter" "^1.1.0"
+    "@protobufjs/fetch" "^1.1.0"
+    "@protobufjs/float" "^1.0.2"
+    "@protobufjs/inquire" "^1.1.0"
+    "@protobufjs/path" "^1.1.2"
+    "@protobufjs/pool" "^1.1.0"
+    "@protobufjs/utf8" "^1.1.0"
+    "@types/long" "^4.0.1"
+    "@types/node" ">=13.7.0"
     long "^4.0.0"
 
 psl@^1.1.28, psl@^1.1.33:

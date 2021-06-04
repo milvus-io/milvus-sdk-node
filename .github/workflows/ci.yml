@@ -1,4 +1,4 @@
-name: Node sdk 1.x release
+name: Node sdk 2.x release
 
 on:
   release:
