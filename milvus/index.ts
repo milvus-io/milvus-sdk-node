@@ -8,7 +8,7 @@ import {
   HasCollectionReq,
   LoadCollectionReq,
   ReleaseLoadCollectionReq,
-} from "./collection-types";
+} from "./types/Collection";
 import path from "path";
 import * as protoLoader from "@grpc/proto-loader";
 import { loadPackageDefinition, credentials } from "@grpc/grpc-js";
@@ -19,7 +19,8 @@ import {
   GetCollectionStatisticsResponse,
   ResStatus,
   ShowCollectionsResponse,
-} from "./response-types";
+} from "./types/Response";
+
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
 
@@ -80,6 +81,7 @@ export class MilvusNode {
   //     SUPERSTRUCTURE: MetricType.SUPERSTRUCTURE,
   //   };
   // }
+
   /**
    * @brief This method is used to create collection
    *
@@ -150,6 +152,11 @@ export class MilvusNode {
     return promise;
   }
 
+  /**
+   * Get collection detail, like name ,schema
+   * @param data
+   * @returns DescribeCollectionResponse
+   */
   async describeCollection(
     data: DescribeCollectionReq
   ): Promise<DescribeCollectionResponse> {
@@ -190,4 +197,6 @@ export class MilvusNode {
     const promise = await promisify(this.milvusClient, "DropCollection", data);
     return promise;
   }
+
+  // async createCollection(data:)
 }

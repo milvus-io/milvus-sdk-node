@@ -1,4 +1,4 @@
-import { KeyValuePair } from "./common-types";
+import { KeyValuePair } from "./Common";
 export enum ErrorCode {
   SUCCESS = "Success",
   UNEXPECTED_ERROR = "UnexpectedError",

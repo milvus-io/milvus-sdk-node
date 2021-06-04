@@ -1,6 +1,6 @@
 import { MilvusNode } from "../milvus/index";
 import { GENERATE_COLLECTION_NAME, IP } from "../const";
-import { DataType } from "../milvus/common-types";
+import { DataType } from "../milvus/types/Common";
 
 const milvusClient = new MilvusNode(IP);
 const COLLECTION_NAME = GENERATE_COLLECTION_NAME();

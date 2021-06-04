@@ -1,4 +1,4 @@
-import { DataType, KeyValuePair, MsgType } from "./common-types";
+import { DataType, KeyValuePair, MsgType } from "./Common";
 export interface MsgBase {
   base?: {
     msg_type: MsgType; // required
