@@ -1,7 +1,7 @@
 import { MilvusNode } from "../milvus/index";
 
 import { GENERATE_NAME, IP } from "../const";
-import { DataType } from "../milvus/types/Common";
+import { DataType, DslType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 
 let milvusClient = new MilvusNode(IP);
@@ -119,5 +119,17 @@ describe("Collection Api", () => {
     });
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it("Search", async () => {
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      partition_names: ["_default"],
+      dsl: "",
+      placeholder_group: [[1, 2, 3]],
+      dsl_type: DslType.BoolExprV1,
+      search_params: [{ key: "nprobe", value: "1024" }],
+    });
+    console.log(res);
   });
 });

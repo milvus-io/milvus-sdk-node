@@ -138,3 +138,8 @@ export enum IndexState {
   Finished = 3,
   Failed = 4,
 }
+
+export enum DslType {
+  Dsl = 0,
+  BoolExprV1 = 1,
+}

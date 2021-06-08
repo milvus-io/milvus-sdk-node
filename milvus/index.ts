@@ -39,6 +39,7 @@ import {
   GetIndexBuildProgressReq,
   GetIndexStateReq,
 } from "./types/Index";
+import { SearchReq } from "./types/Search";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -292,6 +293,15 @@ export class MilvusNode {
 
   async dropIndex(data: DropIndexReq): Promise<ResStatus> {
     const promise = await promisify(this.milvusClient, "DropIndex", data);
+    return promise;
+  }
+
+  // todo: not ready before fix collection loaded problem
+  async search(data: SearchReq): Promise<any> {
+    const promise = await promisify(this.milvusClient, "Search", {
+      ...data,
+      placeholder_group: Buffer.from(JSON.stringify(data.placeholder_group)),
+    });
     return promise;
   }
 }
