@@ -130,3 +130,11 @@ export interface KeyValuePair {
   key: string;
   value: string;
 }
+
+export enum IndexState {
+  IndexStateNone = 0,
+  Unissued = 1,
+  InProgress = 2,
+  Finished = 3,
+  Failed = 4,
+}

@@ -16,6 +16,9 @@ import * as protobuf from "protobufjs";
 import {
   BoolResponse,
   DescribeCollectionResponse,
+  DescribeIndexResponse,
+  GetIndexBuildProgressResponse,
+  GetIndexStateResponse,
   ResStatus,
   ShowCollectionsResponse,
   ShowPartitionsResponse,
@@ -29,6 +32,13 @@ import {
   LoadPartitionsReq,
   ShowPartitionsReq,
 } from "./types/Partition";
+import {
+  CreateIndexReq,
+  DescribeIndexReq,
+  DropIndexReq,
+  GetIndexBuildProgressReq,
+  GetIndexStateReq,
+} from "./types/Index";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -251,6 +261,37 @@ export class MilvusNode {
 
   async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
     const promise = await promisify(this.milvusClient, "DropPartition", data);
+    return promise;
+  }
+
+  async createIndex(data: CreateIndexReq): Promise<ResStatus> {
+    const promise = await promisify(this.milvusClient, "CreateIndex", data);
+    return promise;
+  }
+
+  async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
+    const promise = await promisify(this.milvusClient, "DescribeIndex", data);
+    return promise;
+  }
+
+  async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
+    const promise = await promisify(this.milvusClient, "GetIndexState", data);
+    return promise;
+  }
+
+  async getIndexBuildProgress(
+    data: GetIndexBuildProgressReq
+  ): Promise<GetIndexBuildProgressResponse> {
+    const promise = await promisify(
+      this.milvusClient,
+      "GetIndexBuildProgress",
+      data
+    );
+    return promise;
+  }
+
+  async dropIndex(data: DropIndexReq): Promise<ResStatus> {
+    const promise = await promisify(this.milvusClient, "DropIndex", data);
     return promise;
   }
 }

@@ -1,4 +1,4 @@
-import { KeyValuePair } from "./Common";
+import { IndexState, KeyValuePair } from "./Common";
 export enum ErrorCode {
   SUCCESS = "Success",
   UNEXPECTED_ERROR = "UnexpectedError",
@@ -72,4 +72,24 @@ export interface ShowPartitionsResponse {
   status: ResStatus;
   partition_names: string[];
   partitionIDs: number[];
+}
+
+interface IndexDescription {
+  index_name: string;
+  indexID: number;
+  params: KeyValuePair[];
+  field_name: string;
+}
+export interface DescribeIndexResponse {
+  status: ResStatus;
+  index_descriptions: IndexDescription[];
+}
+
+export interface GetIndexStateResponse {
+  status: ResStatus;
+  state: IndexState;
+}
+
+export interface GetIndexBuildProgressResponse {
+  status: ResStatus;
 }
