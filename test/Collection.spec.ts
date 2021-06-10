@@ -11,6 +11,8 @@ describe("Collection Api", () => {
   it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
+      autoID: false,
+      description: "Collection desc",
       fields: [
         {
           name: "vector_01",
@@ -31,7 +33,8 @@ describe("Collection Api", () => {
         {
           name: "age",
           description: "",
-          data_type: DataType.Int16,
+          data_type: DataType.Int64,
+          is_primary_key: true,
         },
       ],
     });
@@ -94,6 +97,7 @@ describe("Collection Api", () => {
     const res = await milvusClient.getCollectionStatistics({
       collection_name: COLLECTION_NAME,
     });
+    console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.stats[0].value).toEqual("0");
   });
@@ -102,8 +106,9 @@ describe("Collection Api", () => {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
+    console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.schema.autoID).toBeTruthy();
+    expect(res.schema.autoID).toBeFalsy();
     expect(res.schema.name).toEqual(COLLECTION_NAME);
     expect(res.schema.fields.length).toEqual(2);
     expect(res.schema.fields[0].name).toEqual("vector_01");

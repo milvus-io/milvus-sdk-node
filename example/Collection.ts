@@ -1,9 +1,8 @@
 import { MilvusNode } from "../milvus/index";
-import { GENERATE_COLLECTION_NAME, IP } from "../const";
+import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
-
 const milvusClient = new MilvusNode(IP);
-const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
+const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
   const createRes = await milvusClient.createCollection({

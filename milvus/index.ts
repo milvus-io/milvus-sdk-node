@@ -125,7 +125,7 @@ export class MilvusNode {
     let payload: any = {
       name: data.collection_name,
       description: data.description || "",
-      autoID: data.autoID || true,
+      autoID: data.autoID === false ? false : true,
       fields: [],
     };
 
@@ -134,6 +134,7 @@ export class MilvusNode {
         ...field,
         typeParams: field.type_params,
         dataType: field.data_type,
+        isPrimaryKey: field.is_primary_key,
       };
       const fieldParams = FieldSchema.create(value);
 

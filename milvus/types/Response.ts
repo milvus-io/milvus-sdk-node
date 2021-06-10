@@ -59,6 +59,7 @@ export interface CollectionSchema {
 export interface DescribeCollectionResponse {
   status: ResStatus;
   schema: CollectionSchema;
+  collectionID: string;
   virtual_channel_names: string[]; // not useful for now
   physical_channel_names: string[]; // not useful for now
 }
