@@ -2,7 +2,7 @@ name: Node sdk 2.x release
 
 on:
   release:
-    types: [published]
+    types: [released]
 
 jobs:
   publish:
