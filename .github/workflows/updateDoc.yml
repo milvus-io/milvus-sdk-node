@@ -1,7 +1,7 @@
 name: dispatch new tag event
 on:
   release:
-    types: [published]
+    types: [released]
 
 jobs:
   dispatch:
