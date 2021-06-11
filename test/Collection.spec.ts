@@ -4,6 +4,7 @@ import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { ShowCollectionsType } from "../milvus/types/Collection";
+import { BAD_REQUEST_CODE } from "../milvus/const/ErrorCode";
 
 let milvusClient = new MilvusNode(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -44,34 +45,31 @@ describe("Collection Api", () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Create Same Collection `, async () => {
-    const res = await milvusClient.createCollection({
-      collection_name: COLLECTION_NAME,
+  it(`Create Collection validate fields`, async () => {
+    let res = await milvusClient.createCollection({
+      collection_name: "zxc",
       fields: [
         {
           name: "vector_01",
           description: "vector field",
           data_type: DataType.FloatVector,
-
-          type_params: [
-            {
-              key: "dim",
-              value: "128",
-            },
-            {
-              key: "metric_type",
-              value: "L2",
-            },
-          ],
-        },
-        {
-          name: "age",
-          description: "",
-          data_type: DataType.Int16,
         },
       ],
     });
-    expect(res.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+    expect(res.error_code).toEqual(BAD_REQUEST_CODE);
+
+    res = await milvusClient.createCollection({
+      collection_name: "zxc",
+      fields: [
+        {
+          name: "age",
+          description: "",
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+      ],
+    });
+    expect(res.error_code).toEqual(BAD_REQUEST_CODE);
   });
 
   it(`Create load Collection Successful`, async () => {
@@ -96,8 +94,15 @@ describe("Collection Api", () => {
             },
           ],
         },
+        {
+          name: "age",
+          description: "",
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
       ],
     });
+    console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -119,7 +124,7 @@ describe("Collection Api", () => {
   it(`Show all collections`, async () => {
     const res = await milvusClient.showCollections();
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-
+    console.log(res);
     expect(res.collection_names).toContain(COLLECTION_NAME);
   });
 

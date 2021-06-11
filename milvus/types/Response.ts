@@ -27,7 +27,7 @@ export enum ErrorCode {
 }
 
 export interface ResStatus {
-  error_code: string;
+  error_code: string | number;
   reason: string;
 }
 

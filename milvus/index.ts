@@ -42,6 +42,8 @@ import {
   GetIndexStateReq,
 } from "./types/Index";
 import { SearchReq } from "./types/Search";
+import { checkCollectionFields } from "./utils/Validate";
+import { BAD_REQUEST_CODE } from "./const/ErrorCode";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -112,9 +114,18 @@ export class MilvusNode {
    * @return Status
    */
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
-    if (!data.fields || !data.fields.length || !data.collection_name) {
-      throw new Error("fields and collection_name is needed");
+    const { fields, collection_name, description, autoID } = data;
+    if (!fields || !fields.length || !collection_name) {
+      return {
+        error_code: BAD_REQUEST_CODE,
+        reason: "fields and collection_name is needed",
+      };
     }
+    const validateFieldsRes = checkCollectionFields(fields);
+    if (validateFieldsRes !== true) {
+      return validateFieldsRes;
+    }
+
     const root = await protobuf.load(schemaPath);
     if (!root) throw new Error("Missing proto file");
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
@@ -125,9 +136,9 @@ export class MilvusNode {
     const FieldSchema = root.lookupType("milvus.proto.schema.FieldSchema");
 
     let payload: any = {
-      name: data.collection_name,
-      description: data.description || "",
-      autoID: data.autoID === false ? false : true,
+      name: collection_name,
+      description: description || "",
+      autoID: autoID === false ? false : true,
       fields: [],
     };
 
@@ -173,7 +184,6 @@ export class MilvusNode {
   async showCollections(
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
-    console.log("---show collections ---", data);
     const promise = await promisify(this.milvusClient, "ShowCollections", {
       type: data ? data.type : ShowCollectionsType.All,
     });
