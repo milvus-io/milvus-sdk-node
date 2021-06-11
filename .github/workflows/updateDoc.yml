@@ -20,4 +20,4 @@ jobs:
           -H "Accept: application/vnd.github.v3+json" \
           https://api.github.com/repos/milvus-io/docs/actions/workflows/updateApiReference.yml/dispatches \
           -d '{"ref":"master", "inputs": { "tagName": "${{ steps.tag_name.outputs.SOURCE_TAG }}", "repoName": "${{ github.event.repository.name }}" } }' \
-          -u ".:${{secrets.PAT_TOKEN}}"
+          -u ".:${{secrets.DOC_TOKEN}}"
