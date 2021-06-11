@@ -8,6 +8,15 @@ export interface FieldType {
   type_params?: KeyValuePair[];
 }
 
+export enum ShowCollectionsType {
+  All,
+  InMemory,
+}
+
+export interface ShowCollectionsReq {
+  type: ShowCollectionsType;
+}
+
 export interface CreateCollectionReq {
   // collection name
   collection_name: string;

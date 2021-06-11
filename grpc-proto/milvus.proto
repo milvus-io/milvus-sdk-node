@@ -115,12 +115,17 @@ message GetCollectionStatisticsResponse {
   repeated common.KeyValuePair stats = 2;
 }
 
+enum ShowCollectionsType {
+  All = 0;
+  InMemory = 1;
+}
+
 message ShowCollectionsRequest {
   common.MsgBase base = 1; // must
   string db_name = 2;
   uint64 time_stamp = 3;
+  ShowCollectionsType type = 4;
 }
-
 message ShowCollectionsResponse {
   common.Status status = 1;
   repeated string collection_names = 2;
@@ -315,7 +320,7 @@ message SearchRequest {
   bytes placeholder_group = 6; // must
   common.DslType dsl_type = 7; // must
   // anns_field,topk, metric_type, params
-  repeated common.KeyValuePair search_params = 8; // must topk
+  repeated common.KeyValuePair search_params = 8; // must
 }
 
 message RetrieveRequest {

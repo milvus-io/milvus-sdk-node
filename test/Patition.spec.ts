@@ -89,15 +89,15 @@ describe("Collection Api", () => {
     expect(res.partitionIDs.length).toEqual(2);
   });
 
-  // it(`Get partition statistics`, async () => {
-  //   const res = await milvusClient.getPartitionStatistics({
-  //     collection_name: COLLECTION_NAME,
-  //     partition_name: "_default",
-  //   });
-  //   console.log(res);
-  //   expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-  //   // expect(res.stats[0].value).toEqual("0");
-  // });
+  it(`Get partition statistics`, async () => {
+    const res = await milvusClient.getPartitionStatistics({
+      collection_name: COLLECTION_NAME,
+      partition_name: "_default",
+    });
+    console.log(res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // expect(res.stats[0].value).toEqual("0");
+  });
 
   it(`Load Partition `, async () => {
     const res = await milvusClient.loadPartitions({

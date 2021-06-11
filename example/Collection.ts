@@ -41,10 +41,10 @@ const test = async () => {
   });
   console.log(res);
 
-  // res = await milvusClient.loadCollection({
-  //   collection_name: COLLECTION_NAME,
-  // });
-  // console.log(res);
+  res = await milvusClient.loadCollection({
+    collection_name: COLLECTION_NAME,
+  });
+  console.log(res);
 
   res = await milvusClient.describeCollection({
     collection_name: COLLECTION_NAME,

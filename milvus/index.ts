@@ -8,6 +8,8 @@ import {
   HasCollectionReq,
   LoadCollectionReq,
   ReleaseLoadCollectionReq,
+  ShowCollectionsReq,
+  ShowCollectionsType,
 } from "./types/Collection";
 import path from "path";
 import * as protoLoader from "@grpc/proto-loader";
@@ -168,8 +170,13 @@ export class MilvusNode {
    * List all collections
    * @returns
    */
-  async showCollections(): Promise<ShowCollectionsResponse> {
-    const promise = await promisify(this.milvusClient, "ShowCollections", {});
+  async showCollections(
+    data?: ShowCollectionsReq
+  ): Promise<ShowCollectionsResponse> {
+    console.log("---show collections ---", data);
+    const promise = await promisify(this.milvusClient, "ShowCollections", {
+      type: data ? data.type : ShowCollectionsType.All,
+    });
     return promise;
   }
 
@@ -299,9 +306,30 @@ export class MilvusNode {
 
   // todo: not ready before fix collection loaded problem
   async search(data: SearchReq): Promise<any> {
+    const root = await protobuf.load(protoPath);
+    if (!root) throw new Error("Missing milvus proto file");
+    // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
+    const PlaceholderGroup = root.lookupType(
+      "milvus.proto.milvus.PlaceholderGroup"
+    );
+
+    const placeholderGroupParams = PlaceholderGroup.create({
+      placeholders: [
+        {
+          tag: "$100",
+          type: 101,
+          values: [Buffer.from([1, 2, 2, 4])],
+        },
+      ],
+    });
+
+    const placeholderGroupBytes = PlaceholderGroup.encode(
+      placeholderGroupParams
+    ).finish();
+
     const promise = await promisify(this.milvusClient, "Search", {
       ...data,
-      placeholder_group: Buffer.from(JSON.stringify(data.placeholder_group)),
+      placeholder_group: placeholderGroupBytes,
     });
     return promise;
   }
