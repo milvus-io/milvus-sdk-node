@@ -12,6 +12,7 @@ describe("Collection Api", () => {
   beforeAll(async () => {
     await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
+      autoID: false,
       fields: [
         {
           name: "vector_01",
@@ -32,7 +33,8 @@ describe("Collection Api", () => {
         {
           name: "age",
           description: "",
-          data_type: DataType.Int16,
+          data_type: DataType.Int64,
+          is_primary_key: true,
         },
       ],
     });
@@ -96,15 +98,7 @@ describe("Collection Api", () => {
     });
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    // expect(res.stats[0].value).toEqual("0");
-  });
-
-  it(`Load Partition `, async () => {
-    const res = await milvusClient.loadPartitions({
-      collection_name: COLLECTION_NAME,
-      partition_names: ["_default"],
-    });
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.stats[0].value).toEqual("0");
   });
 
   it(`Load Partition `, async () => {

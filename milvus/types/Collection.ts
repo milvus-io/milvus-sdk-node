@@ -1,4 +1,4 @@
-import { DataType, KeyValuePair } from "./Common";
+import { DataType, KeyValuePair, MsgBase, MsgType } from "./Common";
 
 export interface FieldType {
   name: string;
@@ -6,6 +6,7 @@ export interface FieldType {
   data_type?: DataType;
   is_primary_key?: boolean;
   type_params?: KeyValuePair[];
+  autoID?: boolean;
 }
 
 export enum ShowCollectionsType {
@@ -21,7 +22,6 @@ export interface CreateCollectionReq {
   // collection name
   collection_name: string;
   shards_num?: number; // int
-  autoID?: boolean;
   description?: string;
   fields: FieldType[];
 }

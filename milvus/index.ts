@@ -44,6 +44,7 @@ import {
 import { SearchReq } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
 import { BAD_REQUEST_CODE } from "./const/ErrorCode";
+import { MsgType } from "./types/Common";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -114,7 +115,7 @@ export class MilvusNode {
    * @return Status
    */
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
-    const { fields, collection_name, description, autoID } = data;
+    const { fields, collection_name, description } = data;
     if (!fields || !fields.length || !collection_name) {
       return {
         error_code: BAD_REQUEST_CODE,
@@ -138,7 +139,6 @@ export class MilvusNode {
     let payload: any = {
       name: collection_name,
       description: description || "",
-      autoID: autoID === false ? false : true,
       fields: [],
     };
 
@@ -184,6 +184,7 @@ export class MilvusNode {
   async showCollections(
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
+    console.log("----data:", data);
     const promise = await promisify(this.milvusClient, "ShowCollections", {
       type: data ? data.type : ShowCollectionsType.All,
     });

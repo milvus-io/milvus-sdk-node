@@ -13,7 +13,7 @@ service MilvusService {
   rpc LoadCollection(LoadCollectionRequest) returns (common.Status) {}
   rpc ReleaseCollection(ReleaseCollectionRequest) returns (common.Status) {}
   rpc DescribeCollection(DescribeCollectionRequest) returns (DescribeCollectionResponse) {}
-  rpc GetCollectionStatistics(GetCollectionStatisticsRequest) returns (GetCollectionStatisticsResponse) {} // row count
+  rpc GetCollectionStatistics(GetCollectionStatisticsRequest) returns (GetCollectionStatisticsResponse) {}
   rpc ShowCollections(ShowCollectionsRequest) returns (ShowCollectionsResponse) {}
 
   rpc CreatePartition(CreatePartitionRequest) returns (common.Status) {}
@@ -24,16 +24,17 @@ service MilvusService {
   rpc GetPartitionStatistics(GetPartitionStatisticsRequest) returns (GetPartitionStatisticsResponse) {}
   rpc ShowPartitions(ShowPartitionsRequest) returns (ShowPartitionsResponse) {}
 
-  rpc CreateIndex(CreateIndexRequest) returns (common.Status) {} // only for vector field
-  rpc DescribeIndex(DescribeIndexRequest) returns (DescribeIndexResponse) {} // last one
+  rpc CreateIndex(CreateIndexRequest) returns (common.Status) {}
+  rpc DescribeIndex(DescribeIndexRequest) returns (DescribeIndexResponse) {}
   rpc GetIndexState(GetIndexStateRequest) returns (GetIndexStateResponse) {}
   rpc GetIndexBuildProgress(GetIndexBuildProgressRequest) returns (GetIndexBuildProgressResponse) {}
   rpc DropIndex(DropIndexRequest) returns (common.Status) {}
 
-  rpc Insert(InsertRequest) returns (InsertResponse) {}
+  rpc Insert(InsertRequest) returns (MutationResult) {}
   rpc Search(SearchRequest) returns (SearchResults) {}
   rpc Retrieve(RetrieveRequest) returns (RetrieveResults) {}
   rpc Flush(FlushRequest) returns (common.Status) {}
+  rpc Query(QueryRequest) returns (QueryResults) {}
 
   rpc GetPersistentSegmentInfo(GetPersistentSegmentInfoRequest) returns (GetPersistentSegmentInfoResponse) {}
   rpc GetQuerySegmentInfo(GetQuerySegmentInfoRequest) returns (GetQuerySegmentInfoResponse) {}
@@ -49,7 +50,7 @@ message CreateCollectionRequest {
   string db_name = 2;
   string collection_name = 3; // must
   // `schema` is the serialized `schema.CollectionSchema`
-  bytes schema = 4; // must schema.proto collection schema
+  bytes schema = 4; // must
   int32 shards_num = 5; // must. Once set, no modification is allowed
 }
 
@@ -126,9 +127,11 @@ message ShowCollectionsRequest {
   uint64 time_stamp = 3;
   ShowCollectionsType type = 4;
 }
+
 message ShowCollectionsResponse {
   common.Status status = 1;
   repeated string collection_names = 2;
+  repeated int64 collection_ids = 3;
 }
 
 message CreatePartitionRequest {
@@ -220,7 +223,7 @@ message CreateIndexRequest {
   string db_name = 2;
   string collection_name = 3; // must
   string field_name = 4; // must
-  repeated common.KeyValuePair extra_params = 5; // must index_type dim metric_type 
+  repeated common.KeyValuePair extra_params = 5; // must
 }
 
 message DescribeIndexRequest {
@@ -279,18 +282,25 @@ message DropIndexRequest {
 }
 
 message InsertRequest {
-  common.MsgBase base = 1; // must
+  common.MsgBase base = 1;
   string db_name = 2;
-  string collection_name = 3; // must
-  string partition_name = 4; // must
-  repeated common.Blob row_data = 5; // must
-  repeated uint32 hash_keys = 6; // must
+  string collection_name = 3;
+  string partition_name = 4;
+  repeated schema.FieldData fields_data = 5;
+  repeated uint32 hash_keys = 6;
+  uint32 num_rows = 7;
 }
 
-message InsertResponse {
+message MutationResult {
   common.Status status = 1;
-  int64 rowID_begin = 2;
-  int64 rowID_end = 3;
+  schema.IDs IDs = 2; // required for insert, delete
+  repeated uint32 succ_index = 3; // error indexes indicate
+  repeated uint32 err_index = 4; // error indexes indicate
+  bool acknowledged = 5;
+  int64 insert_cnt = 6;
+  int64 delete_cnt = 7;
+  int64 upsert_cnt = 8;
+  uint64 timestamp = 9;
 }
 
 enum PlaceholderType {
@@ -319,8 +329,8 @@ message SearchRequest {
   // serialized `PlaceholderGroup`
   bytes placeholder_group = 6; // must
   common.DslType dsl_type = 7; // must
-  // anns_field,topk, metric_type, params
   repeated common.KeyValuePair search_params = 8; // must
+  uint64 travel_timestamp = 9;
 }
 
 message RetrieveRequest {
@@ -330,6 +340,7 @@ message RetrieveRequest {
   repeated string partition_names = 4; // must
   schema.IDs ids = 5; // must
   repeated string output_fields = 6; // must
+  uint64 travel_timestamp = 7;
 }
 
 message RetrieveResults {
@@ -353,6 +364,20 @@ message FlushRequest {
   common.MsgBase base = 1;
   string db_name = 2;
   repeated string collection_names = 3;
+}
+
+message QueryRequest {
+  common.MsgBase base = 1;
+  string db_name = 2;
+  string collection_name = 3;
+  string expr = 4;
+  repeated string output_fields = 5;
+  repeated string partition_names = 6;
+}
+
+message QueryResults {
+  common.Status status = 1;
+  repeated schema.FieldData fields_data = 2;
 }
 
 message PersistentSegmentInfo {

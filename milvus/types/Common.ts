@@ -101,7 +101,7 @@ export enum MsgType {
 }
 
 export interface MsgBase {
-  base?: {
+  base: {
     msg_type: MsgType; // required
   };
 }

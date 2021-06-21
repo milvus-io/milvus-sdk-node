@@ -14,7 +14,6 @@ describe("Collection Api", () => {
   it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
-      autoID: false,
       description: "Collection desc",
       fields: [
         {
@@ -38,10 +37,10 @@ describe("Collection Api", () => {
           description: "",
           data_type: DataType.Int64,
           is_primary_key: true,
+          autoID: false,
         },
       ],
     });
-    console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -75,7 +74,6 @@ describe("Collection Api", () => {
   it(`Create load Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
       collection_name: LOAD_COLLECTION_NAME,
-      autoID: true,
       description: "Collection desc",
       fields: [
         {
@@ -99,6 +97,7 @@ describe("Collection Api", () => {
           description: "",
           data_type: DataType.Int64,
           is_primary_key: true,
+          autoID: true,
         },
       ],
     });
@@ -124,7 +123,6 @@ describe("Collection Api", () => {
   it(`Show all collections`, async () => {
     const res = await milvusClient.showCollections();
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    console.log(res);
     expect(res.collection_names).toContain(COLLECTION_NAME);
   });
 
@@ -150,8 +148,8 @@ describe("Collection Api", () => {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
+
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.schema.autoID).toBeFalsy();
     expect(res.schema.name).toEqual(COLLECTION_NAME);
     expect(res.schema.fields.length).toEqual(2);
     expect(res.schema.fields[0].name).toEqual("vector_01");

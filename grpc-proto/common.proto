@@ -49,6 +49,7 @@ enum SegmentState {
     Growing = 2;
     Sealed = 3;
     Flushed = 4;
+    Flushing = 5;
 }
 
 message Status {
@@ -94,6 +95,10 @@ enum MsgType {
     /* DEFINE REQUESTS: SEGMENT */
     ShowSegments = 250;
     DescribeSegment = 251;
+    LoadSegments = 252;
+    ReleaseSegments = 253;
+    HandoffSegments = 254;
+    LoadBalanceSegments = 255;
 
     /* DEFINITION REQUESTS: INDEX */
     CreateIndex = 300;
@@ -114,6 +119,10 @@ enum MsgType {
     GetPartitionStatistics = 505;
     Retrieve = 506;
     RetrieveResult = 507;
+    WatchDmChannels = 508;
+    RemoveDmChannels = 509;
+    WatchQueryChannels = 510;
+    RemoveQueryChannels = 511;
 
     /* DATA SERVICE */
     SegmentInfo = 600;
@@ -127,10 +136,12 @@ enum MsgType {
     AllocateSegment = 1205;
     SegmentStatistics = 1206;
     SegmentFlushDone = 1207;
+
+    DataNodeTt = 1208;
 }
 
 message MsgBase {
-    MsgType msg_type = 1; // required
+    MsgType msg_type = 1;
     int64  msgID = 2;
     uint64 timestamp = 3;
     int64 sourceID = 4;

@@ -31,11 +31,12 @@ enum DataType {
 message FieldSchema {
   int64 fieldID = 1;
   string name = 2;
-  bool is_primary_key = 3; // int64 only one in collection
+  bool is_primary_key = 3;
   string description = 4;
   DataType data_type = 5;
-  repeated common.KeyValuePair type_params = 6; // {key:dim,value:128}
+  repeated common.KeyValuePair type_params = 6;
   repeated common.KeyValuePair index_params = 7;
+  bool autoID = 8;
 }
 
 /**
@@ -44,7 +45,7 @@ message FieldSchema {
 message CollectionSchema {
   string name = 1;
   string description = 2;
-  bool autoID = 3;
+  bool autoID = 3; // deprecated later, keep compatible with c++ part now
   repeated FieldSchema fields = 4;
 }
 
