@@ -122,6 +122,7 @@ describe("Collection Api", () => {
 
   it(`Show all collections`, async () => {
     const res = await milvusClient.showCollections();
+    console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.collection_names).toContain(COLLECTION_NAME);
   });
@@ -130,7 +131,6 @@ describe("Collection Api", () => {
     const res = await milvusClient.showCollections({
       type: ShowCollectionsType.InMemory,
     });
-    console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     expect(res.collection_names.length).toEqual(0);
@@ -148,7 +148,7 @@ describe("Collection Api", () => {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-
+    console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.schema.name).toEqual(COLLECTION_NAME);
     expect(res.schema.fields.length).toEqual(2);

@@ -11,27 +11,22 @@ describe("Collection Api", () => {
   beforeAll(async () => {
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
-      autoID: false,
       fields: [
         {
           name: "vector_01",
           description: "vector field",
           data_type: DataType.FloatVector,
-
           type_params: [
             {
               key: "dim",
               value: "4",
-            },
-            {
-              key: "metric_type",
-              value: "L2",
             },
           ],
         },
         {
           name: "age",
           data_type: DataType.Int64,
+          autoID: false,
           is_primary_key: true,
           description: "",
         },
@@ -60,6 +55,10 @@ describe("Collection Api", () => {
         {
           key: "index_type",
           value: "IVF_FLAT",
+        },
+        {
+          key: "metric_type",
+          value: "L2",
         },
         {
           key: "params",
@@ -125,6 +124,15 @@ describe("Collection Api", () => {
     });
     console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Describe Index should be not exist`, async () => {
+    const res = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME,
+      field_name: "vector_01",
+    });
+    console.log(res);
+    expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
   });
 
   // it("Expr Search", async () => {
