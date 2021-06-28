@@ -169,7 +169,7 @@ describe("Collection Api", () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
-    expect(res.collection_names).toEqual([LOAD_COLLECTION_NAME]);
+    expect(res.collection_names).toContain(LOAD_COLLECTION_NAME);
   });
 
   it(`Release Collection`, async () => {

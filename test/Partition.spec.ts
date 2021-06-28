@@ -12,7 +12,6 @@ describe("Collection Api", () => {
   beforeAll(async () => {
     await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
-      autoID: false,
       fields: [
         {
           name: "vector_01",
@@ -35,6 +34,7 @@ describe("Collection Api", () => {
           description: "",
           data_type: DataType.Int64,
           is_primary_key: true,
+          autoID: false,
         },
       ],
     });
@@ -59,7 +59,7 @@ describe("Collection Api", () => {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
     });
-    expect(res.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+    expect(res.error_code).not.toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Has Partition`, async () => {
@@ -85,6 +85,7 @@ describe("Collection Api", () => {
     const res = await milvusClient.showPartitions({
       collection_name: COLLECTION_NAME,
     });
+    console.log(res);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.partition_names).toEqual(["_default", PARTITION_NAME]);
@@ -101,6 +102,23 @@ describe("Collection Api", () => {
     expect(res.stats[0].value).toEqual("0");
   });
 
+  it("Drop partition", async () => {
+    const res = await milvusClient.dropPartition({
+      collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Check droped partition`, async () => {
+    const res = await milvusClient.hasPartition({
+      collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
+    });
+
+    expect(res.value).toEqual(false);
+  });
+
   it(`Load Partition `, async () => {
     const res = await milvusClient.loadPartitions({
       collection_name: COLLECTION_NAME,
@@ -110,7 +128,7 @@ describe("Collection Api", () => {
   });
 
   it(`Release Partition `, async () => {
-    const res = await milvusClient.loadPartitions({
+    const res = await milvusClient.releasePartitions({
       collection_name: COLLECTION_NAME,
       partition_names: ["_default"],
     });

@@ -1,7 +1,7 @@
 [![license](https://img.shields.io/hexpm/l/plug.svg?color=green)](https://github.com/milvus-io/pymilvus/blob/master/LICENSE)
 [![typescript](https://badges.aleen42.com/src/typescript.svg)](https://badges.aleen42.com/src/typescript.svg)
 [![downloads](https://img.shields.io/npm/dw/@zilliz/milvus-sdk-node)](https://img.shields.io/npm/dw/@zilliz/milvus-sdk-node)
-[![coverage](https://img.shields.io/coveralls/github/badges/shields)](https://coveralls.io/github/badges/shields)
+[![codecov](https://codecov.io/gh/milvus-io/milvus-sdk-node/branch/main/graph/badge.svg?token=Zu5FwWstwI)](https://codecov.io/gh/milvus-io/milvus-sdk-node)
 
 # Milvus-sdk-node
 
@@ -10,13 +10,13 @@ The all functions will return a promise, so we can use async await to get the re
 
 ## Dependencies
 
-Milvus: v1.x
-Node: v14+
+Milvus: v2.x
+Node: v12+
 
 ## Installation
 
 ```javascript
-   npm install @zilliz/milvus-sdk-node
+   npm install @zilliz/milvus2-sdk-node
 ```
 
 <!-- ## Example
@@ -30,14 +30,14 @@ Before we start, there are some prerequisites.
 Make sure that:
 
 - You have a running Milvus instance.
-- milvus-sdk-node is correctly installed.
+- @zilliz/milvus2-sdk-node is correctly installed.
 
 ## Connect to Milvus
 
 1. First of all, we need to import @zilliz/milvus-sdk-node.
 
 ```javascript
-import { MilvusNode } from "@zilliz/milvus-sdk-node";
+import { MilvusNode } from "@zilliz/milvus2-sdk-node";
 ```
 
 2. Then, we can make connection with Milvus server.
@@ -85,12 +85,29 @@ To create collection, we need to provide collection parameters.
 Now we can create a collection:
 
 ```javascript
-const metricTypes = milvusClient.getMetricType();
 const res = await milvusClient.createCollection({
   collection_name: "demo_milvus_tutorial",
-  dimension: 8,
-  metric_type: metricTypes.IP,
-  index_file_size: 1024,
+  description: "Collection desc",
+  fields: [
+    {
+      name: "vector_01",
+      description: "vector field",
+      data_type: DataType.FloatVector,
+      type_params: [
+        {
+          key: "dim",
+          value: "128",
+        },
+      ],
+    },
+    {
+      name: "age",
+      description: "",
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: false,
+    },
+  ],
 });
 // { error_code: 'SUCCESS', reason: 'OK' }
 ```
@@ -100,19 +117,22 @@ Then you can list collections and 'demo_film_tutorial' will be in the result.
 You can also get info of the collection.
 
 ```javascript
-const collectionInfo = await milvusClient.showCollectionsInfo({
+const collectionInfo = await milvusClient.describeCollection({
   collection_name: COLLECTION_NAME,
 });
 // {
-//   status: { error_code: 'SUCCESS', reason: 'OK' },
-//   json_info: '{"partitions":[{"row_count":0,"segments":null,"tag":"_default"}],"row_count":0}'
+//   status: { error_code: 'Success', reason: '' },
+//   schema: {
+//     fields: [ [Object], [Object] ],
+//     name: COLLECTION_NAME,
+//     description: 'Collection desc',
+//     autoID: false -> not useful
+//   },
+//   collectionID: '425948843570364417'
 // }
 ```
 
 This tutorial is a basic intro tutorial, building index won't be covered by this tutorial.
-
-If you want to go further into Milvus with indexes, it's recommended to check our
-[Full examples](https://github.com/milvus-io/pymilvus/tree/1.0/examples/indexes)
 
 Further more, if you want to get a thorough view of indexes, check our official website for [Vector Index](https://milvus.io/docs/index.md).
 
@@ -125,9 +145,10 @@ const partitions = await milvusClient.showPartitions({
   collection_name: COLLECTION_NAME,
 });
 // {
-//   partition_tag_array: [ '_default' ],
-//   status: { error_code: 'SUCCESS', reason: 'OK' }
-// }
+//     partition_names: [ '_default' ],
+//     partitionIDs: [ '425948937832366082' ],
+//     status: { error_code: 'Success', reason: '' }
+//   }
 ```
 
 You can provide a partition tag to create a new partition.
@@ -140,183 +161,10 @@ const res = await milvusClient.createPartition({
 // { error_code: 'SUCCESS', reason: 'OK' }
 ```
 
-## Entities
-
-An entity is a group of fields that corresponds to real world objects. In current version, Milvus only contains a vector field.
-
-1. List 3 Entities
-
-```javascript
-const entities = new Array(3).fill(new Array(8).fill(Math.random() * 100));
-```
-
-2. Insert Entities
-   If the entities inserted successfully, `ids` we provided will be returned.
-
-```javascript
-const res = await milvusClient.insert({
-  collection_name: COLLECTION_NAME,
-  partition_tag: PARTITION_TAG,
-  records: entities.map((v, i) => ({
-    value: v,
-  })),
-  record_type: "float",
-});
-// {
-//   vector_id_array: [
-//     '1618818108058974000',
-//     '1618818108058974001',
-//     '1618818108058974002'
-//   ],
-//   status: { error_code: 'SUCCESS', reason: 'OK' }
-// }
-```
-
-Or you can also provide entity ids
-
-```javascript
-const res = await milvusClient.insert({
-  collection_name: COLLECTION_NAME,
-  partition_tag: PARTITION_TAG,
-  records: entities.map((v, i) => ({
-    id: i + 1,
-    value: v,
-  })),
-  record_type: "float",
-});
-// {
-//   vector_id_array: [
-//     '1',
-//     '2',
-//     '3'
-//   ],
-//   status: { error_code: 'SUCCESS', reason: 'OK' }
-// }
-```
-
-### Warning:
-
-If the first time when `insert()` is invoked `id` is not passed into this method, each of the rest time when `insert()` is invoked `id` is not permitted to pass, otherwise server will return an error and the insertion process will fail. And vice versa.
-
-### Note:
-
-If `partition_tag` isn't provided, these entities will be inserted into the "`_default`" partition.
-otherwise, them will be inserted into specified partition.
-
-## Flush
-
-After successfully inserting 3 entities into Milvus, we can `Flush` data from memory to disk so that we can retrieve them. Milvus also performs an automatic flush with a fixed interval(configurable, default 1 second),
-see [Data Flushing](https://milvus.io/docs/flush_python.md)
-
-You can flush multiple collections at one time, so be aware the parameter is a list.
-
-```javascript
-const res = await milvusClient.flush({
-  collection_name_array: [COLLECTION_NAME],
-});
-// { error_code: 'SUCCESS', reason: 'OK' }
-```
-
-# Count Entities
-
-We can also count how many entities are there in the collection.
-
-```javascript
-const count = await milvusClient.countCollection({
-  collection_name: COLLECTION_NAME,
-});
-// {
-//   status: { error_code: 'SUCCESS', reason: 'OK' },
-//   collection_row_count: '6'
-// }
-```
-
-## Get Entities by ID
-
-You can get entities by their ids.
-
-```javascript
-const res = await milvusClient.getVectorsByID({
-  collection_name: COLLECTION_NAME,
-  id_array: [1, 2],
-});
-console.log("--- get vectors by id ---", count);
-```
-
-If id exists, an entity will be returned. If id doesn't exist, `[]` will be return.
-For the example above, the result `demo_milvus_tutorial` will only have one entity, the other is `[]`.
-
-## Search Entities by Vector Similarity
-
-You can get entities by vector similarity. Assuming we have a `film_A` like below, and we want to get top 2 films
-that are most similar with it.
-
-```javascript
-const films_a = new Array(2).fill(new Array(8).fill(Math.random() * 100));
-```
-
-### Note
-
-1. If the collection is index-built, user need to specify search param, and pass parameter `params` like: `milvusClient.search(..., params={...})`.
-   <!-- You can refer to [Index params](https://pymilvus.readthedocs.io/en/1.0/param.html) for more details. -->
-
-2. If parameter `partition_tags` is specified, milvus executes search request on these partition instead of whole collection.
-
-3. Because vectors are randomly generated, so the retrieved vector id and distance may differ.
-
-```javascript
-const res = await milvusClient.search({
-  collection_name: COLLECTION_NAME,
-  topk: 1,
-  extra_params: { nprobe: 16 },
-  query_record_array: films_a.map((v) => ({
-    float_data: v,
-  })),
-});
-// {
-//   ids: [
-//     '1618819557627387001',
-//     '1618819557627387000',
-
-//   ],
-//   distances: [
-//     7.619400501251221,
-//     7.619400501251221,
-//   ],
-//   status: { error_code: 'SUCCESS', reason: 'OK' },
-//   row_num: '2',
-//   data: [
-//    [
-//      { id: '1618819557627387001', distance: 7.619400501251221 },
-//    ],
-//    [
-//      { id: '1618819557627387000', distance: 7.619400501251221 }
-//    ],
-//   ]
-// }
-```
-
 ## Deletion
 
 Finally, let's move on to deletion in Milvus.
 We can delete entities by ids, drop a whole partition, or drop the entire collection.
-
-## Delete Entities by id
-
-You can delete entities by their ids.
-
-```javascript
-const res = await milvusClient.deleteByIds({
-  id_array: [1, 2],
-  collection_name: COLLECTION_NAME,
-});
-// { error_code: 'SUCCESS', reason: 'OK' }
-```
-
-### Note
-
-If one entity corresponding to a specified id doesn't exist, milvus ignore it and execute next deletion.
-In this case, client always return ok status except any exception occurs.
 
 ## Drop a Partition
 
@@ -329,7 +177,7 @@ Once you drop a partition, all the data in this partition will be deleted too.
 ```javascript
 const res = await milvusClient.dropPartition({
   collection_name: COLLECTION_NAME,
-  tag: PARTITION_TAG,
+  partition_name: PARTITION_TAG,
 });
 // { error_code: 'SUCCESS', reason: 'OK' }
 ```
