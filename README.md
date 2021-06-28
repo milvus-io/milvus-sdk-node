@@ -1,7 +1,7 @@
 [![license](https://img.shields.io/hexpm/l/plug.svg?color=green)](https://github.com/milvus-io/pymilvus/blob/master/LICENSE)
 [![typescript](https://badges.aleen42.com/src/typescript.svg)](https://badges.aleen42.com/src/typescript.svg)
 [![downloads](https://img.shields.io/npm/dw/@zilliz/milvus-sdk-node)](https://img.shields.io/npm/dw/@zilliz/milvus-sdk-node)
-[![codecov](https://codecov.io/gh/milvus-io/milvus-sdk-node/branch/main/graph/badge.svg?token=Zu5FwWstwI)](https://codecov.io/gh/milvus-io/milvus-sdk-node)
+[![codecov](https://codecov.io/gh/milvus-io/milvus-sdk-node/branch/v2.x/graph/badge.svg?token=Zu5FwWstwI)](https://codecov.io/gh/milvus-io/milvus-sdk-node)
 
 # Milvus-sdk-node
 
