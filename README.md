@@ -3,9 +3,9 @@
 [![downloads](https://img.shields.io/npm/dw/@zilliz/milvus-sdk-node)](https://img.shields.io/npm/dw/@zilliz/milvus-sdk-node)
 [![codecov](https://codecov.io/gh/milvus-io/milvus-sdk-node/branch/v2.x/graph/badge.svg?token=Zu5FwWstwI)](https://codecov.io/gh/milvus-io/milvus-sdk-node)
 
-# Milvus-sdk-node
+# Milvus2-sdk-node
 
-This is a basic introduction to Milvus by milvus-sdk-node.
+This is a basic introduction to Milvus by milvus2-sdk-node.
 The all functions will return a promise, so we can use async await to get the result.
 
 ## Dependencies
