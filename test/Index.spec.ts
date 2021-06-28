@@ -122,7 +122,7 @@ describe("Collection Api", () => {
       collection_name: COLLECTION_NAME,
       field_name: "vector_01",
     });
-    console.log(res);
+    console.log("----drop index ----", res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -131,7 +131,7 @@ describe("Collection Api", () => {
       collection_name: COLLECTION_NAME,
       field_name: "vector_01",
     });
-    console.log(res);
+    console.log("----describe index after drop ----", res);
     expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
   });
 

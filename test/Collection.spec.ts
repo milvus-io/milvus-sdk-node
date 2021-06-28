@@ -158,7 +158,7 @@ describe("Collection Api", () => {
 
   it(`Load Collection`, async () => {
     const res = await milvusClient.loadCollection({
-      collection_name: COLLECTION_NAME,
+      collection_name: LOAD_COLLECTION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
