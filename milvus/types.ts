@@ -6,6 +6,9 @@ export type {
   CreateCollectionReq,
   ReleaseLoadCollectionReq,
   DescribeCollectionReq,
+  FieldType,
+  ShowCollectionsType,
+  ShowCollectionsReq,
 } from "./types/Collection";
 
 export type {
@@ -14,6 +17,8 @@ export type {
   MetricType,
   MsgBase,
   MsgType,
+  DataType,
+  DslType,
 } from "./types/Common";
 
 export type {

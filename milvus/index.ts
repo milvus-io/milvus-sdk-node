@@ -184,7 +184,6 @@ export class MilvusNode {
   async showCollections(
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
-    console.log("----data:", data);
     const promise = await promisify(this.milvusClient, "ShowCollections", {
       type: data ? data.type : ShowCollectionsType.All,
     });
