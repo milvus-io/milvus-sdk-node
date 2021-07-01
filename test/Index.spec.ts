@@ -135,27 +135,27 @@ describe("Collection Api", () => {
     expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
   });
 
-  // it("Expr Search", async () => {
-  //   // const dsl = {
-  //   //   query:{
+  it("Expr Search", async () => {
+    // const dsl = {
+    //   query:{
 
-  //   //   }
-  //   // }
-  //   const res = await milvusClient.search({
-  //     collection_name: COLLECTION_NAME,
-  //     // partition_names: ["_default"],
-  //     dsl: "",
-  //     placeholder_group: [[1, 2, 3, 4]],
-  //     dsl_type: DslType.BoolExprV1,
-  //     search_params: [
-  //       { key: "anns_field", value: "vector_01" },
-  //       { key: "topk", value: "10" },
-  //       { key: "metric_type", value: "L2" },
-  //       { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
-  //     ],
-  //   });
-  //   console.log(res);
-  // });
+    //   }
+    // }
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      // partition_names: ["_default"],
+      dsl: "",
+      placeholder_group: [[1, 2, 3, 4]],
+      dsl_type: DslType.BoolExprV1,
+      search_params: [
+        { key: "anns_field", value: "vector_01" },
+        { key: "topk", value: "10" },
+        { key: "metric_type", value: "L2" },
+        { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
+      ],
+    });
+    console.log(res);
+  });
 
   // it("Dsl Search", async () => {
   //   const dsl = {

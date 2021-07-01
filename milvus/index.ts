@@ -21,6 +21,7 @@ import {
   DescribeIndexResponse,
   GetIndexBuildProgressResponse,
   GetIndexStateResponse,
+  MutationResult,
   ResStatus,
   ShowCollectionsResponse,
   ShowPartitionsResponse,
@@ -44,7 +45,8 @@ import {
 import { SearchReq } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
 import { BAD_REQUEST_CODE } from "./const/ErrorCode";
-import { MsgType } from "./types/Common";
+import { DataType, MsgType } from "./types/Common";
+import { InsertReq } from "./types/Insert";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -311,6 +313,67 @@ export class MilvusNode {
 
   async dropIndex(data: DropIndexReq): Promise<ResStatus> {
     const promise = await promisify(this.milvusClient, "DropIndex", data);
+    return promise;
+  }
+
+  /**
+   * fields_data: data order need same with schema you create.
+   * hash_keys: If autoid = true, need pass hash_keys to be id.
+   * num_rows: The row length you want to insert.
+   */
+  async insert(data: InsertReq): Promise<MutationResult> {
+    const VECTOR_TYPES = [DataType.FloatVector, DataType.BinaryVector];
+    const params: any = { ...data };
+    params.fields_data = data.fields_data.map((v) => {
+      const isVector = VECTOR_TYPES.includes(v.type);
+      const key = isVector ? "vectors" : "scalars";
+      if (isVector && !v.dim) {
+        throw new Error("Vector field need pass dim");
+      }
+      let dataKey = "float_vector";
+      switch (v.type) {
+        case DataType.FloatVector:
+          dataKey = "float_vector";
+          break;
+        case DataType.BinaryVector:
+          dataKey = "binary_vector";
+          break;
+        case DataType.Double:
+          dataKey = "double_data";
+          break;
+        case DataType.Float:
+          dataKey = "float_data";
+          break;
+        case DataType.Int64:
+          dataKey = "long_data";
+          break;
+        case DataType.Int32:
+        case DataType.Int16:
+        case DataType.Int8:
+          dataKey = "int_data";
+          break;
+        default:
+          break;
+      }
+      return {
+        type: v.type,
+        field_name: v.field_name,
+        [key]: VECTOR_TYPES.includes(v.type)
+          ? {
+              dim: v.dim,
+              [dataKey]: {
+                data: v.data,
+              },
+            }
+          : {
+              [dataKey]: {
+                data: v.data,
+              },
+            },
+      };
+    });
+
+    const promise = await promisify(this.milvusClient, "Insert", params);
     return promise;
   }
 

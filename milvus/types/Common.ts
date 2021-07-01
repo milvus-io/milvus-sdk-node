@@ -143,3 +143,18 @@ export enum DslType {
   Dsl = 0,
   BoolExprV1 = 1,
 }
+
+interface NumberArray {
+  data: Number[];
+}
+
+interface StringArray {
+  data: String[];
+}
+export interface NumberArrayId {
+  int_id: NumberArray;
+}
+
+export interface StringArrayId {
+  str_id: StringArray;
+}

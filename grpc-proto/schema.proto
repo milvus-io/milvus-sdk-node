@@ -82,7 +82,7 @@ message ScalarField {
   oneof data {
     BoolArray bool_data = 1;
     IntArray int_data = 2;
-    LongArray long_data = 3;
+    LongArray long_data = 3; // int64
     FloatArray float_data = 4;
     DoubleArray double_data = 5;
     StringArray string_data = 6;
@@ -120,4 +120,5 @@ message SearchResultData {
   repeated FieldData fields_data = 3;
   repeated float scores = 4;
   IDs ids = 5;
+  repeated int64 topks = 6;
 }

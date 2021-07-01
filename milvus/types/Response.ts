@@ -1,4 +1,9 @@
-import { IndexState, KeyValuePair } from "./Common";
+import {
+  IndexState,
+  KeyValuePair,
+  NumberArrayId,
+  StringArrayId,
+} from "./Common";
 export enum ErrorCode {
   SUCCESS = "Success",
   INDEX_NOT_EXIST = "IndexNotExist",
@@ -95,4 +100,16 @@ export interface GetIndexStateResponse {
 
 export interface GetIndexBuildProgressResponse {
   status: ResStatus;
+}
+
+export interface MutationResult {
+  succ_index: Number[];
+  err_index: Number[];
+  status: ResStatus;
+  acknowledged: boolean;
+  insert_cnt: string;
+  delete_cnt: string;
+  upsert_cnt: string;
+  timestamp: string;
+  ids: StringArrayId | NumberArrayId;
 }
