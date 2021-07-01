@@ -11,6 +11,8 @@ export type {
   ShowCollectionsReq,
 } from "./types/Collection";
 
+export type { InsertReq, FieldData } from "./types/Insert";
+
 export type {
   IndexState,
   IndexType,
@@ -50,6 +52,7 @@ export type {
   GetIndexStateResponse,
   DescribeIndexResponse,
   StatisticsResponse,
+  MutationResult,
 } from "./types/Response";
 
 export type { SearchReq } from "./types/Search";
