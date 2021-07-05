@@ -7,7 +7,7 @@ import { InsertReq } from "../milvus/types/Insert";
 
 let milvusClient = new MilvusNode(IP);
 const COLLECTION_NAME = GENERATE_NAME();
-
+const PARTITION_NAME = "test";
 describe("Collection Api", () => {
   beforeAll(async () => {
     await milvusClient.createCollection({
@@ -34,8 +34,9 @@ describe("Collection Api", () => {
       ],
     });
 
-    const res = await milvusClient.describeCollection({
+    await milvusClient.createPartition({
       collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
     });
   });
 
@@ -48,6 +49,7 @@ describe("Collection Api", () => {
   it(`Insert Data expect success`, async () => {
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
       fields_data: [
         {
           type: DataType.FloatVector,
@@ -64,8 +66,18 @@ describe("Collection Api", () => {
       hash_keys: [1, 2],
       num_rows: 2,
     };
+
     const res = await milvusClient.insert(params);
-    console.log(res);
+
+    const partitionRes = await milvusClient.getPartitionStatistics({
+      collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
+    });
+    const collectionRes = await milvusClient.getCollectionStatistics({
+      collection_name: COLLECTION_NAME,
+    });
+
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // expect(partitionRes.stats);
   });
 });

@@ -1,5 +1,4 @@
 import { promisify } from "../utils";
-
 import {
   CreateCollectionReq,
   DescribeCollectionReq,
@@ -45,12 +44,12 @@ import {
 import { SearchReq } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
 import { BAD_REQUEST_CODE } from "./const/ErrorCode";
-import { DataType, MsgType } from "./types/Common";
+import { DataType } from "./types/Common";
 import { InsertReq } from "./types/Insert";
+import ByteBuffer from "bytebuffer";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
-
 export class MilvusNode {
   milvusClient: any;
 
@@ -128,7 +127,6 @@ export class MilvusNode {
     if (validateFieldsRes !== true) {
       return validateFieldsRes;
     }
-
     const root = await protobuf.load(schemaPath);
     if (!root) throw new Error("Missing proto file");
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
@@ -386,12 +384,44 @@ export class MilvusNode {
       "milvus.proto.milvus.PlaceholderGroup"
     );
 
+    const bytebuffer = new ByteBuffer();
+    // const buf = new Uint8Array([]).buffer;
+    // const a= new Uint8Array([1,2,3,4])
+    // bytebuffer.toBuffer(a)
+
+    // let a = ByteBuffer.wrap(buf);
+    // a.append(bytebuffer.writeFloat(1));
+    // a.append(bytebuffer.writeFloat(2));
+    // a.append(bytebuffer.writeFloat(3));
+    // a.append(bytebuffer.writeFloat(4));
+
+    // console.log(a.buffer);
+    // bytebuffer.clear();
+
+    // console.log(bb.readFloat() + " from bytebuffer.js");
+    let arr = [1, 2, 3, 4, 1, 2, 3, 4];
+    let i = 0;
+    let result = [];
+    while (i < arr.length) {
+      let buf = bytebuffer.writeFloat(arr[i]);
+      result.push(buf.buffer);
+      bytebuffer.clear();
+      i++;
+    }
+    // console.log(result, result?.buffer);
+
+    // bytebuffer.writeFloat(2);
+    // console.log(vectors);
+    // bytebuffer.clear();
+    // const a = bytebuffer.writeFloat(2);
+    // console.log(a);
+
     const placeholderGroupParams = PlaceholderGroup.create({
       placeholders: [
         {
-          tag: "$100",
+          tag: "$0",
           type: 101,
-          values: [Buffer.from([1, 2, 2, 4])],
+          values: result,
         },
       ],
     });
