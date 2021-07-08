@@ -26,7 +26,8 @@ const test = async () => {
       },
     ],
   });
-  console.log("----Start----");
+
+  // need load collection before search
   await milvusClient.loadCollection({
     collection_name: COLLECTION_NAME,
   });
@@ -34,9 +35,8 @@ const test = async () => {
   const res = await milvusClient.search({
     collection_name: COLLECTION_NAME,
     // partition_names: [],
-    // dsl: "time < 2000",
-    placeholder_group: [[4, 10, 4, 1]],
-    dsl_type: DslType.BoolExprV1,
+    expr: "time < 2000",
+    vectors: [[4, 10, 4, 1]],
     search_params: [
       { key: "anns_field", value: "float_vector" },
       { key: "topk", value: "4" },
@@ -48,10 +48,6 @@ const test = async () => {
   console.log(res);
   const data = res.results.map((v: any) => v.fields);
   console.log(data[0], data[1], data[2], data[3]);
-  // console.log(res.results.fields_data);
-
-  // console.log("----0-----", res.results.fields_data[0]?.scalars?.long_data);
-  // console.log("----1-----", res.results.fields_data[1]?.scalars?.int_data);
 };
 
 test();

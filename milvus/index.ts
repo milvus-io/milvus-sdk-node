@@ -45,7 +45,7 @@ import {
 import { SearchReq, SearchRes } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
 import { BAD_REQUEST_CODE } from "./const/ErrorCode";
-import { DataType } from "./types/Common";
+import { DataType, DslType } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
 import { parseFloatArrayToBytes } from "./utils/Blob";
 
@@ -386,6 +386,11 @@ export class MilvusNode {
     return promise;
   }
 
+  /**
+   * We are not support dsl type in node sdk because milvus will no longer support it too.
+   * @param data
+   * @returns
+   */
   async search(data: SearchReq): Promise<SearchResults> {
     const root = await protobuf.load(protoPath);
     if (!root) throw new Error("Missing milvus proto file");
@@ -399,7 +404,7 @@ export class MilvusNode {
         {
           tag: "$0",
           type: 101,
-          values: data.placeholder_group.map((v) => parseFloatArrayToBytes(v)),
+          values: data.vectors.map((v) => parseFloatArrayToBytes(v)),
         },
       ],
     });
@@ -410,6 +415,8 @@ export class MilvusNode {
 
     const promise: SearchRes = await promisify(this.milvusClient, "Search", {
       ...data,
+      dsl: data.expr || "",
+      dsl_type: DslType.BoolExprV1,
       placeholder_group: placeholderGroupBytes,
     });
     const results: any[] = [];
