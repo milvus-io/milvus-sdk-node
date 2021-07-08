@@ -9,7 +9,7 @@ const COLLECTION_NAME = GENERATE_NAME();
 
 describe("Collection Api", () => {
   beforeAll(async () => {
-    const res = await milvusClient.createCollection({
+    await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
       fields: [
         {
@@ -32,7 +32,6 @@ describe("Collection Api", () => {
         },
       ],
     });
-    console.log(res);
 
     await milvusClient.loadCollection({ collection_name: COLLECTION_NAME });
   });

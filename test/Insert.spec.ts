@@ -7,7 +7,7 @@ import { InsertReq } from "../milvus/types/Insert";
 import { generateIds, generateVectors } from "../utils";
 
 let milvusClient = new MilvusNode(IP);
-const COLLECTION_NAME = "test";
+const COLLECTION_NAME = GENERATE_NAME();
 const PARTITION_NAME = "test";
 describe("Collection Api", () => {
   beforeAll(async () => {
@@ -54,7 +54,6 @@ describe("Collection Api", () => {
   it(`Insert Data expect success`, async () => {
     const COUNT = 10;
     const vectorsData = generateVectors(4, COUNT * 4);
-    console.log(vectorsData, vectorsData.length);
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,

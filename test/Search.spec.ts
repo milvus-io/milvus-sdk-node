@@ -11,17 +11,17 @@ const COLLECTION_NAME = GENERATE_NAME();
 
 describe("Search Api", () => {
   beforeAll(async () => {
-    const res = await milvusClient.createCollection({
+    await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
       fields: [
         {
-          name: "vector_01",
+          name: "float_vector",
           description: "vector field",
           data_type: DataType.FloatVector,
           type_params: [
             {
               key: "dim",
-              value: "5",
+              value: "4",
             },
           ],
         },
@@ -32,15 +32,18 @@ describe("Search Api", () => {
           is_primary_key: true,
           description: "",
         },
+        {
+          name: "time",
+          data_type: DataType.Int32,
+          description: "",
+        },
       ],
     });
-    console.log(res);
     await milvusClient.loadCollection({
       collection_name: COLLECTION_NAME,
     });
     const COUNT = 10;
     const vectorsData = generateVectors(4, COUNT * 4);
-    console.log(vectorsData, vectorsData.length);
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
       fields_data: [
@@ -89,10 +92,8 @@ describe("Search Api", () => {
       ],
       output_fields: ["age", "time"],
     });
-
-    expect(res);
     console.log(res);
-    console.log(res.results.fields_data, res.results.fields_data[0]);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   // it("Dsl Search", async () => {
