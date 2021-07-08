@@ -19,5 +19,20 @@ export function promisify(obj: any, target: string, params: any): Promise<any> {
 }
 
 export function generateVectors(dimension: number, count: number = 10) {
-  return new Array(count).fill(new Array(dimension).fill(Math.random() * 100));
+  const result = [];
+  while (count > 0) {
+    const value = Math.random() * 10;
+    result.push(Math.round(value));
+    count--;
+  }
+  return result;
+}
+
+export function generateIds(count: number) {
+  const result = [];
+  while (count > 0) {
+    result.push(count);
+    count--;
+  }
+  return result;
 }

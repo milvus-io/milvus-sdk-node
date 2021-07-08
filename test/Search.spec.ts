@@ -3,6 +3,8 @@ import { MilvusNode } from "../milvus/index";
 import { GENERATE_NAME, IP } from "../const";
 import { DataType, DslType, MsgType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
+import { InsertReq } from "../milvus/types/Insert";
+import { generateVectors, generateIds } from "../utils";
 
 let milvusClient = new MilvusNode(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -19,7 +21,7 @@ describe("Search Api", () => {
           type_params: [
             {
               key: "dim",
-              value: "4",
+              value: "5",
             },
           ],
         },
@@ -33,8 +35,37 @@ describe("Search Api", () => {
       ],
     });
     console.log(res);
+    await milvusClient.loadCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    const COUNT = 10;
+    const vectorsData = generateVectors(4, COUNT * 4);
+    console.log(vectorsData, vectorsData.length);
+    const params: InsertReq = {
+      collection_name: COLLECTION_NAME,
+      fields_data: [
+        {
+          type: DataType.FloatVector,
+          field_name: "float_vector",
+          dim: 4,
+          data: vectorsData,
+        },
+        {
+          type: DataType.Int64,
+          field_name: "age",
+          data: generateIds(COUNT),
+        },
+        {
+          type: DataType.Int32,
+          field_name: "time",
+          data: generateIds(COUNT),
+        },
+      ],
+      hash_keys: generateIds(COUNT),
+      num_rows: COUNT,
+    };
 
-    await milvusClient.loadCollection({ collection_name: COLLECTION_NAME });
+    await milvusClient.insert(params);
   });
 
   afterAll(async () => {
@@ -44,25 +75,24 @@ describe("Search Api", () => {
   });
 
   it("Expr Search", async () => {
-    // const dsl = {
-    //   query:{
-
-    //   }
-    // }
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      partition_names: ["_default"],
-      dsl: "age > 1",
+      // partition_names: [],
+      dsl: "",
       placeholder_group: [[1, 2, 3, 4]],
       dsl_type: DslType.BoolExprV1,
       search_params: [
-        { key: "anns_field", value: "vector_01" },
-        { key: "topk", value: "10" },
+        { key: "anns_field", value: "float_vector" },
+        { key: "topk", value: "2" },
         { key: "metric_type", value: "L2" },
         { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
       ],
+      output_fields: ["age", "time"],
     });
+
+    expect(res);
     console.log(res);
+    console.log(res.results.fields_data, res.results.fields_data[0]);
   });
 
   // it("Dsl Search", async () => {

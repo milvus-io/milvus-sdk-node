@@ -22,6 +22,7 @@ import {
   GetIndexStateResponse,
   MutationResult,
   ResStatus,
+  SearchResults,
   ShowCollectionsResponse,
   ShowPartitionsResponse,
   StatisticsResponse,
@@ -41,12 +42,12 @@ import {
   GetIndexBuildProgressReq,
   GetIndexStateReq,
 } from "./types/Index";
-import { SearchReq } from "./types/Search";
+import { SearchReq, SearchRes } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
 import { BAD_REQUEST_CODE } from "./const/ErrorCode";
 import { DataType } from "./types/Common";
-import { InsertReq } from "./types/Insert";
-import ByteBuffer from "bytebuffer";
+import { FlushReq, InsertReq } from "./types/Insert";
+import { parseFloatArrayToBytes } from "./utils/Blob";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -107,6 +108,16 @@ export class MilvusNode {
   //     SUPERSTRUCTURE: MetricType.SUPERSTRUCTURE,
   //   };
   // }
+
+  /**
+   * After insert vector data, need flush .
+   * @param data
+   * @returns
+   */
+  async flush(data: FlushReq) {
+    const res = await promisify(this.milvusClient, "Flush", data);
+    return res;
+  }
 
   /**
    * @brief This method is used to create collection
@@ -375,8 +386,7 @@ export class MilvusNode {
     return promise;
   }
 
-  // todo: not ready before fix collection loaded problem
-  async search(data: SearchReq): Promise<any> {
+  async search(data: SearchReq): Promise<SearchResults> {
     const root = await protobuf.load(protoPath);
     if (!root) throw new Error("Missing milvus proto file");
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
@@ -384,44 +394,12 @@ export class MilvusNode {
       "milvus.proto.milvus.PlaceholderGroup"
     );
 
-    const bytebuffer = new ByteBuffer();
-    // const buf = new Uint8Array([]).buffer;
-    // const a= new Uint8Array([1,2,3,4])
-    // bytebuffer.toBuffer(a)
-
-    // let a = ByteBuffer.wrap(buf);
-    // a.append(bytebuffer.writeFloat(1));
-    // a.append(bytebuffer.writeFloat(2));
-    // a.append(bytebuffer.writeFloat(3));
-    // a.append(bytebuffer.writeFloat(4));
-
-    // console.log(a.buffer);
-    // bytebuffer.clear();
-
-    // console.log(bb.readFloat() + " from bytebuffer.js");
-    let arr = [1, 2, 3, 4, 1, 2, 3, 4];
-    let i = 0;
-    let result = [];
-    while (i < arr.length) {
-      let buf = bytebuffer.writeFloat(arr[i]);
-      result.push(buf.buffer);
-      bytebuffer.clear();
-      i++;
-    }
-    // console.log(result, result?.buffer);
-
-    // bytebuffer.writeFloat(2);
-    // console.log(vectors);
-    // bytebuffer.clear();
-    // const a = bytebuffer.writeFloat(2);
-    // console.log(a);
-
     const placeholderGroupParams = PlaceholderGroup.create({
       placeholders: [
         {
           tag: "$0",
           type: 101,
-          values: result,
+          values: data.placeholder_group.map((v) => parseFloatArrayToBytes(v)),
         },
       ],
     });
@@ -430,10 +408,55 @@ export class MilvusNode {
       placeholderGroupParams
     ).finish();
 
-    const promise = await promisify(this.milvusClient, "Search", {
+    const promise: SearchRes = await promisify(this.milvusClient, "Search", {
       ...data,
       placeholder_group: placeholderGroupBytes,
     });
-    return promise;
+    const results: any[] = [];
+    if (promise.results) {
+      /**
+       *  fields_data:  what you pass in output_fields, only support non vector fields.
+       *  ids: vector id array
+       *  scores: distance array
+       *  topks: if you use mutiple query to search , will return mutiple topk.
+       * */
+      const { topks, scores, fields_data, ids } = promise.results;
+      const fieldsData = fields_data.map((item, i) => {
+        const value = item[item.field];
+        return {
+          type: item.type,
+          field_name: item.field_name,
+          data: value[value?.data].data,
+        };
+      });
+      // verctor id support int / str id.
+      const idData = ids[ids.id_field]?.data;
+      /**
+       *  milvus support mutilple querys to search
+       *  milvus will return all columns data
+       *  so we need to format value to row data for easy to use
+       *  topk is the key we can splice data for every search result
+       */
+      topks.forEach((v, index) => {
+        const topk = Number(v);
+
+        scores.splice(0, topk).forEach((score, scoreIndex) => {
+          const i = index === 0 ? scoreIndex : scoreIndex + topk;
+          results.push({
+            score,
+            id: idData ? idData[i] : "",
+            fields: fieldsData.map((field) => ({
+              ...field,
+              data: field.data[i],
+            })),
+          });
+        });
+      });
+    }
+
+    return {
+      status: promise.status,
+      results,
+    };
   }
 }

@@ -1,12 +1,13 @@
 import { MilvusNode } from "../milvus/index";
 
 import { GENERATE_NAME, IP } from "../const";
-import { DataType, DslType, MsgType } from "../milvus/types/Common";
+import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { InsertReq } from "../milvus/types/Insert";
+import { generateIds, generateVectors } from "../utils";
 
 let milvusClient = new MilvusNode(IP);
-const COLLECTION_NAME = GENERATE_NAME();
+const COLLECTION_NAME = "test";
 const PARTITION_NAME = "test";
 describe("Collection Api", () => {
   beforeAll(async () => {
@@ -31,6 +32,11 @@ describe("Collection Api", () => {
           is_primary_key: true,
           description: "",
         },
+        {
+          name: "time",
+          data_type: DataType.Int32,
+          description: "",
+        },
       ],
     });
 
@@ -40,13 +46,15 @@ describe("Collection Api", () => {
     });
   });
 
-  afterAll(async () => {
-    await milvusClient.dropCollection({
-      collection_name: COLLECTION_NAME,
-    });
-  });
-
+  // afterAll(async () => {
+  //   await milvusClient.dropCollection({
+  //     collection_name: COLLECTION_NAME,
+  //   });
+  // });
   it(`Insert Data expect success`, async () => {
+    const COUNT = 10;
+    const vectorsData = generateVectors(4, COUNT * 4);
+    console.log(vectorsData, vectorsData.length);
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
@@ -55,28 +63,40 @@ describe("Collection Api", () => {
           type: DataType.FloatVector,
           field_name: "float_vector",
           dim: 4,
-          data: [1.0, 2.0, 3.1, 4.2, 1.0123, 2.22, 3.131, 4.3212],
+          data: vectorsData,
         },
         {
           type: DataType.Int64,
           field_name: "age",
-          data: [222, 333],
+          data: generateIds(COUNT),
+        },
+        {
+          type: DataType.Int32,
+          field_name: "time",
+          data: generateIds(COUNT),
         },
       ],
-      hash_keys: [1, 2],
-      num_rows: 2,
+      hash_keys: generateIds(COUNT),
+      num_rows: COUNT,
     };
 
     const res = await milvusClient.insert(params);
-
+    console.log("insert --- ", COLLECTION_NAME, res);
+    const flushres = await milvusClient.flush({
+      collection_names: [COLLECTION_NAME],
+    });
+    console.log("flush---", flushres);
     const partitionRes = await milvusClient.getPartitionStatistics({
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
     });
+    console.log("stats----", partitionRes);
+
     const collectionRes = await milvusClient.getCollectionStatistics({
       collection_name: COLLECTION_NAME,
     });
 
+    console.log("stats----", collectionRes);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     // expect(partitionRes.stats);
   });

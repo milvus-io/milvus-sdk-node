@@ -1,5 +1,8 @@
 import { DataType } from "./Common";
 
+export interface FlushReq {
+  collection_names: string[];
+}
 export interface FieldData {
   type: DataType;
   field_name: string;
