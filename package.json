@@ -17,8 +17,6 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.2.12",
     "@grpc/proto-loader": "^0.6.0",
-    "@types/bytebuffer": "^5.0.42",
-    "bytebuffer": "^5.0.1",
     "protobufjs": "^6.11.2"
   },
   "devDependencies": {

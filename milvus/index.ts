@@ -388,6 +388,7 @@ export class MilvusNode {
 
   /**
    * We are not support dsl type in node sdk because milvus will no longer support it too.
+   * todo: add binary vector search
    * @param data
    * @returns
    */
@@ -399,6 +400,7 @@ export class MilvusNode {
       "milvus.proto.milvus.PlaceholderGroup"
     );
 
+    // tag $0 is hard code in milvus, when dsltype is expr
     const placeholderGroupParams = PlaceholderGroup.create({
       placeholders: [
         {
