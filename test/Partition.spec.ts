@@ -1,10 +1,10 @@
-import { MilvusNode } from "../milvus/index";
+import { MilvusClient } from "../milvus/index";
 
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 
-let milvusClient = new MilvusNode(IP);
+let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 const PARTITION_NAME = GENERATE_NAME("partition");
 

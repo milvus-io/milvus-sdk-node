@@ -1,4 +1,4 @@
-import { MilvusNode } from "../milvus/index";
+import { MilvusClient } from "../milvus/index";
 
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
@@ -6,7 +6,7 @@ import { ErrorCode } from "../milvus/types/Response";
 import { InsertReq } from "../milvus/types/Insert";
 import { generateIds, generateVectors } from "../utils";
 
-let milvusClient = new MilvusNode(IP);
+let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 const PARTITION_NAME = "test";
 describe("Collection Api", () => {
@@ -54,6 +54,7 @@ describe("Collection Api", () => {
   it(`Insert Data expect success`, async () => {
     const COUNT = 10;
     const vectorsData = generateVectors(4, COUNT * 4);
+
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
@@ -75,7 +76,7 @@ describe("Collection Api", () => {
           data: generateIds(COUNT),
         },
       ],
-      hash_keys: generateIds(COUNT),
+      // hash_keys: generateIds(COUNT),
       num_rows: COUNT,
     };
 

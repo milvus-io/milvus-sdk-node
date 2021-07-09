@@ -1,8 +1,8 @@
-import { MilvusNode } from "../milvus/index";
+import { MilvusClient } from "../milvus/index";
 import { GENERATE_NAME, IP } from "../const";
-import { DataType, DslType } from "../milvus/types/Common";
-const milvusClient = new MilvusNode(IP);
-const COLLECTION_NAME = "test";
+import { DataType } from "../milvus/types/Common";
+const milvusClient = new MilvusClient(IP);
+const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
   await milvusClient.createCollection({

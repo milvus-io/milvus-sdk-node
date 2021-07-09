@@ -51,8 +51,8 @@ import { parseFloatArrayToBytes } from "./utils/Blob";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
-export class MilvusNode {
-  milvusClient: any;
+export class MilvusClient {
+  client: any;
 
   /**
    * set grpc client here
@@ -73,7 +73,7 @@ export class MilvusNode {
       ip,
       credentials.createInsecure()
     );
-    this.milvusClient = client;
+    this.client = client;
   }
 
   /**
@@ -115,7 +115,7 @@ export class MilvusNode {
    * @returns
    */
   async flush(data: FlushReq) {
-    const res = await promisify(this.milvusClient, "Flush", data);
+    const res = await promisify(this.client, "Flush", data);
     return res;
   }
 
@@ -167,7 +167,7 @@ export class MilvusNode {
 
     const collectionParams = CollectionSchema.create(payload);
     const schemaBtyes = CollectionSchema.encode(collectionParams).finish();
-    const promise = await promisify(this.milvusClient, "CreateCollection", {
+    const promise = await promisify(this.client, "CreateCollection", {
       ...data,
       schema: schemaBtyes,
     });
@@ -184,7 +184,7 @@ export class MilvusNode {
     if (!data.collection_name) {
       throw new Error("Collection name is empty");
     }
-    const promise = await promisify(this.milvusClient, "HasCollection", data);
+    const promise = await promisify(this.client, "HasCollection", data);
     return promise;
   }
 
@@ -195,7 +195,7 @@ export class MilvusNode {
   async showCollections(
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
-    const promise = await promisify(this.milvusClient, "ShowCollections", {
+    const promise = await promisify(this.client, "ShowCollections", {
       type: data ? data.type : ShowCollectionsType.All,
     });
     return promise;
@@ -209,11 +209,7 @@ export class MilvusNode {
   async describeCollection(
     data: DescribeCollectionReq
   ): Promise<DescribeCollectionResponse> {
-    const promise = await promisify(
-      this.milvusClient,
-      "DescribeCollection",
-      data
-    );
+    const promise = await promisify(this.client, "DescribeCollection", data);
     return promise;
   }
 
@@ -221,7 +217,7 @@ export class MilvusNode {
     data: GetCollectionStatisticsReq
   ): Promise<StatisticsResponse> {
     const promise = await promisify(
-      this.milvusClient,
+      this.client,
       "GetCollectionStatistics",
       data
     );
@@ -229,38 +225,34 @@ export class MilvusNode {
   }
 
   async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
-    const promise = await promisify(this.milvusClient, "LoadCollection", data);
+    const promise = await promisify(this.client, "LoadCollection", data);
     return promise;
   }
 
   async releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus> {
-    const promise = await promisify(
-      this.milvusClient,
-      "ReleaseCollection",
-      data
-    );
+    const promise = await promisify(this.client, "ReleaseCollection", data);
     return promise;
   }
 
   async dropCollection(data: DropCollectionReq): Promise<ResStatus> {
-    const promise = await promisify(this.milvusClient, "DropCollection", data);
+    const promise = await promisify(this.client, "DropCollection", data);
     return promise;
   }
 
   async createPartition(data: CreatePartitionReq): Promise<ResStatus> {
-    const promise = await promisify(this.milvusClient, "CreatePartition", data);
+    const promise = await promisify(this.client, "CreatePartition", data);
     return promise;
   }
 
   async hasPartition(data: HasPartitionReq): Promise<BoolResponse> {
-    const promise = await promisify(this.milvusClient, "HasPartition", data);
+    const promise = await promisify(this.client, "HasPartition", data);
     return promise;
   }
 
   async showPartitions(
     data: ShowPartitionsReq
   ): Promise<ShowPartitionsResponse> {
-    const promise = await promisify(this.milvusClient, "ShowPartitions", data);
+    const promise = await promisify(this.client, "ShowPartitions", data);
     return promise;
   }
 
@@ -268,7 +260,7 @@ export class MilvusNode {
     data: GetPartitionStatisticsReq
   ): Promise<StatisticsResponse> {
     const promise = await promisify(
-      this.milvusClient,
+      this.client,
       "GetPartitionStatistics",
       data
     );
@@ -276,52 +268,44 @@ export class MilvusNode {
   }
 
   async loadPartitions(data: LoadPartitionsReq): Promise<ResStatus> {
-    const promise = await promisify(this.milvusClient, "LoadPartitions", data);
+    const promise = await promisify(this.client, "LoadPartitions", data);
     return promise;
   }
 
   async releasePartitions(data: LoadPartitionsReq): Promise<ResStatus> {
-    const promise = await promisify(
-      this.milvusClient,
-      "ReleasePartitions",
-      data
-    );
+    const promise = await promisify(this.client, "ReleasePartitions", data);
     return promise;
   }
 
   async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
-    const promise = await promisify(this.milvusClient, "DropPartition", data);
+    const promise = await promisify(this.client, "DropPartition", data);
     return promise;
   }
 
   async createIndex(data: CreateIndexReq): Promise<ResStatus> {
-    const promise = await promisify(this.milvusClient, "CreateIndex", data);
+    const promise = await promisify(this.client, "CreateIndex", data);
     return promise;
   }
 
   async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
-    const promise = await promisify(this.milvusClient, "DescribeIndex", data);
+    const promise = await promisify(this.client, "DescribeIndex", data);
     return promise;
   }
 
   async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
-    const promise = await promisify(this.milvusClient, "GetIndexState", data);
+    const promise = await promisify(this.client, "GetIndexState", data);
     return promise;
   }
 
   async getIndexBuildProgress(
     data: GetIndexBuildProgressReq
   ): Promise<GetIndexBuildProgressResponse> {
-    const promise = await promisify(
-      this.milvusClient,
-      "GetIndexBuildProgress",
-      data
-    );
+    const promise = await promisify(this.client, "GetIndexBuildProgress", data);
     return promise;
   }
 
   async dropIndex(data: DropIndexReq): Promise<ResStatus> {
-    const promise = await promisify(this.milvusClient, "DropIndex", data);
+    const promise = await promisify(this.client, "DropIndex", data);
     return promise;
   }
 
@@ -382,7 +366,7 @@ export class MilvusNode {
       };
     });
 
-    const promise = await promisify(this.milvusClient, "Insert", params);
+    const promise = await promisify(this.client, "Insert", params);
     return promise;
   }
 
@@ -415,7 +399,7 @@ export class MilvusNode {
       placeholderGroupParams
     ).finish();
 
-    const promise: SearchRes = await promisify(this.milvusClient, "Search", {
+    const promise: SearchRes = await promisify(this.client, "Search", {
       ...data,
       dsl: data.expr || "",
       dsl_type: DslType.BoolExprV1,
