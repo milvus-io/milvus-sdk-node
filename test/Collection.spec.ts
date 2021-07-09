@@ -129,7 +129,7 @@ describe("Collection Api", () => {
 
   it(`Show loaded collections expect none`, async () => {
     const res = await milvusClient.showCollections({
-      type: ShowCollectionsType.InMemory,
+      type: ShowCollectionsType.Loaded,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
@@ -165,7 +165,7 @@ describe("Collection Api", () => {
 
   it(`Show loaded collections expect contain one`, async () => {
     const res = await milvusClient.showCollections({
-      type: ShowCollectionsType.InMemory,
+      type: ShowCollectionsType.Loaded,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
