@@ -46,8 +46,6 @@ const test = async () => {
     output_fields: ["age", "time"],
   });
   console.log(res);
-  const data = res.results.map((v: any) => v.fields);
-  console.log(data[0], data[1], data[2], data[3]);
 };
 
 test();
