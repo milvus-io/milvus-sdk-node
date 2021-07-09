@@ -52,6 +52,7 @@ export interface ShowCollectionsResponse {
 export interface FieldSchema {
   name: string;
   description: string;
+  data_type: string;
   is_primary_key?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];

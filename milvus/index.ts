@@ -18,6 +18,7 @@ import {
   BoolResponse,
   DescribeCollectionResponse,
   DescribeIndexResponse,
+  ErrorCode,
   GetIndexBuildProgressResponse,
   GetIndexStateResponse,
   MutationResult,
@@ -45,14 +46,16 @@ import {
 import { SearchReq, SearchRes } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
 import { BAD_REQUEST_CODE } from "./const/ErrorCode";
-import { DataType, DslType } from "./types/Common";
+import { DataType, DataTypeMap, DslType } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
 import { parseFloatArrayToBytes } from "./utils/Blob";
+import { findKeyValue } from "./utils";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
 export class MilvusClient {
   client: any;
+  vectorTypes: number[];
 
   /**
    * set grpc client here
@@ -74,6 +77,7 @@ export class MilvusClient {
       credentials.createInsecure()
     );
     this.client = client;
+    this.vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
   }
 
   /**
@@ -310,21 +314,67 @@ export class MilvusClient {
   }
 
   /**
-   * fields_data: data order need same with schema you create.
-   * hash_keys: If autoid = true, need pass hash_keys to be id.
+   *
+   * fields_data: [{id:1,age:2,time:3,face:[1,2,3,4]}]
+   *
+   * hash_keys: Not support yet. transfer primary key value to hash , let's figure out how to use it.
    * num_rows: The row length you want to insert.
    */
   async insert(data: InsertReq): Promise<MutationResult> {
-    const VECTOR_TYPES = [DataType.FloatVector, DataType.BinaryVector];
-    const params: any = { ...data };
-    params.fields_data = data.fields_data.map((v) => {
-      const isVector = VECTOR_TYPES.includes(v.type);
-      const key = isVector ? "vectors" : "scalars";
-      if (isVector && !v.dim) {
-        throw new Error("Vector field need pass dim");
+    const { collection_name } = data;
+    //
+    const collectionInfo = await this.describeCollection({ collection_name });
+    if (collectionInfo.status.error_code !== ErrorCode.SUCCESS) {
+      throw new Error(collectionInfo.status.reason);
+    }
+
+    // Tip: The field data sequence need same with collectionInfo.schema.fields.
+    const fieldsData = collectionInfo.schema.fields.map((v) => ({
+      name: v.name,
+      type: v.data_type,
+      dim: findKeyValue(v.type_params, "dim"),
+      value: [] as number[],
+    }));
+
+    // the actual data we pass to milvus grpc
+    const params: any = { ...data, num_rows: data.fields_data.length };
+
+    // user pass data is row data, we need parse to column data for milvus
+    data.fields_data.forEach((v, i) => {
+      // the key need to be field name, so we get all names in a row.
+      const fieldNames = Object.keys(v);
+
+      if (fieldNames.length !== fieldsData.length) {
+        throw new Error(
+          `Insert fail: line ${i} missing some field for this collection`
+        );
       }
+      fieldNames.forEach((name) => {
+        const target = fieldsData.find((item) => item.name === name);
+        if (!target) {
+          throw new Error(
+            `Insert fail: line ${i} field is not exist in collection`
+          );
+        }
+        // if is vector field, value should be array. so we need concat it.
+        const isVector = this.vectorTypes.includes(
+          DataTypeMap[target.type.toLowerCase()]
+        );
+        isVector
+          ? (target.value = target.value.concat(v[name]))
+          : target.value.push(v[name]);
+      });
+    });
+
+    params.fields_data = fieldsData.map((v) => {
+      // milvus return string for field type, so we define the map to the value we need.
+      // but if milvus change the string, may casue we cant find value.
+      const type = DataTypeMap[v.type.toLowerCase()];
+      if (!type) {
+      }
+      const key = this.vectorTypes.includes(type) ? "vectors" : "scalars";
       let dataKey = "float_vector";
-      switch (v.type) {
+      switch (type) {
         case DataType.FloatVector:
           dataKey = "float_vector";
           break;
@@ -348,19 +398,20 @@ export class MilvusClient {
         default:
           break;
       }
+
       return {
-        type: v.type,
-        field_name: v.field_name,
-        [key]: VECTOR_TYPES.includes(v.type)
+        type,
+        field_name: v.name,
+        [key]: this.vectorTypes.includes(type)
           ? {
               dim: v.dim,
               [dataKey]: {
-                data: v.data,
+                data: v.value,
               },
             }
           : {
               [dataKey]: {
-                data: v.data,
+                data: v.value,
               },
             },
       };

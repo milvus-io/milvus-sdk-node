@@ -13,7 +13,6 @@ export interface FieldData {
 export interface InsertReq {
   collection_name: string;
   partition_name?: string;
-  fields_data: FieldData[];
-  hash_keys?: Number[];
-  num_rows: Number;
+  fields_data: { [x: string]: any }[];
+  hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }

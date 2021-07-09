@@ -11,28 +11,28 @@ export function promisify(obj: any, target: string, params: any): Promise<any> {
       throw new Error(e);
     }
   }).catch((err) => {
-    console.error(err);
     throw new Error(err);
   });
 
   return res;
 }
 
-export function generateVectors(dimension: number, count: number = 10) {
-  const result = [];
+export function generateInsertData(
+  fields: { isVector: boolean; dim?: number; name: string }[],
+  count: number
+) {
+  const results = [];
   while (count > 0) {
-    const value = Math.random() * 10;
-    result.push(Math.round(value));
-    count--;
-  }
-  return result;
-}
+    let value: any = {};
 
-export function generateIds(count: number) {
-  const result = [];
-  while (count > 0) {
-    result.push(count);
+    fields.forEach((v) => {
+      const { isVector, dim, name } = v;
+      value[name] = isVector
+        ? [...Array(dim)].map(() => Math.random() * 10)
+        : count;
+    });
+    results.push(value);
     count--;
   }
-  return result;
+  return results;
 }

@@ -4,7 +4,7 @@ import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { InsertReq } from "../milvus/types/Insert";
-import { generateIds, generateVectors } from "../utils";
+import { generateInsertData } from "../utils";
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -46,58 +46,96 @@ describe("Collection Api", () => {
     });
   });
 
-  // afterAll(async () => {
-  //   await milvusClient.dropCollection({
-  //     collection_name: COLLECTION_NAME,
-  //   });
-  // });
+  afterAll(async () => {
+    await milvusClient.dropCollection({
+      collection_name: COLLECTION_NAME,
+    });
+  });
+
   it(`Insert Data expect success`, async () => {
-    const COUNT = 10;
-    const vectorsData = generateVectors(4, COUNT * 4);
+    const fields = [
+      {
+        isVector: true,
+        dim: 4,
+        name: "float_vector",
+      },
+      {
+        isVector: false,
+        name: "age",
+      },
+      {
+        isVector: false,
+        name: "time",
+      },
+    ];
+    const vectorsData = generateInsertData(fields, 10);
 
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
-      fields_data: [
-        {
-          type: DataType.FloatVector,
-          field_name: "float_vector",
-          dim: 4,
-          data: vectorsData,
-        },
-        {
-          type: DataType.Int64,
-          field_name: "age",
-          data: generateIds(COUNT),
-        },
-        {
-          type: DataType.Int32,
-          field_name: "time",
-          data: generateIds(COUNT),
-        },
-      ],
-      // hash_keys: generateIds(COUNT),
-      num_rows: COUNT,
+      fields_data: vectorsData,
     };
 
     const res = await milvusClient.insert(params);
-    console.log("insert --- ", COLLECTION_NAME, res);
-    const flushres = await milvusClient.flush({
-      collection_names: [COLLECTION_NAME],
-    });
-    console.log("flush---", flushres);
-    const partitionRes = await milvusClient.getPartitionStatistics({
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Insert data expect missing field throw error`, async () => {
+    const fields = [
+      {
+        isVector: true,
+        dim: 4,
+        name: "float_vector",
+      },
+      {
+        isVector: false,
+        name: "age",
+      },
+    ];
+    const fieldsData = generateInsertData(fields, 10);
+
+    const params: InsertReq = {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
-    });
-    console.log("stats----", partitionRes);
+      fields_data: fieldsData,
+    };
 
-    const collectionRes = await milvusClient.getCollectionStatistics({
+    try {
+      await milvusClient.insert(params);
+    } catch (error) {
+      expect(error.message).toContain("Insert fail");
+    }
+  });
+
+  it(`Insert data expect throw wrong field error`, async () => {
+    const fields = [
+      {
+        isVector: true,
+        dim: 4,
+        name: "float_vector2",
+      },
+      {
+        isVector: false,
+        name: "age",
+      },
+      {
+        isVector: false,
+        name: "time",
+      },
+    ];
+    const fieldsData = generateInsertData(fields, 10);
+
+    const params: InsertReq = {
       collection_name: COLLECTION_NAME,
-    });
+      partition_name: PARTITION_NAME,
+      fields_data: fieldsData,
+    };
 
-    console.log("stats----", collectionRes);
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    // expect(partitionRes.stats);
+    try {
+      await milvusClient.insert(params);
+    } catch (error) {
+      expect(error.message).toContain("Insert fail");
+    }
   });
 });
