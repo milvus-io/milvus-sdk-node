@@ -4,7 +4,7 @@ import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { InsertReq } from "../milvus/types/Insert";
-import { generateVectors, generateIds } from "../utils";
+import { generateInsertData } from "../utils";
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -42,30 +42,26 @@ describe("Search Api", () => {
     await milvusClient.loadCollection({
       collection_name: COLLECTION_NAME,
     });
-    const COUNT = 10;
-    const vectorsData = generateVectors(4, COUNT * 4);
+    const fields = [
+      {
+        isVector: true,
+        dim: 4,
+        name: "float_vector",
+      },
+      {
+        isVector: false,
+        name: "age",
+      },
+      {
+        isVector: false,
+        name: "time",
+      },
+    ];
+    const vectorsData = generateInsertData(fields, 10);
+
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
-      fields_data: [
-        {
-          type: DataType.FloatVector,
-          field_name: "float_vector",
-          dim: 4,
-          data: vectorsData,
-        },
-        {
-          type: DataType.Int64,
-          field_name: "age",
-          data: generateIds(COUNT),
-        },
-        {
-          type: DataType.Int32,
-          field_name: "time",
-          data: generateIds(COUNT),
-        },
-      ],
-      hash_keys: generateIds(COUNT),
-      num_rows: COUNT,
+      fields_data: vectorsData,
     };
 
     await milvusClient.insert(params);

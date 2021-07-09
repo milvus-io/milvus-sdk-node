@@ -486,14 +486,14 @@ export class MilvusClient {
 
         scores.splice(0, topk).forEach((score, scoreIndex) => {
           const i = index === 0 ? scoreIndex : scoreIndex + topk;
-          results.push({
+          const result: any = {
             score,
             id: idData ? idData[i] : "",
-            fields: fieldsData.map((field) => ({
-              ...field,
-              data: field.data[i],
-            })),
+          };
+          fieldsData.forEach((field) => {
+            result[field.field_name] = field.data[i];
           });
+          results.push(result);
         });
       });
     }
