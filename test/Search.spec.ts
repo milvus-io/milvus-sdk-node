@@ -65,6 +65,7 @@ describe("Search Api", () => {
     };
 
     await milvusClient.insert(params);
+    await milvusClient.flush({ collection_names: [COLLECTION_NAME] });
   });
 
   afterAll(async () => {
