@@ -50,6 +50,7 @@ import { DataType, DataTypeMap, DslType } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
 import { parseFloatArrayToBytes } from "./utils/Blob";
 import { findKeyValue } from "./utils";
+import { formatKeyValueData } from "./utils/Format";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -225,6 +226,9 @@ export class MilvusClient {
       "GetCollectionStatistics",
       data
     );
+
+    promise.data = formatKeyValueData(promise.stats, ["row_count"]);
+
     return promise;
   }
 
@@ -268,6 +272,7 @@ export class MilvusClient {
       "GetPartitionStatistics",
       data
     );
+    promise.data = formatKeyValueData(promise.stats, ["row_count"]);
     return promise;
   }
 

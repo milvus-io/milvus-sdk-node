@@ -37,7 +37,7 @@ Make sure that:
 1. First of all, we need to import @zilliz/milvus-sdk-node.
 
 ```javascript
-import { MilvusNode } from "@zilliz/milvus2-sdk-node";
+import { MilvusClient } from "@zilliz/milvus2-sdk-node";
 ```
 
 2. Then, we can make connection with Milvus server.
@@ -45,7 +45,7 @@ import { MilvusNode } from "@zilliz/milvus2-sdk-node";
 
 ```javascript
 const IP = "127.0.0.1:19530";
-const milvusClient = new MilvusNode(IP);
+const milvusClient = new MilvusClient(IP);
 ```
 
 3. After connecting, we can communicate with Milvus in the following ways.
