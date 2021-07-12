@@ -76,6 +76,7 @@ export interface DescribeCollectionResponse {
 export interface StatisticsResponse {
   status: ResStatus;
   stats: KeyValuePair[];
+  data: { [x: string]: any };
 }
 
 export interface ShowPartitionsResponse {

@@ -142,6 +142,7 @@ describe("Collection Api", () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.stats[0].value).toEqual("0");
+    expect(res.data.row_count).toEqual("0");
   });
 
   it("Describe Collection info", async () => {
