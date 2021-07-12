@@ -3,6 +3,8 @@ name: Node sdk 2.x release
 on:
   release:
     types: [released]
+    branches:
+      - v2.x
 
 jobs:
   publish:
