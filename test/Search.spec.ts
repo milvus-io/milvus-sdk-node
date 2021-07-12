@@ -88,7 +88,6 @@ describe("Search Api", () => {
       output_fields: ["age", "time"],
     });
     console.log(res);
-    console.log(res.results[0].fields);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });

@@ -471,11 +471,12 @@ export class MilvusClient {
        * */
       const { topks, scores, fields_data, ids } = promise.results;
       const fieldsData = fields_data.map((item, i) => {
-        const value = item[item.field];
+        // if search result is empty, will cause value is undefined.
+        const value = item.field ? item[item.field] : undefined;
         return {
           type: item.type,
           field_name: item.field_name,
-          data: value[value?.data].data,
+          data: value ? value[value?.data].data : "",
         };
       });
       // verctor id support int / str id.
