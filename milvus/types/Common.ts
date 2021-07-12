@@ -126,6 +126,20 @@ export enum DataType {
   FloatVector = 101,
 }
 
+export const DataTypeMap: { [x: string]: number } = {
+  none: 0,
+  bool: 1,
+  int8: 2,
+  int16: 3,
+  int32: 4,
+  int64: 5,
+  float: 10,
+  double: 11,
+  string: 20,
+  binaryvector: 100,
+  floatvector: 101,
+};
+
 export interface KeyValuePair {
   key: string;
   value: string;

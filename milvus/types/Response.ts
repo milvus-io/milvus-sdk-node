@@ -1,4 +1,5 @@
 import {
+  DataType,
   IndexState,
   KeyValuePair,
   NumberArrayId,
@@ -51,6 +52,7 @@ export interface ShowCollectionsResponse {
 export interface FieldSchema {
   name: string;
   description: string;
+  data_type: string;
   is_primary_key?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
@@ -111,5 +113,28 @@ export interface MutationResult {
   delete_cnt: string;
   upsert_cnt: string;
   timestamp: string;
-  ids: StringArrayId | NumberArrayId;
+  IDs: StringArrayId | NumberArrayId;
+}
+
+interface FieldData {
+  type: DataType;
+  field_name: string;
+  scalars?: { [x: string]: any };
+  vectors?: {
+    dim: number;
+    float_vector?: {
+      data: number[];
+    };
+    binary_vector?: any;
+  };
+}
+export interface SearchResultData {
+  score: number;
+  id: string;
+  fields: { type: string; field_name: string; data: string }[];
+}
+
+export interface SearchResults {
+  status: ResStatus;
+  results: SearchResultData[];
 }

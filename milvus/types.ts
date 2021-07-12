@@ -11,7 +11,7 @@ export type {
   ShowCollectionsReq,
 } from "./types/Collection";
 
-export type { InsertReq, FieldData } from "./types/Insert";
+export type { InsertReq, FieldData, FlushReq } from "./types/Insert";
 
 export type {
   IndexState,
@@ -53,6 +53,6 @@ export type {
   DescribeIndexResponse,
   StatisticsResponse,
   MutationResult,
+  SearchResults,
 } from "./types/Response";
-
-export type { SearchReq } from "./types/Search";
+export type { SearchRes, SearchReq } from "./types/Search";

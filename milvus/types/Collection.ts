@@ -11,7 +11,7 @@ export interface FieldType {
 
 export enum ShowCollectionsType {
   All,
-  InMemory,
+  Loaded,
 }
 
 export interface ShowCollectionsReq {

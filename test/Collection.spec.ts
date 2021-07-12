@@ -1,4 +1,4 @@
-import { MilvusNode } from "../milvus/index";
+import { MilvusClient } from "../milvus/index";
 
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
@@ -6,7 +6,7 @@ import { ErrorCode } from "../milvus/types/Response";
 import { ShowCollectionsType } from "../milvus/types/Collection";
 import { BAD_REQUEST_CODE } from "../milvus/const/ErrorCode";
 
-let milvusClient = new MilvusNode(IP);
+let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = "loaded_collection";
 
@@ -129,7 +129,7 @@ describe("Collection Api", () => {
 
   it(`Show loaded collections expect none`, async () => {
     const res = await milvusClient.showCollections({
-      type: ShowCollectionsType.InMemory,
+      type: ShowCollectionsType.Loaded,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
@@ -165,7 +165,7 @@ describe("Collection Api", () => {
 
   it(`Show loaded collections expect contain one`, async () => {
     const res = await milvusClient.showCollections({
-      type: ShowCollectionsType.InMemory,
+      type: ShowCollectionsType.Loaded,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
