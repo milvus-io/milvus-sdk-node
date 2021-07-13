@@ -403,25 +403,30 @@ export class MilvusClient {
         default:
           break;
       }
-
       return {
         type,
         field_name: v.name,
-        [key]: this.vectorTypes.includes(type)
-          ? {
-              dim: v.dim,
-              [dataKey]: {
-                data: v.value,
+        [key]:
+          type === DataType.FloatVector
+            ? {
+                dim: v.dim,
+                [dataKey]: {
+                  data: v.value,
+                },
+              }
+            : type === DataType.BinaryVector
+            ? {
+                dim: v.dim,
+                [dataKey]: Buffer.from(new Uint8Array(v.value)),
+              }
+            : {
+                [dataKey]: {
+                  data: v.value,
+                },
               },
-            }
-          : {
-              [dataKey]: {
-                data: v.value,
-              },
-            },
       };
     });
-
+    console.log(params.fields_data[0]);
     const promise = await promisify(this.client, "Insert", params);
     return promise;
   }
@@ -435,17 +440,20 @@ export class MilvusClient {
   async search(data: SearchReq): Promise<SearchResults> {
     const root = await protobuf.load(protoPath);
     if (!root) throw new Error("Missing milvus proto file");
+    if (!this.vectorTypes.includes(data.vector_type))
+      throw new Error(
+        "Miss vector_type, need to be binary or float vector field type."
+      );
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
     const PlaceholderGroup = root.lookupType(
       "milvus.proto.milvus.PlaceholderGroup"
     );
-
     // tag $0 is hard code in milvus, when dsltype is expr
     const placeholderGroupParams = PlaceholderGroup.create({
       placeholders: [
         {
           tag: "$0",
-          type: 101,
+          type: data.vector_type,
           values: data.vectors.map((v) => parseFloatArrayToBytes(v)),
         },
       ],
@@ -462,6 +470,7 @@ export class MilvusClient {
       placeholder_group: placeholderGroupBytes,
     });
     const results: any[] = [];
+    console.log(promise);
     if (promise.results) {
       /**
        *  fields_data:  what you pass in output_fields, only support non vector fields.

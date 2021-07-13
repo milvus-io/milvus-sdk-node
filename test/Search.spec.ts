@@ -87,6 +87,7 @@ describe("Search Api", () => {
         { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
       ],
       output_fields: ["age", "time"],
+      vector_type: DataType.FloatVector,
     });
     console.log(res);
 
