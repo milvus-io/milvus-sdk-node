@@ -44,7 +44,7 @@ const test = async () => {
       },
     ],
   });
-  console.log(res);
+  console.log("-----create collection----", res);
   // need load collection before search
   await milvusClient.loadCollection({
     collection_name: COLLECTION_NAME,
@@ -69,13 +69,12 @@ const test = async () => {
     },
   ];
   const vectorsData = generateInsertData(fields, 10);
-  console.log(vectorsData);
   const params: InsertReq = {
     collection_name: COLLECTION_NAME,
     fields_data: vectorsData,
   };
   res = await milvusClient.insert(params);
-  console.log(res);
+  console.log("--- insert ----", res);
   await milvusClient.flush({ collection_names: [COLLECTION_NAME] });
   const result = await milvusClient.search({
     collection_name: COLLECTION_NAME,
@@ -88,10 +87,10 @@ const test = async () => {
       { key: "metric_type", value: "Hamming" },
       { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
     ],
-    output_fields: ["age", "time", "c"],
+    output_fields: [],
     vector_type: DataType.BinaryVector,
   });
-  console.log("search result", result);
+  console.log("----search result-----,", result);
   await milvusClient.dropCollection({ collection_name: COLLECTION_NAME });
 };
 

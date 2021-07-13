@@ -48,7 +48,7 @@ import { checkCollectionFields } from "./utils/Validate";
 import { BAD_REQUEST_CODE } from "./const/ErrorCode";
 import { DataType, DataTypeMap, DslType } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
-import { parseFloatArrayToBytes } from "./utils/Blob";
+import { parseFloatArrayToBytes, parseUint8ArrayToBytes } from "./utils/Blob";
 import { findKeyValue } from "./utils";
 import { formatKeyValueData } from "./utils/Format";
 
@@ -417,7 +417,7 @@ export class MilvusClient {
             : type === DataType.BinaryVector
             ? {
                 dim: v.dim,
-                [dataKey]: Buffer.from(new Uint8Array(v.value)),
+                [dataKey]: parseUint8ArrayToBytes(v.value),
               }
             : {
                 [dataKey]: {
@@ -454,7 +454,11 @@ export class MilvusClient {
         {
           tag: "$0",
           type: data.vector_type,
-          values: data.vectors.map((v) => parseFloatArrayToBytes(v)),
+          values: data.vectors.map((v) =>
+            data.vector_type === DataType.BinaryVector
+              ? parseUint8ArrayToBytes(v)
+              : parseFloatArrayToBytes(v)
+          ),
         },
       ],
     });
