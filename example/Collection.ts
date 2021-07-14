@@ -1,52 +1,66 @@
-import { MilvusNode } from "../milvus/index";
-import {
-  GENERATE_COLLECTION_NAME,
-  DIMENSION,
-  INDEX_FILE_SIZE,
-  IP,
-} from "../const";
-
-const milvusClient = new MilvusNode(IP);
-const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
+import { MilvusClient } from "../milvus/index";
+import { GENERATE_NAME, IP } from "../const";
+import { DataType } from "../milvus/types/Common";
+const milvusClient = new MilvusClient(IP);
+const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
-  const metricTypes = milvusClient.getMetricType();
   const createRes = await milvusClient.createCollection({
     collection_name: COLLECTION_NAME,
-    dimension: DIMENSION,
-    metric_type: metricTypes.IP,
-    index_file_size: INDEX_FILE_SIZE,
-  });
-  console.log("--- create collection ---", createRes);
-  const indexType = milvusClient.getIndexType();
-  console.log("---- index type ---", indexType);
-  const collections = await milvusClient.showCollections();
-  console.log("--- collections ---", collections);
+    fields: [
+      {
+        name: "vector_01",
+        description: "vector field",
+        data_type: DataType.FloatVector,
 
-  const hasCollection = await milvusClient.hasCollection({
-    collection_name: "ad",
+        type_params: [
+          {
+            key: "dim",
+            value: "128",
+          },
+          {
+            key: "metric_type",
+            value: "L2",
+          },
+        ],
+      },
+    ],
   });
-  console.log("--- has collection ---", hasCollection);
+  console.log("--- create collection ---", createRes, COLLECTION_NAME);
 
-  const discribeCollection = await milvusClient.describeCollection({
+  let res: any = await milvusClient.showCollections();
+  console.log(res);
+
+  res = await milvusClient.hasCollection({
     collection_name: COLLECTION_NAME,
   });
-  console.log("--- discribe collection ---", discribeCollection);
+  console.log(res);
 
-  const collectionInfo = await milvusClient.showCollectionsInfo({
+  res = await milvusClient.getCollectionStatistics({
     collection_name: COLLECTION_NAME,
   });
-  console.log("--- collection info ---", collectionInfo);
+  console.log(res);
 
-  const countCollection = await milvusClient.countCollection({
+  res = await milvusClient.loadCollection({
     collection_name: COLLECTION_NAME,
   });
-  console.log("--- count collection ---", countCollection);
+  console.log(res);
 
-  const dropCollection = await milvusClient.dropCollection({
+  res = await milvusClient.describeCollection({
     collection_name: COLLECTION_NAME,
   });
-  console.log("--- drop collection ---", dropCollection);
+  console.log(res);
+  console.log(res.schema.fields);
+
+  res = await milvusClient.releaseCollection({
+    collection_name: COLLECTION_NAME,
+  });
+  console.log(res);
+
+  res = await milvusClient.dropCollection({
+    collection_name: COLLECTION_NAME,
+  });
+  console.log("delete---", res);
 };
 
 test();

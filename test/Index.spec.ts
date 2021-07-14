@@ -1,25 +1,39 @@
-import { MilvusNode } from "../milvus/index";
+import { MilvusClient } from "../milvus/index";
 
-import {
-  GENERATE_COLLECTION_NAME,
-  DIMENSION,
-  INDEX_FILE_SIZE,
-  IP,
-} from "../const";
-import { ErrorCode } from "../milvus/response-types";
+import { GENERATE_NAME, IP } from "../const";
+import { DataType, DslType, MsgType } from "../milvus/types/Common";
+import { ErrorCode } from "../milvus/types/Response";
 
-let milvusClient = new MilvusNode(IP);
-let IndexType = milvusClient.getIndexType();
-const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
+let milvusClient = new MilvusClient(IP);
+const COLLECTION_NAME = GENERATE_NAME();
 
-describe("Index Crud", () => {
+describe("Collection Api", () => {
   beforeAll(async () => {
     await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
-      dimension: DIMENSION,
-      metric_type: 1,
-      index_file_size: INDEX_FILE_SIZE,
+      fields: [
+        {
+          name: "vector_01",
+          description: "vector field",
+          data_type: DataType.FloatVector,
+          type_params: [
+            {
+              key: "dim",
+              value: "4",
+            },
+          ],
+        },
+        {
+          name: "age",
+          data_type: DataType.Int64,
+          autoID: false,
+          is_primary_key: true,
+          description: "",
+        },
+      ],
     });
+
+    await milvusClient.loadCollection({ collection_name: COLLECTION_NAME });
   });
 
   afterAll(async () => {
@@ -28,33 +42,92 @@ describe("Index Crud", () => {
     });
   });
 
-  it("Create Index", async () => {
-    const indexParams = {
-      nlist: 1024,
-    };
-
+  it(`Create Index`, async () => {
     const res = await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
-      index_type: IndexType.IVF_FLAT,
-      extra_params: indexParams,
-    });
+      field_name: "vector_01",
 
+      extra_params: [
+        {
+          key: "index_type",
+          value: "IVF_FLAT",
+        },
+        {
+          key: "metric_type",
+          value: "L2",
+        },
+        {
+          key: "params",
+          value: JSON.stringify({ nlist: 1024 }),
+        },
+      ],
+    });
+    console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it("Desc Index", async () => {
+  // it(`Create Index not exist type`, async () => {
+  //   const res = await milvusClient.createIndex({
+  //     collection_name: COLLECTION_NAME,
+  //     field_name: "vector_02",
+  //     extra_params: [
+  //       {
+  //         key: "index_type",
+  //         value: "NOT exist",
+  //       },
+  //       {
+  //         key: "params",
+  //         value: JSON.stringify({ nlist: 1024 }),
+  //       },
+  //     ],
+  //   });
+  //   console.log(res);
+  //   expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  // });
+
+  it(`Describe Index`, async () => {
     const res = await milvusClient.describeIndex({
       collection_name: COLLECTION_NAME,
+      field_name: "vector_01",
     });
-
-    expect(res.index_type).toEqual(IndexType.IVF_FLAT);
+    console.log(res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it("Drop Index", async () => {
+  it(`Get Index State`, async () => {
+    const res = await milvusClient.getIndexState({
+      collection_name: COLLECTION_NAME,
+      field_name: "vector_01",
+    });
+    console.log(res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Get Index progress`, async () => {
+    const res = await milvusClient.getIndexBuildProgress({
+      collection_name: COLLECTION_NAME,
+      field_name: "vector_01",
+      index_name: "_default_idx",
+    });
+    console.log(res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Drop Index `, async () => {
     const res = await milvusClient.dropIndex({
       collection_name: COLLECTION_NAME,
+      field_name: "vector_01",
     });
-
+    console.log("----drop index ----", res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Describe Index should be not exist`, async () => {
+    const res = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME,
+      field_name: "vector_01",
+    });
+    console.log("----describe index after drop ----", res);
+    expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
   });
 });

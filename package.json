@@ -1,5 +1,5 @@
 {
-  "name": "@zilliz/milvus-sdk-node",
+  "name": "@zilliz/milvus2-sdk-node",
   "author": "zizhao.chen@zilliz.com",
   "version": "1.0.0",
   "main": "dist/milvus",
@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.2.12",
-    "@grpc/proto-loader": "^0.6.0"
+    "@grpc/proto-loader": "^0.6.0",
+    "protobufjs": "^6.11.2"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.13.8",

@@ -1,38 +1,62 @@
 import { promisify } from "../utils";
 import {
-  BoolReply,
-  CollectionInfo,
-  CollectionNameList,
-  CollectionRowCount,
-  ErrorCode,
-  PartitionList,
-  Status,
-  TopKQueryResult,
-  VectorIds,
-  VectorsData,
-  CollectionResult,
-} from "./response-types";
-import {
-  CollectionName,
-  CollectionSchema,
-  DeleteByIDParam,
-  FlushParam,
-  IndexParam,
-  IndexType,
-  InsertParam,
-  MetricType,
-  PartitionParam,
-  SearchParam,
-  VectorsIdentity,
-} from "./types";
+  CreateCollectionReq,
+  DescribeCollectionReq,
+  DropCollectionReq,
+  GetCollectionStatisticsReq,
+  HasCollectionReq,
+  LoadCollectionReq,
+  ReleaseLoadCollectionReq,
+  ShowCollectionsReq,
+  ShowCollectionsType,
+} from "./types/Collection";
 import path from "path";
 import * as protoLoader from "@grpc/proto-loader";
 import { loadPackageDefinition, credentials } from "@grpc/grpc-js";
+import * as protobuf from "protobufjs";
+import {
+  BoolResponse,
+  DescribeCollectionResponse,
+  DescribeIndexResponse,
+  ErrorCode,
+  GetIndexBuildProgressResponse,
+  GetIndexStateResponse,
+  MutationResult,
+  ResStatus,
+  SearchResults,
+  ShowCollectionsResponse,
+  ShowPartitionsResponse,
+  StatisticsResponse,
+} from "./types/Response";
+import {
+  CreatePartitionReq,
+  DropPartitionReq,
+  GetPartitionStatisticsReq,
+  HasPartitionReq,
+  LoadPartitionsReq,
+  ShowPartitionsReq,
+} from "./types/Partition";
+import {
+  CreateIndexReq,
+  DescribeIndexReq,
+  DropIndexReq,
+  GetIndexBuildProgressReq,
+  GetIndexStateReq,
+} from "./types/Index";
+import { SearchReq, SearchRes } from "./types/Search";
+import { checkCollectionFields } from "./utils/Validate";
+import { BAD_REQUEST_CODE } from "./const/ErrorCode";
+import { DataType, DataTypeMap, DslType } from "./types/Common";
+import { FlushReq, InsertReq } from "./types/Insert";
+import { parseFloatArrayToBytes } from "./utils/Blob";
+import { findKeyValue } from "./utils";
+import { formatKeyValueData } from "./utils/Format";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
-
-export class MilvusNode {
-  milvusClient: any;
+const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
+export class MilvusClient {
+  client: any;
+  vectorTypes: number[];
 
   /**
    * set grpc client here
@@ -48,46 +72,58 @@ export class MilvusNode {
       oneofs: true,
     });
     const grpcObject = loadPackageDefinition(packageDefinition);
-    const milvusProto = (grpcObject.milvus as any).grpc;
+    const milvusProto = (grpcObject.milvus as any).proto.milvus;
     const client = new milvusProto.MilvusService(
       ip,
       credentials.createInsecure()
     );
-    this.milvusClient = client;
+    this.client = client;
+    this.vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
   }
 
   /**
    *
    * @returns Get Index type to map grpc index type
    */
-  getIndexType() {
-    return {
-      FLAT: IndexType.FLAT,
-      IVF_FLAT: IndexType.IVFFLAT,
-      IVF_SQ8: IndexType.IVFSQ8,
-      RNSG: IndexType.RNSG,
-      IVF_SQ8h: IndexType.IVFSQ8H,
-      IVF_PQ: IndexType.IVFPQ,
-      HNSW: IndexType.HNSW,
-      ANNOY: IndexType.ANNOY,
-    };
-  }
+  // getIndexType() {
+  //   return {
+  //     FLAT: IndexType.FLAT,
+  //     IVF_FLAT: IndexType.IVFFLAT,
+  //     IVF_SQ8: IndexType.IVFSQ8,
+  //     RNSG: IndexType.RNSG,
+  //     IVF_SQ8h: IndexType.IVFSQ8H,
+  //     IVF_PQ: IndexType.IVFPQ,
+  //     HNSW: IndexType.HNSW,
+  //     ANNOY: IndexType.ANNOY,
+  //   };
+  // }
 
   /**
    *
    * @returns Get Index type to map grpc metric type
    */
-  getMetricType() {
-    return {
-      L2: MetricType.L2,
-      IP: MetricType.IP,
-      HAMMING: MetricType.HAMMING,
-      JACCARD: MetricType.JACCARD,
-      TANIMOTO: MetricType.TANIMOTO,
-      SUBSTRUCTURE: MetricType.SUBSTRUCTURE,
-      SUPERSTRUCTURE: MetricType.SUPERSTRUCTURE,
-    };
+  // getMetricType() {
+  //   return {
+  //     L2: MetricType.L2,
+  //     IP: MetricType.IP,
+  //     HAMMING: MetricType.HAMMING,
+  //     JACCARD: MetricType.JACCARD,
+  //     TANIMOTO: MetricType.TANIMOTO,
+  //     SUBSTRUCTURE: MetricType.SUBSTRUCTURE,
+  //     SUPERSTRUCTURE: MetricType.SUPERSTRUCTURE,
+  //   };
+  // }
+
+  /**
+   * After insert vector data, need flush .
+   * @param data
+   * @returns
+   */
+  async flush(data: FlushReq) {
+    const res = await promisify(this.client, "Flush", data);
+    return res;
   }
+
   /**
    * @brief This method is used to create collection
    *
@@ -95,312 +131,382 @@ export class MilvusNode {
    *
    * @return Status
    */
-  async createCollection(data: CollectionSchema): Promise<Status> {
-    const promise = promisify(this.milvusClient, "CreateCollection", data);
-    return promise;
-  }
+  async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
+    const { fields, collection_name, description } = data;
+    if (!fields || !fields.length || !collection_name) {
+      return {
+        error_code: BAD_REQUEST_CODE,
+        reason: "fields and collection_name is needed",
+      };
+    }
+    const validateFieldsRes = checkCollectionFields(fields);
+    if (validateFieldsRes !== true) {
+      return validateFieldsRes;
+    }
+    const root = await protobuf.load(schemaPath);
+    if (!root) throw new Error("Missing proto file");
+    // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
+    const CollectionSchema = root.lookupType(
+      "milvus.proto.schema.CollectionSchema"
+    );
 
-  /**
-   *
-   * @param data.collection_name Collection name
-   * @returns {bool_replay:boolean}
-   */
-  async hasCollection(data: CollectionName): Promise<BoolReply> {
-    const promise = promisify(this.milvusClient, "HasCollection", data);
-    return promise;
-  }
+    const FieldSchema = root.lookupType("milvus.proto.schema.FieldSchema");
 
-  /**
-   * @brief This method is used to get collection schema.
-   *
-   * @param CollectionName, target collection name.
-   *
-   * @return CollectionSchema
-   *
-   */
+    let payload: any = {
+      name: collection_name,
+      description: description || "",
+      fields: [],
+    };
 
-  async describeCollection(data: CollectionName): Promise<CollectionResult> {
-    const promise = promisify(this.milvusClient, "DescribeCollection", data);
-    return promise;
-  }
+    data.fields.forEach((field) => {
+      const value = {
+        ...field,
+        typeParams: field.type_params,
+        dataType: field.data_type,
+        isPrimaryKey: field.is_primary_key,
+      };
+      const fieldParams = FieldSchema.create(value);
 
-  /**
-   * @brief This method is used to get collection schema.
-   *
-   * @param CollectionName, target collection name.
-   *
-   * @return CollectionRowCount
-   */
-  async countCollection(data: CollectionName): Promise<CollectionRowCount> {
-    const promise = promisify(this.milvusClient, "CountCollection", data);
-    return promise;
-  }
+      payload.fields.push(fieldParams);
+    });
 
-  /**
-   * @brief This method is used to list all collections.
-   *
-   * @param Command, dummy parameter.
-   *
-   * @return CollectionNameList
-   */
-  async showCollections(): Promise<CollectionNameList> {
-    const promise = promisify(this.milvusClient, "ShowCollections", {});
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to get collection detail information.
-   *
-   * @param CollectionName, target collection name.
-   *
-   * @return CollectionInfo
-   */
-
-  async showCollectionsInfo(data: CollectionName): Promise<CollectionInfo> {
-    const promise = promisify(this.milvusClient, "ShowCollectionInfo", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to preload collection/partitions
-   *
-   * @param PreloadCollectionParam, target collection/partitions.
-   *
-   * @return Status
-   */
-  async preloadCollection(data: CollectionName): Promise<CollectionInfo> {
-    const promise = promisify(this.milvusClient, "PreloadCollection", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to delete collection.
-   *
-   * @param CollectionName, collection name is going to be deleted.
-   *
-   * @return CollectionNameList
-   */
-
-  async dropCollection(data: CollectionName): Promise<Status> {
-    const promise = promisify(this.milvusClient, "DropCollection", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to build index by collection in sync mode.
-   *
-   * @param IndexParam, index paramters.
-   *
-   * @return Status
-   */
-  async createIndex(data: IndexParam): Promise<Status> {
-    const { extra_params } = data;
-    const promise = promisify(this.milvusClient, "CreateIndex", {
+    const collectionParams = CollectionSchema.create(payload);
+    const schemaBtyes = CollectionSchema.encode(collectionParams).finish();
+    const promise = await promisify(this.client, "CreateCollection", {
       ...data,
-      extra_params: [
+      schema: schemaBtyes,
+    });
+
+    return promise;
+  }
+
+  /**
+   * Check collection exist or not
+   * @param data
+   * @returns
+   */
+  async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
+    if (!data.collection_name) {
+      throw new Error("Collection name is empty");
+    }
+    const promise = await promisify(this.client, "HasCollection", data);
+    return promise;
+  }
+
+  /**
+   * List all collections
+   * @returns
+   */
+  async showCollections(
+    data?: ShowCollectionsReq
+  ): Promise<ShowCollectionsResponse> {
+    const promise = await promisify(this.client, "ShowCollections", {
+      type: data ? data.type : ShowCollectionsType.All,
+    });
+    return promise;
+  }
+
+  /**
+   * Get collection detail, like name ,schema
+   * @param data
+   * @returns DescribeCollectionResponse
+   */
+  async describeCollection(
+    data: DescribeCollectionReq
+  ): Promise<DescribeCollectionResponse> {
+    const promise = await promisify(this.client, "DescribeCollection", data);
+    return promise;
+  }
+
+  async getCollectionStatistics(
+    data: GetCollectionStatisticsReq
+  ): Promise<StatisticsResponse> {
+    const promise = await promisify(
+      this.client,
+      "GetCollectionStatistics",
+      data
+    );
+
+    promise.data = formatKeyValueData(promise.stats, ["row_count"]);
+
+    return promise;
+  }
+
+  async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "LoadCollection", data);
+    return promise;
+  }
+
+  async releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "ReleaseCollection", data);
+    return promise;
+  }
+
+  async dropCollection(data: DropCollectionReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "DropCollection", data);
+    return promise;
+  }
+
+  async createPartition(data: CreatePartitionReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "CreatePartition", data);
+    return promise;
+  }
+
+  async hasPartition(data: HasPartitionReq): Promise<BoolResponse> {
+    const promise = await promisify(this.client, "HasPartition", data);
+    return promise;
+  }
+
+  async showPartitions(
+    data: ShowPartitionsReq
+  ): Promise<ShowPartitionsResponse> {
+    const promise = await promisify(this.client, "ShowPartitions", data);
+    return promise;
+  }
+
+  async getPartitionStatistics(
+    data: GetPartitionStatisticsReq
+  ): Promise<StatisticsResponse> {
+    const promise = await promisify(
+      this.client,
+      "GetPartitionStatistics",
+      data
+    );
+    promise.data = formatKeyValueData(promise.stats, ["row_count"]);
+    return promise;
+  }
+
+  async loadPartitions(data: LoadPartitionsReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "LoadPartitions", data);
+    return promise;
+  }
+
+  async releasePartitions(data: LoadPartitionsReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "ReleasePartitions", data);
+    return promise;
+  }
+
+  async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "DropPartition", data);
+    return promise;
+  }
+
+  async createIndex(data: CreateIndexReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "CreateIndex", data);
+    return promise;
+  }
+
+  async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
+    const promise = await promisify(this.client, "DescribeIndex", data);
+    return promise;
+  }
+
+  async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
+    const promise = await promisify(this.client, "GetIndexState", data);
+    return promise;
+  }
+
+  async getIndexBuildProgress(
+    data: GetIndexBuildProgressReq
+  ): Promise<GetIndexBuildProgressResponse> {
+    const promise = await promisify(this.client, "GetIndexBuildProgress", data);
+    return promise;
+  }
+
+  async dropIndex(data: DropIndexReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "DropIndex", data);
+    return promise;
+  }
+
+  /**
+   *
+   * fields_data: [{id:1,age:2,time:3,face:[1,2,3,4]}]
+   *
+   * hash_keys: Not support yet. transfer primary key value to hash , let's figure out how to use it.
+   * num_rows: The row length you want to insert.
+   */
+  async insert(data: InsertReq): Promise<MutationResult> {
+    const { collection_name } = data;
+    //
+    const collectionInfo = await this.describeCollection({ collection_name });
+    if (collectionInfo.status.error_code !== ErrorCode.SUCCESS) {
+      throw new Error(collectionInfo.status.reason);
+    }
+
+    // Tip: The field data sequence need same with collectionInfo.schema.fields.
+    const fieldsData = collectionInfo.schema.fields.map((v) => ({
+      name: v.name,
+      type: v.data_type,
+      dim: findKeyValue(v.type_params, "dim"),
+      value: [] as number[],
+    }));
+
+    // the actual data we pass to milvus grpc
+    const params: any = { ...data, num_rows: data.fields_data.length };
+
+    // user pass data is row data, we need parse to column data for milvus
+    data.fields_data.forEach((v, i) => {
+      // the key need to be field name, so we get all names in a row.
+      const fieldNames = Object.keys(v);
+
+      if (fieldNames.length !== fieldsData.length) {
+        throw new Error(
+          `Insert fail: line ${i} missing some field for this collection`
+        );
+      }
+      fieldNames.forEach((name) => {
+        const target = fieldsData.find((item) => item.name === name);
+        if (!target) {
+          throw new Error(
+            `Insert fail: line ${i} field is not exist in collection`
+          );
+        }
+        // if is vector field, value should be array. so we need concat it.
+        const isVector = this.vectorTypes.includes(
+          DataTypeMap[target.type.toLowerCase()]
+        );
+        isVector
+          ? (target.value = target.value.concat(v[name]))
+          : target.value.push(v[name]);
+      });
+    });
+
+    params.fields_data = fieldsData.map((v) => {
+      // milvus return string for field type, so we define the map to the value we need.
+      // but if milvus change the string, may casue we cant find value.
+      const type = DataTypeMap[v.type.toLowerCase()];
+      if (!type) {
+      }
+      const key = this.vectorTypes.includes(type) ? "vectors" : "scalars";
+      let dataKey = "float_vector";
+      switch (type) {
+        case DataType.FloatVector:
+          dataKey = "float_vector";
+          break;
+        case DataType.BinaryVector:
+          dataKey = "binary_vector";
+          break;
+        case DataType.Double:
+          dataKey = "double_data";
+          break;
+        case DataType.Float:
+          dataKey = "float_data";
+          break;
+        case DataType.Int64:
+          dataKey = "long_data";
+          break;
+        case DataType.Int32:
+        case DataType.Int16:
+        case DataType.Int8:
+          dataKey = "int_data";
+          break;
+        default:
+          break;
+      }
+
+      return {
+        type,
+        field_name: v.name,
+        [key]: this.vectorTypes.includes(type)
+          ? {
+              dim: v.dim,
+              [dataKey]: {
+                data: v.value,
+              },
+            }
+          : {
+              [dataKey]: {
+                data: v.value,
+              },
+            },
+      };
+    });
+
+    const promise = await promisify(this.client, "Insert", params);
+    return promise;
+  }
+
+  /**
+   * We are not support dsl type in node sdk because milvus will no longer support it too.
+   * todo: add binary vector search
+   * @param data
+   * @returns
+   */
+  async search(data: SearchReq): Promise<SearchResults> {
+    const root = await protobuf.load(protoPath);
+    if (!root) throw new Error("Missing milvus proto file");
+    // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
+    const PlaceholderGroup = root.lookupType(
+      "milvus.proto.milvus.PlaceholderGroup"
+    );
+
+    // tag $0 is hard code in milvus, when dsltype is expr
+    const placeholderGroupParams = PlaceholderGroup.create({
+      placeholders: [
         {
-          key: "params",
-          value: JSON.stringify(extra_params),
+          tag: "$0",
+          type: 101,
+          values: data.vectors.map((v) => parseFloatArrayToBytes(v)),
         },
       ],
     });
-    return promise;
-  }
 
-  /**
-   * @brief This method is used to describe index
-   *
-   * @param CollectionName, target collection name.
-   *
-   * @return IndexParam
-   */
-  async describeIndex(data: CollectionName): Promise<IndexParam> {
-    const promise = promisify(this.milvusClient, "DescribeIndex", data);
-    return promise;
-  }
+    const placeholderGroupBytes = PlaceholderGroup.encode(
+      placeholderGroupParams
+    ).finish();
 
-  /**
-   * @brief This method is used to drop index
-   *
-   * @param CollectionName, target collection name.
-   *
-   * @return Status
-   */
-  async dropIndex(data: CollectionName): Promise<Status> {
-    const promise = promisify(this.milvusClient, "DropIndex", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to create partition
-   *
-   * @param PartitionParam, partition parameters.
-   *
-   * @return Status
-   */
-  async createPartition(data: PartitionParam): Promise<Status> {
-    const promise = promisify(this.milvusClient, "CreatePartition", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to test partition existence.
-   *
-   * @param PartitionParam, target partition.
-   *
-   * @return BoolReply
-   */
-  async hasPartition(data: PartitionParam): Promise<BoolReply> {
-    const promise = promisify(this.milvusClient, "HasPartition", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to show partition information
-   *
-   * @param CollectionName, target collection name.
-   *
-   * @return PartitionList
-   */
-  async showPartitions(data: CollectionName): Promise<PartitionList> {
-    const promise = promisify(this.milvusClient, "ShowPartitions", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to drop partition
-   *
-   * @param PartitionParam, target partition.
-   *
-   * @return Status
-   */
-  async dropPartition(data: PartitionParam): Promise<Status> {
-    const promise = promisify(this.milvusClient, "DropPartition", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to add vector array to collection.
-   *
-   * @param InsertParam, insert parameters.
-   *
-   * @return VectorIds
-   */
-  async insert(data: InsertParam): Promise<VectorIds> {
-    const { records, record_type } = data;
-    const ids = records.map((v) => v.id);
-
-    const promise = promisify(this.milvusClient, "Insert", {
+    const promise: SearchRes = await promisify(this.client, "Search", {
       ...data,
-      row_record_array: records.map((v) => ({
-        [record_type === "binary" ? "binary_data" : "float_data"]: v.value,
-      })),
-      row_id_array: ids.filter((v) => v && v >= 0),
+      dsl: data.expr || "",
+      dsl_type: DslType.BoolExprV1,
+      placeholder_group: placeholderGroupBytes,
     });
-    return promise;
-  }
+    const results: any[] = [];
+    if (promise.results) {
+      /**
+       *  fields_data:  what you pass in output_fields, only support non vector fields.
+       *  ids: vector id array
+       *  scores: distance array
+       *  topks: if you use mutiple query to search , will return mutiple topk.
+       * */
+      const { topks, scores, fields_data, ids } = promise.results;
+      const fieldsData = fields_data.map((item, i) => {
+        // if search result is empty, will cause value is undefined.
+        const value = item.field ? item[item.field] : undefined;
+        return {
+          type: item.type,
+          field_name: item.field_name,
+          data: value ? value[value?.data].data : "",
+        };
+      });
+      // verctor id support int / str id.
+      const idData = ids[ids.id_field]?.data;
+      /**
+       *  milvus support mutilple querys to search
+       *  milvus will return all columns data
+       *  so we need to format value to row data for easy to use
+       *  topk is the key we can splice data for every search result
+       */
+      topks.forEach((v, index) => {
+        const topk = Number(v);
 
-  /**
-   * @brief This method is used to get vectors data by id array.
-   *
-   * @param VectorsIdentity, target vector id array.
-   *
-   * @return VectorsData
-   */
-  async getVectorsByID(data: VectorsIdentity): Promise<VectorsData> {
-    const promise = promisify(this.milvusClient, "GetVectorsByID", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to query vector in collection.
-   *
-   * @param SearchParam, search parameters.
-   *
-   * @return TopKQueryResult
-   */
-  async search(data: SearchParam): Promise<TopKQueryResult> {
-    const { extra_params, topk, id_array } = data;
-    const result = await promisify(
-      this.milvusClient,
-      id_array ? "SearchByID" : "Search",
-      {
-        ...data,
-        extra_params: [
-          {
-            key: "params",
-            value: JSON.stringify(extra_params),
-          },
-        ],
-      }
-    );
-
-    /**
-     *  Match id and distance by topk and row number
-     */
-    if (result.status.error_code === ErrorCode.SUCCESS) {
-      let rowNum = Number(result.row_num);
-      const ids = result.ids;
-      const distances = result.distances;
-
-      let position = 0;
-      const formatResult = [];
-      while (rowNum > 0) {
-        const rowIds = ids.filter(
-          (v: string, i: number) => i < position + topk && i >= position
-        );
-        const rowDistances = distances.filter(
-          (v: number, i: number) => i < position + topk && i >= position
-        );
-        formatResult.push(
-          rowIds.map((v: string, i: number) => {
-            return {
-              id: v,
-              distance: rowDistances[i],
-            };
-          })
-        );
-        position += topk;
-        rowNum--;
-      }
-      result.data = formatResult;
+        scores.splice(0, topk).forEach((score, scoreIndex) => {
+          const i = index === 0 ? scoreIndex : scoreIndex + topk;
+          const result: any = {
+            score,
+            id: idData ? idData[i] : "",
+          };
+          fieldsData.forEach((field) => {
+            result[field.field_name] = field.data[i];
+          });
+          results.push(result);
+        });
+      });
     }
-    return result;
-  }
 
-  /**
-   * @brief This method is used to delete vector by id
-   *
-   * @param DeleteByIDParam, delete parameters.
-   *
-   * @return status
-   */
-  async deleteByIds(data: DeleteByIDParam): Promise<Status> {
-    const promise = promisify(this.milvusClient, "DeleteByID", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to flush buffer into storage.
-   *
-   * @param FlushParam, flush parameters
-   *
-   * @return Status
-   */
-  async flush(data: FlushParam): Promise<Status> {
-    const promise = promisify(this.milvusClient, "Flush", data);
-    return promise;
-  }
-
-  /**
-   * @brief This method is used to compact collection
-   *
-   * @param CollectionName, target collection name.
-   *
-   * @return Status
-   */
-  async compact(data: CollectionName): Promise<Status> {
-    const promise = promisify(this.milvusClient, "Compact", data);
-    return promise;
+    return {
+      status: promise.status,
+      results,
+    };
   }
 }

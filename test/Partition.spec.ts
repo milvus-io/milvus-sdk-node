@@ -1,24 +1,42 @@
-import { MilvusNode } from "../milvus/index";
+import { MilvusClient } from "../milvus/index";
 
-import {
-  GENERATE_COLLECTION_NAME,
-  DIMENSION,
-  INDEX_FILE_SIZE,
-  IP,
-  PARTITION_TAG,
-} from "../const";
-import { ErrorCode } from "../milvus/response-types";
+import { GENERATE_NAME, IP } from "../const";
+import { DataType } from "../milvus/types/Common";
+import { ErrorCode } from "../milvus/types/Response";
 
-let milvusClient = new MilvusNode(IP);
-const COLLECTION_NAME = GENERATE_COLLECTION_NAME();
+let milvusClient = new MilvusClient(IP);
+const COLLECTION_NAME = GENERATE_NAME();
+const PARTITION_NAME = GENERATE_NAME("partition");
 
-describe("Partition Crud", () => {
+describe("Collection Api", () => {
   beforeAll(async () => {
     await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
-      dimension: DIMENSION,
-      metric_type: 1,
-      index_file_size: INDEX_FILE_SIZE,
+      fields: [
+        {
+          name: "vector_01",
+          description: "vector field",
+          data_type: DataType.FloatVector,
+
+          type_params: [
+            {
+              key: "dim",
+              value: "128",
+            },
+            {
+              key: "metric_type",
+              value: "L2",
+            },
+          ],
+        },
+        {
+          name: "age",
+          description: "",
+          data_type: DataType.Int64,
+          is_primary_key: true,
+          autoID: false,
+        },
+      ],
     });
   });
 
@@ -28,34 +46,92 @@ describe("Partition Crud", () => {
     });
   });
 
-  it("Create Partitions", async () => {
+  it(`Create Partition`, async () => {
     const res = await milvusClient.createPartition({
       collection_name: COLLECTION_NAME,
-      tag: PARTITION_TAG,
+      partition_name: PARTITION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it("Has Partitions", async () => {
-    const res = await milvusClient.hasPartition({
-      tag: PARTITION_TAG,
+  it(`Create Same Partition`, async () => {
+    const res = await milvusClient.createPartition({
       collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
     });
-    expect(res.bool_reply).toBeTruthy();
+    expect(res.error_code).not.toEqual(ErrorCode.SUCCESS);
   });
 
-  it("Show Partitions", async () => {
+  it(`Has Partition`, async () => {
+    const res = await milvusClient.hasPartition({
+      collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.value).toEqual(true);
+  });
+
+  it(`Has not exist Partition `, async () => {
+    const res = await milvusClient.hasPartition({
+      collection_name: COLLECTION_NAME,
+      partition_name: "123",
+    });
+
+    expect(res.value).toEqual(false);
+  });
+
+  it(`Show all Partitions `, async () => {
     const res = await milvusClient.showPartitions({
       collection_name: COLLECTION_NAME,
     });
-    expect(res.partition_tag_array).toContain(PARTITION_TAG);
+    console.log(res);
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.partition_names).toEqual(["_default", PARTITION_NAME]);
+    expect(res.partitionIDs.length).toEqual(2);
   });
 
-  it("Drop Partitions", async () => {
+  it(`Get partition statistics`, async () => {
+    const res = await milvusClient.getPartitionStatistics({
+      collection_name: COLLECTION_NAME,
+      partition_name: "_default",
+    });
+    console.log(res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.stats[0].value).toEqual("0");
+  });
+
+  it("Drop partition", async () => {
     const res = await milvusClient.dropPartition({
       collection_name: COLLECTION_NAME,
-      tag: PARTITION_TAG,
+      partition_name: PARTITION_NAME,
     });
-    expect(res.error_code).toContain(ErrorCode.SUCCESS);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Check droped partition`, async () => {
+    const res = await milvusClient.hasPartition({
+      collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
+    });
+
+    expect(res.value).toEqual(false);
+  });
+
+  it(`Load Partition `, async () => {
+    const res = await milvusClient.loadPartitions({
+      collection_name: COLLECTION_NAME,
+      partition_names: ["_default"],
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Release Partition `, async () => {
+    const res = await milvusClient.releasePartitions({
+      collection_name: COLLECTION_NAME,
+      partition_names: ["_default"],
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });
