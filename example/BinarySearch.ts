@@ -17,7 +17,7 @@ const test = async () => {
         type_params: [
           {
             key: "dim",
-            value: "8",
+            value: "128",
           },
           {
             key: "metric_type",
@@ -52,7 +52,7 @@ const test = async () => {
   const fields = [
     {
       isVector: true,
-      dim: 1,
+      dim: 16,
       name: "float_vector",
     },
     {
@@ -80,14 +80,14 @@ const test = async () => {
     collection_name: COLLECTION_NAME,
     // partition_names: [],
     expr: "",
-    vectors: [[4]],
+    vectors: [[4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3]],
     search_params: [
       { key: "anns_field", value: "float_vector" },
       { key: "topk", value: "4" },
       { key: "metric_type", value: "Hamming" },
       { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
     ],
-    output_fields: [],
+    output_fields: ["age", "time"],
     vector_type: DataType.BinaryVector,
   });
   console.log("----search result-----,", result);

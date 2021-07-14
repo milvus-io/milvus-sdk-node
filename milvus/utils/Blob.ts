@@ -1,11 +1,11 @@
-export const parseFloatArrayToBytes = (array: number[]) => {
+export const parseFloatVectorToBytes = (array: number[]) => {
   // create array buffer
   const a = new Float32Array(array);
   // need return bytes to milvus proto
   return Buffer.from(a.buffer);
 };
 
-export const parseUint8ArrayToBytes = (array: number[]) => {
+export const parseBinaryVectorToBytes = (array: number[]) => {
   // create array buffer
   const a = new Uint8Array(array);
   // need return bytes to milvus proto
