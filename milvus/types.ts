@@ -54,5 +54,8 @@ export type {
   StatisticsResponse,
   MutationResult,
   SearchResults,
+  SearchResultData,
+  CollectionSchema,
+  FieldSchema,
 } from "./types/Response";
 export type { SearchRes, SearchReq } from "./types/Search";

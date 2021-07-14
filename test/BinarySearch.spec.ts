@@ -9,7 +9,7 @@ import { generateInsertData } from "../utils";
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
-describe("Search Api", () => {
+describe("Vector search on binary field", () => {
   beforeAll(async () => {
     await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
@@ -17,11 +17,15 @@ describe("Search Api", () => {
         {
           name: "float_vector",
           description: "vector field",
-          data_type: DataType.FloatVector,
+          data_type: DataType.BinaryVector,
           type_params: [
             {
               key: "dim",
-              value: "4",
+              value: "128",
+            },
+            {
+              key: "metric_type",
+              value: "Hamming",
             },
           ],
         },
@@ -37,6 +41,11 @@ describe("Search Api", () => {
           data_type: DataType.Int32,
           description: "",
         },
+        {
+          name: "c",
+          data_type: DataType.Int32,
+          description: "",
+        },
       ],
     });
     await milvusClient.loadCollection({
@@ -45,7 +54,7 @@ describe("Search Api", () => {
     const fields = [
       {
         isVector: true,
-        dim: 4,
+        dim: 16,
         name: "float_vector",
       },
       {
@@ -56,14 +65,16 @@ describe("Search Api", () => {
         isVector: false,
         name: "time",
       },
+      {
+        isVector: false,
+        name: "c",
+      },
     ];
     const vectorsData = generateInsertData(fields, 10);
-
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
       fields_data: vectorsData,
     };
-
     await milvusClient.insert(params);
     await milvusClient.flush({ collection_names: [COLLECTION_NAME] });
   });
@@ -74,22 +85,21 @@ describe("Search Api", () => {
     });
   });
 
-  it("Expr Search", async () => {
+  it("Expr Vector Search on ", async () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
-      expr: "time > 2",
-      vectors: [[1, 2, 3, 4]],
+      expr: "",
+      vectors: [[4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3]],
       search_params: [
         { key: "anns_field", value: "float_vector" },
-        { key: "topk", value: "2" },
-        { key: "metric_type", value: "L2" },
+        { key: "topk", value: "4" },
+        { key: "metric_type", value: "Hamming" },
         { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
       ],
       output_fields: ["age", "time"],
-      vector_type: DataType.FloatVector,
+      vector_type: DataType.BinaryVector,
     });
-    console.log(res);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });

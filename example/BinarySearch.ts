@@ -7,17 +7,21 @@ const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
-  await milvusClient.createCollection({
+  let res: any = await milvusClient.createCollection({
     collection_name: COLLECTION_NAME,
     fields: [
       {
         name: "float_vector",
         description: "vector field",
-        data_type: DataType.FloatVector,
+        data_type: DataType.BinaryVector,
         type_params: [
           {
             key: "dim",
-            value: "4",
+            value: "128",
+          },
+          {
+            key: "metric_type",
+            value: "Hamming",
           },
         ],
       },
@@ -40,7 +44,7 @@ const test = async () => {
       },
     ],
   });
-
+  console.log("-----create collection----", res);
   // need load collection before search
   await milvusClient.loadCollection({
     collection_name: COLLECTION_NAME,
@@ -48,7 +52,7 @@ const test = async () => {
   const fields = [
     {
       isVector: true,
-      dim: 4,
+      dim: 16,
       name: "float_vector",
     },
     {
@@ -65,28 +69,28 @@ const test = async () => {
     },
   ];
   const vectorsData = generateInsertData(fields, 10);
-
   const params: InsertReq = {
     collection_name: COLLECTION_NAME,
     fields_data: vectorsData,
   };
-  await milvusClient.insert(params);
+  res = await milvusClient.insert(params);
+  console.log("--- insert ----", res);
   await milvusClient.flush({ collection_names: [COLLECTION_NAME] });
   const result = await milvusClient.search({
     collection_name: COLLECTION_NAME,
     // partition_names: [],
-    expr: "age < 8 && c < 4 || c > 3 && time < 5",
-    vectors: [[4, 10, 4, 1]],
+    expr: "",
+    vectors: [[4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3]],
     search_params: [
       { key: "anns_field", value: "float_vector" },
       { key: "topk", value: "4" },
-      { key: "metric_type", value: "L2" },
+      { key: "metric_type", value: "Hamming" },
       { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
     ],
-    output_fields: ["age", "time", "c"],
-    vector_type: DataType.FloatVector,
+    output_fields: ["age", "time"],
+    vector_type: DataType.BinaryVector,
   });
-  console.log("search result", result);
+  console.log("----search result-----,", result);
   await milvusClient.dropCollection({ collection_name: COLLECTION_NAME });
 };
 
