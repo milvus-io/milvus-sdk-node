@@ -60,13 +60,15 @@ const test = async () => {
       name: "c",
     },
   ];
-  const vectorsData = generateInsertData(fields, 10);
+  const vectorsData = generateInsertData(fields, 50000);
 
   const params: InsertReq = {
     collection_name: COLLECTION_NAME,
     fields_data: vectorsData,
   };
+
   await milvusClient.insert(params);
+
   await milvusClient.flush({ collection_names: [COLLECTION_NAME] });
 
   const indexRes = await milvusClient.createIndex({
@@ -90,25 +92,9 @@ const test = async () => {
   });
   console.log(indexRes);
   // need load collection before search
-  await milvusClient.loadCollection({
-    collection_name: COLLECTION_NAME,
+  await milvusClient.flush({
+    collection_names: [COLLECTION_NAME],
   });
-  const result = await milvusClient.search({
-    collection_name: COLLECTION_NAME,
-    // partition_names: [],
-    expr: "age < 8 && c < 4 || c > 3 && time < 5",
-    vectors: [[4, 10, 4, 1]],
-    search_params: [
-      { key: "anns_field", value: "float_vector" },
-      { key: "topk", value: "4" },
-      { key: "metric_type", value: "Jaccard" },
-      { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
-    ],
-    output_fields: ["age", "time", "c"],
-    vector_type: DataType.FloatVector,
-  });
-  console.log("search result", result);
-  await milvusClient.dropCollection({ collection_name: COLLECTION_NAME });
 };
 
 test();

@@ -42,7 +42,7 @@ describe("Collection Api", () => {
     });
 
     await milvusClient.createCollection({
-      collection_name: COLLECTION_NAME,
+      collection_name: BINARY_COLLECTION_NAME,
       fields: [
         {
           name: "binary_vector",
@@ -75,6 +75,10 @@ describe("Collection Api", () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
+
+    await milvusClient.dropCollection({
+      collection_name: BINARY_COLLECTION_NAME,
+    });
   });
 
   it(`Insert Data on float field expect success`, async () => {
@@ -102,6 +106,7 @@ describe("Collection Api", () => {
     };
 
     const res = await milvusClient.insert(params);
+    await milvusClient.loadCollection({ collection_name: COLLECTION_NAME });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -190,5 +195,16 @@ describe("Collection Api", () => {
       console.log(error);
       expect(error.message).toContain("Insert fail");
     }
+  });
+
+  it("Query data expect success", async () => {
+    const res = await milvusClient.getDataByExpr({
+      collection_name: COLLECTION_NAME,
+      expr: "age in [1,2,3,4,5,6,7,8]",
+      output_fields: ["age"],
+    });
+
+    console.log(res);
+    expect(res);
   });
 });

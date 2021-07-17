@@ -52,3 +52,10 @@ export interface SearchRes {
     topks: number[];
   };
 }
+
+export interface QueryReq {
+  collection_name: string;
+  expr: string;
+  output_fields: string[];
+  partition_names?: string[];
+}
