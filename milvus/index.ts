@@ -43,7 +43,7 @@ import {
   GetIndexBuildProgressReq,
   GetIndexStateReq,
 } from "./types/Index";
-import { SearchReq, SearchRes } from "./types/Search";
+import { QueryReq, SearchReq, SearchRes } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
 import { DataType, DataTypeMap, DslType } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
@@ -316,6 +316,11 @@ export class MilvusClient {
     return promise;
   }
 
+  async getDataByExpr(data: QueryReq) {
+    const promise = await promisify(this.client, "Query", data);
+    return promise;
+  }
+
   /**
    * if field type is binary, the vector data length need to be dimension / 8
    * fields_data: [{id:1,age:2,time:3,face:[1,2,3,4]}]
@@ -368,9 +373,13 @@ export class MilvusClient {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
-        isVector
-          ? (target.value = target.value.concat(v[name]))
-          : target.value.push(v[name]);
+        if (isVector) {
+          for (let val of v[name]) {
+            target.value.push(val);
+          }
+        } else {
+          target.value[i] = v[name];
+        }
       });
     });
 
@@ -429,7 +438,9 @@ export class MilvusClient {
               },
       };
     });
+
     const promise = await promisify(this.client, "Insert", params);
+
     return promise;
   }
 
