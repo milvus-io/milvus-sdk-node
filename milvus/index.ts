@@ -373,9 +373,13 @@ export class MilvusClient {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
-        isVector
-          ? (target.value = target.value.concat(v[name]))
-          : target.value.push(v[name]);
+        if (isVector) {
+          for (let val of v[name]) {
+            target.value.push(val);
+          }
+        } else {
+          target.value[i] = v[name];
+        }
       });
     });
 
@@ -434,9 +438,8 @@ export class MilvusClient {
               },
       };
     });
-    console.time("insert");
+
     const promise = await promisify(this.client, "Insert", params);
-    console.timeEnd("insert");
 
     return promise;
   }
