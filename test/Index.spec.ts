@@ -15,11 +15,11 @@ describe("Collection Api", () => {
         {
           name: "vector_01",
           description: "vector field",
-          data_type: DataType.FloatVector,
+          data_type: DataType.BinaryVector,
           type_params: [
             {
               key: "dim",
-              value: "4",
+              value: "8",
             },
           ],
         },
@@ -50,11 +50,11 @@ describe("Collection Api", () => {
       extra_params: [
         {
           key: "index_type",
-          value: "IVF_FLAT",
+          value: "BIN_IVF_FLAT",
         },
         {
           key: "metric_type",
-          value: "L2",
+          value: "HAMMING",
         },
         {
           key: "params",

@@ -60,7 +60,7 @@ const test = async () => {
       name: "c",
     },
   ];
-  const vectorsData = generateInsertData(fields, 5000000);
+  const vectorsData = generateInsertData(fields, 500000);
 
   const params: InsertReq = {
     collection_name: COLLECTION_NAME,
