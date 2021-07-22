@@ -1,7 +1,7 @@
 import { MilvusClient } from "../milvus/index";
 
 import { GENERATE_NAME, IP } from "../const";
-import { DataType, DslType, MsgType } from "../milvus/types/Common";
+import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 
 let milvusClient = new MilvusClient(IP);
