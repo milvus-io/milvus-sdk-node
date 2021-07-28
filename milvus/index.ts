@@ -352,9 +352,6 @@ export class MilvusClient {
       // the key need to be field name, so we get all names in a row.
       const fieldNames = Object.keys(v);
 
-      if (fieldNames.length !== fieldsData.length) {
-        throw new Error(`${ERROR_REASONS.INSERT_CHECK_MISS_FIELD} ${i}`);
-      }
       fieldNames.forEach((name) => {
         const target = fieldsData.find((item) => item.name === name);
         if (!target) {
@@ -455,6 +452,27 @@ export class MilvusClient {
     if (!root) throw new Error("Missing milvus proto file");
     if (!this.vectorTypes.includes(data.vector_type))
       throw new Error(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
+
+    const collectionInfo = await this.describeCollection({
+      collection_name: data.collection_name,
+    });
+    const vectorFieldName = findKeyValue(data.search_params, "anns_field");
+    const targetField = collectionInfo.schema.fields.find(
+      (v) => v.name === vectorFieldName
+    );
+    if (!targetField) {
+      throw new Error(ERROR_REASONS.SEARCH_NOT_FIND_VECTOR_FIELD);
+    }
+
+    const dim = findKeyValue(targetField.type_params, "dim");
+    const vectorType = DataTypeMap[targetField.data_type.toLowerCase()];
+    const dimension =
+      vectorType === DataType.BinaryVector ? Number(dim) / 8 : Number(dim);
+
+    if (data.vectors[0].length !== dimension) {
+      throw new Error(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
+    }
+
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
     const PlaceholderGroup = root.lookupType(
       "milvus.proto.milvus.PlaceholderGroup"
