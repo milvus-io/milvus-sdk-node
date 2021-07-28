@@ -24,7 +24,7 @@ const test = async () => {
       {
         name: "age",
         data_type: DataType.Int64,
-        autoID: false,
+        autoID: true,
         is_primary_key: true,
         description: "",
       },
@@ -49,10 +49,6 @@ const test = async () => {
     },
     {
       isVector: false,
-      name: "age",
-    },
-    {
-      isVector: false,
       name: "time",
     },
     {
@@ -60,7 +56,7 @@ const test = async () => {
       name: "c",
     },
   ];
-  const vectorsData = generateInsertData(fields, 500000);
+  const vectorsData = generateInsertData(fields, 1000);
 
   const params: InsertReq = {
     collection_name: COLLECTION_NAME,
@@ -95,6 +91,8 @@ const test = async () => {
   await milvusClient.flush({
     collection_names: [COLLECTION_NAME],
   });
+
+  await milvusClient.dropCollection({ collection_name: COLLECTION_NAME });
 };
 
 test();

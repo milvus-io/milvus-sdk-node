@@ -65,12 +65,12 @@ export interface FieldSchema {
   is_primary_key?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
+  autoID: boolean;
 }
 
 export interface CollectionSchema {
   name: string;
   description: string;
-  autoID: boolean;
   fields: FieldSchema[];
 }
 
