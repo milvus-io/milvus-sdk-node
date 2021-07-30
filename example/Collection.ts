@@ -27,7 +27,7 @@ const test = async () => {
       {
         name: "age",
         data_type: DataType.Int64,
-        autoID: false,
+        autoID: true,
         is_primary_key: true,
         description: "",
       },

@@ -348,6 +348,7 @@ export class MilvusClient {
         value: [] as number[],
       }));
 
+    console.log(collectionInfo.schema.fields);
     // the actual data we pass to milvus grpc
     const params: any = { ...data, num_rows: data.fields_data.length };
 
