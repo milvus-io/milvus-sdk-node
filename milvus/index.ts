@@ -332,22 +332,22 @@ export class MilvusClient {
     const { collection_name } = data;
     //
     const collectionInfo = await this.describeCollection({ collection_name });
-    console.log(collectionInfo.schema.fields);
     if (collectionInfo.status.error_code !== ErrorCode.SUCCESS) {
       throw new Error(collectionInfo.status.reason);
     }
 
     // Tip: The field data sequence need same with collectionInfo.schema.fields.
     // If primarykey is autoid = true, need to filter it.
+    // And is
     const fieldsData = collectionInfo.schema.fields
-      .filter((v) => !v.is_primary_key && !v.autoID)
+      .filter((v) => !v.is_primary_key || !v.autoID)
       .map((v) => ({
         name: v.name,
         type: v.data_type,
         dim: Number(findKeyValue(v.type_params, "dim")),
         value: [] as number[],
       }));
-    console.log(fieldsData);
+
     // the actual data we pass to milvus grpc
     const params: any = { ...data, num_rows: data.fields_data.length };
 
