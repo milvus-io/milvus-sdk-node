@@ -5,7 +5,7 @@ const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
-  const createRes = await milvusClient.createCollection({
+  const createRes = await milvusClient.collectionManage.createCollection({
     collection_name: COLLECTION_NAME,
     fields: [
       {
@@ -35,36 +35,36 @@ const test = async () => {
   });
   console.log("--- create collection ---", createRes, COLLECTION_NAME);
 
-  let res: any = await milvusClient.showCollections();
+  let res: any = await milvusClient.collectionManage.showCollections();
   console.log(res);
 
-  res = await milvusClient.hasCollection({
+  res = await milvusClient.collectionManage.hasCollection({
     collection_name: COLLECTION_NAME,
   });
   console.log(res);
 
-  res = await milvusClient.getCollectionStatistics({
+  res = await milvusClient.collectionManage.getCollectionStatistics({
     collection_name: COLLECTION_NAME,
   });
   console.log(res);
 
-  res = await milvusClient.loadCollection({
+  res = await milvusClient.collectionManage.loadCollection({
     collection_name: COLLECTION_NAME,
   });
   console.log(res);
 
-  res = await milvusClient.describeCollection({
+  res = await milvusClient.collectionManage.describeCollection({
     collection_name: COLLECTION_NAME,
   });
   console.log(res);
   console.log(res.schema.fields);
 
-  res = await milvusClient.releaseCollection({
+  res = await milvusClient.collectionManage.releaseCollection({
     collection_name: COLLECTION_NAME,
   });
   console.log(res);
 
-  res = await milvusClient.dropCollection({
+  res = await milvusClient.collectionManage.dropCollection({
     collection_name: COLLECTION_NAME,
   });
   console.log("delete---", res);
