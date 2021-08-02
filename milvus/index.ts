@@ -17,14 +17,7 @@ import {
   ShowPartitionsResponse,
   StatisticsResponse,
 } from "./types/Response";
-import {
-  CreatePartitionReq,
-  DropPartitionReq,
-  GetPartitionStatisticsReq,
-  HasPartitionReq,
-  LoadPartitionsReq,
-  ShowPartitionsReq,
-} from "./types/Partition";
+
 import {
   CreateIndexReq,
   DescribeIndexReq,
@@ -36,20 +29,15 @@ import { QueryReq, SearchReq, SearchRes } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
 import { DataType, DataTypeMap, DslType } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
-import {
-  parseFloatVectorToBytes,
-  parseBinaryVectorToBytes,
-} from "./utils/Blob";
-import { findKeyValue } from "./utils";
-import { formatKeyValueData } from "./utils/Format";
-import { ERROR_REASONS } from "./const/ErrorReason";
 import { Collection } from "./Collection";
+import { Partition } from "./Partition";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 export class MilvusClient {
   client: any;
   vectorTypes: number[];
-  collectionManage: Collection;
+  collectionManager: Collection;
+  partitionManager: Partition;
 
   /**
    * set grpc client here
@@ -72,7 +60,8 @@ export class MilvusClient {
     );
     this.client = client;
     this.vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
-    this.collectionManage = new Collection(this.client);
+    this.collectionManager = new Collection(this.client);
+    this.partitionManager = new Partition(this.client);
   }
 
   /**
@@ -83,50 +72,6 @@ export class MilvusClient {
   async flush(data: FlushReq) {
     const res = await promisify(this.client, "Flush", data);
     return res;
-  }
-
-  async createPartition(data: CreatePartitionReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, "CreatePartition", data);
-    return promise;
-  }
-
-  async hasPartition(data: HasPartitionReq): Promise<BoolResponse> {
-    const promise = await promisify(this.client, "HasPartition", data);
-    return promise;
-  }
-
-  async showPartitions(
-    data: ShowPartitionsReq
-  ): Promise<ShowPartitionsResponse> {
-    const promise = await promisify(this.client, "ShowPartitions", data);
-    return promise;
-  }
-
-  async getPartitionStatistics(
-    data: GetPartitionStatisticsReq
-  ): Promise<StatisticsResponse> {
-    const promise = await promisify(
-      this.client,
-      "GetPartitionStatistics",
-      data
-    );
-    promise.data = formatKeyValueData(promise.stats, ["row_count"]);
-    return promise;
-  }
-
-  async loadPartitions(data: LoadPartitionsReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, "LoadPartitions", data);
-    return promise;
-  }
-
-  async releasePartitions(data: LoadPartitionsReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, "ReleasePartitions", data);
-    return promise;
-  }
-
-  async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, "DropPartition", data);
-    return promise;
   }
 
   async createIndex(data: CreateIndexReq): Promise<ResStatus> {

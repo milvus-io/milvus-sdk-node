@@ -22,18 +22,13 @@ import {
 import { checkCollectionFields } from "./utils/Validate";
 import path from "path";
 import { formatKeyValueData } from "./utils/Format";
+import { Client } from "./Client";
 
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
 
-export class Collection {
-  client: any;
-
-  constructor(client: any) {
-    this.client = client;
-  }
-
+export class Collection extends Client {
   /**
-   * @brief This method is used to create collection
+   * This method is used to create collection
    *
    * @param data use to provide collection information to be created.
    *
