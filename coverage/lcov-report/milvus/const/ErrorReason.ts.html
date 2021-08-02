@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for const/index.ts</title>
+    <title>Code coverage report for milvus/const/ErrorReason.ts</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../prettify.css" />
-    <link rel="stylesheet" href="../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../sort-arrow-sprite.png);
+            background-image: url(../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">const</a> index.ts</h1>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">milvus/const</a> ErrorReason.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -69,30 +69,39 @@
 <a name='L10'></a><a href='#L10'>10</a>
 <a name='L11'></a><a href='#L11'>11</a>
 <a name='L12'></a><a href='#L12'>12</a>
-<a name='L13'></a><a href='#L13'>13</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// export const IP = "172.16.50.14:19530";
-// export const IP = "172.16.50.11:19530";
-export const IP = "127.0.0.1:19530";
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">export enum ERROR_REASONS {
+  CREATE_COLLECTION_CHECK_COLLECTION_NAME = "fields and collection_name is needed",
+  CREATE_COLLECTION_CHECK_PRIMARY_KEY = "Fields must contain one data_type = int64 and is_primary_key = true",
+  CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST = "Fields must contain one vector field column",
+  CREATE_COLLECTION_CHECK_MISS_DIM = "Vector field need dim in type params",
+  CREATE_COLLECTION_CHECK_BINARY_DIM = "Binary vector field dim need mutiples of 8",
 &nbsp;
-export const DIMENSION = 4;
+  HAS_COLLECTION_CHECK = "Collection name is required",
 &nbsp;
-export const INDEX_FILE_SIZE = 1024;
+  INSERT_CHECK_MISS_FIELD = "Insert fail: missing some field for this collection in line ",
+  INSERT_CHECK_WRONG_FIELD = "Insert fail: some field is not exist for this collection in line",
+  INSERT_CHECK_WRONG_DIM = "Insert fail: Binary vector data length need to equal (dimension / 8) ",
 &nbsp;
-export const GENERATE_NAME = (pre = "collection") =&gt;
-  `${pre}_${Math.random().toString(36).substr(2, 8)}`;
-&nbsp;
-export const PARTITION_TAG = "random";
+  SEARCH_MISS_VECTOR_TYPE = "Miss vector_type, need to be binary or float vector field type.",
+}
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -103,14 +112,14 @@ export const PARTITION_TAG = "random";
                 at Wed Jul 14 2021 15:41:36 GMT+0800 (中国标准时间)
             </div>
         </div>
-        <script src="../prettify.js"></script>
+        <script src="../../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="../sorter.js"></script>
-        <script src="../block-navigation.js"></script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
     </body>
 </html>
     

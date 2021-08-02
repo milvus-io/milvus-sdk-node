@@ -43,14 +43,17 @@ import {
   GetIndexBuildProgressReq,
   GetIndexStateReq,
 } from "./types/Index";
-import { SearchReq, SearchRes } from "./types/Search";
+import { QueryReq, SearchReq, SearchRes } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
-import { BAD_REQUEST_CODE } from "./const/ErrorCode";
 import { DataType, DataTypeMap, DslType } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
-import { parseFloatArrayToBytes } from "./utils/Blob";
+import {
+  parseFloatVectorToBytes,
+  parseBinaryVectorToBytes,
+} from "./utils/Blob";
 import { findKeyValue } from "./utils";
 import { formatKeyValueData } from "./utils/Format";
+import { ERROR_REASONS } from "./const/ErrorReason";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -134,15 +137,10 @@ export class MilvusClient {
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
     const { fields, collection_name, description } = data;
     if (!fields || !fields.length || !collection_name) {
-      return {
-        error_code: BAD_REQUEST_CODE,
-        reason: "fields and collection_name is needed",
-      };
+      throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_COLLECTION_NAME);
     }
-    const validateFieldsRes = checkCollectionFields(fields);
-    if (validateFieldsRes !== true) {
-      return validateFieldsRes;
-    }
+    checkCollectionFields(fields);
+
     const root = await protobuf.load(schemaPath);
     if (!root) throw new Error("Missing proto file");
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
@@ -187,7 +185,7 @@ export class MilvusClient {
    */
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
     if (!data.collection_name) {
-      throw new Error("Collection name is empty");
+      throw new Error(ERROR_REASONS.HAS_COLLECTION_CHECK);
     }
     const promise = await promisify(this.client, "HasCollection", data);
     return promise;
@@ -318,8 +316,13 @@ export class MilvusClient {
     return promise;
   }
 
+  async getDataByExpr(data: QueryReq) {
+    const promise = await promisify(this.client, "Query", data);
+    return promise;
+  }
+
   /**
-   *
+   * if field type is binary, the vector data length need to be dimension / 8
    * fields_data: [{id:1,age:2,time:3,face:[1,2,3,4]}]
    *
    * hash_keys: Not support yet. transfer primary key value to hash , let's figure out how to use it.
@@ -334,13 +337,18 @@ export class MilvusClient {
     }
 
     // Tip: The field data sequence need same with collectionInfo.schema.fields.
-    const fieldsData = collectionInfo.schema.fields.map((v) => ({
-      name: v.name,
-      type: v.data_type,
-      dim: findKeyValue(v.type_params, "dim"),
-      value: [] as number[],
-    }));
+    // If primarykey is autoid = true, need to filter it.
+    // And is
+    const fieldsData = collectionInfo.schema.fields
+      .filter((v) => !v.is_primary_key || !v.autoID)
+      .map((v) => ({
+        name: v.name,
+        type: v.data_type,
+        dim: Number(findKeyValue(v.type_params, "dim")),
+        value: [] as number[],
+      }));
 
+    console.log(collectionInfo.schema.fields);
     // the actual data we pass to milvus grpc
     const params: any = { ...data, num_rows: data.fields_data.length };
 
@@ -349,25 +357,31 @@ export class MilvusClient {
       // the key need to be field name, so we get all names in a row.
       const fieldNames = Object.keys(v);
 
-      if (fieldNames.length !== fieldsData.length) {
-        throw new Error(
-          `Insert fail: line ${i} missing some field for this collection`
-        );
-      }
       fieldNames.forEach((name) => {
         const target = fieldsData.find((item) => item.name === name);
         if (!target) {
-          throw new Error(
-            `Insert fail: line ${i} field is not exist in collection`
-          );
+          throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
         }
         // if is vector field, value should be array. so we need concat it.
         const isVector = this.vectorTypes.includes(
           DataTypeMap[target.type.toLowerCase()]
         );
-        isVector
-          ? (target.value = target.value.concat(v[name]))
-          : target.value.push(v[name]);
+
+        // milvus will not check binary dim, so we need check it in sdk.
+        if (
+          DataTypeMap[target.type.toLowerCase()] === DataType.BinaryVector &&
+          v[name].length !== target.dim / 8
+        ) {
+          throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
+        }
+
+        if (isVector) {
+          for (let val of v[name]) {
+            target.value.push(val);
+          }
+        } else {
+          target.value[i] = v[name];
+        }
       });
     });
 
@@ -403,26 +417,32 @@ export class MilvusClient {
         default:
           break;
       }
-
       return {
         type,
         field_name: v.name,
-        [key]: this.vectorTypes.includes(type)
-          ? {
-              dim: v.dim,
-              [dataKey]: {
-                data: v.value,
+        [key]:
+          type === DataType.FloatVector
+            ? {
+                dim: v.dim,
+                [dataKey]: {
+                  data: v.value,
+                },
+              }
+            : type === DataType.BinaryVector
+            ? {
+                dim: v.dim,
+                [dataKey]: parseBinaryVectorToBytes(v.value),
+              }
+            : {
+                [dataKey]: {
+                  data: v.value,
+                },
               },
-            }
-          : {
-              [dataKey]: {
-                data: v.value,
-              },
-            },
       };
     });
 
     const promise = await promisify(this.client, "Insert", params);
+
     return promise;
   }
 
@@ -435,18 +455,44 @@ export class MilvusClient {
   async search(data: SearchReq): Promise<SearchResults> {
     const root = await protobuf.load(protoPath);
     if (!root) throw new Error("Missing milvus proto file");
+    if (!this.vectorTypes.includes(data.vector_type))
+      throw new Error(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
+
+    const collectionInfo = await this.describeCollection({
+      collection_name: data.collection_name,
+    });
+    const vectorFieldName = findKeyValue(data.search_params, "anns_field");
+    const targetField = collectionInfo.schema.fields.find(
+      (v) => v.name === vectorFieldName
+    );
+    if (!targetField) {
+      throw new Error(ERROR_REASONS.SEARCH_NOT_FIND_VECTOR_FIELD);
+    }
+
+    const dim = findKeyValue(targetField.type_params, "dim");
+    const vectorType = DataTypeMap[targetField.data_type.toLowerCase()];
+    const dimension =
+      vectorType === DataType.BinaryVector ? Number(dim) / 8 : Number(dim);
+
+    if (data.vectors[0].length !== dimension) {
+      throw new Error(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
+    }
+
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
     const PlaceholderGroup = root.lookupType(
       "milvus.proto.milvus.PlaceholderGroup"
     );
-
     // tag $0 is hard code in milvus, when dsltype is expr
     const placeholderGroupParams = PlaceholderGroup.create({
       placeholders: [
         {
           tag: "$0",
-          type: 101,
-          values: data.vectors.map((v) => parseFloatArrayToBytes(v)),
+          type: data.vector_type,
+          values: data.vectors.map((v) =>
+            data.vector_type === DataType.BinaryVector
+              ? parseBinaryVectorToBytes(v)
+              : parseFloatVectorToBytes(v)
+          ),
         },
       ],
     });

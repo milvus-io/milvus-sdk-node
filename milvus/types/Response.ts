@@ -33,6 +33,15 @@ export enum ErrorCode {
   // OUT_OF_MEMORY = "OUT_OF_MEMORY",
 }
 
+interface TimeStamp {
+  created_timestamp: string; // hybrid timestamp it's milvus inside timestamp
+  created_utc_timestamp: string;
+}
+
+interface TimeStampArray {
+  created_timestamps: string[];
+  created_utc_timestamps: string[];
+}
 export interface ResStatus {
   error_code: string | number;
   reason: string;
@@ -43,7 +52,7 @@ export interface BoolResponse {
   value: Boolean;
 }
 
-export interface ShowCollectionsResponse {
+export interface ShowCollectionsResponse extends TimeStampArray {
   status: ResStatus;
   collection_names: string[];
   collection_ids: string[];
@@ -56,16 +65,16 @@ export interface FieldSchema {
   is_primary_key?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
+  autoID: boolean;
 }
 
 export interface CollectionSchema {
   name: string;
   description: string;
-  autoID: boolean;
   fields: FieldSchema[];
 }
 
-export interface DescribeCollectionResponse {
+export interface DescribeCollectionResponse extends TimeStamp {
   status: ResStatus;
   schema: CollectionSchema;
   collectionID: string;
@@ -79,7 +88,7 @@ export interface StatisticsResponse {
   data: { [x: string]: any };
 }
 
-export interface ShowPartitionsResponse {
+export interface ShowPartitionsResponse extends TimeStampArray {
   status: ResStatus;
   partition_names: string[];
   partitionIDs: number[];

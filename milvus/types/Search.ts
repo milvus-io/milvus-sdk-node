@@ -1,4 +1,10 @@
-import { DslType, KeyValuePair, NumberArrayId, StringArrayId } from "./Common";
+import {
+  DataType,
+  DslType,
+  KeyValuePair,
+  NumberArrayId,
+  StringArrayId,
+} from "./Common";
 import { ResStatus } from "./Response";
 
 // export interface PlaceholderValue {
@@ -17,6 +23,7 @@ export interface SearchReq {
   search_params: KeyValuePair[];
   vectors: number[][];
   output_fields?: string[];
+  vector_type: DataType.BinaryVector | DataType.FloatVector;
 }
 
 export interface SearchRes {
@@ -44,4 +51,11 @@ export interface SearchRes {
     num_queries: number;
     topks: number[];
   };
+}
+
+export interface QueryReq {
+  collection_name: string;
+  expr: string;
+  output_fields: string[];
+  partition_names?: string[];
 }

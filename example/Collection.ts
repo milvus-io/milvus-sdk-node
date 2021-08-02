@@ -24,6 +24,13 @@ const test = async () => {
           },
         ],
       },
+      {
+        name: "age",
+        data_type: DataType.Int64,
+        autoID: true,
+        is_primary_key: true,
+        description: "",
+      },
     ],
   });
   console.log("--- create collection ---", createRes, COLLECTION_NAME);

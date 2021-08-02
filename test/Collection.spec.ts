@@ -4,7 +4,7 @@ import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { ShowCollectionsType } from "../milvus/types/Collection";
-import { BAD_REQUEST_CODE } from "../milvus/const/ErrorCode";
+import { ERROR_REASONS } from "../milvus/const/ErrorReason";
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -45,30 +45,94 @@ describe("Collection Api", () => {
   });
 
   it(`Create Collection validate fields`, async () => {
-    let res = await milvusClient.createCollection({
-      collection_name: "zxc",
-      fields: [
-        {
-          name: "vector_01",
-          description: "vector field",
-          data_type: DataType.FloatVector,
-        },
-      ],
-    });
-    expect(res.error_code).toEqual(BAD_REQUEST_CODE);
+    try {
+      await milvusClient.createCollection({
+        collection_name: "zxc",
+        fields: [
+          {
+            name: "vector_01",
+            description: "vector field",
+            data_type: DataType.FloatVector,
+          },
+        ],
+      });
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY
+      );
+    }
 
-    res = await milvusClient.createCollection({
-      collection_name: "zxc",
-      fields: [
-        {
-          name: "age",
-          description: "",
-          data_type: DataType.Int64,
-          is_primary_key: true,
-        },
-      ],
-    });
-    expect(res.error_code).toEqual(BAD_REQUEST_CODE);
+    try {
+      await milvusClient.createCollection({
+        collection_name: "zxc",
+        fields: [
+          {
+            name: "age",
+            description: "",
+            data_type: DataType.Int64,
+            is_primary_key: true,
+          },
+        ],
+      });
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST
+      );
+    }
+  });
+
+  it(`Create Collection expect dim error`, async () => {
+    try {
+      await milvusClient.createCollection({
+        collection_name: "zxc",
+        fields: [
+          {
+            name: "vector_01",
+            description: "vector field",
+            data_type: DataType.FloatVector,
+          },
+          {
+            name: "age",
+            description: "",
+            data_type: DataType.Int64,
+            is_primary_key: true,
+          },
+        ],
+      });
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM
+      );
+    }
+
+    try {
+      await milvusClient.createCollection({
+        collection_name: "zxc",
+        fields: [
+          {
+            name: "vector_01",
+            description: "vector field",
+            data_type: DataType.BinaryVector,
+            type_params: [
+              {
+                key: "dim",
+                value: "10",
+              },
+            ],
+          },
+          {
+            name: "age",
+            description: "",
+            data_type: DataType.Int64,
+            is_primary_key: true,
+          },
+        ],
+      });
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM
+      );
+    }
   });
 
   it(`Create load Collection Successful`, async () => {
@@ -125,15 +189,6 @@ describe("Collection Api", () => {
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.collection_names).toContain(COLLECTION_NAME);
-  });
-
-  it(`Show loaded collections expect none`, async () => {
-    const res = await milvusClient.showCollections({
-      type: ShowCollectionsType.Loaded,
-    });
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-
-    expect(res.collection_names.length).toEqual(0);
   });
 
   it(`Get Collection Statistics`, async () => {
