@@ -7,7 +7,7 @@ const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
-  await milvusClient.createCollection({
+  await milvusClient.collectionManager.createCollection({
     collection_name: COLLECTION_NAME,
     fields: [
       {
@@ -63,11 +63,11 @@ const test = async () => {
     fields_data: vectorsData,
   };
 
-  await milvusClient.insert(params);
+  await milvusClient.dataManager.insert(params);
 
-  await milvusClient.flush({ collection_names: [COLLECTION_NAME] });
+  await milvusClient.dataManager.flush({ collection_names: [COLLECTION_NAME] });
 
-  const indexRes = await milvusClient.createIndex({
+  const indexRes = await milvusClient.indexManager.createIndex({
     collection_name: COLLECTION_NAME,
     field_name: "float_vector",
 
@@ -88,11 +88,13 @@ const test = async () => {
   });
   console.log(indexRes);
   // need load collection before search
-  await milvusClient.flush({
+  await milvusClient.dataManager.flush({
     collection_names: [COLLECTION_NAME],
   });
 
-  await milvusClient.dropCollection({ collection_name: COLLECTION_NAME });
+  await milvusClient.collectionManager.dropCollection({
+    collection_name: COLLECTION_NAME,
+  });
 };
 
 test();

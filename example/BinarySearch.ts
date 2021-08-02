@@ -7,7 +7,7 @@ const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
-  let res: any = await milvusClient.createCollection({
+  let res: any = await milvusClient.collectionManager.createCollection({
     collection_name: COLLECTION_NAME,
     fields: [
       {
@@ -46,7 +46,7 @@ const test = async () => {
   });
   console.log("-----create collection----", res);
   // need load collection before search
-  await milvusClient.loadCollection({
+  await milvusClient.collectionManager.loadCollection({
     collection_name: COLLECTION_NAME,
   });
   const fields = [
@@ -73,10 +73,10 @@ const test = async () => {
     collection_name: COLLECTION_NAME,
     fields_data: vectorsData,
   };
-  res = await milvusClient.insert(params);
+  res = await milvusClient.dataManager.insert(params);
   console.log("--- insert ----", res);
-  await milvusClient.flush({ collection_names: [COLLECTION_NAME] });
-  const result = await milvusClient.search({
+  await milvusClient.dataManager.flush({ collection_names: [COLLECTION_NAME] });
+  const result = await milvusClient.dataManager.search({
     collection_name: COLLECTION_NAME,
     // partition_names: [],
     expr: "",
@@ -91,7 +91,9 @@ const test = async () => {
     vector_type: DataType.BinaryVector,
   });
   console.log("----search result-----,", result);
-  await milvusClient.dropCollection({ collection_name: COLLECTION_NAME });
+  await milvusClient.collectionManager.dropCollection({
+    collection_name: COLLECTION_NAME,
+  });
 };
 
 test();

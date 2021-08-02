@@ -11,7 +11,7 @@ const COLLECTION_NAME = GENERATE_NAME();
 
 describe("Vector search on binary field", () => {
   beforeAll(async () => {
-    await milvusClient.createCollection({
+    await milvusClient.collectionManager.createCollection({
       collection_name: COLLECTION_NAME,
       fields: [
         {
@@ -48,7 +48,7 @@ describe("Vector search on binary field", () => {
         },
       ],
     });
-    await milvusClient.loadCollection({
+    await milvusClient.collectionManager.loadCollection({
       collection_name: COLLECTION_NAME,
     });
     const fields = [
@@ -75,18 +75,20 @@ describe("Vector search on binary field", () => {
       collection_name: COLLECTION_NAME,
       fields_data: vectorsData,
     };
-    await milvusClient.insert(params);
-    await milvusClient.flush({ collection_names: [COLLECTION_NAME] });
+    await milvusClient.dataManager.insert(params);
+    await milvusClient.dataManager.flush({
+      collection_names: [COLLECTION_NAME],
+    });
   });
 
   afterAll(async () => {
-    await milvusClient.dropCollection({
+    await milvusClient.collectionManager.dropCollection({
       collection_name: COLLECTION_NAME,
     });
   });
 
   it("Expr Vector Search on ", async () => {
-    const res = await milvusClient.search({
+    const res = await milvusClient.dataManager.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       expr: "",
