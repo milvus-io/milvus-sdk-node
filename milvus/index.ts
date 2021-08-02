@@ -18,19 +18,13 @@ import {
   StatisticsResponse,
 } from "./types/Response";
 
-import {
-  CreateIndexReq,
-  DescribeIndexReq,
-  DropIndexReq,
-  GetIndexBuildProgressReq,
-  GetIndexStateReq,
-} from "./types/Index";
 import { QueryReq, SearchReq, SearchRes } from "./types/Search";
 import { checkCollectionFields } from "./utils/Validate";
 import { DataType, DataTypeMap, DslType } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
 import { Collection } from "./Collection";
 import { Partition } from "./Partition";
+import { Index } from "./MilvusIndex";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 export class MilvusClient {
@@ -38,6 +32,7 @@ export class MilvusClient {
   vectorTypes: number[];
   collectionManager: Collection;
   partitionManager: Partition;
+  indexManager: Index;
 
   /**
    * set grpc client here
@@ -62,6 +57,7 @@ export class MilvusClient {
     this.vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
     this.collectionManager = new Collection(this.client);
     this.partitionManager = new Partition(this.client);
+    this.indexManager = new Index(this.client);
   }
 
   /**
@@ -72,33 +68,6 @@ export class MilvusClient {
   async flush(data: FlushReq) {
     const res = await promisify(this.client, "Flush", data);
     return res;
-  }
-
-  async createIndex(data: CreateIndexReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, "CreateIndex", data);
-    return promise;
-  }
-
-  async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
-    const promise = await promisify(this.client, "DescribeIndex", data);
-    return promise;
-  }
-
-  async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
-    const promise = await promisify(this.client, "GetIndexState", data);
-    return promise;
-  }
-
-  async getIndexBuildProgress(
-    data: GetIndexBuildProgressReq
-  ): Promise<GetIndexBuildProgressResponse> {
-    const promise = await promisify(this.client, "GetIndexBuildProgress", data);
-    return promise;
-  }
-
-  async dropIndex(data: DropIndexReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, "DropIndex", data);
-    return promise;
   }
 
   async getDataByExpr(data: QueryReq) {

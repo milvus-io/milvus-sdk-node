@@ -9,7 +9,7 @@ const COLLECTION_NAME = GENERATE_NAME();
 
 describe("Collection Api", () => {
   beforeAll(async () => {
-    await milvusClient.createCollection({
+    await milvusClient.collectionManager.createCollection({
       collection_name: COLLECTION_NAME,
       fields: [
         {
@@ -32,18 +32,16 @@ describe("Collection Api", () => {
         },
       ],
     });
-
-    await milvusClient.loadCollection({ collection_name: COLLECTION_NAME });
   });
 
   afterAll(async () => {
-    await milvusClient.dropCollection({
+    await milvusClient.collectionManager.dropCollection({
       collection_name: COLLECTION_NAME,
     });
   });
 
   it(`Create Index`, async () => {
-    const res = await milvusClient.createIndex({
+    const res = await milvusClient.indexManager.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: "vector_01",
 
@@ -86,7 +84,7 @@ describe("Collection Api", () => {
   // });
 
   it(`Describe Index`, async () => {
-    const res = await milvusClient.describeIndex({
+    const res = await milvusClient.indexManager.describeIndex({
       collection_name: COLLECTION_NAME,
       field_name: "vector_01",
     });
@@ -95,7 +93,7 @@ describe("Collection Api", () => {
   });
 
   it(`Get Index State`, async () => {
-    const res = await milvusClient.getIndexState({
+    const res = await milvusClient.indexManager.getIndexState({
       collection_name: COLLECTION_NAME,
       field_name: "vector_01",
     });
@@ -104,7 +102,7 @@ describe("Collection Api", () => {
   });
 
   it(`Get Index progress`, async () => {
-    const res = await milvusClient.getIndexBuildProgress({
+    const res = await milvusClient.indexManager.getIndexBuildProgress({
       collection_name: COLLECTION_NAME,
       field_name: "vector_01",
       index_name: "_default_idx",
@@ -114,7 +112,7 @@ describe("Collection Api", () => {
   });
 
   it(`Drop Index `, async () => {
-    const res = await milvusClient.dropIndex({
+    const res = await milvusClient.indexManager.dropIndex({
       collection_name: COLLECTION_NAME,
       field_name: "vector_01",
     });
@@ -123,7 +121,7 @@ describe("Collection Api", () => {
   });
 
   it(`Describe Index should be not exist`, async () => {
-    const res = await milvusClient.describeIndex({
+    const res = await milvusClient.indexManager.describeIndex({
       collection_name: COLLECTION_NAME,
       field_name: "vector_01",
     });

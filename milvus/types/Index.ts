@@ -1,4 +1,7 @@
-import { KeyValuePair } from "./Common";
+interface KeyValuePair {
+  key: "index_type" | "metric_type" | "params";
+  value: string;
+}
 
 export interface CreateIndexReq {
   collection_name: string;
