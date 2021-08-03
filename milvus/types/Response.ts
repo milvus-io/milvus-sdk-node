@@ -112,6 +112,8 @@ export interface GetIndexStateResponse {
 
 export interface GetIndexBuildProgressResponse {
   status: ResStatus;
+  indexed_rows: number;
+  total_rows: number;
 }
 
 export interface MutationResult {

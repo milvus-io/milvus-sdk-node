@@ -1,4 +1,4 @@
-interface KeyValuePair {
+export interface CreateIndexParam {
   key: "index_type" | "metric_type" | "params";
   value: string;
 }
@@ -6,7 +6,7 @@ interface KeyValuePair {
 export interface CreateIndexReq {
   collection_name: string;
   field_name: string;
-  extra_params: KeyValuePair[];
+  extra_params: CreateIndexParam[];
 }
 
 export interface DescribeIndexReq {

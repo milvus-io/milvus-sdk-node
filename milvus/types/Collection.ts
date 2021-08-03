@@ -1,11 +1,16 @@
-import { DataType, KeyValuePair, MsgBase, MsgType } from "./Common";
+import { DataType } from "./Common";
+
+export interface FieldTypeParam {
+  key: "dim";
+  value: string;
+}
 
 export interface FieldType {
   name: string;
   description: string;
   data_type?: DataType;
   is_primary_key?: boolean;
-  type_params?: KeyValuePair[];
+  type_params?: FieldTypeParam[];
   autoID?: boolean;
 }
 

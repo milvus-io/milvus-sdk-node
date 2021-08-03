@@ -30,22 +30,21 @@ export class Data extends Client {
    * if field type is binary, the vector data length need to be dimension / 8query
    * fields_data: [{id:1,age:2,time:3,face:[1,2,3,4]}]
    *
-   * hash_keys: Not support yet. transfer primary key value to hash , let's figure out how to use it.
+   * hash_keys: Node sdk just pass to grpc right now. transfer primary key value to hash , let's figure out how to use it.
    * num_rows: The row length you want to insert.
    */
   async insert(data: InsertReq): Promise<MutationResult> {
     const { collection_name } = data;
-    //
     const collectionInfo = await this.collectionManager.describeCollection({
       collection_name,
     });
+
     if (collectionInfo.status.error_code !== ErrorCode.SUCCESS) {
       throw new Error(collectionInfo.status.reason);
     }
 
     // Tip: The field data sequence need same with collectionInfo.schema.fields.
-    // If primarykey is autoid = true, need to filter it.
-    // And is
+    // If primarykey is autoid = true, user can not insert the data
     const fieldsData = collectionInfo.schema.fields
       .filter((v) => !v.is_primary_key || !v.autoID)
       .map((v) => ({
@@ -55,7 +54,6 @@ export class Data extends Client {
         value: [] as number[],
       }));
 
-    console.log(collectionInfo.schema.fields);
     // the actual data we pass to milvus grpc
     const params: any = { ...data, num_rows: data.fields_data.length };
 
@@ -155,7 +153,6 @@ export class Data extends Client {
 
   /**
    * We are not support dsl type in node sdk because milvus will no longer support it too.
-   * todo: add binary vector search
    * @param data
    * @returns
    */
@@ -273,6 +270,11 @@ export class Data extends Client {
     return res;
   }
 
+  /**
+   * Get data by expr. Now we only support like: fieldname in [id1,id2,id3]
+   * @param data
+   * @returns
+   */
   async getDataByExpr(data: QueryReq) {
     const promise = await promisify(this.client, "Query", data);
     return promise;

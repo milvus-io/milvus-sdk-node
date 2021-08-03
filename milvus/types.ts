@@ -7,6 +7,7 @@ export type {
   ReleaseLoadCollectionReq,
   DescribeCollectionReq,
   FieldType,
+  FieldTypeParam,
   ShowCollectionsType,
   ShowCollectionsReq,
 } from "./types/Collection";
@@ -29,6 +30,7 @@ export type {
   GetIndexStateReq,
   CreateIndexReq,
   DescribeIndexReq,
+  CreateIndexParam,
 } from "./types/Index";
 
 export type {
@@ -58,4 +60,4 @@ export type {
   CollectionSchema,
   FieldSchema,
 } from "./types/Response";
-export type { SearchRes, SearchReq } from "./types/Search";
+export type { SearchRes, SearchReq, SearchParam } from "./types/Search";
