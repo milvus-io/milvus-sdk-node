@@ -94,7 +94,7 @@ export interface ShowPartitionsResponse extends TimeStampArray {
   partitionIDs: number[];
 }
 
-interface IndexDescription {
+export interface IndexDescription {
   index_name: string;
   indexID: number;
   params: KeyValuePair[];
