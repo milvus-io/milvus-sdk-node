@@ -32,6 +32,8 @@ export class Data extends Client {
    *
    * hash_keys: Node sdk just pass to grpc right now. transfer primary key value to hash , let's figure out how to use it.
    * num_rows: The row length you want to insert.
+   *
+   * After insert data you may need flush this collection.
    */
   async insert(data: InsertReq): Promise<MutationResult> {
     const { collection_name } = data;
@@ -67,12 +69,11 @@ export class Data extends Client {
         if (!target) {
           throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
         }
-        // if is vector field, value should be array. so we need concat it.
         const isVector = this.vectorTypes.includes(
           DataTypeMap[target.type.toLowerCase()]
         );
 
-        // milvus will not check binary dim, so we need check it in sdk.
+        // Check dimension is match when is's BinaryVector
         if (
           DataTypeMap[target.type.toLowerCase()] === DataType.BinaryVector &&
           v[name].length !== target.dim / 8
@@ -80,6 +81,8 @@ export class Data extends Client {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
+        // if is vector field, value should be array. so we need concat it.
+        // but array.concat is slow, we need for loop to push the value one by one
         if (isVector) {
           for (let val of v[name]) {
             target.value.push(val);
@@ -91,7 +94,7 @@ export class Data extends Client {
     });
 
     params.fields_data = fieldsData.map((v) => {
-      // milvus return string for field type, so we define the map to the value we need.
+      // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may casue we cant find value.
       const type = DataTypeMap[v.type.toLowerCase()];
       if (!type) {
@@ -165,6 +168,8 @@ export class Data extends Client {
     const collectionInfo = await this.collectionManager.describeCollection({
       collection_name: data.collection_name,
     });
+
+    // anns_field is the vector field column user want to compare.
     const vectorFieldName = findKeyValue(data.search_params, "anns_field");
     const targetField = collectionInfo.schema.fields.find(
       (v) => v.name === vectorFieldName
@@ -178,7 +183,7 @@ export class Data extends Client {
     const dimension =
       vectorType === DataType.BinaryVector ? Number(dim) / 8 : Number(dim);
 
-    if (data.vectors[0].length !== dimension) {
+    if (!data.vectors[0] || data.vectors[0].length !== dimension) {
       throw new Error(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
     }
 
