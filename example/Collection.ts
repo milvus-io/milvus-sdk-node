@@ -4,7 +4,7 @@ import { DataType } from "../milvus/types/Common";
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
-
+console.log(milvusClient.getSdkVersion());
 const test = async () => {
   const createRes = await collectionManager.createCollection({
     collection_name: COLLECTION_NAME,
