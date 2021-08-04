@@ -37,4 +37,17 @@ function copyFolderRecursiveSync(source, target) {
   }
 }
 
+function removeDistPackageJson(source) {
+  try {
+    fs.unlinkSync(source);
+    //file removed
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 copyFolderRecursiveSync("./grpc-proto", "./dist");
+
+// if dist has package.json need delete it.
+// otherwise npm publish will use package.json inside dist then will missing files.
+removeDistPackageJson("./dist/package.json");
