@@ -4,7 +4,7 @@ on:
   release:
     types: [released]
     branches:
-      - v2.x
+      - main
 
 jobs:
   publish:
