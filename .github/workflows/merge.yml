@@ -3,7 +3,7 @@ name: Node sdk 2.x merge
 on:
   push:
     branches:
-      - v2.x
+      - main
 
 jobs:
   publish:
