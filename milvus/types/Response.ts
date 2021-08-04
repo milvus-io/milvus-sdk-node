@@ -94,7 +94,7 @@ export interface ShowPartitionsResponse extends TimeStampArray {
   partitionIDs: number[];
 }
 
-interface IndexDescription {
+export interface IndexDescription {
   index_name: string;
   indexID: number;
   params: KeyValuePair[];
@@ -112,6 +112,8 @@ export interface GetIndexStateResponse {
 
 export interface GetIndexBuildProgressResponse {
   status: ResStatus;
+  indexed_rows: number;
+  total_rows: number;
 }
 
 export interface MutationResult {

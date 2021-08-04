@@ -11,7 +11,7 @@ const COLLECTION_NAME = GENERATE_NAME();
 
 describe("Search Api", () => {
   beforeAll(async () => {
-    await milvusClient.createCollection({
+    await milvusClient.collectionManager.createCollection({
       collection_name: COLLECTION_NAME,
       fields: [
         {
@@ -39,7 +39,7 @@ describe("Search Api", () => {
         },
       ],
     });
-    await milvusClient.loadCollection({
+    await milvusClient.collectionManager.loadCollection({
       collection_name: COLLECTION_NAME,
     });
     const fields = [
@@ -64,18 +64,20 @@ describe("Search Api", () => {
       fields_data: vectorsData,
     };
 
-    await milvusClient.insert(params);
-    await milvusClient.flush({ collection_names: [COLLECTION_NAME] });
+    await milvusClient.dataManager.insert(params);
+    await milvusClient.dataManager.flush({
+      collection_names: [COLLECTION_NAME],
+    });
   });
 
   afterAll(async () => {
-    await milvusClient.dropCollection({
+    await milvusClient.collectionManager.dropCollection({
       collection_name: COLLECTION_NAME,
     });
   });
 
   it("Expr Search", async () => {
-    const res = await milvusClient.search({
+    const res = await milvusClient.dataManager.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       expr: "time > 2",

@@ -15,7 +15,7 @@ const PARTITION_NAME = "test";
 describe("Insert data Api", () => {
   beforeAll(async () => {
     // create collection autoid = false and float_vector
-    await milvusClient.createCollection({
+    await milvusClient.collectionManager.createCollection({
       collection_name: COLLECTION_NAME,
       fields: [
         {
@@ -45,7 +45,7 @@ describe("Insert data Api", () => {
     });
 
     // create collection autoid = true and float_vector
-    await milvusClient.createCollection({
+    await milvusClient.collectionManager.createCollection({
       collection_name: COLLECTION_NAME_AUTO_ID,
       fields: [
         {
@@ -77,7 +77,7 @@ describe("Insert data Api", () => {
 
     // create collection autoid = false and binary_vector
 
-    await milvusClient.createCollection({
+    await milvusClient.collectionManager.createCollection({
       collection_name: BINARY_COLLECTION_NAME,
       fields: [
         {
@@ -101,22 +101,22 @@ describe("Insert data Api", () => {
       ],
     });
 
-    await milvusClient.createPartition({
+    await milvusClient.partitionManager.createPartition({
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
     });
   });
 
   afterAll(async () => {
-    await milvusClient.dropCollection({
+    await milvusClient.collectionManager.dropCollection({
       collection_name: COLLECTION_NAME,
     });
 
-    await milvusClient.dropCollection({
+    await milvusClient.collectionManager.dropCollection({
       collection_name: BINARY_COLLECTION_NAME,
     });
 
-    await milvusClient.dropCollection({
+    await milvusClient.collectionManager.dropCollection({
       collection_name: COLLECTION_NAME_AUTO_ID,
     });
   });
@@ -140,10 +140,11 @@ describe("Insert data Api", () => {
       fields_data: vectorsData,
     };
 
-    const res = await milvusClient.insert(params);
+    const res = await milvusClient.dataManager.insert(params);
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
+
   it(`Insert Data on float field expect success`, async () => {
     const fields = [
       {
@@ -168,8 +169,10 @@ describe("Insert data Api", () => {
       fields_data: vectorsData,
     };
 
-    const res = await milvusClient.insert(params);
-    await milvusClient.loadCollection({ collection_name: COLLECTION_NAME });
+    const res = await milvusClient.dataManager.insert(params);
+    await milvusClient.collectionManager.loadCollection({
+      collection_name: COLLECTION_NAME,
+    });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -195,7 +198,7 @@ describe("Insert data Api", () => {
     };
 
     try {
-      await milvusClient.insert(params);
+      await milvusClient.dataManager.insert(params);
     } catch (error) {
       expect(error.message).toContain("Insert fail");
     }
@@ -226,7 +229,7 @@ describe("Insert data Api", () => {
     };
 
     try {
-      await milvusClient.insert(params);
+      await milvusClient.dataManager.insert(params);
     } catch (error) {
       expect(error.message).toContain("Insert fail");
     }
@@ -253,7 +256,7 @@ describe("Insert data Api", () => {
     };
 
     try {
-      await milvusClient.insert(params);
+      await milvusClient.dataManager.insert(params);
     } catch (error) {
       console.log(error);
       expect(error.message).toContain("Insert fail");
@@ -261,7 +264,7 @@ describe("Insert data Api", () => {
   });
 
   it("Query data expect success", async () => {
-    const res = await milvusClient.getDataByExpr({
+    const res = await milvusClient.dataManager.getDataByExpr({
       collection_name: COLLECTION_NAME,
       expr: "age in [1,2,3,4,5,6,7,8]",
       output_fields: ["age"],

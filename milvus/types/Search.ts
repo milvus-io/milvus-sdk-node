@@ -1,26 +1,17 @@
-import {
-  DataType,
-  DslType,
-  KeyValuePair,
-  NumberArrayId,
-  StringArrayId,
-} from "./Common";
+import { DataType } from "./Common";
 import { ResStatus } from "./Response";
 
-// export interface PlaceholderValue {
-//   tag:string;
-//   type: 0 | 100 | 101;
-//   values: []
-//   // values is a 2d-array, every array contains a vector
-//   repeated bytes values = 3;
-// }
+export interface SearchParam {
+  key: "anns_field" | "topk" | "metric_type" | "params";
+  value: string;
+}
 
 export interface SearchReq {
   collection_name: string;
   partition_names?: string[];
   expr?: string;
   // dsl_type: DslType;
-  search_params: KeyValuePair[];
+  search_params: SearchParam[];
   vectors: number[][];
   output_fields?: string[];
   vector_type: DataType.BinaryVector | DataType.FloatVector;
