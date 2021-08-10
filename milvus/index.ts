@@ -6,7 +6,7 @@ import { Collection } from "./Collection";
 import { Partition } from "./Partition";
 import { Index } from "./MilvusIndex";
 import { Data } from "./Data";
-import packageJson from "../package.json";
+import sdkInfo from "../sdk.json";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 export class MilvusClient {
@@ -48,7 +48,7 @@ export class MilvusClient {
 
   getSdkVersion() {
     return {
-      version: packageJson.version,
+      version: sdkInfo.version,
     };
   }
 }

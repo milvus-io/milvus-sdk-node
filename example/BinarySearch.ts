@@ -1,8 +1,10 @@
-import { MilvusClient } from "../milvus/index";
+// import { MilvusClient } from "../milvus/index";
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { generateInsertData } from "../utils";
 import { InsertReq } from "../milvus/types/Insert";
+import { MilvusClient } from "milvus-test-nodes";
+
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 

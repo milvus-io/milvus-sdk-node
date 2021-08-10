@@ -1,8 +1,9 @@
-var fs = require("fs");
-var path = require("path");
+const fs = require("fs");
+const path = require("path");
+const packageJson = require("./package.json");
 
 function copyFileSync(source, target) {
-  var targetFile = target;
+  let targetFile = target;
 
   // If target is a directory, a new file with the same name will be created
   if (fs.existsSync(target)) {
@@ -15,10 +16,10 @@ function copyFileSync(source, target) {
 }
 
 function copyFolderRecursiveSync(source, target) {
-  var files = [];
+  let files = [];
 
   // Check if folder needs to be created or integrated
-  var targetFolder = path.join(target, path.basename(source));
+  let targetFolder = path.join(target, path.basename(source));
   if (!fs.existsSync(targetFolder)) {
     fs.mkdirSync(targetFolder);
   }
@@ -27,7 +28,7 @@ function copyFolderRecursiveSync(source, target) {
   if (fs.lstatSync(source).isDirectory()) {
     files = fs.readdirSync(source);
     files.forEach(function (file) {
-      var curSource = path.join(source, file);
+      let curSource = path.join(source, file);
       if (fs.lstatSync(curSource).isDirectory()) {
         copyFolderRecursiveSync(curSource, targetFolder);
       } else {
@@ -46,8 +47,24 @@ function removeDistPackageJson(source) {
   }
 }
 
+function writeSdkJson(path) {
+  try {
+    const version = packageJson.version;
+    const content = {
+      version,
+    };
+    let data = JSON.stringify(content);
+    fs.writeFileSync(path, data);
+  } catch (err) {
+    throw new Error(err);
+  }
+}
+
 copyFolderRecursiveSync("./grpc-proto", "./dist");
 
 // if dist has package.json need delete it.
 // otherwise npm publish will use package.json inside dist then will missing files.
 removeDistPackageJson("./dist/package.json");
+
+// Because of we dont need package.json in dist folder, so we can write sdk info into sdk.json file.
+writeSdkJson("./dist/sdk.json");
