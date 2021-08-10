@@ -1,4 +1,4 @@
-import protobuf from "@grpc/proto-loader/node_modules/protobufjs";
+import protobuf from "protobufjs";
 import { promisify } from "../utils";
 import { Client } from "./Client";
 import { Collection } from "./Collection";

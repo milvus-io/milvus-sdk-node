@@ -1,4 +1,4 @@
-import protobuf from "@grpc/proto-loader/node_modules/protobufjs";
+import protobuf from "protobufjs";
 import { promisify } from "../utils";
 import { ERROR_REASONS } from "./const/ErrorReason";
 import {
