@@ -7,11 +7,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc --declaration && node helper.js",
+    "build": "tsc --declaration && node build.js",
     "test": "jest",
     "coverage": "jest --coverage=true",
     "example": "npx ts-node",
-    "doc": "npx typedoc --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme",
+    "doc": "rm -rf docs && npx typedoc && node doc.js",
     "doc-json": "npx typedoc milvus --json"
   },
   "dependencies": {
