@@ -155,7 +155,7 @@ export class Data extends Client {
   }
 
   /**
-   * We are not support dsl type in node sdk because milvus will no longer support it too.
+   * vector similarity search
    * @param data
    * @returns
    */

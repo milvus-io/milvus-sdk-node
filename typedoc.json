@@ -1,0 +1,12 @@
+{
+  "entryPoints": [
+    "milvus/Documentation.ts",
+    "milvus/types"
+  ],
+  "out": "docs",
+  "exclude": [
+    "./milvus/utils/*.ts",
+    "./milvus/const/*.ts",
+    "./milvus/types.ts"
+  ]
+}

@@ -11,7 +11,7 @@
     "test": "jest",
     "coverage": "jest --coverage=true",
     "example": "npx ts-node",
-    "doc": "npx typedoc milvus --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme",
+    "doc": "npx typedoc --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme",
     "doc-json": "npx typedoc milvus --json"
   },
   "dependencies": {

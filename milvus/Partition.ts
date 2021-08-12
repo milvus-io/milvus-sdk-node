@@ -68,7 +68,7 @@ export class Partition extends Client {
   }
 
   /**
-   * Load partition data, then you can search.
+   * Load partition data into cache
    * @param data
    * @returns
    */
@@ -78,7 +78,7 @@ export class Partition extends Client {
   }
 
   /**
-   * If you want to ignore some partitions when search, you can release some partitions
+   * Release some partitions data from cache, then you can not search these data
    * @param data
    * @returns
    */
