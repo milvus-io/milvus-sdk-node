@@ -1,9 +1,10 @@
 name: Milvus2 Node sdk check
 
 on:
-  push:
+  pull_request:
     branches:
-      - nameczz/dev
+      - main
+    types: [opened]
 
 jobs:
   publish:
@@ -23,4 +24,9 @@ jobs:
       - name: Run Test
         run: |
           yarn
-          yarn test
+          yarn coverage
+
+      - name: Send to codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: bash <(curl -s https://codecov.io/bash)
