@@ -27,10 +27,6 @@ describe("Collection Api", () => {
               key: "dim",
               value: "128",
             },
-            {
-              key: "metric_type",
-              value: "L2",
-            },
           ],
         },
         {
@@ -150,10 +146,6 @@ describe("Collection Api", () => {
             {
               key: "dim",
               value: "128",
-            },
-            {
-              key: "metric_type",
-              value: "L2",
             },
           ],
         },
