@@ -6,11 +6,11 @@ import {
   DescribeCollectionReq,
   DropCollectionReq,
   GetCollectionStatisticsReq,
-  HasCollectionReq,
   LoadCollectionReq,
   ReleaseLoadCollectionReq,
   ShowCollectionsReq,
   ShowCollectionsType,
+  HasCollectionReq,
 } from "./types/Collection";
 import {
   BoolResponse,
@@ -31,7 +31,6 @@ export class Collection extends Client {
    * This method is used to create collection
    *
    * @param data use to provide collection information to be created.
-   *
    * @return Status
    */
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
@@ -80,14 +79,23 @@ export class Collection extends Client {
 
   /**
    * Check collection exist or not
-   * @param data
+   *
+   * @param {Object} __namedParameters - asdasd
+   * @param {string} __namedParameters.collection_name Collection name in milvus
+   *
    * @returns
    */
-  async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
-    if (!data.collection_name) {
+  async hasCollection({
+    collection_name,
+  }: HasCollectionReq): Promise<BoolResponse> {
+    if (!collection_name) {
       throw new Error(ERROR_REASONS.HAS_COLLECTION_CHECK);
     }
-    const promise = await promisify(this.client, "HasCollection", data);
+    const promise = await promisify(
+      this.client,
+      "HasCollection",
+      collection_name
+    );
     return promise;
   }
 

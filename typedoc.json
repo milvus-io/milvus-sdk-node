@@ -1,6 +1,6 @@
 {
   "entryPoints": [
-    "milvus/Documentation.ts",
+    "milvus/Collection.ts",
     "milvus/types"
   ],
   "out": "docs",

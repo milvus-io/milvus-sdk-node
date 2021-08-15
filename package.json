@@ -11,12 +11,14 @@
     "test": "jest",
     "coverage": "jest --coverage=true",
     "example": "npx ts-node",
-    "doc": "rm -rf docs && npx typedoc && node doc.js",
+    "doc": "rm -rf docs && npx typedoc ",
     "doc-json": "npx typedoc milvus --json"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.2.12",
     "@grpc/proto-loader": "^0.6.0",
+    "@microsoft/api-documenter": "^7.13.39",
+    "@microsoft/api-extractor": "^7.18.5",
     "protobufjs": "^6.11.2"
   },
   "devDependencies": {
