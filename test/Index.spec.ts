@@ -86,7 +86,6 @@ describe("Collection Api", () => {
   it(`Describe Index`, async () => {
     const res = await milvusClient.indexManager.describeIndex({
       collection_name: COLLECTION_NAME,
-      field_name: "vector_01",
     });
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -95,7 +94,6 @@ describe("Collection Api", () => {
   it(`Get Index State`, async () => {
     const res = await milvusClient.indexManager.getIndexState({
       collection_name: COLLECTION_NAME,
-      field_name: "vector_01",
     });
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -104,8 +102,6 @@ describe("Collection Api", () => {
   it(`Get Index progress`, async () => {
     const res = await milvusClient.indexManager.getIndexBuildProgress({
       collection_name: COLLECTION_NAME,
-      field_name: "vector_01",
-      index_name: "_default_idx",
     });
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
