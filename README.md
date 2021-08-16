@@ -45,7 +45,7 @@ Node: v12+
 | insert                  | false |         Insert data into milvus          |
 | search                  | false |         Vector similarity search         |
 | flush                   | false |                Flush Data                |
-| getDataByExpr           | false |             Get data by expr             |
+| query                   | false |             Get data by expr             |
 
 ## Example
 

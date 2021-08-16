@@ -264,7 +264,7 @@ describe("Insert data Api", () => {
   });
 
   it("Query data expect success", async () => {
-    const res = await milvusClient.dataManager.getDataByExpr({
+    const res = await milvusClient.dataManager.query({
       collection_name: COLLECTION_NAME,
       expr: "age in [1,2,3,4,5,6,7,8]",
       output_fields: ["age"],

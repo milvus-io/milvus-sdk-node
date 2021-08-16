@@ -6,7 +6,13 @@ import { ERROR_REASONS } from "./const/ErrorReason";
 
 import { DataType, DataTypeMap, DslType } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
-import { ErrorCode, MutationResult, SearchResults } from "./types/Response";
+import {
+  ErrorCode,
+  FlushResult,
+  MutationResult,
+  QueryResult,
+  SearchResults,
+} from "./types/Response";
 import { QueryReq, SearchReq, SearchRes } from "./types/Search";
 import { findKeyValue } from "./utils";
 import {
@@ -26,14 +32,38 @@ export class Data extends Client {
     this.vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
     this.collectionManager = collectionManager;
   }
+
   /**
-   * if field type is binary, the vector data length need to be dimension / 8query
-   * fields_data: [{id:1,age:2,time:3,face:[1,2,3,4]}]
+   * Insert data into milvus
    *
-   * hash_keys: Node sdk just pass to grpc right now. transfer primary key value to hash , let's figure out how to use it.
-   * num_rows: The row length you want to insert.
+   * @param data
+   *  | Property                | Type                   |           Description              |
+   *  | :---------------------- | :--------------------  | :-------------------------------:  |
+   *  | collection_name         | string                 |       Milvus Collection name       |
+   *  | partition_name(optional)| string                 |       Milvus Partition name       |
+   *  | fields_data             | { [x: string]: any }[] |      field type is binary, the vector data length need to be dimension / 8query    |
+   *  | hash_keys(optional)    | Number[]               |  It's hash value depend on primarykey value       |
    *
-   * After insert data you may need flush this collection.
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------:  |
+   *  | status        |  { error_code: number,reason:string }|
+   *  | succ_index    |        Insert successful index array      |
+   *  | err_index    |        Insert failed index array      |
+   *  | IDs    |        Insert successful id array      |
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).dataManager.insert({
+   *    collection_name: COLLECTION_NAME,
+   *    fields_data: [{
+   *      vector_field: [1,2,2,4],
+   *      scalar_field: 1
+   *    }]
+   *  });
+   * ```
    */
   async insert(data: InsertReq): Promise<MutationResult> {
     const { collection_name } = data;
@@ -156,8 +186,44 @@ export class Data extends Client {
 
   /**
    * vector similarity search
+   *
    * @param data
-   * @returns
+   *  | Property                | Type                   |           Description              |
+   *  | :---------------------- | :--------------------  | :-------------------------------:  |
+   *  | collection_name         | string                 |       Milvus Collection name       |
+   *  | partition_names(optional)| string[]              |       Milvus Partition name array       |
+   *  | expr(optional)           | string                |      scalar field filter    |
+   *  | search_params            | SearchParam[]         |  SearchParam:  {key: "anns_field" | "topk" | "metric_type" | "params";value: string;}   |
+   *  | vectors                  | number[][]            |  The vector value you want to search   |
+   *  | output_fields(optional)  | string[]              |  Define function will return which fields data  |
+   *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
+
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------:  |
+   *  | status        |  { error_code: number,reason:string }|
+   *  | succ_index    |        Insert successful index array      |
+   *  | err_index    |        Insert failed index array      |
+   *  | IDs    |        Insert successful id array      |
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).dataManager.search({
+   *   collection_name: COLLECTION_NAME,
+   *   expr: "",
+   *   vectors: [[1, 2, 3, 4]],
+   *   search_params: [
+   *     { key: "anns_field", value: "float_vector" },
+   *     { key: "topk", value: "4" },
+   *     { key: "metric_type", value: "IP" },
+   *     { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
+   *   ],
+   *   output_fields: ["age", "time"],
+   *   vector_type: 100,
+   *  });
+   * ```
    */
   async search(data: SearchReq): Promise<SearchResults> {
     const root = await protobuf.load(protoPath);
@@ -266,21 +332,62 @@ export class Data extends Client {
   }
 
   /**
-   * After insert vector data, need flush .
+   * Flush
+   *
    * @param data
-   * @returns
+   *  | Property              | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------:  |
+   *  | collection_names        | string[] |       Milvus Collection name array      |
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------:  |
+   *  | status        |  { error_code: number,reason:string }|
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).dataManager.flush({
+   *     collection_names: [COLLECTION_NAME],
+   *  });
+   * ```
    */
-  async flush(data: FlushReq) {
+  async flush(data: FlushReq): Promise<FlushResult> {
     const res = await promisify(this.client, "Flush", data);
     return res;
   }
 
   /**
-   * Get data by expr. Now we only support like: fieldname in [id1,id2,id3]
+   * Query milvus data. Now we only support like: fieldname in [id1,id2,id3]
+   *
    * @param data
-   * @returns
+   *  | Property                     | Type   |           Description              |
+   *  | :--------------------------- | :----  | :-------------------------------:  |
+   *  | collection_name              | string |       Milvus Collection name      |
+   *  | expr                         | string |       Scalar fields filter      |
+   *  | partitions_names(optional)   | string[] |       Milvus partition name array      |
+   *  | output_fields                | string[] |       Collection fields you want to return    |
+   *
+   *
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------:  |
+   *  | status        |  { error_code: number,reason:string } |
+   *  | fields_data   |  All fields data you defined in output_fields |
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).dataManager.query({
+   *    collection_name: COLLECTION_NAME,
+   *    expr: "age in [1,2,3,4,5,6,7,8]",
+   *    output_fields: ["age"],
+   *  });
+   * ```
    */
-  async getDataByExpr(data: QueryReq) {
+  async query(data: QueryReq): Promise<QueryResult> {
     const promise = await promisify(this.client, "Query", data);
     return promise;
   }
