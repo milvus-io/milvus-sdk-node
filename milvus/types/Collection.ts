@@ -32,6 +32,9 @@ export interface CreateCollectionReq {
 }
 
 export interface HasCollectionReq {
+  /**
+   * @param collection_name collection name string
+   */
   collection_name: string;
 }
 
