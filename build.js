@@ -40,7 +40,9 @@ function copyFolderRecursiveSync(source, target) {
 
 function removeDistPackageJson(source) {
   try {
-    fs.unlinkSync(source);
+    if (fs.existsSync(source)) {
+      fs.unlinkSync(source);
+    }
     //file removed
   } catch (err) {
     console.error(err);

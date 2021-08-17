@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "tsc --declaration && node build.js",
-    "test": "jest",
+    "test": "yarn build && jest",
     "coverage": "jest --coverage=true",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc && node doc",
