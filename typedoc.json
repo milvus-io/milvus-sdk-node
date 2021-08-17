@@ -1,0 +1,9 @@
+{
+  "entryPoints": [
+    "milvus/Collection.ts",
+    "milvus/Data.ts",
+    "milvus/Partition.ts",
+    "milvus/MilvusIndex.ts"
+  ],
+  "out": "docs"
+}

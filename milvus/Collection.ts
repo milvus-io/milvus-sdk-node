@@ -6,11 +6,11 @@ import {
   DescribeCollectionReq,
   DropCollectionReq,
   GetCollectionStatisticsReq,
-  HasCollectionReq,
   LoadCollectionReq,
   ReleaseLoadCollectionReq,
   ShowCollectionsReq,
   ShowCollectionsType,
+  HasCollectionReq,
 } from "./types/Collection";
 import {
   BoolResponse,
@@ -26,13 +26,53 @@ import { Client } from "./Client";
 
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
 
+/**
+ * [All collection operation example](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
+ */
 export class Collection extends Client {
   /**
-   * This method is used to create collection
+   * Create collection in milvus.
    *
-   * @param data use to provide collection information to be created.
+   * @param data
+   *  | Property                | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | createCollection        | string |        collection name       |
+   *  | description             | string |        collection description       |
+   *  | fields        | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> |     Field data      |
    *
-   * @return Status
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason          |
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).collectionManager.createCollection({
+   *    collection_name: 'my_collection',
+   *    fields: [
+   *      {
+   *        name: "vector_01",
+   *        description: "vector field",
+   *        data_type: DataType.FloatVect,
+   *        type_params: [
+   *          {
+   *            key: "dim",
+   *            value: "128",
+   *          },
+   *        ],
+   *      },
+   *      {
+   *        name: "age",
+   *        data_type: DataType.Int64,
+   *        autoID: true,
+   *        is_primary_key: true,
+   *        description: "",
+   *      },
+   *  ],
+   *  });
+   * ```
    */
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
     const { fields, collection_name, description } = data;
@@ -79,21 +119,60 @@ export class Collection extends Client {
   }
 
   /**
-   * Check collection exist or not
+   * Check if collection exists or not.
+   *
    * @param data
-   * @returns
+   *  | Property              | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------  |
+   *  | status        |  { error_code: number,reason:string }|
+   *  | value         |        true or false                 |
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).collectionManager.hasCollection({
+   *     collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
     if (!data.collection_name) {
       throw new Error(ERROR_REASONS.HAS_COLLECTION_CHECK);
     }
-    const promise = await promisify(this.client, "HasCollection", data);
+    const promise = await promisify(
+      this.client,
+      "HasCollection",
+      data.collection_name
+    );
     return promise;
   }
 
   /**
-   * List all collections
-   * @returns
+   * List all collections with their names and ids.
+   *
+   * @param data
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | type        | enum |       All -> 0, Loaded -> 1       |
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------  |
+   *  | status        |  { error_code: number,reason:string }|
+   *  | collection_names         |        collection name array                |
+   *  | collection_ids         |        collection id array                |
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).collectionManager.showCollections();
+   * ```
    */
   async showCollections(
     data?: ShowCollectionsReq
@@ -105,9 +184,28 @@ export class Collection extends Client {
   }
 
   /**
-   * Get collection detail, like name ,schema
+   * Get collection detail, eg: name, schema.
+   *
    * @param data
-   * @returns DescribeCollectionResponse
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |        collection name       |
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------  |
+   *  | status        |  { error_code: number,reason:string }|
+   *  | schema        |        all fields information in this collection                |
+   *  | collectionID  |        collection id                |
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).collectionManager.describeCollection({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async describeCollection(
     data: DescribeCollectionReq
@@ -117,10 +215,28 @@ export class Collection extends Client {
   }
 
   /**
-   * Will return collection statistics.
-   * Only row_count for now.
+   * Get collection statistics information.
+   *
    * @param data
-   * @returns
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------  |
+   *  | status        |  { error_code: number,reason:string }|
+   *  | stats        |        [{key: string,value:string}]                |
+   *  | data  |        transform **stats** to { row_count: 0 }               |
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).collectionManager.getCollectionStatistics({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async getCollectionStatistics(
     data: GetCollectionStatisticsReq
@@ -137,9 +253,26 @@ export class Collection extends Client {
   }
 
   /**
-   * Befor search need load collection to cache.
-   * @param data collection name
-   * @returns
+   * Before search, it requires loading collection to cache.
+   *
+   * @param data
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | Number      |
+   *  | reason        | Error reason|   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).collectionManager.loadCollection({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
     const promise = await promisify(this.client, "LoadCollection", data);
@@ -148,9 +281,26 @@ export class Collection extends Client {
 
   /**
    * If you want to reduce your cache usage, you can release some collections.
-   * But you cant search in unload collections.
+   * But you can't search in unloaded collections.
+   *
    * @param data
-   * @returns
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | Number      |
+   *  | reason        | Error reason|   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).collectionManager.releaseCollection({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus> {
     const promise = await promisify(this.client, "ReleaseCollection", data);
@@ -158,9 +308,26 @@ export class Collection extends Client {
   }
 
   /**
-   * Drop collection, also will drop all datas in this collection.
-   * @param data collection name
-   * @returns
+   * Drop collection, it will drop all data in the collection as well.
+   *
+   * @param data
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | Number      |
+   *  | reason        | Error reason|   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).collectionManager.dropCollection({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async dropCollection(data: DropCollectionReq): Promise<ResStatus> {
     const promise = await promisify(this.client, "DropCollection", data);

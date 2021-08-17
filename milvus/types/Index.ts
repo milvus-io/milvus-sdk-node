@@ -22,7 +22,7 @@ export interface GetIndexStateReq {
 export interface GetIndexBuildProgressReq {
   collection_name: string;
   field_name?: string;
-  index_name: string;
+  index_name?: string;
 }
 
 export interface DropIndexReq {

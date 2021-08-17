@@ -21,7 +21,7 @@ export class MilvusClient {
    * CollectionManager: control collection crud api
    * PartitionManager: control partition crud api
    * IndexManager: control index crud api
-   * DataManager: Search | GetDataByExpr | Insert | Flush
+   * DataManager: Search | Query | Insert | Flush
    * @param ip milvus ip address like: 127.0.0.1:19530
    */
   constructor(ip: string) {

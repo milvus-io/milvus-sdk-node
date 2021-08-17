@@ -16,11 +16,45 @@ import {
 
 export class Index extends Client {
   /**
-   * Creat index on vector field, it will be async progress.
-   * Binary field support index: https://milvus.io/docs/v2.0.0/metric.md#binary
-   * Float field support index: https://milvus.io/docs/v2.0.0/metric.md#floating
+   * Create index on vector field, it will be async progress.
+   *
    * @param data
-   * @returns
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |        collection name       |
+   *  | field_name         | string |        field name       |
+   *  | extra_params       | CreateIndexParam[] | parameters: {key: "index_type" \| "metric_type" \| "params";value:string}      |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason|
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).collectionManager.createIndex({
+   *     collection_name: 'my_collection',
+   *     field_name: "vector_01",
+
+   *     extra_params: [
+   *       {
+   *         key: "index_type",
+   *         value: "BIN_IVF_FLAT",
+   *       },
+   *       {
+   *         key: "metric_type",
+   *         value: "HAMMING",
+   *       },
+   *       {
+   *         key: "params",
+   *         value: JSON.stringify({ nlist: 1024 }),
+   *       },
+   *     ],
+   *   });
+   * ```
    */
   async createIndex(data: CreateIndexReq): Promise<ResStatus> {
     const promise = await promisify(this.client, "CreateIndex", data);
@@ -28,9 +62,27 @@ export class Index extends Client {
   }
 
   /**
-   * Get index infos.
+   * Get index information, only get latest index for now.
+   *
    * @param data
-   * @returns
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number,reason:string } |
+   *  | index_descriptions        | index information |
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).indexManager.describeIndex({
+   *     collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
     const promise = await promisify(this.client, "DescribeIndex", data);
@@ -38,9 +90,27 @@ export class Index extends Client {
   }
 
   /**
-   * Get index build state.
+   * Get index building state
+   *
    * @param data
-   * @returns
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number,reason:string } |
+   *  | state         | index building state |
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).indexManager.getIndexState({
+   *     collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
     const promise = await promisify(this.client, "GetIndexState", data);
@@ -49,21 +119,61 @@ export class Index extends Client {
 
   /**
    * Get index building progress.
-   * You can get indexed rows and total rows here
+   *
    * @param data
-   * @returns
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name       |
+   *
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number,reason:string } |
+   *  | indexed_rows  | building index success row count |
+   *  | total_rows    | total row count|
+   *
+   *
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).indexManager.getIndexBuildProgress({
+   *     collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async getIndexBuildProgress(
     data: GetIndexBuildProgressReq
   ): Promise<GetIndexBuildProgressResponse> {
+    // Now we dont have index name, just empty is fine
+    data.index_name = "";
     const promise = await promisify(this.client, "GetIndexBuildProgress", data);
     return promise;
   }
 
   /**
-   * Drop index, it will be async progress.
+   * Drop index
+   *
    * @param data
-   * @returns
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name       |
+   *
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason|
+   *
+   * ### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_IP).indexManager.dropIndex({
+   *     collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async dropIndex(data: DropIndexReq): Promise<ResStatus> {
     const promise = await promisify(this.client, "DropIndex", data);

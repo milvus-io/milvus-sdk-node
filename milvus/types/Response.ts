@@ -128,18 +128,6 @@ export interface MutationResult {
   IDs: StringArrayId | NumberArrayId;
 }
 
-interface FieldData {
-  type: DataType;
-  field_name: string;
-  scalars?: { [x: string]: any };
-  vectors?: {
-    dim: number;
-    float_vector?: {
-      data: number[];
-    };
-    binary_vector?: any;
-  };
-}
 export interface SearchResultData {
   score: number;
   id: string;
@@ -149,4 +137,18 @@ export interface SearchResultData {
 export interface SearchResults {
   status: ResStatus;
   results: SearchResultData[];
+}
+
+export interface FlushResult {
+  status: ResStatus;
+}
+
+export interface QueryResult {
+  status: ResStatus;
+  fields_data: {
+    type: DataType;
+    field_name: string;
+    field: any;
+    field_id: number;
+  }[];
 }

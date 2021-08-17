@@ -7,16 +7,18 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc --declaration && node helper.js",
+    "build": "tsc --declaration && node build.js",
     "test": "jest",
     "coverage": "jest --coverage=true",
     "example": "npx ts-node",
-    "doc": "npx typedoc milvus --theme ./node_modules/typedoc-neo-theme/bin/default --plugin typedoc-neo-theme",
+    "doc": "rm -rf docs && npx typedoc && node doc",
     "doc-json": "npx typedoc milvus --json"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.2.12",
     "@grpc/proto-loader": "^0.6.0",
+    "@microsoft/api-documenter": "^7.13.39",
+    "@microsoft/api-extractor": "^7.18.5",
     "protobufjs": "^6.11.2"
   },
   "devDependencies": {
