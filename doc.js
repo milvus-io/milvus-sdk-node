@@ -20,7 +20,12 @@ const formatDoc = async () => {
       .split(".")
       .filter((v, i) => i !== 1)
       .join(".");
-    fs.renameSync(curSource, `./docs/APi Reference/${name}`);
+    fs.renameSync(
+      curSource,
+      `./docs/APi Reference/${
+        name === "milvusindex.html" ? "index.html" : name
+      }`
+    );
   });
   fs.rmdirSync("./docs/classes", { recursive: true });
 };
