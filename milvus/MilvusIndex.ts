@@ -16,27 +16,27 @@ import {
 
 export class Index extends Client {
   /**
-   * Creat index on vector field, it will be async progress.
+   * Create index on vector field, it will be async progress.
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       Milvus Collection name       |
-   *  | field_name         | string |       Milvus field name       |
-   *  | extra_params       | CreateIndexParam[] | CreateIndexParam: {key: "index_type" | "metric_type" | "params";value:string}      |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |        collection name       |
+   *  | field_name         | string |        field name       |
+   *  | extra_params       | CreateIndexParam[] | parameters: {key: "index_type" \| "metric_type" \| "params";value:string}      |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason|
    *
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.createIndex({
-   *     collection_name: COLLECTION_NAME,
+   *     collection_name: 'my_collection',
    *     field_name: "vector_01",
 
    *     extra_params: [
@@ -62,16 +62,16 @@ export class Index extends Client {
   }
 
   /**
-   * Get index information, only get collection latest index for now.
+   * Get index information, only get latest index for now.
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       Milvus Collection name       |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name       |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
+   *  | :-------------| :--------  |
    *  | status        |  { error_code: number,reason:string } |
    *  | index_descriptions        | index information |
    *
@@ -80,7 +80,7 @@ export class Index extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).indexManager.describeIndex({
-   *     collection_name: COLLECTION_NAME,
+   *     collection_name: 'my_collection',
    *  });
    * ```
    */
@@ -94,12 +94,12 @@ export class Index extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       Milvus Collection name       |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name       |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
+   *  | :-------------| :--------  |
    *  | status        |  { error_code: number,reason:string } |
    *  | state         | index building state |
    *
@@ -108,7 +108,7 @@ export class Index extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).indexManager.getIndexState({
-   *     collection_name: COLLECTION_NAME,
+   *     collection_name: 'my_collection',
    *  });
    * ```
    */
@@ -122,13 +122,13 @@ export class Index extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       Milvus Collection name       |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name       |
    *
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
+   *  | :-------------| :--------  |
    *  | status        |  { error_code: number,reason:string } |
    *  | indexed_rows  | building index success row count |
    *  | total_rows    | total row count|
@@ -139,7 +139,7 @@ export class Index extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).indexManager.getIndexBuildProgress({
-   *     collection_name: COLLECTION_NAME,
+   *     collection_name: 'my_collection',
    *  });
    * ```
    */
@@ -157,21 +157,21 @@ export class Index extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       Milvus Collection name       |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name       |
    *
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason|
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).indexManager.dropIndex({
-   *     collection_name: COLLECTION_NAME,
+   *     collection_name: 'my_collection',
    *  });
    * ```
    */
