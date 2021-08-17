@@ -34,19 +34,19 @@ export class Data extends Client {
   }
 
   /**
-   * Insert data into milvus
+   * Insert data into milvus.
    *
    * @param data
    *  | Property                | Type                   |           Description              |
-   *  | :---------------------- | :--------------------  | :-------------------------------:  |
-   *  | collection_name         | string                 |       Milvus Collection name       |
-   *  | partition_name(optional)| string                 |       Milvus Partition name       |
+   *  | :---------------------- | :--------------------  | :-------------------------------  |
+   *  | collection_name         | string                 |       collection name       |
+   *  | partition_name(optional)| string                 |       partition name       |
    *  | fields_data             | { [x: string]: any }[] |      field type is binary, the vector data length need to be dimension / 8query    |
    *  | hash_keys(optional)    | Number[]               |  It's hash value depend on primarykey value       |
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
    *  | succ_index    |        Insert successful index array      |
    *  | err_index    |        Insert failed index array      |
@@ -189,18 +189,18 @@ export class Data extends Client {
    *
    * @param data
    *  | Property                | Type                   |           Description              |
-   *  | :---------------------- | :--------------------  | :-------------------------------:  |
-   *  | collection_name         | string                 |       Milvus Collection name       |
-   *  | partition_names(optional)| string[]              |       Milvus Partition name array       |
+   *  | :---------------------- | :--------------------  | :-------------------------------  |
+   *  | collection_name         | string                 |        collection name       |
+   *  | partition_names(optional)| string[]              |        partition name array       |
    *  | expr(optional)           | string                |      scalar field filter    |
-   *  | search_params            | SearchParam[]         |  SearchParam:  {key: "anns_field" | "topk" | "metric_type" | "params";value: string;}   |
-   *  | vectors                  | number[][]            |  The vector value you want to search   |
-   *  | output_fields(optional)  | string[]              |  Define function will return which fields data  |
+   *  | search_params            | SearchParam[]         |  search Params:  {key: "anns_field" \| "topk" \| "metric_type" \| "params";value: string;}   |
+   *  | vectors                  | number[][]            |  the vector value you want to search   |
+   *  | output_fields(optional)  | string[]              |  define function will return which fields data  |
    *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
 
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
    *  | succ_index    |        Insert successful index array      |
    *  | err_index    |        Insert failed index array      |
@@ -331,24 +331,24 @@ export class Data extends Client {
     };
   }
 
-  /**
-   * Flush
+  /** 
+   * Milvus temporarily stores the inserted vectors in the memory. Call flush() to flush them to the disk.
    *
    * @param data
    *  | Property              | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------:  |
-   *  | collection_names        | string[] |       Milvus Collection name array      |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | collection_names        | string[] |        collection name array      |
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).dataManager.flush({
-   *     collection_names: [COLLECTION_NAME],
+   *     collection_names: ['my_collection'],
    *  });
    * ```
    */
@@ -362,26 +362,26 @@ export class Data extends Client {
    *
    * @param data
    *  | Property                     | Type   |           Description              |
-   *  | :--------------------------- | :----  | :-------------------------------:  |
-   *  | collection_name              | string |       Milvus Collection name      |
-   *  | expr                         | string |       Scalar fields filter      |
-   *  | partitions_names(optional)   | string[] |       Milvus partition name array      |
-   *  | output_fields                | string[] |       Collection fields you want to return    |
+   *  | :--------------------------- | :----  | :-------------------------------  |
+   *  | collection_name              | string |        collection name      |
+   *  | expr                         | string |       scalar fields filter expression     |
+   *  | partitions_names(optional)   | string[] |        partition name array      |
+   *  | output_fields                | string[] |       collection fields you want to return    |
    *
    *
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string } |
-   *  | fields_data   |  All fields data you defined in output_fields |
+   *  | fields_data   |  all fields data you defined in output_fields |
    *
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).dataManager.query({
-   *    collection_name: COLLECTION_NAME,
+   *    collection_name: 'my_collection',
    *    expr: "age in [1,2,3,4,5,6,7,8]",
    *    output_fields: ["age"],
    *  });

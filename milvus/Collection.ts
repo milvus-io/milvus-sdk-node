@@ -31,32 +31,31 @@ const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
  */
 export class Collection extends Client {
   /**
-   * Create collection in milvus
+   * Create collection in milvus.
    *
    * @param data
    *  | Property                | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------:  |
-   *  | createCollection        | string |       Milvus Collection name       |
-   *  | description             | string |       Milvus Collection desc       |
-   *  | fields        | [FieldType](https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8){:target="_blank"} |     Vector field and scalar field infomation      |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | createCollection        | string |        collection name       |
+   *  | description             | string |        collection description       |
+   *  | fields        | [FieldType](https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8){:target="_blank"} |     Field data      |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason          |
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.createCollection({
-   *    collection_name: COLLECTION_NAME,
+   *    collection_name: 'my_collection',
    *    fields: [
    *      {
    *        name: "vector_01",
    *        description: "vector field",
-   *        data_type: DataType.FloatVect*or,
-
+   *        data_type: DataType.FloatVect,
    *        type_params: [
    *          {
    *            key: "dim",
@@ -120,16 +119,16 @@ export class Collection extends Client {
   }
 
   /**
-   * Check collection exist or not
+   * Check if collection exists or not.
    *
    * @param data
    *  | Property              | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------:  |
-   *  | collection_name        | string |       Milvus Collection name       |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
    *  | value         |        true or false                 |
    *
@@ -137,7 +136,7 @@ export class Collection extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.hasCollection({
-   *     collection_name: COLLECTION_NAME,
+   *     collection_name: 'my_collection',
    *  });
    * ```
    */
@@ -158,15 +157,15 @@ export class Collection extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
+   *  | :----------------- | :----  | :-------------------------------  |
    *  | type        | enum |       All -> 0, Loaded -> 1       |
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
-   *  | collection_names         |        Collection name array                |
-   *  | collection_ids         |        Collection id array                |
+   *  | collection_names         |        collection name array                |
+   *  | collection_ids         |        collection id array                |
    *
    *
    * ### Example
@@ -185,26 +184,26 @@ export class Collection extends Client {
   }
 
   /**
-   * Get collection detail, like name ,schema
+   * Get collection detail, eg: name, schema.
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name        | string |       Milvus Collection name       |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |        collection name       |
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
-   *  | schema        |        All fields information in this collection                |
-   *  | collectionID  |        Collection id                |
+   *  | schema        |        all fields information in this collection                |
+   *  | collectionID  |        collection id                |
    *
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.describeCollection({
-   *    collection_name: COLLECTION_NAME,
+   *    collection_name: 'my_collection',
    *  });
    * ```
    */
@@ -216,16 +215,16 @@ export class Collection extends Client {
   }
 
   /**
-   * Get Collection statistics information
+   * Get collection statistics information.
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name        | string |       Milvus Collection name       |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
    *  | stats        |        [{key: string,value:string}]                |
    *  | data  |        transform **stats** to { row_count: 0 }               |
@@ -235,7 +234,7 @@ export class Collection extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.getCollectionStatistics({
-   *    collection_name: COLLECTION_NAME,
+   *    collection_name: 'my_collection',
    *  });
    * ```
    */
@@ -254,16 +253,16 @@ export class Collection extends Client {
   }
 
   /**
-   * Befor search need load collection to cache.
+   * Before search, it requires loading collection to cache.
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name        | string |       Milvus Collection name       |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
+   *  | :-------------| :--------  |
    *  | error_code    | Number      |
    *  | reason        | Error reason|   *
    *
@@ -271,7 +270,7 @@ export class Collection extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.loadCollection({
-   *    collection_name: COLLECTION_NAME,
+   *    collection_name: 'my_collection',
    *  });
    * ```
    */
@@ -282,16 +281,16 @@ export class Collection extends Client {
 
   /**
    * If you want to reduce your cache usage, you can release some collections.
-   * But you cant search in unload collections.
+   * But you can't search in unloaded collections.
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name        | string |       Milvus Collection name       |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
+   *  | :-------------| :--------  |
    *  | error_code    | Number      |
    *  | reason        | Error reason|   *
    *
@@ -299,7 +298,7 @@ export class Collection extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.releaseCollection({
-   *    collection_name: COLLECTION_NAME,
+   *    collection_name: 'my_collection',
    *  });
    * ```
    */
@@ -309,16 +308,16 @@ export class Collection extends Client {
   }
 
   /**
-   * Drop collection, also will drop all datas in this collection.
+   * Drop collection, it will drop all data in the collection as well.
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name        | string |       Milvus Collection name       |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | string |       collection name       |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
+   *  | :-------------| :--------  |
    *  | error_code    | Number      |
    *  | reason        | Error reason|   *
    *
@@ -326,7 +325,7 @@ export class Collection extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.dropCollection({
-   *    collection_name: COLLECTION_NAME,
+   *    collection_name: 'my_collection',
    *  });
    * ```
    */

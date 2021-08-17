@@ -23,23 +23,23 @@ export class Partition extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       The collection you created   |
-   *  | partition_name     | string |       Partition name      |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name   |
+   *  | partition_name     | string |       partition name      |
    *
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|   *
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason|   *
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.createPartition({
-   *     collection_name: COLLECTION_NAME,
-   *     partition_name: PARTITION_NAME,
+   *     collection_name: 'my_collection',
+   *     partition_name: 'my_partition',
    *  });
    * ```
    */
@@ -53,14 +53,14 @@ export class Partition extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       The collection you created   |
-   *  | partition_name     | string |       Partition name      |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name   |
+   *  | partition_name     | string |       parititon name      |
    *
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
    *  | value         |        true or false                 |
    *
@@ -68,8 +68,8 @@ export class Partition extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.hasPartition({
-   *     collection_name: COLLECTION_NAME,
-   *     partition_name: PARTITION_NAME,
+   *     collection_name: 'my_collection',
+   *     partition_name: 'my_partition',
    *  });
    * ```
    */
@@ -83,23 +83,23 @@ export class Partition extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       The collection you created   |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name   |
    *
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
-   *  | partition_names         |        Partition name array                 |
-   *  | partitionIDs         |        Partition id array                 |
+   *  | partition_names         |        partition name array                 |
+   *  | partitionIDs         |        partition id array                 |
    *
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.showPartitions({
-   *     collection_name: COLLECTION_NAME,
+   *     collection_name: 'my_collection',
    *  });
    * ```
    */
@@ -115,13 +115,13 @@ export class Partition extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       The collection you created   |
-   *  | partition_name     | string |       Partition name      |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name   |
+   *  | partition_name     | string |       partition name      |
    *
    * @return
    *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------:  |
+   *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
    *  | stats        |        [{key: string,value:string}]                |
    *  | data  |        transform **stats** to { row_count: 0 }               |
@@ -131,7 +131,7 @@ export class Partition extends Client {
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.getPartitionStatistics({
-   *     collection_name: COLLECTION_NAME,
+   *     collection_name: 'my_collection',
    *     partition_name: "_default",
    *  });
    * ```
@@ -153,22 +153,22 @@ export class Partition extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       The collection you created   |
-   *  | partition_names     | string[] |       Partition name array      |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name   |
+   *  | partition_names     | string[] |       partition name array      |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|   *
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason|   *
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.loadPartitions({
-   *     collection_name: COLLECTION_NAME,
-   *     partition_names: [PARTITION_NAME],
+   *     collection_name: 'my_collection',
+   *     partition_names: ['my_partition'],
    *  });
    * ```
    */
@@ -182,22 +182,22 @@ export class Partition extends Client {
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       The collection you created   |
-   *  | partition_names    | string[] |       Partition name array    |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name   |
+   *  | partition_names    | string[] |       partition name array    |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|   *
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason|   *
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.releasePartitions({
-   *     collection_name: COLLECTION_NAME,
-   *     partition_names: [PARTITION_NAME],
+   *     collection_name: 'my_collection',
+   *     partition_names: ['my_partition'],
    *  });
    * ```
    */
@@ -213,26 +213,26 @@ export class Partition extends Client {
    * @returns
    */
   /**
-   * Drop partition will drop all data in this partition and _default partition can not dropped.
+   * Drop partition will drop all data in this partition and the _default partition can not dropped.
    *
    * @param data
    *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------:  |
-   *  | collection_name    | string |       The collection you created   |
-   *  | partition_name    | string |       Partition name     |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name    | string |       collection name   |
+   *  | partition_name    | string |       partition name     |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------:  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|   *
+   *  | :-------------| :--------  |
+   *  | error_code    | error code number      |
+   *  | reason        | reason|   *
    *
    * ### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.dropPartition({
-   *     collection_name: COLLECTION_NAME,
-   *     partition_name: PARTITION_NAME,
+   *     collection_name: 'my_collection',
+   *     partition_name: 'my_partition',
    *  });
    * ```
    */
