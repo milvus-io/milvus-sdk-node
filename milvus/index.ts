@@ -46,7 +46,7 @@ export class MilvusClient {
     this.dataManager = new Data(this.client, this.collectionManager);
   }
 
-  getSdkVersion() {
+  static getSdkVersion() {
     return {
       version: sdkInfo.version,
     };

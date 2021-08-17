@@ -1,0 +1,32 @@
+name: Milvus2 Node sdk check
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Run Milvus
+        run: |
+          wget https://raw.githubusercontent.com/milvus-io/milvus/fd84cf7c55fb63e66a066052897b1bd6d6e73830/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
+          docker-compose up -d
+
+      - name: Run Test
+        run: |
+          yarn
+          yarn coverage
+
+      - name: Send to codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: bash <(curl -s https://codecov.io/bash)
