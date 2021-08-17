@@ -1,4 +1,4 @@
-import { MilvusClient } from "../milvus/index";
+import { MilvusClient } from "../dist/milvus/index";
 
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
@@ -166,6 +166,7 @@ describe("Collection Api", () => {
     const res = await collectionManager.hasCollection({
       collection_name: COLLECTION_NAME,
     });
+    console.log("----has collection", res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.value).toEqual(true);
   });

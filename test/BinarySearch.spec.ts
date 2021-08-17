@@ -1,4 +1,4 @@
-import { MilvusClient } from "../milvus/index";
+import { MilvusClient } from "../dist/milvus/index";
 
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";

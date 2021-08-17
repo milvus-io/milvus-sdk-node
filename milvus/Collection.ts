@@ -144,11 +144,7 @@ export class Collection extends Client {
     if (!data.collection_name) {
       throw new Error(ERROR_REASONS.HAS_COLLECTION_CHECK);
     }
-    const promise = await promisify(
-      this.client,
-      "HasCollection",
-      data.collection_name
-    );
+    const promise = await promisify(this.client, "HasCollection", data);
     return promise;
   }
 

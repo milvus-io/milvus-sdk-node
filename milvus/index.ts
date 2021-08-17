@@ -1,6 +1,6 @@
 import path from "path";
 import * as protoLoader from "@grpc/proto-loader";
-import { loadPackageDefinition, credentials } from "@grpc/grpc-js";
+import { loadPackageDefinition, credentials, Client } from "@grpc/grpc-js";
 
 import { Collection } from "./Collection";
 import { Partition } from "./Partition";
@@ -10,7 +10,7 @@ import sdkInfo from "../sdk.json";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 export class MilvusClient {
-  client: any;
+  client: Client;
   collectionManager: Collection;
   partitionManager: Partition;
   indexManager: Index;
@@ -50,5 +50,11 @@ export class MilvusClient {
     return {
       version: sdkInfo.version,
     };
+  }
+
+  closeConnection() {
+    this.client.close();
+    // closed -> 4, connected -> 0
+    return this.client.getChannel().getConnectivityState(true);
   }
 }
