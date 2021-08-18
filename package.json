@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --declaration && node build.js",
     "test": "yarn build && jest",
-    "coverage": "yarn build && jest --coverage=true",
+    "coverage": "yarn build && jest --coverage=true --forceExit",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc && node doc",
     "doc-json": "npx typedoc milvus --json"
