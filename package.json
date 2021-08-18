@@ -1,7 +1,7 @@
 {
   "name": "@zilliz/milvus2-sdk-node",
   "author": "zizhao.chen@zilliz.com",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "main": "dist/milvus",
   "files": [
     "dist"
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --declaration && node build.js",
     "test": "yarn build && jest",
-    "coverage": "jest --coverage=true",
+    "coverage": "yarn build && jest --coverage=true --forceExit",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc && node doc",
     "doc-json": "npx typedoc milvus --json"
