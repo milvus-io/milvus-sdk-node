@@ -7,10 +7,11 @@ const path = require("path");
  */
 const formatDoc = async () => {
   fs.unlinkSync("./docs/modules.html");
-  fs.mkdirSync("./docs/Api Reference");
+  fs.mkdirSync("./docs/Api_Reference");
   fs.renameSync("./docs/index.html", "./docs/tutorial.html");
 
   fs.rmdirSync("./docs/modules", { recursive: true });
+  fs.rmdirSync("./docs/assets", { recursive: true });
 
   const source = "./docs/classes";
   let files = fs.readdirSync(source);
@@ -22,7 +23,7 @@ const formatDoc = async () => {
       .join(".");
     fs.renameSync(
       curSource,
-      `./docs/APi Reference/${
+      `./docs/APi_Reference/${
         name === "milvusindex.html" ? "index.html" : name
       }`
     );
