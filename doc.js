@@ -11,6 +11,7 @@ const formatDoc = async () => {
   fs.renameSync("./docs/index.html", "./docs/tutorial.html");
 
   fs.rmdirSync("./docs/modules", { recursive: true });
+  fs.rmdirSync("./docs/assets", { recursive: true });
 
   const source = "./docs/classes";
   let files = fs.readdirSync(source);
