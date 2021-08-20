@@ -20,7 +20,8 @@ export enum ShowCollectionsType {
 }
 
 export interface ShowCollectionsReq {
-  type: ShowCollectionsType;
+  type?: ShowCollectionsType;
+  collection_names?: string[];
 }
 
 export interface CreateCollectionReq {

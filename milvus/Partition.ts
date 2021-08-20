@@ -34,7 +34,7 @@ export class Partition extends Client {
    *  | error_code    | error code number      |
    *  | reason        | reason|   *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.createPartition({
@@ -64,7 +64,7 @@ export class Partition extends Client {
    *  | status        |  { error_code: number,reason:string }|
    *  | value         |        true or false                 |
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.hasPartition({
@@ -95,7 +95,7 @@ export class Partition extends Client {
    *  | partitionIDs         |        partition id array                 |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.showPartitions({
@@ -127,7 +127,7 @@ export class Partition extends Client {
    *  | data  |        transform **stats** to { row_count: 0 }               |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.getPartitionStatistics({
@@ -163,7 +163,7 @@ export class Partition extends Client {
    *  | error_code    | error code number      |
    *  | reason        | reason|   *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.loadPartitions({
@@ -192,7 +192,7 @@ export class Partition extends Client {
    *  | error_code    | error code number      |
    *  | reason        | reason|   *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.releasePartitions({
@@ -227,7 +227,7 @@ export class Partition extends Client {
    *  | error_code    | error code number      |
    *  | reason        | reason|   *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).partitionManager.dropPartition({

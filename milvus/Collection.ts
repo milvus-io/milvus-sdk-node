@@ -46,7 +46,7 @@ export class Collection extends Client {
    *  | error_code    | error code number      |
    *  | reason        | reason          |
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.createCollection({
@@ -132,7 +132,7 @@ export class Collection extends Client {
    *  | status        |  { error_code: number,reason:string }|
    *  | value         |        true or false                 |
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.hasCollection({
@@ -149,22 +149,25 @@ export class Collection extends Client {
   }
 
   /**
-   * List all collections with their names and ids.
+   * List all collections or get collection loaded status
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | type        | enum |       All -> 0, Loaded -> 1       |
+   *  | type(optional)        | enum |       All -> 0, Loaded -> 1       |
+   *  | collection_names(optional)        | string[] |       If type = Loaded,  will return collection_names inMemory_percentages     |
+   *
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
+   *  | status        |  { error_code: number,reason:string } |
    *  | collection_names         |        collection name array                |
    *  | collection_ids         |        collection id array                |
+   *  | inMemory_percentages         |        help you know collection loaded status                 |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.showCollections();
@@ -175,6 +178,7 @@ export class Collection extends Client {
   ): Promise<ShowCollectionsResponse> {
     const promise = await promisify(this.client, "ShowCollections", {
       type: data ? data.type : ShowCollectionsType.All,
+      collection_names: data?.collection_names || [],
     });
     return promise;
   }
@@ -195,7 +199,7 @@ export class Collection extends Client {
    *  | collectionID  |        collection id                |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.describeCollection({
@@ -226,7 +230,7 @@ export class Collection extends Client {
    *  | data  |        transform **stats** to { row_count: 0 }               |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.getCollectionStatistics({
@@ -262,7 +266,7 @@ export class Collection extends Client {
    *  | error_code    | Number      |
    *  | reason        | Error reason|   *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.loadCollection({
@@ -290,7 +294,7 @@ export class Collection extends Client {
    *  | error_code    | Number      |
    *  | reason        | Error reason|   *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.releaseCollection({
@@ -317,7 +321,7 @@ export class Collection extends Client {
    *  | error_code    | Number      |
    *  | reason        | Error reason|   *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.dropCollection({
