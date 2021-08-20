@@ -14,6 +14,7 @@ import {
 } from "./types/Collection";
 import {
   BoolResponse,
+  CollectionData,
   DescribeCollectionResponse,
   ResStatus,
   ShowCollectionsResponse,
@@ -180,6 +181,17 @@ export class Collection extends Client {
       type: data ? data.type : ShowCollectionsType.All,
       collection_names: data?.collection_names || [],
     });
+    const result: CollectionData[] = [];
+    promise.collection_names.forEach((name: string, index: number) => {
+      result.push({
+        name,
+        id: promise.collection_ids[index],
+        timestamp: promise.created_utc_timestamps[index],
+        loadedPercentage: promise.inMemory_percentages[index],
+      });
+    });
+    promise.data = result;
+
     return promise;
   }
 

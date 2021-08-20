@@ -182,7 +182,9 @@ describe("Collection Api", () => {
     const res = await collectionManager.showCollections();
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.collection_names).toContain(COLLECTION_NAME);
+    expect(res.data.filter((v) => v.name === COLLECTION_NAME).length).toEqual(
+      1
+    );
   });
 
   it(`Get Collection Statistics`, async () => {
@@ -219,7 +221,9 @@ describe("Collection Api", () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
-    expect(res.collection_names).toContain(LOAD_COLLECTION_NAME);
+    expect(
+      res.data.filter((v) => v.name === LOAD_COLLECTION_NAME).length
+    ).toEqual(1);
   });
 
   it(`Release Collection`, async () => {
