@@ -163,9 +163,7 @@ export class Collection extends Client {
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string } |
-   *  | collection_names         |        collection name array                |
-   *  | collection_ids         |        collection id array                |
-   *  | inMemory_percentages         |        help you know collection loaded status                 |
+   *  | data         |  Contain collection name, id , timestamp(utc created time),loadedPercentage(100 means loaded)      |
    *
    *
    * #### Example
