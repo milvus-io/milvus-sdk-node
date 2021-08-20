@@ -62,5 +62,6 @@ export type {
   IndexDescription,
   FlushResult,
   QueryResult,
+  CollectionData,
 } from "./types/Response";
 export type { SearchRes, SearchReq, SearchParam } from "./types/Search";
