@@ -52,10 +52,16 @@ export interface BoolResponse {
   value: Boolean;
 }
 
+export interface CollectionData {
+  name: string;
+  id: string;
+  timestamp: string;
+  loadedPercentage: string;
+}
+
 export interface ShowCollectionsResponse extends TimeStampArray {
   status: ResStatus;
-  collection_names: string[];
-  collection_ids: string[];
+  data: CollectionData[];
 }
 
 export interface FieldSchema {

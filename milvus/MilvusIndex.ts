@@ -32,7 +32,7 @@ export class Index extends Client {
    *  | reason        | reason|
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).collectionManager.createIndex({
@@ -76,7 +76,7 @@ export class Index extends Client {
    *  | index_descriptions        | index information |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).indexManager.describeIndex({
@@ -104,7 +104,7 @@ export class Index extends Client {
    *  | state         | index building state |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).indexManager.getIndexState({
@@ -135,7 +135,7 @@ export class Index extends Client {
    *
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).indexManager.getIndexBuildProgress({
@@ -167,7 +167,7 @@ export class Index extends Client {
    *  | error_code    | error code number      |
    *  | reason        | reason|
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).indexManager.dropIndex({

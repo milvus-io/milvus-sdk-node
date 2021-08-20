@@ -53,7 +53,7 @@ export class Data extends Client {
    *  | IDs    |        Insert successful id array      |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).dataManager.insert({
@@ -207,7 +207,7 @@ export class Data extends Client {
    *  | IDs    |        Insert successful id array      |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).dataManager.search({
@@ -331,7 +331,7 @@ export class Data extends Client {
     };
   }
 
-  /** 
+  /**
    * Milvus temporarily stores the inserted vectors in the memory. Call flush() to flush them to the disk.
    *
    * @param data
@@ -344,7 +344,7 @@ export class Data extends Client {
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).dataManager.flush({
@@ -377,7 +377,7 @@ export class Data extends Client {
    *  | fields_data   |  all fields data you defined in output_fields |
    *
    *
-   * ### Example
+   * #### Example
    *
    * ```
    *  new milvusClient(MILUVS_IP).dataManager.query({
