@@ -1,33 +1,16 @@
 import { MilvusClient } from "../milvus/index";
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
+import { genCollectionParams } from "../utils/test";
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
 console.log(MilvusClient.getSdkVersion());
 
 const test = async () => {
-  const createRes = await collectionManager.createCollection({
-    collection_name: COLLECTION_NAME,
-    fields: [
-      {
-        name: "vector_01",
-        description: "vector field",
-        data_type: DataType.FloatVector,
-
-        type_params: {
-          dim: "128",
-        },
-      },
-      {
-        name: "age",
-        data_type: DataType.Int64,
-        autoID: true,
-        is_primary_key: true,
-        description: "",
-      },
-    ],
-  });
+  const createRes = await collectionManager.createCollection(
+    genCollectionParams(COLLECTION_NAME, "128")
+  );
   console.log("--- create collection ---", createRes, COLLECTION_NAME);
 
   let res: any = await collectionManager.showCollections();

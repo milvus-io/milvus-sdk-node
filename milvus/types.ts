@@ -29,7 +29,6 @@ export type {
   GetIndexStateReq,
   CreateIndexReq,
   DescribeIndexReq,
-  CreateIndexParam,
 } from "./types/Index";
 
 export type {

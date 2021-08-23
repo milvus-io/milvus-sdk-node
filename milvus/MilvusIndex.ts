@@ -13,6 +13,7 @@ import {
   GetIndexBuildProgressReq,
   GetIndexStateReq,
 } from "./types/Index";
+import { parseToKeyValue } from "./utils/Format";
 
 export class Index extends Client {
   /**
@@ -23,7 +24,7 @@ export class Index extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | string |        collection name       |
    *  | field_name         | string |        field name       |
-   *  | extra_params       | CreateIndexParam[] | parameters: {key: "index_type" \| "metric_type" \| "params";value:string}      |
+   *  | extra_params       | object | parameters: { index_type: string; metric_type: string; params: string; };      |
    *
    * @return
    *  | Property      | Description |
@@ -38,26 +39,20 @@ export class Index extends Client {
    *  new milvusClient(MILUVS_IP).collectionManager.createIndex({
    *     collection_name: 'my_collection',
    *     field_name: "vector_01",
-
-   *     extra_params: [
-   *       {
-   *         key: "index_type",
-   *         value: "BIN_IVF_FLAT",
-   *       },
-   *       {
-   *         key: "metric_type",
-   *         value: "HAMMING",
-   *       },
-   *       {
-   *         key: "params",
-   *         value: JSON.stringify({ nlist: 1024 }),
-   *       },
-   *     ],
-   *   });
+   *     extra_params: {
+   *       index_type: "IVF_FLAT",
+   *       metric_type: "IP",
+   *       params: JSON.stringify({ nlist: 10 }),
+   *     },
+   *  });
    * ```
    */
   async createIndex(data: CreateIndexReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, "CreateIndex", data);
+    const params = {
+      ...data,
+      extra_params: parseToKeyValue(data.extra_params),
+    };
+    const promise = await promisify(this.client, "CreateIndex", params);
     return promise;
   }
 

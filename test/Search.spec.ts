@@ -5,40 +5,16 @@ import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { InsertReq } from "../milvus/types/Insert";
 import { generateInsertData } from "../utils";
+import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 describe("Search Api", () => {
   beforeAll(async () => {
-    await milvusClient.collectionManager.createCollection({
-      collection_name: COLLECTION_NAME,
-      fields: [
-        {
-          name: "float_vector",
-          description: "vector field",
-          data_type: DataType.FloatVector,
-          type_params: [
-            {
-              key: "dim",
-              value: "4",
-            },
-          ],
-        },
-        {
-          name: "age",
-          data_type: DataType.Int64,
-          autoID: false,
-          is_primary_key: true,
-          description: "",
-        },
-        {
-          name: "time",
-          data_type: DataType.Int32,
-          description: "",
-        },
-      ],
-    });
+    await milvusClient.collectionManager.createCollection(
+      genCollectionParams(COLLECTION_NAME, "4", DataType.FloatVector, false)
+    );
     await milvusClient.collectionManager.loadCollection({
       collection_name: COLLECTION_NAME,
     });
@@ -46,15 +22,11 @@ describe("Search Api", () => {
       {
         isVector: true,
         dim: 4,
-        name: "float_vector",
+        name: VECTOR_FIELD_NAME,
       },
       {
         isVector: false,
         name: "age",
-      },
-      {
-        isVector: false,
-        name: "time",
       },
     ];
     const vectorsData = generateInsertData(fields, 10);
@@ -80,15 +52,15 @@ describe("Search Api", () => {
     const res = await milvusClient.dataManager.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
-      expr: "time > 2",
+      expr: "age > 2",
       vectors: [[1, 2, 3, 4]],
       search_params: [
-        { key: "anns_field", value: "float_vector" },
+        { key: "anns_field", value: VECTOR_FIELD_NAME },
         { key: "topk", value: "2" },
         { key: "metric_type", value: "L2" },
         { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
       ],
-      output_fields: ["age", "time"],
+      output_fields: ["age"],
       vector_type: DataType.FloatVector,
     });
     console.log(res);

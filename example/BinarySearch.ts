@@ -3,44 +3,14 @@ import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { generateInsertData } from "../utils";
 import { InsertReq } from "../milvus/types/Insert";
-
+import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
-  let res: any = await milvusClient.collectionManager.createCollection({
-    collection_name: COLLECTION_NAME,
-    fields: [
-      {
-        name: "float_vector",
-        description: "vector field",
-        data_type: DataType.BinaryVector,
-        type_params: [
-          {
-            key: "dim",
-            value: "128",
-          },
-        ],
-      },
-      {
-        name: "age",
-        data_type: DataType.Int64,
-        autoID: false,
-        is_primary_key: true,
-        description: "",
-      },
-      {
-        name: "time",
-        data_type: DataType.Int32,
-        description: "",
-      },
-      {
-        name: "c",
-        data_type: DataType.Int32,
-        description: "",
-      },
-    ],
-  });
+  let res: any = await milvusClient.collectionManager.createCollection(
+    genCollectionParams(COLLECTION_NAME, "128", DataType.BinaryVector)
+  );
   console.log("-----create collection----", res);
   // need load collection before search
   await milvusClient.collectionManager.loadCollection({
@@ -50,19 +20,7 @@ const test = async () => {
     {
       isVector: true,
       dim: 16,
-      name: "float_vector",
-    },
-    {
-      isVector: false,
-      name: "age",
-    },
-    {
-      isVector: false,
-      name: "time",
-    },
-    {
-      isVector: false,
-      name: "c",
+      name: VECTOR_FIELD_NAME,
     },
   ];
   const vectorsData = generateInsertData(fields, 10);
@@ -79,12 +37,11 @@ const test = async () => {
     expr: "",
     vectors: [[4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3]],
     search_params: [
-      { key: "anns_field", value: "float_vector" },
+      { key: "anns_field", value: VECTOR_FIELD_NAME },
       { key: "topk", value: "4" },
       { key: "metric_type", value: "Hamming" },
       { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
     ],
-    output_fields: ["age", "time"],
     vector_type: DataType.BinaryVector,
   });
   console.log("----search result-----,", result);
