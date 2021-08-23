@@ -22,7 +22,7 @@ import {
 } from "./types/Response";
 import { checkCollectionFields } from "./utils/Validate";
 import path from "path";
-import { formatKeyValueData } from "./utils/Format";
+import { formatKeyValueData, parseToKeyValue } from "./utils/Format";
 import { Client } from "./Client";
 
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -96,11 +96,10 @@ export class Collection extends Client {
       description: description || "",
       fields: [],
     };
-
     data.fields.forEach((field) => {
       const value = {
         ...field,
-        typeParams: field.type_params,
+        typeParams: parseToKeyValue(field.type_params),
         dataType: field.data_type,
         isPrimaryKey: field.is_primary_key,
       };

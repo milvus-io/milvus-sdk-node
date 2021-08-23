@@ -7,7 +7,6 @@ export type {
   ReleaseLoadCollectionReq,
   DescribeCollectionReq,
   FieldType,
-  FieldTypeParam,
   ShowCollectionsType,
   ShowCollectionsReq,
 } from "./types/Collection";

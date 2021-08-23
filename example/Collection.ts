@@ -15,12 +15,9 @@ const test = async () => {
         description: "vector field",
         data_type: DataType.FloatVector,
 
-        type_params: [
-          {
-            key: "dim",
-            value: "128",
-          },
-        ],
+        type_params: {
+          dim: "128",
+        },
       },
       {
         name: "age",
