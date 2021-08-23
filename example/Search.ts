@@ -36,9 +36,9 @@ const test = async () => {
     collection_name: COLLECTION_NAME,
     field_name: VECTOR_FIELD_NAME,
     extra_params: {
-      index_type: "ANNOY",
-      metric_type: "IP",
-      params: JSON.stringify({ n_trees: 1024 }),
+      index_type: "IVF_FLAT",
+      metric_type: "L2",
+      params: JSON.stringify({ nlist: 10 }),
     },
   });
   console.log(indexRes);
@@ -46,17 +46,19 @@ const test = async () => {
   await milvusClient.collectionManager.loadCollection({
     collection_name: COLLECTION_NAME,
   });
+  console.log(vectorsData[0][VECTOR_FIELD_NAME]);
   const result = await milvusClient.dataManager.search({
     collection_name: COLLECTION_NAME,
     // partition_names: [],
-    expr: "",
-    vectors: [[1, 2, 3, 4]],
-    search_params: [
-      { key: "anns_field", value: VECTOR_FIELD_NAME },
-      { key: "topk", value: "4" },
-      { key: "metric_type", value: "Jaccard" },
-      { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
-    ],
+    // expr: "",
+    vectors: [vectorsData[0][VECTOR_FIELD_NAME]],
+    search_params: {
+      anns_field: VECTOR_FIELD_NAME,
+      topk: "4",
+      metric_type: "L2",
+      params: JSON.stringify({ nprobe: 1024 }),
+    },
+
     vector_type: DataType.FloatVector,
   });
   console.log("search result", result);

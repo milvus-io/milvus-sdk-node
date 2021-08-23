@@ -54,12 +54,12 @@ describe("Search Api", () => {
       // partition_names: [],
       expr: "age > 2",
       vectors: [[1, 2, 3, 4]],
-      search_params: [
-        { key: "anns_field", value: VECTOR_FIELD_NAME },
-        { key: "topk", value: "2" },
-        { key: "metric_type", value: "L2" },
-        { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
-      ],
+      search_params: {
+        anns_field: VECTOR_FIELD_NAME,
+        topk: "4",
+        metric_type: "L2",
+        params: JSON.stringify({ nprobe: 1024 }),
+      },
       output_fields: ["age"],
       vector_type: DataType.FloatVector,
     });

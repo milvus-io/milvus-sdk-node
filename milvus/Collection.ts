@@ -57,12 +57,9 @@ export class Collection extends Client {
    *        name: "vector_01",
    *        description: "vector field",
    *        data_type: DataType.FloatVect,
-   *        type_params: [
-   *          {
-   *            key: "dim",
-   *            value: "128",
-   *          },
-   *        ],
+   *        type_params: {
+   *          dim: "8"
+   *        }
    *      },
    *      {
    *        name: "age",

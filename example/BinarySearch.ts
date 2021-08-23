@@ -36,12 +36,12 @@ const test = async () => {
     // partition_names: [],
     expr: "",
     vectors: [[4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3]],
-    search_params: [
-      { key: "anns_field", value: VECTOR_FIELD_NAME },
-      { key: "topk", value: "4" },
-      { key: "metric_type", value: "Hamming" },
-      { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
-    ],
+    search_params: {
+      anns_field: VECTOR_FIELD_NAME,
+      topk: "4",
+      metric_type: "Hamming",
+      params: JSON.stringify({ nprobe: 1024 }),
+    },
     vector_type: DataType.BinaryVector,
   });
   console.log("----search result-----,", result);

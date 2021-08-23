@@ -20,6 +20,7 @@ import {
   parseFloatVectorToBytes,
 } from "./utils/Blob";
 import path from "path";
+import { parseToKeyValue } from "./utils/Format";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 
@@ -193,7 +194,7 @@ export class Data extends Client {
    *  | collection_name         | string                 |        collection name       |
    *  | partition_names(optional)| string[]              |        partition name array       |
    *  | expr(optional)           | string                |      scalar field filter    |
-   *  | search_params            | SearchParam[]         |  search Params:  {key: "anns_field" \| "topk" \| "metric_type" \| "params";value: string;}   |
+   *  | search_params            | object        |   anns_field: vector field name <br/> topk: search result counts <br/> [metric_type](https://milvus.io/docs/v2.0.0/metric.md#floating#Similarity-Metrics) <br/>params: search params   |
    *  | vectors                  | number[][]            |  the vector value you want to search   |
    *  | output_fields(optional)  | string[]              |  define function will return which fields data  |
    *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
@@ -214,12 +215,12 @@ export class Data extends Client {
    *   collection_name: COLLECTION_NAME,
    *   expr: "",
    *   vectors: [[1, 2, 3, 4]],
-   *   search_params: [
-   *     { key: "anns_field", value: "float_vector" },
-   *     { key: "topk", value: "4" },
-   *     { key: "metric_type", value: "IP" },
-   *     { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
-   *   ],
+   *   search_params: {
+   *     anns_field: VECTOR_FIELD_NAME,
+   *     topk: "4",
+   *     metric_type: "L2",
+   *     params: JSON.stringify({ nprobe: 1024 }),
+   *   },
    *   output_fields: ["age", "time"],
    *   vector_type: 100,
    *  });
@@ -236,9 +237,8 @@ export class Data extends Client {
     });
 
     // anns_field is the vector field column user want to compare.
-    const vectorFieldName = findKeyValue(data.search_params, "anns_field");
     const targetField = collectionInfo.schema.fields.find(
-      (v) => v.name === vectorFieldName
+      (v) => v.name === data.search_params.anns_field
     );
     if (!targetField) {
       throw new Error(ERROR_REASONS.SEARCH_NOT_FIND_VECTOR_FIELD);
@@ -281,6 +281,7 @@ export class Data extends Client {
       dsl: data.expr || "",
       dsl_type: DslType.BoolExprV1,
       placeholder_group: placeholderGroupBytes,
+      search_params: parseToKeyValue(data.search_params),
     });
     const results: any[] = [];
     if (promise.results) {
