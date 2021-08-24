@@ -185,23 +185,23 @@ export class Data extends Client {
   }
 
   /**
-   * vector similarity search
+   * Perform vector similarity search.
    *
    * @param data
    *  | Property                | Type                   |           Description              |
    *  | :---------------------- | :--------------------  | :-------------------------------  |
-   *  | collection_name         | string                 |        collection name       |
-   *  | partition_names(optional)| string[]              |        partition name array       |
-   *  | expr(optional)           | string                |      scalar field filter    |
-   *  | search_params            | SearchParam[]         |  search Params:  {key: "anns_field" \| "topk" \| "metric_type" \| "params";value: string;}   |
-   *  | vectors                  | number[][]            |  the vector value you want to search   |
-   *  | output_fields(optional)  | string[]              |  define function will return which fields data  |
+   *  | collection_name         | String                 |        Collection name       |
+   *  | partition_names(optional)| String[]              |        Array of partition names       |
+   *  | expr(optional)           | String                |      Scalar field filter expression    |
+   *  | search_params            | SearchParam[]         |  Search Params:  {key: "anns_field" \| "topk" \| "metric_type" \| "params";value: string;}   |
+   *  | vectors                  | Number[][]            |  Original vector to search with  |
+   *  | output_fields(optional)  | String[]              |  Vector field to be returned  |
    *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
 
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
+   *  | status        |  { error_code: number, reason: string }|
    *  | succ_index    |        Insert successful index array      |
    *  | err_index    |        Insert failed index array      |
    *  | IDs    |        Insert successful id array      |
@@ -332,17 +332,17 @@ export class Data extends Client {
   }
 
   /**
-   * Milvus temporarily stores the inserted vectors in the memory. Call flush() to flush them to the disk.
+   * Milvus temporarily buffers the newly inserted vectors in the cache. Call `flush()` to persist them to the object storage.
    *
    * @param data
-   *  | Property              | Type   |           Description              |
+   *  | Property                | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collection_names        | string[] |        collection name array      |
+   *  | collection_names        | String[] |        Array of collection names      |
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
+   *  | status        |  { error_code: number, reason: string }|
    *
    * #### Example
    *
@@ -358,15 +358,15 @@ export class Data extends Client {
   }
 
   /**
-   * Query milvus data. Now we only support like: fieldname in [id1,id2,id3]
+   * Query vector data in Milvus. Current release of Milvus only supports expression as fieldname in [id1,id2,id3]
    *
    * @param data
    *  | Property                     | Type   |           Description              |
    *  | :--------------------------- | :----  | :-------------------------------  |
-   *  | collection_name              | string |        collection name      |
-   *  | expr                         | string |       scalar fields filter expression     |
-   *  | partitions_names(optional)   | string[] |        partition name array      |
-   *  | output_fields                | string[] |       collection fields you want to return    |
+   *  | collection_name              | String |        Collection name      |
+   *  | expr                         | String |       Scalar field filter expression     |
+   *  | partitions_names(optional)   | String[] |       Array of partition names      |
+   *  | output_fields                | String[] |       Vector field to be returned    |
    *
    *
    *
@@ -374,7 +374,7 @@ export class Data extends Client {
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string } |
-   *  | fields_data   |  all fields data you defined in output_fields |
+   *  | fields_data   |  Data of all fields that you defined in `output_fields` |
    *
    *
    * #### Example
