@@ -34,23 +34,23 @@ export class Data extends Client {
   }
 
   /**
-   * Insert data into milvus.
+   * Insert data into Milvus.
    *
    * @param data
    *  | Property                | Type                   |           Description              |
    *  | :---------------------- | :--------------------  | :-------------------------------  |
-   *  | collection_name         | string                 |       collection name       |
-   *  | partition_name(optional)| string                 |       partition name       |
-   *  | fields_data             | { [x: string]: any }[] |      field type is binary, the vector data length need to be dimension / 8query    |
-   *  | hash_keys(optional)    | Number[]               |  It's hash value depend on primarykey value       |
+   *  | collection_name         | String                 |       Collection name       |
+   *  | partition_name(optional)| String                 |       Partition name       |
+   *  | fields_data             | { [x: string]: any }[] |      If the field type is binary, the vector data length needs to be dimension / 8   |
+   *  | hash_keys(optional)    | Number[]               |  The hash value depends on the primarykey value       |
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
-   *  | succ_index    |        Insert successful index array      |
-   *  | err_index    |        Insert failed index array      |
-   *  | IDs    |        Insert successful id array      |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | succ_index    |  Index array of the successfully inserted data      |
+   *  | err_index    |   Index array of the unsuccessfully inserted data      |
+   *  | IDs    |        ID array of the successfully inserted data      |
    *
    *
    * #### Example
@@ -75,8 +75,8 @@ export class Data extends Client {
       throw new Error(collectionInfo.status.reason);
     }
 
-    // Tip: The field data sequence need same with collectionInfo.schema.fields.
-    // If primarykey is autoid = true, user can not insert the data
+    // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
+    // If primarykey is set `autoid = true`, you cannot insert the data.
     const fieldsData = collectionInfo.schema.fields
       .filter((v) => !v.is_primary_key || !v.autoID)
       .map((v) => ({
@@ -86,12 +86,12 @@ export class Data extends Client {
         value: [] as number[],
       }));
 
-    // the actual data we pass to milvus grpc
+    // The actual data we pass to Milvus gRPC.
     const params: any = { ...data, num_rows: data.fields_data.length };
 
-    // user pass data is row data, we need parse to column data for milvus
+    // You need to parse the original row data to column data for Milvus.
     data.fields_data.forEach((v, i) => {
-      // the key need to be field name, so we get all names in a row.
+      // Set the key as the field name to get all names in a row.
       const fieldNames = Object.keys(v);
 
       fieldNames.forEach((name) => {
@@ -103,7 +103,7 @@ export class Data extends Client {
           DataTypeMap[target.type.toLowerCase()]
         );
 
-        // Check dimension is match when is's BinaryVector
+        // Check if the dimension is matched when the data type is BinaryVector.
         if (
           DataTypeMap[target.type.toLowerCase()] === DataType.BinaryVector &&
           v[name].length !== target.dim / 8
@@ -111,7 +111,7 @@ export class Data extends Client {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
-        // if is vector field, value should be array. so we need concat it.
+        // Value in vector field should be array. Therefore you need concat it.
         // but array.concat is slow, we need for loop to push the value one by one
         if (isVector) {
           for (let val of v[name]) {
