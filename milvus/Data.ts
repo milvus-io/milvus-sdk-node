@@ -195,7 +195,7 @@ export class Data extends Client {
    *  | expr(optional)           | String                |      Scalar field filter expression    |
    *  | search_params            | SearchParam[]         |  Search Params:  {key: "anns_field" \| "topk" \| "metric_type" \| "params";value: string;}   |
    *  | vectors                  | Number[][]            |  Original vector to search with  |
-   *  | output_fields(optional)  | String[]              |  Vector field to be returned  |
+   *  | output_fields(optional)  | String[]              |  Return scalar field  |
    *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
 
    * @return
@@ -366,7 +366,7 @@ export class Data extends Client {
    *  | collection_name              | String |        Collection name      |
    *  | expr                         | String |       Scalar field filter expression     |
    *  | partitions_names(optional)   | String[] |       Array of partition names      |
-   *  | output_fields                | String[] |       Vector field to be returned    |
+   *  | output_fields                | String[] |       Vector or scalar field to be returned    |
    *
    *
    *
