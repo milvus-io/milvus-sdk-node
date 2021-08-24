@@ -19,20 +19,20 @@ import { formatKeyValueData } from "./utils/Format";
 
 export class Partition extends Client {
   /**
-   * Create partition in milvus collection
+   * Create a partition in a collection.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name   |
-   *  | partition_name     | string |       partition name      |
+   *  | collection_name    | String |       Collection name   |
+   *  | partition_name     | String |       Partition name      |
    *
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | error code number      |
-   *  | reason        | reason|   *
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause |   *
    *
    * #### Example
    *
@@ -49,20 +49,20 @@ export class Partition extends Client {
   }
 
   /**
-   * Check partition exist or not in one collection
+   * Check if a partition exists in a collection.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name   |
-   *  | partition_name     | string |       parititon name      |
+   *  | collection_name    | string |       Collection name   |
+   *  | partition_name     | string |       Parititon name      |
    *
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string }|
-   *  | value         |        true or false                 |
+   *  | value         |        `true` or `false`                 |
    *
    * #### Example
    *
@@ -79,20 +79,20 @@ export class Partition extends Client {
   }
 
   /**
-   * Show all partitions in one collection
+   * Show all partitions in a collection.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name   |
+   *  | collection_name    | String |       Collection name   |
    *
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
-   *  | partition_names         |        partition name array                 |
-   *  | partitionIDs         |        partition id array                 |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | partition_names         |        Array of partition names                 |
+   *  | partitionIDs            |        Array of partition IDs                 |
    *
    *
    * #### Example
@@ -111,20 +111,20 @@ export class Partition extends Client {
   }
 
   /**
-   * Get partition statistics for one partition.
+   * Show the statistics information of a partition.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name   |
-   *  | partition_name     | string |       partition name      |
+   *  | collection_name    | String |       Collection name   |
+   *  | partition_name     | String |       Partition name      |
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
-   *  | stats        |        [{key: string,value:string}]                |
-   *  | data  |        transform **stats** to { row_count: 0 }               |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | stats        |        [{key: string, value: string}]                |
+   *  | data  |          { row_count: 0 } transformed from **stats**               |
    *
    *
    * #### Example
@@ -149,19 +149,19 @@ export class Partition extends Client {
   }
 
   /**
-   * Load partition data into cache
+   * Load a partition into cache.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name   |
-   *  | partition_names     | string[] |       partition name array      |
+   *  | collection_name    | String |       Collection name   |
+   *  | partition_names    | String[] |       Array of partition names      |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | error code number      |
-   *  | reason        | reason|   *
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause |   *
    *
    * #### Example
    *
@@ -178,19 +178,19 @@ export class Partition extends Client {
   }
 
   /**
-   * Release partition data into cache
+   * Release a partition from cache.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name   |
-   *  | partition_names    | string[] |       partition name array    |
+   *  | collection_name    | String |       Collection name   |
+   *  | partition_names    | String[] |       Array of partition names    |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | error code number      |
-   *  | reason        | reason|   *
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause |   *
    *
    * #### Example
    *
@@ -207,25 +207,25 @@ export class Partition extends Client {
   }
 
   /**
-   * Drop partition will drop all data in this partition.
-   * Default partition can not droped.
+   * Drop a partition. Note that it will drop all data in the partition.
+   * Default partition cannot be droped.
    * @param data
    * @returns
    */
   /**
-   * Drop partition will drop all data in this partition and the _default partition can not dropped.
+   * To drop a partition will drop all data in this partition and the `_default` partition cannot be dropped.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name   |
-   *  | partition_name    | string |       partition name     |
+   *  | collection_name    | String |       Collection name   |
+   *  | partition_name    | String |       Partition name     |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | error code number      |
-   *  | reason        | reason|   *
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause |   *
    *
    * #### Example
    *
