@@ -22,9 +22,9 @@ export class MilvusClient {
    * PartitionManager: control partition crud api
    * IndexManager: control index crud api
    * DataManager: Search | Query | Insert | Flush
-   * @param ip milvus ip address like: 127.0.0.1:19530
+   * @param address milvus address like: 127.0.0.1:19530
    */
-  constructor(ip: string) {
+  constructor(address: string) {
     const packageDefinition = protoLoader.loadSync(protoPath, {
       keepCase: true,
       longs: String,
@@ -35,7 +35,7 @@ export class MilvusClient {
     const grpcObject = loadPackageDefinition(packageDefinition);
     const milvusProto = (grpcObject.milvus as any).proto.milvus;
     const client = new milvusProto.MilvusService(
-      ip,
+      address,
       credentials.createInsecure()
     );
 

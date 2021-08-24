@@ -26,9 +26,7 @@ export const checkCollectionFields = (fields: FieldType[]) => {
 
   fields.forEach((v) => {
     if (v.data_type && vectorTypes.includes(v.data_type)) {
-      const dim = v.type_params
-        ? findKeyValue(v.type_params, "dim")
-        : undefined;
+      const dim = v.type_params ? v.type_params.dim : undefined;
       if (!dim) {
         throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM);
       }

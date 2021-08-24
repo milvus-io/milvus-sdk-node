@@ -149,12 +149,7 @@ export interface FlushResult {
   status: ResStatus;
 }
 
-export interface QueryResult {
+export interface QueryResults {
   status: ResStatus;
-  fields_data: {
-    type: DataType;
-    field_name: string;
-    field: any;
-    field_id: number;
-  }[];
+  data: { [x: string]: any }[];
 }

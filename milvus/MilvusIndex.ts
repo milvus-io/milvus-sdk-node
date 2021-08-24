@@ -13,6 +13,7 @@ import {
   GetIndexBuildProgressReq,
   GetIndexStateReq,
 } from "./types/Index";
+import { parseToKeyValue } from "./utils/Format";
 
 export class Index extends Client {
   /**
@@ -23,7 +24,7 @@ export class Index extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |        Collection name       |
    *  | field_name         | String |        Field name       |
-   *  | extra_params       | CreateIndexParam[] | Parameters: {key: "index_type" \| "metric_type" \| "params";value:string}      |
+   *  | extra_params       | Object | Parameters: { index_type: string; metric_type: string; params: string; };      |
    *
    * @return
    *  | Property      | Description |
@@ -35,29 +36,23 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.createIndex({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.createIndex({
    *     collection_name: 'my_collection',
    *     field_name: "vector_01",
-
-   *     extra_params: [
-   *       {
-   *         key: "index_type",
-   *         value: "BIN_IVF_FLAT",
-   *       },
-   *       {
-   *         key: "metric_type",
-   *         value: "HAMMING",
-   *       },
-   *       {
-   *         key: "params",
-   *         value: JSON.stringify({ nlist: 1024 }),
-   *       },
-   *     ],
-   *   });
+   *     extra_params: {
+   *       index_type: "IVF_FLAT",
+   *       metric_type: "IP",
+   *       params: JSON.stringify({ nlist: 10 }),
+   *     },
+   *  });
    * ```
    */
   async createIndex(data: CreateIndexReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, "CreateIndex", data);
+    const params = {
+      ...data,
+      extra_params: parseToKeyValue(data.extra_params),
+    };
+    const promise = await promisify(this.client, "CreateIndex", params);
     return promise;
   }
 
@@ -79,7 +74,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).indexManager.describeIndex({
+   *  new milvusClient(MILUVS_ADDRESS).indexManager.describeIndex({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -107,7 +102,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).indexManager.getIndexState({
+   *  new milvusClient(MILUVS_ADDRESS).indexManager.getIndexState({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -138,7 +133,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).indexManager.getIndexBuildProgress({
+   *  new milvusClient(MILUVS_ADDRESS).indexManager.getIndexBuildProgress({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -170,7 +165,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).indexManager.dropIndex({
+   *  new milvusClient(MILUVS_ADDRESS).indexManager.dropIndex({
    *     collection_name: 'my_collection',
    *  });
    * ```

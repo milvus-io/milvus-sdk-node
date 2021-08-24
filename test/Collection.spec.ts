@@ -5,6 +5,7 @@ import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { ShowCollectionsType } from "../milvus/types/Collection";
 import { ERROR_REASONS } from "../milvus/const/ErrorReason";
+import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
@@ -13,31 +14,9 @@ const LOAD_COLLECTION_NAME = "loaded_collection";
 
 describe("Collection Api", () => {
   it(`Create Collection Successful`, async () => {
-    const res = await collectionManager.createCollection({
-      collection_name: COLLECTION_NAME,
-      description: "Collection desc",
-      fields: [
-        {
-          name: "vector_01",
-          description: "vector field",
-          data_type: DataType.FloatVector,
-
-          type_params: [
-            {
-              key: "dim",
-              value: "128",
-            },
-          ],
-        },
-        {
-          name: "age",
-          description: "",
-          data_type: DataType.Int64,
-          is_primary_key: true,
-          autoID: false,
-        },
-      ],
-    });
+    const res = await collectionManager.createCollection(
+      genCollectionParams(COLLECTION_NAME, "128")
+    );
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -103,28 +82,9 @@ describe("Collection Api", () => {
     }
 
     try {
-      await collectionManager.createCollection({
-        collection_name: "zxc",
-        fields: [
-          {
-            name: "vector_01",
-            description: "vector field",
-            data_type: DataType.BinaryVector,
-            type_params: [
-              {
-                key: "dim",
-                value: "10",
-              },
-            ],
-          },
-          {
-            name: "age",
-            description: "",
-            data_type: DataType.Int64,
-            is_primary_key: true,
-          },
-        ],
-      });
+      await collectionManager.createCollection(
+        genCollectionParams("any", "10")
+      );
     } catch (error) {
       expect(error.message).toEqual(
         ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM
@@ -133,31 +93,9 @@ describe("Collection Api", () => {
   });
 
   it(`Create load Collection Successful`, async () => {
-    const res = await collectionManager.createCollection({
-      collection_name: LOAD_COLLECTION_NAME,
-      description: "Collection desc",
-      fields: [
-        {
-          name: "vector_01",
-          description: "vector field",
-          data_type: DataType.FloatVector,
-
-          type_params: [
-            {
-              key: "dim",
-              value: "128",
-            },
-          ],
-        },
-        {
-          name: "age",
-          description: "",
-          data_type: DataType.Int64,
-          is_primary_key: true,
-          autoID: true,
-        },
-      ],
-    });
+    const res = await collectionManager.createCollection(
+      genCollectionParams(LOAD_COLLECTION_NAME, "128")
+    );
     console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -204,7 +142,7 @@ describe("Collection Api", () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.schema.name).toEqual(COLLECTION_NAME);
     expect(res.schema.fields.length).toEqual(2);
-    expect(res.schema.fields[0].name).toEqual("vector_01");
+    expect(res.schema.fields[0].name).toEqual(VECTOR_FIELD_NAME);
     expect(res.schema.fields[1].name).toEqual("age");
   });
 

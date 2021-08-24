@@ -22,7 +22,7 @@ import {
 } from "./types/Response";
 import { checkCollectionFields } from "./utils/Validate";
 import path from "path";
-import { formatKeyValueData } from "./utils/Format";
+import { formatKeyValueData, parseToKeyValue } from "./utils/Format";
 import { Client } from "./Client";
 
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
@@ -50,19 +50,16 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.createCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.createCollection({
    *    collection_name: 'my_collection',
    *    fields: [
    *      {
    *        name: "vector_01",
    *        description: "vector field",
    *        data_type: DataType.FloatVect,
-   *        type_params: [
-   *          {
-   *            key: "dim",
-   *            value: "128",
-   *          },
-   *        ],
+   *        type_params: {
+   *          dim: "8"
+   *        }
    *      },
    *      {
    *        name: "age",
@@ -96,11 +93,10 @@ export class Collection extends Client {
       description: description || "",
       fields: [],
     };
-
     data.fields.forEach((field) => {
       const value = {
         ...field,
-        typeParams: field.type_params,
+        typeParams: parseToKeyValue(field.type_params),
         dataType: field.data_type,
         isPrimaryKey: field.is_primary_key,
       };
@@ -136,7 +132,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.hasCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.hasCollection({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -169,7 +165,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.showCollections();
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.showCollections();
    * ```
    */
   async showCollections(
@@ -212,7 +208,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.describeCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.describeCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -243,7 +239,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.getCollectionStatistics({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.getCollectionStatistics({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -279,7 +275,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.loadCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.loadCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -307,7 +303,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.releaseCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.releaseCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -334,7 +330,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.dropCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.dropCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```

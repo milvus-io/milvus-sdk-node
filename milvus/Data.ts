@@ -10,16 +10,17 @@ import {
   ErrorCode,
   FlushResult,
   MutationResult,
-  QueryResult,
+  QueryResults,
   SearchResults,
 } from "./types/Response";
-import { QueryReq, SearchReq, SearchRes } from "./types/Search";
+import { QueryReq, QueryRes, SearchReq, SearchRes } from "./types/Search";
 import { findKeyValue } from "./utils";
 import {
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
 } from "./utils/Blob";
 import path from "path";
+import { parseToKeyValue } from "./utils/Format";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 
@@ -56,7 +57,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).dataManager.insert({
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.insert({
    *    collection_name: COLLECTION_NAME,
    *    fields_data: [{
    *      vector_field: [1,2,2,4],
@@ -193,9 +194,9 @@ export class Data extends Client {
    *  | collection_name         | String                 |        Collection name       |
    *  | partition_names(optional)| String[]              |        Array of partition names       |
    *  | expr(optional)           | String                |      Scalar field filter expression    |
-   *  | search_params            | SearchParam[]         |  Search Params:  {key: "anns_field" \| "topk" \| "metric_type" \| "params";value: string;}   |
+   *  | search_params            | Object        |    anns_field: vector field name <br/> topk: search result counts <br/> [metric_type](https://milvus.io/docs/v2.0.0/metric.md#floating#Similarity-Metrics) <br/>params: search params   |
    *  | vectors                  | Number[][]            |  Original vector to search with  |
-   *  | output_fields(optional)  | String[]              |  Return scalar field  |
+   *  | output_fields(optional)  | String[]              |  Support scalar field  |
    *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
 
    * @return
@@ -210,16 +211,16 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).dataManager.search({
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.search({
    *   collection_name: COLLECTION_NAME,
    *   expr: "",
    *   vectors: [[1, 2, 3, 4]],
-   *   search_params: [
-   *     { key: "anns_field", value: "float_vector" },
-   *     { key: "topk", value: "4" },
-   *     { key: "metric_type", value: "IP" },
-   *     { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
-   *   ],
+   *   search_params: {
+   *     anns_field: VECTOR_FIELD_NAME,
+   *     topk: "4",
+   *     metric_type: "L2",
+   *     params: JSON.stringify({ nprobe: 1024 }),
+   *   },
    *   output_fields: ["age", "time"],
    *   vector_type: 100,
    *  });
@@ -236,9 +237,8 @@ export class Data extends Client {
     });
 
     // anns_field is the vector field column user want to compare.
-    const vectorFieldName = findKeyValue(data.search_params, "anns_field");
     const targetField = collectionInfo.schema.fields.find(
-      (v) => v.name === vectorFieldName
+      (v) => v.name === data.search_params.anns_field
     );
     if (!targetField) {
       throw new Error(ERROR_REASONS.SEARCH_NOT_FIND_VECTOR_FIELD);
@@ -281,6 +281,7 @@ export class Data extends Client {
       dsl: data.expr || "",
       dsl_type: DslType.BoolExprV1,
       placeholder_group: placeholderGroupBytes,
+      search_params: parseToKeyValue(data.search_params),
     });
     const results: any[] = [];
     if (promise.results) {
@@ -347,7 +348,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).dataManager.flush({
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.flush({
    *     collection_names: ['my_collection'],
    *  });
    * ```
@@ -374,21 +375,83 @@ export class Data extends Client {
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string } |
-   *  | fields_data   |  Data of all fields that you defined in `output_fields` |
+   *  | data   |  Data of all fields that you defined in `output_fields`, {field_name: value}[] |
    *
    *
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).dataManager.query({
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.query({
    *    collection_name: 'my_collection',
    *    expr: "age in [1,2,3,4,5,6,7,8]",
    *    output_fields: ["age"],
    *  });
    * ```
    */
-  async query(data: QueryReq): Promise<QueryResult> {
-    const promise = await promisify(this.client, "Query", data);
-    return promise;
+  async query(data: QueryReq): Promise<QueryResults> {
+    const promise: QueryRes = await promisify(this.client, "Query", data);
+    const results: { [x: string]: any }[] = [];
+    /**
+     * type: DataType
+     * field_name: Field name
+     * field_id: enum DataType
+     * field: decide the key we can use. If return 'vectors', we can use item.vectors.
+     * vectors: vector data.
+     * scalars: scalar data
+     */
+    const fieldsData = promise.fields_data.map((item, i) => {
+      if (item.field === "vectors") {
+        const key = item.vectors!.data;
+        const vectorValue = item.vectors![key]!.data;
+        // if binary vector , need use dim / 8 to split vector data
+        const dim =
+          item.vectors?.data === "float_vector"
+            ? Number(item.vectors!.dim)
+            : Number(item.vectors!.dim) / 8;
+        const data: number[][] = [];
+
+        // parse number[] to number[][] by dim
+        vectorValue.forEach((v, i) => {
+          const index = Math.floor(i / dim);
+          if (!data[index]) {
+            data[index] = [];
+          }
+          data[index].push(v);
+        });
+
+        return {
+          field_name: item.field_name,
+          data,
+        };
+      }
+
+      const key = item.scalars!.data;
+      const scalarValue = item.scalars![key]!.data;
+
+      return {
+        field_name: item.field_name,
+        data: scalarValue,
+      };
+    });
+
+    // parse column data to [{fieldname:value}]
+    fieldsData.forEach((v) => {
+      v.data.forEach((d: string | number[], i: number) => {
+        if (!results[i]) {
+          results[i] = {
+            [v.field_name]: d,
+          };
+        } else {
+          results[i] = {
+            ...results[i],
+            [v.field_name]: d,
+          };
+        }
+      });
+    });
+    return {
+      status: promise.status,
+      data: results,
+    };
   }
 }

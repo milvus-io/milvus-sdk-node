@@ -5,65 +5,28 @@ import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { InsertReq } from "../milvus/types/Insert";
 import { generateInsertData } from "../utils";
+import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 describe("Vector search on binary field", () => {
   beforeAll(async () => {
-    await milvusClient.collectionManager.createCollection({
-      collection_name: COLLECTION_NAME,
-      fields: [
-        {
-          name: "float_vector",
-          description: "vector field",
-          data_type: DataType.BinaryVector,
-          type_params: [
-            {
-              key: "dim",
-              value: "128",
-            },
-          ],
-        },
-        {
-          name: "age",
-          data_type: DataType.Int64,
-          autoID: false,
-          is_primary_key: true,
-          description: "",
-        },
-        {
-          name: "time",
-          data_type: DataType.Int32,
-          description: "",
-        },
-        {
-          name: "c",
-          data_type: DataType.Int32,
-          description: "",
-        },
-      ],
-    });
+    await milvusClient.collectionManager.createCollection(
+      genCollectionParams(COLLECTION_NAME, "128", DataType.BinaryVector, false)
+    );
     await milvusClient.collectionManager.loadCollection({
       collection_name: COLLECTION_NAME,
     });
     const fields = [
       {
         isVector: true,
-        dim: 16,
-        name: "float_vector",
+        dim: 16, // 128 / 8
+        name: VECTOR_FIELD_NAME,
       },
       {
         isVector: false,
         name: "age",
-      },
-      {
-        isVector: false,
-        name: "time",
-      },
-      {
-        isVector: false,
-        name: "c",
       },
     ];
     const vectorsData = generateInsertData(fields, 10);
@@ -86,16 +49,15 @@ describe("Vector search on binary field", () => {
   it("Expr Vector Search on ", async () => {
     const res = await milvusClient.dataManager.search({
       collection_name: COLLECTION_NAME,
-      // partition_names: [],
       expr: "",
       vectors: [[4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3]],
-      search_params: [
-        { key: "anns_field", value: "float_vector" },
-        { key: "topk", value: "4" },
-        { key: "metric_type", value: "Hamming" },
-        { key: "params", value: JSON.stringify({ nprobe: 1024 }) },
-      ],
-      output_fields: ["age", "time"],
+
+      search_params: {
+        anns_field: VECTOR_FIELD_NAME,
+        topk: "4",
+        metric_type: "Hamming",
+        params: JSON.stringify({ nprobe: 1024 }),
+      },
       vector_type: DataType.BinaryVector,
     });
 

@@ -1,17 +1,17 @@
 import { DataType } from "./Common";
 import { ResStatus } from "./Response";
 
-export interface SearchParam {
-  key: "anns_field" | "topk" | "metric_type" | "params";
-  value: string;
-}
-
 export interface SearchReq {
   collection_name: string;
   partition_names?: string[];
   expr?: string;
   // dsl_type: DslType;
-  search_params: SearchParam[];
+  search_params: {
+    anns_field: string; // your vector field name
+    topk: string;
+    metric_type: string;
+    params: string;
+  };
   vectors: number[][];
   output_fields?: string[];
   vector_type: DataType.BinaryVector | DataType.FloatVector;
@@ -47,6 +47,31 @@ export interface SearchRes {
 export interface QueryReq {
   collection_name: string;
   expr: string;
-  output_fields: string[];
+  output_fields?: string[];
   partition_names?: string[];
+}
+
+export interface QueryRes {
+  status: ResStatus;
+  fields_data: {
+    type: DataType;
+    field_name: string;
+    field: "vectors" | "scalars";
+    field_id: number;
+    vectors?: {
+      dim: string;
+      data: "float_vector" | "binary_vector";
+      float_vector?: {
+        data: number[];
+      };
+      binary_vector?: {
+        data: number[];
+      };
+    };
+    scalars?: {
+      // long_data: {data: [stringID]}
+      [x: string]: any;
+      data: string;
+    };
+  }[];
 }

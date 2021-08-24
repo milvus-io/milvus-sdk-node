@@ -3,6 +3,7 @@ import { MilvusClient } from "../dist/milvus/index";
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
+import { genCollectionParams } from "../utils/test";
 
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -10,30 +11,9 @@ const PARTITION_NAME = GENERATE_NAME("partition");
 
 describe("Collection Api", () => {
   beforeAll(async () => {
-    await milvusClient.collectionManager.createCollection({
-      collection_name: COLLECTION_NAME,
-      fields: [
-        {
-          name: "vector_01",
-          description: "vector field",
-          data_type: DataType.FloatVector,
-
-          type_params: [
-            {
-              key: "dim",
-              value: "128",
-            },
-          ],
-        },
-        {
-          name: "age",
-          description: "",
-          data_type: DataType.Int64,
-          is_primary_key: true,
-          autoID: false,
-        },
-      ],
-    });
+    await milvusClient.collectionManager.createCollection(
+      genCollectionParams(COLLECTION_NAME, "128")
+    );
   });
 
   afterAll(async () => {

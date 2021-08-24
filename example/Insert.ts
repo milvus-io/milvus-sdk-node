@@ -3,57 +3,24 @@ import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { generateInsertData } from "../utils";
 import { InsertReq } from "../milvus/types/Insert";
+import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
-  await milvusClient.collectionManager.createCollection({
-    collection_name: COLLECTION_NAME,
-    fields: [
-      {
-        name: "float_vector",
-        description: "vector field",
-        data_type: DataType.FloatVector,
-        type_params: [
-          {
-            key: "dim",
-            value: "4",
-          },
-        ],
-      },
-      {
-        name: "age",
-        data_type: DataType.Int64,
-        autoID: true,
-        is_primary_key: true,
-        description: "",
-      },
-      {
-        name: "time",
-        data_type: DataType.Int32,
-        description: "",
-      },
-      {
-        name: "c",
-        data_type: DataType.Int32,
-        description: "",
-      },
-    ],
-  });
+  await milvusClient.collectionManager.createCollection(
+    genCollectionParams(COLLECTION_NAME, "4", DataType.FloatVector, false)
+  );
 
   const fields = [
     {
       isVector: true,
       dim: 4,
-      name: "float_vector",
+      name: VECTOR_FIELD_NAME,
     },
     {
       isVector: false,
-      name: "time",
-    },
-    {
-      isVector: false,
-      name: "c",
+      name: "age",
     },
   ];
   const vectorsData = generateInsertData(fields, 1000);
@@ -65,32 +32,18 @@ const test = async () => {
 
   await milvusClient.dataManager.insert(params);
 
+  // need load collection before search
+  await milvusClient.collectionManager.loadCollection({
+    collection_name: COLLECTION_NAME,
+  });
   await milvusClient.dataManager.flush({ collection_names: [COLLECTION_NAME] });
 
-  const indexRes = await milvusClient.indexManager.createIndex({
+  const queryData = await milvusClient.dataManager.query({
     collection_name: COLLECTION_NAME,
-    field_name: "float_vector",
-
-    extra_params: [
-      {
-        key: "index_type",
-        value: "ANNOY",
-      },
-      {
-        key: "metric_type",
-        value: "IP",
-      },
-      {
-        key: "params",
-        value: JSON.stringify({ n_trees: 1024 }),
-      },
-    ],
+    expr: `age in [2,4,33,100]`,
+    output_fields: ["age", VECTOR_FIELD_NAME],
   });
-  console.log(indexRes);
-  // need load collection before search
-  await milvusClient.dataManager.flush({
-    collection_names: [COLLECTION_NAME],
-  });
+  console.log(queryData);
 
   await milvusClient.collectionManager.dropCollection({
     collection_name: COLLECTION_NAME,

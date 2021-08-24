@@ -16,3 +16,19 @@ export const formatKeyValueData = (data: KeyValuePair[], keys: string[]) => {
 
   return result;
 };
+
+/**
+ * parse {row_count:4} to [{key:"row_count",value:"4"}]
+ * @param data Object
+ * @return {KeyValuePair[]}
+ */
+export const parseToKeyValue = (data?: {
+  [x: string]: any;
+}): KeyValuePair[] => {
+  return data
+    ? Object.keys(data).reduce(
+        (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
+        []
+      )
+    : [];
+};

@@ -37,7 +37,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).partitionManager.createPartition({
+   *  new milvusClient(MILUVS_ADDRESS).partitionManager.createPartition({
    *     collection_name: 'my_collection',
    *     partition_name: 'my_partition',
    *  });
@@ -67,7 +67,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).partitionManager.hasPartition({
+   *  new milvusClient(MILUVS_ADDRESS).partitionManager.hasPartition({
    *     collection_name: 'my_collection',
    *     partition_name: 'my_partition',
    *  });
@@ -98,7 +98,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).partitionManager.showPartitions({
+   *  new milvusClient(MILUVS_ADDRESS).partitionManager.showPartitions({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -130,7 +130,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).partitionManager.getPartitionStatistics({
+   *  new milvusClient(MILUVS_ADDRESS).partitionManager.getPartitionStatistics({
    *     collection_name: 'my_collection',
    *     partition_name: "_default",
    *  });
@@ -166,7 +166,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).partitionManager.loadPartitions({
+   *  new milvusClient(MILUVS_ADDRESS).partitionManager.loadPartitions({
    *     collection_name: 'my_collection',
    *     partition_names: ['my_partition'],
    *  });
@@ -195,7 +195,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).partitionManager.releasePartitions({
+   *  new milvusClient(MILUVS_ADDRESS).partitionManager.releasePartitions({
    *     collection_name: 'my_collection',
    *     partition_names: ['my_partition'],
    *  });
@@ -230,7 +230,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).partitionManager.dropPartition({
+   *  new milvusClient(MILUVS_ADDRESS).partitionManager.dropPartition({
    *     collection_name: 'my_collection',
    *     partition_name: 'my_partition',
    *  });
