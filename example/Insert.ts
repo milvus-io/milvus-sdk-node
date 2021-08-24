@@ -9,7 +9,7 @@ const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
   await milvusClient.collectionManager.createCollection(
-    genCollectionParams(COLLECTION_NAME, "4")
+    genCollectionParams(COLLECTION_NAME, "4", DataType.FloatVector, false)
   );
 
   const fields = [
@@ -17,6 +17,10 @@ const test = async () => {
       isVector: true,
       dim: 4,
       name: VECTOR_FIELD_NAME,
+    },
+    {
+      isVector: false,
+      name: "age",
     },
   ];
   const vectorsData = generateInsertData(fields, 1000);
@@ -28,23 +32,18 @@ const test = async () => {
 
   await milvusClient.dataManager.insert(params);
 
+  // need load collection before search
+  await milvusClient.collectionManager.loadCollection({
+    collection_name: COLLECTION_NAME,
+  });
   await milvusClient.dataManager.flush({ collection_names: [COLLECTION_NAME] });
 
-  const indexRes = await milvusClient.indexManager.createIndex({
+  const queryData = await milvusClient.dataManager.query({
     collection_name: COLLECTION_NAME,
-    field_name: VECTOR_FIELD_NAME,
-
-    extra_params: {
-      index_type: "ANNOY",
-      metric_type: "IP",
-      params: JSON.stringify({ n_trees: 1024 }),
-    },
+    expr: `age in [2,4,33,100]`,
+    output_fields: ["age", VECTOR_FIELD_NAME],
   });
-  console.log(indexRes);
-  // need load collection before search
-  await milvusClient.dataManager.flush({
-    collection_names: [COLLECTION_NAME],
-  });
+  console.log(queryData);
 
   await milvusClient.collectionManager.dropCollection({
     collection_name: COLLECTION_NAME,

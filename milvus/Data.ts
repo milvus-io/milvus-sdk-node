@@ -10,10 +10,10 @@ import {
   ErrorCode,
   FlushResult,
   MutationResult,
-  QueryResult,
+  QueryResults,
   SearchResults,
 } from "./types/Response";
-import { QueryReq, SearchReq, SearchRes } from "./types/Search";
+import { QueryReq, QueryRes, SearchReq, SearchRes } from "./types/Search";
 import { findKeyValue } from "./utils";
 import {
   parseBinaryVectorToBytes,
@@ -375,7 +375,7 @@ export class Data extends Client {
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string } |
-   *  | fields_data   |  all fields data you defined in output_fields |
+   *  | data   |  all fields data you defined in output_fields, {field_name: value}[] |
    *
    *
    * #### Example
@@ -388,8 +388,70 @@ export class Data extends Client {
    *  });
    * ```
    */
-  async query(data: QueryReq): Promise<QueryResult> {
-    const promise = await promisify(this.client, "Query", data);
-    return promise;
+  async query(data: QueryReq): Promise<QueryResults> {
+    const promise: QueryRes = await promisify(this.client, "Query", data);
+    const results: { [x: string]: any }[] = [];
+    /**
+     * type: DataType
+     * field_name: Field name
+     * field_id: enum DataType
+     * field: decide the key we can use. If return 'vectors', we can use item.vectors.
+     * vectors: vector data.
+     * scalars: scalar data
+     */
+    const fieldsData = promise.fields_data.map((item, i) => {
+      if (item.field === "vectors") {
+        const key = item.vectors!.data;
+        const vectorValue = item.vectors![key]!.data;
+        // if binary vector , need use dim / 8 to split vector data
+        const dim =
+          item.vectors?.data === "float_vector"
+            ? Number(item.vectors!.dim)
+            : Number(item.vectors!.dim) / 8;
+        const data: number[][] = [];
+
+        // parse number[] to number[][] by dim
+        vectorValue.forEach((v, i) => {
+          const index = Math.floor(i / dim);
+          if (!data[index]) {
+            data[index] = [];
+          }
+          data[index].push(v);
+        });
+
+        return {
+          field_name: item.field_name,
+          data,
+        };
+      }
+
+      const key = item.scalars!.data;
+      const scalarValue = item.scalars![key]!.data;
+
+      return {
+        field_name: item.field_name,
+        data: scalarValue,
+      };
+    });
+
+    // parse column data to [{fieldname:value}]
+    fieldsData.forEach((v) => {
+      v.data.forEach((d: string | number[], i: number) => {
+        if (!results[i]) {
+          results[i] = {
+            [v.field_name]: d,
+          };
+        } else {
+          results[i] = {
+            ...results[i],
+            [v.field_name]: d,
+          };
+        }
+      });
+    });
+    return {
+      status: promise.status,
+      data: results,
+    };
   }
 }

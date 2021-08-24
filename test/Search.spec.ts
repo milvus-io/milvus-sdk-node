@@ -52,7 +52,7 @@ describe("Search Api", () => {
     const res = await milvusClient.dataManager.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
-      expr: "age > 2",
+      expr: "",
       vectors: [[1, 2, 3, 4]],
       search_params: {
         anns_field: VECTOR_FIELD_NAME,
@@ -63,8 +63,16 @@ describe("Search Api", () => {
       output_fields: ["age"],
       vector_type: DataType.FloatVector,
     });
-    console.log(res);
 
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it("Query ", async () => {
+    const res = await milvusClient.dataManager.query({
+      collection_name: COLLECTION_NAME,
+      expr: "age in [2,4,6,8]",
+      output_fields: ["age", VECTOR_FIELD_NAME],
+    });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });

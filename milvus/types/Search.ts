@@ -47,6 +47,31 @@ export interface SearchRes {
 export interface QueryReq {
   collection_name: string;
   expr: string;
-  output_fields: string[];
+  output_fields?: string[];
   partition_names?: string[];
+}
+
+export interface QueryRes {
+  status: ResStatus;
+  fields_data: {
+    type: DataType;
+    field_name: string;
+    field: "vectors" | "scalars";
+    field_id: number;
+    vectors?: {
+      dim: string;
+      data: "float_vector" | "binary_vector";
+      float_vector?: {
+        data: number[];
+      };
+      binary_vector?: {
+        data: number[];
+      };
+    };
+    scalars?: {
+      // long_data: {data: [stringID]}
+      [x: string]: any;
+      data: string;
+    };
+  }[];
 }

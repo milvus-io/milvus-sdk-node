@@ -32,6 +32,7 @@ const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
  */
 export class Collection extends Client {
   /**
+   *
    * Create collection in milvus.
    *
    * @param data

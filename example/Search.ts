@@ -58,7 +58,7 @@ const test = async () => {
       metric_type: "L2",
       params: JSON.stringify({ nprobe: 1024 }),
     },
-
+    output_fields: ["age"],
     vector_type: DataType.FloatVector,
   });
   console.log("search result", result);

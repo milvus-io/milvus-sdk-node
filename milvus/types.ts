@@ -59,7 +59,7 @@ export type {
   FieldSchema,
   IndexDescription,
   FlushResult,
-  QueryResult,
+  QueryResults,
   CollectionData,
 } from "./types/Response";
 export type { SearchRes, SearchReq } from "./types/Search";
