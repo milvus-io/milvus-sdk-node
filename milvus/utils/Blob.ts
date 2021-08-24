@@ -1,5 +1,4 @@
 export const parseFloatVectorToBytes = (array: number[]) => {
-  console.log(array);
   // create array buffer
   const a = new Float32Array(array);
   // need return bytes to milvus proto

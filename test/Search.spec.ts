@@ -73,6 +73,7 @@ describe("Search Api", () => {
       expr: "age in [2,4,6,8]",
       output_fields: ["age", VECTOR_FIELD_NAME],
     });
+    console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });

@@ -35,23 +35,23 @@ export class Data extends Client {
   }
 
   /**
-   * Insert data into milvus.
+   * Insert data into Milvus.
    *
    * @param data
    *  | Property                | Type                   |           Description              |
    *  | :---------------------- | :--------------------  | :-------------------------------  |
-   *  | collection_name         | string                 |       collection name       |
-   *  | partition_name(optional)| string                 |       partition name       |
-   *  | fields_data             | { [x: string]: any }[] |      field type is binary, the vector data length need to be dimension / 8query    |
-   *  | hash_keys(optional)    | Number[]               |  It's hash value depend on primarykey value       |
+   *  | collection_name         | String                 |       Collection name       |
+   *  | partition_name(optional)| String                 |       Partition name       |
+   *  | fields_data             | { [x: string]: any }[] |      If the field type is binary, the vector data length needs to be dimension / 8   |
+   *  | hash_keys(optional)    | Number[]               |  The hash value depends on the primarykey value       |
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
-   *  | succ_index    |        Insert successful index array      |
-   *  | err_index    |        Insert failed index array      |
-   *  | IDs    |        Insert successful id array      |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | succ_index    |  Index array of the successfully inserted data      |
+   *  | err_index    |   Index array of the unsuccessfully inserted data      |
+   *  | IDs    |        ID array of the successfully inserted data      |
    *
    *
    * #### Example
@@ -76,8 +76,8 @@ export class Data extends Client {
       throw new Error(collectionInfo.status.reason);
     }
 
-    // Tip: The field data sequence need same with collectionInfo.schema.fields.
-    // If primarykey is autoid = true, user can not insert the data
+    // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
+    // If primarykey is set `autoid = true`, you cannot insert the data.
     const fieldsData = collectionInfo.schema.fields
       .filter((v) => !v.is_primary_key || !v.autoID)
       .map((v) => ({
@@ -87,12 +87,12 @@ export class Data extends Client {
         value: [] as number[],
       }));
 
-    // the actual data we pass to milvus grpc
+    // The actual data we pass to Milvus gRPC.
     const params: any = { ...data, num_rows: data.fields_data.length };
 
-    // user pass data is row data, we need parse to column data for milvus
+    // You need to parse the original row data to column data for Milvus.
     data.fields_data.forEach((v, i) => {
-      // the key need to be field name, so we get all names in a row.
+      // Set the key as the field name to get all names in a row.
       const fieldNames = Object.keys(v);
 
       fieldNames.forEach((name) => {
@@ -104,7 +104,7 @@ export class Data extends Client {
           DataTypeMap[target.type.toLowerCase()]
         );
 
-        // Check dimension is match when is's BinaryVector
+        // Check if the dimension is matched when the data type is BinaryVector.
         if (
           DataTypeMap[target.type.toLowerCase()] === DataType.BinaryVector &&
           v[name].length !== target.dim / 8
@@ -112,7 +112,7 @@ export class Data extends Client {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
-        // if is vector field, value should be array. so we need concat it.
+        // Value in vector field should be array. Therefore you need concat it.
         // but array.concat is slow, we need for loop to push the value one by one
         if (isVector) {
           for (let val of v[name]) {
@@ -186,23 +186,23 @@ export class Data extends Client {
   }
 
   /**
-   * vector similarity search
+   * Perform vector similarity search.
    *
    * @param data
    *  | Property                | Type                   |           Description              |
    *  | :---------------------- | :--------------------  | :-------------------------------  |
-   *  | collection_name         | string                 |        collection name       |
-   *  | partition_names(optional)| string[]              |        partition name array       |
-   *  | expr(optional)           | string                |      scalar field filter    |
-   *  | search_params            | object        |   anns_field: vector field name <br/> topk: search result counts <br/> [metric_type](https://milvus.io/docs/v2.0.0/metric.md#floating#Similarity-Metrics) <br/>params: search params   |
-   *  | vectors                  | number[][]            |  the vector value you want to search   |
-   *  | output_fields(optional)  | string[]              |  define function will return which fields data  |
+   *  | collection_name         | String                 |        Collection name       |
+   *  | partition_names(optional)| String[]              |        Array of partition names       |
+   *  | expr(optional)           | String                |      Scalar field filter expression    |
+   *  | search_params            | Object        |    anns_field: vector field name <br/> topk: search result counts <br/> [metric_type](https://milvus.io/docs/v2.0.0/metric.md#floating#Similarity-Metrics) <br/>params: search params   |
+   *  | vectors                  | Number[][]            |  Original vector to search with  |
+   *  | output_fields(optional)  | String[]              |  Support scalar field  |
    *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
 
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
+   *  | status        |  { error_code: number, reason: string }|
    *  | succ_index    |        Insert successful index array      |
    *  | err_index    |        Insert failed index array      |
    *  | IDs    |        Insert successful id array      |
@@ -333,17 +333,17 @@ export class Data extends Client {
   }
 
   /**
-   * Milvus temporarily stores the inserted vectors in the memory. Call flush() to flush them to the disk.
+   * Milvus temporarily buffers the newly inserted vectors in the cache. Call `flush()` to persist them to the object storage.
    *
    * @param data
-   *  | Property              | Type   |           Description              |
+   *  | Property                | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collection_names        | string[] |        collection name array      |
+   *  | collection_names        | String[] |        Array of collection names      |
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
+   *  | status        |  { error_code: number, reason: string }|
    *
    * #### Example
    *
@@ -359,15 +359,15 @@ export class Data extends Client {
   }
 
   /**
-   * Query milvus data. Now we only support like: fieldname in [id1,id2,id3]
+   * Query vector data in Milvus. Current release of Milvus only supports expression as fieldname in [id1,id2,id3]
    *
    * @param data
    *  | Property                     | Type   |           Description              |
    *  | :--------------------------- | :----  | :-------------------------------  |
-   *  | collection_name              | string |        collection name      |
-   *  | expr                         | string |       scalar fields filter expression     |
-   *  | partitions_names(optional)   | string[] |        partition name array      |
-   *  | output_fields                | string[] |       collection fields you want to return    |
+   *  | collection_name              | String |        Collection name      |
+   *  | expr                         | String |       Scalar field filter expression     |
+   *  | partitions_names(optional)   | String[] |       Array of partition names      |
+   *  | output_fields                | String[] |       Vector or scalar field to be returned    |
    *
    *
    *
@@ -375,7 +375,7 @@ export class Data extends Client {
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number,reason:string } |
-   *  | data   |  all fields data you defined in output_fields, {field_name: value}[] |
+   *  | data   |  Data of all fields that you defined in `output_fields`, {field_name: value}[] |
    *
    *
    * #### Example

@@ -28,25 +28,24 @@ import { Client } from "./Client";
 const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
 
 /**
- * [All collection operation example](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
+ * See all [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts).
  */
 export class Collection extends Client {
   /**
-   *
-   * Create collection in milvus.
+   * Create a collection in Milvus.
    *
    * @param data
    *  | Property                | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
-   *  | createCollection        | string |        collection name       |
-   *  | description             | string |        collection description       |
+   *  | createCollection        | String |        Collection name       |
+   *  | description             | String |        Collection description       |
    *  | fields        | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> |     Field data      |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | error code number      |
-   *  | reason        | reason          |
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause          |
    *
    * #### Example
    *
@@ -82,7 +81,7 @@ export class Collection extends Client {
 
     const root = await protobuf.load(schemaPath);
     if (!root) throw new Error("Missing proto file");
-    // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
+    // When data type is bytes, use protobufjs to transform data to buffer bytes.
     const CollectionSchema = root.lookupType(
       "milvus.proto.schema.CollectionSchema"
     );
@@ -117,18 +116,18 @@ export class Collection extends Client {
   }
 
   /**
-   * Check if collection exists or not.
+   * Check if a collection exists.
    *
    * @param data
    *  | Property              | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collection_name        | string |       collection name       |
+   *  | collection_name        | String |       Collection name       |
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
-   *  | value         |        true or false                 |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | value         |        `true` or `false`                 |
    *
    * #### Example
    *
@@ -147,20 +146,20 @@ export class Collection extends Client {
   }
 
   /**
-   * List all collections or get collection loaded status
+   * List all collections or get collection loading status.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
    *  | type(optional)        | enum |       All -> 0, Loaded -> 1       |
-   *  | collection_names(optional)        | string[] |       If type = Loaded,  will return collection_names inMemory_percentages     |
+   *  | collection_names(optional)        | String[] |       If `type = Loaded`, Milvus will return `collection_names inMemory_percentages`     |
    *
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string } |
-   *  | data         |  Contain collection name, id , timestamp(utc created time),loadedPercentage(100 means loaded)      |
+   *  | status        |  { error_code: number, reason: string } |
+   *  | data         |  Contains collection name, ID , timestamp (UTC created time), and loadedPercentage (100 means loaded)      |
    *
    *
    * #### Example
@@ -191,19 +190,19 @@ export class Collection extends Client {
   }
 
   /**
-   * Get collection detail, eg: name, schema.
+   * Show the details of a collection, e.g. name, schema.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | string |        collection name       |
+   *  | collection_name        | String |        Collection name       |
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
-   *  | schema        |        all fields information in this collection                |
-   *  | collectionID  |        collection id                |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | schema        |        Information of all fields in this collection                |
+   *  | collectionID  |        Collection ID                |
    *
    *
    * #### Example
@@ -222,19 +221,19 @@ export class Collection extends Client {
   }
 
   /**
-   * Get collection statistics information.
+   * Show the statistics information of a collection.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | string |       collection name       |
+   *  | collection_name        | String |       Collection name       |
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
-   *  | stats        |        [{key: string,value:string}]                |
-   *  | data  |        transform **stats** to { row_count: 0 }               |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | stats        |        [{key: string, value: string}]                |
+   *  | data  |        Transform **stats** to { row_count: 0 }               |
    *
    *
    * #### Example
@@ -260,18 +259,18 @@ export class Collection extends Client {
   }
 
   /**
-   * Before search, it requires loading collection to cache.
+   * Load collection to cache before search.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | string |       collection name       |
+   *  | collection_name        | String |       Collection name       |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|   *
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause|   *
    *
    * #### Example
    *
@@ -287,19 +286,19 @@ export class Collection extends Client {
   }
 
   /**
-   * If you want to reduce your cache usage, you can release some collections.
-   * But you can't search in unloaded collections.
+   * Release a collection from cache to reduce cache usage.
+   * Note that you cannot search while the corresponding collection is unloaded.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | string |       collection name       |
+   *  | collection_name        | String |       Collection name       |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|   *
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause |   *
    *
    * #### Example
    *
@@ -315,18 +314,18 @@ export class Collection extends Client {
   }
 
   /**
-   * Drop collection, it will drop all data in the collection as well.
+   * Drop a collection. Note that this drops all data in the collection.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | string |       collection name       |
+   *  | collection_name        | String |       Collection name       |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Number      |
-   *  | reason        | Error reason|   *
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause|   *
    *
    * #### Example
    *

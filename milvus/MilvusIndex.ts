@@ -17,20 +17,20 @@ import { parseToKeyValue } from "./utils/Format";
 
 export class Index extends Client {
   /**
-   * Create index on vector field, it will be async progress.
+   * Create an index on a vector field. Note that index building is an async progress.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |        collection name       |
-   *  | field_name         | string |        field name       |
-   *  | extra_params       | object | parameters: { index_type: string; metric_type: string; params: string; };      |
+   *  | collection_name    | String |        Collection name       |
+   *  | field_name         | String |        Field name       |
+   *  | extra_params       | Object | Parameters: { index_type: string; metric_type: string; params: string; };      |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | error code number      |
-   *  | reason        | reason|
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause   |
    *
    *
    * #### Example
@@ -57,18 +57,18 @@ export class Index extends Client {
   }
 
   /**
-   * Get index information, only get latest index for now.
+   * Show index information. Current release of Milvus only supports showing latest built index.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name       |
+   *  | collection_name    | String |       Collection name       |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number,reason:string } |
-   *  | index_descriptions        | index information |
+   *  | status        |  { error_code: number, reason: string } |
+   *  | index_descriptions        | Index information |
    *
    *
    * #### Example
@@ -85,18 +85,18 @@ export class Index extends Client {
   }
 
   /**
-   * Get index building state
+   * Show index building state.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name       |
+   *  | collection_name    | string |       Collection name       |
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number,reason:string } |
-   *  | state         | index building state |
+   *  | status        |  { error_code: number, reason: string } |
+   *  | state         | Index building state |
    *
    *
    * #### Example
@@ -113,20 +113,20 @@ export class Index extends Client {
   }
 
   /**
-   * Get index building progress.
+   * Show index building progress.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name       |
+   *  | collection_name    | String |       Collection name       |
    *
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number,reason:string } |
-   *  | indexed_rows  | building index success row count |
-   *  | total_rows    | total row count|
+   *  | status        |  { error_code: number, reason: string } |
+   *  | indexed_rows  |  Row count that successfully built with index |
+   *  | total_rows    |  Total row count |
    *
    *
    *
@@ -148,19 +148,19 @@ export class Index extends Client {
   }
 
   /**
-   * Drop index
+   * Drop an index.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       collection name       |
+   *  | collection_name    | String |       Collection name       |
    *
    *
    * @return
    *  | Property      | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | error code number      |
-   *  | reason        | reason|
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause |
    *
    * #### Example
    *
