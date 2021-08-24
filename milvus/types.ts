@@ -28,6 +28,7 @@ export type {
   DropIndexReq,
   GetIndexStateReq,
   CreateIndexReq,
+  CreateIndexParam,
   DescribeIndexReq,
 } from "./types/Index";
 
@@ -62,4 +63,4 @@ export type {
   QueryResults,
   CollectionData,
 } from "./types/Response";
-export type { SearchRes, SearchReq } from "./types/Search";
+export type { SearchRes, SearchReq, SearchParam } from "./types/Search";

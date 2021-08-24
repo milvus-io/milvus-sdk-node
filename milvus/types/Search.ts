@@ -1,17 +1,18 @@
 import { DataType } from "./Common";
 import { ResStatus } from "./Response";
 
+export interface SearchParam {
+  anns_field: string; // your vector field name
+  topk: string;
+  metric_type: string;
+  params: string;
+}
 export interface SearchReq {
   collection_name: string;
   partition_names?: string[];
   expr?: string;
   // dsl_type: DslType;
-  search_params: {
-    anns_field: string; // your vector field name
-    topk: string;
-    metric_type: string;
-    params: string;
-  };
+  search_params: SearchParam;
   vectors: number[][];
   output_fields?: string[];
   vector_type: DataType.BinaryVector | DataType.FloatVector;

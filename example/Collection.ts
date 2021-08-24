@@ -1,6 +1,5 @@
 import { MilvusClient } from "../milvus/index";
 import { GENERATE_NAME, IP } from "../const";
-import { DataType } from "../milvus/types/Common";
 import { genCollectionParams } from "../utils/test";
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
@@ -15,6 +14,9 @@ const test = async () => {
 
   let res: any = await collectionManager.showCollections();
   console.log(res);
+  await collectionManager.releaseCollection({ collection_name: "test" });
+  res = await collectionManager.showCollections({ type: 1 });
+  console.log("----loaded---", res);
 
   res = await collectionManager.hasCollection({
     collection_name: COLLECTION_NAME,
