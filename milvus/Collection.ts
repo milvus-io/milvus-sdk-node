@@ -32,7 +32,7 @@ const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
  */
 export class Collection extends Client {
   /**
-   * Create a collection by name and other parameters.
+   * Create a collection in Milvus.
    *
    * @param data
    *  | Property                | Type   |           Description              |
@@ -131,7 +131,7 @@ export class Collection extends Client {
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number, reason: string }|
-   *  | value         |        true or false                 |
+   *  | value         |        `true` or `false`                 |
    *
    * #### Example
    *
@@ -150,20 +150,20 @@ export class Collection extends Client {
   }
 
   /**
-   * List all collections or get collection loaded status.
+   * List all collections or get collection loading status.
    *
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
    *  | type(optional)        | enum |       All -> 0, Loaded -> 1       |
-   *  | collection_names(optional)        | String[] |       If type = Loaded,  will return collection_names inMemory_percentages     |
+   *  | collection_names(optional)        | String[] |       If `type = Loaded`, Milvus will return `collection_names inMemory_percentages`     |
    *
    *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number, reason: string } |
-   *  | data         |  Contain collection name, ID , timestamp (UTC created time), loadedPercentage (100 means loaded)      |
+   *  | data         |  Contains collection name, ID , timestamp (UTC created time), and loadedPercentage (100 means loaded)      |
    *
    *
    * #### Example
@@ -290,7 +290,7 @@ export class Collection extends Client {
   }
 
   /**
-   * Release collection to reduce cache usage.
+   * Release a collection from cache to reduce cache usage.
    * Note that you cannot search while the corresponding collection is unloaded.
    *
    * @param data
@@ -318,7 +318,7 @@ export class Collection extends Client {
   }
 
   /**
-   * Drop a collection and the data within.
+   * Drop a collection. Note that this drops all data in the collection.
    *
    * @param data
    *  | Property           | Type   |           Description              |
