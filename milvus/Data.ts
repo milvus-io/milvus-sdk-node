@@ -57,7 +57,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).dataManager.insert({
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.insert({
    *    collection_name: COLLECTION_NAME,
    *    fields_data: [{
    *      vector_field: [1,2,2,4],
@@ -211,7 +211,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).dataManager.search({
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.search({
    *   collection_name: COLLECTION_NAME,
    *   expr: "",
    *   vectors: [[1, 2, 3, 4]],
@@ -348,7 +348,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).dataManager.flush({
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.flush({
    *     collection_names: ['my_collection'],
    *  });
    * ```
@@ -381,7 +381,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).dataManager.query({
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.query({
    *    collection_name: 'my_collection',
    *    expr: "age in [1,2,3,4,5,6,7,8]",
    *    output_fields: ["age"],

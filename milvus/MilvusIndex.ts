@@ -36,7 +36,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.createIndex({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.createIndex({
    *     collection_name: 'my_collection',
    *     field_name: "vector_01",
    *     extra_params: {
@@ -74,7 +74,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).indexManager.describeIndex({
+   *  new milvusClient(MILUVS_ADDRESS).indexManager.describeIndex({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -102,7 +102,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).indexManager.getIndexState({
+   *  new milvusClient(MILUVS_ADDRESS).indexManager.getIndexState({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -133,7 +133,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).indexManager.getIndexBuildProgress({
+   *  new milvusClient(MILUVS_ADDRESS).indexManager.getIndexBuildProgress({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -165,7 +165,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).indexManager.dropIndex({
+   *  new milvusClient(MILUVS_ADDRESS).indexManager.dropIndex({
    *     collection_name: 'my_collection',
    *  });
    * ```

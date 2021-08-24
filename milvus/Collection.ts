@@ -50,7 +50,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.createCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.createCollection({
    *    collection_name: 'my_collection',
    *    fields: [
    *      {
@@ -132,7 +132,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.hasCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.hasCollection({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -165,7 +165,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.showCollections();
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.showCollections();
    * ```
    */
   async showCollections(
@@ -208,7 +208,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.describeCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.describeCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -239,7 +239,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.getCollectionStatistics({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.getCollectionStatistics({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -275,7 +275,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.loadCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.loadCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -303,7 +303,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.releaseCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.releaseCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -330,7 +330,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_IP).collectionManager.dropCollection({
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.dropCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
