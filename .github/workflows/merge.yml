@@ -15,6 +15,16 @@ jobs:
         with:
           node-version: 12
 
+      - name: Run Milvus
+        run: |
+          wget https://raw.githubusercontent.com/milvus-io/milvus/ecfebff801291934a3e6c5955e53637b993ab41a/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
+          docker-compose up -d
+
+      - name: Run Test coverage
+        run: |
+          yarn
+          yarn coverage
+
       - name: send to codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

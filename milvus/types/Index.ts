@@ -1,11 +1,12 @@
+export interface CreateIndexParam {
+  index_type: string;
+  metric_type: string;
+  params: string;
+}
 export interface CreateIndexReq {
   collection_name: string;
   field_name: string;
-  extra_params: {
-    index_type: string;
-    metric_type: string;
-    params: string;
-  };
+  extra_params: CreateIndexParam;
 }
 
 export interface DescribeIndexReq {
