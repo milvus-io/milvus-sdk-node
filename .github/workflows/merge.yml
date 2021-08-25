@@ -15,6 +15,11 @@ jobs:
         with:
           node-version: 12
 
+      - name: Run Test coverage
+        run: |
+          yarn
+          yarn coverage
+
       - name: send to codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

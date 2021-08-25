@@ -1,4 +1,4 @@
-name: Milvus2 Node sdk check
+name: Milvus2 Node sdk check when open pr
 
 on:
   pull_request:
@@ -21,12 +21,7 @@ jobs:
           wget https://raw.githubusercontent.com/milvus-io/milvus/fd84cf7c55fb63e66a066052897b1bd6d6e73830/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
           docker-compose up -d
 
-      - name: Run Test
+      - name: Run Test coverage
         run: |
           yarn
           yarn coverage
-
-      - name: Send to codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        run: bash <(curl -s https://codecov.io/bash)
