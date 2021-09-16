@@ -9,11 +9,18 @@ import { FlushReq, InsertReq } from "./types/Insert";
 import {
   ErrorCode,
   FlushResult,
+  GetMetricsResponse,
   MutationResult,
   QueryResults,
   SearchResults,
 } from "./types/Response";
-import { QueryReq, QueryRes, SearchReq, SearchRes } from "./types/Search";
+import {
+  GetMetricsRequest,
+  QueryReq,
+  QueryRes,
+  SearchReq,
+  SearchRes,
+} from "./types/Search";
 import { findKeyValue } from "./utils";
 import {
   parseBinaryVectorToBytes,
@@ -452,6 +459,24 @@ export class Data extends Client {
     return {
       status: promise.status,
       data: results,
+    };
+  }
+
+  /**
+   * @ignore
+   * @param data
+   *  | Property             | Type   |           Description                      |
+   *  | :------------------- | :----  | :----------------------------------------  |
+   *  | request              | object |        Only allow "system_info" for now    |
+   */
+  async getMetric(data: GetMetricsRequest): Promise<GetMetricsResponse> {
+    const res: GetMetricsResponse = await promisify(this.client, "GetMetrics", {
+      request: JSON.stringify(data.request),
+    });
+
+    return {
+      ...res,
+      response: JSON.parse(res.response),
     };
   }
 }

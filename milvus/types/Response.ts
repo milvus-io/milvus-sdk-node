@@ -153,3 +153,9 @@ export interface QueryResults {
   status: ResStatus;
   data: { [x: string]: any }[];
 }
+
+export interface GetMetricsResponse {
+  status: ResStatus;
+  response: any;
+  component_name: string; // metrics from which component
+}
