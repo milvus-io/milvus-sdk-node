@@ -62,5 +62,11 @@ export type {
   FlushResult,
   QueryResults,
   CollectionData,
+  GetMetricsResponse,
 } from "./types/Response";
-export type { SearchRes, SearchReq, SearchParam } from "./types/Search";
+export type {
+  SearchRes,
+  SearchReq,
+  SearchParam,
+  GetMetricsRequest,
+} from "./types/Search";

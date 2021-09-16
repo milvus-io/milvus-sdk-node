@@ -76,3 +76,9 @@ export interface QueryRes {
     };
   }[];
 }
+
+export interface GetMetricsRequest {
+  request: {
+    metric_type: "system_info" | "system_statistics" | "system_log";
+  };
+}

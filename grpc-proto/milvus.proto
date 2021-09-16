@@ -31,6 +31,7 @@ service MilvusService {
   rpc DropIndex(DropIndexRequest) returns (common.Status) {}
 
   rpc Insert(InsertRequest) returns (MutationResult) {}
+  rpc Delete(DeleteRequest) returns (MutationResult) {}
   rpc Search(SearchRequest) returns (SearchResults) {}
   rpc Flush(FlushRequest) returns (FlushResponse) {}
   rpc Query(QueryRequest) returns (QueryResults) {}
@@ -43,27 +44,50 @@ service MilvusService {
 
   // TODO: remove
   rpc RegisterLink(RegisterLinkRequest) returns (RegisterLinkResponse) {}
+
+  // https://wiki.lfaidata.foundation/display/MIL/MEP+8+--+Add+metrics+for+proxy
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {}
 }
 
+/**
+* Create collection in milvus 
+*/
 message CreateCollectionRequest {
-  common.MsgBase base = 1; // must
+  // Not useful for now
+  common.MsgBase base = 1;
+  // Not useful for now
   string db_name = 2;
-  string collection_name = 3; // must
-  // `schema` is the serialized `schema.CollectionSchema`
-  bytes schema = 4; // must
-  int32 shards_num = 5; // must. Once set, no modification is allowed
+  // The unique collection name in milvus.(Required)
+  string collection_name = 3; 
+  // The serialized `schema.CollectionSchema`(Required)
+  bytes schema = 4; 
+  // Once set, no modification is allowed (Optional)
+  int32 shards_num = 5;
 }
 
+/**
+* Drop collection in milvus, also will drop data in collection. 
+*/
 message DropCollectionRequest {
-  common.MsgBase base = 1; // must
+  // Not useful for now
+  common.MsgBase base = 1; 
+  // Not useful for now
   string db_name = 2;
-  string collection_name = 3; // must
+  // The unique collection name in milvus.(Required)
+  string collection_name = 3;
 }
 
+/**
+* Check collection exist in milvus or not.
+*/
 message HasCollectionRequest {
-  common.MsgBase base = 1; // must
+  // Not useful for now
+  common.MsgBase base = 1;
+  // Not useful for now
   string db_name = 2;
-  string collection_name = 3; // must
+  // The collection name you want to check.
+  string collection_name = 3; 
+  // Not useful for now
   uint64 time_stamp = 4;
 }
 
@@ -93,6 +117,7 @@ message DescribeCollectionResponse {
   repeated string physical_channel_names = 5;
   uint64 created_timestamp = 6; // hybrid timestamp
   uint64 created_utc_timestamp = 7; // physical timestamp
+  int32 shards_num = 8; // shards number
 }
 
 message LoadCollectionRequest {
@@ -313,6 +338,14 @@ message MutationResult {
   int64 delete_cnt = 7;
   int64 upsert_cnt = 8;
   uint64 timestamp = 9;
+}
+
+message DeleteRequest {
+  common.MsgBase base = 1;
+  string db_name = 2;
+  string collection_name = 3;
+  string partition_name = 4;
+  string expr = 5;
 }
 
 enum PlaceholderType {
