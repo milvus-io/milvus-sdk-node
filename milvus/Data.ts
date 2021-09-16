@@ -470,9 +470,13 @@ export class Data extends Client {
    *  | request              | object |        Only allow "system_info" for now    |
    */
   async getMetric(data: GetMetricsRequest): Promise<GetMetricsResponse> {
-    const res = await promisify(this.client, "GetMetrics", {
+    const res: GetMetricsResponse = await promisify(this.client, "GetMetrics", {
       request: JSON.stringify(data.request),
     });
-    return res;
+
+    return {
+      ...res,
+      response: JSON.parse(res.response),
+    };
   }
 }
