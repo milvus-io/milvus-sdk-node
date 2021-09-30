@@ -172,3 +172,12 @@ export interface NumberArrayId {
 export interface StringArrayId {
   str_id: StringArray;
 }
+
+export enum SegmentState {
+  SegmentStateNone,
+  NotExist,
+  Growing,
+  Sealed,
+  Flushed = "Flushed",
+  Flushing = "Flushing",
+}
