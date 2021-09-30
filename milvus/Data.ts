@@ -4,7 +4,7 @@ import { Client } from "./Client";
 import { Collection } from "./Collection";
 import { ERROR_REASONS } from "./const/ErrorReason";
 
-import { DataType, DataTypeMap, DslType } from "./types/Common";
+import { DataType, DataTypeMap, DslType, SegmentState } from "./types/Common";
 import { FlushReq, InsertReq } from "./types/Insert";
 import {
   ErrorCode,
@@ -361,7 +361,44 @@ export class Data extends Client {
    * ```
    */
   async flush(data: FlushReq): Promise<FlushResult> {
+    // copy flushed collection names
+    let copyCollectionNames = [...data.collection_names];
     const res = await promisify(this.client, "Flush", data);
+    // After flush will return collection segment ids, need use GetPersistentSegmentInfo to check segment flush status.
+    const segIDs = res.coll_segIDs;
+    const CHECK_LIMIT = 10000;
+    let count = 0;
+
+    // If flushed is done, filter this collection, util copyCollectionNames is empty means all collections are flush success.
+    while (copyCollectionNames.length) {
+      for (let collectionName of copyCollectionNames) {
+        // Get collection segids from flush response.
+        const collectionSegIDS = segIDs[collectionName].data;
+        // Check collection segments flush status
+        const segmentInfo = await promisify(
+          this.client,
+          "GetPersistentSegmentInfo",
+          { collectionName }
+        );
+        // Check  all segment in collection ready or not
+        if (
+          collectionSegIDS.length === segmentInfo.infos.length &&
+          segmentInfo.infos.every((v: any) => v.state === SegmentState.Flushed)
+        ) {
+          copyCollectionNames = copyCollectionNames.filter(
+            (name) => name !== collectionName
+          );
+        }
+      }
+      count++;
+      // In case check too much times, throw error .
+      if (count > CHECK_LIMIT) {
+        throw new Error(
+          `We tried ten thounds times to check, ${copyCollectionNames.toString()} still not flushed yet. `
+        );
+      }
+    }
+
     return res;
   }
 

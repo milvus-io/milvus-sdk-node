@@ -147,6 +147,7 @@ export interface SearchResults {
 
 export interface FlushResult {
   status: ResStatus;
+  coll_segIDs: any; // collection segment id array
 }
 
 export interface QueryResults {

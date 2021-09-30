@@ -12,6 +12,11 @@ const test = async () => {
     genCollectionParams(COLLECTION_NAME, "4", DataType.FloatVector, false)
   );
 
+  await milvusClient.partitionManager.createPartition({
+    collection_name: COLLECTION_NAME,
+    partition_name: "test",
+  });
+
   const fields = [
     {
       isVector: true,
@@ -28,6 +33,7 @@ const test = async () => {
   const params: InsertReq = {
     collection_name: COLLECTION_NAME,
     fields_data: vectorsData,
+    partition_name: "test",
   };
 
   await milvusClient.dataManager.insert(params);
@@ -36,7 +42,19 @@ const test = async () => {
   await milvusClient.collectionManager.loadCollection({
     collection_name: COLLECTION_NAME,
   });
-  await milvusClient.dataManager.flush({ collection_names: [COLLECTION_NAME] });
+
+  let res: any = await milvusClient.dataManager.flush({
+    collection_names: [COLLECTION_NAME],
+  });
+
+  console.log("---- flush ---", res.coll_segIDs[COLLECTION_NAME]);
+
+  res = await milvusClient.partitionManager.getPartitionStatistics({
+    collection_name: COLLECTION_NAME,
+    partition_name: "test",
+  });
+
+  console.log("----- describe partition --- ", res);
 
   const queryData = await milvusClient.dataManager.query({
     collection_name: COLLECTION_NAME,
