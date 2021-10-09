@@ -43,11 +43,11 @@ const test = async () => {
     collection_name: COLLECTION_NAME,
   });
 
-  let res: any = await milvusClient.dataManager.flush({
+  let res: any = await milvusClient.dataManager.flushSync({
     collection_names: [COLLECTION_NAME],
   });
 
-  console.log("---- flush ---", res.coll_segIDs[COLLECTION_NAME]);
+  console.log("---- flush sync ---", res.coll_segIDs[COLLECTION_NAME]);
 
   res = await milvusClient.partitionManager.getPartitionStatistics({
     collection_name: COLLECTION_NAME,
