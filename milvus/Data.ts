@@ -341,7 +341,7 @@ export class Data extends Client {
 
   /**
    * Milvus temporarily buffers the newly inserted vectors in the cache. Call `flush()` to persist them to the object storage.
-   *
+   * It's async function, so it's will take some times to excute.
    * @param data
    *  | Property                | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
@@ -361,6 +361,33 @@ export class Data extends Client {
    * ```
    */
   async flush(data: FlushReq): Promise<FlushResult> {
+    const res = await promisify(this.client, "Flush", data);
+    return res;
+  }
+
+  /**
+   * It's same function as flush. But flushSync is sync function.
+   * So you can ensure it's flushed after function return the result.
+   *
+   * @param data
+   *  | Property                | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | collection_names        | String[] |        Array of collection names      |
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.flushSync({
+   *     collection_names: ['my_collection'],
+   *  });
+   * ```
+   */
+  async flushSync(data: FlushReq): Promise<FlushResult> {
     // copy flushed collection names
     let copyCollectionNames = [...data.collection_names];
     const res = await promisify(this.client, "Flush", data);
@@ -380,11 +407,15 @@ export class Data extends Client {
           "GetPersistentSegmentInfo",
           { collectionName }
         );
+
         // Check  all segment in collection ready or not
-        if (
-          collectionSegIDS.length === segmentInfo.infos.length &&
-          segmentInfo.infos.every((v: any) => v.state === SegmentState.Flushed)
-        ) {
+        const isAllFlushed = collectionSegIDS.every((segID: string) => {
+          const target = segmentInfo.infos.find(
+            (item: any) => item.segmentID === segID
+          );
+          return target ? target.state === SegmentState.Flushed : false;
+        });
+        if (isAllFlushed) {
           copyCollectionNames = copyCollectionNames.filter(
             (name) => name !== collectionName
           );

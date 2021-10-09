@@ -10,7 +10,7 @@ import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
-describe("Search Api", () => {
+describe("Data.ts Test", () => {
   beforeAll(async () => {
     await milvusClient.collectionManager.createCollection(
       genCollectionParams(COLLECTION_NAME, "4", DataType.FloatVector, false)
@@ -37,15 +37,20 @@ describe("Search Api", () => {
     };
 
     await milvusClient.dataManager.insert(params);
-    await milvusClient.dataManager.flush({
-      collection_names: [COLLECTION_NAME],
-    });
   });
 
   afterAll(async () => {
     await milvusClient.collectionManager.dropCollection({
       collection_name: COLLECTION_NAME,
     });
+  });
+
+  it("Flush Sync", async () => {
+    const res = await milvusClient.dataManager.flushSync({
+      collection_names: [COLLECTION_NAME],
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it("Expr Search", async () => {
