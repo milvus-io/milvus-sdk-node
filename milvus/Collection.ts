@@ -282,6 +282,15 @@ export class Collection extends Client {
    */
   async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
     const promise = await promisify(this.client, "LoadCollection", data);
+    let loadedPercentage = 0;
+    while (Number(loadedPercentage) < 100) {
+      let res = await this.showCollections({
+        collection_names: [data.collection_name],
+        type: ShowCollectionsType.Loaded,
+      });
+      loadedPercentage = Number(res.data[0].loadedPercentage);
+    }
+
     return promise;
   }
 

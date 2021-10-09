@@ -6,6 +6,7 @@ export interface SearchParam {
   topk: string;
   metric_type: string;
   params: string;
+  round_decimal: string;
 }
 export interface SearchReq {
   collection_name: string;
