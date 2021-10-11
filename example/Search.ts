@@ -46,7 +46,7 @@ const Search = async () => {
     },
   });
   // need load collection before search
-  res = await milvusClient.collectionManager.loadCollection({
+  res = await milvusClient.collectionManager.loadCollectionSync({
     collection_name: COLLECTION_NAME,
   });
   console.log("--- load done ----", res);
@@ -75,92 +75,92 @@ Search();
 
 // When created collection, all bool value will store as false.
 // After Milvus has more test about bool,we can test this.
-const BoolExprSearch = async () => {
-  let res: any = await milvusClient.collectionManager.createCollection({
-    collection_name: COLLECTION_NAME,
-    fields: [
-      {
-        name: VECTOR_FIELD_NAME,
-        description: "vector field",
-        data_type: DataType.FloatVector,
+// const BoolExprSearch = async () => {
+//   let res: any = await milvusClient.collectionManager.createCollection({
+//     collection_name: COLLECTION_NAME,
+//     fields: [
+//       {
+//         name: VECTOR_FIELD_NAME,
+//         description: "vector field",
+//         data_type: DataType.FloatVector,
 
-        type_params: {
-          dim: "4",
-        },
-      },
-      {
-        name: "age",
-        data_type: DataType.Int64,
-        autoID: true,
-        is_primary_key: true,
-        description: "",
-      },
-      {
-        name: "rich",
-        data_type: DataType.Bool,
-        autoID: false,
-        is_primary_key: false,
-        description: "",
-      },
-    ],
-  });
+//         type_params: {
+//           dim: "4",
+//         },
+//       },
+//       {
+//         name: "age",
+//         data_type: DataType.Int64,
+//         autoID: true,
+//         is_primary_key: true,
+//         description: "",
+//       },
+//       {
+//         name: "rich",
+//         data_type: DataType.Bool,
+//         autoID: false,
+//         is_primary_key: false,
+//         description: "",
+//       },
+//     ],
+//   });
 
-  const fields = [
-    {
-      isVector: true,
-      dim: 4,
-      name: VECTOR_FIELD_NAME,
-    },
-    {
-      name: "rich",
-      isVector: false,
-      isBool: true,
-    },
-  ];
-  const vectorsData = generateInsertData(fields, 100);
-  console.log("--- insert data ---", vectorsData[0]);
-  const params: InsertReq = {
-    collection_name: COLLECTION_NAME,
-    fields_data: vectorsData,
-  };
-  res = await milvusClient.dataManager.insert(params);
-  console.log("--- insert ---", res);
+//   const fields = [
+//     {
+//       isVector: true,
+//       dim: 4,
+//       name: VECTOR_FIELD_NAME,
+//     },
+//     {
+//       name: "rich",
+//       isVector: false,
+//       isBool: true,
+//     },
+//   ];
+//   const vectorsData = generateInsertData(fields, 100);
+//   console.log("--- insert data ---", vectorsData[0]);
+//   const params: InsertReq = {
+//     collection_name: COLLECTION_NAME,
+//     fields_data: vectorsData,
+//   };
+//   res = await milvusClient.dataManager.insert(params);
+//   console.log("--- insert ---", res);
 
-  res = await milvusClient.dataManager.flushSync({
-    collection_names: [COLLECTION_NAME],
-  });
+//   res = await milvusClient.dataManager.flushSync({
+//     collection_names: [COLLECTION_NAME],
+//   });
 
-  console.log("--- flush ---", res);
+//   console.log("--- flush ---", res);
 
-  // need load collection before search
-  res = await milvusClient.collectionManager.loadCollection({
-    collection_name: COLLECTION_NAME,
-  });
-  console.log("--- load ---", res);
-  res = await milvusClient.dataManager.flushSync({
-    collection_names: [COLLECTION_NAME],
-  });
-  console.log("--- flush ---", res);
+//   // need load collection before search
+//   res = await milvusClient.collectionManager.loadCollectionSync({
+//     collection_name: COLLECTION_NAME,
+//   });
+//   console.log("--- load ---", res);
+//   res = await milvusClient.dataManager.flushSync({
+//     collection_names: [COLLECTION_NAME],
+//   });
+//   console.log("--- flush ---", res);
 
-  res = await milvusClient.dataManager.search({
-    collection_name: COLLECTION_NAME,
-    // partition_names: [],
-    // expr: "rich == true",
-    vectors: [vectorsData[0][VECTOR_FIELD_NAME]],
-    search_params: {
-      anns_field: VECTOR_FIELD_NAME,
-      topk: "4",
-      metric_type: "L2",
-      params: JSON.stringify({ nprobe: 1024 }),
-      round_decimal: 1,
-    },
-    output_fields: ["age", "rich"],
-    vector_type: DataType.FloatVector,
-  });
-  console.log("---- search result ----", res);
-  await milvusClient.collectionManager.dropCollection({
-    collection_name: COLLECTION_NAME,
-  });
-};
+//   res = await milvusClient.dataManager.search({
+//     collection_name: COLLECTION_NAME,
+//     // partition_names: [],
+//     // expr: "rich == true",
+//     vectors: [vectorsData[0][VECTOR_FIELD_NAME]],
+//     search_params: {
+//       anns_field: VECTOR_FIELD_NAME,
+//       topk: "4",
+//       metric_type: "L2",
+//       params: JSON.stringify({ nprobe: 1024 }),
+//       round_decimal: 1,
+//     },
+//     output_fields: ["age", "rich"],
+//     vector_type: DataType.FloatVector,
+//   });
+//   console.log("---- search result ----", res);
+//   await milvusClient.collectionManager.dropCollection({
+//     collection_name: COLLECTION_NAME,
+//   });
+// };
 
 // BoolExprSearch();

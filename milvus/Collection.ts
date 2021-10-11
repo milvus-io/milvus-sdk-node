@@ -259,7 +259,8 @@ export class Collection extends Client {
   }
 
   /**
-   * Load collection to cache before search.
+   * Load collection data into query nodes, then you can do vector search on this collection.
+   * It's async function, but we can use showCollections to check loading status.
    *
    * @param data
    *  | Property           | Type   |           Description              |
@@ -282,12 +283,41 @@ export class Collection extends Client {
    */
   async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
     const promise = await promisify(this.client, "LoadCollection", data);
+    return promise;
+  }
+
+  /**
+   * Same function with loadCollection, but it's sync function.
+   * Help to ensure this collection is loaded.
+   *
+   * @param data
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | String |       Collection name       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause|   *
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.loadCollectionSync({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
+  async loadCollectionSync(data: LoadCollectionReq): Promise<ResStatus> {
+    const promise = await promisify(this.client, "LoadCollection", data);
     let loadedPercentage = 0;
     while (Number(loadedPercentage) < 100) {
       let res = await this.showCollections({
         collection_names: [data.collection_name],
         type: ShowCollectionsType.Loaded,
       });
+      // Because we pass collection_names in showCollections, so it will only this collection in result.
       loadedPercentage = Number(res.data[0].loadedPercentage);
     }
 

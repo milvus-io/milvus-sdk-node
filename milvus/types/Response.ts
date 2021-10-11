@@ -135,7 +135,7 @@ export interface MutationResult {
 }
 
 export interface SearchResultData {
-  score: number;
+  score: string;
   id: string;
   fields: { type: string; field_name: string; data: string }[];
 }

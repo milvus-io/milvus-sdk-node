@@ -27,7 +27,7 @@ import {
   parseFloatVectorToBytes,
 } from "./utils/Blob";
 import path from "path";
-import { parseToKeyValue } from "./utils/Format";
+import { formatNumberPrecision, parseToKeyValue } from "./utils/Format";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 
@@ -239,6 +239,12 @@ export class Data extends Client {
     if (!this.vectorTypes.includes(data.vector_type))
       throw new Error(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
 
+    // Set default value -1 for round_decimal
+    data.search_params.round_decimal =
+      typeof data.search_params.round_decimal === "undefined"
+        ? -1
+        : data.search_params.round_decimal;
+
     const collectionInfo = await this.collectionManager.describeCollection({
       collection_name: data.collection_name,
     });
@@ -291,6 +297,13 @@ export class Data extends Client {
       search_params: parseToKeyValue(data.search_params),
     });
     const results: any[] = [];
+    /**
+     *  It will decide the score precision.
+     *  If round_decimal is 3, need return like 3.142
+     *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
+     *  So the score need to slice by round_decimal
+     */
+    const round_decimal = data.search_params.round_decimal;
     if (promise.results) {
       /**
        *  fields_data:  what you pass in output_fields, only support non vector fields.
@@ -321,8 +334,13 @@ export class Data extends Client {
 
         scores.splice(0, topk).forEach((score, scoreIndex) => {
           const i = index === 0 ? scoreIndex : scoreIndex + topk;
+          const fixedScore =
+            round_decimal === -1
+              ? score
+              : formatNumberPrecision(score, round_decimal);
+
           const result: any = {
-            score,
+            score: fixedScore,
             id: idData ? idData[i] : "",
           };
           fieldsData.forEach((field) => {
