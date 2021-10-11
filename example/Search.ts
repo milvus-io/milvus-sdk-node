@@ -53,14 +53,14 @@ const Search = async () => {
   const result = await milvusClient.dataManager.search({
     collection_name: COLLECTION_NAME,
     // partition_names: [],
-    // expr: "",
+    // expr: "rich == true",
     vectors: [vectorsData[0][VECTOR_FIELD_NAME]],
     search_params: {
       anns_field: VECTOR_FIELD_NAME,
       topk: "4",
       metric_type: "L2",
       params: JSON.stringify({ nprobe: 1024 }),
-      round_decimal: "4",
+      round_decimal: 4,
     },
     output_fields: ["age"],
     vector_type: DataType.FloatVector,
@@ -71,9 +71,10 @@ const Search = async () => {
   });
 };
 
-// Search();
+Search();
 
-// Not working for now.
+// When created collection, all bool value will store as false.
+// After Milvus has more test about bool,we can test this.
 const BoolExprSearch = async () => {
   let res: any = await milvusClient.collectionManager.createCollection({
     collection_name: COLLECTION_NAME,
@@ -144,14 +145,14 @@ const BoolExprSearch = async () => {
   res = await milvusClient.dataManager.search({
     collection_name: COLLECTION_NAME,
     // partition_names: [],
-    // expr: "rich = true",
+    // expr: "rich == true",
     vectors: [vectorsData[0][VECTOR_FIELD_NAME]],
     search_params: {
       anns_field: VECTOR_FIELD_NAME,
       topk: "4",
       metric_type: "L2",
       params: JSON.stringify({ nprobe: 1024 }),
-      round_decimal: "3",
+      round_decimal: 1,
     },
     output_fields: ["age", "rich"],
     vector_type: DataType.FloatVector,
@@ -162,4 +163,4 @@ const BoolExprSearch = async () => {
   });
 };
 
-BoolExprSearch();
+// BoolExprSearch();
