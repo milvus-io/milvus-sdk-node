@@ -16,6 +16,7 @@ import {
   BoolResponse,
   CollectionData,
   DescribeCollectionResponse,
+  ErrorCode,
   ResStatus,
   ShowCollectionsResponse,
   StatisticsResponse,
@@ -317,6 +318,11 @@ export class Collection extends Client {
         collection_names: [data.collection_name],
         type: ShowCollectionsType.Loaded,
       });
+      if (res.status.error_code !== ErrorCode.SUCCESS) {
+        throw new Error(
+          `ErrorCode: ${res.status.error_code}. Reason: ${res.status.reason}`
+        );
+      }
       // Because we pass collection_names in showCollections, so it will only this collection in result.
       loadedPercentage = Number(res.data[0].loadedPercentage);
     }

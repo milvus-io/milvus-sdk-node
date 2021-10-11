@@ -405,8 +405,6 @@ export class Data extends Client {
     const res = await promisify(this.client, "Flush", data);
     // After flush will return collection segment ids, need use GetPersistentSegmentInfo to check segment flush status.
     const segIDs = res.coll_segIDs;
-    const CHECK_LIMIT = 10000;
-    let count = 0;
 
     // If flushed is done, filter this collection, util copyCollectionNames is empty means all collections are flush success.
     while (copyCollectionNames.length) {
@@ -432,13 +430,6 @@ export class Data extends Client {
             (name) => name !== collectionName
           );
         }
-      }
-      count++;
-      // In case check too much times, throw error .
-      if (count > CHECK_LIMIT) {
-        throw new Error(
-          `We tried ten thounds times to check, ${copyCollectionNames.toString()} still not flushed yet. `
-        );
       }
     }
 

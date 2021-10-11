@@ -40,14 +40,16 @@ export const parseToKeyValue = (data?: {
  * @returns
  */
 export const formatNumberPrecision = (number: number, precision: number) => {
-  return number
-    .toString()
-    .split(".")
-    .map((v, i) => {
-      if (i === 1) {
-        return v.slice(0, precision);
-      }
-      return v;
-    })
-    .join(".");
+  return Number(
+    number
+      .toString()
+      .split(".")
+      .map((v, i) => {
+        if (i === 1) {
+          return v.slice(0, precision);
+        }
+        return v;
+      })
+      .join(".")
+  );
 };
