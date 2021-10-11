@@ -239,12 +239,6 @@ export class Data extends Client {
     if (!this.vectorTypes.includes(data.vector_type))
       throw new Error(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
 
-    // Set default value -1 for round_decimal
-    data.search_params.round_decimal =
-      typeof data.search_params.round_decimal === "undefined"
-        ? -1
-        : data.search_params.round_decimal;
-
     const collectionInfo = await this.collectionManager.describeCollection({
       collection_name: data.collection_name,
     });
@@ -335,7 +329,7 @@ export class Data extends Client {
         scores.splice(0, topk).forEach((score, scoreIndex) => {
           const i = index === 0 ? scoreIndex : scoreIndex + topk;
           const fixedScore =
-            round_decimal === -1
+            typeof round_decimal === "undefined" || round_decimal === -1
               ? score
               : formatNumberPrecision(score, round_decimal);
 
