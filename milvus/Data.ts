@@ -417,7 +417,6 @@ export class Data extends Client {
           "GetPersistentSegmentInfo",
           { collectionName }
         );
-
         // Check  all segment in collection ready or not
         const isAllFlushed = collectionSegIDS.every((segID: string) => {
           const target = segmentInfo.infos.find(

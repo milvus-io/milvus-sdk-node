@@ -34,8 +34,6 @@ const Search = async () => {
     collection_names: [COLLECTION_NAME],
   });
 
-  console.log("---flush---", res, res.coll_segIDs[COLLECTION_NAME].data);
-
   await milvusClient.indexManager.createIndex({
     collection_name: COLLECTION_NAME,
     field_name: VECTOR_FIELD_NAME,

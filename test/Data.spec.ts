@@ -1,4 +1,4 @@
-import { MilvusClient } from "../dist/milvus/index";
+import { MilvusClient } from "../milvus";
 
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
@@ -15,9 +15,7 @@ describe("Data.ts Test", () => {
     await milvusClient.collectionManager.createCollection(
       genCollectionParams(COLLECTION_NAME, "4", DataType.FloatVector, false)
     );
-    await milvusClient.collectionManager.loadCollection({
-      collection_name: COLLECTION_NAME,
-    });
+
     const fields = [
       {
         isVector: true,
@@ -37,6 +35,9 @@ describe("Data.ts Test", () => {
     };
 
     await milvusClient.dataManager.insert(params);
+    const res = await milvusClient.collectionManager.loadCollectionSync({
+      collection_name: COLLECTION_NAME,
+    });
   });
 
   afterAll(async () => {
@@ -49,7 +50,13 @@ describe("Data.ts Test", () => {
     const res = await milvusClient.dataManager.flushSync({
       collection_names: [COLLECTION_NAME],
     });
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
+  it("Flush ASync", async () => {
+    const res = await milvusClient.dataManager.flush({
+      collection_names: [COLLECTION_NAME],
+    });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -64,6 +71,7 @@ describe("Data.ts Test", () => {
         topk: "4",
         metric_type: "L2",
         params: JSON.stringify({ nprobe: 1024 }),
+        round_decimal: -1,
       },
       output_fields: ["age"],
       vector_type: DataType.FloatVector,

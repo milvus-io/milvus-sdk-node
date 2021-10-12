@@ -1,5 +1,5 @@
-import { MilvusClient } from "../dist/milvus/index";
-import sdkInfo from "../dist/sdk.json";
+import { MilvusClient } from "../milvus";
+import sdkInfo from "../sdk.json";
 import { IP } from "../const";
 
 const milvusClient = new MilvusClient(IP);
