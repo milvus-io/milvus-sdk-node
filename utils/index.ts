@@ -18,7 +18,7 @@ export function promisify(obj: any, target: string, params: any): Promise<any> {
 }
 
 export function generateInsertData(
-  fields: { isVector: boolean; dim?: number; name: string }[],
+  fields: { isVector: boolean; dim?: number; name: string; isBool?: boolean }[],
   count: number
 ) {
   const results = [];
@@ -26,9 +26,11 @@ export function generateInsertData(
     let value: any = {};
 
     fields.forEach((v) => {
-      const { isVector, dim, name } = v;
+      const { isVector, dim, name, isBool } = v;
       value[name] = isVector
         ? [...Array(dim)].map(() => Math.random() * 10)
+        : isBool
+        ? count % 2 === 0
         : count;
     });
     results.push(value);

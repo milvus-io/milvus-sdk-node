@@ -32,3 +32,24 @@ export const parseToKeyValue = (data?: {
       )
     : [];
 };
+
+/**
+ *
+ * @param number Number like 3.1738998889923096
+ * @param precision The precision you want, if is 3 will return 3.173 and If is 2 will return 3.17
+ * @returns
+ */
+export const formatNumberPrecision = (number: number, precision: number) => {
+  return Number(
+    number
+      .toString()
+      .split(".")
+      .map((v, i) => {
+        if (i === 1) {
+          return v.slice(0, precision);
+        }
+        return v;
+      })
+      .join(".")
+  );
+};

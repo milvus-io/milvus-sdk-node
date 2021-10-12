@@ -24,4 +24,5 @@ jobs:
       - name: Run Test coverage
         run: |
           yarn
+          yarn build-test
           yarn coverage

@@ -1,4 +1,4 @@
-import { MilvusClient } from "../dist/milvus/index";
+import { MilvusClient } from "../milvus";
 
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
@@ -57,6 +57,7 @@ describe("Vector search on binary field", () => {
         topk: "4",
         metric_type: "Hamming",
         params: JSON.stringify({ nprobe: 1024 }),
+        round_decimal: -1,
       },
       vector_type: DataType.BinaryVector,
     });

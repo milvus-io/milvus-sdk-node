@@ -27,7 +27,7 @@ import {
   parseFloatVectorToBytes,
 } from "./utils/Blob";
 import path from "path";
-import { parseToKeyValue } from "./utils/Format";
+import { formatNumberPrecision, parseToKeyValue } from "./utils/Format";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 
@@ -291,6 +291,13 @@ export class Data extends Client {
       search_params: parseToKeyValue(data.search_params),
     });
     const results: any[] = [];
+    /**
+     *  It will decide the score precision.
+     *  If round_decimal is 3, need return like 3.142
+     *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
+     *  So the score need to slice by round_decimal
+     */
+    const round_decimal = data.search_params.round_decimal;
     if (promise.results) {
       /**
        *  fields_data:  what you pass in output_fields, only support non vector fields.
@@ -321,8 +328,13 @@ export class Data extends Client {
 
         scores.splice(0, topk).forEach((score, scoreIndex) => {
           const i = index === 0 ? scoreIndex : scoreIndex + topk;
+          const fixedScore =
+            typeof round_decimal === "undefined" || round_decimal === -1
+              ? score
+              : formatNumberPrecision(score, round_decimal);
+
           const result: any = {
-            score,
+            score: fixedScore,
             id: idData ? idData[i] : "",
           };
           fieldsData.forEach((field) => {
@@ -393,8 +405,6 @@ export class Data extends Client {
     const res = await promisify(this.client, "Flush", data);
     // After flush will return collection segment ids, need use GetPersistentSegmentInfo to check segment flush status.
     const segIDs = res.coll_segIDs;
-    const CHECK_LIMIT = 10000;
-    let count = 0;
 
     // If flushed is done, filter this collection, util copyCollectionNames is empty means all collections are flush success.
     while (copyCollectionNames.length) {
@@ -407,7 +417,6 @@ export class Data extends Client {
           "GetPersistentSegmentInfo",
           { collectionName }
         );
-
         // Check  all segment in collection ready or not
         const isAllFlushed = collectionSegIDS.every((segID: string) => {
           const target = segmentInfo.infos.find(
@@ -420,13 +429,6 @@ export class Data extends Client {
             (name) => name !== collectionName
           );
         }
-      }
-      count++;
-      // In case check too much times, throw error .
-      if (count > CHECK_LIMIT) {
-        throw new Error(
-          `We tried ten thounds times to check, ${copyCollectionNames.toString()} still not flushed yet. `
-        );
       }
     }
 

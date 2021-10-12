@@ -1,11 +1,12 @@
-import { MilvusClient } from "../milvus";
+/** This file only test build files. */
+import { MilvusClient } from "../../dist/milvus";
 
-import { GENERATE_NAME, IP } from "../const";
-import { DataType } from "../milvus/types/Common";
-import { ErrorCode } from "../milvus/types/Response";
-import { ShowCollectionsType } from "../milvus/types/Collection";
-import { ERROR_REASONS } from "../milvus/const/ErrorReason";
-import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
+import { GENERATE_NAME, IP } from "../../const";
+import { DataType } from "../../milvus/types/Common";
+import { ErrorCode } from "../../milvus/types/Response";
+import { ShowCollectionsType } from "../../milvus/types/Collection";
+import { ERROR_REASONS } from "../../milvus/const/ErrorReason";
+import { genCollectionParams, VECTOR_FIELD_NAME } from "../../utils/test";
 
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
@@ -146,14 +147,7 @@ describe("Collection Api", () => {
     expect(res.schema.fields[1].name).toEqual("age");
   });
 
-  it(`Load Collection Sync `, async () => {
-    const res = await collectionManager.loadCollectionSync({
-      collection_name: LOAD_COLLECTION_NAME,
-    });
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
-  it(`Load Collection Async`, async () => {
+  it(`Load Collection`, async () => {
     const res = await collectionManager.loadCollection({
       collection_name: LOAD_COLLECTION_NAME,
     });
