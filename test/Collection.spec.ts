@@ -153,7 +153,7 @@ describe("Collection Api", () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Load Collection Successful`, async () => {
+  it(`Load Collection Async`, async () => {
     const res = await collectionManager.loadCollection({
       collection_name: LOAD_COLLECTION_NAME,
     });
