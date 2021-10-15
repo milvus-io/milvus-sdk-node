@@ -59,8 +59,6 @@ const hello_milvus = async () => {
             ]
           }
     );
-
-
     console.log("--- Create collection ---", createRes, collectionName);
 
     
@@ -91,7 +89,6 @@ const hello_milvus = async () => {
       collection_name: collectionName,
       fields_data: vectorsData
     };
-  
     await milvusClient.dataManager.insert(params);
     console.log("--- Insert Data to Collection ---");
 
@@ -128,9 +125,7 @@ const hello_milvus = async () => {
       output_fields: ["count"],
       vector_type: DataType.FloatVector,
     });
-  
     console.log("--- Search collection (" + collectionName + ") ---", result);
-
 
     const releaseRes = await collectionManager.releaseCollection({
       collection_name: collectionName,
