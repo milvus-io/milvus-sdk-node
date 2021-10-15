@@ -64,11 +64,11 @@ const hello_milvus = async () => {
     console.log("--- Create collection ---", createRes, collectionName);
 
     
-    let showCollectionRes  = await collectionManager.showCollections();
+    const showCollectionRes  = await collectionManager.showCollections();
     console.log("--- Show collections ---", showCollectionRes);
 
     
-    let hasCollectionRes = await collectionManager.hasCollection({
+    const hasCollectionRes = await collectionManager.hasCollection({
       collection_name: collectionName,
     });
     console.log("--- Has collection (" + collectionName + ") ---", hasCollectionRes);
@@ -109,7 +109,7 @@ const hello_milvus = async () => {
   
   
         // need load collection before search
-    let loadCollectionRes = await collectionManager.loadCollectionSync({
+    const loadCollectionRes = await collectionManager.loadCollectionSync({
       collection_name: collectionName,
     });
     console.log("--- Load collection (" + collectionName + ") ---", loadCollectionRes);
