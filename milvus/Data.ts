@@ -192,8 +192,34 @@ export class Data extends Client {
     return promise;
   }
 
+  /**
+   * Delete entities in Milvus
+   *
+   * @param data
+   *  | Property                | Type                   |           Description              |
+   *  | :---------------------- | :--------------------  | :-------------------------------  |
+   *  | collection_name         | String                 |       Collection name       |
+   *  | partition_name(optional)| String                 |       Partition name       |
+   *  | expr    | String        |  Boolean expression used to filter attribute.    |
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-------------| :-------------------------------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | IDs    |        ID array of the successfully deleted data      |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).dataManager.deleteEntities({
+   *    collection_name: COLLECTION_NAME,
+   *    expr: 'id in [1,2,3,4]'
+   *  });
+   * ```
+   */
   async deleteEntities(data: DeleteEntitiesReq): Promise<MutationResult> {
-    if (!data.collection_name || !data.expr) {
+    if (!data || !data.collection_name || !data.expr) {
       throw new Error(ERROR_REASONS.DELETE_PARAMS_CHECK);
     }
     const promise = await promisify(this.client, "Delete", data);
