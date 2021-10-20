@@ -6,6 +6,7 @@ import { ErrorCode } from "../milvus/types/Response";
 import { InsertReq } from "../milvus/types/Data";
 import { generateInsertData } from "../utils";
 import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
+import { ERROR_REASONS } from "../milvus/const/ErrorReason";
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -71,13 +72,81 @@ describe("Data.ts Test", () => {
         topk: "4",
         metric_type: "L2",
         params: JSON.stringify({ nprobe: 1024 }),
-        round_decimal: -1,
+        round_decimal: 2,
       },
       output_fields: ["age"],
       vector_type: DataType.FloatVector,
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it("Expr Search should throw SEARCH_NOT_FIND_VECTOR_FIELD", async () => {
+    try {
+      await milvusClient.dataManager.search({
+        collection_name: COLLECTION_NAME,
+        // partition_names: [],
+        expr: "",
+        vectors: [[1, 2, 3, 4]],
+        search_params: {
+          anns_field: "not exist",
+          topk: "4",
+          metric_type: "L2",
+          params: JSON.stringify({ nprobe: 1024 }),
+          round_decimal: -1,
+        },
+        output_fields: ["age"],
+        vector_type: DataType.FloatVector,
+      });
+      expect("a").toEqual("b");
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.SEARCH_NOT_FIND_VECTOR_FIELD);
+    }
+  });
+
+  it("Expr Search should throw SEARCH_MISS_VECTOR_TYPE", async () => {
+    try {
+      await milvusClient.dataManager.search({
+        collection_name: COLLECTION_NAME,
+        // partition_names: [],
+        expr: "",
+        vectors: [[1, 2, 3, 4]],
+        search_params: {
+          anns_field: "not exist",
+          topk: "4",
+          metric_type: "L2",
+          params: JSON.stringify({ nprobe: 1024 }),
+          round_decimal: -1,
+        },
+        output_fields: ["age"],
+        vector_type: DataType.Bool as DataType.BinaryVector,
+      });
+      expect("a").toEqual("b");
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
+    }
+  });
+
+  it("Expr Search should throw SEARCH_DIM_NOT_MATCH", async () => {
+    try {
+      await milvusClient.dataManager.search({
+        collection_name: COLLECTION_NAME,
+        // partition_names: [],
+        expr: "",
+        vectors: [[1, 2, 3]],
+        search_params: {
+          anns_field: VECTOR_FIELD_NAME,
+          topk: "4",
+          metric_type: "L2",
+          params: JSON.stringify({ nprobe: 1024 }),
+          round_decimal: -1,
+        },
+        output_fields: ["age"],
+        vector_type: DataType.FloatVector,
+      });
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
+    }
   });
 
   it("Query ", async () => {
@@ -87,6 +156,13 @@ describe("Data.ts Test", () => {
       output_fields: ["age", VECTOR_FIELD_NAME],
     });
     console.log(res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it("Get metrics ", async () => {
+    const res = await milvusClient.dataManager.getMetric({
+      request: { metric_type: "system_info" },
+    });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });

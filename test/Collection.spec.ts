@@ -92,6 +92,44 @@ describe("Collection Api", () => {
     }
   });
 
+  it("Create collection should throw CREATE_COLLECTION_CHECK_BINARY_DIM", async () => {
+    try {
+      await collectionManager.createCollection({
+        collection_name: "zxc",
+        fields: [
+          {
+            name: "vector_01",
+            description: "vector field",
+            data_type: DataType.BinaryVector,
+            type_params: {
+              dim: "7",
+            },
+          },
+          {
+            name: "age",
+            description: "",
+            data_type: DataType.Int64,
+            is_primary_key: true,
+          },
+        ],
+      });
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM
+      );
+    }
+  });
+
+  it("Create collection should throw check params error", async () => {
+    try {
+      await collectionManager.createCollection({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS
+      );
+    }
+  });
+
   it(`Create load Collection Successful`, async () => {
     const res = await collectionManager.createCollection(
       genCollectionParams(LOAD_COLLECTION_NAME, "128")
@@ -107,6 +145,14 @@ describe("Collection Api", () => {
     console.log("----has collection", res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.value).toEqual(true);
+  });
+
+  it("Has collection should throw check params error", async () => {
+    try {
+      await collectionManager.hasCollection({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.HAS_COLLECTION_CHECK_PARAMS);
+    }
   });
 
   it(`Has collection not exist`, async () => {
@@ -151,6 +197,30 @@ describe("Collection Api", () => {
       collection_name: LOAD_COLLECTION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Load Collection Sync `, async () => {
+    const fakeClient = new MilvusClient(IP);
+
+    fakeClient.collectionManager.showCollections = () => {
+      return new Promise((res) => {
+        res({
+          status: {
+            error_code: "error",
+            reason: "123",
+          },
+        } as any);
+      });
+    };
+    try {
+      await fakeClient.collectionManager.loadCollectionSync({
+        collection_name: LOAD_COLLECTION_NAME,
+      });
+    } catch (error) {
+      expect(typeof error.message).toBe("string");
+    } finally {
+      fakeClient.closeConnection();
+    }
   });
 
   it(`Load Collection Async`, async () => {

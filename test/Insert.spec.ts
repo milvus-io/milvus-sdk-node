@@ -6,6 +6,7 @@ import { ErrorCode } from "../milvus/types/Response";
 import { InsertReq } from "../milvus/types/Data";
 import { generateInsertData } from "../utils";
 import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
+import { ERROR_REASONS } from "../milvus/const/ErrorReason";
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -83,6 +84,17 @@ describe("Insert data Api", () => {
     });
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Delete Data should throw error `, async () => {
+    try {
+      await milvusClient.dataManager.deleteEntities({
+        collection_name: COLLECTION_NAME,
+      } as any);
+      expect("a").toEqual("b");
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.DELETE_PARAMS_CHECK);
+    }
   });
 
   it(`Insert Data on float field expect success`, async () => {
@@ -192,6 +204,54 @@ describe("Insert data Api", () => {
     } catch (error) {
       console.log(error);
       expect(error.message).toContain("Insert fail");
+    }
+  });
+
+  it(`Insert should throw describeCollection error`, async () => {
+    const fakeClient = new MilvusClient(IP);
+
+    fakeClient.collectionManager.describeCollection = () => {
+      return new Promise((res) => {
+        res({
+          status: {
+            error_code: "error",
+            reason: "error",
+          },
+        } as any);
+      });
+    };
+    try {
+      await fakeClient.dataManager.insert({
+        collection_name: COLLECTION_NAME,
+      } as any);
+    } catch (error) {
+      console.log(error);
+      expect(error.message).toBe("error");
+    } finally {
+      fakeClient.closeConnection();
+    }
+  });
+
+  it("Insert into binary field should throw error", async () => {
+    const fields = [
+      {
+        isVector: true,
+        dim: 8,
+        name: VECTOR_FIELD_NAME,
+      },
+    ];
+    const vectorsData = generateInsertData(fields, 10);
+    const params: InsertReq = {
+      collection_name: BINARY_COLLECTION_NAME,
+      fields_data: vectorsData,
+    };
+    try {
+      await milvusClient.dataManager.insert(params);
+      // If not throw error, test fail
+      expect("a").toEqual("b");
+    } catch (error) {
+      console.log(error);
+      expect(error.message).toEqual(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
     }
   });
 });
