@@ -2,7 +2,7 @@ import { MilvusClient } from "../milvus/index";
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { generateInsertData } from "../utils";
-import { InsertReq } from "../milvus/types/Insert";
+import { InsertReq } from "../milvus/types/Data";
 import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -36,20 +36,40 @@ const test = async () => {
     partition_name: "test",
   };
 
-  await milvusClient.dataManager.insert(params);
+  const insertRes = await milvusClient.dataManager.insert(params);
+  console.log(insertRes);
 
-  // need load collection before search
-  await milvusClient.collectionManager.loadCollection({
-    collection_name: COLLECTION_NAME,
-  });
-
-  let res: any = await milvusClient.dataManager.flushSync({
+  await milvusClient.dataManager.flushSync({
     collection_names: [COLLECTION_NAME],
   });
 
-  console.log("---- flush sync ---", res.coll_segIDs[COLLECTION_NAME]);
+  let entitiesCount =
+    await milvusClient.collectionManager.getCollectionStatistics({
+      collection_name: COLLECTION_NAME,
+    });
+  console.log("---- entity count ----", entitiesCount);
 
-  res = await milvusClient.partitionManager.getPartitionStatistics({
+  const deleteRes = await milvusClient.dataManager.deleteEntities({
+    collection_name: COLLECTION_NAME,
+    expr: "age in [1,2,3,4]",
+  });
+  console.log(deleteRes);
+
+  await milvusClient.dataManager.flushSync({
+    collection_names: [COLLECTION_NAME],
+  });
+
+  entitiesCount = await milvusClient.collectionManager.getCollectionStatistics({
+    collection_name: COLLECTION_NAME,
+  });
+  console.log("---- entity count ----", entitiesCount);
+
+  // need load collection before search
+  await milvusClient.collectionManager.loadCollectionSync({
+    collection_name: COLLECTION_NAME,
+  });
+
+  let res = await milvusClient.partitionManager.getPartitionStatistics({
     collection_name: COLLECTION_NAME,
     partition_name: "test",
   });
@@ -61,7 +81,7 @@ const test = async () => {
     expr: `age in [2,4,33,100]`,
     output_fields: ["age", VECTOR_FIELD_NAME],
   });
-  console.log(queryData);
+  console.log(queryData, queryData.data[1].age, queryData.data[1].vector_field);
 
   await milvusClient.collectionManager.dropCollection({
     collection_name: COLLECTION_NAME,

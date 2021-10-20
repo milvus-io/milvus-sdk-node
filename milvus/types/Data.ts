@@ -16,3 +16,9 @@ export interface InsertReq {
   fields_data: { [x: string]: any }[];
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }
+
+export interface DeleteEntitiesReq {
+  collection_name: string;
+  expr: string;
+  partition_name?: string;
+}

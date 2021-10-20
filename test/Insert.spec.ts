@@ -3,7 +3,7 @@ import { MilvusClient } from "../milvus";
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
-import { InsertReq } from "../milvus/types/Insert";
+import { InsertReq } from "../milvus/types/Data";
 import { generateInsertData } from "../utils";
 import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 
@@ -72,6 +72,15 @@ describe("Insert data Api", () => {
     };
 
     const res = await milvusClient.dataManager.insert(params);
+    console.log(res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Delete Data on float `, async () => {
+    const res = await milvusClient.dataManager.deleteEntities({
+      collection_name: COLLECTION_NAME,
+      expr: "age in [1,2]",
+    });
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });

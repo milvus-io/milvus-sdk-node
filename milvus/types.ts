@@ -11,7 +11,7 @@ export type {
   ShowCollectionsReq,
 } from "./types/Collection";
 
-export type { InsertReq, FieldData, FlushReq } from "./types/Insert";
+export type { InsertReq, FieldData, FlushReq } from "./types/Data";
 
 export type {
   IndexState,

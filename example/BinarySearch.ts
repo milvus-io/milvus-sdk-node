@@ -2,7 +2,7 @@ import { MilvusClient } from "../milvus/index";
 import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { generateInsertData } from "../utils";
-import { InsertReq } from "../milvus/types/Insert";
+import { InsertReq } from "../milvus/types/Data";
 import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
