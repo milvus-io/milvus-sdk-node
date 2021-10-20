@@ -53,7 +53,7 @@ const test = async () => {
     collection_name: COLLECTION_NAME,
     expr: "age in [1,2,3,4]",
   });
-  console.log(deleteRes, (deleteRes.IDs as any).int_id.data);
+  console.log(deleteRes);
 
   await milvusClient.dataManager.flushSync({
     collection_names: [COLLECTION_NAME],

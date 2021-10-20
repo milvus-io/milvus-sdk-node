@@ -17,7 +17,7 @@ jobs:
 
       - name: Run Milvus
         run: |
-          wget https://raw.githubusercontent.com/milvus-io/milvus/ecfebff801291934a3e6c5955e53637b993ab41a/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
+          wget https://github.com/milvus-io/milvus/blob/master/deployments/docker/standalone/docker-compose.yml
           docker-compose up -d
 
       - name: Run Test coverage
