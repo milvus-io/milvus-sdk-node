@@ -14,4 +14,6 @@ export enum ERROR_REASONS {
   SEARCH_MISS_VECTOR_TYPE = "Miss vector_type, need to be binary or float vector field type.",
   SEARCH_NOT_FIND_VECTOR_FIELD = "Your anns_field cannot find in this collection.",
   SEARCH_DIM_NOT_MATCH = "Your vector dimension is not match your anns_field dimension",
+
+  DELETE_PARAMS_CHECK = "Collection name and expr is required.",
 }

@@ -193,6 +193,9 @@ export class Data extends Client {
   }
 
   async deleteEntities(data: DeleteEntitiesReq): Promise<MutationResult> {
+    if (!data.collection_name || !data.expr) {
+      throw new Error(ERROR_REASONS.DELETE_PARAMS_CHECK);
+    }
     const promise = await promisify(this.client, "Delete", data);
     return promise;
   }
