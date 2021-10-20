@@ -5,7 +5,7 @@ import { Collection } from "./Collection";
 import { ERROR_REASONS } from "./const/ErrorReason";
 
 import { DataType, DataTypeMap, DslType, SegmentState } from "./types/Common";
-import { FlushReq, InsertReq } from "./types/Insert";
+import { DeleteEntitiesReq, FlushReq, InsertReq } from "./types/Data";
 import {
   ErrorCode,
   FlushResult,
@@ -189,6 +189,11 @@ export class Data extends Client {
 
     const promise = await promisify(this.client, "Insert", params);
 
+    return promise;
+  }
+
+  async deleteEntities(data: DeleteEntitiesReq): Promise<MutationResult> {
+    const promise = await promisify(this.client, "Delete", data);
     return promise;
   }
 
