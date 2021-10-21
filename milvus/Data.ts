@@ -270,7 +270,6 @@ export class Data extends Client {
    */
   async search(data: SearchReq): Promise<SearchResults> {
     const root = await protobuf.load(protoPath);
-    if (!root) throw new Error("Missing milvus proto file");
     if (!this.vectorTypes.includes(data.vector_type))
       throw new Error(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
 
@@ -351,7 +350,7 @@ export class Data extends Client {
         };
       });
       // verctor id support int / str id.
-      const idData = ids[ids.id_field]?.data;
+      const idData = ids ? ids[ids.id_field]?.data : undefined;
       /**
        *  milvus support mutilple querys to search
        *  milvus will return all columns data

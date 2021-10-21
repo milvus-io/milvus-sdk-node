@@ -28,7 +28,7 @@ const test = async () => {
   });
   console.log(res);
 
-  res = await collectionManager.loadCollection({
+  res = await collectionManager.loadCollectionSync({
     collection_name: COLLECTION_NAME,
   });
   console.log(res);

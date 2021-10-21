@@ -256,7 +256,7 @@ describe("Insert data Api", () => {
     };
 
     const res = await milvusClient.dataManager.insert(params);
-    await milvusClient.collectionManager.loadCollection({
+    await milvusClient.collectionManager.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
 

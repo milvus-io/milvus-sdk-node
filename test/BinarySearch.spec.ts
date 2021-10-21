@@ -15,7 +15,7 @@ describe("Vector search on binary field", () => {
     await milvusClient.collectionManager.createCollection(
       genCollectionParams(COLLECTION_NAME, "128", DataType.BinaryVector, false)
     );
-    await milvusClient.collectionManager.loadCollection({
+    await milvusClient.collectionManager.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
     const fields = [
@@ -35,7 +35,7 @@ describe("Vector search on binary field", () => {
       fields_data: vectorsData,
     };
     await milvusClient.dataManager.insert(params);
-    await milvusClient.dataManager.flush({
+    await milvusClient.dataManager.flushSync({
       collection_names: [COLLECTION_NAME],
     });
   });
