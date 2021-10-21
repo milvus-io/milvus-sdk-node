@@ -12,6 +12,7 @@ let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 const BINARY_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
+const MORE_SCALAR_COLLECTION_NAME = GENERATE_NAME();
 
 const PARTITION_NAME = "test";
 describe("Insert data Api", () => {
@@ -41,6 +42,45 @@ describe("Insert data Api", () => {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
     });
+    await milvusClient.collectionManager.createCollection({
+      collection_name: MORE_SCALAR_COLLECTION_NAME,
+      fields: [
+        {
+          name: VECTOR_FIELD_NAME,
+          description: "vector field",
+          data_type: DataType.FloatVector,
+          type_params: {
+            dim: "4",
+          },
+        },
+        {
+          name: "age",
+          data_type: DataType.Int64,
+          is_primary_key: true,
+          description: "",
+        },
+        {
+          name: "int",
+          data_type: DataType.Int32,
+          description: "",
+        },
+        {
+          name: "bool",
+          data_type: DataType.Bool,
+          description: "",
+        },
+        {
+          name: "double",
+          data_type: DataType.Double,
+          description: "",
+        },
+        {
+          name: "float",
+          data_type: DataType.Float,
+          description: "",
+        },
+      ],
+    });
   });
 
   afterAll(async () => {
@@ -54,6 +94,10 @@ describe("Insert data Api", () => {
 
     await milvusClient.collectionManager.dropCollection({
       collection_name: COLLECTION_NAME_AUTO_ID,
+    });
+
+    await milvusClient.collectionManager.dropCollection({
+      collection_name: MORE_SCALAR_COLLECTION_NAME,
     });
   });
 
@@ -75,6 +119,100 @@ describe("Insert data Api", () => {
     const res = await milvusClient.dataManager.insert(params);
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Insert Data on different scalar fields`, async () => {
+    const dataset = [
+      {
+        [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
+        age: 1,
+        bool: false,
+        int: 1,
+        double: 1.12,
+        float: 1.3,
+      },
+    ];
+    const params: InsertReq = {
+      collection_name: MORE_SCALAR_COLLECTION_NAME,
+      fields_data: dataset,
+    };
+
+    const res = await milvusClient.dataManager.insert(params);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Insert Data throw type error`, async () => {
+    const dataset = [
+      {
+        [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
+        age: 1,
+        bool: false,
+        int: 1,
+        double: 1.12,
+        float: 1.3,
+      },
+    ];
+    const params: InsertReq = {
+      collection_name: MORE_SCALAR_COLLECTION_NAME,
+      fields_data: dataset,
+    };
+
+    const res = await milvusClient.dataManager.insert(params);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Should throw INSERT_CHECK_WRONG_DATA_TYPE `, async () => {
+    const fakeClient = new MilvusClient(IP);
+    fakeClient.collectionManager.describeCollection = () => {
+      return new Promise((res) => {
+        res({
+          status: {
+            error_code: "Success",
+            reason: "123",
+          },
+          schema: {
+            fields: [
+              {
+                name: "vector_field",
+                data_type: "Not exist",
+                type_params: [
+                  {
+                    key: "dim",
+                    value: "4",
+                  },
+                ],
+              },
+              {
+                name: "age",
+                data_type: "Not exist",
+                type_params: [],
+              },
+            ],
+          },
+        } as any);
+      });
+    };
+
+    try {
+      const dataset = [
+        {
+          [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
+          age: 1,
+        },
+      ];
+      const params: InsertReq = {
+        collection_name: COLLECTION_NAME,
+        fields_data: dataset,
+      };
+
+      await fakeClient.dataManager.insert(params);
+      expect("a").toEqual("b");
+    } catch (error) {
+      console.log("---error----", error);
+      expect(error.message).toEqual(ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE);
+    } finally {
+      fakeClient.closeConnection();
+    }
   });
 
   it(`Delete Data on float `, async () => {
