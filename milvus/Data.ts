@@ -135,7 +135,6 @@ export class Data extends Client {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may casue we cant find value.
       const type = DataTypeMap[v.type.toLowerCase()];
-      console.log(type, collection_name);
       const key = this.vectorTypes.includes(type) ? "vectors" : "scalars";
       let dataKey = "float_vector";
       switch (type) {
