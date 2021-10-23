@@ -76,12 +76,11 @@ export class Collection extends Client {
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
     const { fields, collection_name, description } = data;
     if (!fields || !fields.length || !collection_name) {
-      throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_COLLECTION_NAME);
+      throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
     }
     checkCollectionFields(fields);
 
     const root = await protobuf.load(schemaPath);
-    if (!root) throw new Error("Missing proto file");
     // When data type is bytes, use protobufjs to transform data to buffer bytes.
     const CollectionSchema = root.lookupType(
       "milvus.proto.schema.CollectionSchema"
@@ -140,7 +139,7 @@ export class Collection extends Client {
    */
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
     if (!data.collection_name) {
-      throw new Error(ERROR_REASONS.HAS_COLLECTION_CHECK);
+      throw new Error(ERROR_REASONS.HAS_COLLECTION_CHECK_PARAMS);
     }
     const promise = await promisify(this.client, "HasCollection", data);
     return promise;

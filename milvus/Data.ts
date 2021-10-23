@@ -135,8 +135,6 @@ export class Data extends Client {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may casue we cant find value.
       const type = DataTypeMap[v.type.toLowerCase()];
-      if (!type) {
-      }
       const key = this.vectorTypes.includes(type) ? "vectors" : "scalars";
       let dataKey = "float_vector";
       switch (type) {
@@ -160,8 +158,11 @@ export class Data extends Client {
         case DataType.Int8:
           dataKey = "int_data";
           break;
-        default:
+        case DataType.Bool:
+          dataKey = "bool_data";
           break;
+        default:
+          throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE);
       }
       return {
         type,
@@ -269,7 +270,6 @@ export class Data extends Client {
    */
   async search(data: SearchReq): Promise<SearchResults> {
     const root = await protobuf.load(protoPath);
-    if (!root) throw new Error("Missing milvus proto file");
     if (!this.vectorTypes.includes(data.vector_type))
       throw new Error(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
 
@@ -350,7 +350,7 @@ export class Data extends Client {
         };
       });
       // verctor id support int / str id.
-      const idData = ids[ids.id_field]?.data;
+      const idData = ids ? ids[ids.id_field]?.data : undefined;
       /**
        *  milvus support mutilple querys to search
        *  milvus will return all columns data

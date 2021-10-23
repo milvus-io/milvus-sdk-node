@@ -12,8 +12,18 @@ import { DataType } from "../types/Common";
  */
 export const checkCollectionFields = (fields: FieldType[]) => {
   const vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
-
-  if (!fields.find((v) => v.data_type === DataType.Int64 && v.is_primary_key)) {
+  const primaryTypes = [
+    DataType.Int16,
+    DataType.Int32,
+    DataType.Int8,
+    DataType.Int64,
+  ];
+  if (
+    !fields.find(
+      (v) =>
+        v.data_type && primaryTypes.includes(v.data_type) && v.is_primary_key
+    )
+  ) {
     throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY);
   }
   if (

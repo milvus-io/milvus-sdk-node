@@ -13,7 +13,7 @@ const test = async () => {
   );
   console.log("-----create collection----", res);
   // need load collection before search
-  await milvusClient.collectionManager.loadCollection({
+  await milvusClient.collectionManager.loadCollectionSync({
     collection_name: COLLECTION_NAME,
   });
   const fields = [
