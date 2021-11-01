@@ -74,9 +74,7 @@ export class Data extends Client {
    * ```
    */
   async insert(data: InsertReq): Promise<MutationResult> {
-    if (!data.collection_name) {
-      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
-    }
+    this.checkCollectionName(data);
     if (
       !data.fields_data ||
       !Array.isArray(data.fields_data) ||
