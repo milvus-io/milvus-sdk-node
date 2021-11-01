@@ -74,7 +74,7 @@ export class Collection extends Client {
    * ```
    */
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
-    const { fields, collection_name, description } = data;
+    const { fields, collection_name, description } = data || {};
     if (!fields || !fields.length || !collection_name) {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
     }
@@ -138,9 +138,8 @@ export class Collection extends Client {
    * ```
    */
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
-    if (!data.collection_name) {
-      throw new Error(ERROR_REASONS.HAS_COLLECTION_CHECK_PARAMS);
-    }
+    this.checkCollectionName(data);
+
     const promise = await promisify(this.client, "HasCollection", data);
     return promise;
   }
@@ -216,6 +215,8 @@ export class Collection extends Client {
   async describeCollection(
     data: DescribeCollectionReq
   ): Promise<DescribeCollectionResponse> {
+    this.checkCollectionName(data);
+
     const promise = await promisify(this.client, "DescribeCollection", data);
     return promise;
   }
@@ -247,6 +248,8 @@ export class Collection extends Client {
   async getCollectionStatistics(
     data: GetCollectionStatisticsReq
   ): Promise<StatisticsResponse> {
+    this.checkCollectionName(data);
+
     const promise = await promisify(
       this.client,
       "GetCollectionStatistics",
@@ -282,6 +285,8 @@ export class Collection extends Client {
    * ```
    */
   async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
+    this.checkCollectionName(data);
+
     const promise = await promisify(this.client, "LoadCollection", data);
     return promise;
   }
@@ -310,6 +315,8 @@ export class Collection extends Client {
    * ```
    */
   async loadCollectionSync(data: LoadCollectionReq): Promise<ResStatus> {
+    this.checkCollectionName(data);
+
     const promise = await promisify(this.client, "LoadCollection", data);
     let loadedPercentage = 0;
     while (Number(loadedPercentage) < 100) {
@@ -353,6 +360,8 @@ export class Collection extends Client {
    * ```
    */
   async releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus> {
+    this.checkCollectionName(data);
+
     const promise = await promisify(this.client, "ReleaseCollection", data);
     return promise;
   }
@@ -380,6 +389,8 @@ export class Collection extends Client {
    * ```
    */
   async dropCollection(data: DropCollectionReq): Promise<ResStatus> {
+    this.checkCollectionName(data);
+
     const promise = await promisify(this.client, "DropCollection", data);
     return promise;
   }

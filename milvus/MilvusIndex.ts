@@ -1,5 +1,6 @@
 import { promisify } from "../utils";
 import { Client } from "./Client";
+import { ERROR_REASONS } from "./const/ErrorReason";
 import {
   ResStatus,
   DescribeIndexResponse,
@@ -48,6 +49,10 @@ export class Index extends Client {
    * ```
    */
   async createIndex(data: CreateIndexReq): Promise<ResStatus> {
+    this.checkCollectionName(data);
+    if (!data.extra_params || !data.field_name) {
+      throw new Error(ERROR_REASONS.CREATE_INDEX_PARAMS_REQUIRED);
+    }
     const params = {
       ...data,
       extra_params: parseToKeyValue(data.extra_params),
@@ -80,6 +85,7 @@ export class Index extends Client {
    * ```
    */
   async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
+    this.checkCollectionName(data);
     const promise = await promisify(this.client, "DescribeIndex", data);
     return promise;
   }
@@ -108,6 +114,7 @@ export class Index extends Client {
    * ```
    */
   async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
+    this.checkCollectionName(data);
     const promise = await promisify(this.client, "GetIndexState", data);
     return promise;
   }
@@ -141,6 +148,7 @@ export class Index extends Client {
   async getIndexBuildProgress(
     data: GetIndexBuildProgressReq
   ): Promise<GetIndexBuildProgressResponse> {
+    this.checkCollectionName(data);
     // Now we dont have index name, just empty is fine
     data.index_name = "";
     const promise = await promisify(this.client, "GetIndexBuildProgress", data);
@@ -171,6 +179,7 @@ export class Index extends Client {
    * ```
    */
   async dropIndex(data: DropIndexReq): Promise<ResStatus> {
+    this.checkCollectionName(data);
     const promise = await promisify(this.client, "DropIndex", data);
     return promise;
   }
