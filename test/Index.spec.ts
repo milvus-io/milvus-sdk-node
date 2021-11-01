@@ -4,6 +4,7 @@ import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
+import { ERROR_REASONS } from "../milvus/const/ErrorReason";
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -21,7 +22,17 @@ describe("Collection Api", () => {
     });
   });
 
-  it(`Create Index`, async () => {
+  it(`Create Index should throw CREATE_INDEX_PARAMS_REQUIRED`, async () => {
+    try {
+      await milvusClient.indexManager.createIndex({
+        collection_name: COLLECTION_NAME,
+      } as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.CREATE_INDEX_PARAMS_REQUIRED);
+    }
+  });
+
+  it(`Create Index should success`, async () => {
     const res = await milvusClient.indexManager.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,

@@ -101,6 +101,24 @@ describe("Insert data Api", () => {
     });
   });
 
+  it(`Insert should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
+    try {
+      await milvusClient.dataManager.insert({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it(`Insert should throw INSERT_CHECK_FILEDS_DATA_IS_REQUIRED`, async () => {
+    try {
+      await milvusClient.dataManager.insert({ collection_name: "asd" } as any);
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.INSERT_CHECK_FILEDS_DATA_IS_REQUIRED
+      );
+    }
+  });
+
   it(`Insert Data on float field and autoId is true expect success`, async () => {
     const fields = [
       {
@@ -361,7 +379,9 @@ describe("Insert data Api", () => {
     try {
       await fakeClient.dataManager.insert({
         collection_name: COLLECTION_NAME,
-      } as any);
+        fields_data: [{ a: 1 }],
+      });
+      expect("a").toEqual("b");
     } catch (error) {
       console.log(error);
       expect(error.message).toBe("error");

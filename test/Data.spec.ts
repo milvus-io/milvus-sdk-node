@@ -47,11 +47,27 @@ describe("Data.ts Test", () => {
     });
   });
 
-  it("Flush Sync", async () => {
+  it(`Flush sync should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
+    try {
+      await milvusClient.dataManager.flushSync({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it("Flush Sync shoulud success", async () => {
     const res = await milvusClient.dataManager.flushSync({
       collection_names: [COLLECTION_NAME],
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Flush async should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
+    try {
+      await milvusClient.dataManager.flush({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
   });
 
   it("Flush ASync", async () => {
@@ -61,7 +77,23 @@ describe("Data.ts Test", () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it("Expr Search", async () => {
+  it("Expr Search should throw COLLECTION_NAME_IS_REQUIRED", async () => {
+    try {
+      await milvusClient.dataManager.search({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it("Expr Search should throw SEARCH_PARAMS_IS_REQUIRED", async () => {
+    try {
+      await milvusClient.dataManager.search({ collection_name: "asd" } as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.SEARCH_PARAMS_IS_REQUIRED);
+    }
+  });
+
+  it("Expr Search should success", async () => {
     const res = await milvusClient.dataManager.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
@@ -159,7 +191,15 @@ describe("Data.ts Test", () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it("Get metrics ", async () => {
+  it(`Get metrics should throw GET_METRIC_CHECK_PARAMS`, async () => {
+    try {
+      await milvusClient.dataManager.getMetric({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.GET_METRIC_CHECK_PARAMS);
+    }
+  });
+
+  it("Get metrics should success", async () => {
     const res = await milvusClient.dataManager.getMetric({
       request: { metric_type: "system_info" },
     });

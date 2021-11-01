@@ -4,6 +4,7 @@ import { GENERATE_NAME, IP } from "../const";
 import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { genCollectionParams } from "../utils/test";
+import { ERROR_REASONS } from "../milvus/const/ErrorReason";
 
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -78,7 +79,19 @@ describe("Collection Api", () => {
     expect(res.stats[0].value).toEqual("0");
   });
 
-  it("Drop partition", async () => {
+  it("Drop partition should throw COLLECTION_PARTITION_NAME_ARE_REQUIRED", async () => {
+    try {
+      await milvusClient.partitionManager.dropPartition({
+        collection_name: COLLECTION_NAME,
+      } as any);
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.COLLECTION_PARTITION_NAME_ARE_REQUIRED
+      );
+    }
+  });
+
+  it("Drop partition should success", async () => {
     const res = await milvusClient.partitionManager.dropPartition({
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
@@ -95,7 +108,18 @@ describe("Collection Api", () => {
     expect(res.value).toEqual(false);
   });
 
-  it(`Load Partition `, async () => {
+  it(`Load Partition should throw PARTITION_NAMES_IS_REQUIRED`, async () => {
+    try {
+      await milvusClient.partitionManager.loadPartitions({
+        collection_name: COLLECTION_NAME,
+        partition_names: [],
+      });
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
+    }
+  });
+
+  it(`Load Partition should success`, async () => {
     const res = await milvusClient.partitionManager.loadPartitions({
       collection_name: COLLECTION_NAME,
       partition_names: ["_default"],
@@ -103,7 +127,18 @@ describe("Collection Api", () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Release Partition `, async () => {
+  it(`Release Partition should throw PARTITION_NAMES_IS_REQUIRED`, async () => {
+    try {
+      await milvusClient.partitionManager.releasePartitions({
+        collection_name: COLLECTION_NAME,
+        partition_names: [],
+      });
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
+    }
+  });
+
+  it(`Release Partition should success`, async () => {
     const res = await milvusClient.partitionManager.releasePartitions({
       collection_name: COLLECTION_NAME,
       partition_names: ["_default"],

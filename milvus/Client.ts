@@ -15,7 +15,7 @@ export class Client {
 
   checkCollectionAndPartitionName(data: any) {
     if (!data || !data.collection_name || !data.partition_name) {
-      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+      throw new Error(ERROR_REASONS.COLLECTION_PARTITION_NAME_ARE_REQUIRED);
     }
   }
 }
