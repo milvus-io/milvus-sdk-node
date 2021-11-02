@@ -29,29 +29,31 @@ export interface CreateCollectionReq {
   fields: FieldType[];
 }
 
-export interface HasCollectionReq {
+interface CollectionNameReq {
   /**
    * @param collection_name collection name string
    */
   collection_name: string;
 }
+export interface HasCollectionReq extends CollectionNameReq {}
 
-export interface DescribeCollectionReq {
-  collection_name: string;
+export interface DescribeCollectionReq extends CollectionNameReq {}
+
+export interface GetCollectionStatisticsReq extends CollectionNameReq {}
+
+export interface LoadCollectionReq extends CollectionNameReq {}
+export interface ReleaseLoadCollectionReq extends CollectionNameReq {}
+
+export interface DropCollectionReq extends CollectionNameReq {}
+
+export interface CreateAliasReq extends CollectionNameReq {
+  alias: string;
 }
 
-export interface GetCollectionStatisticsReq {
-  collection_name: string;
+export interface DropAliasReq {
+  alias: string;
 }
 
-export interface LoadCollectionReq {
-  collection_name: string;
-}
-
-export interface ReleaseLoadCollectionReq {
-  collection_name: string;
-}
-
-export interface DropCollectionReq {
-  collection_name: string;
+export interface AlterAliasReq extends CollectionNameReq {
+  alias: string;
 }

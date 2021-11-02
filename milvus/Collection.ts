@@ -11,6 +11,9 @@ import {
   ShowCollectionsReq,
   ShowCollectionsType,
   HasCollectionReq,
+  CreateAliasReq,
+  DropAliasReq,
+  AlterAliasReq,
 } from "./types/Collection";
 import {
   BoolResponse,
@@ -392,6 +395,32 @@ export class Collection extends Client {
     this.checkCollectionName(data);
 
     const promise = await promisify(this.client, "DropCollection", data);
+    return promise;
+  }
+
+  async createAlias(data: CreateAliasReq): Promise<ResStatus> {
+    this.checkCollectionName(data);
+    if (!data.alias) {
+      throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
+    }
+    const promise = await promisify(this.client, "CreateAlias", data);
+    return promise;
+  }
+
+  async dropAlias(data: DropAliasReq): Promise<ResStatus> {
+    if (!data.alias) {
+      throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
+    }
+    const promise = await promisify(this.client, "DropAlias", data);
+    return promise;
+  }
+
+  async alterAlias(data: AlterAliasReq): Promise<ResStatus> {
+    this.checkCollectionName(data);
+    if (!data.alias) {
+      throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
+    }
+    const promise = await promisify(this.client, "AlterAlias", data);
     return promise;
   }
 }
