@@ -41,7 +41,7 @@ export class Collection extends Client {
    * @param data
    *  | Property                | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
-   *  | createCollection        | String |        Collection name       |
+   *  | collection_name        | String |        Collection name       |
    *  | description             | String |        Collection description       |
    *  | fields        | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> |     Field data      |
    *
