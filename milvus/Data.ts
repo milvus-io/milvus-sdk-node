@@ -5,8 +5,14 @@ import { Collection } from "./Collection";
 import { ERROR_REASONS } from "./const/ErrorReason";
 
 import { DataType, DataTypeMap, DslType, SegmentState } from "./types/Common";
-import { DeleteEntitiesReq, FlushReq, InsertReq } from "./types/Data";
 import {
+  CalcDistanceReq,
+  DeleteEntitiesReq,
+  FlushReq,
+  InsertReq,
+} from "./types/Data";
+import {
+  CalcDistanceResponse,
   ErrorCode,
   FlushResult,
   GetMetricsResponse,
@@ -384,7 +390,7 @@ export class Data extends Client {
             typeof round_decimal === "undefined" || round_decimal === -1
               ? score
               : formatNumberPrecision(score, round_decimal);
-
+          console.log(fixedScore);
           const result: any = {
             score: fixedScore,
             id: idData ? idData[i] : "",
@@ -618,5 +624,14 @@ export class Data extends Client {
       ...res,
       response: JSON.parse(res.response),
     };
+  }
+
+  /**
+   * @ignore
+   * @param data
+   */
+  async calcDistance(data: CalcDistanceReq): Promise<CalcDistanceResponse> {
+    const res = await promisify(this.client, "CalcDistance", data);
+    return res;
   }
 }

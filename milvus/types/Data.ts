@@ -22,3 +22,9 @@ export interface DeleteEntitiesReq {
   expr: string;
   partition_name?: string;
 }
+
+export interface CalcDistanceReq {
+  op_left: any;
+  op_right: any;
+  params: { key: string; value: string }[];
+}

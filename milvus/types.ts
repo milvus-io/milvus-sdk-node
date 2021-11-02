@@ -9,9 +9,17 @@ export type {
   FieldType,
   ShowCollectionsType,
   ShowCollectionsReq,
+  AlterAliasReq,
+  CreateAliasReq,
+  DropAliasReq,
 } from "./types/Collection";
 
-export type { InsertReq, FieldData, FlushReq } from "./types/Data";
+export type {
+  InsertReq,
+  FieldData,
+  FlushReq,
+  CalcDistanceReq,
+} from "./types/Data";
 
 export type {
   IndexState,
@@ -63,6 +71,7 @@ export type {
   QueryResults,
   CollectionData,
   GetMetricsResponse,
+  CalcDistanceResponse,
 } from "./types/Response";
 export type {
   SearchRes,

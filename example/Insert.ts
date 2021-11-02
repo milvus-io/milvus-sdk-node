@@ -83,6 +83,31 @@ const test = async () => {
   });
   console.log(queryData, queryData.data[1].age, queryData.data[1].vector_field);
 
+  const res2 = await milvusClient.dataManager.calcDistance({
+    op_left: {
+      data_array: {
+        dim: 4,
+        float_vector: {
+          data: [1, 1, 1, 1],
+        },
+      },
+    },
+    op_right: {
+      data_array: {
+        dim: 4,
+        float_vector: {
+          data: [1, 2, 13, 1],
+        },
+      },
+    },
+    params: [
+      {
+        key: "metric",
+        value: "L2",
+      },
+    ],
+  });
+  console.log("--- calc distance ---", res2);
   await milvusClient.collectionManager.dropCollection({
     collection_name: COLLECTION_NAME,
   });
