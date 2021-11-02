@@ -24,6 +24,15 @@ describe("Collection Api", () => {
     try {
       await collectionManager.createCollection({
         collection_name: "zxc",
+      } as any);
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS
+      );
+    }
+    try {
+      await collectionManager.createCollection({
+        collection_name: "zxc",
         fields: [
           {
             name: "vector_01",
@@ -138,7 +147,15 @@ describe("Collection Api", () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Has collection `, async () => {
+  it(`Has collection should throw error`, async () => {
+    try {
+      await collectionManager.hasCollection({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it(`Has collection should success`, async () => {
     const res = await collectionManager.hasCollection({
       collection_name: COLLECTION_NAME,
     });
@@ -151,7 +168,7 @@ describe("Collection Api", () => {
     try {
       await collectionManager.hasCollection({} as any);
     } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.HAS_COLLECTION_CHECK_PARAMS);
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
   });
 
@@ -171,7 +188,15 @@ describe("Collection Api", () => {
     );
   });
 
-  it(`Get Collection Statistics`, async () => {
+  it(`Get Collection Statistics should throw error`, async () => {
+    try {
+      await collectionManager.getCollectionStatistics({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it(`Get Collection Statistics should success`, async () => {
     const res = await collectionManager.getCollectionStatistics({
       collection_name: COLLECTION_NAME,
     });
@@ -192,14 +217,22 @@ describe("Collection Api", () => {
     expect(res.schema.fields[1].name).toEqual("age");
   });
 
-  it(`Load Collection Sync `, async () => {
+  it(`Load Collection Sync throw COLLECTION_NAME_IS_REQUIRED`, async () => {
+    try {
+      await collectionManager.loadCollectionSync({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it(`Load Collection Sync success `, async () => {
     const res = await collectionManager.loadCollectionSync({
       collection_name: LOAD_COLLECTION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Load Collection Sync `, async () => {
+  it(`Load Collection Sync throw error`, async () => {
     const fakeClient = new MilvusClient(IP);
 
     fakeClient.collectionManager.showCollections = () => {
@@ -223,7 +256,15 @@ describe("Collection Api", () => {
     }
   });
 
-  it(`Load Collection Async`, async () => {
+  it(`Load Collection Async throw COLLECTION_NAME_IS_REQUIRED`, async () => {
+    try {
+      await collectionManager.loadCollectionSync({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it(`Load Collection Async success`, async () => {
     const res = await collectionManager.loadCollection({
       collection_name: LOAD_COLLECTION_NAME,
     });

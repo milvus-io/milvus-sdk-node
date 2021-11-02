@@ -74,6 +74,14 @@ export class Data extends Client {
    * ```
    */
   async insert(data: InsertReq): Promise<MutationResult> {
+    this.checkCollectionName(data);
+    if (
+      !data.fields_data ||
+      !Array.isArray(data.fields_data) ||
+      !data.fields_data.length
+    ) {
+      throw new Error(ERROR_REASONS.INSERT_CHECK_FILEDS_DATA_IS_REQUIRED);
+    }
     const { collection_name } = data;
     const collectionInfo = await this.collectionManager.describeCollection({
       collection_name,
@@ -270,6 +278,16 @@ export class Data extends Client {
    */
   async search(data: SearchReq): Promise<SearchResults> {
     const root = await protobuf.load(protoPath);
+    this.checkCollectionName(data);
+    if (
+      !data.search_params ||
+      !data.search_params.anns_field ||
+      !data.search_params.metric_type ||
+      !data.search_params.topk ||
+      !data.search_params.params
+    ) {
+      throw new Error(ERROR_REASONS.SEARCH_PARAMS_IS_REQUIRED);
+    }
     if (!this.vectorTypes.includes(data.vector_type))
       throw new Error(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
 
@@ -407,6 +425,13 @@ export class Data extends Client {
    * ```
    */
   async flush(data: FlushReq): Promise<FlushResult> {
+    if (
+      !data ||
+      !Array.isArray(data.collection_names) ||
+      !data.collection_names.length
+    ) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
     const res = await promisify(this.client, "Flush", data);
     return res;
   }
@@ -434,6 +459,13 @@ export class Data extends Client {
    * ```
    */
   async flushSync(data: FlushReq): Promise<FlushResult> {
+    if (
+      !data ||
+      !Array.isArray(data.collection_names) ||
+      !data.collection_names.length
+    ) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
     // copy flushed collection names
     let copyCollectionNames = [...data.collection_names];
     const res = await promisify(this.client, "Flush", data);
@@ -500,6 +532,7 @@ export class Data extends Client {
    * ```
    */
   async query(data: QueryReq): Promise<QueryResults> {
+    this.checkCollectionName(data);
     const promise: QueryRes = await promisify(this.client, "Query", data);
     const results: { [x: string]: any }[] = [];
     /**
@@ -574,6 +607,9 @@ export class Data extends Client {
    *  | request              | object |        Only allow "system_info" for now    |
    */
   async getMetric(data: GetMetricsRequest): Promise<GetMetricsResponse> {
+    if (!data || !data.request || !data.request.metric_type) {
+      throw new Error(ERROR_REASONS.GET_METRIC_CHECK_PARAMS);
+    }
     const res: GetMetricsResponse = await promisify(this.client, "GetMetrics", {
       request: JSON.stringify(data.request),
     });

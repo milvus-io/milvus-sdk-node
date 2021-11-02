@@ -7,6 +7,7 @@ import { Partition } from "./Partition";
 import { Index } from "./MilvusIndex";
 import { Data } from "./Data";
 import sdkInfo from "../sdk.json";
+import { ERROR_REASONS } from "./const/ErrorReason";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 export class MilvusClient {
@@ -25,6 +26,9 @@ export class MilvusClient {
    * @param address milvus address like: 127.0.0.1:19530
    */
   constructor(address: string) {
+    if (!address) {
+      throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
+    }
     const packageDefinition = protoLoader.loadSync(protoPath, {
       keepCase: true,
       longs: String,
