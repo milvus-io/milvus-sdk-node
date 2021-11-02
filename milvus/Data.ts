@@ -390,7 +390,7 @@ export class Data extends Client {
             typeof round_decimal === "undefined" || round_decimal === -1
               ? score
               : formatNumberPrecision(score, round_decimal);
-          console.log(fixedScore);
+
           const result: any = {
             score: fixedScore,
             id: idData ? idData[i] : "",
