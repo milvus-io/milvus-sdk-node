@@ -398,6 +398,11 @@ export class Collection extends Client {
     return promise;
   }
 
+  /**
+   * @ignore
+   * Create collection alias, then you can use alias instead of collection_name when you do vector search
+   * @param data
+   */
   async createAlias(data: CreateAliasReq): Promise<ResStatus> {
     this.checkCollectionName(data);
     if (!data.alias) {
@@ -407,6 +412,10 @@ export class Collection extends Client {
     return promise;
   }
 
+  /**
+   * @ignore
+   * @param data
+   */
   async dropAlias(data: DropAliasReq): Promise<ResStatus> {
     if (!data.alias) {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
@@ -415,6 +424,10 @@ export class Collection extends Client {
     return promise;
   }
 
+  /**
+   * @ignore
+   * @param data
+   */
   async alterAlias(data: AlterAliasReq): Promise<ResStatus> {
     this.checkCollectionName(data);
     if (!data.alias) {

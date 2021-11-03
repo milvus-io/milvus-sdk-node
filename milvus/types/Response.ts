@@ -160,3 +160,8 @@ export interface GetMetricsResponse {
   response: any;
   component_name: string; // metrics from which component
 }
+
+export interface CalcDistanceResponse {
+  status: ResStatus;
+  [x: string]: any;
+}
