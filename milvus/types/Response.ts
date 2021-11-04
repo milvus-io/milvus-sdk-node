@@ -130,7 +130,7 @@ export interface MutationResult {
   insert_cnt: string;
   delete_cnt: string;
   upsert_cnt: string;
-  timestamp: string;
+  timestamp: string; // we can use it do time travel
   IDs: StringArrayId | NumberArrayId;
 }
 

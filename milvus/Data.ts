@@ -254,6 +254,7 @@ export class Data extends Client {
    *  | vectors                  | Number[][]            |  Original vector to search with  |
    *  | output_fields(optional)  | String[]              |  Support scalar field  |
    *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
+   *  | travel_timestamp          | number                  |  We can get timestamp after insert success. Use this timestamp we can time travel in vector search.|
 
    * @return
    *  | Property    |           Description              |
@@ -262,6 +263,7 @@ export class Data extends Client {
    *  | succ_index    |        Insert successful index array      |
    *  | err_index    |        Insert failed index array      |
    *  | IDs    |        Insert successful id array      |
+   * 
    *
    *
    * #### Example
