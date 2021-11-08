@@ -16,7 +16,7 @@ export interface SearchReq {
   search_params: SearchParam;
   vectors: number[][];
   output_fields?: string[];
-  travel_timestamp?: number;
+  travel_timestamp?: string;
   vector_type: DataType.BinaryVector | DataType.FloatVector;
 }
 

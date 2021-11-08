@@ -130,14 +130,14 @@ export interface MutationResult {
   insert_cnt: string;
   delete_cnt: string;
   upsert_cnt: string;
-  timestamp: string;
+  timestamp: string; // we can use it do time travel
   IDs: StringArrayId | NumberArrayId;
 }
 
 export interface SearchResultData {
+  [x: string]: any;
   score: number;
   id: string;
-  fields: { type: string; field_name: string; data: string }[];
 }
 
 export interface SearchResults {
