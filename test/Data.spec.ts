@@ -182,12 +182,17 @@ describe("Data.ts Test", () => {
   });
 
   it("Query ", async () => {
+    await milvusClient.dataManager.deleteEntities({
+      collection_name: COLLECTION_NAME,
+      expr: "age in [2,6]",
+    });
+
     const res = await milvusClient.dataManager.query({
       collection_name: COLLECTION_NAME,
       expr: "age in [2,4,6,8]",
       output_fields: ["age", VECTOR_FIELD_NAME],
     });
-    console.log(res);
+    console.log("----query---", res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

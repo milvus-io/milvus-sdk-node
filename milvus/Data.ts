@@ -260,9 +260,7 @@ export class Data extends Client {
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number, reason: string }|
-   *  | succ_index    |        Insert successful index array      |
-   *  | err_index    |        Insert failed index array      |
-   *  | IDs    |        Insert successful id array      |
+   *  | results    |        {score:number,id:string}[];       |
    * 
    *
    *
