@@ -19,6 +19,7 @@ export type {
   FieldData,
   FlushReq,
   CalcDistanceReq,
+  GetFlushStateReq,
 } from "./types/Data";
 
 export type {
@@ -72,6 +73,7 @@ export type {
   CollectionData,
   GetMetricsResponse,
   CalcDistanceResponse,
+  GetFlushStateResponse,
 } from "./types/Response";
 export type {
   SearchRes,

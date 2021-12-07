@@ -39,9 +39,15 @@ const test = async () => {
   const insertRes = await milvusClient.dataManager.insert(params);
   console.log(insertRes);
 
-  await milvusClient.dataManager.flushSync({
+  const flushRes = await milvusClient.dataManager.flushSync({
     collection_names: [COLLECTION_NAME],
   });
+  const segIds = flushRes.coll_segIDs[COLLECTION_NAME].data;
+  console.log("--- flush response", flushRes, segIds);
+  const flushStateRes = await milvusClient.dataManager.getFlushState({
+    segmentIDs: segIds,
+  });
+  console.log("--- flush state response", flushStateRes);
 
   let entitiesCount =
     await milvusClient.collectionManager.getCollectionStatistics({

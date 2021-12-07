@@ -165,3 +165,8 @@ export interface CalcDistanceResponse {
   status: ResStatus;
   [x: string]: any;
 }
+
+export interface GetFlushStateResponse {
+  status: ResStatus;
+  flushed: boolean;
+}

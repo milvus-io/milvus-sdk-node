@@ -28,3 +28,7 @@ export interface CalcDistanceReq {
   op_right: any;
   params: { key: string; value: string }[];
 }
+
+export interface GetFlushStateReq {
+  segmentIDs: number[];
+}

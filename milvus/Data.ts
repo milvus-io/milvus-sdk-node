@@ -9,12 +9,14 @@ import {
   CalcDistanceReq,
   DeleteEntitiesReq,
   FlushReq,
+  GetFlushStateReq,
   InsertReq,
 } from "./types/Data";
 import {
   CalcDistanceResponse,
   ErrorCode,
   FlushResult,
+  GetFlushStateResponse,
   GetMetricsResponse,
   MutationResult,
   QueryResults,
@@ -632,6 +634,44 @@ export class Data extends Client {
    */
   async calcDistance(data: CalcDistanceReq): Promise<CalcDistanceResponse> {
     const res = await promisify(this.client, "CalcDistance", data);
+    return res;
+  }
+
+  /**
+   * Get flush state by segment ids
+   *
+   * @param data
+   *  | Property                | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | segmentIDs              | Array  |       The segment ids        |
+   *
+   *
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-----------| :-------------------------------  |
+   *  | status      |  { error_code: number,reason:string } |
+   *  | flushed     |  segments flushed or not  |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *   const res = await milvusClient.dataManager.getFlushState({
+   *    segmentIDs: segIds,
+   *   });
+   * ```
+   */
+  async getFlushState(data: GetFlushStateReq): Promise<GetFlushStateResponse> {
+    if (!data || !data.segmentIDs) {
+      throw new Error(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
+    }
+    const res = await promisify(this.client, "GetFlushState", data);
+    return res;
+  }
+
+  async loadBalance(data: any): Promise<any> {
+    const res = await promisify(this.client, "LoadBalance", data);
     return res;
   }
 }
