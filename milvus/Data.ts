@@ -10,7 +10,9 @@ import {
   DeleteEntitiesReq,
   FlushReq,
   GetFlushStateReq,
+  GetQuerySegmentInfoReq,
   InsertReq,
+  LoadBalanceReq,
 } from "./types/Data";
 import {
   CalcDistanceResponse,
@@ -18,8 +20,10 @@ import {
   FlushResult,
   GetFlushStateResponse,
   GetMetricsResponse,
+  GetQuerySegmentInfoResponse,
   MutationResult,
   QueryResults,
+  ResStatus,
   SearchResults,
 } from "./types/Response";
 import {
@@ -670,8 +674,72 @@ export class Data extends Client {
     return res;
   }
 
-  async loadBalance(data: any): Promise<any> {
+  /**
+   * Do load balancing operation from source query node to destination query node.
+   *
+   * @param data
+   *  | Property            | Type     |           Description              |
+   *  | :-------------------| :----    | :-------------------------------  |
+   *  | src_nodeID          | number   |     The source query node id to balance.        |
+   *  | dst_nodeIDs         | number[] |     The destination query node ids to balance.(optional)        |
+   *  | sealed_segmentIDs   | number[] |     Sealed segment ids to balance.(optional)       |
+   *
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-----------| :-------------------------------  |
+   *  | status      |  { error_code: number,reason:string } |
+   *  | infos       |  segments infomations  |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *   const res = await milvusClient.dataManager.getFlushState({
+   *    segmentIDs: segIds,
+   *   });
+   * ```
+   */
+  async loadBalance(data: LoadBalanceReq): Promise<ResStatus> {
+    if (!data || !data.src_nodeID) {
+      throw new Error(ERROR_REASONS.LOAD_BALANCE_CHECK_PARAMS);
+    }
     const res = await promisify(this.client, "LoadBalance", data);
+    return res;
+  }
+
+  /**
+   * Notifies Proxy to return segments information from query nodes.
+   *
+   * @param data
+   *  | Property                | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | collectionName          | String |      The name of the collection to get segments info.       |
+   *
+   *
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-----------| :-------------------------------  |
+   *  | status      |  { error_code: number,reason:string } |
+   *  | infos       |  QuerySegmentInfo is the growing segments's information in query cluster.  |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *   const res = await milvusClient.dataManager.getFlushState({
+   *    segmentIDs: segIds,
+   *   });
+   * ```
+   */
+  async getQuerySegmentInfo(
+    data: GetQuerySegmentInfoReq
+  ): Promise<GetQuerySegmentInfoResponse> {
+    if (!data || !data.collectionName) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+    const res = await promisify(this.client, "GetQuerySegmentInfo", data);
     return res;
   }
 }

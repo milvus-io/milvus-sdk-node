@@ -6,10 +6,9 @@ const dataManager = milvusClient.dataManager;
 console.log(MilvusClient.getSdkVersion());
 
 const test = async () => {
-  const res = await dataManager.getMetric({
+  let res: any = await dataManager.getMetric({
     request: { metric_type: "system_info" },
   });
-  console.log(res);
 };
 
 test();

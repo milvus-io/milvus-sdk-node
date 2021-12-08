@@ -62,6 +62,14 @@ describe("Data.ts Test", () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it("Get flush state should throw GET_FLUSH_STATE_CHECK_PARAMS", async () => {
+    try {
+      await milvusClient.dataManager.getFlushState({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
+    }
+  });
+
   it(`Flush async should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
       await milvusClient.dataManager.flush({} as any);
@@ -74,7 +82,12 @@ describe("Data.ts Test", () => {
     const res = await milvusClient.dataManager.flush({
       collection_names: [COLLECTION_NAME],
     });
+    const segIDs = res.coll_segIDs[COLLECTION_NAME].data;
+    const flushState = await milvusClient.dataManager.getFlushState({
+      segmentIDs: segIDs,
+    });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(flushState.flushed).toBeTruthy();
   });
 
   it("Expr Search should throw COLLECTION_NAME_IS_REQUIRED", async () => {
@@ -237,5 +250,34 @@ describe("Data.ts Test", () => {
       ],
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it("Get query segment infos should throw COLLECTION_NAME_IS_REQUIRED", async () => {
+    try {
+      await milvusClient.dataManager.getQuerySegmentInfo({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it("Get query segment infos should success", async () => {
+    const res = await milvusClient.dataManager.getQuerySegmentInfo({
+      collectionName: COLLECTION_NAME,
+    });
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it("Load balance should throw LOAD_BALANCE_CHECK_PARAMS", async () => {
+    try {
+      await milvusClient.dataManager.loadBalance({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.LOAD_BALANCE_CHECK_PARAMS);
+    }
+  });
+
+  // Load balance only working in cluster, so we can only do the error test
+  it("Load balance should throw UNEXPECTED_ERROR", async () => {
+    const res = await milvusClient.dataManager.loadBalance({ src_nodeID: 1 });
+    expect(res.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
   });
 });
