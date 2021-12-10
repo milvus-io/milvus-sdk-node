@@ -3,12 +3,13 @@ import {
   IndexState,
   KeyValuePair,
   NumberArrayId,
+  SegmentState,
   StringArrayId,
 } from "./Common";
 export enum ErrorCode {
   SUCCESS = "Success",
   INDEX_NOT_EXIST = "IndexNotExist",
-  // UNEXPECTED_ERROR = "UnexpectedError",
+  UNEXPECTED_ERROR = "UnexpectedError",
   // CONNECT_FAILED = "CONNECT_FAILED",
   // PERMISSION_DENIED = "PERMISSION_DENIED",
   // COLLECTION_NOT_EXISTS = "COLLECTION_NOT_EXISTS",
@@ -164,4 +165,26 @@ export interface GetMetricsResponse {
 export interface CalcDistanceResponse {
   status: ResStatus;
   [x: string]: any;
+}
+
+export interface GetFlushStateResponse {
+  status: ResStatus;
+  flushed: boolean;
+}
+
+export interface QuerySegmentInfo {
+  segmentID: number;
+  collectionID: number;
+  partitionID: number;
+  mem_size: number;
+  num_rows: number;
+  index_name: string;
+  indexID: number;
+  nodeID: number;
+  state: SegmentState[];
+}
+
+export interface GetQuerySegmentInfoResponse {
+  status: ResStatus;
+  infos: QuerySegmentInfo[];
 }

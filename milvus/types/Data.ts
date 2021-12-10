@@ -28,3 +28,20 @@ export interface CalcDistanceReq {
   op_right: any;
   params: { key: string; value: string }[];
 }
+
+export interface GetFlushStateReq {
+  segmentIDs: number[];
+}
+
+export interface LoadBalanceReq {
+  // The source query node id to balance.
+  src_nodeID: number;
+  // The destination query node ids to balance.
+  dst_nodeIDs?: number[];
+  // Sealed segment ids to balance.
+  sealed_segmentIDs?: number[];
+}
+
+export interface GetQuerySegmentInfoReq {
+  collectionName: string;
+}

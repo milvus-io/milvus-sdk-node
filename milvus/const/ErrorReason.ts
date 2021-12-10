@@ -25,6 +25,10 @@ export enum ERROR_REASONS {
 
   GET_METRIC_CHECK_PARAMS = "request.metric_type is required.",
 
+  GET_FLUSH_STATE_CHECK_PARAMS = "segmentIDs is required as array",
+
+  LOAD_BALANCE_CHECK_PARAMS = "src_nodeID is required",
+
   CREATE_INDEX_PARAMS_REQUIRED = "field_name and extra_params are required",
 
   PARTITION_NAMES_IS_REQUIRED = "partition_names is required",

@@ -51,6 +51,7 @@ enum SegmentState {
     Sealed = 3;
     Flushed = 4;
     Flushing = 5;
+    Dropped = 6;
 }
 
 message Status {
@@ -134,9 +135,11 @@ enum MsgType {
     WatchQueryChannels = 510;
     RemoveQueryChannels = 511;
     SealedSegmentsChangeInfo = 512;
+    WatchDeltaChannels = 513;
 
     /* DATA SERVICE */
     SegmentInfo = 600;
+    SystemInfo = 601;
 
     /* SYSTEM CONTROL */
     TimeTick = 1200;
@@ -172,4 +175,10 @@ message MsgHeader {
 message DMLMsgHeader {
     common.MsgBase base = 1;
     string shardName = 2;
+}
+
+enum CompactionState {
+  UndefiedState = 0;
+  Executing = 1;
+  Completed = 2;
 }

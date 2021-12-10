@@ -181,3 +181,13 @@ export enum SegmentState {
   Flushed = "Flushed",
   Flushing = "Flushing",
 }
+
+export enum MilvusSegmentState {
+  SegmentStateNone = 0,
+  NotExist = 1,
+  Growing = 2,
+  Sealed = 3,
+  Flushed = 4,
+  Flushing = 5,
+  Dropped = 6,
+}

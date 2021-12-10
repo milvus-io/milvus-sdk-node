@@ -41,6 +41,7 @@ service MilvusService {
   rpc Query(QueryRequest) returns (QueryResults) {}
   rpc CalcDistance(CalcDistanceRequest) returns (CalcDistanceResults) {}
 
+  rpc GetFlushState(GetFlushStateRequest) returns (GetFlushStateResponse) {}
   rpc GetPersistentSegmentInfo(GetPersistentSegmentInfoRequest) returns (GetPersistentSegmentInfoResponse) {}
   rpc GetQuerySegmentInfo(GetQuerySegmentInfoRequest) returns (GetQuerySegmentInfoResponse) {}
 
@@ -51,6 +52,10 @@ service MilvusService {
 
   // https://wiki.lfaidata.foundation/display/MIL/MEP+8+--+Add+metrics+for+proxy
   rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {}
+  rpc LoadBalance(LoadBalanceRequest) returns (common.Status) {}
+  rpc GetCompactionState(GetCompactionStateRequest) returns (GetCompactionStateResponse) {}
+  rpc ManualCompaction(ManualCompactionRequest) returns (ManualCompactionResponse) {}
+  rpc GetCompactionStateWithPlans(GetCompactionPlansRequest) returns (GetCompactionPlansResponse) {}
 }
 
 message CreateAliasRequest {
@@ -398,6 +403,7 @@ message DescribeSegmentResponse {
   int64 indexID = 2;
   int64 buildID = 3;
   bool enable_index = 4;
+  int64 fieldID = 5;
 }
 
 message ShowSegmentsRequest {
@@ -468,12 +474,20 @@ message DescribeIndexResponse {
   repeated IndexDescription index_descriptions = 2;
 }
 
+/*
+*  Get index building progress 
+*/
 message GetIndexBuildProgressRequest {
-  common.MsgBase base = 1; // must
+  // Not useful for now
+  common.MsgBase base = 1;
+  // Not useful for now
   string db_name = 2 ;
-  string collection_name = 3; // must
+  // The collection name in milvus
+  string collection_name = 3;
+  // The vector field name in this collection
   string field_name = 4;
-  string index_name = 5; // must
+  // Not useful for now
+  string index_name = 5;
 }
 
 message GetIndexBuildProgressResponse {
@@ -703,6 +717,62 @@ message GetMetricsResponse {
   common.Status status = 1;
   string response = 2;  // response is of jsonic format
   string component_name = 3; // metrics from which component
+}
+
+/*
+* Do load balancing operation from src_nodeID to dst_nodeID.
+*/
+message LoadBalanceRequest {
+  common.MsgBase base = 1;
+  int64 src_nodeID = 2;
+  repeated int64 dst_nodeIDs = 3;
+  repeated int64 sealed_segmentIDs = 4;
+}
+
+message ManualCompactionRequest {
+  int64 collectionID = 1;
+  uint64 timetravel = 2;
+}
+
+message ManualCompactionResponse {
+  common.Status status = 1;
+  int64 compactionID = 2;
+}
+
+message GetCompactionStateRequest {
+  int64 compactionID = 1;
+}
+
+message GetCompactionStateResponse {
+  common.Status status = 1;
+  common.CompactionState state = 2;
+  int64 executingPlanNo = 3;
+  int64 timeoutPlanNo = 4;
+  int64 completedPlanNo = 5;
+}
+
+message GetCompactionPlansRequest {
+  int64 compactionID = 1;
+}
+
+message GetCompactionPlansResponse {
+  common.Status status = 1;
+  common.CompactionState state = 2;
+  repeated CompactionMergeInfo mergeInfos = 3;
+}
+
+message CompactionMergeInfo {
+  repeated int64 sources = 1;
+  int64 target = 2;
+}
+
+message GetFlushStateRequest {
+  repeated int64 segmentIDs = 1;
+}
+
+message GetFlushStateResponse {
+  common.Status status = 1;
+  bool flushed = 2;
 }
 
 service ProxyService {
