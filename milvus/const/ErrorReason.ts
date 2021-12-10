@@ -34,4 +34,8 @@ export enum ERROR_REASONS {
   PARTITION_NAMES_IS_REQUIRED = "partition_names is required",
 
   ALIAS_NAME_IS_REQUIRED = "alias is required",
+
+  TIMESTAMP_PARAM_CHECK = "type should be string or bigint",
+
+  DATE_TYPE_CHECK = "type should be Date",
 }

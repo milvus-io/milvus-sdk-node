@@ -31,4 +31,4 @@ const formatDoc = async () => {
   fs.rmdirSync("./docs/classes", { recursive: true });
 };
 
-formatDoc();
+// formatDoc();

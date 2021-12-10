@@ -1,13 +1,13 @@
 import path from "path";
 import * as protoLoader from "@grpc/proto-loader";
 import { loadPackageDefinition, credentials, Client } from "@grpc/grpc-js";
-
 import { Collection } from "./Collection";
 import { Partition } from "./Partition";
 import { Index } from "./MilvusIndex";
 import { Data } from "./Data";
 import sdkInfo from "../sdk.json";
 import { ERROR_REASONS } from "./const/ErrorReason";
+import * as formatUtils from "./utils/Format";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 export class MilvusClient {

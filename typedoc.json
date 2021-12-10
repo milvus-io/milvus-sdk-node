@@ -3,7 +3,8 @@
     "milvus/Collection.ts",
     "milvus/Data.ts",
     "milvus/Partition.ts",
-    "milvus/MilvusIndex.ts"
+    "milvus/MilvusIndex.ts",
+    "milvus/Utils.ts"
   ],
   "out": "docs"
 }
