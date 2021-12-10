@@ -33,7 +33,7 @@ import {
   SearchReq,
   SearchRes,
 } from "./types/Search";
-import { findKeyValue } from "./utils";
+import { findKeyValue } from "./utils/index";
 import {
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,

@@ -1,4 +1,5 @@
-import { findKeyValue } from ".";
+import { findKeyValue } from "./index";
+import { ERROR_REASONS } from "../const/ErrorReason";
 import { KeyValuePair } from "../types/Common";
 
 /**
@@ -52,4 +53,110 @@ export const formatNumberPrecision = (number: number, precision: number) => {
       })
       .join(".")
   );
+};
+
+const LOGICAL_BITS = BigInt(18);
+// const LOGICAL_BITS_MASK = (1 << LOGICAL_BITS) - 1;
+
+const checkTimeParam = (ts: any) => {
+  switch (typeof ts) {
+    case "bigint":
+      return true;
+    case "string":
+      return isNaN(Number(ts)) ? false : true;
+    default:
+      return false;
+  }
+};
+
+/**
+ * Convert a hybrid timestamp to UNIX Epoch time ignoring the logic part.
+ *
+ * @param data
+ *  | Property          | Type   |           Description              |
+ *  | :---------------- | :----  | :-------------------------------  |
+ *  | hybridts          | String or BigInt |    The known hybrid timestamp to convert to UNIX Epoch time. Non-negative interger range from 0 to 18446744073709551615.       |
+ *
+ *
+ *
+ * @return
+ *  | Property    |           Description              |
+ *  | :-----------| :-------------------------------  |
+ *  | unixtime as string      |  The Unix Epoch time is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT). |
+ *
+ *
+ * #### Example
+ *
+ * ```
+ *   const res = hybridtsToUnixtime("429642767925248000");
+ * ```
+ */
+export const hybridtsToUnixtime = (hybridts: BigInt | string) => {
+  if (!checkTimeParam(hybridts)) {
+    throw new Error(`hybridts ${ERROR_REASONS.TIMESTAMP_PARAM_CHECK}`);
+  }
+  const timestamp = typeof hybridts === "bigint" ? hybridts : BigInt(hybridts);
+  const physical = timestamp >> LOGICAL_BITS;
+  return (physical / BigInt(1000)).toString();
+};
+
+/**
+ * Generate a hybrid timestamp based on Unix Epoch time, timedelta and incremental time internval.
+ *
+ * @param data
+ *  | Property          | Type   |           Description              |
+ *  | :---------------- | :----  | :-------------------------------  |
+ *  | unixtime          | string or bigint |    The known Unix Epoch time used to generate a hybrid timestamp.  The Unix Epoch time is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT).       |
+ *
+ *
+ *
+ * @return
+ *  | Property    | Type   |           Description              |
+ *  | :-----------| :---   | :-------------------------------  |
+ *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |
+ *
+ *
+ * #### Example
+ *
+ * ```
+ *   const res = unixtimeToHybridts("429642767925248000");
+ * ```
+ */
+export const unixtimeToHybridts = (unixtime: BigInt | string) => {
+  if (!checkTimeParam(unixtime)) {
+    throw new Error(`hybridts ${ERROR_REASONS.TIMESTAMP_PARAM_CHECK}`);
+  }
+  const timestamp = typeof unixtime === "bigint" ? unixtime : BigInt(unixtime);
+
+  const physical = (timestamp * BigInt(1000)) << LOGICAL_BITS;
+  return physical.toString();
+};
+
+/**
+ * Generate a hybrid timestamp based on datetime。
+ *
+ * @param data
+ *  | Property          | Type   |           Description              |
+ *  | :---------------- | :----  | :-------------------------------  |
+ *  | datetime          | Date |    The known datetime used to generate a hybrid timestamp.       |
+ *
+ *
+ *
+ * @return
+ *  | Property    | Type   |           Description              |
+ *  | :-----------| :---   | :-------------------------------  |
+ *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |
+ *
+ *
+ * #### Example
+ *
+ * ```
+ *   const res = datetimeToHybrids("429642767925248000");
+ * ```
+ */
+export const datetimeToHybrids = (datetime: Date) => {
+  if (!(datetime instanceof Date)) {
+    throw new Error(`hybridts ${ERROR_REASONS.DATE_TYPE_CHECK}`);
+  }
+  return unixtimeToHybridts((datetime.getTime() / 1000).toString());
 };

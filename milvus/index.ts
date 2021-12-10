@@ -1,7 +1,6 @@
 import path from "path";
 import * as protoLoader from "@grpc/proto-loader";
 import { loadPackageDefinition, credentials, Client } from "@grpc/grpc-js";
-
 import { Collection } from "./Collection";
 import { Partition } from "./Partition";
 import { Index } from "./MilvusIndex";

@@ -9,6 +9,10 @@ const formatDoc = async () => {
   fs.unlinkSync("./docs/modules.html");
   fs.mkdirSync("./docs/api reference");
   fs.renameSync("./docs/index.html", "./docs/tutorial.html");
+  fs.copyFileSync(
+    "./docs/modules/utils.html",
+    "./docs/api reference/utils.html"
+  );
 
   fs.rmdirSync("./docs/modules", { recursive: true });
   fs.rmdirSync("./docs/assets", { recursive: true });
