@@ -7,7 +7,6 @@ import { Index } from "./MilvusIndex";
 import { Data } from "./Data";
 import sdkInfo from "../sdk.json";
 import { ERROR_REASONS } from "./const/ErrorReason";
-import * as formatUtils from "./utils/Format";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 export class MilvusClient {
