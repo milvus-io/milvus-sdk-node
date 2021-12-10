@@ -69,6 +69,12 @@ describe("Insert data Api", () => {
     } catch (error) {
       expect(error.message).toContain(ERROR_REASONS.TIMESTAMP_PARAM_CHECK);
     }
+
+    try {
+      unixtimeToHybridts("asd");
+    } catch (error) {
+      expect(error.message).toContain(ERROR_REASONS.TIMESTAMP_PARAM_CHECK);
+    }
   });
 
   it("datetimeToHybrids should success", async () => {

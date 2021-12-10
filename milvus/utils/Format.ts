@@ -63,7 +63,7 @@ const checkTimeParam = (ts: any) => {
     case "bigint":
       return true;
     case "string":
-      return true;
+      return isNaN(Number(ts)) ? false : true;
     default:
       return false;
   }
