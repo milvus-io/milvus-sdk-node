@@ -282,6 +282,49 @@ describe("Collection Api", () => {
     ).toEqual(1);
   });
 
+  it("Compact collection and get state expect success", async () => {
+    const res = await collectionManager.compact({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+    const compactionID = res.compactionID;
+    const state = await collectionManager.getCompactionState({ compactionID });
+    const stateWithPlan = await collectionManager.getCompactionStateWithPlans({
+      compactionID,
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(state.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(stateWithPlan.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it("Compact collection expect throw error", async () => {
+    try {
+      await collectionManager.compact({
+        collection_name: undefined as any,
+      });
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it("Get Compaction State and with plan throw error", async () => {
+    try {
+      await collectionManager.getCompactionState({
+        compactionID: undefined as any,
+      });
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+    }
+
+    try {
+      await collectionManager.getCompactionStateWithPlans({
+        compactionID: undefined as any,
+      });
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+    }
+  });
+
   it(`Release Collection`, async () => {
     const res = await collectionManager.releaseCollection({
       collection_name: COLLECTION_NAME,

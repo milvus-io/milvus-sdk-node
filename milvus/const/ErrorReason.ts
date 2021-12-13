@@ -35,6 +35,8 @@ export enum ERROR_REASONS {
 
   ALIAS_NAME_IS_REQUIRED = "alias is required",
 
+  COMPACTIONID_IS_REQUIRED = "compactionID is required",
+
   TIMESTAMP_PARAM_CHECK = "type should be string (only contains number) or bigint",
 
   DATE_TYPE_CHECK = "type should be Date",

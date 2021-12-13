@@ -57,3 +57,16 @@ export interface DropAliasReq {
 export interface AlterAliasReq extends CollectionNameReq {
   alias: string;
 }
+
+export interface CompactReq {
+  collection_name: string;
+  timetravel?: number | string;
+}
+
+export interface GetCompactionStateReq {
+  compactionID: number | string;
+}
+
+export interface GetCompactionPlansReq {
+  compactionID: number | string;
+}

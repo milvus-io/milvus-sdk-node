@@ -14,12 +14,18 @@ import {
   CreateAliasReq,
   DropAliasReq,
   AlterAliasReq,
+  CompactReq,
+  GetCompactionStateReq,
+  GetCompactionPlansReq,
 } from "./types/Collection";
 import {
   BoolResponse,
   CollectionData,
+  CompactionResponse,
   DescribeCollectionResponse,
   ErrorCode,
+  GetCompactionPlansResponse,
+  GetCompactionStateResponse,
   ResStatus,
   ShowCollectionsResponse,
   StatisticsResponse,
@@ -435,5 +441,104 @@ export class Collection extends Client {
     }
     const promise = await promisify(this.client, "AlterAlias", data);
     return promise;
+  }
+
+  /**
+   * Do compaction for the collection.
+   *
+   * @param data
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collection_name        | String |       The collection name to compact       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | compactionID  | compaction ID |
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.compact({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
+  async compact(data: CompactReq): Promise<CompactionResponse> {
+    this.checkCollectionName(data);
+    const collectionInfo = await this.describeCollection(data);
+    const res = await promisify(this.client, "ManualCompaction", {
+      collectionID: collectionInfo.collectionID,
+    });
+    return res;
+  }
+
+  /**
+   * Get compaction states of a targeted compaction id
+   *
+   * @param data
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | compactionID       | number or string |       the id returned by compact       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | state         | the state of the compaction |
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.getCompactionState({
+   *    compactionID: compactionID,
+   *  });
+   * ```
+   */
+  async getCompactionState(
+    data: GetCompactionStateReq
+  ): Promise<GetCompactionStateResponse> {
+    if (!data || !data.compactionID) {
+      throw new Error(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+    }
+    const res = await promisify(this.client, "GetCompactionState", data);
+    return res;
+  }
+
+  /**
+   * Get compaction states of a targeted compaction id
+   *
+   * @param data
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | compactionID       | number or string |       the id returned by compact       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | state         | the state of the compaction |
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.getCompactionStateWithPlans({
+   *    compactionID: compactionID,
+   *  });
+   * ```
+   */
+  async getCompactionStateWithPlans(
+    data: GetCompactionPlansReq
+  ): Promise<GetCompactionPlansResponse> {
+    if (!data || !data.compactionID) {
+      throw new Error(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+    }
+    const res = await promisify(
+      this.client,
+      "GetCompactionStateWithPlans",
+      data
+    );
+    return res;
   }
 }

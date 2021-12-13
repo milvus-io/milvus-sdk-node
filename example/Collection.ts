@@ -39,6 +39,24 @@ const test = async () => {
   console.log(res);
   console.log(res.schema.fields);
 
+  res = await collectionManager.compact({
+    collection_name: COLLECTION_NAME,
+  });
+  console.log("--- compact ---", res);
+
+  const compactionID = res.compactionID;
+  res = await collectionManager.getCompactionState({
+    compactionID: compactionID,
+  });
+
+  console.log("--- compact state ---", res);
+
+  res = await collectionManager.getCompactionStateWithPlans({
+    compactionID: compactionID,
+  });
+
+  console.log("--- compact state with plans---", res);
+
   res = await collectionManager.releaseCollection({
     collection_name: COLLECTION_NAME,
   });
