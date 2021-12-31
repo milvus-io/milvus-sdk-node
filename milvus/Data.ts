@@ -676,6 +676,7 @@ export class Data extends Client {
 
   /**
    * Do load balancing operation from source query node to destination query node.
+   * Only work in cluster milvus.
    *
    * @param data
    *  | Property            | Type     |           Description              |
@@ -695,8 +696,8 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *   const res = await milvusClient.dataManager.getFlushState({
-   *    segmentIDs: segIds,
+   *   const res = await dataManager.loadBalance({
+   *      src_nodeID: 31,
    *   });
    * ```
    */
@@ -728,9 +729,9 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *   const res = await milvusClient.dataManager.getFlushState({
-   *    segmentIDs: segIds,
-   *   });
+   *   const res = await dataManager.getQuerySegmentInfo({
+   *      collectionName: COLLECTION,
+   *    });
    * ```
    */
   async getQuerySegmentInfo(

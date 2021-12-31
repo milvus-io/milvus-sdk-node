@@ -5,6 +5,7 @@ import {
   NumberArrayId,
   SegmentState,
   StringArrayId,
+  CompactionState,
 } from "./Common";
 export enum ErrorCode {
   SUCCESS = "Success",
@@ -187,4 +188,23 @@ export interface QuerySegmentInfo {
 export interface GetQuerySegmentInfoResponse {
   status: ResStatus;
   infos: QuerySegmentInfo[];
+}
+
+export interface CompactionResponse {
+  status: ResStatus;
+  compactionID: number;
+}
+
+export interface GetCompactionStateResponse {
+  status: ResStatus;
+  state: CompactionState;
+  executingPlanNo: number;
+  timeoutPlanNo: number;
+  completedPlanNo: number;
+}
+
+export interface GetCompactionPlansResponse {
+  status: ResStatus;
+  state: CompactionState;
+  mergeInfos: { sources: number[]; target: number }[];
 }
