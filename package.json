@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --declaration && node build.js",
     "test": "jest",
-    "coverage": "jest --coverage=true --testPathIgnorePatterns=/test\/build/",
+    "coverage": "jest --coverage=true --testPathIgnorePatterns=/test/build/",
     "build-test": "yarn build && jest test/build/Collection.spec.ts",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc && node doc",
@@ -20,6 +20,7 @@
     "@grpc/proto-loader": "^0.6.0",
     "@microsoft/api-documenter": "^7.13.39",
     "@microsoft/api-extractor": "^7.18.5",
+    "json-schema": "^0.4.0",
     "protobufjs": "^6.11.2"
   },
   "devDependencies": {
