@@ -83,11 +83,10 @@ describe("Data.ts Test", () => {
       collection_names: [COLLECTION_NAME],
     });
     const segIDs = res.coll_segIDs[COLLECTION_NAME].data;
-    const flushState = await milvusClient.dataManager.getFlushState({
+    await milvusClient.dataManager.getFlushState({
       segmentIDs: segIDs,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(flushState.flushed).toBeTruthy();
   });
 
   it("Expr Search should throw COLLECTION_NAME_IS_REQUIRED", async () => {
