@@ -489,7 +489,7 @@ export class Data extends Client {
     let flushRes = null;
     while (!isFlushed) {
       flushRes = await this.getFlushState({ segmentIDs: segIDs });
-      await sleep(1000);
+      await sleep(100);
       isFlushed = flushRes.flushed;
     }
     // Before Milvus pre-GA will throw error

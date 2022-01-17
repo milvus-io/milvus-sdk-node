@@ -1,12 +1,15 @@
-import { MilvusClient } from "@zilliz/milvus2-sdk-node";
-import { DataType } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Common";
-// todo need change Insert to Data after new release
-import { InsertReq } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Insert";
+// import { MilvusClient } from "@zilliz/milvus2-sdk-node";
+import { MilvusClient } from "../dist/milvus";
+import { DataType } from "../dist/milvus/types/Common";
+import { InsertReq } from "../dist/milvus/types/Data";
+
+// import { DataType } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Common";
+// import { InsertReq } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Data";
 
 const milvusClient = new MilvusClient("localhost:19530");
 const collectionManager = milvusClient.collectionManager;
 
-console.log("Milvus SDK Version: ", MilvusClient.getSdkVersion());
+console.log("Milvus SDK Info: ", milvusClient.sdkInfo);
 
 const generateInsertData = function generateInsertData(
   fields: { isVector: boolean; dim?: number; name: string; isBool?: boolean }[],
@@ -33,6 +36,8 @@ const generateInsertData = function generateInsertData(
 };
 
 const hello_milvus = async () => {
+  const checkVersion = await milvusClient.checkVersion();
+  console.log("--- check version ---", checkVersion);
   const collectionName = "hello_milvus";
   const dim = "4";
   const createRes = await collectionManager.createCollection({
