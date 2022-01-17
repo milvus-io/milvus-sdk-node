@@ -1,10 +1,6 @@
-// import { MilvusClient } from "@zilliz/milvus2-sdk-node";
-import { MilvusClient } from "../dist/milvus";
-import { DataType } from "../dist/milvus/types/Common";
-import { InsertReq } from "../dist/milvus/types/Data";
-
-// import { DataType } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Common";
-// import { InsertReq } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Data";
+import { MilvusClient } from "@zilliz/milvus2-sdk-node";
+import { DataType } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Common";
+import { InsertReq } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Data";
 
 const milvusClient = new MilvusClient("localhost:19530");
 const collectionManager = milvusClient.collectionManager;
