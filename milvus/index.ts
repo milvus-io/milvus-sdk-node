@@ -7,6 +7,7 @@ import { Index } from "./MilvusIndex";
 import { Data } from "./Data";
 import sdkInfo from "../sdk.json";
 import { ERROR_REASONS } from "./const/ErrorReason";
+import { ErrorCode } from "./types/Response";
 
 const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
 export class MilvusClient {
@@ -49,10 +50,33 @@ export class MilvusClient {
     this.dataManager = new Data(this.client, this.collectionManager);
   }
 
-  static getSdkVersion() {
+  get sdkInfo() {
     return {
       version: sdkInfo.version,
+      recommandMilvus: sdkInfo.milvusVersion,
     };
+  }
+
+  /**
+   * @ignore
+   * Everytime build sdk will rewrite sdk.json depend on version, milvusVersion fields in package.json.
+   * @returns
+   */
+  async checkVersion() {
+    const res = await this.dataManager.getMetric({
+      request: { metric_type: "system_info" },
+    });
+    // Each node contains the same system info, so get version from first one.
+    const curMilvusVersion =
+      res.response.nodes_info[0]?.infos?.system_info?.build_version;
+    if (curMilvusVersion !== this.sdkInfo.recommandMilvus) {
+      console.warn("------- Warning ---------");
+      console.warn(
+        `Node sdk ${this.sdkInfo.version} recommend Milvus Version ${this.sdkInfo.recommandMilvus}.\nDifferent version may cause some error.`
+      );
+      return { error_code: ErrorCode.SUCCESS, match: false };
+    }
+    return { error_code: ErrorCode.SUCCESS, match: true };
   }
 
   closeConnection() {

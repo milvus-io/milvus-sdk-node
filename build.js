@@ -52,8 +52,11 @@ function removeDistPackageJson(source) {
 function writeSdkJson(path) {
   try {
     const version = packageJson.version;
+    const milvusVersion = packageJson.milvusVersion;
+
     const content = {
       version,
+      milvusVersion,
     };
     let data = JSON.stringify(content);
     fs.writeFileSync(path, data);
