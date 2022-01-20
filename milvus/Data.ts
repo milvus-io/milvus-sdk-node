@@ -529,6 +529,7 @@ export class Data extends Client {
   async query(data: QueryReq): Promise<QueryResults> {
     this.checkCollectionName(data);
     const promise: QueryRes = await promisify(this.client, "Query", data);
+    console.log(promise.fields_data);
     const results: { [x: string]: any }[] = [];
     /**
      * type: DataType
@@ -541,7 +542,11 @@ export class Data extends Client {
     const fieldsData = promise.fields_data.map((item, i) => {
       if (item.field === "vectors") {
         const key = item.vectors!.data;
-        const vectorValue = item.vectors![key]!.data;
+        const vectorValue =
+          key === "float_vector"
+            ? item.vectors![key]!.data
+            : item.vectors![key]!.toJSON().data;
+
         // if binary vector , need use dim / 8 to split vector data
         const dim =
           item.vectors?.data === "float_vector"
