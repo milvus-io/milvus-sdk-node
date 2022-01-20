@@ -29,7 +29,6 @@ const test = async () => {
     fields_data: vectorsData,
   };
   res = await milvusClient.dataManager.insert(params);
-  console.log("--- insert ----", res);
   await milvusClient.dataManager.flush({ collection_names: [COLLECTION_NAME] });
   const result = await milvusClient.dataManager.search({
     collection_name: COLLECTION_NAME,
@@ -45,6 +44,13 @@ const test = async () => {
     vector_type: DataType.BinaryVector,
   });
   console.log("----search result-----,", result);
+  const queryRes = await milvusClient.dataManager.query({
+    collection_name: COLLECTION_NAME,
+    expr: `age == ${result.results[0].id}`,
+    output_fields: ["age", "vector_field"],
+  });
+  console.log("----query----", queryRes.data[0].vector_field);
+
   await milvusClient.collectionManager.dropCollection({
     collection_name: COLLECTION_NAME,
   });

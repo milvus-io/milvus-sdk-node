@@ -67,9 +67,7 @@ export interface QueryRes {
       float_vector?: {
         data: number[];
       };
-      binary_vector?: {
-        data: number[];
-      };
+      binary_vector?: Buffer;
     };
     scalars?: {
       // long_data: {data: [stringID]}
