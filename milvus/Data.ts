@@ -529,7 +529,6 @@ export class Data extends Client {
   async query(data: QueryReq): Promise<QueryResults> {
     this.checkCollectionName(data);
     const promise: QueryRes = await promisify(this.client, "Query", data);
-    console.log(promise.fields_data);
     const results: { [x: string]: any }[] = [];
     /**
      * type: DataType
