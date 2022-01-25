@@ -77,7 +77,11 @@ export type {
   CalcDistanceResponse,
   GetFlushStateResponse,
   GetQuerySegmentInfoResponse,
+  GetCompactionStateResponse,
+  GetCompactionPlansResponse,
+  CompactionResponse,
 } from "./types/Response";
+
 export type {
   SearchRes,
   SearchReq,

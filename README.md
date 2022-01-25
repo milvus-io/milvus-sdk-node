@@ -7,6 +7,14 @@
 
 This is node sdk for [Milvus](https://github.com/milvus-io/milvus).
 
+## Compatibility
+
+The following collection shows Milvus versions and recommended @zilliz/milvus2-sdk-node versions:
+
+| Milvus version | Recommended @zilliz/milvus2-sdk-node version |
+| :------------: | :------------------------------------------: |
+|     2.0.0      |                    2.0.0                     |
+
 ## Dependencies
 
 Milvus: v2+
@@ -19,7 +27,7 @@ Node: v12+
    npm install @zilliz/milvus2-sdk-node
 ```
 
-## API
+## API Support
 
 | Name                    | Async |               Description                |
 | :---------------------- | :---- | :--------------------------------------: |
@@ -45,12 +53,16 @@ Node: v12+
 | dropIndex               | true  |                Drop index                |
 | insert                  | false |         Insert data into milvus          |
 | search                  | false |         Vector similarity search         |
-| flush                   | false |                Flush Data                |
+| flush                   | true  |                Flush Data                |
+| flushSync               | false |             Flush Data Sync              |
 | query                   | false |             Get data by expr             |
+| compact                 | true  |     Do compaction for the collection     |
+| getCompactionState      | true  |   Get compaction states by compact id    |
 
 ## Example
 
-1. [How to operate collection](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
-2. [How to insert data](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Insert.ts)
-3. [Vector similarity search on float field](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Search.ts)
-4. [Vector similarity search on binary field](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/BinarySearch.ts)
+1. [Hello World](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/HelloMilvus.ts)
+2. [How to operate collection](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
+3. [How to insert data](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Insert.ts)
+4. [Vector similarity search on float field](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Search.ts)
+5. [Vector similarity search on binary field](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/BinarySearch.ts)
