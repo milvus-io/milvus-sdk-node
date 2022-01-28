@@ -22,6 +22,7 @@
     "@microsoft/api-documenter": "^7.13.39",
     "@microsoft/api-extractor": "^7.18.5",
     "json-schema": "^0.4.0",
+    "node-forge": "^1.0.0",
     "protobufjs": "^6.11.2"
   },
   "devDependencies": {
