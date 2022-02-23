@@ -16,8 +16,8 @@ describe("Milvus client ", () => {
   });
 
   it("Expect get node sdk info", async () => {
-    expect(milvusClient.sdkInfo.version).toEqual(sdkInfo.version);
-    expect(milvusClient.sdkInfo.recommandMilvus).toEqual(sdkInfo.milvusVersion);
+    expect(MilvusClient.sdkInfo.version).toEqual(sdkInfo.version);
+    expect(MilvusClient.sdkInfo.recommandMilvus).toEqual(sdkInfo.milvusVersion);
   });
 
   it("Check version should success", async () => {

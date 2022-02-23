@@ -1,7 +1,6 @@
 import { MilvusClient } from "../milvus";
 
 import { GENERATE_NAME, IP } from "../const";
-import { DataType } from "../milvus/types/Common";
 import { ErrorCode } from "../milvus/types/Response";
 import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
 import { ERROR_REASONS } from "../milvus/const/ErrorReason";

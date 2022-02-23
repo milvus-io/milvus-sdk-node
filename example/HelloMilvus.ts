@@ -3,7 +3,7 @@ import { DataType } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Common";
 import { InsertReq } from "@zilliz/milvus2-sdk-node/dist/milvus/types/Data";
 
 const milvusClient = new MilvusClient("localhost:19530");
-const collectionManager = milvusClient.collectionManager;
+const collectionManager = MilvusClient.collectionManager;
 
 console.log("Milvus SDK Info: ", milvusClient.sdkInfo);
 
