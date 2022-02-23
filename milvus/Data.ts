@@ -4,7 +4,7 @@ import { Client } from "./Client";
 import { Collection } from "./Collection";
 import { ERROR_REASONS } from "./const/ErrorReason";
 
-import { DataType, DataTypeMap, DslType, SegmentState } from "./types/Common";
+import { DataType, DataTypeMap, DslType } from "./types/Common";
 import {
   CalcDistanceReq,
   DeleteEntitiesReq,
