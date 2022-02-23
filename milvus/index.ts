@@ -50,7 +50,7 @@ export class MilvusClient {
     this.dataManager = new Data(this.client, this.collectionManager);
   }
 
-  get sdkInfo() {
+  static get sdkInfo() {
     return {
       version: sdkInfo.version,
       recommandMilvus: sdkInfo.milvusVersion,
@@ -69,10 +69,10 @@ export class MilvusClient {
     // Each node contains the same system info, so get version from first one.
     const curMilvusVersion =
       res.response.nodes_info[0]?.infos?.system_info?.build_version;
-    if (curMilvusVersion !== this.sdkInfo.recommandMilvus) {
+    if (curMilvusVersion !== MilvusClient.sdkInfo.recommandMilvus) {
       console.warn("------- Warning ---------");
       console.warn(
-        `Node sdk ${this.sdkInfo.version} recommend Milvus Version ${this.sdkInfo.recommandMilvus}.\nDifferent version may cause some error.`
+        `Node sdk ${MilvusClient.sdkInfo.version} recommend Milvus Version ${MilvusClient.sdkInfo.recommandMilvus}.\nDifferent version may cause some error.`
       );
       return { error_code: ErrorCode.SUCCESS, match: false };
     }
