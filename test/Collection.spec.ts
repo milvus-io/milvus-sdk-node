@@ -14,9 +14,10 @@ const LOAD_COLLECTION_NAME = GENERATE_NAME();
 
 describe("Collection Api", () => {
   it(`Create Collection Successful`, async () => {
-    const res = await collectionManager.createCollection(
-      genCollectionParams(COLLECTION_NAME, "128")
-    );
+    const res = await collectionManager.createCollection({
+      ...genCollectionParams(COLLECTION_NAME, "128"),
+      consistency_level: "Eventually",
+    });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -209,8 +210,9 @@ describe("Collection Api", () => {
     const res = await collectionManager.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log(res);
+    console.log("---- describe collection ---", res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.consistency_level).toEqual("Eventually");
     expect(res.schema.name).toEqual(COLLECTION_NAME);
     expect(res.schema.fields.length).toEqual(2);
     expect(res.schema.fields[0].name).toEqual(VECTOR_FIELD_NAME);

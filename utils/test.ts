@@ -1,3 +1,4 @@
+import { ConsistencyLevelEnum } from "../milvus/types";
 import { DataType } from "../milvus/types/Common";
 
 export const VECTOR_FIELD_NAME = "vector_field";
@@ -24,7 +25,7 @@ export const genCollectionParams = (
       {
         name: "age",
         data_type: DataType.Int64,
-        autoID: autoID,
+        autoID,
         is_primary_key: true,
         description: "",
       },

@@ -26,7 +26,21 @@ export interface CreateCollectionReq {
   collection_name: string;
   shards_num?: number; // int
   description?: string;
+  consistency_level?:
+    | "Strong"
+    | "Session"
+    | "Bounded"
+    | "Eventually"
+    | "Customized";
   fields: FieldType[];
+}
+
+export enum ConsistencyLevelEnum {
+  Strong = 0,
+  Session = 1, // default in PyMilvus
+  Bounded = 2,
+  Eventually = 3,
+  Customized = 4, // Users pass their own `guarantee_timestamp`.
 }
 
 interface CollectionNameReq {

@@ -17,7 +17,6 @@ import {
   ShowPartitionsReq,
 } from "./types/Partition";
 import { formatKeyValueData } from "./utils/Format";
-
 export class Partition extends Client {
   /**
    * Create a partition in a collection.
