@@ -17,6 +17,7 @@ import {
   CompactReq,
   GetCompactionStateReq,
   GetCompactionPlansReq,
+  ConsistencyLevelEnum,
 } from "./types/Collection";
 import {
   BoolResponse,
@@ -49,6 +50,7 @@ export class Collection extends Client {
    *  | :---------------------- | :----  | :-------------------------------  |
    *  | collection_name        | String |        Collection name       |
    *  | description             | String |        Collection description       |
+   *  | consistency_level       | String |        "Strong" | "Session" (default) | "Bounded"| "Eventually" | "Customized";      |
    *  | fields        | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> |     Field data      |
    *
    * @return
@@ -83,7 +85,12 @@ export class Collection extends Client {
    * ```
    */
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
-    const { fields, collection_name, description } = data || {};
+    const {
+      fields,
+      collection_name,
+      description,
+      consistency_level = "Session",
+    } = data || {};
     if (!fields || !fields.length || !collection_name) {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
     }
@@ -119,6 +126,8 @@ export class Collection extends Client {
     const promise = await promisify(this.client, "CreateCollection", {
       ...data,
       schema: schemaBtyes,
+      consistency_level:
+        ConsistencyLevelEnum[consistency_level] || ConsistencyLevelEnum.Session,
     });
 
     return promise;

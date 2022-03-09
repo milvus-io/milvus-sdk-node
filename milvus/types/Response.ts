@@ -1,3 +1,4 @@
+import { ConsistencyLevelEnum } from "./Collection";
 import {
   DataType,
   IndexState,
@@ -86,6 +87,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   status: ResStatus;
   schema: CollectionSchema;
   collectionID: string;
+  consistency_level: ConsistencyLevelEnum;
   virtual_channel_names: string[]; // not useful for now
   physical_channel_names: string[]; // not useful for now
 }
