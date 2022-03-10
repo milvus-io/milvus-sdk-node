@@ -40,7 +40,10 @@ export class MilvusClient {
     const milvusProto = (grpcObject.milvus as any).proto.milvus;
     const client = new milvusProto.MilvusService(
       address,
-      credentials.createInsecure()
+      credentials.createInsecure(),
+      {
+        "grpc.max_receive_message_length": -1,
+      }
     );
 
     this.client = client;
