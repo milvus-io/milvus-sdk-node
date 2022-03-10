@@ -42,6 +42,8 @@ export class MilvusClient {
       address,
       credentials.createInsecure(),
       {
+        // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
+        // So SDK should support max_receive_message_length unlimited.
         "grpc.max_receive_message_length": -1,
       }
     );
