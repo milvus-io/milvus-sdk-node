@@ -40,7 +40,12 @@ export class MilvusClient {
     const milvusProto = (grpcObject.milvus as any).proto.milvus;
     const client = new milvusProto.MilvusService(
       address,
-      credentials.createInsecure()
+      credentials.createInsecure(),
+      {
+        // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
+        // So SDK should support max_receive_message_length unlimited.
+        "grpc.max_receive_message_length": -1,
+      }
     );
 
     this.client = client;
