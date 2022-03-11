@@ -147,7 +147,6 @@ export interface SearchResultData {
 export interface SearchResults {
   status: ResStatus;
   results: SearchResultData[];
-  collection_name:string;
 }
 
 export interface FlushResult {
@@ -158,7 +157,6 @@ export interface FlushResult {
 export interface QueryResults {
   status: ResStatus;
   data: { [x: string]: any }[];
-  collection_name: string;
 }
 
 export interface GetMetricsResponse {
