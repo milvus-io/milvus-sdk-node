@@ -17,7 +17,9 @@ function copyFileSync(source, target) {
 
 function copyFolderRecursiveSync(source, target) {
   let files = [];
-
+  if (!fs.existsSync(target)){
+    fs.mkdirSync(target, { recursive: true });
+}
   // Check if folder needs to be created or integrated
   let targetFolder = path.join(target, path.basename(source));
   if (!fs.existsSync(targetFolder)) {
@@ -65,7 +67,7 @@ function writeSdkJson(path) {
   }
 }
 
-copyFolderRecursiveSync("./grpc-proto", "./dist");
+copyFolderRecursiveSync("./proto/proto", "./dist/proto");
 
 // if dist has package.json need delete it.
 // otherwise npm publish will use package.json inside dist then will missing files.
