@@ -9,7 +9,7 @@ import sdkInfo from "../sdk.json";
 import { ERROR_REASONS } from "./const/ErrorReason";
 import { ErrorCode } from "./types/Response";
 
-const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
+const protoPath = path.resolve(__dirname, "../proto/proto/milvus.proto");
 export class MilvusClient {
   client: Client;
   collectionManager: Collection;
