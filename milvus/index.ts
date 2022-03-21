@@ -24,8 +24,9 @@ export class MilvusClient {
    * IndexManager: control index crud api
    * DataManager: Search | Query | Insert | Flush
    * @param address milvus address like: 127.0.0.1:19530
+   * @param ssl ssl connect or not, default is false
    */
-  constructor(address: string) {
+  constructor(address: string,ssl?:boolean) {
     if (!address) {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
@@ -40,7 +41,7 @@ export class MilvusClient {
     const milvusProto = (grpcObject.milvus as any).proto.milvus;
     const client = new milvusProto.MilvusService(
       address,
-      credentials.createInsecure(),
+      ssl ? credentials.createSsl(): credentials.createInsecure(),
       {
         // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
         // So SDK should support max_receive_message_length unlimited.
