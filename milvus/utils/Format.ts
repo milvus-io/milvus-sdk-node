@@ -28,9 +28,9 @@ export const parseToKeyValue = (data?: {
 }): KeyValuePair[] => {
   return data
     ? Object.keys(data).reduce(
-        (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
-        []
-      )
+      (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
+      []
+    )
     : [];
 };
 
@@ -91,7 +91,7 @@ const checkTimeParam = (ts: any) => {
  *   const res = hybridtsToUnixtime("429642767925248000");
  * ```
  */
-export const hybridtsToUnixtime = (hybridts: BigInt | string) => {
+export const hybridtsToUnixtime = (hybridts: bigint | string) => {
   if (!checkTimeParam(hybridts)) {
     throw new Error(`hybridts ${ERROR_REASONS.TIMESTAMP_PARAM_CHECK}`);
   }
@@ -122,7 +122,7 @@ export const hybridtsToUnixtime = (hybridts: BigInt | string) => {
  *   const res = unixtimeToHybridts("429642767925248000");
  * ```
  */
-export const unixtimeToHybridts = (unixtime: BigInt | string) => {
+export const unixtimeToHybridts = (unixtime: bigint | string) => {
   if (!checkTimeParam(unixtime)) {
     throw new Error(`hybridts ${ERROR_REASONS.TIMESTAMP_PARAM_CHECK}`);
   }
