@@ -41,7 +41,7 @@ import {
 import path from "path";
 import { formatNumberPrecision, parseToKeyValue } from "./utils/Format";
 
-const protoPath = path.resolve(__dirname, "../grpc-proto/milvus.proto");
+const protoPath = path.resolve(__dirname, "../proto/proto/milvus.proto");
 
 export class Data extends Client {
   vectorTypes: number[];

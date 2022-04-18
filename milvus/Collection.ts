@@ -36,7 +36,7 @@ import path from "path";
 import { formatKeyValueData, parseToKeyValue } from "./utils/Format";
 import { Client } from "./Client";
 
-const schemaPath = path.resolve(__dirname, "../grpc-proto/schema.proto");
+const schemaPath = path.resolve(__dirname, "../proto/proto/schema.proto");
 
 /**
  * See all [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts).

@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc --declaration && node build.js",
-    "test": "jest",
+    "test": "jest --testPathIgnorePatterns=/test/build/",
     "coverage": "jest --coverage=true --testPathIgnorePatterns=/test/build/",
     "build-test": "yarn build && jest test/build/Collection.spec.ts",
     "example": "npx ts-node",
