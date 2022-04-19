@@ -210,3 +210,8 @@ export interface GetCompactionPlansResponse {
   state: CompactionState;
   mergeInfos: { sources: number[]; target: number }[];
 }
+
+export interface ListCredUsersResponse{
+  status: ResStatus;
+  usernames:string[];
+}

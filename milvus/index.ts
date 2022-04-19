@@ -1,10 +1,11 @@
 import path from "path";
 import * as protoLoader from "@grpc/proto-loader";
-import { loadPackageDefinition, credentials, Client } from "@grpc/grpc-js";
+import { loadPackageDefinition, credentials, Client, InterceptingCall } from "@grpc/grpc-js";
 import { Collection } from "./Collection";
 import { Partition } from "./Partition";
 import { Index } from "./MilvusIndex";
 import { Data } from "./Data";
+import { User } from './User'
 import sdkInfo from "../sdk.json";
 import { ERROR_REASONS } from "./const/ErrorReason";
 import { ErrorCode } from "./types/Response";
@@ -16,6 +17,7 @@ export class MilvusClient {
   partitionManager: Partition;
   indexManager: Index;
   dataManager: Data;
+  userManager: User;
 
   /**
    * Connect to milvus grpc client.
@@ -26,9 +28,22 @@ export class MilvusClient {
    * @param address milvus address like: 127.0.0.1:19530
    * @param ssl ssl connect or not, default is false
    */
-  constructor(address: string,ssl?:boolean) {
+  constructor(address: string, ssl?: boolean, username?: string, password?: string) {
     if (!address) {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
+    }
+    let authInterceptor = null
+    if (username && password) {
+      authInterceptor = function (options: any, nextCall: any) {
+        return new InterceptingCall(nextCall(options), {
+          start: function (metadata, listener, next) {
+            const auth = Buffer.from(`${username}:${password}`,'utf-8').toString('base64')
+            metadata.add('authorization', auth)
+
+            next(metadata, listener);
+          }
+        });
+      }
     }
     const packageDefinition = protoLoader.loadSync(protoPath, {
       keepCase: true,
@@ -41,19 +56,24 @@ export class MilvusClient {
     const milvusProto = (grpcObject.milvus as any).proto.milvus;
     const client = new milvusProto.MilvusService(
       address,
-      ssl ? credentials.createSsl(): credentials.createInsecure(),
+      ssl ? credentials.createSsl() : credentials.createInsecure(),
       {
+        "interceptors": [authInterceptor],
         // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
         // So SDK should support max_receive_message_length unlimited.
         "grpc.max_receive_message_length": -1,
       }
     );
 
+
+
+
     this.client = client;
     this.collectionManager = new Collection(this.client);
     this.partitionManager = new Partition(this.client);
     this.indexManager = new Index(this.client);
     this.dataManager = new Data(this.client, this.collectionManager);
+    this.userManager = new User(this.client)
   }
 
   static get sdkInfo() {
