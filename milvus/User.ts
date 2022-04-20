@@ -30,14 +30,87 @@ export class User extends Client {
     return promise;
   }
 
+  /**
+   * Create user in milvus
+   *
+   * @param data
+   *  | Property        | Type   |           Description              |
+   *  | :-------------- | :----  | :-------------------------------  |
+   *  | username        | String |       username        |
+   *  | password        | String |       user password        |
+   *
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause|
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.createUser({
+   *    username: NAME,
+   *    password: PASSWORD,
+   *  });
+   * ```
+   */
   async createUser(data: UpdateUserReq): Promise<ResStatus> {
     return await this.createOrUpdateUser(data, 'create');
   }
 
+  /**
+   * Update user in milvus
+   *
+   * @param data
+   *  | Property        | Type   |           Description              |
+   *  | :-------------- | :----  | :-------------------------------  |
+   *  | username        | String |       username        |
+   *  | password        | String |       user password        |
+   *
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause|
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.createUser({
+   *    username: NAME,
+   *    password: PASSWORD,
+   *  });
+   * ```
+   */
   async updateUser(data: UpdateUserReq): Promise<ResStatus> {
     return await this.createOrUpdateUser(data, 'update');
   }
 
+  /**
+   * Delete user in milvus
+   *
+   * @param data
+   *  | Property        | Type   |           Description              |
+   *  | :-------------- | :----  | :-------------------------------  |
+   *  | username        | String |       username        |
+   *
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause|
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.createUser({
+   *    username: NAME,
+   *  });
+   * ```
+   */
   async deleteUser(data: DeleteUserReq): Promise<ResStatus> {
     if (!data.username) {
       throw new Error(ERROR_REASONS.USERNAME_IS_REQUIRED);
@@ -48,6 +121,21 @@ export class User extends Client {
     return promise;
   }
 
+  /**
+   * List user in milvus
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | usernames    |       string[]     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.listUsers();
+   * ```
+   */
   async listUsers(): Promise<ListCredUsersResponse> {
     const promise = await promisify(this.client, 'ListCredUsers', {});
     return promise;
