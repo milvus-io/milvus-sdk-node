@@ -160,3 +160,5 @@ export const datetimeToHybrids = (datetime: Date) => {
   }
   return unixtimeToHybridts((datetime.getTime() / 1000).toString());
 };
+
+export const stringToBase64 = (str: string) => Buffer.from(str, 'utf-8').toString('base64')

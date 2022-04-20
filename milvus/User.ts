@@ -1,41 +1,55 @@
-import protobuf from "protobufjs";
-import { promisify } from "../utils";
-import { Client } from "./Client";
-import { ERROR_REASONS } from "./const/ErrorReason";
+import protobuf from 'protobufjs';
+import { promisify } from '../utils';
+import { Client } from './Client';
+import { ERROR_REASONS } from './const/ErrorReason';
 
-import {
-
-  ListCredUsersResponse,
-
-} from "./types/Response";
-import { DeleteUserReq, UpdateUserReq } from "./types/User";
-
-
+import { ListCredUsersResponse } from './types/Response';
+import { DeleteUserReq, UpdateUserReq } from './types/User';
+import { stringToBase64 } from './utils/Format';
 
 /**
  * See all [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts).
  */
 export class User extends Client {
-
-  async createUser(data: UpdateUserReq) {
-    const encryptedPassword = Buffer.from(data.password, 'utf-8').toString('base64')
-    console.log(data, encryptedPassword)
-    const promise = await promisify(this.client, "CreateCredential", {
-      username: data.username,
-      passwrod: encryptedPassword
-    });
+  private async createOrUpdateUser(
+    data: UpdateUserReq,
+    type: 'create' | 'update'
+  ) {
+    if (!data.username || !data.password) {
+      throw new Error(ERROR_REASONS.USERNAME_PWD_ARE_REQUIRED);
+    }
+    const encryptedPassword = stringToBase64(data.password);
+    const promise = await promisify(
+      this.client,
+      type === 'create' ? 'CreateCredential' : 'UpdateCredential',
+      {
+        username: data.username,
+        password: encryptedPassword,
+      }
+    );
     return promise;
   }
 
+  async createUser(data: UpdateUserReq) {
+    return await this.createOrUpdateUser(data, 'create');
+  }
+
+  async updateUser(data: UpdateUserReq) {
+    return await this.createOrUpdateUser(data, 'update');
+  }
+
   async deleteUser(data: DeleteUserReq) {
-    const promise = await promisify(this.client, "DeleteCredential", {
+    if (!data.username) {
+      throw new Error(ERROR_REASONS.USERNAME_IS_REQUIRED);
+    }
+    const promise = await promisify(this.client, 'DeleteCredential', {
       username: data.username,
     });
     return promise;
   }
 
   async listUsers(): Promise<ListCredUsersResponse> {
-    const promise = await promisify(this.client, "ListCredUsers", {});
+    const promise = await promisify(this.client, 'ListCredUsers', {});
     return promise;
   }
 }
