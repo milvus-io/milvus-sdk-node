@@ -1,19 +1,19 @@
-## loadPartitions()
+# loadPartitions()
 Load some partitions into cache.
 
-### Invocation 
+## Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.loadPartitions(LoadPartitionsReq);
 ```
 
-### Parameter
-#### LoadPartitionsReq
+## Parameter
+### LoadPartitionsReq
 | Parameter       | Description              | type     | required |
 | --------------- | ------------------------ | -------- | -------- |
 | collection_name | Collection name          | String   | true     |
 | partition_names | Array of Partition names | String[] | true     |
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.loadPartitions({
   collection_name: 'my_collection',
@@ -21,7 +21,7 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.loadPartitions({
 });
 ```
 
-### Return
+## Return
 ```javascript
 // loadPartitions return
 ```

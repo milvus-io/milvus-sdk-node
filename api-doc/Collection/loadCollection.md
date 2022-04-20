@@ -1,25 +1,25 @@
-## loadCollection()
+# loadCollection()
 Loads the collection to memory (for search or query).
 
-### Invocation 
+# Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.loadCollection(LoadCollectionReq);
 ```
 
-### Parameter
-#### LoadCollectionReq
+# Parameter
+## LoadCollectionReq
 | Parameter       | Description     | type   | required |
 | --------------- | --------------- | ------ | -------- |
 | collection_name | Collection name | String | true     |
 
-### Example
+# Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.loadCollection({
   collection_name: 'my_collection',
 });
 ```
 
-### Return
+# Return
 ```javascript
 // loadCollection return
 ```

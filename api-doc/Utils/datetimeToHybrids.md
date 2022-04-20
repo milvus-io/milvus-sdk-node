@@ -1,22 +1,22 @@
-## datetimeToHybrids()
+# datetimeToHybrids()
 Generate a hybrid timestamp based on datetime。
 
-### Invocation 
+## Invocation 
 ```javascript
 datetimeToHybrids(HybridTimetamp);
 ```
 
-### Parameter
+## Parameter
 | Parameter      | Description                                                                      | type   | required |
 | -------------- | -------------------------------------------------------------------------------- | ------ | -------- |
 | HybridTimetamp | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. | String | true     |
 
-### Example
+## Example
 ```javascript
 datetimeToHybrids("429642767925248000");
 ```
 
-### Return
+## Return
 ```javascript
 // datetimeToHybrids return
 ```

@@ -1,24 +1,24 @@
-## flushSync()
+# flushSync()
 It's same function as flush. But flushSync is sync function. So you can ensure it's flushed after function return the result.
 
-### Invocation 
+## Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.flushSync(FlushReq);
 ```
 
-### Parameter
-#### FlushReq
+## Parameter
+### FlushReq
 | Parameter        | Description                 | type     | required |
 | ---------------- | --------------------------- | -------- | -------- |
 | collection_names | An array of Collection name | String[] | true     |
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).dataManager.flushSync({
   collection_names: ['my_collection'],
 });
 ```
-### Return
+## Return
 ```javascript
 // flushSync return
 ```

@@ -1,19 +1,19 @@
-## releasePartitions()
+# releasePartitions()
 Release partitions from cache.
 
-### Invocation 
+## Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.releasePartitions(ReleasePartitionsReq);
 ```
 
-### Parameter
-#### ReleasePartitionsReq
+## Parameter
+### ReleasePartitionsReq
 | Parameter       | Description              | type     | required |
 | --------------- | ------------------------ | -------- | -------- |
 | collection_name | Collection name          | String   | true     |
 | partition_names | Array of Partition names | String[] | true     |
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.releasePartitions({
   collection_name: 'my_collection',
@@ -21,7 +21,7 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.releasePartitions({
 });
 ```
 
-### Return
+## Return
 ```javascript
 // releasePartitions return
 ```

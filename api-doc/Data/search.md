@@ -1,13 +1,13 @@
-## search()
+# search()
 Conducts a vector search.
 
-### Invocation 
+## Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).dataManager.search(SearchReq);
 ```
 
-### Parameter
-#### SearchReq(object)
+## Parameter
+### SearchReq(object)
 | Parameter                  | Description                                             | type         | required |
 | -------------------------- | ------------------------------------------------------- | ------------ | -------- |
 | collection_name            | Collection name                                         | String       | true     |
@@ -19,7 +19,7 @@ new milvusClient(MILUVS_ADDRESS).dataManager.search(SearchReq);
 | partitions_names(optional) | Array of partition names                                | string[]     | false    |
 | expr(optional)             | Scalar field filter expression                          | String       | false    |
 
-#### SearchParams(object)
+### SearchParams(object)
 | Parameter   | Description          | type        | required |
 | ----------- | -------------------- | ----------- | -------- |
 | anns_field  | vector field name    | String      | true     |
@@ -27,7 +27,7 @@ new milvusClient(MILUVS_ADDRESS).dataManager.search(SearchReq);
 | metric_type | metric type          | MetricTypes | false    |
 | params      | special parameters   | SearchParam | true     |
 
-#### MetricTypes(string)
+### MetricTypes(string)
 | Value          | Description        |
 | -------------- | ------------------ |
 | L2             | Euclidean distance |
@@ -38,16 +38,16 @@ new milvusClient(MILUVS_ADDRESS).dataManager.search(SearchReq);
 | SUBSTRUCTURE   | Superstructure     |
 | SUPERSTRUCTURE | Substructure       |
 
-#### VectorTypes
+### VectorTypes
 | Value | Description |
 | ----- | ----------- |
 | 100   | Binary      |
 | 101   | Float       |
 
-#### SearchParam
+### SearchParam
 Please refer https://milvus.io/docs/index.md
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).dataManager.search({
   collection_name: 'my-collection-name',
@@ -64,7 +64,7 @@ new milvusClient(MILUVS_ADDRESS).dataManager.search({
 });
 
 ```
-#### Return
+### Return
 ```javascript
 // search return
 ```

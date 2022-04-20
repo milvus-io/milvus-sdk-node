@@ -1,24 +1,24 @@
-## getIndexBuildProgress()
+# getIndexBuildProgress()
 Get index building progress.
 
-### Invocation 
+# Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.getIndexBuildProgress(GetIndexBuildProgressReq);
 ```
 
-### Parameter
-#### GetIndexBuildProgressReq
+# Parameter
+## GetIndexBuildProgressReq
 | Parameter       | Description     | type   | required |
 | --------------- | --------------- | ------ | -------- |
 | collection_name | Collection name | String | true     |
 
-### Example
+# Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.getIndexBuildProgress({
   collection_name: 'my_collection',
 });
 ```
-### Return
+# Return
 ```javascript
 // getIndexBuildProgress return
 ```

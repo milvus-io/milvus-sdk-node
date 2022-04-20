@@ -1,13 +1,13 @@
-## insert()
+# insert()
 Insert data into collection.
 
-### Invocation 
+## Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).dataManager.insert(InsertReq);
 ```
 
-### Parameter
-#### getQuerySegmentInfoReq
+## Parameter
+### getQuerySegmentInfoReq
 | Parameter                | Description                               | type                   | required |
 | ------------------------ | ----------------------------------------- | ---------------------- | -------- |
 | collection_name          | Collection name                           | String                 | true     |
@@ -15,10 +15,10 @@ new milvusClient(MILUVS_ADDRESS).dataManager.insert(InsertReq);
 | fields_data              | vector data                               | { [x: string]: any }[] | false    |
 | hash_keys(optional)      | The hash value depends on the primary key | Number[]               | false    |
 
-#### note 
+### note 
 If the field type is binary, the vector data length needs to be dimension / 8
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).dataManager.insert({
   collection_name: COLLECTION_NAME,
@@ -28,7 +28,7 @@ new milvusClient(MILUVS_ADDRESS).dataManager.insert({
   }]
 });
 ```
-### Return
+## Return
 ```javascript
 // getQuerySegmentInfo return
 ```
