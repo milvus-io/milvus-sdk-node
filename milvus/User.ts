@@ -15,7 +15,7 @@ export class User extends Client {
     data: UpdateUserReq,
     type: 'create' | 'update'
   ) {
-    if (!data.username || !data.password) {
+    if (!data.username !== undefined || !data.password !== undefined) {
       throw new Error(ERROR_REASONS.USERNAME_PWD_ARE_REQUIRED);
     }
     const encryptedPassword = stringToBase64(data.password);

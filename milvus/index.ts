@@ -48,7 +48,7 @@ export class MilvusClient {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
     let authInterceptor = null;
-    if (username && password) {
+    if (username !== undefined && password !== undefined) {
       authInterceptor = function (options: any, nextCall: any) {
         return new InterceptingCall(nextCall(options), {
           start: function (metadata, listener, next) {
