@@ -1,19 +1,19 @@
-## getPartitionStatistics()
+# getPartitionStatistics()
 Show the statistics information of a partition.
 
-### Invocation 
+## Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.getPartitionStatistics(GetPartitionStatisticsReq);
 ```
 
-### Parameter
-#### GetPartitionStatisticsReq
+## Parameter
+### GetPartitionStatisticsReq
 | Parameter       | Description     | type   | required |
 | --------------- | --------------- | ------ | -------- |
 | collection_name | Collection name | String | true     |
 | partition_name  | Partition name  | String | true     |
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.getPartitionStatistics({
   collection_name: 'my_collection',
@@ -21,7 +21,7 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.getPartitionStatistics({
 });
 ```
 
-### Return
+## Return
 ```javascript
 // getPartitionStatistics return
 ```

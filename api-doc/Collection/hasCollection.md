@@ -1,25 +1,25 @@
-## hasCollection()
+# hasCollection()
 Check if the collection exists.
 
-### Invocation 
+# Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.hasCollection(HasCollectionReq);
 ```
 
-### Parameter
-#### HasCollectionReq
+# Parameter
+## HasCollectionReq
 | Parameter       | Description     | type   | required |
 | --------------- | --------------- | ------ | -------- |
 | collection_name | Collection name | String | true     |
 
-### Example
+# Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.hasCollection({
   collection_name: 'my_collection',
 });
 ```
 
-### Return
+# Return
 ```javascript
 // hasCollection return
 ```

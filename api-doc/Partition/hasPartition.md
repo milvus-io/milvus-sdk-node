@@ -1,20 +1,20 @@
-## hasPartition()
+# hasPartition()
 Check if a partition exists in a collection.
 
-### Invocation 
+## Invocation 
 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.hasPartition(HasPartitionReq);
 ```
 
-### Parameter
-#### HasPartitionReq
+## Parameter
+### HasPartitionReq
 | Parameter       | Description     | type   | required |
 | --------------- | --------------- | ------ | -------- |
 | collection_name | Collection name | String | true     |
 | partition_name  | Partition name  | String | true     |
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.hasPartition({
   collection_name: 'my_collection',
@@ -22,7 +22,7 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.hasPartition({
 });
 ```
 
-### Return
+## Return
 ```javascript
 // hasPartition return
 ```

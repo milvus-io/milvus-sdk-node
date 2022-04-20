@@ -1,19 +1,19 @@
-## createCollection()
+# createCollection()
 Creates a collection with the specified schema.
 
-### Invocation
+# Invocation
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.createCollection(CreateCollectionReq);
 ```
 
-### Parameter
-#### CreateCollectionReq(object)
+# Parameter
+## CreateCollectionReq(object)
 | Parameter       | Description      | type   | required |
 | --------------- | ---------------- | ------ | -------- |
 | collection_name | Collection name  | String | true     |
 | fields          | schema to create | Fields | true     |
 
-#### Fields(object)
+## Fields(object)
 | Parameter      | Description          | type     | required |
 | -------------- | -------------------- | -------- | -------- |
 | name           | Field name           | String   | true     |
@@ -23,7 +23,7 @@ new milvusClient(MILUVS_ADDRESS).collectionManager.createCollection(CreateCollec
 | autoID         | Is auto generated ID | Bool     | false    |
 | is_primary_key | Is primary key       | Bool     | false    |
 
-#### DataType
+## DataType
 | Value | Description  |
 | ----- | ------------ |
 | 0     | none         |
@@ -38,7 +38,7 @@ new milvusClient(MILUVS_ADDRESS).collectionManager.createCollection(CreateCollec
 | 100   | BinaryVector |
 | 101   | FloatVector  |
 
-### Example
+# Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.createCollection({
   collection_name: 'my_collection',
@@ -62,7 +62,7 @@ new milvusClient(MILUVS_ADDRESS).collectionManager.createCollection({
 });
 ```
 
-### Return
+# Return
 ```javascript
 // create collection return
 ```

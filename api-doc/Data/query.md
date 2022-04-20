@@ -1,13 +1,13 @@
-## query()
+# query()
 Conducts a vector query.
 
-### Invocation 
+## Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).dataManager.query(QueryReq);
 ```
 
-### Parameter
-#### QueryReq
+## Parameter
+### QueryReq
 | Parameter                  | Description                           | type     | required |
 | -------------------------- | ------------------------------------- | -------- | -------- |
 | collection_name            | Collection name                       | String   | true     |
@@ -15,7 +15,7 @@ new milvusClient(MILUVS_ADDRESS).dataManager.query(QueryReq);
 | expr(optional)             | Scalar field filter expression        | String   | false    |
 | partitions_names(optional) | Array of partition names              | string[] | false    |
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).dataManager.query({
   collection_name: 'my_collection',
@@ -23,7 +23,7 @@ new milvusClient(MILUVS_ADDRESS).dataManager.query({
   output_fields: ["age"],
 });
 ```
-### Return
+## Return
 ```javascript
 // query return
 ```

@@ -1,25 +1,25 @@
-## showPartitions()
+# showPartitions()
 Show all partitions in a collection.
 
-### Invocation 
+## Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.showPartitions(ShowPartitionsReq);
 ```
 
-### Parameter
-#### ShowPartitionsReq
+## Parameter
+### ShowPartitionsReq
 | Parameter       | Description     | type   | required |
 | --------------- | --------------- | ------ | -------- |
 | collection_name | Collection name | String | true     |
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.showPartitions({
   collection_name: 'my_collection',
 });
 ```
 
-### Return
+## Return
 ```javascript
 // showPartitions return
 ```

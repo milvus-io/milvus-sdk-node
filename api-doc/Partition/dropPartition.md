@@ -1,19 +1,19 @@
-## dropPartition()
+# dropPartition()
 To drop a partition will drop all data in this partition and the ```_default``` partition cannot be dropped.
 
-### Invocation 
+## Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.dropPartition(DropPartitionReq);
 ```
 
-### Parameter
-#### DropPartitionReq
+## Parameter
+### DropPartitionReq
 | Parameter       | Description     | type   | required |
 | --------------- | --------------- | ------ | -------- |
 | collection_name | Collection name | String | true     |
 | partition_name  | Partition name  | String | true     |
 
-### Example
+## Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.dropPartition({
   collection_name: 'my_collection',
@@ -21,7 +21,7 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.dropPartition({
 });
 ```
 
-### Return
+## Return
 ```javascript
 // drop partition return
 ```

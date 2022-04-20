@@ -1,25 +1,25 @@
-## dropIndex()
+# dropIndex()
 List all collections or get collection loading status.
 
-### Invocation 
+# Invocation 
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.dropIndex(DropIndexReq);
 ```
 
-### Parameter
-##### DropIndexReq
+# Parameter
+### DropIndexReq
 | Parameter       | Description     | type   | required |
 | --------------- | --------------- | ------ | -------- |
 | collection_name | Collection name | String | true     |
 
-### Example
+# Example
 ```javascript
 new milvusClient(MILUVS_ADDRESS).collectionManager.dropIndex({
   collection_name: 'my_collection',
 });
 
 ```
-### Return
+# Return
 ```javascript
 // dropIndex return
 ```

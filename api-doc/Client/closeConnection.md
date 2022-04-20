@@ -1,20 +1,20 @@
-## closeConnection()
+# closeConnection()
 Close the connection to the milvus, make sure you close the connection when you are done.
 
-### Invocation 
+# Invocation 
 ```javascript
 milvusClient.closeConnection();
 ```
 
-### Parameter
+# Parameter
 None.
 
-### Example
+# Example
 ```javascript
 milvusClient.closeConnection();
 ```
 
-### Return
+# Return
 ```javascript
 // closeConnection return
 ```
