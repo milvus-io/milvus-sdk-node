@@ -9,8 +9,9 @@
   ],
   "scripts": {
     "build": "tsc --declaration && node build.js",
-    "test": "jest --testPathIgnorePatterns=/test/build/",
-    "coverage": "jest --coverage=true --testPathIgnorePatterns=/test/build/",
+    "testAll": "jest --testPathIgnorePatterns=/test/build/",
+    "test": "jest",
+    "coverage": "jest --coverage=true --config jest.config.js --no-cache --testPathIgnorePatterns=/test/build/ test/User.spec.ts ",
     "build-test": "yarn build && jest test/build/Collection.spec.ts",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc && node doc",

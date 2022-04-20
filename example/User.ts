@@ -2,21 +2,22 @@ import { MilvusClient } from '../milvus/index';
 import { IP } from '../const';
 const NAME = 'nameczz';
 const PASSWORD = '123456';
-const milvusClient = new MilvusClient(IP, false, NAME, PASSWORD); // After create user we can use this Auth Client
-// const milvusClient = new MilvusClient(IP); // Normal client
+const noAuthClient = new MilvusClient(IP); // Normal client
 
 // when test_1 collection includes some data.
 const user = async () => {
-  const createUserRes = await milvusClient.userManager.createUser({
-    username: 'test2',
-    password: '123456',
+  const createUserRes = await noAuthClient.userManager.createUser({
+    username: NAME,
+    password: PASSWORD,
   });
   console.log('--- create user ---', createUserRes);
+  noAuthClient.closeConnection();
+  const authClient = new MilvusClient(IP, false, NAME, PASSWORD); // After create user we can use this Auth Client
 
-  const usersRes = await milvusClient.userManager.listUsers();
+  const usersRes = await authClient.userManager.listUsers();
   console.log('--- list user ---', usersRes);
 
-  const deleteUserRes = await milvusClient.userManager.deleteUser({
+  const deleteUserRes = await authClient.userManager.deleteUser({
     username: NAME,
   });
   console.log('--- delete user ---', deleteUserRes);

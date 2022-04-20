@@ -3,7 +3,7 @@ import { promisify } from '../utils';
 import { Client } from './Client';
 import { ERROR_REASONS } from './const/ErrorReason';
 
-import { ListCredUsersResponse } from './types/Response';
+import { ListCredUsersResponse, ResStatus } from './types/Response';
 import { DeleteUserReq, UpdateUserReq } from './types/User';
 import { stringToBase64 } from './utils/Format';
 
@@ -30,15 +30,15 @@ export class User extends Client {
     return promise;
   }
 
-  async createUser(data: UpdateUserReq) {
+  async createUser(data: UpdateUserReq): Promise<ResStatus> {
     return await this.createOrUpdateUser(data, 'create');
   }
 
-  async updateUser(data: UpdateUserReq) {
+  async updateUser(data: UpdateUserReq): Promise<ResStatus> {
     return await this.createOrUpdateUser(data, 'update');
   }
 
-  async deleteUser(data: DeleteUserReq) {
+  async deleteUser(data: DeleteUserReq): Promise<ResStatus> {
     if (!data.username) {
       throw new Error(ERROR_REASONS.USERNAME_IS_REQUIRED);
     }
