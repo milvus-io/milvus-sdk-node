@@ -1,4 +1,4 @@
-import { ConsistencyLevelEnum } from "./Collection";
+import { ConsistencyLevelEnum } from './Collection';
 import {
   DataType,
   IndexState,
@@ -7,11 +7,11 @@ import {
   SegmentState,
   StringArrayId,
   CompactionState,
-} from "./Common";
+} from './Common';
 export enum ErrorCode {
-  SUCCESS = "Success",
-  INDEX_NOT_EXIST = "IndexNotExist",
-  UNEXPECTED_ERROR = "UnexpectedError",
+  SUCCESS = 'Success',
+  INDEX_NOT_EXIST = 'IndexNotExist',
+  UNEXPECTED_ERROR = 'UnexpectedError',
   // CONNECT_FAILED = "CONNECT_FAILED",
   // PERMISSION_DENIED = "PERMISSION_DENIED",
   // COLLECTION_NOT_EXISTS = "COLLECTION_NOT_EXISTS",
@@ -209,4 +209,9 @@ export interface GetCompactionPlansResponse {
   status: ResStatus;
   state: CompactionState;
   mergeInfos: { sources: number[]; target: number }[];
+}
+
+export interface ListCredUsersResponse {
+  status: ResStatus;
+  usernames: string[];
 }

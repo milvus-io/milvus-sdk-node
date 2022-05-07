@@ -2,15 +2,16 @@
   "name": "@zilliz/milvus2-sdk-node",
   "author": "ued@zilliz.com",
   "version": "2.0.2",
-  "milvusVersion": "v2.0.1",
+  "milvusVersion": "v2.0.2",
   "main": "dist/milvus",
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "tsc --declaration && node build.js",
-    "test": "jest --testPathIgnorePatterns=/test/build/",
-    "coverage": "jest --coverage=true --testPathIgnorePatterns=/test/build/",
+    "testAll": "jest --testPathIgnorePatterns=/test/build/",
+    "test": "jest",
+    "coverage": "jest --coverage=true --config jest.config.js --no-cache --testPathIgnorePatterns=/test/build/ test/User.spec.ts ",
     "build-test": "yarn build && jest test/build/Collection.spec.ts",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc && node doc",
