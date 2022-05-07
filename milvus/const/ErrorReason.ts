@@ -38,6 +38,8 @@ export enum ERROR_REASONS {
   COMPACTIONID_IS_REQUIRED = 'compactionID is required',
 
   USERNAME_PWD_ARE_REQUIRED = 'username and password are required',
+  USERNAME_OLD_NEW_PWD_ARE_REQUIRED = 'username, old password and new password are required',
+
   USERNAME_IS_REQUIRED = 'username is required',
 
   TIMESTAMP_PARAM_CHECK = 'type should be string (only contains number) or bigint',

@@ -39,13 +39,14 @@ describe('User Auth Api', () => {
   it(`Auth client list user expect success`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
     const res = await authClient.userManager.listUsers();
-    expect(res.usernames).toEqual([USERNAME]);
+    expect(res.usernames).toEqual([USERNAME, 'root']);
   });
 
   it(`Auth client update user expect success`, async () => {
     const res = await authClient!.userManager.updateUser({
       username: USERNAME,
-      password: NEW_PASSWORD,
+      oldPassword: PASSWORD,
+      newPassword: NEW_PASSWORD,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
