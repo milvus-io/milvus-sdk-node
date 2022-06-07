@@ -1,22 +1,22 @@
-import { MilvusClient } from "../milvus";
+import { MilvusClient } from '../milvus';
 
-import { GENERATE_NAME, IP } from "../const";
-import { DataType } from "../milvus/types/Common";
-import { ErrorCode } from "../milvus/types/Response";
-import { ShowCollectionsType } from "../milvus/types/Collection";
-import { ERROR_REASONS } from "../milvus/const/ErrorReason";
-import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
+import { GENERATE_NAME, IP } from '../const';
+import { DataType } from '../milvus/types/Common';
+import { ErrorCode } from '../milvus/types/Response';
+import { ShowCollectionsType } from '../milvus/types/Collection';
+import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
 
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 
-describe("Collection Api", () => {
+describe('Collection Api', () => {
   it(`Create Collection Successful`, async () => {
     const res = await collectionManager.createCollection({
-      ...genCollectionParams(COLLECTION_NAME, "128"),
-      consistency_level: "Eventually",
+      ...genCollectionParams(COLLECTION_NAME, '128'),
+      consistency_level: 'Eventually',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -24,7 +24,7 @@ describe("Collection Api", () => {
   it(`Create Collection validate fields`, async () => {
     try {
       await collectionManager.createCollection({
-        collection_name: "zxc",
+        collection_name: 'zxc',
       } as any);
     } catch (error) {
       expect(error.message).toEqual(
@@ -33,11 +33,11 @@ describe("Collection Api", () => {
     }
     try {
       await collectionManager.createCollection({
-        collection_name: "zxc",
+        collection_name: 'zxc',
         fields: [
           {
-            name: "vector_01",
-            description: "vector field",
+            name: 'vector_01',
+            description: 'vector field',
             data_type: DataType.FloatVector,
           },
         ],
@@ -50,11 +50,11 @@ describe("Collection Api", () => {
 
     try {
       await collectionManager.createCollection({
-        collection_name: "zxc",
+        collection_name: 'zxc',
         fields: [
           {
-            name: "age",
-            description: "",
+            name: 'age',
+            description: '',
             data_type: DataType.Int64,
             is_primary_key: true,
           },
@@ -70,16 +70,16 @@ describe("Collection Api", () => {
   it(`Create Collection expect dim error`, async () => {
     try {
       await collectionManager.createCollection({
-        collection_name: "zxc",
+        collection_name: 'zxc',
         fields: [
           {
-            name: "vector_01",
-            description: "vector field",
+            name: 'vector_01',
+            description: 'vector field',
             data_type: DataType.FloatVector,
           },
           {
-            name: "age",
-            description: "",
+            name: 'age',
+            description: '',
             data_type: DataType.Int64,
             is_primary_key: true,
           },
@@ -93,7 +93,7 @@ describe("Collection Api", () => {
 
     try {
       await collectionManager.createCollection(
-        genCollectionParams("any", "10")
+        genCollectionParams('any', '10')
       );
     } catch (error) {
       expect(error.message).toEqual(
@@ -102,22 +102,22 @@ describe("Collection Api", () => {
     }
   });
 
-  it("Create collection should throw CREATE_COLLECTION_CHECK_BINARY_DIM", async () => {
+  it('Create collection should throw CREATE_COLLECTION_CHECK_BINARY_DIM', async () => {
     try {
       await collectionManager.createCollection({
-        collection_name: "zxc",
+        collection_name: 'zxc',
         fields: [
           {
-            name: "vector_01",
-            description: "vector field",
+            name: 'vector_01',
+            description: 'vector field',
             data_type: DataType.BinaryVector,
             type_params: {
-              dim: "7",
+              dim: '7',
             },
           },
           {
-            name: "age",
-            description: "",
+            name: 'age',
+            description: '',
             data_type: DataType.Int64,
             is_primary_key: true,
           },
@@ -130,7 +130,7 @@ describe("Collection Api", () => {
     }
   });
 
-  it("Create collection should throw check params error", async () => {
+  it('Create collection should throw check params error', async () => {
     try {
       await collectionManager.createCollection({} as any);
     } catch (error) {
@@ -142,7 +142,7 @@ describe("Collection Api", () => {
 
   it(`Create load Collection Successful`, async () => {
     const res = await collectionManager.createCollection(
-      genCollectionParams(LOAD_COLLECTION_NAME, "128")
+      genCollectionParams(LOAD_COLLECTION_NAME, '128')
     );
     console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -160,12 +160,12 @@ describe("Collection Api", () => {
     const res = await collectionManager.hasCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log("----has collection", res);
+    console.log('----has collection', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.value).toEqual(true);
   });
 
-  it("Has collection should throw check params error", async () => {
+  it('Has collection should throw check params error', async () => {
     try {
       await collectionManager.hasCollection({} as any);
     } catch (error) {
@@ -175,7 +175,7 @@ describe("Collection Api", () => {
 
   it(`Has collection not exist`, async () => {
     const res = await collectionManager.hasCollection({
-      collection_name: "collection_not_exist",
+      collection_name: 'collection_not_exist',
     });
     expect(res.value).toEqual(false);
   });
@@ -184,9 +184,7 @@ describe("Collection Api", () => {
     const res = await collectionManager.showCollections();
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.data.filter((v) => v.name === COLLECTION_NAME).length).toEqual(
-      1
-    );
+    expect(res.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
   });
 
   it(`Get Collection Statistics should throw error`, async () => {
@@ -202,21 +200,21 @@ describe("Collection Api", () => {
       collection_name: COLLECTION_NAME,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.stats[0].value).toEqual("0");
-    expect(res.data.row_count).toEqual("0");
+    expect(res.stats[0].value).toEqual('0');
+    expect(res.data.row_count).toEqual('0');
   });
 
-  it("Describe Collection info", async () => {
+  it('Describe Collection info', async () => {
     const res = await collectionManager.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log("---- describe collection ---", res);
+    console.log('---- describe collection ---', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.consistency_level).toEqual("Eventually");
+    expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
     expect(res.schema.fields.length).toEqual(2);
     expect(res.schema.fields[0].name).toEqual(VECTOR_FIELD_NAME);
-    expect(res.schema.fields[1].name).toEqual("age");
+    expect(res.schema.fields[1].name).toEqual('age');
   });
 
   it(`Load Collection Sync throw COLLECTION_NAME_IS_REQUIRED`, async () => {
@@ -238,11 +236,11 @@ describe("Collection Api", () => {
     const fakeClient = new MilvusClient(IP);
 
     fakeClient.collectionManager.showCollections = () => {
-      return new Promise((res) => {
+      return new Promise(res => {
         res({
           status: {
-            error_code: "error",
-            reason: "123",
+            error_code: 'error',
+            reason: '123',
           },
         } as any);
       });
@@ -252,7 +250,7 @@ describe("Collection Api", () => {
         collection_name: LOAD_COLLECTION_NAME,
       });
     } catch (error) {
-      expect(typeof error.message).toBe("string");
+      expect(typeof error.message).toBe('string');
     } finally {
       fakeClient.closeConnection();
     }
@@ -267,6 +265,9 @@ describe("Collection Api", () => {
   });
 
   it(`Load Collection Async success`, async () => {
+    await collectionManager.releaseCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
     const res = await collectionManager.loadCollection({
       collection_name: LOAD_COLLECTION_NAME,
     });
@@ -280,11 +281,11 @@ describe("Collection Api", () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     expect(
-      res.data.filter((v) => v.name === LOAD_COLLECTION_NAME).length
+      res.data.filter(v => v.name === LOAD_COLLECTION_NAME).length
     ).toEqual(1);
   });
 
-  it("Compact collection and get state expect success", async () => {
+  it('Compact collection and get state expect success', async () => {
     const res = await collectionManager.compact({
       collection_name: LOAD_COLLECTION_NAME,
     });
@@ -299,7 +300,7 @@ describe("Collection Api", () => {
     expect(stateWithPlan.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it("Compact collection expect throw error", async () => {
+  it('Compact collection expect throw error', async () => {
     try {
       await collectionManager.compact({
         collection_name: undefined as any,
@@ -309,7 +310,7 @@ describe("Collection Api", () => {
     }
   });
 
-  it("Get Compaction State and with plan throw error", async () => {
+  it('Get Compaction State and with plan throw error', async () => {
     try {
       await collectionManager.getCompactionState({
         compactionID: undefined as any,

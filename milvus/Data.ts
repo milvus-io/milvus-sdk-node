@@ -1,10 +1,10 @@
-import protobuf from "protobufjs";
-import { promisify } from "../utils";
-import { Client } from "./Client";
-import { Collection } from "./Collection";
-import { ERROR_REASONS } from "./const/ErrorReason";
+import protobuf from 'protobufjs';
+import { promisify } from '../utils';
+import { Client } from './Client';
+import { Collection } from './Collection';
+import { ERROR_REASONS } from './const/ErrorReason';
 
-import { DataType, DataTypeMap, DslType } from "./types/Common";
+import { DataType, DataTypeMap, DslType } from './types/Common';
 import {
   CalcDistanceReq,
   DeleteEntitiesReq,
@@ -13,7 +13,7 @@ import {
   GetQuerySegmentInfoReq,
   InsertReq,
   LoadBalanceReq,
-} from "./types/Data";
+} from './types/Data';
 import {
   CalcDistanceResponse,
   ErrorCode,
@@ -25,23 +25,23 @@ import {
   QueryResults,
   ResStatus,
   SearchResults,
-} from "./types/Response";
+} from './types/Response';
 import {
   GetMetricsRequest,
   QueryReq,
   QueryRes,
   SearchReq,
   SearchRes,
-} from "./types/Search";
-import { findKeyValue, sleep } from "./utils/index";
+} from './types/Search';
+import { findKeyValue, sleep } from './utils/index';
 import {
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
-} from "./utils/Blob";
-import path from "path";
-import { formatNumberPrecision, parseToKeyValue } from "./utils/Format";
+} from './utils/Blob';
+import path from 'path';
+import { formatNumberPrecision, parseToKeyValue } from './utils/Format';
 
-const protoPath = path.resolve(__dirname, "../proto/proto/milvus.proto");
+const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
 
 export class Data extends Client {
   vectorTypes: number[];
@@ -106,11 +106,11 @@ export class Data extends Client {
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
     const fieldsData = collectionInfo.schema.fields
-      .filter((v) => !v.is_primary_key || !v.autoID)
-      .map((v) => ({
+      .filter(v => !v.is_primary_key || !v.autoID)
+      .map(v => ({
         name: v.name,
         type: v.data_type,
-        dim: Number(findKeyValue(v.type_params, "dim")),
+        dim: Number(findKeyValue(v.type_params, 'dim')),
         value: [] as number[],
       }));
 
@@ -122,8 +122,8 @@ export class Data extends Client {
       // Set the key as the field name to get all names in a row.
       const fieldNames = Object.keys(v);
 
-      fieldNames.forEach((name) => {
-        const target = fieldsData.find((item) => item.name === name);
+      fieldNames.forEach(name => {
+        const target = fieldsData.find(item => item.name === name);
         if (!target) {
           throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
         }
@@ -151,35 +151,35 @@ export class Data extends Client {
       });
     });
 
-    params.fields_data = fieldsData.map((v) => {
+    params.fields_data = fieldsData.map(v => {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may casue we cant find value.
       const type = DataTypeMap[v.type.toLowerCase()];
-      const key = this.vectorTypes.includes(type) ? "vectors" : "scalars";
-      let dataKey = "float_vector";
+      const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
+      let dataKey = 'float_vector';
       switch (type) {
         case DataType.FloatVector:
-          dataKey = "float_vector";
+          dataKey = 'float_vector';
           break;
         case DataType.BinaryVector:
-          dataKey = "binary_vector";
+          dataKey = 'binary_vector';
           break;
         case DataType.Double:
-          dataKey = "double_data";
+          dataKey = 'double_data';
           break;
         case DataType.Float:
-          dataKey = "float_data";
+          dataKey = 'float_data';
           break;
         case DataType.Int64:
-          dataKey = "long_data";
+          dataKey = 'long_data';
           break;
         case DataType.Int32:
         case DataType.Int16:
         case DataType.Int8:
-          dataKey = "int_data";
+          dataKey = 'int_data';
           break;
         case DataType.Bool:
-          dataKey = "bool_data";
+          dataKey = 'bool_data';
           break;
         default:
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE);
@@ -208,7 +208,7 @@ export class Data extends Client {
       };
     });
 
-    const promise = await promisify(this.client, "Insert", params);
+    const promise = await promisify(this.client, 'Insert', params);
 
     return promise;
   }
@@ -243,7 +243,7 @@ export class Data extends Client {
     if (!data || !data.collection_name || !data.expr) {
       throw new Error(ERROR_REASONS.DELETE_PARAMS_CHECK);
     }
-    const promise = await promisify(this.client, "Delete", data);
+    const promise = await promisify(this.client, 'Delete', data);
     return promise;
   }
 
@@ -309,13 +309,13 @@ export class Data extends Client {
 
     // anns_field is the vector field column user want to compare.
     const targetField = collectionInfo.schema.fields.find(
-      (v) => v.name === data.search_params.anns_field
+      v => v.name === data.search_params.anns_field
     );
     if (!targetField) {
       throw new Error(ERROR_REASONS.SEARCH_NOT_FIND_VECTOR_FIELD);
     }
 
-    const dim = findKeyValue(targetField.type_params, "dim");
+    const dim = findKeyValue(targetField.type_params, 'dim');
     const vectorType = DataTypeMap[targetField.data_type.toLowerCase()];
     const dimension =
       vectorType === DataType.BinaryVector ? Number(dim) / 8 : Number(dim);
@@ -326,15 +326,15 @@ export class Data extends Client {
 
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
     const PlaceholderGroup = root.lookupType(
-      "milvus.proto.milvus.PlaceholderGroup"
+      'milvus.proto.common.PlaceholderGroup'
     );
     // tag $0 is hard code in milvus, when dsltype is expr
     const placeholderGroupParams = PlaceholderGroup.create({
       placeholders: [
         {
-          tag: "$0",
+          tag: '$0',
           type: data.vector_type,
-          values: data.vectors.map((v) =>
+          values: data.vectors.map(v =>
             data.vector_type === DataType.BinaryVector
               ? parseBinaryVectorToBytes(v)
               : parseFloatVectorToBytes(v)
@@ -347,9 +347,9 @@ export class Data extends Client {
       placeholderGroupParams
     ).finish();
 
-    const promise: SearchRes = await promisify(this.client, "Search", {
+    const promise: SearchRes = await promisify(this.client, 'Search', {
       ...data,
-      dsl: data.expr || "",
+      dsl: data.expr || '',
       dsl_type: DslType.BoolExprV1,
       placeholder_group: placeholderGroupBytes,
       search_params: parseToKeyValue(data.search_params),
@@ -376,7 +376,7 @@ export class Data extends Client {
         return {
           type: item.type,
           field_name: item.field_name,
-          data: value ? value[value?.data].data : "",
+          data: value ? value[value?.data].data : '',
         };
       });
       // verctor id support int / str id.
@@ -393,15 +393,15 @@ export class Data extends Client {
         scores.splice(0, topk).forEach((score, scoreIndex) => {
           const i = index === 0 ? scoreIndex : scoreIndex + topk;
           const fixedScore =
-            typeof round_decimal === "undefined" || round_decimal === -1
+            typeof round_decimal === 'undefined' || round_decimal === -1
               ? score
               : formatNumberPrecision(score, round_decimal);
 
           const result: any = {
             score: fixedScore,
-            id: idData ? idData[i] : "",
+            id: idData ? idData[i] : '',
           };
-          fieldsData.forEach((field) => {
+          fieldsData.forEach(field => {
             result[field.field_name] = field.data[i];
           });
           results.push(result);
@@ -444,7 +444,7 @@ export class Data extends Client {
     ) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
-    const res = await promisify(this.client, "Flush", data);
+    const res = await promisify(this.client, 'Flush', data);
     return res;
   }
 
@@ -479,10 +479,10 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     // copy flushed collection names
-    const res = await promisify(this.client, "Flush", data);
+    const res = await promisify(this.client, 'Flush', data);
     // After flush will return collection segment ids, need use GetPersistentSegmentInfo to check segment flush status.
     const segIDs = Object.keys(res.coll_segIDs)
-      .map((v) => res.coll_segIDs[v].data)
+      .map(v => res.coll_segIDs[v].data)
       .reduce((pre, cur) => [...pre, ...cur], []);
 
     let isFlushed = false;
@@ -528,7 +528,7 @@ export class Data extends Client {
    */
   async query(data: QueryReq): Promise<QueryResults> {
     this.checkCollectionName(data);
-    const promise: QueryRes = await promisify(this.client, "Query", data);
+    const promise: QueryRes = await promisify(this.client, 'Query', data);
     const results: { [x: string]: any }[] = [];
     /**
      * type: DataType
@@ -539,16 +539,16 @@ export class Data extends Client {
      * scalars: scalar data
      */
     const fieldsData = promise.fields_data.map((item, i) => {
-      if (item.field === "vectors") {
+      if (item.field === 'vectors') {
         const key = item.vectors!.data;
         const vectorValue =
-          key === "float_vector"
+          key === 'float_vector'
             ? item.vectors![key]!.data
             : item.vectors![key]!.toJSON().data;
 
         // if binary vector , need use dim / 8 to split vector data
         const dim =
-          item.vectors?.data === "float_vector"
+          item.vectors?.data === 'float_vector'
             ? Number(item.vectors!.dim)
             : Number(item.vectors!.dim) / 8;
         const data: number[][] = [];
@@ -578,7 +578,7 @@ export class Data extends Client {
     });
 
     // parse column data to [{fieldname:value}]
-    fieldsData.forEach((v) => {
+    fieldsData.forEach(v => {
       v.data.forEach((d: string | number[], i: number) => {
         if (!results[i]) {
           results[i] = {
@@ -609,7 +609,7 @@ export class Data extends Client {
     if (!data || !data.request || !data.request.metric_type) {
       throw new Error(ERROR_REASONS.GET_METRIC_CHECK_PARAMS);
     }
-    const res: GetMetricsResponse = await promisify(this.client, "GetMetrics", {
+    const res: GetMetricsResponse = await promisify(this.client, 'GetMetrics', {
       request: JSON.stringify(data.request),
     });
 
@@ -624,7 +624,7 @@ export class Data extends Client {
    * @param data
    */
   async calcDistance(data: CalcDistanceReq): Promise<CalcDistanceResponse> {
-    const res = await promisify(this.client, "CalcDistance", data);
+    const res = await promisify(this.client, 'CalcDistance', data);
     return res;
   }
 
@@ -657,7 +657,7 @@ export class Data extends Client {
     if (!data || !data.segmentIDs) {
       throw new Error(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
     }
-    const res = await promisify(this.client, "GetFlushState", data);
+    const res = await promisify(this.client, 'GetFlushState', data);
     return res;
   }
 
@@ -692,7 +692,7 @@ export class Data extends Client {
     if (!data || !data.src_nodeID) {
       throw new Error(ERROR_REASONS.LOAD_BALANCE_CHECK_PARAMS);
     }
-    const res = await promisify(this.client, "LoadBalance", data);
+    const res = await promisify(this.client, 'LoadBalance', data);
     return res;
   }
 
@@ -727,7 +727,7 @@ export class Data extends Client {
     if (!data || !data.collectionName) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
-    const res = await promisify(this.client, "GetQuerySegmentInfo", data);
+    const res = await promisify(this.client, 'GetQuerySegmentInfo', data);
     return res;
   }
 }
