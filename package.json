@@ -24,7 +24,7 @@
     "@microsoft/api-extractor": "^7.18.5",
     "json-schema": "^0.4.0",
     "node-forge": "^1.0.0",
-    "protobufjs": "^6.11.2"
+    "protobufjs": "^6.11.3"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.13.8",
