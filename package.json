@@ -1,13 +1,14 @@
 {
   "name": "@zilliz/milvus2-sdk-node",
   "author": "ued@zilliz.com",
-  "version": "2.0.3",
-  "milvusVersion": "v2.0.2",
+  "version": "2.1.0",
+  "milvusVersion": "v2.1.0",
   "main": "dist/milvus",
   "files": [
     "dist"
   ],
   "scripts": {
+    "pre": "git submodule update --remote && rm -rf proto/proto/google && mkdir -p proto/proto/google/protobuf && wget https://raw.githubusercontent.com/protocolbuffers/protobuf/main/src/google/protobuf/descriptor.proto -O proto/proto/google/protobuf/descriptor.proto",
     "build": "tsc --declaration && node build.js",
     "testAll": "jest --testPathIgnorePatterns=/test/build/",
     "test": "jest",
