@@ -23,7 +23,7 @@ jobs:
       - name: update submodules
         run: |
           git submodule init
-          yarn pre2
+          yarn pre
 
       - name: Run Test coverage
         run: |
