@@ -22,11 +22,11 @@ jobs:
       - name: update submodules
         run: |
           git submodule init
-          yarn pre
+          git submodule update --remote
 
       - name: Build app
         run: |
-          yarn build2
+          yarn build
 
       - uses: JS-DevTools/npm-publish@v1
         with:

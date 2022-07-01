@@ -19,11 +19,11 @@ jobs:
         run: |
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
           docker-compose up -d
-      
+
       - name: update submodules
         run: |
           git submodule init
-          yarn pre
+          yarn pre2
 
       - name: Run Test coverage
         run: |
