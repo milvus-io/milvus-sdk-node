@@ -1,39 +1,32 @@
-import { ERROR_REASONS } from "../const/ErrorReason";
-import { FieldType } from "../types/Collection";
-import { DataType } from "../types/Common";
+import { ERROR_REASONS } from '../const/ErrorReason';
+import { FieldType } from '../types/Collection';
+import { DataType } from '../types/Common';
 
 /**
  * when create collection, field must contain 2 Fields.
- * Type is int64 and primary_key = true
+ * Type is int64 or varchar and primary_key = true
  * Type is one of float_vector and binary_vector
  * Will check fields
  * @param fields
  */
 export const checkCollectionFields = (fields: FieldType[]) => {
   const vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
-  const primaryTypes = [
-    DataType.Int16,
-    DataType.Int32,
-    DataType.Int8,
-    DataType.Int64,
-  ];
+  // primary key only support DataType.Int64 and varchar
+  const primaryTypes = [DataType.Int64, DataType.VarChar];
   if (
     !fields.find(
-      (v) =>
-        v.data_type && primaryTypes.includes(v.data_type) && v.is_primary_key
+      v => v.data_type && primaryTypes.includes(v.data_type) && v.is_primary_key
     )
   ) {
     throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY);
   }
   if (
-    !fields.find((v) =>
-      v.data_type ? vectorTypes.includes(v.data_type) : false
-    )
+    !fields.find(v => (v.data_type ? vectorTypes.includes(v.data_type) : false))
   ) {
     throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST);
   }
 
-  fields.forEach((v) => {
+  fields.forEach(v => {
     if (v.data_type && vectorTypes.includes(v.data_type)) {
       const dim = v.type_params ? v.type_params.dim : undefined;
       if (!dim) {

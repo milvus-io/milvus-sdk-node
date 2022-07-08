@@ -181,6 +181,9 @@ export class Data extends Client {
         case DataType.Bool:
           dataKey = 'bool_data';
           break;
+        case DataType.VarChar:
+          dataKey = 'string_data';
+          break;
         default:
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE);
       }

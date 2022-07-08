@@ -10,7 +10,7 @@ export function promisify(obj: any, target: string, params: any): Promise<any> {
     } catch (e) {
       throw new Error(e);
     }
-  }).catch((err) => {
+  }).catch(err => {
     throw new Error(err);
   });
 
@@ -25,13 +25,13 @@ export function generateInsertData(
   while (count > 0) {
     let value: any = {};
 
-    fields.forEach((v) => {
+    fields.forEach(v => {
       const { isVector, dim, name, isBool } = v;
       value[name] = isVector
         ? [...Array(dim)].map(() => Math.random() * 10)
         : isBool
         ? count % 2 === 0
-        : count;
+        : Math.floor(Math.random() * 100000);
     });
     results.push(value);
     count--;
