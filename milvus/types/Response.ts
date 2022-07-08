@@ -12,6 +12,7 @@ export enum ErrorCode {
   SUCCESS = 'Success',
   INDEX_NOT_EXIST = 'IndexNotExist',
   UNEXPECTED_ERROR = 'UnexpectedError',
+  EMPTY_COLLECTION = 'EmptyCollection',
   // CONNECT_FAILED = "CONNECT_FAILED",
   // PERMISSION_DENIED = "PERMISSION_DENIED",
   // COLLECTION_NOT_EXISTS = "COLLECTION_NOT_EXISTS",
