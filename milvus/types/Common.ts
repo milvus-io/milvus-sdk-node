@@ -121,6 +121,7 @@ export enum DataType {
   Double = 11,
 
   String = 20,
+  VarChar = 21, // variable-length strings with a specified maximum length
 
   BinaryVector = 100,
   FloatVector = 101,
@@ -136,6 +137,7 @@ export const DataTypeMap: { [x: string]: number } = {
   float: 10,
   double: 11,
   string: 20,
+  varchar: 21,
   binaryvector: 100,
   floatvector: 101,
 };
@@ -178,8 +180,8 @@ export enum SegmentState {
   NotExist,
   Growing,
   Sealed,
-  Flushed = "Flushed",
-  Flushing = "Flushing",
+  Flushed = 'Flushed',
+  Flushing = 'Flushing',
 }
 
 export enum CompactionState {

@@ -1,4 +1,4 @@
-import { DataType } from "./Common";
+import { DataType } from './Common';
 
 export interface FieldType {
   name: string;
@@ -6,7 +6,8 @@ export interface FieldType {
   data_type?: DataType;
   is_primary_key?: boolean;
   type_params?: {
-    dim: string;
+    dim?: string;
+    max_length?: string;
   };
   autoID?: boolean;
 }
@@ -27,11 +28,11 @@ export interface CreateCollectionReq {
   shards_num?: number; // int
   description?: string;
   consistency_level?:
-    | "Strong"
-    | "Session"
-    | "Bounded"
-    | "Eventually"
-    | "Customized";
+    | 'Strong'
+    | 'Session'
+    | 'Bounded'
+    | 'Eventually'
+    | 'Customized';
   fields: FieldType[];
 }
 
