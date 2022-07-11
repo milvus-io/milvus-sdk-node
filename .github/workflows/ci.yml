@@ -22,7 +22,7 @@ jobs:
       - name: update submodules
         run: |
           git submodule init
-          yarn pres
+          yarn pre
 
       - name: Build app
         run: |
