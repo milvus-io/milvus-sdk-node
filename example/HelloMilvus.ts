@@ -3,9 +3,7 @@ import { DataType } from '@zilliz/milvus2-sdk-node/dist/milvus/types/Common';
 import { InsertReq } from '@zilliz/milvus2-sdk-node/dist/milvus/types/Data';
 
 const milvusClient = new MilvusClient('localhost:19530');
-const collectionManager = MilvusClient.collectionManager;
-
-console.log('Milvus SDK Info: ', milvusClient.sdkInfo);
+const collectionManager = milvusClient.collectionManager;
 
 const generateInsertData = function generateInsertData(
   fields: { isVector: boolean; dim?: number; name: string; isBool?: boolean }[],
@@ -41,8 +39,11 @@ const hello_milvus = async () => {
     fields: [
       {
         name: 'count',
-        data_type: DataType.Int64,
+        data_type: DataType.VarChar,
         is_primary_key: true,
+        type_params: {
+          max_length: '100',
+        },
         description: '',
       },
       {
