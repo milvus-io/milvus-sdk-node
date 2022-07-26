@@ -30,6 +30,6 @@ export interface GetIndexBuildProgressReq {
 
 export interface DropIndexReq {
   collection_name: string;
-  field_name?: string;
+  field_name: string;
   index_name?: string;
 }
