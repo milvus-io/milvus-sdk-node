@@ -17,11 +17,11 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.loadPartitions(LoadPartitionsR
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.loadPartitions({
   collection_name: 'my_collection',
-  partition_name: ['my_partition'],
+  partition_names: ['my_partition'],
 });
 ```
 
 ## Return
 ```javascript
-// loadPartitions return
+{ error_code: 'Success', reason: '' }
 ```

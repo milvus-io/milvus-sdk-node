@@ -17,11 +17,11 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.releasePartitions(ReleaseParti
 ```javascript
 new milvusClient(MILUVS_ADDRESS).partitionManager.releasePartitions({
   collection_name: 'my_collection',
-  partition_name: ['my_partition'],
+  partition_names: ['my_partition'],
 });
 ```
 
 ## Return
 ```javascript
-// releasePartitions return
+{ error_code: 'Success', reason: '' }
 ```

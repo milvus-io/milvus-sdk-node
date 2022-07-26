@@ -23,5 +23,9 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.getPartitionStatistics({
 
 ## Return
 ```javascript
-// getPartitionStatistics return
+{
+  status: { error_code: 'Success', reason: '' },
+  data: { row_count: '0' },
+  stats: [ { key: 'row_count', value: '0' } ]
+}
 ```

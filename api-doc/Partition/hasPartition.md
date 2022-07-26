@@ -24,5 +24,5 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.hasPartition({
 
 ## Return
 ```javascript
-// hasPartition return
+{ status: { error_code: 'Success', reason: '' }, value: true }
 ```

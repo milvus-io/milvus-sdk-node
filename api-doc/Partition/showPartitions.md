@@ -21,5 +21,12 @@ new milvusClient(MILUVS_ADDRESS).partitionManager.showPartitions({
 
 ## Return
 ```javascript
-// showPartitions return
+{
+  status: { error_code: 'Success', reason: '' },
+  partition_names: [ '_default', 'my_partition' ],
+  partitionIDs: [ '434827144696954882', '434827353243779073' ],
+  created_timestamps: [ '434827144696954883', '434827353243779075' ],
+  created_utc_timestamps: [ '1658733919895', '1658734715438' ],
+  inMemory_percentages: []
+}
 ```
