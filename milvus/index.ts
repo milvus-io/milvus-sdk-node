@@ -122,7 +122,7 @@ export class MilvusClient {
 
   closeConnection() {
     this.client.close();
-    // closed -> 4, connected -> 0
+    // grpc client closed -> 4, connected -> 0
     return this.client.getChannel().getConnectivityState(true);
   }
 }
