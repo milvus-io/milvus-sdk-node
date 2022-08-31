@@ -1,6 +1,6 @@
-import protobuf from "protobufjs";
-import { promisify } from "../utils";
-import { ERROR_REASONS } from "./const/ErrorReason";
+import protobuf from 'protobufjs';
+import { promisify } from '../utils';
+import { ERROR_REASONS } from './const/ErrorReason';
 import {
   CreateCollectionReq,
   DescribeCollectionReq,
@@ -18,7 +18,7 @@ import {
   GetCompactionStateReq,
   GetCompactionPlansReq,
   ConsistencyLevelEnum,
-} from "./types/Collection";
+} from './types/Collection';
 import {
   BoolResponse,
   CollectionData,
@@ -30,13 +30,13 @@ import {
   ResStatus,
   ShowCollectionsResponse,
   StatisticsResponse,
-} from "./types/Response";
-import { checkCollectionFields } from "./utils/Validate";
-import path from "path";
-import { formatKeyValueData, parseToKeyValue } from "./utils/Format";
-import { Client } from "./Client";
+} from './types/Response';
+import { checkCollectionFields } from './utils/Validate';
+import path from 'path';
+import { formatKeyValueData, parseToKeyValue } from './utils/Format';
+import { Client } from './Client';
 
-const schemaPath = path.resolve(__dirname, "../proto/proto/schema.proto");
+const schemaPath = path.resolve(__dirname, '../proto/proto/schema.proto');
 
 /**
  * See all [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts).
@@ -52,6 +52,7 @@ export class Collection extends Client {
    *  | description             | String |        Collection description       |
    *  | consistency_level       | String |        "Strong" | "Session" (default) | "Bounded"| "Eventually" | "Customized";      |
    *  | fields        | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> |     Field data      |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property      | Description |
@@ -89,7 +90,7 @@ export class Collection extends Client {
       fields,
       collection_name,
       description,
-      consistency_level = "Session",
+      consistency_level = 'Session',
     } = data || {};
     if (!fields || !fields.length || !collection_name) {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
@@ -99,17 +100,17 @@ export class Collection extends Client {
     const root = await protobuf.load(schemaPath);
     // When data type is bytes, use protobufjs to transform data to buffer bytes.
     const CollectionSchema = root.lookupType(
-      "milvus.proto.schema.CollectionSchema"
+      'milvus.proto.schema.CollectionSchema'
     );
 
-    const FieldSchema = root.lookupType("milvus.proto.schema.FieldSchema");
+    const FieldSchema = root.lookupType('milvus.proto.schema.FieldSchema');
 
     let payload: any = {
       name: collection_name,
-      description: description || "",
+      description: description || '',
       fields: [],
     };
-    data.fields.forEach((field) => {
+    data.fields.forEach(field => {
       const value = {
         ...field,
         typeParams: parseToKeyValue(field.type_params),
@@ -123,12 +124,18 @@ export class Collection extends Client {
 
     const collectionParams = CollectionSchema.create(payload);
     const schemaBtyes = CollectionSchema.encode(collectionParams).finish();
-    const promise = await promisify(this.client, "CreateCollection", {
-      ...data,
-      schema: schemaBtyes,
-      consistency_level:
-        ConsistencyLevelEnum[consistency_level] || ConsistencyLevelEnum.Session,
-    });
+    const promise = await promisify(
+      this.client,
+      'CreateCollection',
+      {
+        ...data,
+        schema: schemaBtyes,
+        consistency_level:
+          ConsistencyLevelEnum[consistency_level] ||
+          ConsistencyLevelEnum.Session,
+      },
+      data.timeout
+    );
 
     return promise;
   }
@@ -140,12 +147,14 @@ export class Collection extends Client {
    *  | Property              | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
    *  | collection_name        | String |       Collection name       |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
+   * 
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number, reason: string }|
    *  | value         |        `true` or `false`                 |
+  
    *
    * #### Example
    *
@@ -158,7 +167,12 @@ export class Collection extends Client {
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
     this.checkCollectionName(data);
 
-    const promise = await promisify(this.client, "HasCollection", data);
+    const promise = await promisify(
+      this.client,
+      'HasCollection',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -170,7 +184,7 @@ export class Collection extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | type(optional)        | enum |       All -> 0, Loaded -> 1       |
    *  | collection_names(optional)        | String[] |       If `type = Loaded`, Milvus will return `collection_names inMemory_percentages`     |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property    |           Description              |
@@ -188,10 +202,15 @@ export class Collection extends Client {
   async showCollections(
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
-    const promise = await promisify(this.client, "ShowCollections", {
-      type: data ? data.type : ShowCollectionsType.All,
-      collection_names: data?.collection_names || [],
-    });
+    const promise = await promisify(
+      this.client,
+      'ShowCollections',
+      {
+        type: data ? data.type : ShowCollectionsType.All,
+        collection_names: data?.collection_names || [],
+      },
+      data?.timeout
+    );
     const result: CollectionData[] = [];
     promise.collection_names.forEach((name: string, index: number) => {
       result.push({
@@ -212,7 +231,8 @@ export class Collection extends Client {
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | String |        Collection name       |
+   *  | collection_name    | String |        Collection name       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property    |           Description              |
@@ -235,7 +255,12 @@ export class Collection extends Client {
   ): Promise<DescribeCollectionResponse> {
     this.checkCollectionName(data);
 
-    const promise = await promisify(this.client, "DescribeCollection", data);
+    const promise = await promisify(
+      this.client,
+      'DescribeCollection',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -245,7 +270,8 @@ export class Collection extends Client {
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | String |       Collection name       |
+   *  | collection_name    | String |       Collection name       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property    |           Description              |
@@ -270,11 +296,12 @@ export class Collection extends Client {
 
     const promise = await promisify(
       this.client,
-      "GetCollectionStatistics",
-      data
+      'GetCollectionStatistics',
+      data,
+      data.timeout
     );
 
-    promise.data = formatKeyValueData(promise.stats, ["row_count"]);
+    promise.data = formatKeyValueData(promise.stats, ['row_count']);
 
     return promise;
   }
@@ -286,7 +313,8 @@ export class Collection extends Client {
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | String |       Collection name       |
+   *  | collection_name    | String |       Collection name       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property      | Description |
@@ -305,7 +333,12 @@ export class Collection extends Client {
   async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
     this.checkCollectionName(data);
 
-    const promise = await promisify(this.client, "LoadCollection", data);
+    const promise = await promisify(
+      this.client,
+      'LoadCollection',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -316,7 +349,8 @@ export class Collection extends Client {
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | String |       Collection name       |
+   *  | collection_name    | String |       Collection name       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property      | Description |
@@ -335,7 +369,12 @@ export class Collection extends Client {
   async loadCollectionSync(data: LoadCollectionReq): Promise<ResStatus> {
     this.checkCollectionName(data);
 
-    const promise = await promisify(this.client, "LoadCollection", data);
+    const promise = await promisify(
+      this.client,
+      'LoadCollection',
+      data,
+      data.timeout
+    );
     let loadedPercentage = 0;
     while (Number(loadedPercentage) < 100) {
       let res = await this.showCollections({
@@ -361,7 +400,8 @@ export class Collection extends Client {
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | String |       Collection name       |
+   *  | collection_name    | String |       Collection name       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property      | Description |
@@ -380,7 +420,12 @@ export class Collection extends Client {
   async releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus> {
     this.checkCollectionName(data);
 
-    const promise = await promisify(this.client, "ReleaseCollection", data);
+    const promise = await promisify(
+      this.client,
+      'ReleaseCollection',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -391,6 +436,7 @@ export class Collection extends Client {
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name        | String |       Collection name       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property      | Description |
@@ -409,7 +455,12 @@ export class Collection extends Client {
   async dropCollection(data: DropCollectionReq): Promise<ResStatus> {
     this.checkCollectionName(data);
 
-    const promise = await promisify(this.client, "DropCollection", data);
+    const promise = await promisify(
+      this.client,
+      'DropCollection',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -423,7 +474,12 @@ export class Collection extends Client {
     if (!data.alias) {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
-    const promise = await promisify(this.client, "CreateAlias", data);
+    const promise = await promisify(
+      this.client,
+      'CreateAlias',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -435,7 +491,12 @@ export class Collection extends Client {
     if (!data.alias) {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
-    const promise = await promisify(this.client, "DropAlias", data);
+    const promise = await promisify(
+      this.client,
+      'DropAlias',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -448,7 +509,12 @@ export class Collection extends Client {
     if (!data.alias) {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
-    const promise = await promisify(this.client, "AlterAlias", data);
+    const promise = await promisify(
+      this.client,
+      'AlterAlias',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -458,7 +524,8 @@ export class Collection extends Client {
    * @param data
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | String |       The collection name to compact       |
+   *  | collection_name    | String |       The collection name to compact       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property      | Description |
@@ -477,9 +544,14 @@ export class Collection extends Client {
   async compact(data: CompactReq): Promise<CompactionResponse> {
     this.checkCollectionName(data);
     const collectionInfo = await this.describeCollection(data);
-    const res = await promisify(this.client, "ManualCompaction", {
-      collectionID: collectionInfo.collectionID,
-    });
+    const res = await promisify(
+      this.client,
+      'ManualCompaction',
+      {
+        collectionID: collectionInfo.collectionID,
+      },
+      data.timeout
+    );
     return res;
   }
 
@@ -490,6 +562,7 @@ export class Collection extends Client {
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
    *  | compactionID       | number or string |       the id returned by compact       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property      | Description |
@@ -511,7 +584,12 @@ export class Collection extends Client {
     if (!data || !data.compactionID) {
       throw new Error(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
     }
-    const res = await promisify(this.client, "GetCompactionState", data);
+    const res = await promisify(
+      this.client,
+      'GetCompactionState',
+      data,
+      data.timeout
+    );
     return res;
   }
 
@@ -522,6 +600,7 @@ export class Collection extends Client {
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
    *  | compactionID       | number or string |       the id returned by compact       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to None, the client keeps waiting until the server responds or error occurs.       |
    *
    * @return
    *  | Property      | Description |
@@ -545,8 +624,9 @@ export class Collection extends Client {
     }
     const res = await promisify(
       this.client,
-      "GetCompactionStateWithPlans",
-      data
+      'GetCompactionStateWithPlans',
+      data,
+      data.timeout
     );
     return res;
   }

@@ -1,4 +1,4 @@
-import { DataType } from './Common';
+import { DataType, GrpcTimeOut } from './Common';
 
 export interface FieldType {
   name: string;
@@ -17,12 +17,12 @@ export enum ShowCollectionsType {
   Loaded,
 }
 
-export interface ShowCollectionsReq {
+export interface ShowCollectionsReq extends GrpcTimeOut {
   type?: ShowCollectionsType;
   collection_names?: string[];
 }
 
-export interface CreateCollectionReq {
+export interface CreateCollectionReq extends GrpcTimeOut {
   // collection name
   collection_name: string;
   shards_num?: number; // int
@@ -44,7 +44,7 @@ export enum ConsistencyLevelEnum {
   Customized = 4, // Users pass their own `guarantee_timestamp`.
 }
 
-interface CollectionNameReq {
+interface CollectionNameReq extends GrpcTimeOut {
   /**
    * @param collection_name collection name string
    */
@@ -65,7 +65,7 @@ export interface CreateAliasReq extends CollectionNameReq {
   alias: string;
 }
 
-export interface DropAliasReq {
+export interface DropAliasReq extends GrpcTimeOut {
   alias: string;
 }
 
@@ -73,15 +73,15 @@ export interface AlterAliasReq extends CollectionNameReq {
   alias: string;
 }
 
-export interface CompactReq {
+export interface CompactReq extends GrpcTimeOut {
   collection_name: string;
   timetravel?: number | string;
 }
 
-export interface GetCompactionStateReq {
+export interface GetCompactionStateReq extends GrpcTimeOut {
   compactionID: number | string;
 }
 
-export interface GetCompactionPlansReq {
+export interface GetCompactionPlansReq extends GrpcTimeOut {
   compactionID: number | string;
 }

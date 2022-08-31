@@ -189,3 +189,7 @@ export enum CompactionState {
   Executing = 1,
   Completed = 2,
 }
+
+export interface GrpcTimeOut {
+  timeout?: number;
+}

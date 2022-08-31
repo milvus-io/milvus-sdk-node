@@ -6,6 +6,7 @@ import { ErrorCode } from '../milvus/types/Response';
 import { ShowCollectionsType } from '../milvus/types/Collection';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
+import { timeoutTest } from './common/timeout';
 
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
@@ -186,6 +187,11 @@ describe('Collection Api', () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
   });
+
+  it(
+    `Expect Show all collections timeout`,
+    timeoutTest(collectionManager.showCollections.bind(collectionManager))
+  );
 
   it(`Get Collection Statistics should throw error`, async () => {
     try {
