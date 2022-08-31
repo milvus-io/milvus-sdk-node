@@ -1,13 +1,20 @@
-export function promisify(obj: any, target: string, params: any): Promise<any> {
+export function promisify(
+  obj: any,
+  target: string,
+  params: any,
+  timeout?: number
+): Promise<any> {
+  const deadline = timeout ? new Date(Date.now() + timeout) : timeout;
+
   const res = new Promise((resolve, reject) => {
     try {
-      obj[target](params, (err: any, result: any) => {
+      obj[target](params, { deadline }, (err: any, result: any) => {
         if (err) {
           reject(err);
         }
         resolve(result);
       });
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(e);
     }
   }).catch(err => {

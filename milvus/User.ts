@@ -110,7 +110,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.createUser({
+   *  milvusClient.userManager.deleteUser({
    *    username: NAME,
    *  });
    * ```
