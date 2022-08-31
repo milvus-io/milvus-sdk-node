@@ -1,4 +1,6 @@
-interface PartitionParent {
+import { GrpcTimeOut } from './Common';
+
+interface PartitionParent extends GrpcTimeOut {
   collection_name: string;
   partition_name: string;
 }
@@ -10,16 +12,16 @@ export interface DropPartitionReq extends PartitionParent {}
 
 export interface GetPartitionStatisticsReq extends PartitionParent {}
 
-export interface ShowPartitionsReq {
+export interface ShowPartitionsReq extends GrpcTimeOut {
   collection_name: string;
 }
 
-export interface LoadPartitionsReq {
+export interface LoadPartitionsReq extends GrpcTimeOut {
   collection_name: string;
   partition_names: string[];
 }
 
-export interface ReleasePartitionsReq {
+export interface ReleasePartitionsReq extends GrpcTimeOut {
   collection_name: string;
   partition_names: string[];
 }

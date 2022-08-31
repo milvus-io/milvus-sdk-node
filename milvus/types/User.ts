@@ -1,14 +1,18 @@
-export interface UpdateUserReq {
+import { GrpcTimeOut } from './Common';
+
+export interface UpdateUserReq extends GrpcTimeOut {
   username: string;
   oldPassword: string;
   newPassword: string;
 }
 
-export interface CreateUserReq {
+export interface CreateUserReq extends GrpcTimeOut {
   username: string;
   password: string;
 }
 
-export interface DeleteUserReq {
+export interface DeleteUserReq extends GrpcTimeOut {
   username: string;
 }
+
+export interface ListUsersReq extends GrpcTimeOut {}

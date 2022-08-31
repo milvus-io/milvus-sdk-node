@@ -1,5 +1,5 @@
-import { DataType } from "./Common";
-import { ResStatus } from "./Response";
+import { DataType, GrpcTimeOut } from './Common';
+import { ResStatus } from './Response';
 
 export interface SearchParam {
   anns_field: string; // your vector field name
@@ -8,7 +8,7 @@ export interface SearchParam {
   params: string;
   round_decimal?: number;
 }
-export interface SearchReq {
+export interface SearchReq extends GrpcTimeOut {
   collection_name: string;
   partition_names?: string[];
   expr?: string;
@@ -27,7 +27,7 @@ export interface SearchRes {
     fields_data: {
       type: string;
       field_name: string;
-      field: "scalars";
+      field: 'scalars';
       scalars: {
         [x: string]: any;
       };
@@ -40,14 +40,14 @@ export interface SearchRes {
       str_id?: {
         data: string[];
       };
-      id_field: "int_id" | "str_id";
+      id_field: 'int_id' | 'str_id';
     };
     num_queries: number;
     topks: number[];
   };
 }
 
-export interface QueryReq {
+export interface QueryReq extends GrpcTimeOut {
   collection_name: string;
   expr: string;
   output_fields?: string[];
@@ -59,11 +59,11 @@ export interface QueryRes {
   fields_data: {
     type: DataType;
     field_name: string;
-    field: "vectors" | "scalars";
+    field: 'vectors' | 'scalars';
     field_id: number;
     vectors?: {
       dim: string;
-      data: "float_vector" | "binary_vector";
+      data: 'float_vector' | 'binary_vector';
       float_vector?: {
         data: number[];
       };
@@ -77,8 +77,8 @@ export interface QueryRes {
   }[];
 }
 
-export interface GetMetricsRequest {
+export interface GetMetricsRequest extends GrpcTimeOut {
   request: {
-    metric_type: "system_info" | "system_statistics" | "system_log";
+    metric_type: 'system_info' | 'system_statistics' | 'system_log';
   };
 }

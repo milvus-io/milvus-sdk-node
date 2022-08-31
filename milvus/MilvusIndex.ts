@@ -1,6 +1,5 @@
 import { promisify } from '../utils';
 import { Client } from './Client';
-import { ERROR_REASONS } from './const/ErrorReason';
 import {
   ResStatus,
   DescribeIndexResponse,
@@ -27,6 +26,7 @@ export class Index extends Client {
    *  | field_name         | String |        Field name       |
    *  | index_name         | String |      Index name is unique in one collection     |
    *  | extra_params       | Object | Parameters: { index_type: string; metric_type: string; params: string; };      |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -56,7 +56,12 @@ export class Index extends Client {
       ...data,
       extra_params: parseToKeyValue(data.extra_params),
     };
-    const promise = await promisify(this.client, 'CreateIndex', params);
+    const promise = await promisify(
+      this.client,
+      'CreateIndex',
+      params,
+      data.timeout
+    );
     return promise;
   }
 
@@ -67,6 +72,7 @@ export class Index extends Client {
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name       |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -85,7 +91,12 @@ export class Index extends Client {
    */
   async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
     this.checkCollectionName(data);
-    const promise = await promisify(this.client, 'DescribeIndex', data);
+    const promise = await promisify(
+      this.client,
+      'DescribeIndex',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -97,7 +108,7 @@ export class Index extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | string |       Collection name       |
    *  | field_name         | string |       Field name       |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -116,7 +127,12 @@ export class Index extends Client {
    */
   async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
     this.checkCollectionName(data);
-    const promise = await promisify(this.client, 'GetIndexState', data);
+    const promise = await promisify(
+      this.client,
+      'GetIndexState',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -128,6 +144,7 @@ export class Index extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name       |
    *  | field_name         | String |       Field name       |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -152,7 +169,12 @@ export class Index extends Client {
     this.checkCollectionName(data);
     // Now we dont have index name, just empty is fine
     data.index_name = '';
-    const promise = await promisify(this.client, 'GetIndexBuildProgress', data);
+    const promise = await promisify(
+      this.client,
+      'GetIndexBuildProgress',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -164,6 +186,7 @@ export class Index extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name       |
    *  | field_name         | String |       Field name       |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -181,7 +204,12 @@ export class Index extends Client {
    */
   async dropIndex(data: DropIndexReq): Promise<ResStatus> {
     this.checkCollectionName(data);
-    const promise = await promisify(this.client, 'DropIndex', data);
+    const promise = await promisify(
+      this.client,
+      'DropIndex',
+      data,
+      data.timeout
+    );
     return promise;
   }
 }

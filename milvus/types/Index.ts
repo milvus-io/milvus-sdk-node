@@ -1,34 +1,36 @@
+import { GrpcTimeOut } from './Common';
+
 export interface CreateIndexParam {
   index_type: string;
   metric_type: string;
   params: string;
 }
-export interface CreateIndexReq {
+export interface CreateIndexReq extends GrpcTimeOut {
   collection_name: string;
   field_name: string;
   index_name?: string;
   extra_params?: CreateIndexParam;
 }
 
-export interface DescribeIndexReq {
+export interface DescribeIndexReq extends GrpcTimeOut {
   collection_name: string;
   field_name?: string;
   index_name?: string;
 }
 
-export interface GetIndexStateReq {
+export interface GetIndexStateReq extends GrpcTimeOut {
   collection_name: string;
   field_name?: string;
   index_name?: string;
 }
 
-export interface GetIndexBuildProgressReq {
+export interface GetIndexBuildProgressReq extends GrpcTimeOut {
   collection_name: string;
   field_name?: string;
   index_name?: string;
 }
 
-export interface DropIndexReq {
+export interface DropIndexReq extends GrpcTimeOut {
   collection_name: string;
   field_name: string;
   index_name?: string;
