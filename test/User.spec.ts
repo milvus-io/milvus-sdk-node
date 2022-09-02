@@ -3,6 +3,7 @@ import { MilvusClient } from '../milvus';
 import { IP } from '../const';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { ErrorCode } from '../milvus/types/Response';
+import { timeoutTest } from './common/timeout';
 
 let milvusClient = new MilvusClient(IP);
 let authClient: MilvusClient | null = null;
@@ -35,6 +36,13 @@ describe('User Auth Api', () => {
     }
     milvusClient.closeConnection();
   });
+
+  it(
+    `Test list all users should timeout`,
+    timeoutTest(
+      milvusClient.userManager.listUsers.bind(milvusClient.userManager)
+    )
+  );
 
   it(`Auth client list user expect success`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);

@@ -4,6 +4,7 @@ import { GENERATE_NAME, IP } from '../const';
 import { ErrorCode } from '../milvus/types/Response';
 import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import { timeoutTest } from './common/timeout';
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -61,6 +62,14 @@ describe('Collection Api', () => {
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
+
+  it(
+    'Test Describe Index should timeout',
+    timeoutTest(
+      milvusClient.indexManager.describeIndex.bind(milvusClient.indexManager),
+      { collection_name: COLLECTION_NAME }
+    )
+  );
 
   it(`Get Index State`, async () => {
     const res = await milvusClient.indexManager.getIndexState({

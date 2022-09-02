@@ -7,6 +7,7 @@ import { InsertReq } from '../milvus/types/Data';
 import { generateInsertData } from '../utils';
 import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import { timeoutTest } from './common/timeout';
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -61,6 +62,14 @@ describe('Data.ts Test', () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
+
+  it(
+    'Test Flush Sync shoulud timeout',
+    timeoutTest(
+      milvusClient.dataManager.flushSync.bind(milvusClient.dataManager),
+      { collection_names: [COLLECTION_NAME] }
+    )
+  );
 
   it('Get flush state should throw GET_FLUSH_STATE_CHECK_PARAMS', async () => {
     try {

@@ -1,10 +1,14 @@
-import protobuf from 'protobufjs';
 import { promisify } from '../utils';
 import { Client } from './Client';
 import { ERROR_REASONS } from './const/ErrorReason';
 
 import { ListCredUsersResponse, ResStatus } from './types/Response';
-import { CreateUserReq, DeleteUserReq, UpdateUserReq } from './types/User';
+import {
+  CreateUserReq,
+  DeleteUserReq,
+  ListUsersReq,
+  UpdateUserReq,
+} from './types/User';
 import { stringToBase64 } from './utils/Format';
 
 /**
@@ -119,9 +123,14 @@ export class User extends Client {
     if (!data.username) {
       throw new Error(ERROR_REASONS.USERNAME_IS_REQUIRED);
     }
-    const promise = await promisify(this.client, 'DeleteCredential', {
-      username: data.username,
-    });
+    const promise = await promisify(
+      this.client,
+      'DeleteCredential',
+      {
+        username: data.username,
+      },
+      data.timeout
+    );
     return promise;
   }
 
@@ -140,8 +149,13 @@ export class User extends Client {
    *  milvusClient.userManager.listUsers();
    * ```
    */
-  async listUsers(): Promise<ListCredUsersResponse> {
-    const promise = await promisify(this.client, 'ListCredUsers', {});
+  async listUsers(data?: ListUsersReq): Promise<ListCredUsersResponse> {
+    const promise = await promisify(
+      this.client,
+      'ListCredUsers',
+      {},
+      data?.timeout
+    );
     return promise;
   }
 }

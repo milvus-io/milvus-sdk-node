@@ -1,6 +1,6 @@
-import { DataType } from "./Common";
+import { DataType, GrpcTimeOut } from './Common';
 
-export interface FlushReq {
+export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
 }
 export interface FieldData {
@@ -10,30 +10,30 @@ export interface FieldData {
   data: Number[];
 }
 
-export interface InsertReq {
+export interface InsertReq extends GrpcTimeOut {
   collection_name: string;
   partition_name?: string;
   fields_data: { [x: string]: any }[];
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }
 
-export interface DeleteEntitiesReq {
+export interface DeleteEntitiesReq extends GrpcTimeOut {
   collection_name: string;
   expr: string;
   partition_name?: string;
 }
 
-export interface CalcDistanceReq {
+export interface CalcDistanceReq extends GrpcTimeOut {
   op_left: any;
   op_right: any;
   params: { key: string; value: string }[];
 }
 
-export interface GetFlushStateReq {
+export interface GetFlushStateReq extends GrpcTimeOut {
   segmentIDs: number[];
 }
 
-export interface LoadBalanceReq {
+export interface LoadBalanceReq extends GrpcTimeOut {
   // The source query node id to balance.
   src_nodeID: number;
   // The destination query node ids to balance.
@@ -42,6 +42,6 @@ export interface LoadBalanceReq {
   sealed_segmentIDs?: number[];
 }
 
-export interface GetQuerySegmentInfoReq {
+export interface GetQuerySegmentInfoReq extends GrpcTimeOut {
   collectionName: string;
 }

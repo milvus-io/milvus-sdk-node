@@ -189,7 +189,7 @@ describe('Collection Api', () => {
   });
 
   it(
-    `Expect Show all collections timeout`,
+    `Expect Show all collections should timeout`,
     timeoutTest(collectionManager.showCollections.bind(collectionManager))
   );
 

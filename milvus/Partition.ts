@@ -1,12 +1,12 @@
-import { promisify } from "../utils";
-import { Client } from "./Client";
-import { ERROR_REASONS } from "./const/ErrorReason";
+import { promisify } from '../utils';
+import { Client } from './Client';
+import { ERROR_REASONS } from './const/ErrorReason';
 import {
   ResStatus,
   BoolResponse,
   ShowPartitionsResponse,
   StatisticsResponse,
-} from "./types";
+} from './types';
 import {
   CreatePartitionReq,
   DropPartitionReq,
@@ -15,8 +15,8 @@ import {
   LoadPartitionsReq,
   ReleasePartitionsReq,
   ShowPartitionsReq,
-} from "./types/Partition";
-import { formatKeyValueData } from "./utils/Format";
+} from './types/Partition';
+import { formatKeyValueData } from './utils/Format';
 export class Partition extends Client {
   /**
    * Create a partition in a collection.
@@ -26,7 +26,7 @@ export class Partition extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name   |
    *  | partition_name     | String |       Partition name      |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -45,7 +45,12 @@ export class Partition extends Client {
    */
   async createPartition(data: CreatePartitionReq): Promise<ResStatus> {
     this.checkCollectionAndPartitionName(data);
-    const promise = await promisify(this.client, "CreatePartition", data);
+    const promise = await promisify(
+      this.client,
+      'CreatePartition',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -57,7 +62,7 @@ export class Partition extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | string |       Collection name   |
    *  | partition_name     | string |       Parititon name      |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property    |           Description              |
@@ -76,7 +81,12 @@ export class Partition extends Client {
    */
   async hasPartition(data: HasPartitionReq): Promise<BoolResponse> {
     this.checkCollectionAndPartitionName(data);
-    const promise = await promisify(this.client, "HasPartition", data);
+    const promise = await promisify(
+      this.client,
+      'HasPartition',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -87,7 +97,7 @@ export class Partition extends Client {
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name   |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property    |           Description              |
@@ -109,7 +119,12 @@ export class Partition extends Client {
     data: ShowPartitionsReq
   ): Promise<ShowPartitionsResponse> {
     this.checkCollectionName(data);
-    const promise = await promisify(this.client, "ShowPartitions", data);
+    const promise = await promisify(
+      this.client,
+      'ShowPartitions',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -121,6 +136,7 @@ export class Partition extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name   |
    *  | partition_name     | String |       Partition name      |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property    |           Description              |
@@ -145,10 +161,11 @@ export class Partition extends Client {
     this.checkCollectionAndPartitionName(data);
     const promise = await promisify(
       this.client,
-      "GetPartitionStatistics",
-      data
+      'GetPartitionStatistics',
+      data,
+      data.timeout
     );
-    promise.data = formatKeyValueData(promise.stats, ["row_count"]);
+    promise.data = formatKeyValueData(promise.stats, ['row_count']);
     return promise;
   }
 
@@ -160,6 +177,7 @@ export class Partition extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name   |
    *  | partition_names    | String[] |       Array of partition names      |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -181,7 +199,12 @@ export class Partition extends Client {
     if (!Array.isArray(data.partition_names) || !data.partition_names.length) {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
-    const promise = await promisify(this.client, "LoadPartitions", data);
+    const promise = await promisify(
+      this.client,
+      'LoadPartitions',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -193,6 +216,7 @@ export class Partition extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name   |
    *  | partition_names    | String[] |       Array of partition names    |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -214,7 +238,12 @@ export class Partition extends Client {
     if (!Array.isArray(data.partition_names) || !data.partition_names.length) {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
-    const promise = await promisify(this.client, "ReleasePartitions", data);
+    const promise = await promisify(
+      this.client,
+      'ReleasePartitions',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -232,6 +261,7 @@ export class Partition extends Client {
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name   |
    *  | partition_name    | String |       Partition name     |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -250,7 +280,12 @@ export class Partition extends Client {
    */
   async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
     this.checkCollectionAndPartitionName(data);
-    const promise = await promisify(this.client, "DropPartition", data);
+    const promise = await promisify(
+      this.client,
+      'DropPartition',
+      data,
+      data.timeout
+    );
     return promise;
   }
 }

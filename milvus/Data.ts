@@ -63,6 +63,7 @@ export class Data extends Client {
    *  | partition_name(optional)| String                 |       Partition name       |
    *  | fields_data             | { [x: string]: any }[] |      If the field type is binary, the vector data length needs to be dimension / 8   |
    *  | hash_keys(optional)    | Number[]               |  The hash value depends on the primarykey value       |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property    |           Description              |
@@ -211,7 +212,12 @@ export class Data extends Client {
       };
     });
 
-    const promise = await promisify(this.client, 'Insert', params);
+    const promise = await promisify(
+      this.client,
+      'Insert',
+      params,
+      data.timeout
+    );
 
     return promise;
   }
@@ -225,6 +231,7 @@ export class Data extends Client {
    *  | collection_name         | String                 |       Collection name       |
    *  | partition_name(optional)| String                 |       Partition name       |
    *  | expr    | String        |  Boolean expression used to filter attribute.    |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property    |           Description              |
@@ -246,7 +253,7 @@ export class Data extends Client {
     if (!data || !data.collection_name || !data.expr) {
       throw new Error(ERROR_REASONS.DELETE_PARAMS_CHECK);
     }
-    const promise = await promisify(this.client, 'Delete', data);
+    const promise = await promisify(this.client, 'Delete', data, data.timeout);
     return promise;
   }
 
@@ -264,13 +271,14 @@ export class Data extends Client {
    *  | output_fields(optional)  | String[]              |  Support scalar field  |
    *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
    *  | travel_timestamp          | number                  |  We can get timestamp after insert success. Use this timestamp we can time travel in vector search.|
-
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
    * @return
    *  | Property    |           Description              |
    *  | :-------------| :-------------------------------  |
    *  | status        |  { error_code: number, reason: string }|
    *  | results    |        {score:number,id:string}[];       |
-   * 
+   *
    *
    *
    * #### Example
@@ -350,13 +358,18 @@ export class Data extends Client {
       placeholderGroupParams
     ).finish();
 
-    const promise: SearchRes = await promisify(this.client, 'Search', {
-      ...data,
-      dsl: data.expr || '',
-      dsl_type: DslType.BoolExprV1,
-      placeholder_group: placeholderGroupBytes,
-      search_params: parseToKeyValue(data.search_params),
-    });
+    const promise: SearchRes = await promisify(
+      this.client,
+      'Search',
+      {
+        ...data,
+        dsl: data.expr || '',
+        dsl_type: DslType.BoolExprV1,
+        placeholder_group: placeholderGroupBytes,
+        search_params: parseToKeyValue(data.search_params),
+      },
+      data.timeout
+    );
     const results: any[] = [];
     /**
      *  It will decide the score precision.
@@ -425,6 +438,7 @@ export class Data extends Client {
    *  | Property                | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
    *  | collection_names        | String[] |        Array of collection names      |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property    |           Description              |
@@ -447,7 +461,7 @@ export class Data extends Client {
     ) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
-    const res = await promisify(this.client, 'Flush', data);
+    const res = await promisify(this.client, 'Flush', data, data.timeout);
     return res;
   }
 
@@ -459,6 +473,7 @@ export class Data extends Client {
    *  | Property                | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
    *  | collection_names        | String[] |        Array of collection names      |
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property    |           Description              |
@@ -482,7 +497,7 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     // copy flushed collection names
-    const res = await promisify(this.client, 'Flush', data);
+    const res = await promisify(this.client, 'Flush', data, data.timeout);
     // After flush will return collection segment ids, need use GetPersistentSegmentInfo to check segment flush status.
     const segIDs = Object.keys(res.coll_segIDs)
       .map(v => res.coll_segIDs[v].data)
@@ -509,7 +524,7 @@ export class Data extends Client {
    *  | expr                         | String |       Scalar field filter expression     |
    *  | partitions_names(optional)   | String[] |       Array of partition names      |
    *  | output_fields                | String[] |       Vector or scalar field to be returned    |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    *
    * @return
@@ -531,7 +546,12 @@ export class Data extends Client {
    */
   async query(data: QueryReq): Promise<QueryResults> {
     this.checkCollectionName(data);
-    const promise: QueryRes = await promisify(this.client, 'Query', data);
+    const promise: QueryRes = await promisify(
+      this.client,
+      'Query',
+      data,
+      data.timeout
+    );
     const results: { [x: string]: any }[] = [];
     /**
      * type: DataType
@@ -612,9 +632,14 @@ export class Data extends Client {
     if (!data || !data.request || !data.request.metric_type) {
       throw new Error(ERROR_REASONS.GET_METRIC_CHECK_PARAMS);
     }
-    const res: GetMetricsResponse = await promisify(this.client, 'GetMetrics', {
-      request: JSON.stringify(data.request),
-    });
+    const res: GetMetricsResponse = await promisify(
+      this.client,
+      'GetMetrics',
+      {
+        request: JSON.stringify(data.request),
+      },
+      data.timeout
+    );
 
     return {
       ...res,
@@ -627,7 +652,12 @@ export class Data extends Client {
    * @param data
    */
   async calcDistance(data: CalcDistanceReq): Promise<CalcDistanceResponse> {
-    const res = await promisify(this.client, 'CalcDistance', data);
+    const res = await promisify(
+      this.client,
+      'CalcDistance',
+      data,
+      data.timeout
+    );
     return res;
   }
 
@@ -638,7 +668,7 @@ export class Data extends Client {
    *  | Property                | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
    *  | segmentIDs              | Array  |       The segment ids        |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    *
    * @return
@@ -660,7 +690,12 @@ export class Data extends Client {
     if (!data || !data.segmentIDs) {
       throw new Error(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
     }
-    const res = await promisify(this.client, 'GetFlushState', data);
+    const res = await promisify(
+      this.client,
+      'GetFlushState',
+      data,
+      data.timeout
+    );
     return res;
   }
 
@@ -674,7 +709,7 @@ export class Data extends Client {
    *  | src_nodeID          | number   |     The source query node id to balance.        |
    *  | dst_nodeIDs         | number[] |     The destination query node ids to balance.(optional)        |
    *  | sealed_segmentIDs   | number[] |     Sealed segment ids to balance.(optional)       |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property    |           Description              |
@@ -695,7 +730,7 @@ export class Data extends Client {
     if (!data || !data.src_nodeID) {
       throw new Error(ERROR_REASONS.LOAD_BALANCE_CHECK_PARAMS);
     }
-    const res = await promisify(this.client, 'LoadBalance', data);
+    const res = await promisify(this.client, 'LoadBalance', data, data.timeout);
     return res;
   }
 
@@ -706,7 +741,7 @@ export class Data extends Client {
    *  | Property                | Type   |           Description              |
    *  | :---------------------- | :----  | :-------------------------------  |
    *  | collectionName          | String |      The name of the collection to get segments info.       |
-   *
+   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    *
    * @return
@@ -730,7 +765,12 @@ export class Data extends Client {
     if (!data || !data.collectionName) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
-    const res = await promisify(this.client, 'GetQuerySegmentInfo', data);
+    const res = await promisify(
+      this.client,
+      'GetQuerySegmentInfo',
+      data,
+      data.timeout
+    );
     return res;
   }
 }

@@ -1,19 +1,20 @@
-import { MilvusClient } from "../milvus";
+import { MilvusClient } from '../milvus';
 
-import { GENERATE_NAME, IP } from "../const";
-import { DataType } from "../milvus/types/Common";
-import { ErrorCode } from "../milvus/types/Response";
-import { genCollectionParams } from "../utils/test";
-import { ERROR_REASONS } from "../milvus/const/ErrorReason";
+import { GENERATE_NAME, IP } from '../const';
+import { DataType } from '../milvus/types/Common';
+import { ErrorCode } from '../milvus/types/Response';
+import { genCollectionParams } from '../utils/test';
+import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import { timeoutTest } from './common/timeout';
 
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
-const PARTITION_NAME = GENERATE_NAME("partition");
+const PARTITION_NAME = GENERATE_NAME('partition');
 
-describe("Collection Api", () => {
+describe('Collection Api', () => {
   beforeAll(async () => {
     await milvusClient.collectionManager.createCollection(
-      genCollectionParams(COLLECTION_NAME, "128")
+      genCollectionParams(COLLECTION_NAME, '128')
     );
   });
 
@@ -52,7 +53,7 @@ describe("Collection Api", () => {
   it(`Has not exist Partition `, async () => {
     const res = await milvusClient.partitionManager.hasPartition({
       collection_name: COLLECTION_NAME,
-      partition_name: "123",
+      partition_name: '123',
     });
 
     expect(res.value).toEqual(false);
@@ -65,21 +66,33 @@ describe("Collection Api", () => {
     console.log(res);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.partition_names).toEqual(["_default", PARTITION_NAME]);
+    expect(res.partition_names).toEqual(['_default', PARTITION_NAME]);
     expect(res.partitionIDs.length).toEqual(2);
   });
+
+  it(
+    `Test show all partitions should timeout`,
+    timeoutTest(
+      milvusClient.partitionManager.showPartitions.bind(
+        milvusClient.partitionManager
+      ),
+      {
+        collection_name: COLLECTION_NAME,
+      }
+    )
+  );
 
   it(`Get partition statistics`, async () => {
     const res = await milvusClient.partitionManager.getPartitionStatistics({
       collection_name: COLLECTION_NAME,
-      partition_name: "_default",
+      partition_name: '_default',
     });
     console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.stats[0].value).toEqual("0");
+    expect(res.stats[0].value).toEqual('0');
   });
 
-  it("Drop partition should throw COLLECTION_PARTITION_NAME_ARE_REQUIRED", async () => {
+  it('Drop partition should throw COLLECTION_PARTITION_NAME_ARE_REQUIRED', async () => {
     try {
       await milvusClient.partitionManager.dropPartition({
         collection_name: COLLECTION_NAME,
@@ -91,7 +104,7 @@ describe("Collection Api", () => {
     }
   });
 
-  it("Drop partition should success", async () => {
+  it('Drop partition should success', async () => {
     const res = await milvusClient.partitionManager.dropPartition({
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
@@ -122,7 +135,7 @@ describe("Collection Api", () => {
   it(`Load Partition should success`, async () => {
     const res = await milvusClient.partitionManager.loadPartitions({
       collection_name: COLLECTION_NAME,
-      partition_names: ["_default"],
+      partition_names: ['_default'],
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -141,7 +154,7 @@ describe("Collection Api", () => {
   it(`Release Partition should success`, async () => {
     const res = await milvusClient.partitionManager.releasePartitions({
       collection_name: COLLECTION_NAME,
-      partition_names: ["_default"],
+      partition_names: ['_default'],
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
