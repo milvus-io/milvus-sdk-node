@@ -6,9 +6,8 @@ const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
-  const createRes = await collectionManager.createCollection(
-    genCollectionParams(COLLECTION_NAME, '4')
-  );
+  const createRes = await collectionManager.createCollection({
+    ...genCollectionParams(COLLECTION_NAME, '4'));
   console.log('--- create collection ---', createRes, COLLECTION_NAME);
 
   let res: any = await collectionManager.showCollections();

@@ -50,7 +50,7 @@ export class Collection extends Client {
    *  | :---------------------- | :----  | :-------------------------------  |
    *  | collection_name        | String |        Collection name       |
    *  | description             | String |        Collection description       |
-   *  | consistency_level       | String |        "Strong" | "Session" (default) | "Bounded"| "Eventually" | "Customized";      |
+   *  | consistency_level       | String |        "Strong"(Milvus default) | "Session" | "Bounded"| "Eventually" | "Customized";      |
    *  | fields        | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> |     Field data      |
    *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
@@ -90,7 +90,7 @@ export class Collection extends Client {
       fields,
       collection_name,
       description,
-      consistency_level = 'Session',
+      consistency_level = 'Strong',
     } = data || {};
     if (!fields || !fields.length || !collection_name) {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
@@ -130,9 +130,7 @@ export class Collection extends Client {
       {
         ...data,
         schema: schemaBtyes,
-        consistency_level:
-          ConsistencyLevelEnum[consistency_level] ||
-          ConsistencyLevelEnum.Session,
+        consistency_level: ConsistencyLevelEnum[consistency_level],
       },
       data.timeout
     );
