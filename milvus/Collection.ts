@@ -90,7 +90,7 @@ export class Collection extends Client {
       fields,
       collection_name,
       description,
-      consistency_level = 'Strong',
+      consistency_level = 'Bounded',
     } = data || {};
     if (!fields || !fields.length || !collection_name) {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
@@ -124,13 +124,16 @@ export class Collection extends Client {
 
     const collectionParams = CollectionSchema.create(payload);
     const schemaBtyes = CollectionSchema.encode(collectionParams).finish();
+    const level = Object.keys(ConsistencyLevelEnum).includes(consistency_level)
+      ? ConsistencyLevelEnum[consistency_level]
+      : ConsistencyLevelEnum['Bounded'];
     const promise = await promisify(
       this.client,
       'CreateCollection',
       {
         ...data,
         schema: schemaBtyes,
-        consistency_level: ConsistencyLevelEnum[consistency_level],
+        consistency_level: level,
       },
       data.timeout
     );
