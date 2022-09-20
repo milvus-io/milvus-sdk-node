@@ -167,8 +167,6 @@ export class Index extends Client {
     data: GetIndexBuildProgressReq
   ): Promise<GetIndexBuildProgressResponse> {
     this.checkCollectionName(data);
-    // Now we dont have index name, just empty is fine
-    data.index_name = '';
     const promise = await promisify(
       this.client,
       'GetIndexBuildProgress',
