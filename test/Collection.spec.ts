@@ -11,6 +11,7 @@ import { timeoutTest } from './common/timeout';
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
+const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 
 describe('Collection Api', () => {
@@ -143,9 +144,10 @@ describe('Collection Api', () => {
 
   it('Create collection will be successful even if passed consistency level is invalid', async () => {
     const res = await collectionManager.createCollection({
-      ...genCollectionParams(COLLECTION_NAME, '128'),
+      ...genCollectionParams(TEST_CONSISTENCY_LEVEL_COLLECTION_NAME, '128'),
       consistency_level: 'xxx' as any,
     });
+
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -355,6 +357,9 @@ describe('Collection Api', () => {
     });
     await collectionManager.dropCollection({
       collection_name: LOAD_COLLECTION_NAME,
+    });
+    await collectionManager.dropCollection({
+      collection_name: TEST_CONSISTENCY_LEVEL_COLLECTION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
