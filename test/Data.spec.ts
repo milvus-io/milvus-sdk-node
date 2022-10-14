@@ -202,6 +202,27 @@ describe('Data.ts Test', () => {
     }
   });
 
+  it('Expr Search should throw SEARCH_ROUND_DECIMAL_NOT_VALID', async () => {
+    try {
+      await milvusClient.dataManager.search({
+        collection_name: COLLECTION_NAME,
+        expr: '',
+        vectors: [[1, 2, 3, 4]],
+        search_params: {
+          anns_field: VECTOR_FIELD_NAME,
+          topk: '4',
+          metric_type: 'L2',
+          params: JSON.stringify({ nprobe: 1024 }),
+          round_decimal: 7,
+        },
+        output_fields: ['age'],
+        vector_type: DataType.FloatVector,
+      });
+    } catch (err) {
+      expect(err.message).toEqual(ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
+    }
+  });
+
   it('Query ', async () => {
     await milvusClient.dataManager.deleteEntities({
       collection_name: COLLECTION_NAME,

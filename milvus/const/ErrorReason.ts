@@ -20,6 +20,7 @@ export enum ERROR_REASONS {
   SEARCH_NOT_FIND_VECTOR_FIELD = 'Your anns_field cannot find in this collection.',
   SEARCH_DIM_NOT_MATCH = 'Your vector dimension is not match your anns_field dimension',
   SEARCH_PARAMS_IS_REQUIRED = 'search_params must contains anns_field, metric_type, topk and params.',
+  SEARCH_ROUND_DECIMAL_NOT_VALID = 'round_decimal should be an integer greater than -2 and less than 7',
 
   DELETE_PARAMS_CHECK = 'Collection name and expr is required.',
 
