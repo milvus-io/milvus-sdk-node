@@ -648,20 +648,6 @@ export class Data extends Client {
   }
 
   /**
-   * @ignore
-   * @param data
-   */
-  async calcDistance(data: CalcDistanceReq): Promise<CalcDistanceResponse> {
-    const res = await promisify(
-      this.client,
-      'CalcDistance',
-      data,
-      data.timeout
-    );
-    return res;
-  }
-
-  /**
    * Get flush state by segment ids
    *
    * @param data
