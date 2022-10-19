@@ -61,10 +61,12 @@ Node: v12+
 | getCompactionState      | true  |   Get compaction states by compact id    |
 
 ## How to dev
-1. yarn 
-2. git submodule init (if this is your first time)
-3. git submodule update --remote
-4. In milvus folder has all milvus related functions.
+1. yarn install
+2. Fetch milvus proto
+   1. ```git submodule init``` (if this is your first time)
+   2. ```git submodule update --remote```
+3. Add feature in milvus folder.
+4. Run test ```yarn test -- test/Your-test-for-your-feature.spec.ts```
 ## Example
 
 1. [Hello World](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/HelloMilvus.ts)

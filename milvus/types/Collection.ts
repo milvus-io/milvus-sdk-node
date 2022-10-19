@@ -56,7 +56,9 @@ export interface DescribeCollectionReq extends CollectionNameReq {}
 
 export interface GetCollectionStatisticsReq extends CollectionNameReq {}
 
-export interface LoadCollectionReq extends CollectionNameReq {}
+export interface LoadCollectionReq extends CollectionNameReq {
+  replica_number?: number
+}
 export interface ReleaseLoadCollectionReq extends CollectionNameReq {}
 
 export interface DropCollectionReq extends CollectionNameReq {}
@@ -84,4 +86,12 @@ export interface GetCompactionStateReq extends GrpcTimeOut {
 
 export interface GetCompactionPlansReq extends GrpcTimeOut {
   compactionID: number | string;
+}
+
+export interface GetReplicaReq extends GrpcTimeOut {
+  /**
+   * @param collectionID collection ID
+   */
+   collectionID: number | string;
+   with_shard_nodes?: boolean;
 }

@@ -18,6 +18,7 @@ import {
   GetCompactionStateReq,
   GetCompactionPlansReq,
   ConsistencyLevelEnum,
+  GetReplicaReq,
 } from './types/Collection';
 import {
   BoolResponse,
@@ -30,6 +31,7 @@ import {
   ResStatus,
   ShowCollectionsResponse,
   StatisticsResponse,
+  ReplicasResponse,
 } from './types/Response';
 import { checkCollectionFields } from './utils/Validate';
 import path from 'path';
@@ -315,6 +317,7 @@ export class Collection extends Client {
    *  | Property           | Type   |           Description              |
    *  | :----------------- | :----  | :-------------------------------  |
    *  | collection_name    | String |       Collection name       |
+   *  | replica_number?    | number |       Collection name       |
    *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
@@ -629,6 +632,54 @@ export class Collection extends Client {
       data,
       data.timeout
     );
+    return res;
+  }
+
+  /**
+   * Get replicas
+   *
+   * @param data
+   *  | Property           | Type   |           Description              |
+   *  | :----------------- | :----  | :-------------------------------  |
+   *  | collectionID       | number or string |       the id returned by compact       |
+   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | ReplicaInfo[] | replica info array |
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.getReplicas({
+   *    collectionID: collectionID,
+   *  });
+   *
+   * ```
+   * 
+   * Return
+   * ```
+   * {
+   *  replicas: [
+   *     {
+   *      partition_ids: [Array],
+   *      shard_replicas: [Array],
+   *      node_ids: [Array],
+   *      replicaID: '436724291187770258',
+   *      collectionID: '436777253933154305'
+   *    }
+   *  ],
+   *  status: { error_code: 'Success', reason: '' }
+   * }
+   * ```
+   */
+  async getReplicas(data: GetReplicaReq): Promise<ReplicasResponse> {
+    if (!data || !data.collectionID) {
+      throw new Error(ERROR_REASONS.COLLECTION_ID_IS_REQUIRED);
+    }
+    const res = await promisify(this.client, 'GetReplicas', data, data.timeout);
     return res;
   }
 }
