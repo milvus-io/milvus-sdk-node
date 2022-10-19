@@ -28,6 +28,13 @@ describe('User Auth Api', () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(
+    `Test list all users should timeout`,
+    timeoutTest(
+      milvusClient.userManager.listUsers.bind(milvusClient.userManager)
+    )
+  );
+
   it(`Normal client should not valid`, async () => {
     try {
       await milvusClient.userManager.listUsers();
@@ -36,13 +43,6 @@ describe('User Auth Api', () => {
     }
     milvusClient.closeConnection();
   });
-
-  it(
-    `Test list all users should timeout`,
-    timeoutTest(
-      milvusClient.userManager.listUsers.bind(milvusClient.userManager)
-    )
-  );
 
   it(`Auth client list user expect success`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
