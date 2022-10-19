@@ -89,6 +89,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   schema: CollectionSchema;
   collectionID: string;
   consistency_level: ConsistencyLevelEnum;
+  aliases: string[];
   virtual_channel_names: string[]; // not useful for now
   physical_channel_names: string[]; // not useful for now
 }

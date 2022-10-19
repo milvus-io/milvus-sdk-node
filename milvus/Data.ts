@@ -335,6 +335,16 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
     }
 
+    const round_decimal = data.search_params.round_decimal;
+    if (
+      round_decimal !== undefined &&
+      (!Number.isInteger(round_decimal) ||
+        round_decimal < -1 ||
+        round_decimal > 6)
+    ) {
+      throw new Error(ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
+    }
+
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
     const PlaceholderGroup = root.lookupType(
       'milvus.proto.common.PlaceholderGroup'
@@ -377,7 +387,6 @@ export class Data extends Client {
      *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
      *  So the score need to slice by round_decimal
      */
-    const round_decimal = data.search_params.round_decimal;
     if (promise.results) {
       /**
        *  fields_data:  what you pass in output_fields, only support non vector fields.
