@@ -253,34 +253,6 @@ describe('Data.ts Test', () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it('Calc distance should success', async () => {
-    const res = await milvusClient.dataManager.calcDistance({
-      op_left: {
-        data_array: {
-          dim: 4,
-          float_vector: {
-            data: [1, 1, 1, 1],
-          },
-        },
-      },
-      op_right: {
-        data_array: {
-          dim: 4,
-          float_vector: {
-            data: [1, 2, 13, 1],
-          },
-        },
-      },
-      params: [
-        {
-          key: 'metric',
-          value: 'L2',
-        },
-      ],
-    });
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
   it('Get query segment infos should throw COLLECTION_NAME_IS_REQUIRED', async () => {
     try {
       await milvusClient.dataManager.getQuerySegmentInfo({} as any);
