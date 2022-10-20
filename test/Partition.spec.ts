@@ -41,15 +41,6 @@ describe('Collection Api', () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Create Same Partition`, async () => {
-    const res = await milvusClient.partitionManager.createPartition({
-      collection_name: COLLECTION_NAME,
-      partition_name: PARTITION_NAME,
-    });
-    // console.log('----Create partition with a existing name ----', res);
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
   it(`Has Partition`, async () => {
     const res = await milvusClient.partitionManager.hasPartition({
       collection_name: COLLECTION_NAME,
