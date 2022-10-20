@@ -15,6 +15,16 @@ describe('Vector search on binary field', () => {
     await milvusClient.collectionManager.createCollection(
       genCollectionParams(COLLECTION_NAME, '128', DataType.BinaryVector, false)
     );
+    // create index before load
+    await milvusClient.indexManager.createIndex({
+      collection_name: COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
     await milvusClient.collectionManager.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
@@ -61,7 +71,7 @@ describe('Vector search on binary field', () => {
       },
       vector_type: DataType.BinaryVector,
     });
-    console.log('----- Expr Vector Search  -----', res);
+    // console.log('----- Expr Vector Search  -----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });

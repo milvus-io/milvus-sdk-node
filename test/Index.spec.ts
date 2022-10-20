@@ -1,9 +1,11 @@
 import { MilvusClient } from '../milvus';
-
 import { GENERATE_NAME, IP } from '../const';
 import { ErrorCode } from '../milvus/types/Response';
-import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import {
+  genCollectionParams,
+  VECTOR_FIELD_NAME,
+  INDEX_NAME,
+} from '../utils/test';
 import { timeoutTest } from './common/timeout';
 
 let milvusClient = new MilvusClient(IP);
@@ -22,8 +24,9 @@ describe('Collection Api', () => {
     });
   });
 
-  it(`Create Index should success`, async () => {
+  it(`Create Index with name should success`, async () => {
     const res = await milvusClient.indexManager.createIndex({
+      index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -32,7 +35,7 @@ describe('Collection Api', () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    console.log(res);
+    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -59,7 +62,7 @@ describe('Collection Api', () => {
     const res = await milvusClient.indexManager.describeIndex({
       collection_name: COLLECTION_NAME,
     });
-    console.log(res);
+    // console.log('----describeIndex ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -75,33 +78,36 @@ describe('Collection Api', () => {
     const res = await milvusClient.indexManager.getIndexState({
       collection_name: COLLECTION_NAME,
     });
-    console.log(res);
+    // console.log('----getIndexState ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Get Index progress`, async () => {
     const res = await milvusClient.indexManager.getIndexBuildProgress({
+      index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
     });
-    console.log(res);
+    // console.log('----getIndexBuildProgress ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Drop Index `, async () => {
     const res = await milvusClient.indexManager.dropIndex({
+      index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
-    console.log('----drop index ----', res);
+    // console.log('----drop index ----', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Describe Index should be not exist`, async () => {
     const res = await milvusClient.indexManager.describeIndex({
+      index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
-    console.log('----describe index after drop ----', res);
+    // console.log('----describe index after drop ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
   });
 });

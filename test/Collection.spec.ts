@@ -258,6 +258,23 @@ describe('Collection Api', () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`Load Collection Sync with replica no enough node error `, async () => {
+    try {
+      await collectionManager.releaseCollection({
+        collection_name: LOAD_COLLECTION_NAME,
+      });
+      const res = await collectionManager.loadCollectionSync({
+        collection_name: LOAD_COLLECTION_NAME,
+        replica_number: 3,
+      });
+      expect(res.error_code).not.toEqual(ErrorCode.SUCCESS);
+    } catch (error) {
+      expect(error.message).toEqual(
+        ERROR_REASONS.LOAD_WITH_REPLICA_NO_ENOUGH_NODE
+      );
+    }
+  });
+
   it(`Load Collection Sync throw error`, async () => {
     const fakeClient = new MilvusClient(IP);
 

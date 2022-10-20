@@ -1,6 +1,7 @@
 import { DataType } from '../milvus/types/Common';
 
 export const VECTOR_FIELD_NAME = 'vector_field';
+export const INDEX_NAME = 'index_name';
 export const genCollectionParams = (
   collectionName: string,
   dim: string,
