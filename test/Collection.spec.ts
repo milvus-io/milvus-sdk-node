@@ -13,6 +13,7 @@ const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
 const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
+const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
 
 describe('Collection Api', () => {
   it(`Create Collection Successful`, async () => {
@@ -152,8 +153,11 @@ describe('Collection Api', () => {
   });
 
   it(`Create load Collection Successful`, async () => {
-    const res = await collectionManager.createCollection(
+    const res1 = await collectionManager.createCollection(
       genCollectionParams(LOAD_COLLECTION_NAME, '128')
+    );
+    const res2 = await collectionManager.createCollection(
+      genCollectionParams(LOAD_COLLECTION_NAME_SYNC, '128')
     );
     // make sure load successful
     await milvusClient.indexManager.createIndex({
@@ -165,8 +169,20 @@ describe('Collection Api', () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
+
+    // make sure load successful
+    await milvusClient.indexManager.createIndex({
+      collection_name: LOAD_COLLECTION_NAME_SYNC,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
     // console.log(res);
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res1.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Has collection should throw error`, async () => {
@@ -253,7 +269,7 @@ describe('Collection Api', () => {
 
   it(`Load Collection Sync success `, async () => {
     const res = await collectionManager.loadCollectionSync({
-      collection_name: LOAD_COLLECTION_NAME,
+      collection_name: LOAD_COLLECTION_NAME_SYNC,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -261,10 +277,10 @@ describe('Collection Api', () => {
   it(`Load Collection Sync with replica no enough node error `, async () => {
     try {
       await collectionManager.releaseCollection({
-        collection_name: LOAD_COLLECTION_NAME,
+        collection_name: LOAD_COLLECTION_NAME_SYNC,
       });
       const res = await collectionManager.loadCollectionSync({
-        collection_name: LOAD_COLLECTION_NAME,
+        collection_name: LOAD_COLLECTION_NAME_SYNC,
         replica_number: 3,
       });
       expect(res.error_code).not.toEqual(ErrorCode.SUCCESS);
@@ -317,15 +333,12 @@ describe('Collection Api', () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Show loaded collections expect contain one`, async () => {
+  it(`Show loaded collections success`, async () => {
     const res = await collectionManager.showCollections({
       type: ShowCollectionsType.Loaded,
     });
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
-    expect(
-      res.data.filter(v => v.name === LOAD_COLLECTION_NAME).length
-    ).toEqual(1);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it('Compact collection and get state expect success', async () => {
@@ -383,15 +396,22 @@ describe('Collection Api', () => {
     const res = await collectionManager.dropCollection({
       collection_name: COLLECTION_NAME,
     });
-    await collectionManager.dropCollection({
+    const res2 = await collectionManager.dropCollection({
       collection_name: LOAD_COLLECTION_NAME,
     });
-    await collectionManager.dropCollection({
+    const res3 = await collectionManager.dropCollection({
+      collection_name: LOAD_COLLECTION_NAME_SYNC,
+    });
+    const res4 = await collectionManager.dropCollection({
       collection_name: TEST_CONSISTENCY_LEVEL_COLLECTION_NAME,
     });
-    await collectionManager.dropCollection({
+    const res5 = await collectionManager.dropCollection({
       collection_name: 'zxc',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res3.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res4.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res5.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });
