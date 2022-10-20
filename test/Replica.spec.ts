@@ -26,20 +26,18 @@ describe("Collection's replica Api", () => {
   });
 
   it(`Testing getReplica`, async () => {
-    try {
-      const collectionInfo =
-        await milvusClient.collectionManager.describeCollection({
-          collection_name: COLLECTION_NAME,
-        } as any);
+    const collectionInfo =
+      await milvusClient.collectionManager.describeCollection({
+        collection_name: COLLECTION_NAME,
+      } as any);
 
-      const res = await milvusClient.collectionManager.getReplicas({
-        collectionID: collectionInfo.collectionID,
-      });
+    const res = await milvusClient.collectionManager.getReplicas({
+      collectionID: collectionInfo.collectionID,
+    });
 
-      console.log(res);
+    console.log(res);
 
-      expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    }
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Testing getReplica params test`, async () => {
