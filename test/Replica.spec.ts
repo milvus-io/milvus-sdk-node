@@ -39,8 +39,6 @@ describe("Collection's replica Api", () => {
       console.log(res);
 
       expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
   });
 
