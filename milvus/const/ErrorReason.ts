@@ -8,6 +8,7 @@ export enum ERROR_REASONS {
   CREATE_COLLECTION_CHECK_BINARY_DIM = 'Binary vector field dim need mutiples of 8',
 
   COLLECTION_NAME_IS_REQUIRED = 'Collection name is required',
+  COLLECTION_ID_IS_REQUIRED = 'Collection ID is required',
   COLLECTION_PARTITION_NAME_ARE_REQUIRED = 'Collection and partition name are required',
 
   INSERT_CHECK_MISS_FIELD = 'Insert fail: missing some field for this collection in line ',

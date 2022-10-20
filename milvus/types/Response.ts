@@ -217,3 +217,23 @@ export interface ListCredUsersResponse {
   status: ResStatus;
   usernames: string[];
 }
+
+export interface ReplicasResponse {
+  status: ResStatus;
+  replicas: ReplicaInfo[];
+}
+
+export interface ReplicaInfo {
+  replicaID: number;
+  collectionID: number;
+  partition_ids: number[];
+  shard_replicas: ShardReplica[];
+  node_ids: number[];
+}
+
+export interface ShardReplica {
+  leaderID: number;
+  leader_addr: string;
+  dm_channel_name: string;
+  node_ids: number[];
+}

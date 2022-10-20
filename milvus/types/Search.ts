@@ -1,4 +1,4 @@
-import { DataType, GrpcTimeOut } from './Common';
+import { DataType, GrpcTimeOut, KeyValuePair } from './Common';
 import { ResStatus } from './Response';
 
 export interface SearchParam {
@@ -75,6 +75,7 @@ export interface QueryRes {
       data: string;
     };
   }[];
+  params?: KeyValuePair[];
 }
 
 export interface GetMetricsRequest extends GrpcTimeOut {
