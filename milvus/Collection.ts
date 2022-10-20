@@ -381,7 +381,7 @@ export class Collection extends Client {
     );
 
     if (promise.error_code !== ErrorCode.SUCCESS) {
-      throw new Error(promise.reason);
+      throw new Error(`ErrorCode: ${promise.error_code}. Reason: ${promise.reason}`);
     }
 
     let loadedPercentage = 0;

@@ -45,6 +45,4 @@ export enum ERROR_REASONS {
   TIMESTAMP_PARAM_CHECK = 'type should be string (only contains number) or bigint',
 
   DATE_TYPE_CHECK = 'type should be Date',
-
-  LOAD_WITH_REPLICA_NO_ENOUGH_NODE = 'failed to load collection, err=no enough nodes to create replicas[NoEnoughNode]',
 }
