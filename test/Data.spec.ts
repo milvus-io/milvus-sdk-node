@@ -251,7 +251,7 @@ describe('Data.ts Test', () => {
         { key: 'offset', value: 1 },
       ],
     });
-    console.log('----query---', res);
+    // console.log('----query---', res);
     expect(res.status.error_code).toEqual(ErrorCode.EMPTY_COLLECTION);
   });
 
