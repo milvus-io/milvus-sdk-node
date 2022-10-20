@@ -373,6 +373,7 @@ export class Data extends Client {
       'Search',
       {
         ...data,
+        nq: data.nq || data.vectors.length,
         dsl: data.expr || '',
         dsl_type: DslType.BoolExprV1,
         placeholder_group: placeholderGroupBytes,
@@ -380,6 +381,7 @@ export class Data extends Client {
       },
       data.timeout
     );
+
     const results: any[] = [];
     /**
      *  It will decide the score precision.
@@ -534,7 +536,7 @@ export class Data extends Client {
    *  | partitions_names(optional)   | String[] |       Array of partition names      |
    *  | output_fields                | String[] |       Vector or scalar field to be returned    |
    *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
-   *
+   *  | params | {key: value}[] | An optional key pair json array
    *
    * @return
    *  | Property    |           Description              |

@@ -155,7 +155,17 @@ describe('Collection Api', () => {
     const res = await collectionManager.createCollection(
       genCollectionParams(LOAD_COLLECTION_NAME, '128')
     );
-    console.log(res);
+    // make sure load successful
+    await milvusClient.indexManager.createIndex({
+      collection_name: LOAD_COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
+    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -171,7 +181,7 @@ describe('Collection Api', () => {
     const res = await collectionManager.hasCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log('----has collection', res);
+    // console.log('----has collection', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.value).toEqual(true);
   });
@@ -193,7 +203,7 @@ describe('Collection Api', () => {
 
   it(`Show all collections`, async () => {
     const res = await collectionManager.showCollections();
-    console.log(res);
+    // console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
   });
@@ -224,7 +234,7 @@ describe('Collection Api', () => {
     const res = await collectionManager.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log('---- describe collection ---', res);
+    // console.log('---- describe collection ---', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
@@ -351,6 +361,7 @@ describe('Collection Api', () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  // make sure all collections are deleted here
   it(`Drop Collection`, async () => {
     const res = await collectionManager.dropCollection({
       collection_name: COLLECTION_NAME,
@@ -360,6 +371,9 @@ describe('Collection Api', () => {
     });
     await collectionManager.dropCollection({
       collection_name: TEST_CONSISTENCY_LEVEL_COLLECTION_NAME,
+    });
+    await collectionManager.dropCollection({
+      collection_name: 'zxc',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });

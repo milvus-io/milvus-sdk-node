@@ -144,7 +144,7 @@ export const DataTypeMap: { [x: string]: number } = {
 
 export interface KeyValuePair {
   key: string;
-  value: string;
+  value: string | number;
 }
 
 export enum IndexState {

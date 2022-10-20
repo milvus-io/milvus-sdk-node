@@ -18,6 +18,7 @@ export interface SearchReq extends GrpcTimeOut {
   output_fields?: string[];
   travel_timestamp?: string;
   vector_type: DataType.BinaryVector | DataType.FloatVector;
+  nq?: number;
 }
 
 export interface SearchRes {
@@ -52,6 +53,7 @@ export interface QueryReq extends GrpcTimeOut {
   expr: string;
   output_fields?: string[];
   partition_names?: string[];
+  params?: KeyValuePair[];
 }
 
 export interface QueryRes {
@@ -75,7 +77,6 @@ export interface QueryRes {
       data: string;
     };
   }[];
-  params?: KeyValuePair[];
 }
 
 export interface GetMetricsRequest extends GrpcTimeOut {

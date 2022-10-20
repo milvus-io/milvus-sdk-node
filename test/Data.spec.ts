@@ -37,7 +37,16 @@ describe('Data.ts Test', () => {
     };
 
     await milvusClient.dataManager.insert(params);
-    const res = await milvusClient.collectionManager.loadCollectionSync({
+    await milvusClient.indexManager.createIndex({
+      collection_name: COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
+    await milvusClient.collectionManager.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
   });
@@ -150,6 +159,7 @@ describe('Data.ts Test', () => {
         },
         output_fields: ['age'],
         vector_type: DataType.FloatVector,
+        nq: 1,
       });
       expect('a').toEqual('b');
     } catch (error) {
@@ -173,6 +183,7 @@ describe('Data.ts Test', () => {
         },
         output_fields: ['age'],
         vector_type: DataType.Bool as DataType.BinaryVector,
+        nq: 1,
       });
       expect('a').toEqual('b');
     } catch (error) {
@@ -196,6 +207,7 @@ describe('Data.ts Test', () => {
         },
         output_fields: ['age'],
         vector_type: DataType.FloatVector,
+        nq: 1,
       });
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
@@ -217,6 +229,7 @@ describe('Data.ts Test', () => {
         },
         output_fields: ['age'],
         vector_type: DataType.FloatVector,
+        nq: 1,
       });
     } catch (err) {
       expect(err.message).toEqual(ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
@@ -233,6 +246,10 @@ describe('Data.ts Test', () => {
       collection_name: COLLECTION_NAME,
       expr: 'age in [2,4,6,8]',
       output_fields: ['age', VECTOR_FIELD_NAME],
+      params: [
+        { key: 'limit', value: 1 },
+        { key: 'offset', value: 1 },
+      ],
     });
     console.log('----query---', res);
     expect(res.status.error_code).toEqual(ErrorCode.EMPTY_COLLECTION);
