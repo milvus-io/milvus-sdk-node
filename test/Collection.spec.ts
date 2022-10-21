@@ -409,6 +409,8 @@ describe('Collection Api', () => {
     const res6 = await collectionManager.dropCollection({
       collection_name: 'any',
     });
+
+    console.log(res5);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res3.error_code).toEqual(ErrorCode.SUCCESS);
