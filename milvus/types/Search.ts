@@ -53,7 +53,8 @@ export interface QueryReq extends GrpcTimeOut {
   expr: string;
   output_fields?: string[];
   partition_names?: string[];
-  params?: KeyValuePair[];
+  offset?: number;
+  limit?: number;
 }
 
 export interface QueryRes {

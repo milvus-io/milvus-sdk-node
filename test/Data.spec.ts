@@ -11,30 +11,28 @@ import { timeoutTest } from './common/timeout';
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
+const fields = [
+  {
+    isVector: true,
+    dim: 4,
+    name: VECTOR_FIELD_NAME,
+  },
+  {
+    isVector: false,
+    name: 'age',
+  },
+];
+const vectorsData = generateInsertData(fields, 10);
+const params: InsertReq = {
+  collection_name: COLLECTION_NAME,
+  fields_data: vectorsData,
+};
 
 describe('Data.ts Test', () => {
   beforeAll(async () => {
     await milvusClient.collectionManager.createCollection(
       genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
     );
-
-    const fields = [
-      {
-        isVector: true,
-        dim: 4,
-        name: VECTOR_FIELD_NAME,
-      },
-      {
-        isVector: false,
-        name: 'age',
-      },
-    ];
-    const vectorsData = generateInsertData(fields, 10);
-
-    const params: InsertReq = {
-      collection_name: COLLECTION_NAME,
-      fields_data: vectorsData,
-    };
 
     await milvusClient.dataManager.insert(params);
     await milvusClient.indexManager.createIndex({
@@ -140,6 +138,7 @@ describe('Data.ts Test', () => {
       vector_type: DataType.FloatVector,
     });
 
+    // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -236,7 +235,35 @@ describe('Data.ts Test', () => {
     }
   });
 
-  it('Query ', async () => {
+  it('Query with data limit', async () => {
+    const res = await milvusClient.dataManager.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'age > 0',
+      output_fields: ['age', VECTOR_FIELD_NAME],
+      offset: 0,
+      limit: 3,
+    });
+    // console.log('----query with data limit3, offset: 0 ----', res);
+    expect(res.data.length).toBe(3);
+
+    const res2 = await milvusClient.dataManager.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'age > 0',
+      output_fields: ['age', VECTOR_FIELD_NAME],
+      limit: 3,
+    });
+    expect(res2.data.length).toBe(3);
+
+    const res3 = await milvusClient.dataManager.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'age > 0',
+      output_fields: ['age', VECTOR_FIELD_NAME],
+    });
+    expect(res3.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // console.log('----query with data limit: not set, offset: 3 ----', res2);
+  });
+
+  it('Query with empty data', async () => {
     await milvusClient.dataManager.deleteEntities({
       collection_name: COLLECTION_NAME,
       expr: 'age in [2,6]',
@@ -246,12 +273,9 @@ describe('Data.ts Test', () => {
       collection_name: COLLECTION_NAME,
       expr: 'age in [2,4,6,8]',
       output_fields: ['age', VECTOR_FIELD_NAME],
-      params: [
-        { key: 'limit', value: 1 },
-        { key: 'offset', value: 1 },
-      ],
+      limit: 3,
+      offset: 0,
     });
-    // console.log('----query---', res);
     expect(res.status.error_code).toEqual(ErrorCode.EMPTY_COLLECTION);
   });
 

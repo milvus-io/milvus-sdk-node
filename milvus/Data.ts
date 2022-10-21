@@ -555,12 +555,27 @@ export class Data extends Client {
    */
   async query(data: QueryReq): Promise<QueryResults> {
     this.checkCollectionName(data);
+
+    let limits: { limit: number } | undefined;
+    let offset: { offset: number } | undefined;
+
+    if (typeof data.limit === 'number') {
+      limits = { limit: data.limit };
+    }
+    if (typeof data.offset === 'number') {
+      offset = { offset: data.offset };
+    }
+
     const promise: QueryRes = await promisify(
       this.client,
       'Query',
-      data,
+      {
+        ...data,
+        query_params: parseToKeyValue({ ...limits, ...offset }),
+      },
       data.timeout
     );
+
     const results: { [x: string]: any }[] = [];
     /**
      * type: DataType
