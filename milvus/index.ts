@@ -13,7 +13,12 @@ import { Data } from './Data';
 import { User } from './User';
 import sdkInfo from '../sdk.json';
 import { ERROR_REASONS } from './const/ErrorReason';
-import { ErrorCode } from './types/Response';
+import {
+  ErrorCode,
+  GetVersionResponse,
+  CheckHealthResponse,
+} from './types/Response';
+import { promisify } from '../utils';
 
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
 export class MilvusClient {
@@ -107,9 +112,11 @@ export class MilvusClient {
     const res = await this.dataManager.getMetric({
       request: { metric_type: 'system_info' },
     });
+
     // Each node contains the same system info, so get version from first one.
     const curMilvusVersion =
       res.response.nodes_info[0]?.infos?.system_info?.build_version;
+
     if (curMilvusVersion !== MilvusClient.sdkInfo.recommandMilvus) {
       console.warn('------- Warning ---------');
       console.warn(
@@ -125,4 +132,13 @@ export class MilvusClient {
     // grpc client closed -> 4, connected -> 0
     return this.client.getChannel().getConnectivityState(true);
   }
+
+  // async getVersion(): Promise<GetVersionResponse> {
+  //   const promise = await promisify(this.client, 'GetVersion', {});
+  //   return promise;
+  // }
+
+  // async checkHealth(): Promise<CheckHealthResponse> {
+  //   return await promisify(this.client, 'CheckHealth', {});
+  // }
 }

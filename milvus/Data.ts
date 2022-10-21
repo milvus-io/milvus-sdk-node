@@ -6,7 +6,6 @@ import { ERROR_REASONS } from './const/ErrorReason';
 
 import { DataType, DataTypeMap, DslType } from './types/Common';
 import {
-  CalcDistanceReq,
   DeleteEntitiesReq,
   FlushReq,
   GetFlushStateReq,
@@ -15,7 +14,6 @@ import {
   LoadBalanceReq,
 } from './types/Data';
 import {
-  CalcDistanceResponse,
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,

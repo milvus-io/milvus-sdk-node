@@ -237,3 +237,12 @@ export interface ShardReplica {
   dm_channel_name: string;
   node_ids: number[];
 }
+
+export interface GetVersionResponse {
+  version: string;
+}
+
+export interface CheckHealthResponse {
+  isHealthy: boolean;
+  reasons: [];
+}
