@@ -27,7 +27,7 @@ describe('Collection Api', () => {
       collection_name: COLLECTION_NAME,
     });
     await milvusClient.collectionManager.dropCollection({
-      collection_name: COLLECTION_NAME,
+      collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
     });
   });
 
@@ -127,14 +127,6 @@ describe('Collection Api', () => {
       index_name: INDEX_NAME,
     });
     // console.log('----getIndexBuildProgress with name ----', res);
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
-  it(`Get Index without name progress`, async () => {
-    const res = await milvusClient.indexManager.getIndexBuildProgress({
-      collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
-    });
-    // console.log('----getIndexBuildProgress without name ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
