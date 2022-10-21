@@ -84,7 +84,7 @@ describe('Collection Api', () => {
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
-    // console.log('----describeIndex ----', res);
+    console.log('----describeIndex ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -109,7 +109,7 @@ describe('Collection Api', () => {
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
-    // console.log('----getIndexState ----', res);
+    console.log('----getIndexState ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
