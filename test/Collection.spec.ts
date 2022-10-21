@@ -95,7 +95,7 @@ describe('Collection Api', () => {
     }
 
     try {
-      await collectionManager.createCollection(
+      const d = await collectionManager.createCollection(
         genCollectionParams('any', '10')
       );
     } catch (error) {
@@ -404,18 +404,13 @@ describe('Collection Api', () => {
       collection_name: TEST_CONSISTENCY_LEVEL_COLLECTION_NAME,
     });
     const res5 = await collectionManager.dropCollection({
-      collection_name: 'zxc',
-    });
-    const res6 = await collectionManager.dropCollection({
       collection_name: 'any',
     });
 
-    console.log(res5);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res3.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res4.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res5.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res6.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });
