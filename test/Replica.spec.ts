@@ -1,11 +1,10 @@
 import { MilvusClient } from '../milvus';
-
 import { GENERATE_NAME, IP } from '../const';
 import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { ErrorCode } from '../milvus/types/Response';
-import { ShowCollectionsType } from '../milvus/types/Collection';
-let milvusClient = new MilvusClient('10.100.31.105:19530');
+
+let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 describe("Collection's replica Api", () => {
@@ -22,12 +21,10 @@ describe("Collection's replica Api", () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-
-    // make sure load collection with replica 1 as we are using standalone
     await milvusClient.collectionManager.loadCollectionSync({
       collection_name: COLLECTION_NAME,
-      replica_number: 1,
-    } as any);
+      replica_number: 1
+    });
   });
 
   afterAll(async () => {
