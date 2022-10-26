@@ -863,34 +863,6 @@ export class Data extends Client {
    *      collection_name: COLLECTION
    *    });
    * ```
-   * {
-      id_list: [],
-      infos: [
-        {
-          key: 'files',
-          value: '/Users/ryjiang/workspace/milvus-sdk-node/test/files/data.json'
-        },
-        { key: 'collection', value: 'collection_nwp5uobk' },
-        { key: 'partition', value: '_default' },
-        { key: 'failed_reason', value: '' }
-      ],
-      segment_ids: [],
-      status: { error_code: 'Success', reason: '' },
-      state: 'ImportStarted',
-      row_count: '0',
-      id: '436914168627200287',
-      collection_id: '436914168627200284',
-      create_ts: '1666700477'
-    }
-   * 
-   * 
-   * 
-   * 
-   * 
-   * 
-   * 
-   * 
-   * 
    */
   async listImportTasks(
     data: ListImportTasksReq
@@ -910,4 +882,3 @@ export class Data extends Client {
     return res;
   }
 }
-
