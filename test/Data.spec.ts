@@ -235,7 +235,7 @@ describe('Data.ts Test', () => {
     }
   });
 
-  it('Query with data limit', async () => {
+  it('Query with data limit and offset', async () => {
     const res = await milvusClient.dataManager.query({
       collection_name: COLLECTION_NAME,
       expr: 'age > 0',
@@ -245,7 +245,9 @@ describe('Data.ts Test', () => {
     });
     // console.log('----query with data limit3, offset: 0 ----', res);
     expect(res.data.length).toBe(3);
+  });
 
+  it('Query with data limit only', async () => {
     const res2 = await milvusClient.dataManager.query({
       collection_name: COLLECTION_NAME,
       expr: 'age > 0',
@@ -253,7 +255,9 @@ describe('Data.ts Test', () => {
       limit: 3,
     });
     expect(res2.data.length).toBe(3);
+  });
 
+  it('Query with data without limit and offset', async () => {
     const res3 = await milvusClient.dataManager.query({
       collection_name: COLLECTION_NAME,
       expr: 'age > 0',

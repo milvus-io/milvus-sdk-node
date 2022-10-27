@@ -133,12 +133,12 @@ export class MilvusClient {
     return this.client.getChannel().getConnectivityState(true);
   }
 
-  // async getVersion(): Promise<GetVersionResponse> {
-  //   const promise = await promisify(this.client, 'GetVersion', {});
-  //   return promise;
-  // }
+  async getVersion(): Promise<GetVersionResponse> {
+    const promise = await promisify(this.client, 'GetVersion', {});
+    return promise;
+  }
 
-  // async checkHealth(): Promise<CheckHealthResponse> {
-  //   return await promisify(this.client, 'CheckHealth', {});
-  // }
+  async checkHealth(): Promise<CheckHealthResponse> {
+    return await promisify(this.client, 'CheckHealth', {});
+  }
 }
