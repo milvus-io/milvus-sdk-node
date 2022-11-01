@@ -3,7 +3,7 @@ name: Milvus2 Node sdk check when open pr
 on:
   pull_request:
     branches:
-      - main
+      - dev
     types: [opened, synchronize]
 
 jobs:
@@ -19,6 +19,7 @@ jobs:
       - name: Run Milvus
         run: |
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
+          sed -i -e 's/milvusdb.*$/milvusdb\/milvus:master-latest/g' docker-compose.yml
           docker-compose up -d
 
       - name: update submodules
