@@ -20,6 +20,8 @@ jobs:
         run: |
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
           docker-compose up -d
+        run: | 
+          sed -i -e 's/milvusdb.*$/milvusdb\/milvus:master-latest/g' docker-compose.yml
 
       - name: update submodules
         run: |
