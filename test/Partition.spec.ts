@@ -1,9 +1,8 @@
 import { MilvusClient } from '../milvus';
 
 import { GENERATE_NAME, IP } from '../const';
-import { DataType } from '../milvus/types/Common';
 import { ErrorCode } from '../milvus/types/Response';
-import { genCollectionParams } from '../utils/test';
+import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { timeoutTest } from './common/timeout';
 
@@ -16,6 +15,16 @@ describe('Collection Api', () => {
     await milvusClient.collectionManager.createCollection(
       genCollectionParams(COLLECTION_NAME, '128')
     );
+
+    await milvusClient.indexManager.createIndex({
+      collection_name: COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
   });
 
   afterAll(async () => {
@@ -30,14 +39,6 @@ describe('Collection Api', () => {
       partition_name: PARTITION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
-  it(`Create Same Partition`, async () => {
-    const res = await milvusClient.partitionManager.createPartition({
-      collection_name: COLLECTION_NAME,
-      partition_name: PARTITION_NAME,
-    });
-    expect(res.error_code).not.toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Has Partition`, async () => {
@@ -63,7 +64,6 @@ describe('Collection Api', () => {
     const res = await milvusClient.partitionManager.showPartitions({
       collection_name: COLLECTION_NAME,
     });
-    console.log(res);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.partition_names).toEqual(['_default', PARTITION_NAME]);
@@ -87,7 +87,7 @@ describe('Collection Api', () => {
       collection_name: COLLECTION_NAME,
       partition_name: '_default',
     });
-    console.log(res);
+
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.stats[0].value).toEqual('0');
   });

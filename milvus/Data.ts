@@ -6,16 +6,16 @@ import { ERROR_REASONS } from './const/ErrorReason';
 
 import { DataType, DataTypeMap, DslType } from './types/Common';
 import {
-  CalcDistanceReq,
   DeleteEntitiesReq,
   FlushReq,
   GetFlushStateReq,
   GetQuerySegmentInfoReq,
   InsertReq,
   LoadBalanceReq,
+  ImportReq,
+  ListImportTasksReq,
 } from './types/Data';
 import {
-  CalcDistanceResponse,
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,
@@ -25,6 +25,8 @@ import {
   QueryResults,
   ResStatus,
   SearchResults,
+  ImportResponse,
+  ListImportTasksResponse,
 } from './types/Response';
 import {
   GetMetricsRequest,
@@ -373,6 +375,7 @@ export class Data extends Client {
       'Search',
       {
         ...data,
+        nq: data.nq || data.vectors.length,
         dsl: data.expr || '',
         dsl_type: DslType.BoolExprV1,
         placeholder_group: placeholderGroupBytes,
@@ -380,6 +383,7 @@ export class Data extends Client {
       },
       data.timeout
     );
+
     const results: any[] = [];
     /**
      *  It will decide the score precision.
@@ -534,7 +538,7 @@ export class Data extends Client {
    *  | partitions_names(optional)   | String[] |       Array of partition names      |
    *  | output_fields                | String[] |       Vector or scalar field to be returned    |
    *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
-   *
+   *  | params | {key: value}[] | An optional key pair json array
    *
    * @return
    *  | Property    |           Description              |
@@ -555,12 +559,27 @@ export class Data extends Client {
    */
   async query(data: QueryReq): Promise<QueryResults> {
     this.checkCollectionName(data);
+
+    let limits: { limit: number } | undefined;
+    let offset: { offset: number } | undefined;
+
+    if (typeof data.limit === 'number') {
+      limits = { limit: data.limit };
+    }
+    if (typeof data.offset === 'number') {
+      offset = { offset: data.offset };
+    }
+
     const promise: QueryRes = await promisify(
       this.client,
       'Query',
-      data,
+      {
+        ...data,
+        query_params: parseToKeyValue({ ...limits, ...offset }),
+      },
       data.timeout
     );
+
     const results: { [x: string]: any }[] = [];
     /**
      * type: DataType
@@ -764,6 +783,100 @@ export class Data extends Client {
       this.client,
       'GetQuerySegmentInfo',
       data,
+      data.timeout
+    );
+    return res;
+  }
+
+  /**
+   * Import data from files
+   *
+   * @param data
+   *  | Property                | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | collection_name          | String |      The name of the collection      |
+   *  | files        | string[] |        File path array       |
+   *
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-----------| :-------------------------------  |
+   *  | status      |  { error_code: number,reason:string } |
+   *  | tasks       |  taskId array  |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *   const res = await dataManager.bulkInsert({
+   *      collection_name: COLLECTION,
+   *      files: [`path-to-data-file.json`]
+   *    });
+   * ```
+   */
+  async bulkInsert(data: ImportReq): Promise<ImportResponse> {
+    if (!data || !data.collection_name) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+
+    if (!data || !data.files) {
+      throw new Error(ERROR_REASONS.IMPORT_FILE_CHECK);
+    }
+    const res = await promisify(
+      this.client,
+      'Import',
+      {
+        ...data,
+        options: data.options || [],
+      },
+      data.timeout
+    );
+    return res;
+  }
+
+  /**
+   * List import tasks
+   *
+   * @param data
+   *  | Property                | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | collection_name          | String |      The name of the collection       |
+   *  | limit        | number |       optional, maximum number of tasks returned, list all tasks if the value is 0       |
+   *
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-----------| :-------------------------------  |
+   *  | status      |  { error_code: number,reason:string } |
+   *  | state | import state |
+   *  | row_count | how many rows to import|
+   *  | id_list| id lists |
+   *  | collection_id | collection to be imported to |
+   *  |
+   *  | tasks       |  taskId array  |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *   const res = await dataManager.listImportTasks({
+   *      collection_name: COLLECTION
+   *    });
+   * ```
+   */
+  async listImportTasks(
+    data: ListImportTasksReq
+  ): Promise<ListImportTasksResponse> {
+    if (!data || !data.collection_name) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+    const res = await promisify(
+      this.client,
+      'ListImportTasks',
+      {
+        ...data,
+        limit: data.limit || 0,
+      },
       data.timeout
     );
     return res;

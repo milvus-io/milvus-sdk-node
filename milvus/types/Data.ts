@@ -1,4 +1,4 @@
-import { DataType, GrpcTimeOut } from './Common';
+import { DataType, GrpcTimeOut, KeyValuePair } from './Common';
 
 export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
@@ -44,4 +44,21 @@ export interface LoadBalanceReq extends GrpcTimeOut {
 
 export interface GetQuerySegmentInfoReq extends GrpcTimeOut {
   collectionName: string;
+}
+
+export interface ImportReq extends GrpcTimeOut {
+  collection_name: string;
+  partition_name?: string;
+  channel_names?: string[];
+  files: string[];
+  options?: KeyValuePair[];
+}
+
+export interface ListImportTasksReq extends GrpcTimeOut {
+  collection_name: string; // target collection, list all tasks if the name is empty
+  limit?: number; // maximum number of tasks returned, list all tasks if the value is 0
+}
+
+export interface GetImportStateReq extends GrpcTimeOut {
+  task: number;
 }
