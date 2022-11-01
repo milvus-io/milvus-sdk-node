@@ -2,6 +2,7 @@ import { ConsistencyLevelEnum } from './Collection';
 import {
   DataType,
   IndexState,
+  ImportState,
   KeyValuePair,
   NumberArrayId,
   SegmentState,
@@ -245,4 +246,26 @@ export interface GetVersionResponse {
 export interface CheckHealthResponse {
   isHealthy: boolean;
   reasons: [];
+}
+
+export interface ImportResponse {
+  status: ResStatus;
+  tasks: number[];
+}
+
+export interface GetImportStateResponse {
+  status: ResStatus;
+  state: ImportState;
+  row_count: number;
+  id_list: number[];
+  infos: KeyValuePair[];
+  id: number;
+  collection_id: number;
+  segment_ids: number[];
+  create_ts: number;
+}
+
+export interface ListImportTasksResponse {
+  status: ResStatus;
+  tasks: GetImportStateResponse[];
 }

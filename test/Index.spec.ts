@@ -60,24 +60,18 @@ describe('Collection Api', () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  // it(`Create Index not exist type`, async () => {
-  //   const res = await milvusClient.createIndex({
-  //     collection_name: COLLECTION_NAME,
-  //     field_name: "vector_02",
-  //     extra_params: [
-  //       {
-  //         key: "index_type",
-  //         value: "NOT exist",
-  //       },
-  //       {
-  //         key: "params",
-  //         value: JSON.stringify({ nlist: 1024 }),
-  //       },
-  //     ],
-  //   });
-  //   console.log(res);
-  //   expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
+  it(`Create Index not exist type should failed`, async () => {
+    const res = await milvusClient.indexManager.createIndex({
+      collection_name: COLLECTION_NAME,
+      field_name: 'vector_02',
+      extra_params: {
+        index_type: 'abcd',
+        metric_type: 'HAMMING',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
+    expect(res.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+  });
 
   it(`Describe Index with index name`, async () => {
     const res = await milvusClient.indexManager.describeIndex({
@@ -120,6 +114,15 @@ describe('Collection Api', () => {
     // console.log('----getIndexState ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
+
+  // it(`Get Index without name progress`, async () => {
+  //   const res = await milvusClient.indexManager.getIndexBuildProgress({
+  //     collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
+  //     index_name: INDEX_NAME,
+  //   });
+  //   // console.log('----getIndexBuildProgress with name ----', res);
+  //   expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  // });
 
   it(`Get Index with name progress`, async () => {
     const res = await milvusClient.indexManager.getIndexBuildProgress({

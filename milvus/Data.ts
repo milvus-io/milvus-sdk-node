@@ -12,6 +12,8 @@ import {
   GetQuerySegmentInfoReq,
   InsertReq,
   LoadBalanceReq,
+  ImportReq,
+  ListImportTasksReq,
 } from './types/Data';
 import {
   ErrorCode,
@@ -23,6 +25,8 @@ import {
   QueryResults,
   ResStatus,
   SearchResults,
+  ImportResponse,
+  ListImportTasksResponse,
 } from './types/Response';
 import {
   GetMetricsRequest,
@@ -779,6 +783,100 @@ export class Data extends Client {
       this.client,
       'GetQuerySegmentInfo',
       data,
+      data.timeout
+    );
+    return res;
+  }
+
+  /**
+   * Import data from files
+   *
+   * @param data
+   *  | Property                | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | collection_name          | String |      The name of the collection      |
+   *  | files        | string[] |        File path array       |
+   *
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-----------| :-------------------------------  |
+   *  | status      |  { error_code: number,reason:string } |
+   *  | tasks       |  taskId array  |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *   const res = await dataManager.bulkInsert({
+   *      collection_name: COLLECTION,
+   *      files: [`path-to-data-file.json`]
+   *    });
+   * ```
+   */
+  async bulkInsert(data: ImportReq): Promise<ImportResponse> {
+    if (!data || !data.collection_name) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+
+    if (!data || !data.files) {
+      throw new Error(ERROR_REASONS.IMPORT_FILE_CHECK);
+    }
+    const res = await promisify(
+      this.client,
+      'Import',
+      {
+        ...data,
+        options: data.options || [],
+      },
+      data.timeout
+    );
+    return res;
+  }
+
+  /**
+   * List import tasks
+   *
+   * @param data
+   *  | Property                | Type   |           Description              |
+   *  | :---------------------- | :----  | :-------------------------------  |
+   *  | collection_name          | String |      The name of the collection       |
+   *  | limit        | number |       optional, maximum number of tasks returned, list all tasks if the value is 0       |
+   *
+   *
+   * @return
+   *  | Property    |           Description              |
+   *  | :-----------| :-------------------------------  |
+   *  | status      |  { error_code: number,reason:string } |
+   *  | state | import state |
+   *  | row_count | how many rows to import|
+   *  | id_list| id lists |
+   *  | collection_id | collection to be imported to |
+   *  |
+   *  | tasks       |  taskId array  |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *   const res = await dataManager.listImportTasks({
+   *      collection_name: COLLECTION
+   *    });
+   * ```
+   */
+  async listImportTasks(
+    data: ListImportTasksReq
+  ): Promise<ListImportTasksResponse> {
+    if (!data || !data.collection_name) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+    const res = await promisify(
+      this.client,
+      'ListImportTasks',
+      {
+        ...data,
+        limit: data.limit || 0,
+      },
       data.timeout
     );
     return res;
