@@ -97,7 +97,7 @@ describe('Collection Api', () => {
     const res = await collectionManager.createCollection(
       genCollectionParams(LOAD_COLLECTION_NAME, '128')
     );
-    console.log(res);
+    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -105,7 +105,7 @@ describe('Collection Api', () => {
     const res = await collectionManager.hasCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log('----has collection', res);
+    // console.log('----has collection', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.value).toEqual(true);
   });
@@ -119,7 +119,7 @@ describe('Collection Api', () => {
 
   it(`Show all collections`, async () => {
     const res = await collectionManager.showCollections();
-    console.log(res);
+    // console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
   });
@@ -137,7 +137,7 @@ describe('Collection Api', () => {
     const res = await collectionManager.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log(res);
+    // console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.schema.name).toEqual(COLLECTION_NAME);
     expect(res.schema.fields.length).toEqual(2);
@@ -146,7 +146,16 @@ describe('Collection Api', () => {
   });
 
   it(`Load Collection`, async () => {
-    const res = await collectionManager.loadCollection({
+    await milvusClient.indexManager.createIndex({
+      collection_name: LOAD_COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
+    const res = await collectionManager.loadCollectionSync({
       collection_name: LOAD_COLLECTION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);

@@ -5,7 +5,7 @@
 
 # Milvus2-sdk-node
 
-This is node sdk for [Milvus](https://github.com/milvus-io/milvus).
+Node.js sdk for [Milvus](https://github.com/milvus-io/milvus).
 
 ## Compatibility
 
@@ -15,58 +15,41 @@ The following collection shows Milvus versions and recommended @zilliz/milvus2-s
 | :------------: | :------------------------------------------: |
 |     2.0.0      |                    2.0.0                     |
 |     2.0.1      |                 2.0.0, 2.0.1                 |
+|     2.1.x      |                    2.1.x                     |
+|     2.2.x      |                    2.2.x                     |
 
 ## Dependencies
 
-Milvus: v2+
-
-Node: v12+
+- Milvus: v2+
+- Node: v12+
 
 ## Installation
 
 ```javascript
-   npm install @zilliz/milvus2-sdk-node
+npm install @zilliz/milvus2-sdk-node
 ```
 
-## API Support
+## SDK
 
-| Name                    | Async |               Description                |
-| :---------------------- | :---- | :--------------------------------------: |
-| createCollection        | false |       Create collection in milvus        |
-| hasCollection           | false |      Check collection exist or not       |
-| showCollections         | false |           List all collections           |
-| describeCollection      | false | Get collection detail, like name ,schema |
-| getCollectionStatistics | false | Get collection statistics like row count |
-| loadCollection          | true  |           Load data into cache           |
-| releaseCollection       | true  |         Release data from cache          |
-| dropCollection          | false |       Drop collection from milvus        |
-| createPartition         | false |    Create partition in one collection    |
-| hasPartition            | false |       Check partition exist or not       |
-| showPartitions          | false |  List all partitions for one collection  |
-| getPartitionStatistics  | false | Get partition statistics like row_count  |
-| loadPartitions          | true  |           Load data into cache           |
-| releasePartitions       | true  |         Release data from cache          |
-| dropPartition           | false |        Drop partition from milvus        |
-| createIndex             | true  |       Creat index on vector field        |
-| describeIndex           | false |              Get index info              |
-| getIndexState           | false |          Get index build state           |
-| getIndexBuildProgress   | false |       Get index building progress        |
-| dropIndex               | true  |                Drop index                |
-| insert                  | false |         Insert data into milvus          |
-| search                  | false |         Vector similarity search         |
-| flush                   | true  |                Flush Data                |
-| flushSync               | false |             Flush Data Sync              |
-| query                   | false |             Get data by expr             |
-| compact                 | true  |     Do compaction for the collection     |
-| getCompactionState      | true  |   Get compaction states by compact id    |
+- [Client](./milvus/Index.ts)
+- [Collection](./milvus/Collection.ts)
+- [Index](./milvus/MilvusIndex.ts)
+- [Partition](./milvus/Partition.ts)
+- [User](./milvus/User.ts)
+- [Utils](./milvus/Utils.ts)
+- [Data](./milvus/Data.ts)
+
+More documentation, you can refer [Milvus offical website](https://milvus.io/).
 
 ## How to dev
+
 1. yarn install
 2. Fetch milvus proto
-   1. ```git submodule init``` (if this is your first time)
-   2. ```git submodule update --remote```
+   1. `git submodule init` (if this is your first time)
+   2. `git submodule update --remote`
 3. Add feature in milvus folder.
-4. Run test ```yarn test -- test/Your-test-for-your-feature.spec.ts```
+4. Run test `yarn test -- test/Your-test-for-your-feature.spec.ts`
+
 ## Example
 
 1. [Hello World](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/HelloMilvus.ts)
@@ -74,3 +57,7 @@ Node: v12+
 3. [How to insert data](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Insert.ts)
 4. [Vector similarity search on float field](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Search.ts)
 5. [Vector similarity search on binary field](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/BinarySearch.ts)
+
+## Others
+
+[Attu](https://github.com/zilliztech/attu) which is a Milvus web interface tool, depends on Milvus node.js SDK.

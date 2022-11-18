@@ -45,4 +45,5 @@ export enum ERROR_REASONS {
   TIMESTAMP_PARAM_CHECK = 'type should be string (only contains number) or bigint',
 
   DATE_TYPE_CHECK = 'type should be Date',
+  IMPORT_FILE_CHECK = 'files is required',
 }

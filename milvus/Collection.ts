@@ -379,12 +379,18 @@ export class Collection extends Client {
       data,
       data.timeout
     );
+
+    if (promise.error_code !== ErrorCode.SUCCESS) {
+      throw new Error(`ErrorCode: ${promise.error_code}. Reason: ${promise.reason}`);
+    }
+
     let loadedPercentage = 0;
     while (Number(loadedPercentage) < 100) {
       let res = await this.showCollections({
         collection_names: [data.collection_name],
         type: ShowCollectionsType.Loaded,
       });
+
       if (res.status.error_code !== ErrorCode.SUCCESS) {
         throw new Error(
           `ErrorCode: ${res.status.error_code}. Reason: ${res.status.reason}`
@@ -658,7 +664,7 @@ export class Collection extends Client {
    *  });
    *
    * ```
-   * 
+   *
    * Return
    * ```
    * {

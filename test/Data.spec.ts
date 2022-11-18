@@ -11,6 +11,22 @@ import { timeoutTest } from './common/timeout';
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
+const fields = [
+  {
+    isVector: true,
+    dim: 4,
+    name: VECTOR_FIELD_NAME,
+  },
+  {
+    isVector: false,
+    name: 'age',
+  },
+];
+const vectorsData = generateInsertData(fields, 10);
+const params: InsertReq = {
+  collection_name: COLLECTION_NAME,
+  fields_data: vectorsData,
+};
 
 describe('Data.ts Test', () => {
   beforeAll(async () => {
@@ -18,26 +34,17 @@ describe('Data.ts Test', () => {
       genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
     );
 
-    const fields = [
-      {
-        isVector: true,
-        dim: 4,
-        name: VECTOR_FIELD_NAME,
-      },
-      {
-        isVector: false,
-        name: 'age',
-      },
-    ];
-    const vectorsData = generateInsertData(fields, 10);
-
-    const params: InsertReq = {
-      collection_name: COLLECTION_NAME,
-      fields_data: vectorsData,
-    };
-
     await milvusClient.dataManager.insert(params);
-    const res = await milvusClient.collectionManager.loadCollectionSync({
+    await milvusClient.indexManager.createIndex({
+      collection_name: COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
+    await milvusClient.collectionManager.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
   });
@@ -131,6 +138,7 @@ describe('Data.ts Test', () => {
       vector_type: DataType.FloatVector,
     });
 
+    // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -150,6 +158,7 @@ describe('Data.ts Test', () => {
         },
         output_fields: ['age'],
         vector_type: DataType.FloatVector,
+        nq: 1,
       });
       expect('a').toEqual('b');
     } catch (error) {
@@ -173,6 +182,7 @@ describe('Data.ts Test', () => {
         },
         output_fields: ['age'],
         vector_type: DataType.Bool as DataType.BinaryVector,
+        nq: 1,
       });
       expect('a').toEqual('b');
     } catch (error) {
@@ -196,6 +206,7 @@ describe('Data.ts Test', () => {
         },
         output_fields: ['age'],
         vector_type: DataType.FloatVector,
+        nq: 1,
       });
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
@@ -217,13 +228,46 @@ describe('Data.ts Test', () => {
         },
         output_fields: ['age'],
         vector_type: DataType.FloatVector,
+        nq: 1,
       });
     } catch (err) {
       expect(err.message).toEqual(ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
     }
   });
 
-  it('Query ', async () => {
+  it('Query with data limit and offset', async () => {
+    const res = await milvusClient.dataManager.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'age > 0',
+      output_fields: ['age', VECTOR_FIELD_NAME],
+      offset: 0,
+      limit: 3,
+    });
+    // console.log('----query with data limit3, offset: 0 ----', res);
+    expect(res.data.length).toBe(3);
+  });
+
+  it('Query with data limit only', async () => {
+    const res2 = await milvusClient.dataManager.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'age > 0',
+      output_fields: ['age', VECTOR_FIELD_NAME],
+      limit: 3,
+    });
+    expect(res2.data.length).toBe(3);
+  });
+
+  it('Query with data without limit and offset', async () => {
+    const res3 = await milvusClient.dataManager.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'age > 0',
+      output_fields: ['age', VECTOR_FIELD_NAME],
+    });
+    expect(res3.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // console.log('----query with data limit: not set, offset: 3 ----', res2);
+  });
+
+  it('Query with empty data', async () => {
     await milvusClient.dataManager.deleteEntities({
       collection_name: COLLECTION_NAME,
       expr: 'age in [2,6]',
@@ -233,8 +277,9 @@ describe('Data.ts Test', () => {
       collection_name: COLLECTION_NAME,
       expr: 'age in [2,4,6,8]',
       output_fields: ['age', VECTOR_FIELD_NAME],
+      limit: 3,
+      offset: 0,
     });
-    console.log('----query---', res);
     expect(res.status.error_code).toEqual(ErrorCode.EMPTY_COLLECTION);
   });
 
