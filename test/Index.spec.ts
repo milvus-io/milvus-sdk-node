@@ -9,8 +9,17 @@ import {
 import { timeoutTest } from './common/timeout';
 
 let milvusClient = new MilvusClient(IP);
+// names
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_WITHOUT_INDEX_NAME = GENERATE_NAME();
+const INDEX_COLLECTIONS = Array(7).fill(1);
+
+for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
+  INDEX_COLLECTIONS[i] = GENERATE_NAME();
+}
+
+const [FLAT, IVF_FLAT, IVF_SQ8, IVF_PQ, HNSW, ANNOY, DISKANN] =
+  INDEX_COLLECTIONS;
 
 describe('Collection Api', () => {
   beforeAll(async () => {
@@ -20,6 +29,12 @@ describe('Collection Api', () => {
     await milvusClient.collectionManager.createCollection(
       genCollectionParams(COLLECTION_NAME_WITHOUT_INDEX_NAME, '8')
     );
+
+    for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
+      await milvusClient.collectionManager.createCollection(
+        genCollectionParams(INDEX_COLLECTIONS[i], '8')
+      );
+    }
   });
 
   afterAll(async () => {
@@ -29,6 +44,116 @@ describe('Collection Api', () => {
     await milvusClient.collectionManager.dropCollection({
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
     });
+
+    for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
+      await milvusClient.collectionManager.dropCollection({
+        collection_name: INDEX_COLLECTIONS[i],
+      });
+    }
+  });
+
+  it(`Create FLAT index should success`, async () => {
+    const res = await milvusClient.indexManager.createIndex({
+      collection_name: FLAT,
+      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'FLAT',
+        metric_type: 'L2',
+      },
+    });
+    // console.log(res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create IVF_FLAT index should success`, async () => {
+    const res = await milvusClient.indexManager.createIndex({
+      collection_name: IVF_FLAT,
+      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
+    // console.log(res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create IVF_SQ8 index should success`, async () => {
+    const res = await milvusClient.indexManager.createIndex({
+      collection_name: IVF_SQ8,
+      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_SQ8',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
+    // console.log(res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create IVF_PQ index should success`, async () => {
+    const res = await milvusClient.indexManager.createIndex({
+      collection_name: IVF_PQ,
+      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_PQ',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024, m: 8, nbits: 8 }),
+      },
+    });
+    // console.log(res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create HNSW index should success`, async () => {
+    const res = await milvusClient.indexManager.createIndex({
+      collection_name: HNSW,
+      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'HNSW',
+        metric_type: 'L2',
+        params: JSON.stringify({ M: 4, efConstruction: 8 }),
+      },
+    });
+    // console.log(res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create ANNOY index should success`, async () => {
+    const res = await milvusClient.indexManager.createIndex({
+      collection_name: ANNOY,
+      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'ANNOY',
+        metric_type: 'L2',
+        params: JSON.stringify({ n_trees: 8 }),
+      },
+    });
+    // console.log(res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create DISKANN index should success`, async () => {
+    const res = await milvusClient.indexManager.createIndex({
+      collection_name: DISKANN,
+      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'DISKANN',
+        metric_type: 'L2',
+        params: JSON.stringify({ k: 8, search_list: 8 }),
+      },
+    });
+    console.log(res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Create Index with name should success`, async () => {
@@ -115,14 +240,14 @@ describe('Collection Api', () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  // it(`Get Index without name progress`, async () => {
-  //   const res = await milvusClient.indexManager.getIndexBuildProgress({
-  //     collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
-  //     index_name: INDEX_NAME,
-  //   });
-  //   // console.log('----getIndexBuildProgress with name ----', res);
-  //   expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
+  it(`Get Index without name progress`, async () => {
+    const res = await milvusClient.indexManager.getIndexBuildProgress({
+      collection_name: COLLECTION_NAME,
+      index_name: INDEX_NAME,
+    });
+    // console.log('----getIndexBuildProgress with name ----', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
   it(`Get Index with name progress`, async () => {
     const res = await milvusClient.indexManager.getIndexBuildProgress({
