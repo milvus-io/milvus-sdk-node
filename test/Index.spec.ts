@@ -141,20 +141,19 @@ describe('Collection Api', () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Create DISKANN index should success`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
-      collection_name: DISKANN,
-      index_name: INDEX_NAME,
-      field_name: VECTOR_FIELD_NAME,
-      extra_params: {
-        index_type: 'DISKANN',
-        metric_type: 'L2',
-        params: JSON.stringify({ k: 8, search_list: 8 }),
-      },
-    });
-    console.log(res);
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-  });
+  // it(`Create DISKANN index should success`, async () => {
+  //   const res = await milvusClient.indexManager.createIndex({
+  //     collection_name: DISKANN,
+  //     index_name: INDEX_NAME,
+  //     field_name: VECTOR_FIELD_NAME,
+  //     extra_params: {
+  //       index_type: 'DISKANN',
+  //       metric_type: 'L2',
+  //     },
+  //   });
+  //   console.log(res);
+  //   expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  // });
 
   it(`Create Index with name should success`, async () => {
     const res = await milvusClient.indexManager.createIndex({
