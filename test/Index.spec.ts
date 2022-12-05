@@ -18,8 +18,15 @@ for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
   INDEX_COLLECTIONS[i] = GENERATE_NAME();
 }
 
-const [FLAT, IVF_FLAT, IVF_SQ8, IVF_PQ, HNSW, ANNOY, DISKANN] =
-  INDEX_COLLECTIONS;
+const [
+  COL_FLAT,
+  COL_IVF_FLAT,
+  COL_IVF_SQ8,
+  COL_IVF_PQ,
+  COL_HNSW,
+  COL_ANNOY,
+  DISKANN,
+] = INDEX_COLLECTIONS;
 
 describe('Collection Api', () => {
   beforeAll(async () => {
@@ -54,7 +61,7 @@ describe('Collection Api', () => {
 
   it(`Create FLAT index should success`, async () => {
     const res = await milvusClient.indexManager.createIndex({
-      collection_name: FLAT,
+      collection_name: COL_FLAT,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -68,7 +75,7 @@ describe('Collection Api', () => {
 
   it(`Create IVF_FLAT index should success`, async () => {
     const res = await milvusClient.indexManager.createIndex({
-      collection_name: IVF_FLAT,
+      collection_name: COL_IVF_FLAT,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -83,7 +90,7 @@ describe('Collection Api', () => {
 
   it(`Create IVF_SQ8 index should success`, async () => {
     const res = await milvusClient.indexManager.createIndex({
-      collection_name: IVF_SQ8,
+      collection_name: COL_IVF_SQ8,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -98,7 +105,7 @@ describe('Collection Api', () => {
 
   it(`Create IVF_PQ index should success`, async () => {
     const res = await milvusClient.indexManager.createIndex({
-      collection_name: IVF_PQ,
+      collection_name: COL_IVF_PQ,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -113,7 +120,7 @@ describe('Collection Api', () => {
 
   it(`Create HNSW index should success`, async () => {
     const res = await milvusClient.indexManager.createIndex({
-      collection_name: HNSW,
+      collection_name: COL_HNSW,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -128,7 +135,7 @@ describe('Collection Api', () => {
 
   it(`Create ANNOY index should success`, async () => {
     const res = await milvusClient.indexManager.createIndex({
-      collection_name: ANNOY,
+      collection_name: COL_ANNOY,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -226,14 +233,6 @@ describe('Collection Api', () => {
     const res = await milvusClient.indexManager.getIndexState({
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
-    });
-    // console.log('----getIndexState ----', res);
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
-  it(`Get Index without name State`, async () => {
-    const res = await milvusClient.indexManager.getIndexState({
-      collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
     });
     // console.log('----getIndexState ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
