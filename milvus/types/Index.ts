@@ -3,7 +3,7 @@ import { GrpcTimeOut } from './Common';
 export interface CreateIndexParam {
   index_type: string;
   metric_type: string;
-  params: string;
+  params?: string;
 }
 export interface CreateIndexReq extends GrpcTimeOut {
   collection_name: string;
