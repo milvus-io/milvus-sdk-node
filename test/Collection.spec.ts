@@ -15,7 +15,6 @@ const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
 const ALIAS = 'my_alias';
-const ALTED_ALIAS = 'my_alias2';
 
 describe('Collection Api', () => {
   it(`Create Collection Successful`, async () => {
