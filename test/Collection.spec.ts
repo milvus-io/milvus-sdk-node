@@ -14,6 +14,8 @@ const COLLECTION_NAME = GENERATE_NAME();
 const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
+const ALIAS = 'my_alias';
+const ALTED_ALIAS = 'my_alias2';
 
 describe('Collection Api', () => {
   it(`Create Collection Successful`, async () => {
@@ -359,6 +361,57 @@ describe('Collection Api', () => {
       await collectionManager.compact({
         collection_name: undefined as any,
       });
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it(`Create alais success`, async () => {
+    try {
+      await collectionManager.createAlias({
+        collection_name: LOAD_COLLECTION_NAME,
+        alias: ALIAS,
+      });
+
+      const res = await collectionManager.describeCollection({
+        collection_name: LOAD_COLLECTION_NAME,
+      });
+
+      expect(res.aliases[0]).toEqual(ALIAS);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it(`Alter alais success`, async () => {
+    try {
+      await collectionManager.alterAlias({
+        collection_name: LOAD_COLLECTION_NAME_SYNC,
+        alias: ALIAS,
+      });
+      const res = await collectionManager.describeCollection({
+        collection_name: LOAD_COLLECTION_NAME_SYNC,
+      });
+      expect(res.aliases[0]).toEqual(ALIAS);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
+  it(`Drop alais success`, async () => {
+    try {
+      await collectionManager.dropAlias({
+        alias: ALIAS,
+      });
+      const res = await collectionManager.describeCollection({
+        collection_name: LOAD_COLLECTION_NAME,
+      });
+      const res2 = await collectionManager.describeCollection({
+        collection_name: LOAD_COLLECTION_NAME_SYNC,
+      });
+
+      expect(res.aliases.length).toEqual(0);
+      expect(res2.aliases.length).toEqual(0);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
