@@ -60,7 +60,9 @@ describe('Vector search on binary field', () => {
     const res = await milvusClient.dataManager.search({
       collection_name: COLLECTION_NAME,
       expr: '',
-      vectors: [[4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3]],
+      vectors: [
+        Array.from({ length: 16 }).map(() => (Math.random() > 0.5 ? 1 : 0)),
+      ],
 
       search_params: {
         anns_field: VECTOR_FIELD_NAME,
