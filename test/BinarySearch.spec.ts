@@ -20,8 +20,8 @@ describe('Vector search on binary field', () => {
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
-        index_type: 'IVF_FLAT',
-        metric_type: 'L2',
+        index_type: 'BIN_IVF_FLAT',
+        metric_type: 'TANIMOTO',
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
@@ -60,18 +60,20 @@ describe('Vector search on binary field', () => {
     const res = await milvusClient.dataManager.search({
       collection_name: COLLECTION_NAME,
       expr: '',
-      vectors: [[4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3]],
+      vectors: [
+        Array.from({ length: 16 }).map(() => (Math.random() > 0.5 ? 1 : 0)),
+      ],
 
       search_params: {
         anns_field: VECTOR_FIELD_NAME,
         topk: '4',
-        metric_type: 'Hamming',
+        metric_type: 'TANIMOTO',
         params: JSON.stringify({ nprobe: 1024 }),
         round_decimal: -1,
       },
       vector_type: DataType.BinaryVector,
     });
-    // console.log('----- Expr Vector Search  -----', res);
+    // console.log('----- Binary Vector Search  -----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });
