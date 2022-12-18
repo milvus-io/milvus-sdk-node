@@ -1,4 +1,4 @@
-import protobuf from 'protobufjs';
+import protobuf, { Root } from 'protobufjs';
 import { promisify } from '../utils';
 import { Client } from './Client';
 import { Collection } from './Collection';
@@ -49,10 +49,14 @@ export class Data extends Client {
   vectorTypes: number[];
   collectionManager: Collection;
 
+  private readonly _protoRoot: Root;
+
   constructor(client: any, collectionManager: Collection) {
     super(client);
     this.vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
     this.collectionManager = collectionManager;
+
+    this._protoRoot = protobuf.loadSync(protoPath)
   }
 
   /**
@@ -302,7 +306,6 @@ export class Data extends Client {
    * ```
    */
   async search(data: SearchReq): Promise<SearchResults> {
-    const root = await protobuf.load(protoPath);
     this.checkCollectionName(data);
     if (
       !data.search_params ||
@@ -348,7 +351,7 @@ export class Data extends Client {
     }
 
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
-    const PlaceholderGroup = root.lookupType(
+    const PlaceholderGroup = this._protoRoot.lookupType(
       'milvus.proto.common.PlaceholderGroup'
     );
     // tag $0 is hard code in milvus, when dsltype is expr
