@@ -280,7 +280,8 @@ describe('Data.ts Test', () => {
       limit: 3,
       offset: 0,
     });
-    expect(res.status.error_code).toEqual(ErrorCode.EMPTY_COLLECTION);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.data.length).toEqual(0);
   });
 
   it(`Get metrics should throw GET_METRIC_CHECK_PARAMS`, async () => {
