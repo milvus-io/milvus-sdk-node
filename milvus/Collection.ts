@@ -1,4 +1,4 @@
-import protobuf from 'protobufjs';
+import protobuf, { Root } from 'protobufjs';
 import { promisify } from '../utils';
 import { ERROR_REASONS } from './const/ErrorReason';
 import {
@@ -44,6 +44,14 @@ const schemaPath = path.resolve(__dirname, '../proto/proto/schema.proto');
  * See all [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts).
  */
 export class Collection extends Client {
+  private readonly _protoRoot: Root;
+
+  constructor(client: any) {
+    super(client);
+
+    this._protoRoot = protobuf.loadSync(schemaPath);
+  }
+
   /**
    * Create a collection in Milvus.
    *
@@ -101,11 +109,13 @@ export class Collection extends Client {
 
     const root = await protobuf.load(schemaPath);
     // When data type is bytes, use protobufjs to transform data to buffer bytes.
-    const CollectionSchema = root.lookupType(
+    const CollectionSchema = this._protoRoot.lookupType(
       'milvus.proto.schema.CollectionSchema'
     );
 
-    const FieldSchema = root.lookupType('milvus.proto.schema.FieldSchema');
+    const FieldSchema = this._protoRoot.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
 
     let payload: any = {
       name: collection_name,
@@ -381,7 +391,9 @@ export class Collection extends Client {
     );
 
     if (promise.error_code !== ErrorCode.SUCCESS) {
-      throw new Error(`ErrorCode: ${promise.error_code}. Reason: ${promise.reason}`);
+      throw new Error(
+        `ErrorCode: ${promise.error_code}. Reason: ${promise.reason}`
+      );
     }
 
     let loadedPercentage = 0;
