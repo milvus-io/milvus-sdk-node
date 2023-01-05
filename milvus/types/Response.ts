@@ -269,3 +269,12 @@ export interface ListImportTasksResponse {
   status: ResStatus;
   tasks: GetImportStateResponse[];
 }
+
+type RoleEntity = { name: string };
+
+type RoleResult = { users: string[]; role: RoleEntity };
+
+export interface SelectRoleResponse {
+  status: ResStatus;
+  results: RoleResult[];
+}

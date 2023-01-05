@@ -16,3 +16,27 @@ export interface DeleteUserReq extends GrpcTimeOut {
 }
 
 export interface ListUsersReq extends GrpcTimeOut {}
+
+export interface CreateRoleReq extends GrpcTimeOut {
+  roleName: string;
+}
+
+export interface DropRoleReq extends GrpcTimeOut {
+  roleName: string;
+}
+
+export interface AddUserToRoleReq extends GrpcTimeOut {
+  username: string;
+  roleName: string;
+}
+
+export interface RemoveUserFromRoleReq extends GrpcTimeOut {
+  username: string;
+  roleName: string;
+}
+
+export interface SelectRoleReq extends GrpcTimeOut {
+  roleName: string;
+  includeUserInfo?: boolean;
+}
+

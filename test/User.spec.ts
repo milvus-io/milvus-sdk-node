@@ -10,6 +10,7 @@ let authClient: MilvusClient | null = null;
 const USERNAME = 'nameczz';
 const PASSWORD = '123456';
 const NEW_PASSWORD = '1234567';
+const ROLENAME = 'ROLENAME';
 
 describe('User Auth Api', () => {
   it(`Create first user expect error`, async () => {
@@ -68,6 +69,60 @@ describe('User Auth Api', () => {
     authClient!.closeConnection();
   });
 
+  it(`It should create role successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.createRole({
+      roleName: ROLENAME,
+    });
+    // console.log('createRole', res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    authClient.closeConnection();
+  });
+
+  it(`It should add user to role successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.addUserToRole({
+      username: USERNAME,
+      roleName: ROLENAME,
+    });
+    // console.log('addUserToRole', res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    authClient.closeConnection();
+  });
+
+  it(`It should get role successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.selectRole({
+      roleName: ROLENAME,
+    });
+    console.log('selectRole', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results[0].role.name).toEqual(ROLENAME);
+    authClient.closeConnection();
+  });
+
+  it(`It should remove user from role successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.removeUserFromRole({
+      username: USERNAME,
+      roleName: ROLENAME,
+    });
+    // console.log('addUserToRole', res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    authClient.closeConnection();
+  });
+
+  it(`It should drop role successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.dropRole({
+      roleName: ROLENAME,
+    });
+    // console.log('dropRole', res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    authClient.closeConnection();
+  });
+
+  // last test
   it(`Auth client delete user expect success`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.deleteUser({ username: USERNAME });

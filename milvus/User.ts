@@ -2,13 +2,23 @@ import { promisify } from '../utils';
 import { Client } from './Client';
 import { ERROR_REASONS } from './const/ErrorReason';
 
-import { ListCredUsersResponse, ResStatus } from './types/Response';
+import {
+  ListCredUsersResponse,
+  ResStatus,
+  SelectRoleResponse,
+} from './types/Response';
 import {
   CreateUserReq,
   DeleteUserReq,
   ListUsersReq,
   UpdateUserReq,
+  CreateRoleReq,
+  DropRoleReq,
+  AddUserToRoleReq,
+  RemoveUserFromRoleReq,
+  SelectRoleReq,
 } from './types/User';
+import { OperateUserRoleType } from './types/Common';
 import { stringToBase64 } from './utils/Format';
 
 /**
@@ -154,6 +164,146 @@ export class User extends Client {
       this.client,
       'ListCredUsers',
       {},
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * Create user role
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.createRole({roleName: 'myrole'});
+   * ```
+   */
+  async createRole(data: CreateRoleReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'CreateRole',
+      {
+        entity: { name: data.roleName },
+      },
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * Drop user role
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.dropRole({roleName: 'myrole'});
+   * ```
+   */
+  async dropRole(data: DropRoleReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'DropRole',
+      {
+        role_name: data.roleName,
+      },
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * add user to role
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.addUserToRole({username: 'my', roleName: 'myrole'});
+   * ```
+   */
+  async addUserToRole(data: AddUserToRoleReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'OperateUserRole',
+      {
+        username: data.username,
+        role_name: data.roleName,
+        type: OperateUserRoleType.AddUserToRole,
+      },
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * remove user from role
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.removeUserFromRole({username: 'my', roleName: 'myrole'});
+   * ```
+   */
+  async removeUserFromRole(data: RemoveUserFromRoleReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'OperateUserRole',
+      {
+        username: data.username,
+        role_name: data.roleName,
+        type: OperateUserRoleType.RemoveUserFromRole,
+      },
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * gets all roles that a user has
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.removeUserFromRole({username: 'my', roleName: 'myrole'});
+   * ```
+   */
+  async selectRole(data: SelectRoleReq): Promise<SelectRoleResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectRole',
+      {
+        role: { name: data.roleName },
+        includeUserInfo: data.includeUserInfo || true,
+      },
       data?.timeout
     );
     return promise;

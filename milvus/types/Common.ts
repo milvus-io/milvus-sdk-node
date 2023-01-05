@@ -357,3 +357,8 @@ export enum StateCode {
   Abnormal = 2,
   StandBy = 3,
 }
+
+export enum OperateUserRoleType {
+  AddUserToRole = 0,
+  RemoveUserFromRole = 1,
+}
