@@ -1,11 +1,13 @@
 import { promisify } from '../utils';
 import { Client } from './Client';
 import { ERROR_REASONS } from './const/ErrorReason';
-
 import {
   ListCredUsersResponse,
   ResStatus,
   SelectRoleResponse,
+  SelectUserResponse,
+  SelectGrantResponse,
+  HasRoleResponse,
 } from './types/Response';
 import {
   CreateUserReq,
@@ -17,8 +19,13 @@ import {
   AddUserToRoleReq,
   RemoveUserFromRoleReq,
   SelectRoleReq,
+  SelectUserReq,
+  OperateRolePrivilegeReq,
+  SelectGrantReq,
+  ListGrantsReq,
+  HasRoleReq,
 } from './types/User';
-import { OperateUserRoleType } from './types/Common';
+import { OperateUserRoleType, OperatePrivilegeType } from './types/Common';
 import { stringToBase64 } from './utils/Format';
 
 /**
@@ -282,7 +289,7 @@ export class User extends Client {
   }
 
   /**
-   * gets all roles that a user has
+   * gets all users that belong to a specified role
    *
    * @return
    *  | Property      | Description |
@@ -293,7 +300,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.removeUserFromRole({username: 'my', roleName: 'myrole'});
+   *  milvusClient.userManager.selectRole({roleName: 'myrole'});
    * ```
    */
   async selectRole(data: SelectRoleReq): Promise<SelectRoleResponse> {
@@ -302,10 +309,281 @@ export class User extends Client {
       'SelectRole',
       {
         role: { name: data.roleName },
-        includeUserInfo: data.includeUserInfo || true,
+        include_user_info: data.includeUserInfo || true,
       },
       data?.timeout
     );
+
     return promise;
+  }
+
+  async listRoles(data?: SelectRoleReq): Promise<SelectRoleResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectRole',
+      {
+        include_user_info: true,
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * gets all users that belong to a specified role
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.selectUser({username: 'name'});
+   * ```
+   */
+  async selectUser(data: SelectUserReq): Promise<SelectUserResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectUser',
+      {
+        user: { name: data.username },
+        include_role_info: data.includeRoleInfo || true,
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * grant privileges to a role
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.grantRolePrivilege({
+   *    roleName: 'roleName',
+   *    object: '*',
+   *    objectName: 'Collection',
+   *    privilegeName: 'CreateIndex'
+   * });
+   * ```
+   */
+  async grantRolePrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'OperatePrivilege',
+      {
+        entity: {
+          role: { name: data.roleName },
+          object: { name: data.object },
+          object_name: data.objectName,
+          grantor: {
+            // user: { name: data.username },
+            privilege: { name: data.privilegeName },
+          },
+        },
+        type: OperatePrivilegeType.Grant,
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * revoke privileges to a role
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.grantRolePrivilege({
+   *    roleName: 'roleName',
+   *    object: '*',
+   *    objectName: 'Collection',
+   *    privilegeName: 'CreateIndex'
+   * });
+   * ```
+   */
+  async revokeRolePrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'OperatePrivilege',
+      {
+        entity: {
+          role: { name: data.roleName },
+          object: { name: data.object },
+          object_name: data.objectName,
+          grantor: {
+            privilege: { name: data.privilegeName },
+          },
+        },
+        type: OperatePrivilegeType.Revoke,
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * revoke all roles priviledges
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.revokeAllRolesPrivileges({});
+   * ```
+   */
+  async revokeAllRolesPrivileges(): Promise<ResStatus[]> {
+    const res = await this.listRoles();
+
+    const promises = [];
+
+    for (let i = 0; i < res.results.length; i++) {
+      const r = res.results[i];
+      const grants = await this.listGrants({
+        roleName: r.role.name,
+      });
+
+      for (let j = 0; j < grants.entities.length; j++) {
+        const entity = grants.entities[j];
+        const res = await this.revokeRolePrivilege({
+          roleName: entity.role.name,
+          object: entity.object.name,
+          objectName: entity.object_name,
+          privilegeName: entity.grantor.privilege.name,
+        });
+        console.log('revoke response', res);
+      }
+
+      promises.push(
+        await this.dropRole({
+          roleName: r.role.name,
+        })
+      );
+    }
+
+    return promises;
+  }
+
+  /**
+   * select a grant
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.selectGrant({
+   *    roleName: 'roleName',
+   *    object: '*',
+   *    objectName: 'Collection',
+   *    privilegeName: 'CreateIndex'
+   * });
+   * ```
+   */
+  async selectGrant(data: SelectGrantReq): Promise<SelectGrantResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectGrant',
+      {
+        entity: {
+          role: { name: data.roleName },
+          object: { name: data.object },
+          object_name: data.objectName,
+          grantor: {
+            privilege: { name: data.privilegeName },
+          },
+        },
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * list all grants for a role
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.listGrants({
+   *    roleName: 'roleName',
+   * });
+   * ```
+   */
+  async listGrants(data: ListGrantsReq): Promise<SelectGrantResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectGrant',
+      {
+        entity: {
+          role: { name: data.roleName },
+        },
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * check if the role is existing
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.hasRole({
+   *    roleName: 'roleName',
+   * });
+   * ```
+   */
+  async hasRole(data: HasRoleReq): Promise<HasRoleResponse> {
+    const result = await this.listRoles();
+
+    return {
+      status: result.status,
+      hasRole: result.results.map(r => r.role.name).includes(data.roleName),
+    };
   }
 }

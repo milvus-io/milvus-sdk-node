@@ -362,3 +362,13 @@ export enum OperateUserRoleType {
   AddUserToRole = 0,
   RemoveUserFromRole = 1,
 }
+
+export enum OperatePrivilegeType {
+  Grant = 0,
+  Revoke = 1,
+}
+
+export enum Roles {
+  ADMIN = 'admin',
+  PUBLIC = 'public',
+}

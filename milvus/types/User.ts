@@ -24,6 +24,9 @@ export interface CreateRoleReq extends GrpcTimeOut {
 export interface DropRoleReq extends GrpcTimeOut {
   roleName: string;
 }
+export interface HasRoleReq extends GrpcTimeOut {
+  roleName: string;
+}
 
 export interface AddUserToRoleReq extends GrpcTimeOut {
   username: string;
@@ -40,3 +43,20 @@ export interface SelectRoleReq extends GrpcTimeOut {
   includeUserInfo?: boolean;
 }
 
+export interface SelectUserReq extends GrpcTimeOut {
+  username: string;
+  includeRoleInfo?: boolean;
+}
+
+export interface OperateRolePrivilegeReq extends GrpcTimeOut {
+  roleName: string; // grant role name
+  object: string; // Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.
+  objectName: string; // Name of the object to which the role is granted the specified prvilege.
+  privilegeName: string; // Name of the privilege to be granted to the role. This parameter is case-sensitive.
+}
+
+export interface SelectGrantReq extends OperateRolePrivilegeReq {}
+
+export interface ListGrantsReq extends GrpcTimeOut {
+  roleName: string; // grant role name
+}

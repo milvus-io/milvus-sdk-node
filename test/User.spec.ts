@@ -1,18 +1,34 @@
 import { MilvusClient } from '../milvus';
-
-import { IP } from '../const';
+import { GENERATE_NAME, IP } from '../const';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { ErrorCode } from '../milvus/types/Response';
 import { timeoutTest } from './common/timeout';
+import { DataType, Roles } from '../milvus/types/Common';
+import { genCollectionParams } from '../utils/test';
 
 let milvusClient = new MilvusClient(IP);
 let authClient: MilvusClient | null = null;
 const USERNAME = 'nameczz';
 const PASSWORD = '123456';
 const NEW_PASSWORD = '1234567';
-const ROLENAME = 'ROLENAME';
+const ROLENAME = GENERATE_NAME('role');
+const COLLECTION_NAME = GENERATE_NAME();
 
 describe('User Auth Api', () => {
+  beforeAll(async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    await authClient.collectionManager.createCollection(
+      genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
+    );
+  });
+
+  afterAll(async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    await authClient.collectionManager.dropCollection({
+      collection_name: COLLECTION_NAME,
+    });
+  });
+
   it(`Create first user expect error`, async () => {
     try {
       await milvusClient.userManager.createUser({ username: USERNAME } as any);
@@ -49,6 +65,18 @@ describe('User Auth Api', () => {
     authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
     const res = await authClient.userManager.listUsers();
     expect(res.usernames).toEqual([USERNAME, 'root']);
+  });
+
+  it(`Clean all role priviledges`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
+    await authClient.userManager.revokeAllRolesPrivileges();
+    const res = await authClient.userManager.listRoles();
+
+    res.results.map(r => {
+      expect(
+        r.role.name === Roles.ADMIN || r.role.name === Roles.PUBLIC
+      ).toBeTruthy();
+    });
   });
 
   it(`Auth client update user expect success`, async () => {
@@ -90,14 +118,99 @@ describe('User Auth Api', () => {
     authClient.closeConnection();
   });
 
+  it(`It should list roles successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.listRoles();
+    // console.log('list roles', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    authClient.closeConnection();
+  });
+
   it(`It should get role successfully`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.selectRole({
       roleName: ROLENAME,
     });
-    console.log('selectRole', res);
+    // console.log('selectRole', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results[0].users[0].name).toEqual(USERNAME);
     expect(res.results[0].role.name).toEqual(ROLENAME);
+    authClient.closeConnection();
+  });
+
+  it(`It should get user successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.selectUser({
+      username: USERNAME,
+    });
+    // console.log('selectUser', res.results);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results[0].user.name).toEqual(USERNAME);
+    expect(res.results[0].roles[0].name).toEqual(ROLENAME);
+    authClient.closeConnection();
+  });
+
+  it(`It should grant privilege to role successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.grantRolePrivilege({
+      roleName: ROLENAME,
+      object: 'Collection',
+      objectName: COLLECTION_NAME,
+      privilegeName: 'Search',
+    });
+    // console.log('grant privilege to role', ROLENAME, res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    authClient.closeConnection();
+  });
+
+  it(`It should list grants successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.listGrants({
+      roleName: ROLENAME,
+    });
+    // console.log('list grants', ROLENAME, res);
+    expect(res.entities.length).toEqual(1);
+    expect(res.entities[0].object_name).toEqual(COLLECTION_NAME);
+    expect(res.entities[0].object.name).toEqual('Collection');
+    expect(res.entities[0].grantor.privilege.name).toEqual('Search');
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    authClient.closeConnection();
+  });
+
+  it(`It should select grant successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.selectGrant({
+      roleName: ROLENAME,
+      object: 'Collection',
+      objectName: COLLECTION_NAME,
+      privilegeName: 'Search',
+    });
+    // console.log('selectGrant', ROLENAME, res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    authClient.closeConnection();
+  });
+
+  it(`It should check role name  successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.hasRole({
+      roleName: ROLENAME,
+    });
+    // console.log('hasRole', ROLENAME, res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.hasRole).toEqual(true);
+    authClient.closeConnection();
+  });
+
+  it(`It should revoke privilege to role successfully`, async () => {
+    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    const res = await authClient.userManager.revokeRolePrivilege({
+      roleName: ROLENAME,
+      object: 'Collection',
+      objectName: COLLECTION_NAME,
+      privilegeName: 'Search',
+    });
+    // console.log('revoke privilege to role', ROLENAME, res);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
     authClient.closeConnection();
   });
 

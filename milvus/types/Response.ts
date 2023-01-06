@@ -271,10 +271,33 @@ export interface ListImportTasksResponse {
 }
 
 type RoleEntity = { name: string };
-
-type RoleResult = { users: string[]; role: RoleEntity };
-
+type User = { name: string };
+type RoleResult = { users: User[]; role: RoleEntity };
 export interface SelectRoleResponse {
   status: ResStatus;
   results: RoleResult[];
+}
+
+type UserResult = { user: User; roles: RoleEntity[] };
+export interface SelectUserResponse {
+  status: ResStatus;
+  results: UserResult[];
+}
+type ObjectEntity = { name: string };
+type PrivilegeEntity = { name: string };
+type Grantor = { user: User; privilege: PrivilegeEntity };
+type GrantEntity = {
+  role: RoleEntity;
+  object: ObjectEntity;
+  object_name: string;
+  grantor: Grantor;
+};
+export interface SelectGrantResponse {
+  status: ResStatus;
+  entities: GrantEntity[];
+}
+
+export interface HasRoleResponse {
+  status: ResStatus;
+  hasRole: boolean;
 }
