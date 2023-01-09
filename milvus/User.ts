@@ -1,35 +1,54 @@
 import { promisify } from '../utils';
 import { Client } from './Client';
 import { ERROR_REASONS } from './const/ErrorReason';
-
-import { ListCredUsersResponse, ResStatus } from './types/Response';
+import {
+  ListCredUsersResponse,
+  ResStatus,
+  SelectRoleResponse,
+  SelectUserResponse,
+  SelectGrantResponse,
+  HasRoleResponse,
+} from './types/Response';
 import {
   CreateUserReq,
   DeleteUserReq,
   ListUsersReq,
   UpdateUserReq,
+  CreateRoleReq,
+  DropRoleReq,
+  AddUserToRoleReq,
+  RemoveUserFromRoleReq,
+  SelectRoleReq,
+  SelectUserReq,
+  OperateRolePrivilegeReq,
+  SelectGrantReq,
+  ListGrantsReq,
+  HasRoleReq,
 } from './types/User';
+import {
+  OperateUserRoleType,
+  OperatePrivilegeType,
+  GrpcTimeOut,
+  RbacObjects,
+} from './types/Common';
 import { stringToBase64 } from './utils/Format';
 
-/**
- * See all [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts).
- */
 export class User extends Client {
   /**
    * Create user in milvus
    *
    * @param data
-   *  | Property        | Type   |           Description              |
-   *  | :-------------- | :----  | :-------------------------------  |
-   *  | username        | String |       username        |
-   *  | password        | String |       user password        |
+   *  | Property | Type   | Description |
+   *  | :-------------- | :----  | :---- |
+   *  | username | String | username |
+   *  | password | String | user password |
    *
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|
+   *  | error_code | Error code number |
+   *  | reason | Error cause|
    *
    * #### Example
    *
@@ -56,17 +75,17 @@ export class User extends Client {
    * Update user in milvus
    *
    * @param data
-   *  | Property        | Type   |           Description              |
-   *  | :-------------- | :----  | :-------------------------------  |
-   *  | username        | String |       username        |
-   *  | password        | String |       user password        |
+   *  | Property | Type | Description |
+   *  | :-------------- | :----  | :------ |
+   *  | username | String | username |
+   *  | password | String | user password |
    *
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|
+   *  | error_code | Error code number |
+   *  | reason | Error cause|
    *
    * #### Example
    *
@@ -100,16 +119,16 @@ export class User extends Client {
    * Delete user in milvus
    *
    * @param data
-   *  | Property        | Type   |           Description              |
-   *  | :-------------- | :----  | :-------------------------------  |
-   *  | username        | String |       username        |
+   *  | Property | Type | Description |
+   *  | :-------------- | :----  | :-- |
+   *  | username | String | username |
    *
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|
+   *  | error_code | Error code number |
+   *  | reason | Error cause|
    *
    * #### Example
    *
@@ -138,10 +157,10 @@ export class User extends Client {
    * List user in milvus
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | usernames    |       string[]     |
+   *  | status | { error_code: number, reason: string }|
+   *  | usernames | string[] |
    *
    * #### Example
    *
@@ -157,5 +176,491 @@ export class User extends Client {
       data?.timeout
     );
     return promise;
+  }
+
+  /**
+   * Create user role
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :--------  |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.createRole({roleName: 'myrole'});
+   * ```
+   */
+  async createRole(data: CreateRoleReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'CreateRole',
+      {
+        entity: { name: data.roleName },
+      },
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * Drop user role
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :--------  |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.dropRole({roleName: 'myrole'});
+   * ```
+   */
+  async dropRole(data: DropRoleReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'DropRole',
+      {
+        role_name: data.roleName,
+      },
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * add user to role
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :--------  |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.addUserToRole({username: 'my', roleName: 'myrole'});
+   * ```
+   */
+  async addUserToRole(data: AddUserToRoleReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'OperateUserRole',
+      {
+        username: data.username,
+        role_name: data.roleName,
+        type: OperateUserRoleType.AddUserToRole,
+      },
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * remove user from role
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.removeUserFromRole({username: 'my', roleName: 'myrole'});
+   * ```
+   */
+  async removeUserFromRole(data: RemoveUserFromRoleReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'OperateUserRole',
+      {
+        username: data.username,
+        role_name: data.roleName,
+        type: OperateUserRoleType.RemoveUserFromRole,
+      },
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * gets all users that belong to a specified role
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | includeUserInfo? | boolean | should result including user info, by default: true |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | results | { users: {name: string}[]; role: {name: string} }[] |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.selectRole({roleName: 'myrole'});
+   * ```
+   */
+  async selectRole(data: SelectRoleReq): Promise<SelectRoleResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectRole',
+      {
+        role: { name: data.roleName },
+        include_user_info: data.includeUserInfo || true,
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * list all roles
+   *
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.listRoles();
+   * ```
+   */
+  async listRoles(data?: GrpcTimeOut): Promise<SelectRoleResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectRole',
+      {},
+      data?.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * gets all users that belong to a specified role
+   *
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | userName | String | user name |
+   *  | includeUserInfo? | boolean | should result including user info, by default: true |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :--------  |
+   *  | status | { error_code: number, reason: string }|
+   *  | results | user: {name: string}; roles: {name: string}[] |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.selectUser({username: 'name'});
+   * ```
+   */
+  async selectUser(data: SelectUserReq): Promise<SelectUserResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectUser',
+      {
+        user: { name: data.username },
+        include_role_info: data.includeRoleInfo || true,
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * grant privileges to a role
+   *
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | object | string | Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.|
+   *  | objectName | string | Name of the object to which the role is granted the specified prvilege. |
+   *  | privilegeName | string | Name of the privilege to be granted to the role. This parameter is case-sensitive. |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :--------  |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.grantRolePrivilege({
+   *    roleName: 'roleName',
+   *    object: '*',
+   *    objectName: 'Collection',
+   *    privilegeName: 'CreateIndex'
+   * });
+   * ```
+   */
+  async grantRolePrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'OperatePrivilege',
+      {
+        entity: {
+          role: { name: data.roleName },
+          object: { name: data.object },
+          object_name: data.objectName,
+          grantor: {
+            privilege: { name: data.privilegeName },
+          },
+        },
+        type: OperatePrivilegeType.Grant,
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * revoke privileges to a role
+   *
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | object | string | Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.|
+   *  | objectName | string | Name of the object to which the role is granted the specified prvilege. |
+   *  | privilegeName | string | Name of the privilege to be granted to the role. This parameter is case-sensitive. |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :------------- | :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.grantRolePrivilege({
+   *    roleName: 'roleName',
+   *    object: '*',
+   *    objectName: 'Collection',
+   *    privilegeName: 'CreateIndex'
+   * });
+   * ```
+   */
+  async revokeRolePrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'OperatePrivilege',
+      {
+        entity: {
+          role: { name: data.roleName },
+          object: { name: data.object },
+          object_name: data.objectName,
+          grantor: {
+            privilege: { name: data.privilegeName },
+          },
+        },
+        type: OperatePrivilegeType.Revoke,
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * revoke all roles priviledges
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | object | string | Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.|
+   *  | objectName | string | Name of the object to which the role is granted the specified prvilege. |
+   *  | privilegeName | string | Name of the privilege to be granted to the role. This parameter is case-sensitive. |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :--------  |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | ''      |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.revokeAllRolesPrivileges({});
+   * ```
+   */
+  async revokeAllRolesPrivileges(data?: GrpcTimeOut): Promise<ResStatus[]> {
+    const res = await this.listRoles({ timeout: data?.timeout });
+
+    const promises = [];
+
+    for (let i = 0; i < res.results.length; i++) {
+      const r = res.results[i];
+      const grants = await this.listGrants({
+        roleName: r.role.name,
+      });
+
+      for (let j = 0; j < grants.entities.length; j++) {
+        const entity = grants.entities[j];
+        await this.revokeRolePrivilege({
+          roleName: entity.role.name,
+          object: entity.object.name,
+          objectName: entity.object_name,
+          privilegeName: entity.grantor.privilege.name,
+          timeout: data?.timeout,
+        });
+      }
+
+      promises.push(
+        await this.dropRole({
+          roleName: r.role.name,
+          timeout: data?.timeout,
+        })
+      );
+    }
+
+    return promises;
+  }
+
+  /**
+   * select a grant
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | object | string | Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.|
+   *  | objectName | string | Name of the object to which the role is granted the specified prvilege. |
+   *  | privilegeName | string | Name of the privilege to be granted to the role. This parameter is case-sensitive. |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | status        |  { error_code: number, reason: string }|
+   *  | reason    |       ''     |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.selectGrant({
+   *    roleName: 'roleName',
+   *    object: '*',
+   *    objectName: 'Collection',
+   *    privilegeName: 'CreateIndex'
+   * });
+   * ```
+   */
+  async selectGrant(data: SelectGrantReq): Promise<SelectGrantResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectGrant',
+      {
+        entity: {
+          role: { name: data.roleName },
+          object: { name: data.object },
+          object_name: data.objectName,
+          grantor: {
+            privilege: { name: data.privilegeName },
+          },
+        },
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * list all grants for a role
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.listGrants({
+   *    roleName: 'roleName',
+   * });
+   * ```
+   */
+  async listGrants(data: ListGrantsReq): Promise<SelectGrantResponse> {
+    const promise = await promisify(
+      this.client,
+      'SelectGrant',
+      {
+        entity: {
+          role: { name: data.roleName },
+        },
+      },
+      data?.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * check if the role is existing
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.hasRole({
+   *    roleName: 'roleName',
+   * });
+   * ```
+   */
+  async hasRole(data: HasRoleReq): Promise<HasRoleResponse> {
+    const result = await this.listRoles();
+
+    return {
+      status: result.status,
+      hasRole: result.results.map(r => r.role.name).includes(data.roleName),
+    };
   }
 }

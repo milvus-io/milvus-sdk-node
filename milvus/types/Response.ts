@@ -1,6 +1,6 @@
 import { ConsistencyLevelEnum } from './Collection';
 import {
-  DataType,
+  Privileges,
   IndexState,
   ImportState,
   KeyValuePair,
@@ -8,6 +8,7 @@ import {
   SegmentState,
   StringArrayId,
   CompactionState,
+  RbacObjects,
 } from './Common';
 export enum ErrorCode {
   SUCCESS = 'Success',
@@ -268,4 +269,36 @@ export interface GetImportStateResponse {
 export interface ListImportTasksResponse {
   status: ResStatus;
   tasks: GetImportStateResponse[];
+}
+
+type RoleEntity = { name: string };
+type User = { name: string };
+type RoleResult = { users: User[]; role: RoleEntity };
+export interface SelectRoleResponse {
+  status: ResStatus;
+  results: RoleResult[];
+}
+
+type UserResult = { user: User; roles: RoleEntity[] };
+export interface SelectUserResponse {
+  status: ResStatus;
+  results: UserResult[];
+}
+type ObjectEntity = { name: RbacObjects };
+type PrivilegeEntity = { name: Privileges };
+type Grantor = { user: User; privilege: PrivilegeEntity };
+type GrantEntity = {
+  role: RoleEntity;
+  object: ObjectEntity;
+  object_name: string;
+  grantor: Grantor;
+};
+export interface SelectGrantResponse {
+  status: ResStatus;
+  entities: GrantEntity[];
+}
+
+export interface HasRoleResponse {
+  status: ResStatus;
+  hasRole: boolean;
 }

@@ -357,3 +357,70 @@ export enum StateCode {
   Abnormal = 2,
   StandBy = 3,
 }
+
+export enum OperateUserRoleType {
+  AddUserToRole = 0,
+  RemoveUserFromRole = 1,
+}
+
+export enum OperatePrivilegeType {
+  Grant = 0,
+  Revoke = 1,
+}
+
+export enum Roles {
+  ADMIN = 'admin',
+  PUBLIC = 'public',
+}
+
+export enum RbacObjects {
+  Collection = 'Collection',
+  Global = 'Global',
+  User = 'User',
+}
+
+export enum CollectionPrivileges {
+  CreateIndex = 'CreateIndex',
+  DropIndex = 'DropIndex',
+  IndexDetail = 'IndexDetail',
+  Load = 'Load',
+  Release = 'Release',
+  Insert = 'Insert',
+  Delete = 'Delete',
+  Search = 'Search',
+  Flush = 'Flush',
+  Query = 'Query',
+  GetStatistics = 'GetStatistics',
+  Compaction = 'Compaction',
+  Alias = 'Alias',
+  Import = 'Import',
+  LoadBalance = 'LoadBalance',
+}
+
+export enum GlobalPrivileges {
+  All = '*',
+  CreateCollection = 'CreateCollection',
+  DropCollection = 'DropCollection',
+  DescribeCollection = 'DescribeCollection',
+  ShowCollections = 'ShowCollections',
+  CreateOwnership = 'CreateOwnership',
+  DropOwnership = 'DropOwnership',
+  SelectOwnership = 'SelectOwnership',
+  ManageOwnership = 'ManageOwnership',
+}
+
+export enum UserPrivileges {
+  UpdateUser = 'UpdateUser',
+  SelectUser = 'SelectUser',
+}
+
+export const Privileges = {
+  ...CollectionPrivileges,
+  ...UserPrivileges,
+  ...GlobalPrivileges,
+};
+
+export type Privileges =
+  | CollectionPrivileges
+  | UserPrivileges
+  | GlobalPrivileges;
