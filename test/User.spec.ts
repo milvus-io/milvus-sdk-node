@@ -3,7 +3,12 @@ import { GENERATE_NAME, IP } from '../const';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { ErrorCode } from '../milvus/types/Response';
 import { timeoutTest } from './common/timeout';
-import { DataType, Roles } from '../milvus/types/Common';
+import {
+  DataType,
+  Roles,
+  Privileges,
+  RbacObjects,
+} from '../milvus/types/Common';
 import { genCollectionParams } from '../utils/test';
 
 let milvusClient = new MilvusClient(IP);
@@ -144,9 +149,9 @@ describe('User Auth Api', () => {
   it(`It should grant privilege to role successfully`, async () => {
     const res = await authClient.userManager.grantRolePrivilege({
       roleName: ROLENAME,
-      object: 'Collection',
+      object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
-      privilegeName: 'Search',
+      privilegeName: Privileges.Search,
     });
     // console.log('grant privilege to role', ROLENAME, res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -159,17 +164,17 @@ describe('User Auth Api', () => {
     // console.log('list grants', ROLENAME, res);
     expect(res.entities.length).toEqual(1);
     expect(res.entities[0].object_name).toEqual(COLLECTION_NAME);
-    expect(res.entities[0].object.name).toEqual('Collection');
-    expect(res.entities[0].grantor.privilege.name).toEqual('Search');
+    expect(res.entities[0].object.name).toEqual(RbacObjects.Collection);
+    expect(res.entities[0].grantor.privilege.name).toEqual(Privileges.Search);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should select grant successfully`, async () => {
     const res = await authClient.userManager.selectGrant({
       roleName: ROLENAME,
-      object: 'Collection',
+      object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
-      privilegeName: 'Search',
+      privilegeName: Privileges.Search,
     });
     // console.log('selectGrant', ROLENAME, res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -187,9 +192,9 @@ describe('User Auth Api', () => {
   it(`It should revoke privilege to role successfully`, async () => {
     const res = await authClient.userManager.revokeRolePrivilege({
       roleName: ROLENAME,
-      object: 'Collection',
+      object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
-      privilegeName: 'Search',
+      privilegeName: Privileges.Search,
     });
     // console.log('revoke privilege to role', ROLENAME, res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);

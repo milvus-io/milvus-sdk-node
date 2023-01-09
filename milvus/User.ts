@@ -29,6 +29,7 @@ import {
   OperateUserRoleType,
   OperatePrivilegeType,
   GrpcTimeOut,
+  RbacObjects,
 } from './types/Common';
 import { stringToBase64 } from './utils/Format';
 
