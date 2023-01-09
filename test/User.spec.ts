@@ -7,7 +7,7 @@ import { DataType, Roles } from '../milvus/types/Common';
 import { genCollectionParams } from '../utils/test';
 
 let milvusClient = new MilvusClient(IP);
-let authClient: MilvusClient | null = null;
+let authClient: MilvusClient;
 const USERNAME = 'nameczz';
 const PASSWORD = '123456';
 const NEW_PASSWORD = '1234567';
@@ -23,10 +23,10 @@ describe('User Auth Api', () => {
   });
 
   afterAll(async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     await authClient.collectionManager.dropCollection({
       collection_name: COLLECTION_NAME,
     });
+    authClient.closeConnection();
   });
 
   it(`Create first user expect error`, async () => {
@@ -104,30 +104,24 @@ describe('User Auth Api', () => {
     });
     // console.log('createRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 
   it(`It should add user to role successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.addUserToRole({
       username: USERNAME,
       roleName: ROLENAME,
     });
     // console.log('addUserToRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 
   it(`It should list roles successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.listRoles();
     // console.log('list roles', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 
   it(`It should get role successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.selectRole({
       roleName: ROLENAME,
     });
@@ -135,11 +129,9 @@ describe('User Auth Api', () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].users[0].name).toEqual(USERNAME);
     expect(res.results[0].role.name).toEqual(ROLENAME);
-    authClient.closeConnection();
   });
 
   it(`It should get user successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.selectUser({
       username: USERNAME,
     });
@@ -147,11 +139,9 @@ describe('User Auth Api', () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].user.name).toEqual(USERNAME);
     expect(res.results[0].roles[0].name).toEqual(ROLENAME);
-    authClient.closeConnection();
   });
 
   it(`It should grant privilege to role successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.grantRolePrivilege({
       roleName: ROLENAME,
       object: 'Collection',
@@ -160,11 +150,9 @@ describe('User Auth Api', () => {
     });
     // console.log('grant privilege to role', ROLENAME, res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 
   it(`It should list grants successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.listGrants({
       roleName: ROLENAME,
     });
@@ -174,11 +162,9 @@ describe('User Auth Api', () => {
     expect(res.entities[0].object.name).toEqual('Collection');
     expect(res.entities[0].grantor.privilege.name).toEqual('Search');
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 
   it(`It should select grant successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.selectGrant({
       roleName: ROLENAME,
       object: 'Collection',
@@ -187,22 +173,18 @@ describe('User Auth Api', () => {
     });
     // console.log('selectGrant', ROLENAME, res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 
   it(`It should check role name  successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.hasRole({
       roleName: ROLENAME,
     });
     // console.log('hasRole', ROLENAME, res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.hasRole).toEqual(true);
-    authClient.closeConnection();
   });
 
   it(`It should revoke privilege to role successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.revokeRolePrivilege({
       roleName: ROLENAME,
       object: 'Collection',
@@ -211,35 +193,28 @@ describe('User Auth Api', () => {
     });
     // console.log('revoke privilege to role', ROLENAME, res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 
   it(`It should remove user from role successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.removeUserFromRole({
       username: USERNAME,
       roleName: ROLENAME,
     });
     // console.log('addUserToRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 
   it(`It should drop role successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.dropRole({
       roleName: ROLENAME,
     });
     // console.log('dropRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 
   // last test
   it(`Auth client delete user expect success`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     const res = await authClient.userManager.deleteUser({ username: USERNAME });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-    authClient.closeConnection();
   });
 });

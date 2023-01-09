@@ -25,28 +25,29 @@ import {
   ListGrantsReq,
   HasRoleReq,
 } from './types/User';
-import { OperateUserRoleType, OperatePrivilegeType } from './types/Common';
+import {
+  OperateUserRoleType,
+  OperatePrivilegeType,
+  GrpcTimeOut,
+} from './types/Common';
 import { stringToBase64 } from './utils/Format';
 
-/**
- * See all [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts).
- */
 export class User extends Client {
   /**
    * Create user in milvus
    *
    * @param data
-   *  | Property        | Type   |           Description              |
-   *  | :-------------- | :----  | :-------------------------------  |
-   *  | username        | String |       username        |
-   *  | password        | String |       user password        |
+   *  | Property | Type   | Description |
+   *  | :-------------- | :----  | :---- |
+   *  | username | String | username |
+   *  | password | String | user password |
    *
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|
+   *  | error_code | Error code number |
+   *  | reason | Error cause|
    *
    * #### Example
    *
@@ -73,17 +74,17 @@ export class User extends Client {
    * Update user in milvus
    *
    * @param data
-   *  | Property        | Type   |           Description              |
-   *  | :-------------- | :----  | :-------------------------------  |
-   *  | username        | String |       username        |
-   *  | password        | String |       user password        |
+   *  | Property | Type | Description |
+   *  | :-------------- | :----  | :------ |
+   *  | username | String | username |
+   *  | password | String | user password |
    *
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|
+   *  | error_code | Error code number |
+   *  | reason | Error cause|
    *
    * #### Example
    *
@@ -117,16 +118,16 @@ export class User extends Client {
    * Delete user in milvus
    *
    * @param data
-   *  | Property        | Type   |           Description              |
-   *  | :-------------- | :----  | :-------------------------------  |
-   *  | username        | String |       username        |
+   *  | Property | Type | Description |
+   *  | :-------------- | :----  | :-- |
+   *  | username | String | username |
    *
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|
+   *  | error_code | Error code number |
+   *  | reason | Error cause|
    *
    * #### Example
    *
@@ -155,10 +156,10 @@ export class User extends Client {
    * List user in milvus
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | usernames    |       string[]     |
+   *  | status | { error_code: number, reason: string }|
+   *  | usernames | string[] |
    *
    * #### Example
    *
@@ -180,10 +181,10 @@ export class User extends Client {
    * Create user role
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
    *
    * #### Example
    *
@@ -207,10 +208,10 @@ export class User extends Client {
    * Drop user role
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
    *
    * #### Example
    *
@@ -234,10 +235,10 @@ export class User extends Client {
    * add user to role
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
    *
    * #### Example
    *
@@ -263,10 +264,10 @@ export class User extends Client {
    * remove user from role
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
    *
    * #### Example
    *
@@ -291,11 +292,18 @@ export class User extends Client {
   /**
    * gets all users that belong to a specified role
    *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | includeUserInfo? | boolean | should result including user info, by default: true |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | results | { users: {name: string}[]; role: {name: string} }[] |
    *
    * #### Example
    *
@@ -317,27 +325,51 @@ export class User extends Client {
     return promise;
   }
 
-  async listRoles(data?: SelectRoleReq): Promise<SelectRoleResponse> {
+  /**
+   * list all roles
+   *
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
+   *
+   * #### Example
+   *
+   * ```
+   *  milvusClient.userManager.listRoles();
+   * ```
+   */
+  async listRoles(data?: GrpcTimeOut): Promise<SelectRoleResponse> {
     const promise = await promisify(
       this.client,
       'SelectRole',
-      {
-        include_user_info: true,
-      },
+      {},
       data?.timeout
     );
-
     return promise;
   }
 
   /**
    * gets all users that belong to a specified role
    *
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | userName | String | user name |
+   *  | includeUserInfo? | boolean | should result including user info, by default: true |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | status | { error_code: number, reason: string }|
+   *  | results | user: {name: string}; roles: {name: string}[] |
    *
    * #### Example
    *
@@ -362,11 +394,20 @@ export class User extends Client {
   /**
    * grant privileges to a role
    *
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | object | string | Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.|
+   *  | objectName | string | Name of the object to which the role is granted the specified prvilege. |
+   *  | privilegeName | string | Name of the privilege to be granted to the role. This parameter is case-sensitive. |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
    *
    * #### Example
    *
@@ -389,7 +430,6 @@ export class User extends Client {
           object: { name: data.object },
           object_name: data.objectName,
           grantor: {
-            // user: { name: data.username },
             privilege: { name: data.privilegeName },
           },
         },
@@ -404,11 +444,20 @@ export class User extends Client {
   /**
    * revoke privileges to a role
    *
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | object | string | Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.|
+   *  | objectName | string | Name of the object to which the role is granted the specified prvilege. |
+   *  | privilegeName | string | Name of the privilege to be granted to the role. This parameter is case-sensitive. |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | Property | Description |
+   *  | :------------- | :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
    *
    * #### Example
    *
@@ -444,12 +493,20 @@ export class User extends Client {
 
   /**
    * revoke all roles priviledges
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | object | string | Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.|
+   *  | objectName | string | Name of the object to which the role is granted the specified prvilege. |
+   *  | privilegeName | string | Name of the privilege to be granted to the role. This parameter is case-sensitive. |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | ''      |
    *
    * #### Example
    *
@@ -457,8 +514,8 @@ export class User extends Client {
    *  milvusClient.userManager.revokeAllRolesPrivileges({});
    * ```
    */
-  async revokeAllRolesPrivileges(): Promise<ResStatus[]> {
-    const res = await this.listRoles();
+  async revokeAllRolesPrivileges(data?: GrpcTimeOut): Promise<ResStatus[]> {
+    const res = await this.listRoles({ timeout: data?.timeout });
 
     const promises = [];
 
@@ -470,18 +527,19 @@ export class User extends Client {
 
       for (let j = 0; j < grants.entities.length; j++) {
         const entity = grants.entities[j];
-        const res = await this.revokeRolePrivilege({
+        await this.revokeRolePrivilege({
           roleName: entity.role.name,
           object: entity.object.name,
           objectName: entity.object_name,
           privilegeName: entity.grantor.privilege.name,
+          timeout: data?.timeout,
         });
-        console.log('revoke response', res);
       }
 
       promises.push(
         await this.dropRole({
           roleName: r.role.name,
+          timeout: data?.timeout,
         })
       );
     }
@@ -491,6 +549,14 @@ export class User extends Client {
 
   /**
    * select a grant
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | object | string | Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.|
+   *  | objectName | string | Name of the object to which the role is granted the specified prvilege. |
+   *  | privilegeName | string | Name of the privilege to be granted to the role. This parameter is case-sensitive. |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
    *  | Property      | Description |
@@ -531,12 +597,17 @@ export class User extends Client {
 
   /**
    * list all grants for a role
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
    *
    * #### Example
    *
@@ -563,12 +634,17 @@ export class User extends Client {
 
   /**
    * check if the role is existing
+   *  @param data
+   *  | Property | Type | Description |
+   *  | :------- | :----- | :------------ |
+   *  | roleName | String | role name |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | reason    |       ''     |
+   *  | Property | Description |
+   *  | :-------------| :-------- |
+   *  | status | { error_code: number, reason: string }|
+   *  | reason | '' |
    *
    * #### Example
    *
