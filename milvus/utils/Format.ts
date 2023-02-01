@@ -167,6 +167,6 @@ export const stringToBase64 = (str: string) =>
 
 export const formatAddress = (address: string) => {
   // remove http or https prefix from address
-  const ip = address.replace(/(http|https):\/\//, '');
+  const ip = address.replace(/(http|https)*:\/\//, '');
   return ip.includes(':') ? ip : `${ip}:${DEFAULT_MILVUS_PORT}`;
 };
