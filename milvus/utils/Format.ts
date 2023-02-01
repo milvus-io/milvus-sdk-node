@@ -1,6 +1,7 @@
-import { findKeyValue } from "./index";
-import { ERROR_REASONS } from "../const/ErrorReason";
-import { KeyValuePair } from "../types/Common";
+import { findKeyValue } from './index';
+import { DEFAULT_MILVUS_PORT } from '../const/Milvus';
+import { ERROR_REASONS } from '../const/ErrorReason';
+import { KeyValuePair } from '../types/Common';
 
 /**
  *  parse [{key:"row_count",value:4}] to {row_count:4}
@@ -10,7 +11,7 @@ import { KeyValuePair } from "../types/Common";
  */
 export const formatKeyValueData = (data: KeyValuePair[], keys: string[]) => {
   const result: { [x: string]: any } = {};
-  keys.forEach((k) => {
+  keys.forEach(k => {
     const value = findKeyValue(data, k);
     result[k] = value;
   });
@@ -28,9 +29,9 @@ export const parseToKeyValue = (data?: {
 }): KeyValuePair[] => {
   return data
     ? Object.keys(data).reduce(
-      (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
-      []
-    )
+        (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
+        []
+      )
     : [];
 };
 
@@ -44,14 +45,14 @@ export const formatNumberPrecision = (number: number, precision: number) => {
   return Number(
     number
       .toString()
-      .split(".")
+      .split('.')
       .map((v, i) => {
         if (i === 1) {
           return v.slice(0, precision);
         }
         return v;
       })
-      .join(".")
+      .join('.')
   );
 };
 
@@ -60,9 +61,9 @@ const LOGICAL_BITS = BigInt(18);
 
 const checkTimeParam = (ts: any) => {
   switch (typeof ts) {
-    case "bigint":
+    case 'bigint':
       return true;
-    case "string":
+    case 'string':
       return isNaN(Number(ts)) ? false : true;
     default:
       return false;
@@ -95,7 +96,7 @@ export const hybridtsToUnixtime = (hybridts: bigint | string) => {
   if (!checkTimeParam(hybridts)) {
     throw new Error(`hybridts ${ERROR_REASONS.TIMESTAMP_PARAM_CHECK}`);
   }
-  const timestamp = typeof hybridts === "bigint" ? hybridts : BigInt(hybridts);
+  const timestamp = typeof hybridts === 'bigint' ? hybridts : BigInt(hybridts);
   const physical = timestamp >> LOGICAL_BITS;
   return (physical / BigInt(1000)).toString();
 };
@@ -126,7 +127,7 @@ export const unixtimeToHybridts = (unixtime: bigint | string) => {
   if (!checkTimeParam(unixtime)) {
     throw new Error(`hybridts ${ERROR_REASONS.TIMESTAMP_PARAM_CHECK}`);
   }
-  const timestamp = typeof unixtime === "bigint" ? unixtime : BigInt(unixtime);
+  const timestamp = typeof unixtime === 'bigint' ? unixtime : BigInt(unixtime);
 
   const physical = (timestamp * BigInt(1000)) << LOGICAL_BITS;
   return physical.toString();
@@ -161,4 +162,11 @@ export const datetimeToHybrids = (datetime: Date) => {
   return unixtimeToHybridts((datetime.getTime() / 1000).toString());
 };
 
-export const stringToBase64 = (str: string) => Buffer.from(str, 'utf-8').toString('base64')
+export const stringToBase64 = (str: string) =>
+  Buffer.from(str, 'utf-8').toString('base64');
+
+export const formatAddress = (address: string) => {
+  // remove http or https prefix from address
+  const ip = address.replace(/(http|https)*:\/\//, '');
+  return ip.includes(':') ? ip : `${ip}:${DEFAULT_MILVUS_PORT}`;
+};

@@ -3,6 +3,7 @@ import {
   datetimeToHybrids,
   hybridtsToUnixtime,
   unixtimeToHybridts,
+  formatAddress,
 } from '../milvus/utils/Format';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 
@@ -88,5 +89,27 @@ describe('Insert data Api', () => {
     } catch (error) {
       expect(error.message).toContain(ERROR_REASONS.DATE_TYPE_CHECK);
     }
+  });
+
+  it('all kinds of url should be supported', async () => {
+    const port = `80980`;
+    const urlWithHttps = `https://my-url:${port}`;
+    expect(formatAddress(urlWithHttps)).toBe(`my-url:${port}`);
+
+    const urlWithHttp = `https://my-url:${port}`;
+    expect(formatAddress(urlWithHttp)).toBe(`my-url:${port}`);
+
+    const urlWithoutHttp = `my-url`;
+    expect(formatAddress(urlWithoutHttp)).toBe(`my-url:19530`);
+
+
+    const urlWithoutHttpCustomPort = `my-url:12345`;
+    expect(formatAddress(urlWithoutHttpCustomPort)).toBe(`my-url:12345`);
+
+    const urlWithEmpty = `://my-url`;
+    expect(formatAddress(urlWithEmpty)).toBe(`my-url:19530`);
+
+    const urlWithEmptyCustomPort = `://my-url:12345`;
+    expect(formatAddress(urlWithEmptyCustomPort)).toBe(`my-url:12345`);
   });
 });
