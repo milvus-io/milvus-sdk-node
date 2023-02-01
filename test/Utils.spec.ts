@@ -3,6 +3,7 @@ import {
   datetimeToHybrids,
   hybridtsToUnixtime,
   unixtimeToHybridts,
+  formatAddress,
 } from '../milvus/utils/Format';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 
@@ -88,5 +89,17 @@ describe('Insert data Api', () => {
     } catch (error) {
       expect(error.message).toContain(ERROR_REASONS.DATE_TYPE_CHECK);
     }
+  });
+
+  it('url can be formatted as none-protocal version', async () => {
+    const port = `80980`;
+    const urlWithHttp = `https://my-url:${port}`;
+    expect(formatAddress(urlWithHttp)).toBe(`my-url:${port}`);
+
+    const urlWithoutHttp = `my-url`;
+    expect(formatAddress(urlWithoutHttp)).toBe(`my-url:19530`);
+
+    const url = `://my-url`;
+    expect(formatAddress(urlWithoutHttp)).toBe(`my-url:19530`);
   });
 });

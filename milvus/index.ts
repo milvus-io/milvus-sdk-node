@@ -19,7 +19,7 @@ import {
   CheckHealthResponse,
 } from './types/Response';
 import { promisify } from '../utils';
-
+import { formatAddress } from './utils/Format';
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
 export class MilvusClient {
   client: Client;
@@ -78,7 +78,7 @@ export class MilvusClient {
     const grpcObject = loadPackageDefinition(packageDefinition);
     const milvusProto = (grpcObject.milvus as any).proto.milvus;
     const client = new milvusProto.MilvusService(
-      address,
+      formatAddress(address),
       ssl ? credentials.createSsl() : credentials.createInsecure(),
       {
         interceptors: [authInterceptor],
