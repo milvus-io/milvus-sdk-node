@@ -478,8 +478,6 @@ export class Collection extends Client {
    * ```
    */
   async renameCollection(data: RenameCollectionReq): Promise<ResStatus> {
-    checkCollectionName(data);
-
     const promise = await promisify(
       this.client,
       'RenameCollection',
