@@ -57,7 +57,7 @@ export interface DescribeCollectionReq extends CollectionNameReq {}
 export interface GetCollectionStatisticsReq extends CollectionNameReq {}
 
 export interface LoadCollectionReq extends CollectionNameReq {
-  replica_number?: number
+  replica_number?: number;
 }
 export interface ReleaseLoadCollectionReq extends CollectionNameReq {}
 
@@ -92,6 +92,11 @@ export interface GetReplicaReq extends GrpcTimeOut {
   /**
    * @param collectionID collection ID
    */
-   collectionID: number | string;
-   with_shard_nodes?: boolean;
+  collectionID: number | string;
+  with_shard_nodes?: boolean;
+}
+
+export interface RenameCollectionReq extends GrpcTimeOut {
+  collection_name: string;
+  new_collection_name: string;
 }

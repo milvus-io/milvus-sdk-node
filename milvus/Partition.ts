@@ -16,6 +16,10 @@ import {
   ReleasePartitionsReq,
   ShowPartitionsReq,
 } from './types/Partition';
+import {
+  checkCollectionName,
+  checkCollectionAndPartitionName,
+} from './utils/Validate';
 import { formatKeyValueData } from './utils/Format';
 export class Partition extends Client {
   /**
@@ -44,7 +48,7 @@ export class Partition extends Client {
    * ```
    */
   async createPartition(data: CreatePartitionReq): Promise<ResStatus> {
-    this.checkCollectionAndPartitionName(data);
+    checkCollectionAndPartitionName(data);
     const promise = await promisify(
       this.client,
       'CreatePartition',
@@ -80,7 +84,7 @@ export class Partition extends Client {
    * ```
    */
   async hasPartition(data: HasPartitionReq): Promise<BoolResponse> {
-    this.checkCollectionAndPartitionName(data);
+    checkCollectionAndPartitionName(data);
     const promise = await promisify(
       this.client,
       'HasPartition',
@@ -118,7 +122,7 @@ export class Partition extends Client {
   async showPartitions(
     data: ShowPartitionsReq
   ): Promise<ShowPartitionsResponse> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     const promise = await promisify(
       this.client,
       'ShowPartitions',
@@ -158,7 +162,7 @@ export class Partition extends Client {
   async getPartitionStatistics(
     data: GetPartitionStatisticsReq
   ): Promise<StatisticsResponse> {
-    this.checkCollectionAndPartitionName(data);
+    checkCollectionAndPartitionName(data);
     const promise = await promisify(
       this.client,
       'GetPartitionStatistics',
@@ -195,7 +199,7 @@ export class Partition extends Client {
    * ```
    */
   async loadPartitions(data: LoadPartitionsReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     if (!Array.isArray(data.partition_names) || !data.partition_names.length) {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
@@ -234,7 +238,7 @@ export class Partition extends Client {
    * ```
    */
   async releasePartitions(data: ReleasePartitionsReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     if (!Array.isArray(data.partition_names) || !data.partition_names.length) {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
@@ -279,7 +283,7 @@ export class Partition extends Client {
    * ```
    */
   async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
-    this.checkCollectionAndPartitionName(data);
+    checkCollectionAndPartitionName(data);
     const promise = await promisify(
       this.client,
       'DropPartition',

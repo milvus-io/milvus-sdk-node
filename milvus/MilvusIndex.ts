@@ -13,6 +13,7 @@ import {
   GetIndexBuildProgressReq,
   GetIndexStateReq,
 } from './types/Index';
+import { checkCollectionName } from './utils/Validate';
 import { parseToKeyValue } from './utils/Format';
 
 export class Index extends Client {
@@ -50,7 +51,7 @@ export class Index extends Client {
    * ```
    */
   async createIndex(data: CreateIndexReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
 
     const params = {
       ...data,
@@ -90,7 +91,7 @@ export class Index extends Client {
    * ```
    */
   async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     const promise = await promisify(
       this.client,
       'DescribeIndex',
@@ -126,7 +127,7 @@ export class Index extends Client {
    * ```
    */
   async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     const promise = await promisify(
       this.client,
       'GetIndexState',
@@ -166,7 +167,7 @@ export class Index extends Client {
   async getIndexBuildProgress(
     data: GetIndexBuildProgressReq
   ): Promise<GetIndexBuildProgressResponse> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     const promise = await promisify(
       this.client,
       'GetIndexBuildProgress',
@@ -201,7 +202,7 @@ export class Index extends Client {
    * ```
    */
   async dropIndex(data: DropIndexReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     const promise = await promisify(
       this.client,
       'DropIndex',

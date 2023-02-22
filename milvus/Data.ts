@@ -40,6 +40,7 @@ import {
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
 } from './utils/Blob';
+import { checkCollectionName } from './utils/Validate';
 import path from 'path';
 import { formatNumberPrecision, parseToKeyValue } from './utils/Format';
 
@@ -93,7 +94,7 @@ export class Data extends Client {
    * ```
    */
   async insert(data: InsertReq): Promise<MutationResult> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     if (
       !data.fields_data ||
       !Array.isArray(data.fields_data) ||
@@ -306,7 +307,7 @@ export class Data extends Client {
    * ```
    */
   async search(data: SearchReq): Promise<SearchResults> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     if (
       !data.search_params ||
       !data.search_params.anns_field ||
@@ -561,7 +562,7 @@ export class Data extends Client {
    * ```
    */
   async query(data: QueryReq): Promise<QueryResults> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
 
     let limits: { limit: number } | undefined;
     let offset: { offset: number } | undefined;
