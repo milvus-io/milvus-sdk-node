@@ -205,6 +205,7 @@ describe('Collection Api', () => {
   });
 
   it('Rename collection should be successful ', async () => {
+    // rename
     const renameRes = await collectionManager.renameCollection({
       collection_name: COLLECTION_NAME,
       new_collection_name: NEW_COLLECTION_NAME,
@@ -216,6 +217,7 @@ describe('Collection Api', () => {
     });
     expect(hasRes.status.error_code).toEqual(ErrorCode.SUCCESS);
 
+    // rename back
     const newRenameRes = await collectionManager.renameCollection({
       collection_name: NEW_COLLECTION_NAME,
       new_collection_name: COLLECTION_NAME,
