@@ -21,15 +21,15 @@ jobs:
 
       - name: Read package.json
         uses: culshaw/read-package-node-version-actions@v1
-        id: package-json-endpoint
+        id: package-node-version
 
       - name: Show target Milvus version
-        run: echo "Milvus Version is ${{ steps.package-version.outputs.version }}"
+        run: echo "Milvus Version is ${{ steps.package-node-version.outputs.milvusVersion }}"
 
       - name: Run Milvus
         run: |
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
-          sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ steps.package-json-endpoint.outputs.milvusVersion }}/g" docker-compose.yml
+          sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ steps.package-node-version.outputs.milvusVersion }}/g" docker-compose.yml
           docker-compose up -d
 
       - name: update submodules
