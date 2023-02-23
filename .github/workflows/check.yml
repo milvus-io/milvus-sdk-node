@@ -41,3 +41,8 @@ jobs:
           yarn
           yarn build-test
           yarn coverage
+
+      - name: send to codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: bash <(curl -s https://codecov.io/bash)
