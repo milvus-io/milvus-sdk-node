@@ -19,6 +19,7 @@ import {
   GetCompactionPlansReq,
   ConsistencyLevelEnum,
   GetReplicaReq,
+  RenameCollectionReq,
 } from './types/Collection';
 import {
   BoolResponse,
@@ -33,7 +34,7 @@ import {
   StatisticsResponse,
   ReplicasResponse,
 } from './types/Response';
-import { checkCollectionFields } from './utils/Validate';
+import { checkCollectionFields, checkCollectionName } from './utils/Validate';
 import path from 'path';
 import { formatKeyValueData, parseToKeyValue } from './utils/Format';
 import { Client } from './Client';
@@ -178,7 +179,7 @@ export class Collection extends Client {
    * ```
    */
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
 
     const promise = await promisify(
       this.client,
@@ -266,7 +267,7 @@ export class Collection extends Client {
   async describeCollection(
     data: DescribeCollectionReq
   ): Promise<DescribeCollectionResponse> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
 
     const promise = await promisify(
       this.client,
@@ -305,7 +306,7 @@ export class Collection extends Client {
   async getCollectionStatistics(
     data: GetCollectionStatisticsReq
   ): Promise<StatisticsResponse> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
 
     const promise = await promisify(
       this.client,
@@ -345,7 +346,7 @@ export class Collection extends Client {
    * ```
    */
   async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
 
     const promise = await promisify(
       this.client,
@@ -381,7 +382,7 @@ export class Collection extends Client {
    * ```
    */
   async loadCollectionSync(data: LoadCollectionReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
 
     const promise = await promisify(
       this.client,
@@ -440,12 +441,50 @@ export class Collection extends Client {
    * ```
    */
   async releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
 
     const promise = await promisify(
       this.client,
       'ReleaseCollection',
       data,
+      data.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * Rename a collection
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :--------- | :----  | :------  |
+   *  | collection_name | String | old collection name |
+   *  | new_collection_name | String | new collection name |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *
+   * @return
+   *  | Property      | Description |
+   *  | :-------------| :--------  |
+   *  | error_code    | Error code number      |
+   *  | reason        | Error cause|   *
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.renameCollection({
+   *    collection_name: 'my_collection',
+   *    new_collection_name: 'my_new_collection'
+   *  });
+   * ```
+   */
+  async renameCollection(data: RenameCollectionReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.client,
+      'RenameCollection',
+      {
+        oldName: data.collection_name,
+        newName: data.new_collection_name,
+      },
       data.timeout
     );
     return promise;
@@ -475,7 +514,7 @@ export class Collection extends Client {
    * ```
    */
   async dropCollection(data: DropCollectionReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
 
     const promise = await promisify(
       this.client,
@@ -492,7 +531,7 @@ export class Collection extends Client {
    * @param data
    */
   async createAlias(data: CreateAliasReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     if (!data.alias) {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
@@ -527,7 +566,7 @@ export class Collection extends Client {
    * @param data
    */
   async alterAlias(data: AlterAliasReq): Promise<ResStatus> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     if (!data.alias) {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
@@ -564,7 +603,7 @@ export class Collection extends Client {
    * ```
    */
   async compact(data: CompactReq): Promise<CompactionResponse> {
-    this.checkCollectionName(data);
+    checkCollectionName(data);
     const collectionInfo = await this.describeCollection(data);
     const res = await promisify(
       this.client,

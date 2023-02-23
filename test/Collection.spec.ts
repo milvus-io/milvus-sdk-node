@@ -11,6 +11,7 @@ import { timeoutTest } from './common/timeout';
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
+const NEW_COLLECTION_NAME = GENERATE_NAME();
 const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
@@ -201,6 +202,27 @@ describe('Collection Api', () => {
     // console.log('----has collection', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.value).toEqual(true);
+  });
+
+  it('Rename collection should be successful ', async () => {
+    // rename
+    const renameRes = await collectionManager.renameCollection({
+      collection_name: COLLECTION_NAME,
+      new_collection_name: NEW_COLLECTION_NAME,
+    });
+    expect(renameRes.error_code).toEqual(ErrorCode.SUCCESS);
+    // check new collection should be ok
+    const hasRes = await collectionManager.hasCollection({
+      collection_name: NEW_COLLECTION_NAME,
+    });
+    expect(hasRes.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // rename back
+    const newRenameRes = await collectionManager.renameCollection({
+      collection_name: NEW_COLLECTION_NAME,
+      new_collection_name: COLLECTION_NAME,
+    });
+    expect(newRenameRes.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it('Has collection should throw check params error', async () => {
