@@ -1,14 +1,8 @@
 import { promisify } from '../utils';
 import { Client } from './Client';
 import { ERROR_REASONS } from './const/ErrorReason';
-import {
-  ListCredUsersResponse,
-  ResStatus,
-  SelectRoleResponse,
-  SelectUserResponse,
-  SelectGrantResponse,
-  HasRoleResponse,
-} from './types/Response';
+import { stringToBase64 } from './utils/Format';
+import { OperateUserRoleType, OperatePrivilegeType } from './const/Milvus';
 import {
   CreateUserReq,
   DeleteUserReq,
@@ -24,14 +18,14 @@ import {
   SelectGrantReq,
   ListGrantsReq,
   HasRoleReq,
-} from './types/User';
-import {
-  OperateUserRoleType,
-  OperatePrivilegeType,
   GrpcTimeOut,
-  RbacObjects,
-} from './types/Common';
-import { stringToBase64 } from './utils/Format';
+  ListCredUsersResponse,
+  ResStatus,
+  SelectRoleResponse,
+  SelectUserResponse,
+  SelectGrantResponse,
+  HasRoleResponse,
+} from './types';
 
 export class User extends Client {
   /**

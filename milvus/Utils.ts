@@ -2,4 +2,4 @@ export {
   hybridtsToUnixtime,
   datetimeToHybrids,
   unixtimeToHybridts,
-} from "./utils/Format";
+} from './utils/Format';

@@ -13,14 +13,12 @@ import { Data } from './Data';
 import { User } from './User';
 import sdkInfo from '../sdk.json';
 import { ERROR_REASONS } from './const/ErrorReason';
-import {
-  ErrorCode,
-  GetVersionResponse,
-  CheckHealthResponse,
-} from './types/Response';
 import { promisify } from '../utils';
 import { formatAddress } from './utils/Format';
+import { ErrorCode, GetVersionResponse, CheckHealthResponse } from './types';
+
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
+
 export class MilvusClient {
   client: Client;
   collectionManager: Collection;

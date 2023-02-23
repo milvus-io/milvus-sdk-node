@@ -1,7 +1,7 @@
 import { MilvusClient } from '../milvus';
 
 import { GENERATE_NAME, IP } from '../const';
-import { DataType } from '../milvus/types/Common';
+import { DataType } from '../milvus/const/Milvus';
 import { ErrorCode } from '../milvus/types/Response';
 import { ShowCollectionsType } from '../milvus/types/Collection';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';

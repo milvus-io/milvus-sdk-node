@@ -1,11 +1,19 @@
 import protobuf, { Root } from 'protobufjs';
+import path from 'path';
 import { promisify } from '../utils';
 import { Client } from './Client';
 import { Collection } from './Collection';
 import { ERROR_REASONS } from './const/ErrorReason';
-
-import { DataType, DataTypeMap, DslType } from './types/Common';
+import { findKeyValue, sleep } from './utils/index';
 import {
+  parseBinaryVectorToBytes,
+  parseFloatVectorToBytes,
+} from './utils/Blob';
+import { checkCollectionName } from './utils/Validate';
+import { formatNumberPrecision, parseToKeyValue } from './utils/Format';
+import { DataType, DataTypeMap } from './const/Milvus';
+import {
+  DslType,
   DeleteEntitiesReq,
   FlushReq,
   GetFlushStateReq,
@@ -14,8 +22,6 @@ import {
   LoadBalanceReq,
   ImportReq,
   ListImportTasksReq,
-} from './types/Data';
-import {
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,
@@ -27,22 +33,12 @@ import {
   SearchResults,
   ImportResponse,
   ListImportTasksResponse,
-} from './types/Response';
-import {
   GetMetricsRequest,
   QueryReq,
   QueryRes,
   SearchReq,
   SearchRes,
-} from './types/Search';
-import { findKeyValue, sleep } from './utils/index';
-import {
-  parseBinaryVectorToBytes,
-  parseFloatVectorToBytes,
-} from './utils/Blob';
-import { checkCollectionName } from './utils/Validate';
-import path from 'path';
-import { formatNumberPrecision, parseToKeyValue } from './utils/Format';
+} from './types';
 
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
 
@@ -57,7 +53,7 @@ export class Data extends Client {
     this.vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
     this.collectionManager = collectionManager;
 
-    this._protoRoot = protobuf.loadSync(protoPath)
+    this._protoRoot = protobuf.loadSync(protoPath);
   }
 
   /**

@@ -1,7 +1,14 @@
 import protobuf, { Root } from 'protobufjs';
+import path from 'path';
 import { promisify } from '../utils';
 import { ERROR_REASONS } from './const/ErrorReason';
+import { checkCollectionFields, checkCollectionName } from './utils/Validate';
+import { formatKeyValueData, parseToKeyValue } from './utils/Format';
+import { Client } from './Client';
+import { ConsistencyLevelEnum } from './const/Milvus';
 import {
+  ErrorCode,
+  CollectionData,
   CreateCollectionReq,
   DescribeCollectionReq,
   DropCollectionReq,
@@ -17,27 +24,18 @@ import {
   CompactReq,
   GetCompactionStateReq,
   GetCompactionPlansReq,
-  ConsistencyLevelEnum,
   GetReplicaReq,
   RenameCollectionReq,
-} from './types/Collection';
-import {
   BoolResponse,
-  CollectionData,
+  ResStatus,
   CompactionResponse,
   DescribeCollectionResponse,
-  ErrorCode,
   GetCompactionPlansResponse,
   GetCompactionStateResponse,
-  ResStatus,
   ShowCollectionsResponse,
   StatisticsResponse,
   ReplicasResponse,
-} from './types/Response';
-import { checkCollectionFields, checkCollectionName } from './utils/Validate';
-import path from 'path';
-import { formatKeyValueData, parseToKeyValue } from './utils/Format';
-import { Client } from './Client';
+} from './types';
 
 const schemaPath = path.resolve(__dirname, '../proto/proto/schema.proto');
 

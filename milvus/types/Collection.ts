@@ -1,4 +1,47 @@
-import { DataType, GrpcTimeOut } from './Common';
+import {
+  ResStatus,
+  KeyValuePair,
+  GrpcTimeOut,
+  TimeStamp,
+  TimeStampArray,
+} from './Common';
+import {
+  ConsistencyLevelEnum,
+  CompactionState,
+  DataType,
+} from '../const/Milvus';
+
+export interface FieldSchema {
+  name: string;
+  description: string;
+  data_type: string;
+  is_primary_key?: boolean;
+  type_params: KeyValuePair[];
+  index_params: KeyValuePair[];
+  autoID: boolean;
+}
+
+export interface CollectionData {
+  name: string;
+  id: string;
+  timestamp: string;
+  loadedPercentage: string;
+}
+
+export interface ShardReplica {
+  leaderID: number;
+  leader_addr: string;
+  dm_channel_name: string;
+  node_ids: number[];
+}
+
+export interface ReplicaInfo {
+  replicaID: number;
+  collectionID: number;
+  partition_ids: number[];
+  shard_replicas: ShardReplica[];
+  node_ids: number[];
+}
 
 export interface FieldType {
   name: string;
@@ -34,14 +77,6 @@ export interface CreateCollectionReq extends GrpcTimeOut {
     | 'Eventually'
     | 'Customized';
   fields: FieldType[];
-}
-
-export enum ConsistencyLevelEnum {
-  Strong = 0,
-  Session = 1, // default in PyMilvus
-  Bounded = 2,
-  Eventually = 3,
-  Customized = 4, // Users pass their own `guarantee_timestamp`.
 }
 
 interface CollectionNameReq extends GrpcTimeOut {
@@ -99,4 +134,59 @@ export interface GetReplicaReq extends GrpcTimeOut {
 export interface RenameCollectionReq extends GrpcTimeOut {
   collection_name: string;
   new_collection_name: string;
+}
+
+export interface BoolResponse {
+  status: ResStatus;
+  value: Boolean;
+}
+export interface CompactionResponse {
+  status: ResStatus;
+  compactionID: number;
+}
+
+export interface CollectionSchema {
+  name: string;
+  description: string;
+  fields: FieldSchema[];
+}
+
+export interface DescribeCollectionResponse extends TimeStamp {
+  status: ResStatus;
+  schema: CollectionSchema;
+  collectionID: string;
+  consistency_level: ConsistencyLevelEnum;
+  aliases: string[];
+  virtual_channel_names: string[]; // not useful for now
+  physical_channel_names: string[]; // not useful for now
+}
+
+export interface GetCompactionPlansResponse {
+  status: ResStatus;
+  state: CompactionState;
+  mergeInfos: { sources: number[]; target: number }[];
+}
+
+export interface GetCompactionStateResponse {
+  status: ResStatus;
+  state: CompactionState;
+  executingPlanNo: number;
+  timeoutPlanNo: number;
+  completedPlanNo: number;
+}
+
+export interface ShowCollectionsResponse extends TimeStampArray {
+  status: ResStatus;
+  data: CollectionData[];
+}
+
+export interface StatisticsResponse {
+  status: ResStatus;
+  stats: KeyValuePair[];
+  data: { [x: string]: any };
+}
+
+export interface ReplicasResponse {
+  status: ResStatus;
+  replicas: ReplicaInfo[];
 }

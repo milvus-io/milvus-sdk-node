@@ -1,20 +1,18 @@
 import { promisify } from '../utils';
 import { Client } from './Client';
-import {
-  ResStatus,
-  DescribeIndexResponse,
-  GetIndexStateResponse,
-  GetIndexBuildProgressResponse,
-} from './types';
+import { checkCollectionName } from './utils/Validate';
+import { parseToKeyValue } from './utils/Format';
 import {
   CreateIndexReq,
   DescribeIndexReq,
   DropIndexReq,
   GetIndexBuildProgressReq,
   GetIndexStateReq,
-} from './types/Index';
-import { checkCollectionName } from './utils/Validate';
-import { parseToKeyValue } from './utils/Format';
+  ResStatus,
+  DescribeIndexResponse,
+  GetIndexStateResponse,
+  GetIndexBuildProgressResponse,
+} from './types';
 
 export class Index extends Client {
   /**
