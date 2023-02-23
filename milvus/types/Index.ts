@@ -1,4 +1,4 @@
-import { GrpcTimeOut } from './Common';
+import { GrpcTimeOut, ResStatus, KeyValuePair, IndexState } from './Common';
 
 export interface CreateIndexParam {
   index_type: string;
@@ -34,4 +34,26 @@ export interface DropIndexReq extends GrpcTimeOut {
   collection_name: string;
   field_name: string;
   index_name?: string;
+}
+
+export interface IndexDescription {
+  index_name: string;
+  indexID: number;
+  params: KeyValuePair[];
+  field_name: string;
+}
+export interface DescribeIndexResponse {
+  status: ResStatus;
+  index_descriptions: IndexDescription[];
+}
+
+export interface GetIndexStateResponse {
+  status: ResStatus;
+  state: IndexState;
+}
+
+export interface GetIndexBuildProgressResponse {
+  status: ResStatus;
+  indexed_rows: number;
+  total_rows: number;
 }

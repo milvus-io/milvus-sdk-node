@@ -1,5 +1,4 @@
 import { MilvusClient } from "../milvus";
-
 import { GENERATE_NAME, IP } from "../const";
 import { genCollectionParams } from "../utils/test";
 import { ERROR_REASONS } from "../milvus/const/ErrorReason";

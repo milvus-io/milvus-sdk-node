@@ -2,11 +2,10 @@ import { promisify } from '../utils';
 import { Client } from './Client';
 import { ERROR_REASONS } from './const/ErrorReason';
 import {
-  ResStatus,
-  BoolResponse,
-  ShowPartitionsResponse,
-  StatisticsResponse,
-} from './types';
+  checkCollectionName,
+  checkCollectionAndPartitionName,
+} from './utils/Validate';
+import { formatKeyValueData } from './utils/Format';
 import {
   CreatePartitionReq,
   DropPartitionReq,
@@ -15,12 +14,12 @@ import {
   LoadPartitionsReq,
   ReleasePartitionsReq,
   ShowPartitionsReq,
-} from './types/Partition';
-import {
-  checkCollectionName,
-  checkCollectionAndPartitionName,
-} from './utils/Validate';
-import { formatKeyValueData } from './utils/Format';
+  ResStatus,
+  BoolResponse,
+  ShowPartitionsResponse,
+  StatisticsResponse,
+} from './types';
+
 export class Partition extends Client {
   /**
    * Create a partition in a collection.

@@ -8,7 +8,7 @@ import {
   Roles,
   Privileges,
   RbacObjects,
-} from '../milvus/types/Common';
+} from '../milvus/const/Milvus';
 import { genCollectionParams } from '../utils/test';
 
 let milvusClient = new MilvusClient(IP);

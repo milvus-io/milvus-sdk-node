@@ -1,4 +1,4 @@
-import { DataType } from '../milvus/types/Common';
+import { DataType } from '../milvus/const/Milvus';
 
 export const VECTOR_FIELD_NAME = 'vector_field';
 export const INDEX_NAME = 'index_name';

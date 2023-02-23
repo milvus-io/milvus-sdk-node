@@ -1,6 +1,6 @@
 import { ERROR_REASONS } from '../const/ErrorReason';
 import { FieldType } from '../types/Collection';
-import { DataType } from '../types/Common';
+import { DataType } from '../const/Milvus';
 
 /**
  * when create collection, field must contain 2 Fields.

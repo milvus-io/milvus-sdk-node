@@ -1,4 +1,5 @@
-import { GrpcTimeOut, Privileges, RbacObjects } from './Common';
+import { GrpcTimeOut, Privileges, ResStatus } from './Common';
+import { RbacObjects } from '../const/Milvus';
 
 export interface UpdateUserReq extends GrpcTimeOut {
   username: string;
@@ -59,4 +60,41 @@ export interface SelectGrantReq extends OperateRolePrivilegeReq {}
 
 export interface ListGrantsReq extends GrpcTimeOut {
   roleName: string; // grant role name
+}
+
+export interface ListCredUsersResponse {
+  status: ResStatus;
+  usernames: string[];
+}
+
+type RoleEntity = { name: string };
+type User = { name: string };
+type RoleResult = { users: User[]; role: RoleEntity };
+export interface SelectRoleResponse {
+  status: ResStatus;
+  results: RoleResult[];
+}
+
+type UserResult = { user: User; roles: RoleEntity[] };
+export interface SelectUserResponse {
+  status: ResStatus;
+  results: UserResult[];
+}
+type ObjectEntity = { name: RbacObjects };
+type PrivilegeEntity = { name: Privileges };
+type Grantor = { user: User; privilege: PrivilegeEntity };
+type GrantEntity = {
+  role: RoleEntity;
+  object: ObjectEntity;
+  object_name: string;
+  grantor: Grantor;
+};
+export interface SelectGrantResponse {
+  status: ResStatus;
+  entities: GrantEntity[];
+}
+
+export interface HasRoleResponse {
+  status: ResStatus;
+  hasRole: boolean;
 }
