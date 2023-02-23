@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 14
+          node-version: 18
 
       - name: Read package.json
         uses: jaywcjlove/github-action-package@main
@@ -26,7 +26,7 @@ jobs:
       - name: Show target Milvus version
         run: echo "Milvus Version is ${{ steps.info.outputs.milvusVersion }}"
 
-      - name: Run Milvus
+      - name: Run target Milvus
         run: |
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
           sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ steps.info.outputs.milvusVersion }}/g" docker-compose.yml
