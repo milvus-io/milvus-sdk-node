@@ -17,16 +17,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 14
+          node-version: 19
 
-      - name: Read package.json
-        uses: dutscher/read-package-json-endpoint-actions@v1.33.7
-        id: package-json-endpoint
-
-      - name: Run Milvus
-        run: |
+      - name: Package.json info
+        uses: rexdefuror/read-package-json@v1.0.5
+      - run: |
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
-          sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ steps.package-json-endpoint.outputs.milvusVersion }}/g" docker-compose.yml
+          sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ env.milvusVersion }}/g" docker-compose.yml
           docker-compose up -d
 
       - name: update submodules
