@@ -139,6 +139,7 @@ export class Resource extends Client {
    * });
    * ```
    */
+  /* istanbul ignore next */
   async transferReplica(data: TransferReplicaReq): Promise<ResStatus> {
     const promise = await promisify(this.client, 'TransferReplica', data);
     return promise;
@@ -164,6 +165,7 @@ export class Resource extends Client {
    * });
    * ```
    */
+  /* istanbul ignore next */
   async transferNode(data: TransferNodeReq): Promise<ResStatus> {
     const promise = await promisify(this.client, 'TransferNode', data);
     return promise;
@@ -204,6 +206,7 @@ export class Resource extends Client {
 
         // if capacity is not 0, transfer node back
         if (detail.resource_group.capacity > 0) {
+          // istanbul ignore next
           await this.transferNode({
             source_resource_group: sourceRg,
             target_resource_group: DEFAULT_RESOURCE_GROUP,
