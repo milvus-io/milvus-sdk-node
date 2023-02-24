@@ -1,9 +1,13 @@
 import { MilvusClient } from '../milvus';
 import * as path from 'path';
-import { GENERATE_NAME, IP } from '../const';
+import { IP } from '../const';
 import { DataType } from '../milvus/const/Milvus';
 import { ErrorCode } from '../milvus/types/Response';
-import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
+import {
+  genCollectionParams,
+  VECTOR_FIELD_NAME,
+  GENERATE_NAME,
+} from '../utils/test';
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();

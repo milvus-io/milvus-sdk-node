@@ -1,17 +1,17 @@
-import { MilvusClient } from "../milvus";
-import { GENERATE_NAME, IP } from "../const";
-import { genCollectionParams } from "../utils/test";
-import { ERROR_REASONS } from "../milvus/const/ErrorReason";
-import { ErrorCode } from "../milvus/types/Response";
+import { MilvusClient } from '../milvus';
+import { IP } from '../const';
+import { genCollectionParams, GENERATE_NAME } from '../utils/test';
+import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import { ErrorCode } from '../milvus/types/Response';
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
-const COLLECTION_ALIAS = GENERATE_NAME("alias");
+const COLLECTION_ALIAS = GENERATE_NAME('alias');
 
-describe("Collection Api", () => {
+describe('Collection Api', () => {
   beforeAll(async () => {
     await milvusClient.collectionManager.createCollection(
-      genCollectionParams(COLLECTION_NAME, "8")
+      genCollectionParams(COLLECTION_NAME, '8')
     );
   });
 

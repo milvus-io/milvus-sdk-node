@@ -11,6 +11,7 @@ import { Partition } from './Partition';
 import { Index } from './MilvusIndex';
 import { Data } from './Data';
 import { User } from './User';
+import { Resource } from './Resource';
 import sdkInfo from '../sdk.json';
 import { ERROR_REASONS } from './const/ErrorReason';
 import { promisify } from '../utils';
@@ -26,6 +27,7 @@ export class MilvusClient {
   indexManager: Index;
   dataManager: Data;
   userManager: User;
+  resourceManager: Resource;
 
   /**
    * Connect to milvus grpc client.
@@ -92,6 +94,7 @@ export class MilvusClient {
     this.indexManager = new Index(this.client);
     this.dataManager = new Data(this.client, this.collectionManager);
     this.userManager = new User(this.client);
+    this.resourceManager = new Resource(this.client);
   }
 
   static get sdkInfo() {

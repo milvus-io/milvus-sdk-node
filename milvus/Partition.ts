@@ -173,20 +173,22 @@ export class Partition extends Client {
   }
 
   /**
-   * Load a partition into cache.
+   * Load multiple partitions into query nodes.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name   |
-   *  | partition_names    | String[] |       Array of partition names      |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type   | Description |
+   *  | :--- | :--  | :-- |
+   *  | collection_name | String | Collection name |
+   *  | partition_names | String[] | Array of partition names |
+   *  | replica_number? | number | replica number |
+   *  | resource_groups | String[] | resource group names |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause |   *
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    * #### Example
    *

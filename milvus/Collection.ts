@@ -323,17 +323,18 @@ export class Collection extends Client {
    * It's async function, but we can use showCollections to check loading status.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name       |
-   *  | replica_number?    | number |       Collection name       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type   | Description |
+   *  | :--- | :--  | :-- |
+   *  | collection_name    | String | Collection name |
+   *  | replica_number? | number | replica number |
+   *  | resource_groups? | String[] | resource group names |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|   *
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    * #### Example
    *
@@ -360,16 +361,18 @@ export class Collection extends Client {
    * Help to ensure this collection is loaded.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type   | Description |
+   *  | :--- | :--  | :-- |
+   *  | collection_name | String | Collection name |
+   *  | replica_number？ | number | replica number |
+   *  | resource_groups？ | String[] | resource group |
+   *  | timeout？ | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
-   *  | Property      | Description |
+   *  | Property | Description |
    *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|   *
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    * #### Example
    *

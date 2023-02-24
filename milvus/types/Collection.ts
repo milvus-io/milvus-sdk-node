@@ -93,6 +93,8 @@ export interface GetCollectionStatisticsReq extends CollectionNameReq {}
 
 export interface LoadCollectionReq extends CollectionNameReq {
   replica_number?: number;
+  resource_groups?: string[];
+  refresh?: boolean;
 }
 export interface ReleaseLoadCollectionReq extends CollectionNameReq {}
 
