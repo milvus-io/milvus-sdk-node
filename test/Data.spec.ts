@@ -4,7 +4,7 @@ import { IP } from '../const';
 import { DataType } from '../milvus/const/Milvus';
 import { ErrorCode } from '../milvus/types/Response';
 import { InsertReq } from '../milvus/types/Data';
-import { generateInsertData } from '../utils';
+import { generateInsertData } from '../utils/test';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,

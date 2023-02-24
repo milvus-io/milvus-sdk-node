@@ -1,6 +1,10 @@
 import { MilvusClient } from '../milvus';
-import { GENERATE_NAME, IP } from '../const';
-import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
+import { IP } from '../const';
+import {
+  genCollectionParams,
+  VECTOR_FIELD_NAME,
+  GENERATE_NAME,
+} from '../utils/test';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { ErrorCode } from '../milvus/types/Response';
 
@@ -23,7 +27,7 @@ describe("Collection's replica Api", () => {
     });
     await milvusClient.collectionManager.loadCollectionSync({
       collection_name: COLLECTION_NAME,
-      replica_number: 1
+      replica_number: 1,
     });
   });
 
