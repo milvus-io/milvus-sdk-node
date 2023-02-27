@@ -3,6 +3,7 @@ import { Client } from './Client';
 import { ResStatus } from './types';
 import { DEFAULT_RESOURCE_GROUP } from './const/Milvus';
 import {
+  GrpcTimeOut,
   CreateResourceGroupReq,
   DropResourceGroupsReq,
   ListResourceGroupsResponse,
@@ -50,6 +51,7 @@ export class Resource extends Client {
    *  | status.error_code | string | error code |
    *  | status.reason | string | error reason |
    *  | resource_groups | string[] | Resource group string array |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * #### Example
    *
@@ -57,8 +59,10 @@ export class Resource extends Client {
    *  new milvusClient(MILUVS_ADDRESS).resourceManager.listResourceGroups();
    * ```
    */
-  async listResourceGroups(): Promise<ListResourceGroupsResponse> {
-    const promise = await promisify(this.client, 'ListResourceGroups', {});
+  async listResourceGroups(
+    data?: GrpcTimeOut
+  ): Promise<ListResourceGroupsResponse> {
+    const promise = await promisify(this.client, 'ListResourceGroups', data);
     return promise;
   }
 
@@ -99,6 +103,11 @@ export class Resource extends Client {
 
   /**
    * drop a resource group.
+   * @param data
+   *  | Property | Type | Description |
+   *  | :--- | :--  | :-- |
+   *  | resource_group | String | Resource group name |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property | Type | Description |
@@ -187,7 +196,7 @@ export class Resource extends Client {
    *  new milvusClient(MILUVS_ADDRESS).resourceManager.dropResourceGroups();
    * ```
    */
-  async dropResourceGroups(): Promise<ResStatus[]> {
+  async dropAllResourceGroups(): Promise<ResStatus[]> {
     // get all resource groups
     const { resource_groups } = await this.listResourceGroups();
 

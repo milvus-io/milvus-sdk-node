@@ -144,7 +144,7 @@ describe('Resource Api', () => {
   });
 
   it(`Drop all resource groups should be successful`, async () => {
-    const res = await milvusClient.resourceManager.dropResourceGroups();
+    const res = await milvusClient.resourceManager.dropAllResourceGroups();
     res.forEach(r => {
       expect(r.error_code).toEqual(ErrorCode.SUCCESS);
     });
