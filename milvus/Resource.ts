@@ -38,7 +38,12 @@ export class Resource extends Client {
    * ```
    */
   async createResourceGroup(data: CreateResourceGroupReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, 'CreateResourceGroup', data);
+    const promise = await promisify(
+      this.client,
+      'CreateResourceGroup',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -62,7 +67,12 @@ export class Resource extends Client {
   async listResourceGroups(
     data?: GrpcTimeOut
   ): Promise<ListResourceGroupsResponse> {
-    const promise = await promisify(this.client, 'ListResourceGroups', data);
+    const promise = await promisify(
+      this.client,
+      'ListResourceGroups',
+      {},
+      data?.timeout
+    );
     return promise;
   }
 
@@ -97,7 +107,12 @@ export class Resource extends Client {
   async describeResourceGroup(
     data: DesribeResourceGroupsReq
   ): Promise<DescribeResourceGroupResponse> {
-    const promise = await promisify(this.client, 'DescribeResourceGroup', data);
+    const promise = await promisify(
+      this.client,
+      'DescribeResourceGroup',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -124,7 +139,12 @@ export class Resource extends Client {
    * ```
    */
   async dropResourceGroup(data: DropResourceGroupsReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, 'DropResourceGroup', data);
+    const promise = await promisify(
+      this.client,
+      'DropResourceGroup',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -176,7 +196,12 @@ export class Resource extends Client {
    */
   /* istanbul ignore next */
   async transferNode(data: TransferNodeReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, 'TransferNode', data);
+    const promise = await promisify(
+      this.client,
+      'TransferNode',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -188,7 +213,6 @@ export class Resource extends Client {
    *  | :-- | :-- | :-- |
    *  | status.error_code | string | error code |
    *  | status.reason | string[] | error reason |
-   *
    *
    * #### Example
    *

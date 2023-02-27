@@ -106,7 +106,6 @@ export class Collection extends Client {
     }
     checkCollectionFields(fields);
 
-    const root = await protobuf.load(schemaPath);
     // When data type is bytes, use protobufjs to transform data to buffer bytes.
     const CollectionSchema = this._protoRoot.lookupType(
       'milvus.proto.schema.CollectionSchema'
