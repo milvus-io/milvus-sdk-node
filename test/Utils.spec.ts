@@ -4,6 +4,10 @@ import {
   hybridtsToUnixtime,
   unixtimeToHybridts,
   formatAddress,
+  stringToBase64,
+  parseToKeyValue,
+  formatKeyValueData,
+  formatNumberPrecision,
 } from '../milvus/utils/Format';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 
@@ -102,7 +106,6 @@ describe('Insert data Api', () => {
     const urlWithoutHttp = `my-url`;
     expect(formatAddress(urlWithoutHttp)).toBe(`my-url:19530`);
 
-
     const urlWithoutHttpCustomPort = `my-url:12345`;
     expect(formatAddress(urlWithoutHttpCustomPort)).toBe(`my-url:12345`);
 
@@ -111,5 +114,34 @@ describe('Insert data Api', () => {
 
     const urlWithEmptyCustomPort = `://my-url:12345`;
     expect(formatAddress(urlWithEmptyCustomPort)).toBe(`my-url:12345`);
+  });
+
+  it('should convert string to base64 encoding', () => {
+    const testString = 'hello world, I love milvus';
+    const str = stringToBase64(testString);
+    expect(str.length % 4 == 0 && /^[A-Za-z0-9+/]+[=]{0,2}$/.test(str)).toBe(
+      true
+    );
+  });
+
+  it('should convert [{key:"row_count",value:4}] to {row_count:4}', () => {
+    const testValue = [{ key: 'row_count', value: 4 }];
+    const res = formatKeyValueData(testValue, ['row_count']);
+    expect(res).toMatchObject({ row_count: 4 });
+  });
+
+  it('should convert  {row_count:4} t0 [{key:"row_count",value:4}]', () => {
+    const testValue = { row_count: 4, b: 3 };
+    const res = parseToKeyValue(testValue);
+    expect(res).toMatchObject([
+      { key: 'row_count', value: 4 },
+      { key: 'b', value: 3 },
+    ]);
+  });
+
+  it('should convert [{key:"row_count",value:4}] to {row_count:4}', () => {
+    const testValue = 3.1231241241234124124;
+    const res = formatNumberPrecision(testValue, 3);
+    expect(res).toBe(3.123);
   });
 });
