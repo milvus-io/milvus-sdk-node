@@ -19,6 +19,8 @@ export interface ShowPartitionsReq extends GrpcTimeOut {
 export interface LoadPartitionsReq extends GrpcTimeOut {
   collection_name: string;
   partition_names: string[];
+  replica_number?: number;
+  resource_groups?: string[];
 }
 
 export interface ReleasePartitionsReq extends GrpcTimeOut {

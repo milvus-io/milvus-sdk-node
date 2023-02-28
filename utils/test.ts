@@ -35,3 +35,28 @@ export const genCollectionParams = (
     ],
   };
 };
+
+export const GENERATE_NAME = (pre = 'collection') =>
+  `${pre}_${Math.random().toString(36).substr(2, 8)}`;
+
+export function generateInsertData(
+  fields: { isVector: boolean; dim?: number; name: string; isBool?: boolean }[],
+  count: number
+) {
+  const results: any = [];
+  while (count > 0) {
+    let value: any = {};
+
+    fields.forEach(v => {
+      const { isVector, dim, name, isBool } = v;
+      value[name] = isVector
+        ? [...Array(dim)].map(() => Math.random() * 10)
+        : isBool
+        ? count % 2 === 0
+        : Math.floor(Math.random() * 100000);
+    });
+    results.push(value);
+    count--;
+  }
+  return results;
+}

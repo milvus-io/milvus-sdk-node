@@ -378,3 +378,5 @@ export const Privileges = {
   ...UserPrivileges,
   ...GlobalPrivileges,
 };
+
+export const DEFAULT_RESOURCE_GROUP = '__default_resource_group';

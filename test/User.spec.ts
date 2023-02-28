@@ -1,5 +1,5 @@
 import { MilvusClient } from '../milvus';
-import { GENERATE_NAME, IP } from '../const';
+import { IP } from '../const';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { ErrorCode } from '../milvus/types/Response';
 import { timeoutTest } from './common/timeout';
@@ -9,7 +9,7 @@ import {
   Privileges,
   RbacObjects,
 } from '../milvus/const/Milvus';
-import { genCollectionParams } from '../utils/test';
+import { genCollectionParams, GENERATE_NAME } from '../utils/test';
 
 let milvusClient = new MilvusClient(IP);
 let authClient: MilvusClient;
