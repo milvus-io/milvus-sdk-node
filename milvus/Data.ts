@@ -60,21 +60,22 @@ export class Data extends Client {
    * Insert data into Milvus.
    *
    * @param data
-   *  | Property                | Type                   |           Description              |
-   *  | :---------------------- | :--------------------  | :-------------------------------  |
-   *  | collection_name         | String                 |       Collection name       |
-   *  | partition_name(optional)| String                 |       Partition name       |
-   *  | fields_data             | { [x: string]: any }[] |      If the field type is binary, the vector data length needs to be dimension / 8   |
-   *  | hash_keys(optional)    | Number[]               |  The hash value depends on the primarykey value       |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | partition_name(optional)| String | Partition name |
+   *  | fields_data | { [x: string]: any }[] | If the field type is binary, the vector data length needs to be dimension / 8 |
+   *  | hash_keys(optional) | Number[] |  The hash value depends on the primarykey value |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | succ_index    |  Index array of the successfully inserted data      |
-   *  | err_index    |   Index array of the unsuccessfully inserted data      |
-   *  | IDs    |        ID array of the successfully inserted data      |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | succ_index |  Index array of the successfully inserted data |
+   *  | err_index | Index array of the unsuccessfully inserted data |
+   *  | IDs | ID array of the successfully inserted data |
    *
    *
    * #### Example
@@ -229,18 +230,19 @@ export class Data extends Client {
    * Delete entities in Milvus
    *
    * @param data
-   *  | Property                | Type                   |           Description              |
-   *  | :---------------------- | :--------------------  | :-------------------------------  |
-   *  | collection_name         | String                 |       Collection name       |
-   *  | partition_name(optional)| String                 |       Partition name       |
-   *  | expr    | String        |  Boolean expression used to filter attribute.    |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | partition_name(optional)| String | Partition name |
+   *  | expr | String | Boolean expression used to filter attribute. |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | IDs    |        ID array of the successfully deleted data      |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status |  { error_code: number, reason: string } |
+   *  | IDs | ID array of the successfully deleted data |
    *
    *
    * #### Example
@@ -264,23 +266,24 @@ export class Data extends Client {
    * Perform vector similarity search.
    *
    * @param data
-   *  | Property                | Type                   |           Description              |
-   *  | :---------------------- | :--------------------  | :-------------------------------  |
-   *  | collection_name         | String                 |        Collection name       |
-   *  | partition_names(optional)| String[]              |        Array of partition names       |
-   *  | expr(optional)           | String                |      Scalar field filter expression    |
-   *  | search_params            | Object        |    anns_field: vector field name <br/> topk: search result counts <br/> [metric_type](https://milvus.io/docs/v2.0.0/metric.md#floating#Similarity-Metrics) <br/>params: search params   |
-   *  | vectors                  | Number[][]            |  Original vector to search with  |
-   *  | output_fields(optional)  | String[]              |  Support scalar field  |
-   *  | vector_type              | enum                  |  Binary field -> 100, Float field -> 101  |
-   *  | travel_timestamp          | number                  |  We can get timestamp after insert success. Use this timestamp we can time travel in vector search.|
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | partition_names(optional)| String[] | Array of partition names |
+   *  | expr(optional) | String | Scalar field filter expression |
+   *  | search_params | Object | anns_field: vector field name <br/> topk: search result counts <br/> [metric_type](https://milvus.io/docs/v2.0.0/metric.md#floating#Similarity-Metrics) <br/>params: search params |
+   *  | vectors | Number[][] | Original vector to search with |
+   *  | output_fields(optional) | String[] |  Support scalar field |
+   *  | vector_type | enum | Binary field -> 100, Float field -> 101 |
+   *  | travel_timestamp | number |  We can get timestamp after insert success. Use this timestamp we can time travel in vector search.|
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | results    |        {score:number,id:string}[];       |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | results | {score:number,id:string}[]; |
    *
    *
    *
@@ -448,15 +451,16 @@ export class Data extends Client {
    * Milvus temporarily buffers the newly inserted vectors in the cache. Call `flush()` to persist them to the object storage.
    * It's async function, so it's will take some times to excute.
    * @param data
-   *  | Property                | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collection_names        | String[] |        Array of collection names      |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_names | String[] | Array of collection names |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
    *
    * #### Example
    *
@@ -483,15 +487,16 @@ export class Data extends Client {
    * So you can ensure it's flushed after function return the result.
    *
    * @param data
-   *  | Property                | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collection_names        | String[] |        Array of collection names      |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_names | String[] | Array of collection names |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status |  { error_code: number, reason: string } |
    *
    * #### Example
    *
@@ -531,20 +536,21 @@ export class Data extends Client {
    * Query vector data in Milvus. Current release of Milvus only supports expression as fieldname in [id1,id2,id3]
    *
    * @param data
-   *  | Property                     | Type   |           Description              |
-   *  | :--------------------------- | :----  | :-------------------------------  |
-   *  | collection_name              | String |        Collection name      |
-   *  | expr                         | String |       Scalar field filter expression     |
-   *  | partitions_names(optional)   | String[] |       Array of partition names      |
-   *  | output_fields                | String[] |       Vector or scalar field to be returned    |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type  | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | expr | String | Scalar field filter expression |
+   *  | partitions_names(optional) | String[] | Array of partition names |
+   *  | output_fields | String[] | Vector or scalar field to be returned |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *  | params | {key: value}[] | An optional key pair json array
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string } |
-   *  | data   |  Data of all fields that you defined in `output_fields`, {field_name: value}[] |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number,reason:string } |
+   *  | data | Data of all fields that you defined in `output_fields`, {field_name: value}[] |
    *
    *
    * #### Example
@@ -652,9 +658,9 @@ export class Data extends Client {
   /**
    * @ignore
    * @param data
-   *  | Property             | Type   |           Description                      |
-   *  | :------------------- | :----  | :----------------------------------------  |
-   *  | request              | object |        Only allow "system_info" for now    |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | request | object | Only allow "system_info" for now |
    */
   async getMetric(data: GetMetricsRequest): Promise<GetMetricsResponse> {
     if (!data || !data.request || !data.request.metric_type) {
@@ -679,17 +685,18 @@ export class Data extends Client {
    * Get flush state by segment ids
    *
    * @param data
-   *  | Property                | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------  |
-   *  | segmentIDs              | Array  |       The segment ids        |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | segmentIDs | Array | The segment ids |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-----------| :-------------------------------  |
-   *  | status      |  { error_code: number,reason:string } |
-   *  | flushed     |  segments flushed or not  |
+   * | Property | Description |
+   *  | :--- | :-- |
+   *  | status | { error_code: number,reason:string } |
+   *  | flushed | segments flushed or not |
    *
    *
    * #### Example
@@ -718,18 +725,18 @@ export class Data extends Client {
    * Only work in cluster milvus.
    *
    * @param data
-   *  | Property            | Type     |           Description              |
-   *  | :-------------------| :----    | :-------------------------------  |
-   *  | src_nodeID          | number   |     The source query node id to balance.        |
-   *  | dst_nodeIDs         | number[] |     The destination query node ids to balance.(optional)        |
-   *  | sealed_segmentIDs   | number[] |     Sealed segment ids to balance.(optional)       |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | src_nodeID | number | The source query node id to balance. |
+   *  | dst_nodeIDs | number[] | The destination query node ids to balance.(optional) |
+   *  | sealed_segmentIDs | number[] | Sealed segment ids to balance.(optional) |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-----------| :-------------------------------  |
-   *  | status      |  { error_code: number,reason:string } |
-   *  | infos       |  segments infomations  |
+   * | Property | Description |
+   *  | :--- | :-- |
+   *  | status | { error_code: number,reason:string } |
+   *  | infos | segments infomations |
    *
    *
    * #### Example
@@ -752,17 +759,17 @@ export class Data extends Client {
    * Notifies Proxy to return segments information from query nodes.
    *
    * @param data
-   *  | Property                | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collectionName          | String |      The name of the collection to get segments info.       |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type  | Description |
+   *  | :--- | :-- | :-- |
+   *  | collectionName | String | The name of the collection to get segments info. |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-----------| :-------------------------------  |
-   *  | status      |  { error_code: number,reason:string } |
-   *  | infos       |  QuerySegmentInfo is the growing segments's information in query cluster.  |
+   * | Property | Description |
+   *  | :--- | :-- |
+   *  | status | { error_code: number,reason:string } |
+   *  | infos | QuerySegmentInfo is the growing segments's information in query cluster. |
    *
    *
    * #### Example
@@ -792,17 +799,17 @@ export class Data extends Client {
    * Import data from files
    *
    * @param data
-   *  | Property                | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collection_name          | String |      The name of the collection      |
-   *  | files        | string[] |        File path array       |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_name | String | The name of the collection |
+   *  | files | string[] | File path array |
    *
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-----------| :-------------------------------  |
-   *  | status      |  { error_code: number,reason:string } |
-   *  | tasks       |  taskId array  |
+   * | Property | Description |
+   *  | :--- | :-- |
+   *  | status | { error_code: number,reason:string } |
+   *  | tasks | taskId array |
    *
    *
    * #### Example
@@ -838,22 +845,21 @@ export class Data extends Client {
    * List import tasks
    *
    * @param data
-   *  | Property                | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collection_name          | String |      The name of the collection       |
-   *  | limit        | number |       optional, maximum number of tasks returned, list all tasks if the value is 0       |
+   *  | Property | Type  | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_name | String | The name of the collection |
+   *  | limit | number | optional, maximum number of tasks returned, list all tasks if the value is 0 |
    *
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-----------| :-------------------------------  |
-   *  | status      |  { error_code: number,reason:string } |
+   * | Property | Description |
+   *  | :--- | :-- |
+   *  | status | { error_code: number,reason:string } |
    *  | state | import state |
    *  | row_count | how many rows to import|
    *  | id_list| id lists |
    *  | collection_id | collection to be imported to |
-   *  |
-   *  | tasks       |  taskId array  |
+   *  | tasks | taskId array  |
    *
    *
    * #### Example

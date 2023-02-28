@@ -19,19 +19,20 @@ export class Index extends Client {
    * Create an index on a vector field. Note that index building is an async progress.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |        Collection name       |
-   *  | field_name         | String |        Field name       |
-   *  | index_name         | String |      Index name is unique in one collection     |
-   *  | extra_params       | Object | Parameters: { index_type: string; metric_type: string; params: string; };      |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | field_name | String | Field name |
+   *  | index_name | String | Index name is unique in one collection |
+   *  | extra_params | Object | Parameters: { index_type: string; metric_type: string; params: string; }; |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause   |
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    *
    * #### Example
@@ -68,14 +69,15 @@ export class Index extends Client {
    * Show index information. Current release of Milvus only supports showing latest built index.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name       |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------  |
+   *  | :-- | :-- |
    *  | status        |  { error_code: number, reason: string } |
    *  | index_descriptions        | Index information |
    *
@@ -103,17 +105,18 @@ export class Index extends Client {
    * Show index building state.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       Collection name       |
-   *  | field_name         | string |       Field name       |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | string | Collection name |
+   *  | field_name | string | Field name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string } |
-   *  | state         | Index building state |
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | state | Index building state |
    *
    *
    * #### Example
@@ -139,18 +142,19 @@ export class Index extends Client {
    * Show index building progress.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name       |
-   *  | field_name         | String |       Field name       |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | field_name | String | Field name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string } |
-   *  | indexed_rows  |  Row count that successfully built with index |
-   *  | total_rows    |  Total row count |
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | indexed_rows | Row count that successfully built with index |
+   *  | total_rows | Total row count |
    *
    *
    *
@@ -179,17 +183,18 @@ export class Index extends Client {
    * Drop an index.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name       |
-   *  | field_name         | String |       Field name       |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | field_name | String | Field name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause |
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    * #### Example
    *

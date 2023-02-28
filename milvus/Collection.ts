@@ -55,17 +55,17 @@ export class Collection extends Client {
    * Create a collection in Milvus.
    *
    * @param data
-   *  | Property                | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collection_name        | String |        Collection name       |
-   *  | description             | String |        Collection description       |
-   *  | consistency_level       | String |        "Strong"(Milvus default) | "Session" | "Bounded"| "Eventually" | "Customized";      |
-   *  | fields        | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> |     Field data      |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | description | String | Collection description |
+   *  | consistency_level | String | "Strong"(Milvus default) | "Session" | "Bounded"| "Eventually" | "Customized"; |
+   *  | fields | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> | Field data |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property      | Description |
-   *  | :-------------| :--------  |
+   *  | :-- | :-- |
    *  | error_code    | Error code number      |
    *  | reason        | Error cause          |
    *
@@ -155,16 +155,16 @@ export class Collection extends Client {
    * Check if a collection exists.
    *
    * @param data
-   *  | Property              | Type   |           Description              |
-   *  | :---------------------- | :----  | :-------------------------------  |
-   *  | collection_name        | String |       Collection name       |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    * 
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | value         |        `true` or `false`                 |
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | value | `true` or `false` |
   
    *
    * #### Example
@@ -191,17 +191,18 @@ export class Collection extends Client {
    * List all collections or get collection loading status.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | type(optional)        | enum |       All -> 0, Loaded -> 1       |
-   *  | collection_names(optional)        | String[] |       If `type = Loaded`, Milvus will return `collection_names inMemory_percentages`     |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | type(optional) | enum | All -> 0, Loaded -> 1 |
+   *  | collection_names(optional) | String[] | If `type = Loaded`, Milvus will return `collection_names inMemory_percentages` |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string } |
-   *  | data         |  Contains collection name, ID , timestamp (UTC created time), and loadedPercentage (100 means loaded)      |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | data |  Contains collection name, ID , timestamp (UTC created time), and loadedPercentage (100 means loaded) |
    *
    *
    * #### Example
@@ -240,17 +241,17 @@ export class Collection extends Client {
    * Show the details of a collection, e.g. name, schema.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |        Collection name       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | schema        |        Information of all fields in this collection                |
-   *  | collectionID  |        Collection ID                |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | schema | Information of all fields in this collection |
+   *  | collectionID  | Collection ID |
    *
    *
    * #### Example
@@ -279,17 +280,17 @@ export class Collection extends Client {
    * Show the statistics information of a collection.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | stats        |        [{key: string, value: string}]                |
-   *  | data  |        Transform **stats** to { row_count: 0 }               |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | stats | [{key: string, value: string}] |
+   *  | data | Transform **stats** to { row_count: 0 } |
    *
    *
    * #### Example
@@ -322,8 +323,8 @@ export class Collection extends Client {
    * It's async function, but we can use showCollections to check loading status.
    *
    * @param data
-   *  | Property | Type   | Description |
-   *  | :--- | :--  | :-- |
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
    *  | collection_name    | String | Collection name |
    *  | replica_number? | number | replica number |
    *  | resource_groups? | String[] | resource group names |
@@ -331,7 +332,7 @@ export class Collection extends Client {
    *
    * @return
    *  | Property | Description |
-   *  | :-------------| :--------  |
+   *  | :-- | :-- |
    *  | error_code | Error code number |
    *  | reason | Error cause |
    *
@@ -360,8 +361,8 @@ export class Collection extends Client {
    * Help to ensure this collection is loaded.
    *
    * @param data
-   *  | Property | Type   | Description |
-   *  | :--- | :--  | :-- |
+   *  | Property | Type  | Description |
+   *  | :--- | :-- | :-- |
    *  | collection_name | String | Collection name |
    *  | replica_number？ | number | replica number |
    *  | resource_groups？ | String[] | resource group |
@@ -369,7 +370,7 @@ export class Collection extends Client {
    *
    * @return
    *  | Property | Description |
-   *  | :-------------| :--------  |
+   *  | :-- | :-- |
    *  | error_code | Error code number |
    *  | reason | Error cause |
    *
@@ -421,16 +422,16 @@ export class Collection extends Client {
    * Note that you cannot search while the corresponding collection is unloaded.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause |   *
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    * #### Example
    *
@@ -457,16 +458,16 @@ export class Collection extends Client {
    *
    * @param data
    *  | Property | Type | Description |
-   *  | :--------- | :----  | :------  |
+   *  | :-- | :-- | :-- |
    *  | collection_name | String | old collection name |
    *  | new_collection_name | String | new collection name |
-   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|   *
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    * #### Example
    *
@@ -494,16 +495,16 @@ export class Collection extends Client {
    * Drop a collection. Note that this drops all data in the collection.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name        | String |       Collection name       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause|   *
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    * #### Example
    *
@@ -526,9 +527,30 @@ export class Collection extends Client {
   }
 
   /**
-   * @ignore
    * Create collection alias, then you can use alias instead of collection_name when you do vector search
+   *
    * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | alias | String | alias name |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.createAlias({
+   *    alias: 'my_collection_alis',
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async createAlias(data: CreateAliasReq): Promise<ResStatus> {
     checkCollectionName(data);
@@ -545,8 +567,30 @@ export class Collection extends Client {
   }
 
   /**
-   * @ignore
+   * Drop a collection alias
+   *
    * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | alias | String | alias name |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.dropAlias({
+   *    alias: 'my_collection_alis',
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async dropAlias(data: DropAliasReq): Promise<ResStatus> {
     if (!data.alias) {
@@ -562,8 +606,30 @@ export class Collection extends Client {
   }
 
   /**
-   * @ignore
+   * alter a collection alias
+   *
    * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | alias | String | alias name |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
+   *
+   * @return
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).collectionManager.alterAlais({
+   *    alias: 'my_collection_alis',
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
    */
   async alterAlias(data: AlterAliasReq): Promise<ResStatus> {
     checkCollectionName(data);
@@ -583,16 +649,16 @@ export class Collection extends Client {
    * Do compaction for the collection.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       The collection name to compact       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | The collection name to compact |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | compactionID  | compaction ID |
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | compactionID | compaction ID |
    *
    * #### Example
    *
@@ -620,16 +686,16 @@ export class Collection extends Client {
    * Get compaction states of a targeted compaction id
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | compactionID       | number or string |       the id returned by compact       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | compactionID | number or string | the id returned by compact |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | state         | the state of the compaction |
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | state | the state of the compaction |
    *
    * #### Example
    *
@@ -658,16 +724,16 @@ export class Collection extends Client {
    * Get compaction states of a targeted compaction id
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | compactionID       | number or string |       the id returned by compact       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | compactionID | number or string | the id returned by compact |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | state         | the state of the compaction |
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | state | the state of the compaction |
    *
    * #### Example
    *
@@ -696,15 +762,15 @@ export class Collection extends Client {
    * Get replicas
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collectionID       | number or string |       the id returned by compact       |
-   *  | timeout            | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collectionID | number or string | the id returned by compact |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | status        |  { error_code: number, reason: string }|
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
    *  | ReplicaInfo[] | replica info array |
    *
    * #### Example

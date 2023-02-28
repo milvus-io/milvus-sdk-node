@@ -19,9 +19,9 @@ export class Resource extends Client {
    *
    * @param data
    *  | Property | Type | Description |
-   *  | :--- | :--  | :-- |
+   *  | :--- | :-- | :-- |
    *  | resource_group | String | Resource group name |
-   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property | Type | Description |
@@ -56,7 +56,7 @@ export class Resource extends Client {
    *  | status.error_code | string | error code |
    *  | status.reason | string | error reason |
    *  | resource_groups | string[] | Resource group string array |
-   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * #### Example
    *
@@ -81,9 +81,9 @@ export class Resource extends Client {
    *
    * @param data
    *  | Property | Type | Description |
-   *  | :--- | :--  | :-- |
+   *  | :--- | :-- | :-- |
    *  | resource_group | String | Resource group name |
-   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property | Type | Description |
@@ -120,9 +120,9 @@ export class Resource extends Client {
    * drop a resource group.
    * @param data
    *  | Property | Type | Description |
-   *  | :--- | :--  | :-- |
+   *  | :--- | :-- | :-- |
    *  | resource_group | String | Resource group name |
-   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property | Type | Description |
@@ -152,12 +152,12 @@ export class Resource extends Client {
    * transfer nodes from one resource group to another
    * @param data
    *  | Property | Type | Description |
-   *  | :--- | :--  | :-- |
+   *  | :--- | :-- | :-- |
    *  | source_resource_group | String | source resource group name |
    *  | target_resource_group | String | target resource group name |
    *  | collection_name | String | collection name |
    *  | num_replica | Number | number of replicas to transfer |
-   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property | Type | Description |
@@ -192,11 +192,11 @@ export class Resource extends Client {
    * transfer nodes from one resource group to another
    * @param data
    *  | Property | Type | Description |
-   *  | :--- | :--  | :-- |
+   *  | :--- | :-- | :-- |
    *  | source_resource_group | String | source resource group name |
    *  | target_resource_group | String | target resource group name |
    *  | num_node | Number | number of nodes to transfer |
-   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property | Type | Description |

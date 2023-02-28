@@ -74,14 +74,14 @@ const checkTimeParam = (ts: any) => {
  * Convert a hybrid timestamp to UNIX Epoch time ignoring the logic part.
  *
  * @param data
- *  | Property          | Type   |           Description              |
+ *  | Property          | Type  |           Description              |
  *  | :---------------- | :----  | :-------------------------------  |
  *  | hybridts          | String or BigInt |    The known hybrid timestamp to convert to UNIX Epoch time. Non-negative interger range from 0 to 18446744073709551615.       |
  *
  *
  *
  * @return
- *  | Property    |           Description              |
+ * | Property | Description |
  *  | :-----------| :-------------------------------  |
  *  | unixtime as string      |  The Unix Epoch time is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT). |
  *
@@ -105,14 +105,14 @@ export const hybridtsToUnixtime = (hybridts: bigint | string) => {
  * Generate a hybrid timestamp based on Unix Epoch time, timedelta and incremental time internval.
  *
  * @param data
- *  | Property          | Type   |           Description              |
+ *  | Property          | Type  |           Description              |
  *  | :---------------- | :----  | :-------------------------------  |
  *  | unixtime          | string or bigint |    The known Unix Epoch time used to generate a hybrid timestamp.  The Unix Epoch time is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT).       |
  *
  *
  *
  * @return
- *  | Property    | Type   |           Description              |
+ *  | Property    | Type  |           Description              |
  *  | :-----------| :---   | :-------------------------------  |
  *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |
  *
@@ -137,14 +137,14 @@ export const unixtimeToHybridts = (unixtime: bigint | string) => {
  * Generate a hybrid timestamp based on datetime。
  *
  * @param data
- *  | Property          | Type   |           Description              |
+ *  | Property          | Type  |           Description              |
  *  | :---------------- | :----  | :-------------------------------  |
  *  | datetime          | Date |    The known datetime used to generate a hybrid timestamp.       |
  *
  *
  *
  * @return
- *  | Property    | Type   |           Description              |
+ *  | Property    | Type  |           Description              |
  *  | :-----------| :---   | :-------------------------------  |
  *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |
  *

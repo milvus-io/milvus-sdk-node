@@ -4,6 +4,8 @@
     "milvus/Data.ts",
     "milvus/Partition.ts",
     "milvus/MilvusIndex.ts",
+    "milvus/Resource.ts",
+    "milvus/User.ts",
     "milvus/Utils.ts"
   ],
   "out": "docs"

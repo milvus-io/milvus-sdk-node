@@ -25,17 +25,18 @@ export class Partition extends Client {
    * Create a partition in a collection.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name   |
-   *  | partition_name     | String |       Partition name      |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | partition_name | String | Partition name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause |   *
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    * #### Example
    *
@@ -61,17 +62,18 @@ export class Partition extends Client {
    * Check if a partition exists in a collection.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | string |       Collection name   |
-   *  | partition_name     | string |       Parititon name      |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | string | Collection name |
+   *  | partition_name | string | Parititon name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number,reason:string }|
-   *  | value         |        `true` or `false`                 |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number,reason:string } |
+   *  | value | `true` or `false` |
    *
    * #### Example
    *
@@ -97,17 +99,18 @@ export class Partition extends Client {
    * Show all partitions in a collection.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name   |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | partition_names         |        Array of partition names                 |
-   *  | partitionIDs            |        Array of partition IDs                 |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | partition_names | Array of partition names |
+   *  | partitionIDs | Array of partition IDs |
    *
    *
    * #### Example
@@ -135,18 +138,19 @@ export class Partition extends Client {
    * Show the statistics information of a partition.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name   |
-   *  | partition_name     | String |       Partition name      |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | partition_name | String | Partition name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property    |           Description              |
-   *  | :-------------| :-------------------------------  |
-   *  | status        |  { error_code: number, reason: string }|
-   *  | stats        |        [{key: string, value: string}]                |
-   *  | data  |          { row_count: 0 } transformed from **stats**               |
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | stats | [{key: string, value: string}] |
+   *  | data  | { row_count: 0 } transformed from **stats** |
    *
    *
    * #### Example
@@ -176,17 +180,17 @@ export class Partition extends Client {
    * Load multiple partitions into query nodes.
    *
    * @param data
-   *  | Property | Type   | Description |
-   *  | :--- | :--  | :-- |
+   *  | Property | Type  | Description |
+   *  | :--- | :-- | :-- |
    *  | collection_name | String | Collection name |
    *  | partition_names | String[] | Array of partition names |
    *  | replica_number? | number | replica number |
    *  | resource_groups | String[] | resource group names |
-   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property | Description |
-   *  | :-------------| :--------  |
+   *  | :-- | :-- |
    *  | error_code | Error code number |
    *  | reason | Error cause |
    *
@@ -217,18 +221,19 @@ export class Partition extends Client {
    * Release a partition from cache.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name   |
-   *  | partition_names    | String[] |       Array of partition names    |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | partition_names | String[] | Array of partition names |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause |   *
-   *
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
+   * 
    * #### Example
    *
    * ```
@@ -262,17 +267,18 @@ export class Partition extends Client {
    * To drop a partition will drop all data in this partition and the `_default` partition cannot be dropped.
    *
    * @param data
-   *  | Property           | Type   |           Description              |
-   *  | :----------------- | :----  | :-------------------------------  |
-   *  | collection_name    | String |       Collection name   |
-   *  | partition_name    | String |       Partition name     |
-   *  | timeout        | number |        An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | partition_name | String | Partition name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
    *
    * @return
-   *  | Property      | Description |
-   *  | :-------------| :--------  |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause |   *
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | error_code | Error code number |
+   *  | reason | Error cause |
    *
    * #### Example
    *
