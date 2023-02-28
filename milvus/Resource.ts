@@ -150,6 +150,14 @@ export class Resource extends Client {
 
   /**
    * transfer nodes from one resource group to another
+   * @param data
+   *  | Property | Type | Description |
+   *  | :--- | :--  | :-- |
+   *  | source_resource_group | String | source resource group name |
+   *  | target_resource_group | String | target resource group name |
+   *  | collection_name | String | collection name |
+   *  | num_replica | Number | number of replicas to transfer |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property | Type | Description |
@@ -164,18 +172,31 @@ export class Resource extends Client {
    *  new milvusClient(MILUVS_ADDRESS).resourceManager.transferNode({
    *    source_resource_group: 'source-resource-group',
    *    target_resource_group: 'target-resource-group',
-   *    num_node: 2
+   *    collection_name: 'my-collection',
+   *    num_replica: 2
    * });
    * ```
    */
   /* istanbul ignore next */
   async transferReplica(data: TransferReplicaReq): Promise<ResStatus> {
-    const promise = await promisify(this.client, 'TransferReplica', data);
+    const promise = await promisify(
+      this.client,
+      'TransferReplica',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
   /**
    * transfer nodes from one resource group to another
+   * @param data
+   *  | Property | Type | Description |
+   *  | :--- | :--  | :-- |
+   *  | source_resource_group | String | source resource group name |
+   *  | target_resource_group | String | target resource group name |
+   *  | num_node | Number | number of nodes to transfer |
+   *  | timeout | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @return
    *  | Property | Type | Description |
