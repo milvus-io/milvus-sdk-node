@@ -69,7 +69,7 @@ export class Data extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -238,7 +238,7 @@ export class Data extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status |  { error_code: number, reason: string } |
@@ -279,7 +279,7 @@ export class Data extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -457,7 +457,7 @@ export class Data extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -493,7 +493,7 @@ export class Data extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status |  { error_code: number, reason: string } |
@@ -546,7 +546,7 @@ export class Data extends Client {
 
    *  | params | {key: value}[] | An optional key pair json array
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number,reason:string } |
@@ -692,7 +692,7 @@ export class Data extends Client {
 
    *
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :--- | :-- |
    *  | status | { error_code: number,reason:string } |
@@ -732,7 +732,7 @@ export class Data extends Client {
    *  | sealed_segmentIDs | number[] | Sealed segment ids to balance.(optional) |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :--- | :-- |
    *  | status | { error_code: number,reason:string } |
@@ -765,7 +765,7 @@ export class Data extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :--- | :-- |
    *  | status | { error_code: number,reason:string } |
@@ -805,7 +805,7 @@ export class Data extends Client {
    *  | files | string[] | File path array |
    *
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :--- | :-- |
    *  | status | { error_code: number,reason:string } |
@@ -851,7 +851,7 @@ export class Data extends Client {
    *  | limit | number | optional, maximum number of tasks returned, list all tasks if the value is 0 |
    *
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :--- | :-- |
    *  | status | { error_code: number,reason:string } |

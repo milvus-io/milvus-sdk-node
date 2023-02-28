@@ -32,7 +32,7 @@ export class Partition extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -69,7 +69,7 @@ export class Partition extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number,reason:string } |
@@ -105,7 +105,7 @@ export class Partition extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -145,7 +145,7 @@ export class Partition extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -188,7 +188,7 @@ export class Partition extends Client {
    *  | resource_groups | String[] | resource group names |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -228,7 +228,7 @@ export class Partition extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -274,7 +274,7 @@ export class Partition extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |

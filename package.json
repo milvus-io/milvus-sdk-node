@@ -15,7 +15,7 @@
     "coverage": "jest --coverage=true --config jest.config.js --no-cache --testPathIgnorePatterns=/test/build/ test/User.spec.ts ",
     "build-test": "yarn build && jest test/build/Collection.spec.ts",
     "example": "npx ts-node",
-    "doc": "rm -rf docs && npx typedoc && node doc",
+    "doc": "rm -rf docs && npx typedoc",
     "doc-json": "npx typedoc milvus --json"
   },
   "dependencies": {

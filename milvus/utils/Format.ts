@@ -22,7 +22,7 @@ export const formatKeyValueData = (data: KeyValuePair[], keys: string[]) => {
 /**
  * parse {row_count:4} to [{key:"row_count",value:"4"}]
  * @param data Object
- * @return {KeyValuePair[]}
+ * @returns {KeyValuePair[]}
  */
 export const parseToKeyValue = (data?: {
   [x: string]: any;
@@ -80,7 +80,7 @@ const checkTimeParam = (ts: any) => {
  *
  *
  *
- * @return
+ * @returns
  * | Property | Description |
  *  | :-----------| :-------------------------------  |
  *  | unixtime as string      |  The Unix Epoch time is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT). |
@@ -111,7 +111,7 @@ export const hybridtsToUnixtime = (hybridts: bigint | string) => {
  *
  *
  *
- * @return
+ * @returns
  *  | Property    | Type  |           Description              |
  *  | :-----------| :---   | :-------------------------------  |
  *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |
@@ -143,7 +143,7 @@ export const unixtimeToHybridts = (unixtime: bigint | string) => {
  *
  *
  *
- * @return
+ * @returns
  *  | Property    | Type  |           Description              |
  *  | :-----------| :---   | :-------------------------------  |
  *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |

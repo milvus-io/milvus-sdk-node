@@ -40,7 +40,7 @@ import {
 const schemaPath = path.resolve(__dirname, '../proto/proto/schema.proto');
 
 /**
- * See all [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts).
+ * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
  */
 export class Collection extends Client {
   private readonly _protoRoot: Root;
@@ -63,7 +63,7 @@ export class Collection extends Client {
    *  | fields | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> | Field data |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
-   * @return
+   * @returns
    *  | Property      | Description |
    *  | :-- | :-- |
    *  | error_code    | Error code number      |
@@ -160,7 +160,7 @@ export class Collection extends Client {
    *  | collection_name | String | Collection name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    * 
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -198,7 +198,7 @@ export class Collection extends Client {
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -246,7 +246,7 @@ export class Collection extends Client {
    *  | collection_name | String | Collection name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -285,7 +285,7 @@ export class Collection extends Client {
    *  | collection_name | String | Collection name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
-   * @return
+   * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -330,7 +330,7 @@ export class Collection extends Client {
    *  | resource_groups? | String[] | resource group names |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -368,7 +368,7 @@ export class Collection extends Client {
    *  | resource_groups？ | String[] | resource group |
    *  | timeout？ | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -427,7 +427,7 @@ export class Collection extends Client {
    *  | collection_name | String | Collection name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -463,7 +463,7 @@ export class Collection extends Client {
    *  | new_collection_name | String | new collection name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -500,7 +500,7 @@ export class Collection extends Client {
    *  | collection_name | String | Collection name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -536,7 +536,7 @@ export class Collection extends Client {
    *  | collection_name | String | Collection name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -576,7 +576,7 @@ export class Collection extends Client {
    *  | collection_name | String | Collection name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -615,7 +615,7 @@ export class Collection extends Client {
    *  | collection_name | String | Collection name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | error_code | Error code number |
@@ -654,7 +654,7 @@ export class Collection extends Client {
    *  | collection_name | String | The collection name to compact |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -691,7 +691,7 @@ export class Collection extends Client {
    *  | compactionID | number or string | the id returned by compact |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -729,7 +729,7 @@ export class Collection extends Client {
    *  | compactionID | number or string | the id returned by compact |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
@@ -767,7 +767,7 @@ export class Collection extends Client {
    *  | collectionID | number or string | the id returned by compact |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
-   * @return
+   * @returns
    *  | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
