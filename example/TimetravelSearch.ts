@@ -1,15 +1,15 @@
-import { MilvusClient } from "../milvus/index";
-import { GENERATE_NAME, IP } from "../const";
-import { DataType } from "../milvus/types/Common";
-import { generateInsertData } from "../utils";
-import { InsertReq } from "../milvus/types/Data";
-import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
+import { MilvusClient } from '../milvus/index';
+import { IP } from '../const';
+import { DataType } from '../milvus/const/Milvus';
+import { generateInsertData, GENERATE_NAME } from '../utils/test';
+import { InsertReq } from '../milvus/types/Data';
+import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 const Search = async () => {
   let res: any = await milvusClient.collectionManager.createCollection(
-    genCollectionParams(COLLECTION_NAME, "4", DataType.FloatVector, false)
+    genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
   );
 
   const fields = [
@@ -20,7 +20,7 @@ const Search = async () => {
     },
     {
       isVector: false,
-      name: "age",
+      name: 'age',
     },
   ];
   const vectorsData = generateInsertData(fields, 100);
@@ -74,16 +74,16 @@ const Search = async () => {
     vectors: [[10, 10, 10, 11]],
     search_params: {
       anns_field: VECTOR_FIELD_NAME,
-      topk: "4",
-      metric_type: "L2",
+      topk: '4',
+      metric_type: 'L2',
       params: JSON.stringify({ nprobe: 1024 }),
       round_decimal: 4,
     },
-    output_fields: ["age"],
+    output_fields: ['age'],
     vector_type: DataType.FloatVector,
     travel_timestamp: insert1.timestamp,
   });
-  console.log("----search result should not have score: 0 ----", result);
+  console.log('----search result should not have score: 0 ----', result);
 
   await milvusClient.collectionManager.dropCollection({
     collection_name: COLLECTION_NAME,

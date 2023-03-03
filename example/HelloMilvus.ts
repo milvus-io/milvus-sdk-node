@@ -1,5 +1,5 @@
 import { MilvusClient } from '@zilliz/milvus2-sdk-node';
-import { DataType } from '@zilliz/milvus2-sdk-node/dist/milvus/types/Common';
+import { DataType } from '@zilliz/milvus2-sdk-node/dist/milvus/const/Milvus';
 import { InsertReq } from '@zilliz/milvus2-sdk-node/dist/milvus/types/Data';
 
 const milvusClient = new MilvusClient('localhost:19530');

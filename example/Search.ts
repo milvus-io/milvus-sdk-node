@@ -1,16 +1,16 @@
-import { MilvusClient } from "../milvus/index";
-import { GENERATE_NAME, IP } from "../const";
-import { DataType } from "../milvus/types/Common";
-import { generateInsertData } from "../utils";
-import { InsertReq } from "../milvus/types/Data";
-import { genCollectionParams, VECTOR_FIELD_NAME } from "../utils/test";
+import { MilvusClient } from '../milvus/index';
+import { IP } from '../const';
+import { DataType } from '../milvus/const/Milvus';
+import { generateInsertData, GENERATE_NAME } from '../utils/test';
+import { InsertReq } from '../milvus/types/Data';
+import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 const ALIAS_NAME = GENERATE_NAME();
 
 const Search = async () => {
   let res: any = await milvusClient.collectionManager.createCollection(
-    genCollectionParams(COLLECTION_NAME, "4", DataType.FloatVector, false)
+    genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
   );
 
   const fields = [
@@ -21,7 +21,7 @@ const Search = async () => {
     },
     {
       isVector: false,
-      name: "age",
+      name: 'age',
     },
   ];
   const vectorsData = generateInsertData(fields, 100);
@@ -44,8 +44,8 @@ const Search = async () => {
     collection_name: COLLECTION_NAME,
     field_name: VECTOR_FIELD_NAME,
     extra_params: {
-      index_type: "IVF_FLAT",
-      metric_type: "L2",
+      index_type: 'IVF_FLAT',
+      metric_type: 'L2',
       params: JSON.stringify({ nlist: 10 }),
     },
   });
@@ -53,7 +53,7 @@ const Search = async () => {
   res = await milvusClient.collectionManager.loadCollectionSync({
     collection_name: COLLECTION_NAME,
   });
-  console.log("--- load done ----", res);
+  console.log('--- load done ----', res);
   const result = await milvusClient.dataManager.search({
     collection_name: COLLECTION_NAME,
     // partition_names: [],
@@ -61,15 +61,15 @@ const Search = async () => {
     vectors: [vectorsData[0][VECTOR_FIELD_NAME]],
     search_params: {
       anns_field: VECTOR_FIELD_NAME,
-      topk: "4",
-      metric_type: "L2",
+      topk: '4',
+      metric_type: 'L2',
       params: JSON.stringify({ nprobe: 1024 }),
       round_decimal: 4,
     },
-    output_fields: ["age"],
+    output_fields: ['age'],
     vector_type: DataType.FloatVector,
   });
-  console.log("----search result----", result);
+  console.log('----search result----', result);
 
   await milvusClient.collectionManager.createAlias({
     collection_name: COLLECTION_NAME,
@@ -83,15 +83,15 @@ const Search = async () => {
     vectors: [vectorsData[0][VECTOR_FIELD_NAME]],
     search_params: {
       anns_field: VECTOR_FIELD_NAME,
-      topk: "4",
-      metric_type: "L2",
+      topk: '4',
+      metric_type: 'L2',
       params: JSON.stringify({ nprobe: 1024 }),
       round_decimal: 4,
     },
-    output_fields: ["age"],
+    output_fields: ['age'],
     vector_type: DataType.FloatVector,
   });
-  console.log("---- alias search result----", aliasResult);
+  console.log('---- alias search result----', aliasResult);
 
   await milvusClient.collectionManager.dropCollection({
     collection_name: COLLECTION_NAME,

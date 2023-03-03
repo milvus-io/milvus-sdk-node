@@ -1,13 +1,13 @@
-import { MilvusClient } from "../milvus/index";
-import { IP, GENERATE_NAME } from "../const";
-import { genCollectionParams } from "../utils/test";
+import { MilvusClient } from '../milvus/index';
+import { IP } from '../const';
+import { genCollectionParams, GENERATE_NAME } from '../utils/test';
 const milvusClient = new MilvusClient(IP);
 const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
   await collectionManager.createCollection(
-    genCollectionParams(COLLECTION_NAME, "128")
+    genCollectionParams(COLLECTION_NAME, '128')
   );
 
   await collectionManager.loadCollection({
