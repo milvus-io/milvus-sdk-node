@@ -533,10 +533,6 @@ export class User extends Client {
    *  @param data
    *  | Property | Type | Description |
    *  | :-- | :-- | :-- |
-   *  | roleName | String | Role name |
-   *  | object | string | Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.|
-   *  | objectName | string | Name of the object to which the role is granted the specified prvilege. |
-   *  | privilegeName | string | Name of the privilege to be granted to the role. This parameter is case-sensitive. |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @returns
@@ -548,22 +544,27 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.revokeAllRolesPrivileges({});
+   *  milvusClient.userManager.revokeAllRolesPrivileges();
    * ```
    */
-  async revokeAllRolesPrivileges(data?: GrpcTimeOut): Promise<ResStatus[]> {
+  async dropAllRoles(data?: GrpcTimeOut): Promise<ResStatus[]> {
+    // find all roles
     const res = await this.listRoles({ timeout: data?.timeout });
 
     const promises = [];
 
+    // iterate through roles
     for (let i = 0; i < res.results.length; i++) {
       const r = res.results[i];
+      // get all grants that specific to the role
       const grants = await this.listGrants({
         roleName: r.role.name,
       });
 
+      // iterate throught these grant
       for (let j = 0; j < grants.entities.length; j++) {
         const entity = grants.entities[j];
+        // revoke grant
         await this.revokeRolePrivilege({
           roleName: entity.role.name,
           object: entity.object.name,
@@ -574,6 +575,7 @@ export class User extends Client {
       }
 
       promises.push(
+        // drop the role
         await this.dropRole({
           roleName: r.role.name,
           timeout: data?.timeout,

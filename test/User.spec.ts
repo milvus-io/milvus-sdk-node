@@ -74,7 +74,7 @@ describe('User Auth Api', () => {
 
   it(`Clean all role priviledges`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
-    await authClient.userManager.revokeAllRolesPrivileges();
+    await authClient.userManager.dropAllRoles();
     const res = await authClient.userManager.listRoles();
 
     res.results.map(r => {
