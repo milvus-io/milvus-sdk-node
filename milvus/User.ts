@@ -89,9 +89,10 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.createUser({
+   *  milvusClient.userManager.updateUser({
    *    username: NAME,
-   *    password: PASSWORD,
+   *    newPassword: PASSWORD,
+   *    oldPassword: PASSWORD,
    *  });
    * ```
    */
