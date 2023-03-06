@@ -194,7 +194,7 @@ export class User extends Client {
    * @param data
    *  | Property | Type | Description |
    *  | :-- | :-- | :-- |
-   *  | roleName | String | username |
+   *  | roleName | String | role name |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @returns
