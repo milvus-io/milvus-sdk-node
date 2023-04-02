@@ -1,7 +1,7 @@
-import { findKeyValue } from './index';
-import { DEFAULT_MILVUS_PORT } from '../const/Milvus';
-import { ERROR_REASONS } from '../const/ErrorReason';
-import { KeyValuePair } from '../types/Common';
+import { findKeyValue } from './';
+import { DEFAULT_MILVUS_PORT } from '../milvus/const/Milvus';
+import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import { KeyValuePair } from '../milvus/types/Common';
 
 /**
  *  parse [{key:"row_count",value:4}] to {row_count:4}

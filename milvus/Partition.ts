@@ -4,8 +4,8 @@ import { ERROR_REASONS } from './const/ErrorReason';
 import {
   checkCollectionName,
   checkCollectionAndPartitionName,
-} from './utils/Validate';
-import { formatKeyValueData } from './utils/Format';
+  formatKeyValueData,
+} from '../utils';
 import {
   CreatePartitionReq,
   DropPartitionReq,

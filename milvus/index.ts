@@ -1,11 +1,5 @@
 import path from 'path';
-import * as protoLoader from '@grpc/proto-loader';
-import {
-  loadPackageDefinition,
-  credentials,
-  Client,
-  InterceptingCall,
-} from '@grpc/grpc-js';
+import { credentials, Client, InterceptingCall } from '@grpc/grpc-js';
 import { Collection } from './Collection';
 import { Partition } from './Partition';
 import { Index } from './MilvusIndex';
@@ -14,8 +8,7 @@ import { User } from './User';
 import { Resource } from './Resource';
 import sdkInfo from '../sdk.json';
 import { ERROR_REASONS } from './const/ErrorReason';
-import { promisify } from '../utils';
-import { formatAddress } from './utils/Format';
+import { promisify, getService, formatAddress } from '../utils';
 import { ErrorCode, GetVersionResponse, CheckHealthResponse } from './types';
 
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
@@ -68,16 +61,13 @@ export class MilvusClient {
         });
       };
     }
-    const packageDefinition = protoLoader.loadSync(protoPath, {
-      keepCase: true,
-      longs: String,
-      enums: String,
-      defaults: true,
-      oneofs: true,
+
+    const MilvusService = getService({
+      protoPath,
+      serviceName: 'milvus.proto.milvus.MilvusService',
     });
-    const grpcObject = loadPackageDefinition(packageDefinition);
-    const milvusProto = (grpcObject.milvus as any).proto.milvus;
-    const client = new milvusProto.MilvusService(
+
+    const client = new MilvusService(
       formatAddress(address),
       ssl ? credentials.createSsl() : credentials.createInsecure(),
       {
@@ -95,6 +85,17 @@ export class MilvusClient {
     this.dataManager = new Data(this.client, this.collectionManager);
     this.userManager = new User(this.client);
     this.resourceManager = new Resource(this.client);
+
+    // composition
+    Object.assign(
+      this,
+      this.collectionManager,
+      this.collectionManager,
+      this.indexManager,
+      this.userManager,
+      this.dataManager,
+      this.resourceManager
+    );
   }
 
   static get sdkInfo() {

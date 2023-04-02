@@ -1,16 +1,18 @@
 import protobuf, { Root } from 'protobufjs';
 import path from 'path';
-import { promisify } from '../utils';
+import {
+  promisify,
+  findKeyValue,
+  sleep,
+  formatNumberPrecision,
+  parseToKeyValue,
+  checkCollectionName,
+  parseBinaryVectorToBytes,
+  parseFloatVectorToBytes,
+} from '../utils';
 import { Client } from './Client';
 import { Collection } from './Collection';
 import { ERROR_REASONS } from './const/ErrorReason';
-import { findKeyValue, sleep } from './utils/index';
-import {
-  parseBinaryVectorToBytes,
-  parseFloatVectorToBytes,
-} from './utils/Blob';
-import { checkCollectionName } from './utils/Validate';
-import { formatNumberPrecision, parseToKeyValue } from './utils/Format';
 import { DataType, DataTypeMap } from './const/Milvus';
 import {
   DslType,

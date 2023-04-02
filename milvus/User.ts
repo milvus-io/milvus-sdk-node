@@ -1,7 +1,6 @@
-import { promisify } from '../utils';
+import { promisify, stringToBase64 } from '../utils';
 import { Client } from './Client';
 import { ERROR_REASONS } from './const/ErrorReason';
-import { stringToBase64 } from './utils/Format';
 import { OperateUserRoleType, OperatePrivilegeType } from './const/Milvus';
 import {
   CreateUserReq,

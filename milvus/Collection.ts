@@ -1,9 +1,13 @@
 import protobuf, { Root } from 'protobufjs';
 import path from 'path';
-import { promisify } from '../utils';
+import {
+  promisify,
+  formatKeyValueData,
+  parseToKeyValue,
+  checkCollectionFields,
+  checkCollectionName,
+} from '../utils';
 import { ERROR_REASONS } from './const/ErrorReason';
-import { checkCollectionFields, checkCollectionName } from './utils/Validate';
-import { formatKeyValueData, parseToKeyValue } from './utils/Format';
 import { Client } from './Client';
 import { ConsistencyLevelEnum } from './const/Milvus';
 import {

@@ -1,7 +1,6 @@
 import { promisify } from '../utils';
 import { Client } from './Client';
-import { checkCollectionName } from './utils/Validate';
-import { parseToKeyValue } from './utils/Format';
+import { checkCollectionName, parseToKeyValue } from '../utils';
 import {
   CreateIndexReq,
   DescribeIndexReq,

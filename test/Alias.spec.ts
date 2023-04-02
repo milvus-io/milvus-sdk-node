@@ -10,20 +10,20 @@ const COLLECTION_ALIAS = GENERATE_NAME('alias');
 
 describe('Collection Api', () => {
   beforeAll(async () => {
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '8')
     );
   });
 
   afterAll(async () => {
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
   });
 
   it(`Create alias should throw ALIAS_NAME_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.collectionManager.createAlias({
+      await milvusClient.createAlias({
         collection_name: COLLECTION_NAME,
       } as any);
     } catch (error) {
@@ -32,7 +32,7 @@ describe('Collection Api', () => {
   });
 
   it(`Create alias should success`, async () => {
-    const res = await milvusClient.collectionManager.createAlias({
+    const res = await milvusClient.createAlias({
       collection_name: COLLECTION_NAME,
       alias: COLLECTION_ALIAS,
     });
@@ -40,7 +40,7 @@ describe('Collection Api', () => {
   });
 
   it(`Alter alias should success`, async () => {
-    const res = await milvusClient.collectionManager.alterAlias({
+    const res = await milvusClient.alterAlias({
       collection_name: COLLECTION_NAME,
       alias: COLLECTION_ALIAS,
     });
@@ -49,7 +49,7 @@ describe('Collection Api', () => {
 
   it(`Alter alias should throw ALIAS_NAME_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.collectionManager.alterAlias({
+      await milvusClient.alterAlias({
         collection_name: COLLECTION_NAME,
       } as any);
     } catch (error) {
@@ -58,7 +58,7 @@ describe('Collection Api', () => {
   });
 
   it(`Drop alias should success`, async () => {
-    const res = await milvusClient.collectionManager.dropAlias({
+    const res = await milvusClient.dropAlias({
       alias: COLLECTION_ALIAS,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -66,7 +66,7 @@ describe('Collection Api', () => {
 
   it(`Drop alias should throw ALIAS_NAME_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.collectionManager.dropAlias({
+      await milvusClient.dropAlias({
         collection_name: COLLECTION_NAME,
       } as any);
     } catch (error) {

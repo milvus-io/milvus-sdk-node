@@ -1,8 +1,8 @@
 import { promisify } from '../utils';
 import { Client } from './Client';
-import { ResStatus } from './types';
 import { DEFAULT_RESOURCE_GROUP } from './const/Milvus';
 import {
+  ResStatus,
   GrpcTimeOut,
   CreateResourceGroupReq,
   DropResourceGroupsReq,
