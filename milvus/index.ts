@@ -13,36 +13,42 @@ export class MilvusClient extends User {
 
   // @deprecated
   get collectionManager() {
+    /* istanbul ignore next */
     console.warn(
       `collectionManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get partitionManager() {
+    /* istanbul ignore next */
     console.warn(
       `partitionManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get indexManager() {
+    /* istanbul ignore next */
     console.warn(
       `indexManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get dataManager() {
+    /* istanbul ignore next */
     console.warn(
       `dataManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get resourceManager() {
+    /* istanbul ignore next */
     console.warn(
       `resourceManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get userManager() {
+    /* istanbul ignore next */
     console.warn(
       `userManager are no longer necessary, you can call methods directly on the client object.`
     );

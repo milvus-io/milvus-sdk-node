@@ -46,4 +46,13 @@ describe(`Milvus client`, () => {
     // console.log('----closeConnection ----', res);
     expect(res).toEqual(4);
   });
+
+  it(`Expect *Managers are working`, async () => {
+    expect(typeof milvusClient.collectionManager === typeof milvusClient);
+    expect(typeof milvusClient.dataManager === typeof milvusClient);
+    expect(typeof milvusClient.indexManager === typeof milvusClient);
+    expect(typeof milvusClient.userManager === typeof milvusClient);
+    expect(typeof milvusClient.resourceManager === typeof milvusClient);
+    expect(typeof milvusClient.partitionManager === typeof milvusClient);
+  });
 });
