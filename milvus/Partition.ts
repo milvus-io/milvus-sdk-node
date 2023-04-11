@@ -1,5 +1,5 @@
 import { promisify } from '../utils';
-import { Client } from './Client';
+import { Index } from './MilvusIndex';
 import { ERROR_REASONS } from './const/ErrorReason';
 import {
   checkCollectionName,
@@ -20,7 +20,7 @@ import {
   StatisticsResponse,
 } from './types';
 
-export class Partition extends Client {
+export class Partition extends Index {
   /**
    * Create a partition in a collection.
    *
@@ -41,7 +41,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).partitionManager.createPartition({
+   *  new milvusClient(MILUVS_ADDRESS).createPartition({
    *     collection_name: 'my_collection',
    *     partition_name: 'my_partition',
    *  });
@@ -50,7 +50,7 @@ export class Partition extends Client {
   async createPartition(data: CreatePartitionReq): Promise<ResStatus> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'CreatePartition',
       data,
       data.timeout
@@ -78,7 +78,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).partitionManager.hasPartition({
+   *  new milvusClient(MILUVS_ADDRESS).hasPartition({
    *     collection_name: 'my_collection',
    *     partition_name: 'my_partition',
    *  });
@@ -87,7 +87,7 @@ export class Partition extends Client {
   async hasPartition(data: HasPartitionReq): Promise<BoolResponse> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'HasPartition',
       data,
       data.timeout
@@ -116,7 +116,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).partitionManager.showPartitions({
+   *  new milvusClient(MILUVS_ADDRESS).showPartitions({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -126,7 +126,7 @@ export class Partition extends Client {
   ): Promise<ShowPartitionsResponse> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'ShowPartitions',
       data,
       data.timeout
@@ -156,7 +156,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).partitionManager.getPartitionStatistics({
+   *  new milvusClient(MILUVS_ADDRESS).getPartitionStatistics({
    *     collection_name: 'my_collection',
    *     partition_name: "_default",
    *  });
@@ -167,7 +167,7 @@ export class Partition extends Client {
   ): Promise<StatisticsResponse> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'GetPartitionStatistics',
       data,
       data.timeout
@@ -197,7 +197,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).partitionManager.loadPartitions({
+   *  new milvusClient(MILUVS_ADDRESS).loadPartitions({
    *     collection_name: 'my_collection',
    *     partition_names: ['my_partition'],
    *  });
@@ -209,7 +209,7 @@ export class Partition extends Client {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'LoadPartitions',
       data,
       data.timeout
@@ -237,7 +237,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).partitionManager.releasePartitions({
+   *  new milvusClient(MILUVS_ADDRESS).releasePartitions({
    *     collection_name: 'my_collection',
    *     partition_names: ['my_partition'],
    *  });
@@ -249,7 +249,7 @@ export class Partition extends Client {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'ReleasePartitions',
       data,
       data.timeout
@@ -283,7 +283,7 @@ export class Partition extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).partitionManager.dropPartition({
+   *  new milvusClient(MILUVS_ADDRESS).dropPartition({
    *     collection_name: 'my_collection',
    *     partition_name: 'my_partition',
    *  });
@@ -292,7 +292,7 @@ export class Partition extends Client {
   async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DropPartition',
       data,
       data.timeout

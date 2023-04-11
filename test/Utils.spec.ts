@@ -8,11 +8,11 @@ import {
   parseToKeyValue,
   formatKeyValueData,
   formatNumberPrecision,
-} from '../milvus/utils/Format';
+} from '../utils';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 
-describe('Insert data Api', () => {
-  it('Promisify should catch  obj[target] is not a function', async () => {
+describe(`Utils`, () => {
+  it(`Promisify should catch  obj[target] is not a function`, async () => {
     let a = {};
     try {
       await promisify(a, 'a', {});
@@ -22,7 +22,7 @@ describe('Insert data Api', () => {
     }
   });
 
-  it('Promisify should catch error', async () => {
+  it(`Promisify should catch error`, async () => {
     let a = {
       a: () => {
         throw new Error('123');
@@ -36,7 +36,7 @@ describe('Insert data Api', () => {
     }
   });
 
-  it('Promisify should reject', async () => {
+  it(`Promisify should reject`, async () => {
     let a = {
       a: (params = {}, {}, callback = (err: any) => {}) => {
         callback('123');
@@ -50,12 +50,12 @@ describe('Insert data Api', () => {
     }
   });
 
-  it('hybridtsToUnixtime should success', async () => {
+  it(`hybridtsToUnixtime should success`, async () => {
     let unixtime = hybridtsToUnixtime('429642767925248000');
     expect(unixtime).toEqual('1638957092');
   });
 
-  it('hybridtsToUnixtime should throw error', async () => {
+  it(`hybridtsToUnixtime should throw error`, async () => {
     try {
       hybridtsToUnixtime(1 as any);
     } catch (error) {
@@ -63,12 +63,12 @@ describe('Insert data Api', () => {
     }
   });
 
-  it('unixtimeToHybridts should success', async () => {
+  it(`unixtimeToHybridts should success`, async () => {
     let unixtime = unixtimeToHybridts('1638957092');
     expect(unixtime).toEqual('429642767925248000');
   });
 
-  it('unixtimeToHybridts should throw error', async () => {
+  it(`unixtimeToHybridts should throw error`, async () => {
     try {
       unixtimeToHybridts(1 as any);
     } catch (error) {
@@ -82,12 +82,12 @@ describe('Insert data Api', () => {
     }
   });
 
-  it('datetimeToHybrids should success', async () => {
+  it(`datetimeToHybrids should success`, async () => {
     let unixtime = datetimeToHybrids(new Date(1638957092 * 1000));
     expect(unixtime).toEqual('429642767925248000');
   });
 
-  it('datetimeToHybrids should throw error', async () => {
+  it(`datetimeToHybrids should throw error`, async () => {
     try {
       datetimeToHybrids(1 as any);
     } catch (error) {
@@ -95,7 +95,7 @@ describe('Insert data Api', () => {
     }
   });
 
-  it('all kinds of url should be supported', async () => {
+  it(`all kinds of url should be supported`, async () => {
     const port = `80980`;
     const urlWithHttps = `https://my-url:${port}`;
     expect(formatAddress(urlWithHttps)).toBe(`my-url:${port}`);
@@ -116,7 +116,7 @@ describe('Insert data Api', () => {
     expect(formatAddress(urlWithEmptyCustomPort)).toBe(`my-url:12345`);
   });
 
-  it('should convert string to base64 encoding', () => {
+  it(`should convert string to base64 encoding`, () => {
     const testString = 'hello world, I love milvus';
     const str = stringToBase64(testString);
     expect(str.length % 4 == 0 && /^[A-Za-z0-9+/]+[=]{0,2}$/.test(str)).toBe(
@@ -124,13 +124,13 @@ describe('Insert data Api', () => {
     );
   });
 
-  it('should convert [{key:"row_count",value:4}] to {row_count:4}', () => {
+  it(`should convert [{key:"row_count",value:4}] to {row_count:4}`, () => {
     const testValue = [{ key: 'row_count', value: 4 }];
     const res = formatKeyValueData(testValue, ['row_count']);
     expect(res).toMatchObject({ row_count: 4 });
   });
 
-  it('should convert  {row_count:4} t0 [{key:"row_count",value:4}]', () => {
+  it(`should convert  {row_count:4} t0 [{key:"row_count",value:4}]`, () => {
     const testValue = { row_count: 4, b: 3 };
     const res = parseToKeyValue(testValue);
     expect(res).toMatchObject([
@@ -139,7 +139,7 @@ describe('Insert data Api', () => {
     ]);
   });
 
-  it('should convert [{key:"row_count",value:4}] to {row_count:4}', () => {
+  it(`should convert [{key:"row_count",value:4}] to {row_count:4}`, () => {
     const testValue = 3.1231241241234124124;
     const res = formatNumberPrecision(testValue, 3);
     expect(res).toBe(3.123);

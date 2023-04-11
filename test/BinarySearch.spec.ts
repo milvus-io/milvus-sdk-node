@@ -13,13 +13,13 @@ import {
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
-describe('Vector search on binary field', () => {
+describe(`Bianary search API`, () => {
   beforeAll(async () => {
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '128', DataType.BinaryVector, false)
     );
     // create index before load
-    await milvusClient.indexManager.createIndex({
+    await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -28,7 +28,7 @@ describe('Vector search on binary field', () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    await milvusClient.collectionManager.loadCollectionSync({
+    await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
     const fields = [
@@ -47,20 +47,20 @@ describe('Vector search on binary field', () => {
       collection_name: COLLECTION_NAME,
       fields_data: vectorsData,
     };
-    await milvusClient.dataManager.insert(params);
-    await milvusClient.dataManager.flushSync({
+    await milvusClient.insert(params);
+    await milvusClient.flushSync({
       collection_names: [COLLECTION_NAME],
     });
   });
 
   afterAll(async () => {
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
   });
 
-  it('Expr Vector Search on ', async () => {
-    const res = await milvusClient.dataManager.search({
+  it(`Expr Vector Search on`, async () => {
+    const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       expr: '',
       vectors: [

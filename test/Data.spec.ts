@@ -32,14 +32,14 @@ const params: InsertReq = {
   fields_data: vectorsData,
 };
 
-describe('Data.ts Test', () => {
+describe(`Data.API`, () => {
   beforeAll(async () => {
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
     );
 
-    await milvusClient.dataManager.insert(params);
-    await milvusClient.indexManager.createIndex({
+    await milvusClient.insert(params);
+    await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -48,43 +48,42 @@ describe('Data.ts Test', () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    await milvusClient.collectionManager.loadCollectionSync({
+    await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
   });
 
   afterAll(async () => {
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
   });
 
   it(`Flush sync should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.dataManager.flushSync({} as any);
+      await milvusClient.flushSync({} as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
   });
 
-  it('Flush Sync shoulud success', async () => {
-    const res = await milvusClient.dataManager.flushSync({
+  it(`Flush Sync shoulud success`, async () => {
+    const res = await milvusClient.flushSync({
       collection_names: [COLLECTION_NAME],
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(
-    'Test Flush Sync shoulud timeout',
-    timeoutTest(
-      milvusClient.dataManager.flushSync.bind(milvusClient.dataManager),
-      { collection_names: [COLLECTION_NAME] }
-    )
+    `Test Flush Sync shoulud timeout`,
+    timeoutTest(milvusClient.flushSync.bind(milvusClient), {
+      collection_names: [COLLECTION_NAME],
+    })
   );
 
-  it('Get flush state should throw GET_FLUSH_STATE_CHECK_PARAMS', async () => {
+  it(`Get flush state should throw GET_FLUSH_STATE_CHECK_PARAMS`, async () => {
     try {
-      await milvusClient.dataManager.getFlushState({} as any);
+      await milvusClient.getFlushState({} as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
     }
@@ -92,41 +91,41 @@ describe('Data.ts Test', () => {
 
   it(`Flush async should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.dataManager.flush({} as any);
+      await milvusClient.flush({} as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
   });
 
-  it('Flush ASync', async () => {
-    const res = await milvusClient.dataManager.flush({
+  it(`Flush ASync`, async () => {
+    const res = await milvusClient.flush({
       collection_names: [COLLECTION_NAME],
     });
     const segIDs = res.coll_segIDs[COLLECTION_NAME].data;
-    await milvusClient.dataManager.getFlushState({
+    await milvusClient.getFlushState({
       segmentIDs: segIDs,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it('Expr Search should throw COLLECTION_NAME_IS_REQUIRED', async () => {
+  it(`Expr Search should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.dataManager.search({} as any);
+      await milvusClient.search({} as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
   });
 
-  it('Expr Search should throw SEARCH_PARAMS_IS_REQUIRED', async () => {
+  it(`Expr Search should throw SEARCH_PARAMS_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.dataManager.search({ collection_name: 'asd' } as any);
+      await milvusClient.search({ collection_name: 'asd' } as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.SEARCH_PARAMS_IS_REQUIRED);
     }
   });
 
-  it('Expr Search should success', async () => {
-    const res = await milvusClient.dataManager.search({
+  it(`Expr Search should success`, async () => {
+    const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       expr: '',
@@ -146,9 +145,9 @@ describe('Data.ts Test', () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it('Expr Search should throw SEARCH_NOT_FIND_VECTOR_FIELD', async () => {
+  it(`Expr Search should throw SEARCH_NOT_FIND_VECTOR_FIELD`, async () => {
     try {
-      await milvusClient.dataManager.search({
+      await milvusClient.search({
         collection_name: COLLECTION_NAME,
         // partition_names: [],
         expr: '',
@@ -170,9 +169,9 @@ describe('Data.ts Test', () => {
     }
   });
 
-  it('Expr Search should throw SEARCH_MISS_VECTOR_TYPE', async () => {
+  it(`Expr Search should throw SEARCH_MISS_VECTOR_TYPE`, async () => {
     try {
-      await milvusClient.dataManager.search({
+      await milvusClient.search({
         collection_name: COLLECTION_NAME,
         // partition_names: [],
         expr: '',
@@ -194,9 +193,9 @@ describe('Data.ts Test', () => {
     }
   });
 
-  it('Expr Search should throw SEARCH_DIM_NOT_MATCH', async () => {
+  it(`Expr Search should throw SEARCH_DIM_NOT_MATCH`, async () => {
     try {
-      await milvusClient.dataManager.search({
+      await milvusClient.search({
         collection_name: COLLECTION_NAME,
         // partition_names: [],
         expr: '',
@@ -217,9 +216,9 @@ describe('Data.ts Test', () => {
     }
   });
 
-  it('Expr Search should throw SEARCH_ROUND_DECIMAL_NOT_VALID', async () => {
+  it(`Expr Search should throw SEARCH_ROUND_DECIMAL_NOT_VALID`, async () => {
     try {
-      await milvusClient.dataManager.search({
+      await milvusClient.search({
         collection_name: COLLECTION_NAME,
         expr: '',
         vectors: [[1, 2, 3, 4]],
@@ -239,8 +238,8 @@ describe('Data.ts Test', () => {
     }
   });
 
-  it('Query with data limit and offset', async () => {
-    const res = await milvusClient.dataManager.query({
+  it(`Query with data limit and offset`, async () => {
+    const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'age > 0',
       output_fields: ['age', VECTOR_FIELD_NAME],
@@ -251,8 +250,8 @@ describe('Data.ts Test', () => {
     expect(res.data.length).toBe(3);
   });
 
-  it('Query with data limit only', async () => {
-    const res2 = await milvusClient.dataManager.query({
+  it(`Query with data limit only`, async () => {
+    const res2 = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'age > 0',
       output_fields: ['age', VECTOR_FIELD_NAME],
@@ -261,8 +260,8 @@ describe('Data.ts Test', () => {
     expect(res2.data.length).toBe(3);
   });
 
-  it('Query with data without limit and offset', async () => {
-    const res3 = await milvusClient.dataManager.query({
+  it(`Query with data without limit and offset`, async () => {
+    const res3 = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'age > 0',
       output_fields: ['age', VECTOR_FIELD_NAME],
@@ -271,13 +270,13 @@ describe('Data.ts Test', () => {
     // console.log('----query with data limit: not set, offset: 3 ----', res2);
   });
 
-  it('Query with empty data', async () => {
-    await milvusClient.dataManager.deleteEntities({
+  it(`Query with empty data`, async () => {
+    await milvusClient.deleteEntities({
       collection_name: COLLECTION_NAME,
       expr: 'age in [2,6]',
     });
 
-    const res = await milvusClient.dataManager.query({
+    const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'age in [2,4,6,8]',
       output_fields: ['age', VECTOR_FIELD_NAME],
@@ -290,45 +289,45 @@ describe('Data.ts Test', () => {
 
   it(`Get metrics should throw GET_METRIC_CHECK_PARAMS`, async () => {
     try {
-      await milvusClient.dataManager.getMetric({} as any);
+      await milvusClient.getMetric({} as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.GET_METRIC_CHECK_PARAMS);
     }
   });
 
-  it('Get metrics should success', async () => {
-    const res = await milvusClient.dataManager.getMetric({
+  it(`Get metrics should success`, async () => {
+    const res = await milvusClient.getMetric({
       request: { metric_type: 'system_info' },
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it('Get query segment infos should throw COLLECTION_NAME_IS_REQUIRED', async () => {
+  it(`Get query segment infos should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.dataManager.getQuerySegmentInfo({} as any);
+      await milvusClient.getQuerySegmentInfo({} as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
   });
 
-  it('Get query segment infos should success', async () => {
-    const res = await milvusClient.dataManager.getQuerySegmentInfo({
+  it(`Get query segment infos should success`, async () => {
+    const res = await milvusClient.getQuerySegmentInfo({
       collectionName: COLLECTION_NAME,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it('Load balance should throw LOAD_BALANCE_CHECK_PARAMS', async () => {
+  it(`Load balance should throw LOAD_BALANCE_CHECK_PARAMS`, async () => {
     try {
-      await milvusClient.dataManager.loadBalance({} as any);
+      await milvusClient.loadBalance({} as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.LOAD_BALANCE_CHECK_PARAMS);
     }
   });
 
   // Load balance only working in cluster, so we can only do the error test
-  it('Load balance should throw UNEXPECTED_ERROR', async () => {
-    const res = await milvusClient.dataManager.loadBalance({ src_nodeID: 1 });
+  it(`Load balance should throw UNEXPECTED_ERROR`, async () => {
+    const res = await milvusClient.loadBalance({ src_nodeID: 1 });
     expect(res.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
   });
 });

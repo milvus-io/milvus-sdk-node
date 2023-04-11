@@ -19,16 +19,16 @@ const NEW_PASSWORD = '1234567';
 const ROLENAME = GENERATE_NAME('role');
 const COLLECTION_NAME = GENERATE_NAME();
 
-describe('User Auth Api', () => {
+describe(`User Api`, () => {
   beforeAll(async () => {
     authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
-    await authClient.collectionManager.createCollection(
+    await authClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
     );
   });
 
   afterAll(async () => {
-    await authClient.collectionManager.dropCollection({
+    await authClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
     authClient.closeConnection();
@@ -36,14 +36,14 @@ describe('User Auth Api', () => {
 
   it(`Create first user expect error`, async () => {
     try {
-      await milvusClient.userManager.createUser({ username: USERNAME } as any);
+      await milvusClient.createUser({ username: USERNAME } as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.USERNAME_PWD_ARE_REQUIRED);
     }
   });
 
   it(`Create first user expect success`, async () => {
-    const res = await milvusClient.userManager.createUser({
+    const res = await milvusClient.createUser({
       username: USERNAME,
       password: PASSWORD,
     });
@@ -53,13 +53,13 @@ describe('User Auth Api', () => {
   it(
     `Test list all users should timeout`,
     timeoutTest(
-      milvusClient.userManager.listUsers.bind(milvusClient.userManager)
+      milvusClient.listUsers.bind(milvusClient.userManager)
     )
   );
 
   it(`Normal client should not valid`, async () => {
     try {
-      await milvusClient.userManager.listUsers();
+      await milvusClient.listUsers();
     } catch (error) {
       expect(error.toString()).toContain('unauthenticated');
     }
@@ -68,14 +68,14 @@ describe('User Auth Api', () => {
 
   it(`Auth client list user expect success`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
-    const res = await authClient.userManager.listUsers();
+    const res = await authClient.listUsers();
     expect(res.usernames).toEqual([USERNAME, 'root']);
   });
 
   it(`Clean all role priviledges`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
-    await authClient.userManager.dropAllRoles();
-    const res = await authClient.userManager.listRoles();
+    await authClient.dropAllRoles();
+    const res = await authClient.listRoles();
 
     res.results.map(r => {
       expect(
@@ -85,7 +85,7 @@ describe('User Auth Api', () => {
   });
 
   it(`Auth client update user expect success`, async () => {
-    const res = await authClient!.userManager.updateUser({
+    const res = await authClient!.updateUser({
       username: USERNAME,
       oldPassword: PASSWORD,
       newPassword: NEW_PASSWORD,
@@ -95,7 +95,7 @@ describe('User Auth Api', () => {
 
   it(`Old pwd client should not valid`, async () => {
     try {
-      await authClient!.userManager.listUsers();
+      await authClient!.listUsers();
     } catch (error) {
       expect(error.toString()).toContain('unauthenticated');
     }
@@ -104,7 +104,7 @@ describe('User Auth Api', () => {
 
   it(`It should create role successfully`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
-    const res = await authClient.userManager.createRole({
+    const res = await authClient.createRole({
       roleName: ROLENAME,
     });
     // console.log('createRole', res);
@@ -112,7 +112,7 @@ describe('User Auth Api', () => {
   });
 
   it(`It should add user to role successfully`, async () => {
-    const res = await authClient.userManager.addUserToRole({
+    const res = await authClient.addUserToRole({
       username: USERNAME,
       roleName: ROLENAME,
     });
@@ -121,13 +121,13 @@ describe('User Auth Api', () => {
   });
 
   it(`It should list roles successfully`, async () => {
-    const res = await authClient.userManager.listRoles();
+    const res = await authClient.listRoles();
     // console.log('list roles', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should get role successfully`, async () => {
-    const res = await authClient.userManager.selectRole({
+    const res = await authClient.selectRole({
       roleName: ROLENAME,
     });
     // console.log('selectRole', res);
@@ -137,7 +137,7 @@ describe('User Auth Api', () => {
   });
 
   it(`It should get user successfully`, async () => {
-    const res = await authClient.userManager.selectUser({
+    const res = await authClient.selectUser({
       username: USERNAME,
     });
     // console.log('selectUser', res.results);
@@ -147,7 +147,7 @@ describe('User Auth Api', () => {
   });
 
   it(`It should grant privilege to role successfully`, async () => {
-    const res = await authClient.userManager.grantRolePrivilege({
+    const res = await authClient.grantRolePrivilege({
       roleName: ROLENAME,
       object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
@@ -158,7 +158,7 @@ describe('User Auth Api', () => {
   });
 
   it(`It should list grants successfully`, async () => {
-    const res = await authClient.userManager.listGrants({
+    const res = await authClient.listGrants({
       roleName: ROLENAME,
     });
     // console.log('list grants', ROLENAME, res);
@@ -170,7 +170,7 @@ describe('User Auth Api', () => {
   });
 
   it(`It should select grant successfully`, async () => {
-    const res = await authClient.userManager.selectGrant({
+    const res = await authClient.selectGrant({
       roleName: ROLENAME,
       object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
@@ -181,7 +181,7 @@ describe('User Auth Api', () => {
   });
 
   it(`It should check role name  successfully`, async () => {
-    const res = await authClient.userManager.hasRole({
+    const res = await authClient.hasRole({
       roleName: ROLENAME,
     });
     // console.log('hasRole', ROLENAME, res);
@@ -190,7 +190,7 @@ describe('User Auth Api', () => {
   });
 
   it(`It should revoke privilege to role successfully`, async () => {
-    const res = await authClient.userManager.revokeRolePrivilege({
+    const res = await authClient.revokeRolePrivilege({
       roleName: ROLENAME,
       object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
@@ -201,7 +201,7 @@ describe('User Auth Api', () => {
   });
 
   it(`It should remove user from role successfully`, async () => {
-    const res = await authClient.userManager.removeUserFromRole({
+    const res = await authClient.removeUserFromRole({
       username: USERNAME,
       roleName: ROLENAME,
     });
@@ -210,7 +210,7 @@ describe('User Auth Api', () => {
   });
 
   it(`It should drop role successfully`, async () => {
-    const res = await authClient.userManager.dropRole({
+    const res = await authClient.dropRole({
       roleName: ROLENAME,
     });
     // console.log('dropRole', res);
@@ -219,7 +219,7 @@ describe('User Auth Api', () => {
 
   // last test
   it(`Auth client delete user expect success`, async () => {
-    const res = await authClient.userManager.deleteUser({ username: USERNAME });
+    const res = await authClient.deleteUser({ username: USERNAME });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });

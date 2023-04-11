@@ -1,5 +1,5 @@
 import { promisify } from '../utils';
-import { Client } from './Client';
+import { Partition } from './Partition';
 import { DEFAULT_RESOURCE_GROUP } from './const/Milvus';
 import {
   ResStatus,
@@ -13,7 +13,7 @@ import {
   TransferReplicaReq,
 } from './types';
 
-export class Resource extends Client {
+export class Resource extends Partition {
   /**
    * Create a resource group.
    *
@@ -32,14 +32,14 @@ export class Resource extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).resourceManager.createResourceGroup({
+   *  new milvusClient(MILUVS_ADDRESS).createResourceGroup({
    *     resource_group: "vector_01",
    *  });
    * ```
    */
   async createResourceGroup(data: CreateResourceGroupReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'CreateResourceGroup',
       data,
       data.timeout
@@ -61,14 +61,14 @@ export class Resource extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).resourceManager.listResourceGroups();
+   *  new milvusClient(MILUVS_ADDRESS).listResourceGroups();
    * ```
    */
   async listResourceGroups(
     data?: GrpcTimeOut
   ): Promise<ListResourceGroupsResponse> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'ListResourceGroups',
       {},
       data?.timeout
@@ -99,7 +99,7 @@ export class Resource extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).resourceManager.describeResrouceGroup({
+   *  new milvusClient(MILUVS_ADDRESS).describeResrouceGroup({
    *    resource_group: 'my-resource-group'
    * });
    * ```
@@ -108,7 +108,7 @@ export class Resource extends Client {
     data: DesribeResourceGroupsReq
   ): Promise<DescribeResourceGroupResponse> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DescribeResourceGroup',
       data,
       data.timeout
@@ -133,14 +133,14 @@ export class Resource extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).resourceManager.dropResourceGroup({
+   *  new milvusClient(MILUVS_ADDRESS).dropResourceGroup({
    *    resource_group: 'my-resource-group'
    * });
    * ```
    */
   async dropResourceGroup(data: DropResourceGroupsReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DropResourceGroup',
       data,
       data.timeout
@@ -169,7 +169,7 @@ export class Resource extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).resourceManager.transferNode({
+   *  new milvusClient(MILUVS_ADDRESS).transferNode({
    *    source_resource_group: 'source-resource-group',
    *    target_resource_group: 'target-resource-group',
    *    collection_name: 'my-collection',
@@ -180,7 +180,7 @@ export class Resource extends Client {
   /* istanbul ignore next */
   async transferReplica(data: TransferReplicaReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'TransferReplica',
       data,
       data.timeout
@@ -208,7 +208,7 @@ export class Resource extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).resourceManager.transferNode({
+   *  new milvusClient(MILUVS_ADDRESS).transferNode({
    *    source_resource_group: 'source-resource-group',
    *    target_resource_group: 'target-resource-group',
    *    num_node: 4
@@ -218,7 +218,7 @@ export class Resource extends Client {
   /* istanbul ignore next */
   async transferNode(data: TransferNodeReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'TransferNode',
       data,
       data.timeout
@@ -238,7 +238,7 @@ export class Resource extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).resourceManager.dropResourceGroups();
+   *  new milvusClient(MILUVS_ADDRESS).dropResourceGroups();
    * ```
    */
   async dropAllResourceGroups(): Promise<ResStatus[]> {

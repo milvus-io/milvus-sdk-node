@@ -8,7 +8,7 @@ let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_ALIAS = GENERATE_NAME('alias');
 
-describe('Collection Api', () => {
+describe(`Alias API`, () => {
   beforeAll(async () => {
     await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '8')

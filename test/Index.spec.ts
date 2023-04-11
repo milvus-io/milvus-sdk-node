@@ -29,39 +29,39 @@ const [
   DISKANN,
 ] = INDEX_COLLECTIONS;
 
-describe('Collection Api', () => {
+describe(`Index API`, () => {
   beforeAll(async () => {
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '8')
     );
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME_WITHOUT_INDEX_NAME, '8')
     );
 
     for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
-      await milvusClient.collectionManager.createCollection(
+      await milvusClient.createCollection(
         genCollectionParams(INDEX_COLLECTIONS[i], '8')
       );
     }
   });
 
   afterAll(async () => {
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
     });
 
     for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
-      await milvusClient.collectionManager.dropCollection({
+      await milvusClient.dropCollection({
         collection_name: INDEX_COLLECTIONS[i],
       });
     }
   });
 
   it(`Create FLAT index should success`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
+    const res = await milvusClient.createIndex({
       collection_name: COL_FLAT,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -75,7 +75,7 @@ describe('Collection Api', () => {
   });
 
   it(`Create IVF_FLAT index should success`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
+    const res = await milvusClient.createIndex({
       collection_name: COL_IVF_FLAT,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -90,7 +90,7 @@ describe('Collection Api', () => {
   });
 
   it(`Create IVF_SQ8 index should success`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
+    const res = await milvusClient.createIndex({
       collection_name: COL_IVF_SQ8,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -105,7 +105,7 @@ describe('Collection Api', () => {
   });
 
   it(`Create IVF_PQ index should success`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
+    const res = await milvusClient.createIndex({
       collection_name: COL_IVF_PQ,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -120,7 +120,7 @@ describe('Collection Api', () => {
   });
 
   it(`Create HNSW index should success`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
+    const res = await milvusClient.createIndex({
       collection_name: COL_HNSW,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -135,7 +135,7 @@ describe('Collection Api', () => {
   });
 
   it(`Create ANNOY index should success`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
+    const res = await milvusClient.createIndex({
       collection_name: COL_ANNOY,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -150,7 +150,7 @@ describe('Collection Api', () => {
   });
 
   // it(`Create DISKANN index should success`, async () => {
-  //   const res = await milvusClient.indexManager.createIndex({
+  //   const res = await milvusClient.createIndex({
   //     collection_name: DISKANN,
   //     index_name: INDEX_NAME,
   //     field_name: VECTOR_FIELD_NAME,
@@ -164,7 +164,7 @@ describe('Collection Api', () => {
   // });
 
   it(`Create Index with name should success`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
+    const res = await milvusClient.createIndex({
       index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -179,7 +179,7 @@ describe('Collection Api', () => {
   });
 
   it(`Create Index without name should success`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
+    const res = await milvusClient.createIndex({
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -193,7 +193,7 @@ describe('Collection Api', () => {
   });
 
   it(`Create Index not exist type should failed`, async () => {
-    const res = await milvusClient.indexManager.createIndex({
+    const res = await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: 'vector_02',
       extra_params: {
@@ -206,7 +206,7 @@ describe('Collection Api', () => {
   });
 
   it(`Describe Index with index name`, async () => {
-    const res = await milvusClient.indexManager.describeIndex({
+    const res = await milvusClient.describeIndex({
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
@@ -215,7 +215,7 @@ describe('Collection Api', () => {
   });
 
   it(`Describe Index without index name`, async () => {
-    const res = await milvusClient.indexManager.describeIndex({
+    const res = await milvusClient.describeIndex({
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
     });
     // console.log('----describeIndex ----', res);
@@ -225,13 +225,13 @@ describe('Collection Api', () => {
   it(
     'Test Describe Index should timeout',
     timeoutTest(
-      milvusClient.indexManager.describeIndex.bind(milvusClient.indexManager),
+      milvusClient.describeIndex.bind(milvusClient),
       { collection_name: COLLECTION_NAME }
     )
   );
 
   it(`Get Index with name State`, async () => {
-    const res = await milvusClient.indexManager.getIndexState({
+    const res = await milvusClient.getIndexState({
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
@@ -240,7 +240,7 @@ describe('Collection Api', () => {
   });
 
   it(`Get Index without name progress`, async () => {
-    const res = await milvusClient.indexManager.getIndexBuildProgress({
+    const res = await milvusClient.getIndexBuildProgress({
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
@@ -249,7 +249,7 @@ describe('Collection Api', () => {
   });
 
   it(`Get Index with name progress`, async () => {
-    const res = await milvusClient.indexManager.getIndexBuildProgress({
+    const res = await milvusClient.getIndexBuildProgress({
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
@@ -258,7 +258,7 @@ describe('Collection Api', () => {
   });
 
   it(`Drop Index with index name`, async () => {
-    const res = await milvusClient.indexManager.dropIndex({
+    const res = await milvusClient.dropIndex({
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -268,7 +268,7 @@ describe('Collection Api', () => {
   });
 
   it(`Drop Index without index name`, async () => {
-    const res = await milvusClient.indexManager.dropIndex({
+    const res = await milvusClient.dropIndex({
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
@@ -277,7 +277,7 @@ describe('Collection Api', () => {
   });
 
   it(`Describe Index should be not exist`, async () => {
-    const res = await milvusClient.indexManager.describeIndex({
+    const res = await milvusClient.describeIndex({
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -285,7 +285,7 @@ describe('Collection Api', () => {
     // console.log('----describe index after drop ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
 
-    const res2 = await milvusClient.indexManager.describeIndex({
+    const res2 = await milvusClient.describeIndex({
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,

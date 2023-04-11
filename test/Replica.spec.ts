@@ -11,12 +11,12 @@ import { ErrorCode } from '../milvus/types/Response';
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
-describe("Collection's replica Api", () => {
+describe(`Replica API`, () => {
   beforeAll(async () => {
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '8')
     );
-    await milvusClient.indexManager.createIndex({
+    await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -25,25 +25,25 @@ describe("Collection's replica Api", () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    await milvusClient.collectionManager.loadCollectionSync({
+    await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
       replica_number: 1,
     });
   });
 
   afterAll(async () => {
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
   });
 
   it(`Testing getReplica`, async () => {
     const collectionInfo =
-      await milvusClient.collectionManager.describeCollection({
+      await milvusClient.describeCollection({
         collection_name: COLLECTION_NAME,
       } as any);
 
-    const res = await milvusClient.collectionManager.getReplicas({
+    const res = await milvusClient.getReplicas({
       collectionID: collectionInfo.collectionID,
     });
 
@@ -53,7 +53,7 @@ describe("Collection's replica Api", () => {
 
   it(`Testing getReplica params test`, async () => {
     try {
-      const res = await milvusClient.collectionManager.getReplicas({
+      const res = await milvusClient.getReplicas({
         collectionID2: 1,
       } as any);
     } catch (error) {
