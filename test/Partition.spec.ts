@@ -75,14 +75,9 @@ describe(`Partition API`, () => {
 
   it(
     `Test show all partitions should timeout`,
-    timeoutTest(
-      milvusClient.showPartitions.bind(
-        milvusClient.partitionManager
-      ),
-      {
-        collection_name: COLLECTION_NAME,
-      }
-    )
+    timeoutTest(milvusClient.showPartitions.bind(milvusClient), {
+      collection_name: COLLECTION_NAME,
+    })
   );
 
   it(`Get partition statistics`, async () => {

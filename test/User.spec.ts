@@ -53,7 +53,7 @@ describe(`User Api`, () => {
   it(
     `Test list all users should timeout`,
     timeoutTest(
-      milvusClient.listUsers.bind(milvusClient.userManager)
+      milvusClient.listUsers.bind(milvusClient)
     )
   );
 
