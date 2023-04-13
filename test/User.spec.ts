@@ -1,14 +1,15 @@
-import { MilvusClient } from '../milvus';
-import { IP } from '../const';
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
-import { ErrorCode } from '../milvus/types/Response';
-import { timeoutTest } from './common/timeout';
 import {
+  MilvusClient,
+  ERROR_REASONS,
+  ErrorCode,
   DataType,
   Roles,
   Privileges,
   RbacObjects,
-} from '../milvus/const/Milvus';
+} from '../milvus';
+import { IP } from '../const';
+import { timeoutTest } from './common/timeout';
+
 import { genCollectionParams, GENERATE_NAME } from '../utils/test';
 
 let milvusClient = new MilvusClient(IP);
@@ -52,9 +53,7 @@ describe(`User Api`, () => {
 
   it(
     `Test list all users should timeout`,
-    timeoutTest(
-      milvusClient.listUsers.bind(milvusClient)
-    )
+    timeoutTest(milvusClient.listUsers.bind(milvusClient))
   );
 
   it(`Normal client should not valid`, async () => {

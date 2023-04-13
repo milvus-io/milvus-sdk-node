@@ -1,12 +1,10 @@
-import { MilvusClient } from '../milvus';
+import { MilvusClient, ErrorCode, ERROR_REASONS } from '../milvus';
 import { IP } from '../const';
-import { ErrorCode } from '../milvus/types/Response';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
 } from '../utils/test';
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { timeoutTest } from './common/timeout';
 
 const milvusClient = new MilvusClient(IP);

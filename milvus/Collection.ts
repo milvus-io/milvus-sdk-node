@@ -6,9 +6,9 @@ import {
   checkCollectionName,
 } from '../utils';
 import { BaseClient } from './BaseClient';
-import { ERROR_REASONS } from './const/ErrorReason';
-import { ConsistencyLevelEnum } from './const/Milvus';
 import {
+  ERROR_REASONS,
+  ConsistencyLevelEnum,
   ErrorCode,
   CollectionData,
   CreateCollectionReq,
@@ -37,7 +37,7 @@ import {
   ShowCollectionsResponse,
   StatisticsResponse,
   ReplicasResponse,
-} from './types';
+} from '.';
 
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)

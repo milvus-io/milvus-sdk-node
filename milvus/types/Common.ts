@@ -46,7 +46,7 @@ export interface StringArrayId {
 export interface GrpcTimeOut {
   timeout?: number;
 }
-export type Privileges =
+export type PrivilegesTypes =
   | CollectionPrivileges
   | UserPrivileges
   | GlobalPrivileges;

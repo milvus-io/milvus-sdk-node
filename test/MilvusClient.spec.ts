@@ -1,8 +1,6 @@
-import { MilvusClient } from '../milvus';
+import { MilvusClient, ERROR_REASONS, ErrorCode } from '../milvus';
 import sdkInfo from '../sdk.json';
 import { IP } from '../const';
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
-import { ErrorCode } from '../milvus/types';
 
 const milvusClient = new MilvusClient(IP);
 

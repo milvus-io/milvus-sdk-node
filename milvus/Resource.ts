@@ -1,7 +1,7 @@
 import { promisify } from '../utils';
 import { Partition } from './Partition';
-import { DEFAULT_RESOURCE_GROUP } from './const/Milvus';
 import {
+  DEFAULT_RESOURCE_GROUP,
   ResStatus,
   GrpcTimeOut,
   CreateResourceGroupReq,
@@ -11,7 +11,7 @@ import {
   DescribeResourceGroupResponse,
   TransferNodeReq,
   TransferReplicaReq,
-} from './types';
+} from '.';
 
 export class Resource extends Partition {
   /**

@@ -11,7 +11,7 @@ import {
   DescribeIndexResponse,
   GetIndexStateResponse,
   GetIndexBuildProgressResponse,
-} from './types';
+} from '.';
 
 export class Index extends Data {
   /**

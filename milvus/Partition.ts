@@ -1,12 +1,12 @@
-import { promisify } from '../utils';
 import { Index } from './MilvusIndex';
-import { ERROR_REASONS } from './const/ErrorReason';
 import {
+  promisify,
   checkCollectionName,
   checkCollectionAndPartitionName,
   formatKeyValueData,
 } from '../utils';
 import {
+  ERROR_REASONS,
   CreatePartitionReq,
   DropPartitionReq,
   GetPartitionStatisticsReq,
@@ -18,7 +18,7 @@ import {
   BoolResponse,
   ShowPartitionsResponse,
   StatisticsResponse,
-} from './types';
+} from '.';
 
 export class Partition extends Index {
   /**

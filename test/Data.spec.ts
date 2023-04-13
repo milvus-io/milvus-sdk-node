@@ -1,16 +1,17 @@
-import { MilvusClient } from '../milvus';
-
+import {
+  MilvusClient,
+  DataType,
+  ErrorCode,
+  InsertReq,
+  ERROR_REASONS,
+} from '../milvus';
 import { IP } from '../const';
-import { DataType } from '../milvus/const/Milvus';
-import { ErrorCode } from '../milvus/types/Response';
-import { InsertReq } from '../milvus/types/Data';
 import { generateInsertData } from '../utils/test';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
 } from '../utils/test';
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 import { timeoutTest } from './common/timeout';
 
 let milvusClient = new MilvusClient(IP);

@@ -8,10 +8,10 @@ import {
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
 } from '../utils';
-import { Collection } from './Collection';
-import { ERROR_REASONS } from './const/ErrorReason';
-import { DataType, DataTypeMap } from './const/Milvus';
 import {
+  DataType,
+  DataTypeMap,
+  ERROR_REASONS,
   DslType,
   DeleteEntitiesReq,
   FlushReq,
@@ -37,7 +37,8 @@ import {
   QueryRes,
   SearchReq,
   SearchRes,
-} from './types';
+} from '.';
+import { Collection } from './Collection';
 
 export class Data extends Collection {
   vectorTypes = [DataType.BinaryVector, DataType.FloatVector];

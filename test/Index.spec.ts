@@ -1,6 +1,5 @@
-import { MilvusClient } from '../milvus';
+import { MilvusClient, ErrorCode } from '../milvus';
 import { IP } from '../const';
-import { ErrorCode } from '../milvus/types/Response';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
@@ -224,10 +223,9 @@ describe(`Index API`, () => {
 
   it(
     'Test Describe Index should timeout',
-    timeoutTest(
-      milvusClient.describeIndex.bind(milvusClient),
-      { collection_name: COLLECTION_NAME }
-    )
+    timeoutTest(milvusClient.describeIndex.bind(milvusClient), {
+      collection_name: COLLECTION_NAME,
+    })
   );
 
   it(`Get Index with name State`, async () => {

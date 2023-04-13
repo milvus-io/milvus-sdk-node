@@ -1,12 +1,10 @@
-import { MilvusClient } from '../milvus';
+import { MilvusClient, ERROR_REASONS, ErrorCode } from '../milvus';
 import { IP } from '../const';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
 } from '../utils/test';
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
-import { ErrorCode } from '../milvus/types/Response';
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -38,10 +36,9 @@ describe(`Replica API`, () => {
   });
 
   it(`Testing getReplica`, async () => {
-    const collectionInfo =
-      await milvusClient.describeCollection({
-        collection_name: COLLECTION_NAME,
-      } as any);
+    const collectionInfo = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    } as any);
 
     const res = await milvusClient.getReplicas({
       collectionID: collectionInfo.collectionID,

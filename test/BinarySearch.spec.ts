@@ -1,8 +1,5 @@
-import { MilvusClient } from '../milvus';
+import { MilvusClient, DataType, ErrorCode, InsertReq } from '../milvus';
 import { IP } from '../const';
-import { DataType } from '../milvus/const/Milvus';
-import { ErrorCode } from '../milvus/types/Response';
-import { InsertReq } from '../milvus/types/Data';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,

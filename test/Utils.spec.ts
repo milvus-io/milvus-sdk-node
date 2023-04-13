@@ -12,7 +12,7 @@ import {
   getGRPCService,
   getAuthInterceptor,
 } from '../utils';
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import { ERROR_REASONS } from '../milvus';
 import { InterceptingCall } from '@grpc/grpc-js';
 // mock
 jest.mock('@grpc/grpc-js', () => {

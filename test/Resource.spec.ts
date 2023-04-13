@@ -1,6 +1,5 @@
-import { MilvusClient } from '../milvus';
+import { MilvusClient, ErrorCode } from '../milvus';
 import { IP } from '../const';
-import { ErrorCode } from '../milvus/types/Response';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,

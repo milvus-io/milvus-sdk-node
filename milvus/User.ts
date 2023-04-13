@@ -1,8 +1,9 @@
 import { promisify, stringToBase64 } from '../utils';
 import { Resource } from './Resource';
-import { ERROR_REASONS } from './const/ErrorReason';
-import { OperateUserRoleType, OperatePrivilegeType } from './const/Milvus';
 import {
+  ERROR_REASONS,
+  OperateUserRoleType,
+  OperatePrivilegeType,
   CreateUserReq,
   DeleteUserReq,
   ListUsersReq,
@@ -24,7 +25,7 @@ import {
   SelectUserResponse,
   SelectGrantResponse,
   HasRoleResponse,
-} from './types';
+} from '.';
 
 export class User extends Resource {
   /**

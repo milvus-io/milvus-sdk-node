@@ -13,5 +13,3 @@ export * from './types/Response';
 export * from './types/User';
 
 export * from './types/Resource';
-
-export type Constructor<T = {}> = new (...args: any[]) => T;

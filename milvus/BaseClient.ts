@@ -1,7 +1,7 @@
 import path from 'path';
 import protobuf, { Root } from 'protobufjs';
 import { credentials, Client } from '@grpc/grpc-js';
-import { ERROR_REASONS } from './const/ErrorReason';
+import { ERROR_REASONS } from '.';
 import { getGRPCService, formatAddress, getAuthInterceptor } from '../utils';
 
 // pathes
