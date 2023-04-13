@@ -11,6 +11,7 @@ import {
   formatNumberPrecision,
   getGRPCService,
   getAuthInterceptor,
+  checkTimeParam,
 } from '../utils';
 import { ERROR_REASONS } from '../milvus';
 import { InterceptingCall } from '@grpc/grpc-js';
@@ -29,6 +30,25 @@ jest.mock('@grpc/grpc-js', () => {
 describe(`Utils`, () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+  it(`should return true for a bigint input`, () => {
+    expect(checkTimeParam(BigInt(123))).toBe(true);
+  });
+
+  it(`should return true for a string input that can be converted to a number`, () => {
+    expect(checkTimeParam(`123`)).toBe(true);
+  });
+
+  it(`should return false for a string input that cannot be converted to a number`, () => {
+    expect(checkTimeParam(`abc`)).toBe(false);
+  });
+
+  it(`should return false for other types of input`, () => {
+    expect(checkTimeParam(null)).toBe(false);
+    expect(checkTimeParam(undefined)).toBe(false);
+    expect(checkTimeParam({})).toBe(false);
+    expect(checkTimeParam([])).toBe(false);
+    expect(checkTimeParam(() => {})).toBe(false);
   });
   it(`Promisify should catch  obj[target] is not a function`, async () => {
     let a = {};

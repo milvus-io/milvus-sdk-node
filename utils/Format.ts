@@ -59,7 +59,7 @@ export const formatNumberPrecision = (number: number, precision: number) => {
 const LOGICAL_BITS = BigInt(18);
 // const LOGICAL_BITS_MASK = (1 << LOGICAL_BITS) - 1;
 
-const checkTimeParam = (ts: any) => {
+export const checkTimeParam = (ts: any) => {
   switch (typeof ts) {
     case 'bigint':
       return true;

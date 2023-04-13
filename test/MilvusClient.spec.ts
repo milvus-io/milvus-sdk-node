@@ -1,10 +1,34 @@
-import { MilvusClient, ERROR_REASONS, ErrorCode } from '../milvus';
+import { MilvusClient, ERROR_REASONS } from '../milvus';
 import sdkInfo from '../sdk.json';
 import { IP } from '../const';
 
 const milvusClient = new MilvusClient(IP);
 
 describe(`Milvus client`, () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test(`should create a grpc client without SSL credentials when ssl is false`, () => {
+    const client = new MilvusClient(
+      'localhost:19530',
+      false,
+      'username',
+      'password'
+    );
+    expect(client.grpcClient).toBeDefined();
+  });
+
+  test(`should create a grpc client without authentication when username and password are not provided`, () => {
+    const client = new MilvusClient(`localhost:19530`, false);
+    expect(client.grpcClient).toBeDefined();
+  });
+
+  test(`should create a grpc client with authentication when username and password are provided`, () => {
+    const client = new MilvusClient(IP, false, `username`, `password`);
+    expect(client.grpcClient).toBeDefined();
+  });
+
   it(`Should throw MILVUS_ADDRESS_IS_REQUIRED`, async () => {
     try {
       new MilvusClient(undefined as any);
@@ -16,12 +40,6 @@ describe(`Milvus client`, () => {
   it(`Expect get node sdk info`, async () => {
     expect(MilvusClient.sdkInfo.version).toEqual(sdkInfo.version);
     expect(MilvusClient.sdkInfo.recommandMilvus).toEqual(sdkInfo.milvusVersion);
-  });
-
-  it(`Check version should success`, async () => {
-    const res = await milvusClient.checkVersion();
-    // console.log('----checkVersion ----', res);
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Get milvus version`, async () => {

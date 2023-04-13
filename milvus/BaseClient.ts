@@ -42,6 +42,7 @@ export class BaseClient {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
 
+    // if we need to create auth interceptors
     const needAuth = username !== undefined && password !== undefined;
 
     // get Milvus GRPC service
@@ -49,6 +50,11 @@ export class BaseClient {
       protoPath,
       serviceName: 'milvus.proto.milvus.MilvusService', // the name of the Milvus service
     });
+
+    // create interceptors
+    const interceptors = needAuth
+      ? getAuthInterceptor(username, password)
+      : null;
 
     // load proto
     this.schemaProto = protobuf.loadSync(schemaProtoPath);
@@ -59,9 +65,7 @@ export class BaseClient {
       formatAddress(address), // format the address
       ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
       {
-        interceptors: [
-          needAuth ? getAuthInterceptor(username, password) : null,
-        ],
+        interceptors: [interceptors],
         // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
         // So SDK should support max_receive_message_length unlimited.
         'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited

@@ -55,41 +55,20 @@ export class MilvusClient extends User {
     return this;
   }
 
-  /**
-   * @ignore
-   * Everytime build sdk will rewrite sdk.json depend on version, milvusVersion fields in package.json.
-   * @returns
-   */
-  async checkVersion() {
-    const res = await this.getMetric({
-      request: { metric_type: 'system_info' },
-    });
-
-    // Each node contains the same system info, so get version from first one.
-    const curMilvusVersion =
-      res.response.nodes_info[0]?.infos?.system_info?.build_version;
-
-    if (curMilvusVersion !== MilvusClient.sdkInfo.recommandMilvus) {
-      console.warn('------- Warning ---------');
-      console.warn(
-        `Node sdk ${MilvusClient.sdkInfo.version} recommend Milvus Version ${MilvusClient.sdkInfo.recommandMilvus}.\nDifferent version may cause some error.`
-      );
-      return { error_code: ErrorCode.SUCCESS, match: false };
-    }
-    return { error_code: ErrorCode.SUCCESS, match: true };
-  }
-
+  // This method closes the gRPC client connection and returns the connectivity state of the channel.
   closeConnection() {
+    // Close the gRPC client connection
     this.grpcClient.close();
     // grpc client closed -> 4, connected -> 0
     return this.grpcClient.getChannel().getConnectivityState(true);
   }
 
+  // This method returns the version of the Milvus server.
   async getVersion(): Promise<GetVersionResponse> {
-    const promise = await promisify(this.grpcClient, 'GetVersion', {});
-    return promise;
+    return await promisify(this.grpcClient, 'GetVersion', {});
   }
 
+  // This method checks the health of the Milvus server.
   async checkHealth(): Promise<CheckHealthResponse> {
     return await promisify(this.grpcClient, 'CheckHealth', {});
   }
