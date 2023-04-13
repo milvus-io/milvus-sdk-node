@@ -1,8 +1,8 @@
 import path from 'path';
 import protobuf, { Root } from 'protobufjs';
-import { credentials, Client, InterceptingCall } from '@grpc/grpc-js';
+import { credentials, Client } from '@grpc/grpc-js';
 import { ERROR_REASONS } from './const/ErrorReason';
-import { getService, formatAddress } from '../utils';
+import { getGRPCService, formatAddress, getAuthInterceptor } from '../utils';
 
 // pathes
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
@@ -37,32 +37,17 @@ export class BaseClient {
     username?: string,
     password?: string
   ) {
-    // check address set
+    // check if address is set
     if (!address) {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
-    let authInterceptor = null;
-    // authorization if needed, following pymilvus
-    if (username !== undefined && password !== undefined) {
-      authInterceptor = function (options: any, nextCall: any) {
-        return new InterceptingCall(nextCall(options), {
-          start: function (metadata, listener, next) {
-            const auth = Buffer.from(
-              `${username}:${password}`,
-              'utf-8'
-            ).toString('base64');
-            metadata.add('authorization', auth);
 
-            next(metadata, listener);
-          },
-        });
-      };
-    }
+    const needAuth = username !== undefined && password !== undefined;
 
-    // get Milvus service
-    const MilvusService = getService({
+    // get Milvus GRPC service
+    const MilvusService = getGRPCService({
       protoPath,
-      serviceName: 'milvus.proto.milvus.MilvusService',
+      serviceName: 'milvus.proto.milvus.MilvusService', // the name of the Milvus service
     });
 
     // load proto
@@ -71,13 +56,15 @@ export class BaseClient {
 
     // create grpc client
     this.grpcClient = new MilvusService(
-      formatAddress(address),
-      ssl ? credentials.createSsl() : credentials.createInsecure(),
+      formatAddress(address), // format the address
+      ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
       {
-        interceptors: [authInterceptor],
+        interceptors: [
+          needAuth ? getAuthInterceptor(username, password) : null,
+        ],
         // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
         // So SDK should support max_receive_message_length unlimited.
-        'grpc.max_receive_message_length': -1,
+        'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
       }
     );
   }

@@ -1,4 +1,5 @@
 import { promisify } from '../utils/index';
+import path from 'path';
 import {
   datetimeToHybrids,
   hybridtsToUnixtime,
@@ -8,10 +9,27 @@ import {
   parseToKeyValue,
   formatKeyValueData,
   formatNumberPrecision,
+  getGRPCService,
+  getAuthInterceptor,
 } from '../utils';
 import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import { InterceptingCall } from '@grpc/grpc-js';
+// mock
+jest.mock('@grpc/grpc-js', () => {
+  const actual = jest.requireActual(`@grpc/grpc-js`);
+
+  return {
+    InterceptingCall: jest.fn(),
+    loadPackageDefinition: actual.loadPackageDefinition,
+    ServiceClientConstructor: actual.ServiceClientConstructor,
+    GrpcObject: actual.GrpcObject,
+  };
+});
 
 describe(`Utils`, () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
   it(`Promisify should catch  obj[target] is not a function`, async () => {
     let a = {};
     try {
@@ -143,5 +161,58 @@ describe(`Utils`, () => {
     const testValue = 3.1231241241234124124;
     const res = formatNumberPrecision(testValue, 3);
     expect(res).toBe(3.123);
+  });
+
+  it(`should return a service client constructor`, () => {
+    const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
+    const proto = {
+      protoPath,
+      serviceName: `milvus.proto.milvus.MilvusService`,
+    };
+    const service = getGRPCService(proto);
+    expect(service).toBeDefined();
+  });
+
+  it(`should throw an error if the service object is invalid`, () => {
+    const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
+    const proto = {
+      protoPath,
+      serviceName: `milvus.proto.milvus.MilvusService2`,
+    };
+    expect(() => getGRPCService(proto)).toThrowError();
+  });
+
+  it('should add an authorization header to the metadata of a gRPC call', () => {
+    const username = 'testuser';
+    const password = 'testpassword';
+    const metadata = {
+      add: jest.fn(),
+    };
+    const listener = jest.fn();
+    const next = jest.fn();
+    const nextCall = jest.fn(() => ({
+      start: (metadata: any, listener: any, next: any) => {
+        next(metadata, listener);
+      },
+    }));
+    (InterceptingCall as any).mockImplementationOnce(
+      (call: any, options: any) => {
+        return {
+          call,
+          options,
+          start: options.start,
+        };
+      }
+    );
+
+    const interceptor = getAuthInterceptor(username, password);
+    const interceptedCall = interceptor({}, nextCall);
+
+    (interceptedCall.start as any)(metadata, listener, next);
+
+    expect(metadata.add).toHaveBeenCalledWith(
+      'authorization',
+      'dGVzdHVzZXI6dGVzdHBhc3N3b3Jk'
+    );
   });
 });
