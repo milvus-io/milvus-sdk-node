@@ -1,8 +1,6 @@
-import { MilvusClient } from '../milvus';
 import * as path from 'path';
+import { MilvusClient, DataType, ErrorCode } from '../milvus';
 import { IP } from '../const';
-import { DataType } from '../milvus/const/Milvus';
-import { ErrorCode } from '../milvus/types/Response';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
@@ -12,13 +10,13 @@ import {
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
-describe('Import tests', () => {
+describe(`Import API`, () => {
   beforeAll(async () => {
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
     );
 
-    await milvusClient.indexManager.createIndex({
+    await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -27,31 +25,31 @@ describe('Import tests', () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    await milvusClient.collectionManager.loadCollectionSync({
+    await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
   });
 
   afterAll(async () => {
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
   });
 
-  it('list import tasks should be zero', async () => {
-    const res = await milvusClient.dataManager.listImportTasks({
+  it(`list import tasks should be zero`, async () => {
+    const res = await milvusClient.listImportTasks({
       collection_name: COLLECTION_NAME,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.tasks.length).toEqual(0);
   });
 
-  it('Import with file', async () => {
-    const res = await milvusClient.dataManager.bulkInsert({
+  it(`Import with file`, async () => {
+    const res = await milvusClient.bulkInsert({
       collection_name: COLLECTION_NAME,
       files: [path.join(__dirname, `files/data.json`)],
     });
-    const importTasks = await milvusClient.dataManager.listImportTasks({
+    const importTasks = await milvusClient.listImportTasks({
       collection_name: COLLECTION_NAME,
     });
 

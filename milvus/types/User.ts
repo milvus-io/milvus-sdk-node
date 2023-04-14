@@ -1,4 +1,4 @@
-import { GrpcTimeOut, Privileges, ResStatus } from './Common';
+import { GrpcTimeOut, PrivilegesTypes, ResStatus } from './Common';
 import { RbacObjects } from '../const/Milvus';
 
 export interface UpdateUserReq extends GrpcTimeOut {
@@ -53,7 +53,7 @@ export interface OperateRolePrivilegeReq extends GrpcTimeOut {
   roleName: string; // grant role name
   object: RbacObjects; // Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.
   objectName: string; // Name of the object to which the role is granted the specified prvilege.
-  privilegeName: Privileges; // Name of the privilege to be granted to the role. This parameter is case-sensitive.
+  privilegeName: PrivilegesTypes; // Name of the privilege to be granted to the role. This parameter is case-sensitive.
 }
 
 export interface SelectGrantReq extends OperateRolePrivilegeReq {}
@@ -81,7 +81,7 @@ export interface SelectUserResponse {
   results: UserResult[];
 }
 type ObjectEntity = { name: RbacObjects };
-type PrivilegeEntity = { name: Privileges };
+type PrivilegeEntity = { name: PrivilegesTypes };
 type Grantor = { user: User; privilege: PrivilegeEntity };
 type GrantEntity = {
   role: RoleEntity;

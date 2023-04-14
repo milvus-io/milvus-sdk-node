@@ -1,12 +1,14 @@
-import protobuf, { Root } from 'protobufjs';
-import path from 'path';
-import { promisify } from '../utils';
-import { ERROR_REASONS } from './const/ErrorReason';
-import { checkCollectionFields, checkCollectionName } from './utils/Validate';
-import { formatKeyValueData, parseToKeyValue } from './utils/Format';
-import { Client } from './Client';
-import { ConsistencyLevelEnum } from './const/Milvus';
 import {
+  promisify,
+  formatKeyValueData,
+  parseToKeyValue,
+  checkCollectionFields,
+  checkCollectionName,
+} from '../utils';
+import { BaseClient } from './BaseClient';
+import {
+  ERROR_REASONS,
+  ConsistencyLevelEnum,
   ErrorCode,
   CollectionData,
   CreateCollectionReq,
@@ -35,22 +37,12 @@ import {
   ShowCollectionsResponse,
   StatisticsResponse,
   ReplicasResponse,
-} from './types';
-
-const schemaPath = path.resolve(__dirname, '../proto/proto/schema.proto');
+} from '.';
 
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
  */
-export class Collection extends Client {
-  private readonly _protoRoot: Root;
-
-  constructor(client: any) {
-    super(client);
-
-    this._protoRoot = protobuf.loadSync(schemaPath);
-  }
-
+export class Collection extends BaseClient {
   /**
    * Create a collection in Milvus.
    *
@@ -72,7 +64,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.createCollection({
+   *  new milvusClient(MILUVS_ADDRESS).createCollection({
    *    collection_name: 'my_collection',
    *    fields: [
    *      {
@@ -107,11 +99,11 @@ export class Collection extends Client {
     checkCollectionFields(fields);
 
     // When data type is bytes, use protobufjs to transform data to buffer bytes.
-    const CollectionSchema = this._protoRoot.lookupType(
+    const CollectionSchema = this.schemaProto.lookupType(
       'milvus.proto.schema.CollectionSchema'
     );
 
-    const FieldSchema = this._protoRoot.lookupType(
+    const FieldSchema = this.schemaProto.lookupType(
       'milvus.proto.schema.FieldSchema'
     );
 
@@ -138,7 +130,7 @@ export class Collection extends Client {
       ? ConsistencyLevelEnum[consistency_level]
       : ConsistencyLevelEnum['Bounded'];
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'CreateCollection',
       {
         ...data,
@@ -152,34 +144,34 @@ export class Collection extends Client {
   }
 
   /**
-   * Check if a collection exists.
-   *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-   * 
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | value | `true` or `false` |
-  
-   *
-   * #### Example
-   *
-   * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.hasCollection({
-   *     collection_name: 'my_collection',
-   *  });
-   * ```
-   */
+ * Check if a collection exists.
+ *
+ * @param data
+ *  | Property | Type | Description |
+ *  | :-- | :-- | :-- |
+ *  | collection_name | String | Collection name |
+ *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+ * 
+ * @returns
+ *  | Property | Description |
+ *  | :-- | :-- |
+ *  | status | { error_code: number, reason: string } |
+ *  | value | `true` or `false` |
+
+ *
+ * #### Example
+ *
+ * ```
+ *  new milvusClient(MILUVS_ADDRESS).hasCollection({
+ *     collection_name: 'my_collection',
+ *  });
+ * ```
+ */
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'HasCollection',
       data,
       data.timeout
@@ -188,34 +180,34 @@ export class Collection extends Client {
   }
 
   /**
-   * List all collections or get collection loading status.
-   *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | type(optional) | enum | All -> 0, Loaded -> 1 |
-   *  | collection_names(optional) | String[] | If `type = Loaded`, Milvus will return `collection_names inMemory_percentages` |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+ * List all collections or get collection loading status.
+ *
+ * @param data
+ *  | Property | Type | Description |
+ *  | :-- | :-- | :-- |
+ *  | type(optional) | enum | All -> 0, Loaded -> 1 |
+ *  | collection_names(optional) | String[] | If `type = Loaded`, Milvus will return `collection_names inMemory_percentages` |
+ *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
-   *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | data |  Contains collection name, ID , timestamp (UTC created time), and loadedPercentage (100 means loaded) |
-   *
-   *
-   * #### Example
-   *
-   * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.showCollections();
-   * ```
-   */
+ *
+ * @returns
+ * | Property | Description |
+ *  | :-- | :-- |
+ *  | status | { error_code: number, reason: string } |
+ *  | data |  Contains collection name, ID , timestamp (UTC created time), and loadedPercentage (100 means loaded) |
+ *
+ *
+ * #### Example
+ *
+ * ```
+ *  new milvusClient(MILUVS_ADDRESS).showCollections();
+ * ```
+ */
   async showCollections(
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'ShowCollections',
       {
         type: data ? data.type : ShowCollectionsType.All,
@@ -257,7 +249,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.describeCollection({
+   *  new milvusClient(MILUVS_ADDRESS).describeCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -268,7 +260,7 @@ export class Collection extends Client {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DescribeCollection',
       data,
       data.timeout
@@ -296,7 +288,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.getCollectionStatistics({
+   *  new milvusClient(MILUVS_ADDRESS).getCollectionStatistics({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -307,7 +299,7 @@ export class Collection extends Client {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'GetCollectionStatistics',
       data,
       data.timeout
@@ -339,7 +331,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.loadCollection({
+   *  new milvusClient(MILUVS_ADDRESS).loadCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -348,7 +340,7 @@ export class Collection extends Client {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'LoadCollection',
       data,
       data.timeout
@@ -377,7 +369,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.loadCollectionSync({
+   *  new milvusClient(MILUVS_ADDRESS).loadCollectionSync({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -386,7 +378,7 @@ export class Collection extends Client {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'LoadCollection',
       data,
       data.timeout
@@ -436,7 +428,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.releaseCollection({
+   *  new milvusClient(MILUVS_ADDRESS).releaseCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -445,7 +437,7 @@ export class Collection extends Client {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'ReleaseCollection',
       data,
       data.timeout
@@ -472,7 +464,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.renameCollection({
+   *  new milvusClient(MILUVS_ADDRESS).renameCollection({
    *    collection_name: 'my_collection',
    *    new_collection_name: 'my_new_collection'
    *  });
@@ -480,7 +472,7 @@ export class Collection extends Client {
    */
   async renameCollection(data: RenameCollectionReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'RenameCollection',
       {
         oldName: data.collection_name,
@@ -509,7 +501,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.dropCollection({
+   *  new milvusClient(MILUVS_ADDRESS).dropCollection({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -518,7 +510,7 @@ export class Collection extends Client {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DropCollection',
       data,
       data.timeout
@@ -546,7 +538,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.createAlias({
+   *  new milvusClient(MILUVS_ADDRESS).createAlias({
    *    alias: 'my_collection_alis',
    *    collection_name: 'my_collection',
    *  });
@@ -558,7 +550,7 @@ export class Collection extends Client {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'CreateAlias',
       data,
       data.timeout
@@ -586,7 +578,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.dropAlias({
+   *  new milvusClient(MILUVS_ADDRESS).dropAlias({
    *    alias: 'my_collection_alis',
    *    collection_name: 'my_collection',
    *  });
@@ -597,7 +589,7 @@ export class Collection extends Client {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DropAlias',
       data,
       data.timeout
@@ -625,7 +617,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.alterAlais({
+   *  new milvusClient(MILUVS_ADDRESS).alterAlais({
    *    alias: 'my_collection_alis',
    *    collection_name: 'my_collection',
    *  });
@@ -637,7 +629,7 @@ export class Collection extends Client {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'AlterAlias',
       data,
       data.timeout
@@ -663,7 +655,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.compact({
+   *  new milvusClient(MILUVS_ADDRESS).compact({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -672,7 +664,7 @@ export class Collection extends Client {
     checkCollectionName(data);
     const collectionInfo = await this.describeCollection(data);
     const res = await promisify(
-      this.client,
+      this.grpcClient,
       'ManualCompaction',
       {
         collectionID: collectionInfo.collectionID,
@@ -700,7 +692,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.getCompactionState({
+   *  new milvusClient(MILUVS_ADDRESS).getCompactionState({
    *    compactionID: compactionID,
    *  });
    * ```
@@ -712,7 +704,7 @@ export class Collection extends Client {
       throw new Error(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.grpcClient,
       'GetCompactionState',
       data,
       data.timeout
@@ -738,7 +730,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.getCompactionStateWithPlans({
+   *  new milvusClient(MILUVS_ADDRESS).getCompactionStateWithPlans({
    *    compactionID: compactionID,
    *  });
    * ```
@@ -750,7 +742,7 @@ export class Collection extends Client {
       throw new Error(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.grpcClient,
       'GetCompactionStateWithPlans',
       data,
       data.timeout
@@ -776,7 +768,7 @@ export class Collection extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.getReplicas({
+   *  new milvusClient(MILUVS_ADDRESS).getReplicas({
    *    collectionID: collectionID,
    *  });
    *
@@ -802,7 +794,12 @@ export class Collection extends Client {
     if (!data || !data.collectionID) {
       throw new Error(ERROR_REASONS.COLLECTION_ID_IS_REQUIRED);
     }
-    const res = await promisify(this.client, 'GetReplicas', data, data.timeout);
+    const res = await promisify(
+      this.grpcClient,
+      'GetReplicas',
+      data,
+      data.timeout
+    );
     return res;
   }
 }

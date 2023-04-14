@@ -1,70 +1,77 @@
-import { MilvusClient } from '../milvus/index';
+import { MilvusClient } from  '@zilliz/milvus2-sdk-node';
 import { IP } from '../const';
-import { genCollectionParams, GENERATE_NAME } from '../utils/test';
+import {
+  genCollectionParams,
+  GENERATE_NAME,
+  VECTOR_FIELD_NAME,
+} from '../utils/test';
 const milvusClient = new MilvusClient(IP);
-const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
-  const createRes = await collectionManager.createCollection({
+  // create a new collection with generated parameters
+  const createRes = await milvusClient.createCollection({
     ...genCollectionParams(COLLECTION_NAME, '4'),
   });
   console.log('--- create collection ---', createRes, COLLECTION_NAME);
 
-  let res: any = await collectionManager.showCollections();
+  // show all collections
+  let res: any = await milvusClient.showCollections();
   console.log(res);
-  await collectionManager.releaseCollection({ collection_name: 'test' });
-  res = await collectionManager.showCollections({ type: 1 });
+
+  // release the collection
+  await milvusClient.releaseCollection({ collection_name: COLLECTION_NAME });
+
+  // show loaded collections
+  res = await milvusClient.showCollections({ type: 1 });
   console.log('----loaded---', res);
 
-  res = await collectionManager.hasCollection({
+  // check if the collection exists
+  res = await milvusClient.hasCollection({
     collection_name: COLLECTION_NAME,
   });
-  console.log(res);
+  console.log('hasCollection', res);
 
-  res = await collectionManager.getCollectionStatistics({
+  // get statistics for the collection
+  res = await milvusClient.getCollectionStatistics({
     collection_name: COLLECTION_NAME,
   });
-  console.log(res);
+  console.log('getCollectionStatistics', res);
 
-  res = await collectionManager.loadCollectionSync({
+  // make sure load successful
+  await milvusClient.createIndex({
+    collection_name: COLLECTION_NAME,
+    field_name: VECTOR_FIELD_NAME,
+    extra_params: {
+      index_type: 'IVF_FLAT',
+      metric_type: 'L2',
+      params: JSON.stringify({ nlist: 1024 }),
+    },
+  });
+
+  // load the collection synchronously
+  res = await milvusClient.loadCollectionSync({
     collection_name: COLLECTION_NAME,
   });
-  console.log(res);
+  console.log('loadCollectionSync result', res.schema.fields);
 
-  res = await collectionManager.describeCollection({
+  // describe the collection
+  res = await milvusClient.describeCollection({
     collection_name: COLLECTION_NAME,
   });
-  console.log(res);
-  console.log(res.schema.fields);
+  console.log('describeCollection result', res.schema.fields);
 
-  res = await collectionManager.compact({
+  // release the collection
+  res = await milvusClient.releaseCollection({
     collection_name: COLLECTION_NAME,
   });
-  console.log('--- compact ---', res);
+  console.log('releaseCollection result', res);
 
-  const compactionID = res.compactionID;
-  res = await collectionManager.getCompactionState({
-    compactionID: compactionID,
-  });
-
-  console.log('--- compact state ---', res);
-
-  res = await collectionManager.getCompactionStateWithPlans({
-    compactionID: compactionID,
-  });
-
-  console.log('--- compact state with plans---', res);
-
-  res = await collectionManager.releaseCollection({
+  // drop the collection
+  res = await milvusClient.dropCollection({
     collection_name: COLLECTION_NAME,
   });
-  console.log(res);
-
-  res = await collectionManager.dropCollection({
-    collection_name: COLLECTION_NAME,
-  });
-  console.log('delete---', res);
+  console.log('dropCollection result', res);
 };
 
 test();

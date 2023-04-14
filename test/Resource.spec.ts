@@ -1,6 +1,5 @@
-import { MilvusClient } from '../milvus';
+import { MilvusClient, ErrorCode } from '../milvus';
 import { IP } from '../const';
-import { ErrorCode } from '../milvus/types/Response';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
@@ -17,10 +16,10 @@ const resource_group3 = GENERATE_NAME('rg');
 
 let runRgTransferTest = false;
 
-describe('Resource Api', () => {
+describe(`Resource API`, () => {
   beforeAll(async () => {
     // [TODO]: move getMetric to client
-    const metrics = await milvusClient.dataManager.getMetric({
+    const metrics = await milvusClient.getMetric({
       request: {
         metric_type: 'system_info',
       },
@@ -33,11 +32,11 @@ describe('Resource Api', () => {
     runRgTransferTest = queryNodes.length > 1;
 
     // create collection
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '128')
     );
 
-    await milvusClient.indexManager.createIndex({
+    await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -49,21 +48,21 @@ describe('Resource Api', () => {
   });
 
   afterAll(async () => {
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
   });
 
   it(`Create resource group should be successful`, async () => {
-    const res = await milvusClient.resourceManager.createResourceGroup({
+    const res = await milvusClient.createResourceGroup({
       resource_group,
     });
 
-    const res2 = await milvusClient.resourceManager.createResourceGroup({
+    const res2 = await milvusClient.createResourceGroup({
       resource_group: resource_group2,
     });
 
-    const res3 = await milvusClient.resourceManager.createResourceGroup({
+    const res3 = await milvusClient.createResourceGroup({
       resource_group: resource_group3,
     });
 
@@ -74,7 +73,7 @@ describe('Resource Api', () => {
   });
 
   it(`List resource groups should be successful`, async () => {
-    const res = await milvusClient.resourceManager.listResourceGroups();
+    const res = await milvusClient.listResourceGroups();
 
     // console.log('list resource group', res);
     expect(res.resource_groups).toContain(resource_group);
@@ -83,7 +82,7 @@ describe('Resource Api', () => {
   });
 
   it(`Describe rg should be successful`, async () => {
-    const res = await milvusClient.resourceManager.describeResourceGroup({
+    const res = await milvusClient.describeResourceGroup({
       resource_group: DEFAULT_RESOURCE_GROUP,
     });
     // console.log('describe resource group', res);
@@ -98,7 +97,7 @@ describe('Resource Api', () => {
 
   it(`Transfer node to another rg should be successful`, async () => {
     if (runRgTransferTest) {
-      const res = await milvusClient.resourceManager.transferNode({
+      const res = await milvusClient.transferNode({
         source_resource_group: DEFAULT_RESOURCE_GROUP,
         target_resource_group: resource_group,
         num_node: 1,
@@ -112,13 +111,13 @@ describe('Resource Api', () => {
   it(`Transfer replica to another rg should be successful`, async () => {
     if (runRgTransferTest) {
       // load col with replica
-      await milvusClient.collectionManager.loadCollectionSync({
+      await milvusClient.loadCollectionSync({
         collection_name: COLLECTION_NAME,
         replica_number: 2,
         resource_groups: [DEFAULT_RESOURCE_GROUP],
       });
 
-      const res = await milvusClient.resourceManager.transferReplica({
+      const res = await milvusClient.transferReplica({
         source_resource_group: DEFAULT_RESOURCE_GROUP,
         target_resource_group: resource_group,
         collection_name: COLLECTION_NAME,
@@ -129,7 +128,7 @@ describe('Resource Api', () => {
       expect(res.error_code).toEqual(ErrorCode.SUCCESS);
 
       // release collection
-      await milvusClient.collectionManager.releaseCollection({
+      await milvusClient.releaseCollection({
         collection_name: COLLECTION_NAME,
       });
     }
@@ -137,14 +136,14 @@ describe('Resource Api', () => {
 
   it(`Drop a resource group should be successful`, async () => {
     // drop rg
-    const res = await milvusClient.resourceManager.dropResourceGroup({
+    const res = await milvusClient.dropResourceGroup({
       resource_group: resource_group3,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Drop all resource groups should be successful`, async () => {
-    const res = await milvusClient.resourceManager.dropAllResourceGroups();
+    const res = await milvusClient.dropAllResourceGroups();
     res.forEach(r => {
       expect(r.error_code).toEqual(ErrorCode.SUCCESS);
     });

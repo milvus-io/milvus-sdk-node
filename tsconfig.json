@@ -70,5 +70,5 @@
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */,
     "useUnknownInCatchVariables": false /*  starting typescript v4.0, catch clause variables have type unknown instead of any */
   },
-  "include": ["milvus/**/*", "milvus/proto/proto/*.proto"]
+  "include": ["milvus/**/*", "milvus/proto/proto/*.proto", "utils/**/*"]
 }

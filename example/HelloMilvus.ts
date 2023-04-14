@@ -1,9 +1,6 @@
-import { MilvusClient } from '@zilliz/milvus2-sdk-node';
-import { DataType } from '@zilliz/milvus2-sdk-node/dist/milvus/const/Milvus';
-import { InsertReq } from '@zilliz/milvus2-sdk-node/dist/milvus/types/Data';
+import { MilvusClient, DataType, InsertReq } from '@zilliz/milvus2-sdk-node';
 
 const milvusClient = new MilvusClient('localhost:19530');
-const collectionManager = milvusClient.collectionManager;
 
 const generateInsertData = function generateInsertData(
   fields: { isVector: boolean; dim?: number; name: string; isBool?: boolean }[],
@@ -18,8 +15,8 @@ const generateInsertData = function generateInsertData(
       value[name] = isVector
         ? [...Array(dim)].map(() => Math.random() * 10)
         : isBool
-        ? count % 2 === 0
-        : count;
+          ? count % 2 === 0
+          : count;
     });
 
     value['count'] = count;
@@ -30,11 +27,11 @@ const generateInsertData = function generateInsertData(
 };
 
 const hello_milvus = async () => {
-  const checkVersion = await milvusClient.checkVersion();
+  const checkVersion = await milvusClient.getVersion();
   console.log('--- check version ---', checkVersion);
   const collectionName = 'hello_milvus';
   const dim = '4';
-  const createRes = await collectionManager.createCollection({
+  const createRes = await milvusClient.createCollection({
     collection_name: collectionName,
     fields: [
       {
@@ -63,12 +60,12 @@ const hello_milvus = async () => {
   });
   console.log('--- Create collection ---', createRes, collectionName);
 
-  const showCollectionRes = await collectionManager.showCollections();
+  const showCollectionRes = await milvusClient.showCollections();
   console.log('--- Show collections ---', showCollectionRes);
 
-  const hasCollectionRes = await collectionManager.hasCollection({
+  const hasCollectionRes = await milvusClient.hasCollection({
     collection_name: collectionName,
-  });
+  }); 
   console.log(
     '--- Has collection (' + collectionName + ') ---',
     hasCollectionRes
@@ -91,10 +88,10 @@ const hello_milvus = async () => {
     collection_name: collectionName,
     fields_data: vectorsData,
   };
-  await milvusClient.dataManager.insert(params);
+  await milvusClient.insert(params);
   console.log('--- Insert Data to Collection ---');
 
-  await milvusClient.indexManager.createIndex({
+  await milvusClient.createIndex({
     collection_name: collectionName,
     field_name: 'float_vector',
     extra_params: {
@@ -106,7 +103,7 @@ const hello_milvus = async () => {
   console.log('--- Create Index in Collection ---');
 
   // need load collection before search
-  const loadCollectionRes = await collectionManager.loadCollectionSync({
+  const loadCollectionRes = await milvusClient.loadCollectionSync({
     collection_name: collectionName,
   });
   console.log(
@@ -114,7 +111,7 @@ const hello_milvus = async () => {
     loadCollectionRes
   );
 
-  const result = await milvusClient.dataManager.search({
+  const result = await milvusClient.search({
     collection_name: collectionName,
     vectors: [vectorsData[0]['float_vector']],
     search_params: {
@@ -129,12 +126,12 @@ const hello_milvus = async () => {
   });
   console.log('--- Search collection (' + collectionName + ') ---', result);
 
-  const releaseRes = await collectionManager.releaseCollection({
+  const releaseRes = await milvusClient.releaseCollection({
     collection_name: collectionName,
   });
   console.log('--- Release Collection ---', releaseRes);
 
-  const dropRes = await collectionManager.dropCollection({
+  const dropRes = await milvusClient.dropCollection({
     collection_name: collectionName,
   });
   console.log('--- Drop Collection ---', dropRes);

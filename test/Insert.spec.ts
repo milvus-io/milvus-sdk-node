@@ -1,15 +1,17 @@
-import { MilvusClient } from '../milvus';
-import { IP } from '../const';
-import { DataType } from '../milvus/const/Milvus';
-import { ErrorCode } from '../milvus/types/Response';
-import { InsertReq } from '../milvus/types/Data';
-import { generateInsertData } from '../utils/test';
 import {
+  MilvusClient,
+  DataType,
+  ErrorCode,
+  InsertReq,
+  ERROR_REASONS,
+} from '../milvus';
+import { IP } from '../const';
+import {
+  generateInsertData,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
 } from '../utils/test';
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
 
 let milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
@@ -18,14 +20,14 @@ const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
 const MORE_SCALAR_COLLECTION_NAME = GENERATE_NAME();
 
 const PARTITION_NAME = 'test';
-describe('Insert data Api', () => {
+describe(`Insert API`, () => {
   beforeAll(async () => {
     // create collection autoid = false and float_vector
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
     );
     // create index before load
-    await milvusClient.indexManager.createIndex({
+    await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -36,13 +38,13 @@ describe('Insert data Api', () => {
     });
 
     // create collection autoid = true and float_vector
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME_AUTO_ID, '4')
     );
 
     // create collection autoid = false and binary_vector
 
-    await milvusClient.collectionManager.createCollection(
+    await milvusClient.createCollection(
       genCollectionParams(
         BINARY_COLLECTION_NAME,
         '8',
@@ -51,11 +53,11 @@ describe('Insert data Api', () => {
       )
     );
 
-    await milvusClient.partitionManager.createPartition({
+    await milvusClient.createPartition({
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
     });
-    await milvusClient.collectionManager.createCollection({
+    await milvusClient.createCollection({
       collection_name: MORE_SCALAR_COLLECTION_NAME,
       fields: [
         {
@@ -97,26 +99,26 @@ describe('Insert data Api', () => {
   });
 
   afterAll(async () => {
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
 
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: BINARY_COLLECTION_NAME,
     });
 
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME_AUTO_ID,
     });
 
-    await milvusClient.collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: MORE_SCALAR_COLLECTION_NAME,
     });
   });
 
   it(`Insert should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.dataManager.insert({} as any);
+      await milvusClient.insert({} as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
@@ -124,7 +126,7 @@ describe('Insert data Api', () => {
 
   it(`Insert should throw INSERT_CHECK_FILEDS_DATA_IS_REQUIRED`, async () => {
     try {
-      await milvusClient.dataManager.insert({ collection_name: 'asd' } as any);
+      await milvusClient.insert({ collection_name: 'asd' } as any);
     } catch (error) {
       expect(error.message).toEqual(
         ERROR_REASONS.INSERT_CHECK_FILEDS_DATA_IS_REQUIRED
@@ -147,7 +149,7 @@ describe('Insert data Api', () => {
       fields_data: vectorsData,
     };
 
-    const res = await milvusClient.dataManager.insert(params);
+    const res = await milvusClient.insert(params);
     // console.log('----generateInsertData ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -168,7 +170,7 @@ describe('Insert data Api', () => {
       fields_data: dataset,
     };
 
-    const res = await milvusClient.dataManager.insert(params);
+    const res = await milvusClient.insert(params);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -188,13 +190,13 @@ describe('Insert data Api', () => {
       fields_data: dataset,
     };
 
-    const res = await milvusClient.dataManager.insert(params);
+    const res = await milvusClient.insert(params);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Should throw INSERT_CHECK_WRONG_DATA_TYPE `, async () => {
     const fakeClient = new MilvusClient(IP);
-    fakeClient.collectionManager.describeCollection = () => {
+    fakeClient.describeCollection = () => {
       return new Promise(res => {
         res({
           status: {
@@ -236,7 +238,7 @@ describe('Insert data Api', () => {
         fields_data: dataset,
       };
 
-      await fakeClient.dataManager.insert(params);
+      await fakeClient.insert(params);
       expect('a').toEqual('b');
     } catch (error) {
       // console.log('---error----', error);
@@ -247,7 +249,7 @@ describe('Insert data Api', () => {
   });
 
   it(`Delete Data on float `, async () => {
-    const res = await milvusClient.dataManager.deleteEntities({
+    const res = await milvusClient.deleteEntities({
       collection_name: COLLECTION_NAME,
       expr: 'age in [1,2]',
     });
@@ -257,7 +259,7 @@ describe('Insert data Api', () => {
 
   it(`Delete Data should throw error `, async () => {
     try {
-      await milvusClient.dataManager.deleteEntities({
+      await milvusClient.deleteEntities({
         collection_name: COLLECTION_NAME,
       } as any);
       expect('a').toEqual('b');
@@ -286,8 +288,8 @@ describe('Insert data Api', () => {
       fields_data: vectorsData,
     };
 
-    const res = await milvusClient.dataManager.insert(params);
-    await milvusClient.collectionManager.loadCollectionSync({
+    const res = await milvusClient.insert(params);
+    await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
 
@@ -315,7 +317,7 @@ describe('Insert data Api', () => {
     };
 
     try {
-      await milvusClient.dataManager.insert(params);
+      await milvusClient.insert(params);
     } catch (error) {
       expect(error.message).toContain('Insert fail');
     }
@@ -342,7 +344,7 @@ describe('Insert data Api', () => {
     };
 
     try {
-      await milvusClient.dataManager.insert(params);
+      await milvusClient.insert(params);
     } catch (error) {
       expect(error.message).toContain('Insert fail');
     }
@@ -369,7 +371,7 @@ describe('Insert data Api', () => {
     };
 
     try {
-      await milvusClient.dataManager.insert(params);
+      await milvusClient.insert(params);
     } catch (error) {
       // console.log(error);
       expect(error.message).toContain('Insert fail');
@@ -379,7 +381,7 @@ describe('Insert data Api', () => {
   it(`Insert should throw describeCollection error`, async () => {
     const fakeClient = new MilvusClient(IP);
 
-    fakeClient.collectionManager.describeCollection = () => {
+    fakeClient.describeCollection = () => {
       return new Promise(res => {
         res({
           status: {
@@ -390,7 +392,7 @@ describe('Insert data Api', () => {
       });
     };
     try {
-      await fakeClient.dataManager.insert({
+      await fakeClient.insert({
         collection_name: COLLECTION_NAME,
         fields_data: [{ a: 1 }],
       });
@@ -403,7 +405,7 @@ describe('Insert data Api', () => {
     }
   });
 
-  it('Insert into binary field should throw error', async () => {
+  it(`Insert into binary field should throw error`, async () => {
     const fields = [
       {
         isVector: true,
@@ -417,7 +419,7 @@ describe('Insert data Api', () => {
       fields_data: vectorsData,
     };
     try {
-      await milvusClient.dataManager.insert(params);
+      await milvusClient.insert(params);
       // If not throw error, test fail
       expect('a').toEqual('b');
     } catch (error) {

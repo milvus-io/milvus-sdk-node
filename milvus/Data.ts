@@ -1,18 +1,17 @@
-import protobuf, { Root } from 'protobufjs';
-import path from 'path';
-import { promisify } from '../utils';
-import { Client } from './Client';
-import { Collection } from './Collection';
-import { ERROR_REASONS } from './const/ErrorReason';
-import { findKeyValue, sleep } from './utils/index';
 import {
+  promisify,
+  findKeyValue,
+  sleep,
+  formatNumberPrecision,
+  parseToKeyValue,
+  checkCollectionName,
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
-} from './utils/Blob';
-import { checkCollectionName } from './utils/Validate';
-import { formatNumberPrecision, parseToKeyValue } from './utils/Format';
-import { DataType, DataTypeMap } from './const/Milvus';
+} from '../utils';
 import {
+  DataType,
+  DataTypeMap,
+  ERROR_REASONS,
   DslType,
   DeleteEntitiesReq,
   FlushReq,
@@ -38,24 +37,11 @@ import {
   QueryRes,
   SearchReq,
   SearchRes,
-} from './types';
+} from '.';
+import { Collection } from './Collection';
 
-const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
-
-export class Data extends Client {
-  vectorTypes: number[];
-  collectionManager: Collection;
-
-  private readonly _protoRoot: Root;
-
-  constructor(client: any, collectionManager: Collection) {
-    super(client);
-    this.vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
-    this.collectionManager = collectionManager;
-
-    this._protoRoot = protobuf.loadSync(protoPath);
-  }
-
+export class Data extends Collection {
+  vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
   /**
    * Insert data into Milvus.
    *
@@ -81,7 +67,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).dataManager.insert({
+   *  new milvusClient(MILUVS_ADDRESS).insert({
    *    collection_name: COLLECTION_NAME,
    *    fields_data: [{
    *      vector_field: [1,2,2,4],
@@ -100,7 +86,7 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.INSERT_CHECK_FILEDS_DATA_IS_REQUIRED);
     }
     const { collection_name } = data;
-    const collectionInfo = await this.collectionManager.describeCollection({
+    const collectionInfo = await this.describeCollection({
       collection_name,
     });
 
@@ -128,7 +114,7 @@ export class Data extends Client {
       const fieldNames = Object.keys(v);
 
       fieldNames.forEach(name => {
-        const target = fieldsData.find(item => item.name === name);
+        const target = fieldsData.find((item: any) => item.name === name);
         if (!target) {
           throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
         }
@@ -217,7 +203,7 @@ export class Data extends Client {
     });
 
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'Insert',
       params,
       data.timeout
@@ -248,7 +234,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).dataManager.deleteEntities({
+   *  new milvusClient(MILUVS_ADDRESS).deleteEntities({
    *    collection_name: COLLECTION_NAME,
    *    expr: 'id in [1,2,3,4]'
    *  });
@@ -258,7 +244,12 @@ export class Data extends Client {
     if (!data || !data.collection_name || !data.expr) {
       throw new Error(ERROR_REASONS.DELETE_PARAMS_CHECK);
     }
-    const promise = await promisify(this.client, 'Delete', data, data.timeout);
+    const promise = await promisify(
+      this.grpcClient,
+      'Delete',
+      data,
+      data.timeout
+    );
     return promise;
   }
 
@@ -290,7 +281,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).dataManager.search({
+   *  new milvusClient(MILUVS_ADDRESS).search({
    *   collection_name: COLLECTION_NAME,
    *   expr: "",
    *   vectors: [[1, 2, 3, 4]],
@@ -319,7 +310,7 @@ export class Data extends Client {
     if (!this.vectorTypes.includes(data.vector_type))
       throw new Error(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
 
-    const collectionInfo = await this.collectionManager.describeCollection({
+    const collectionInfo = await this.describeCollection({
       collection_name: data.collection_name,
     });
 
@@ -351,7 +342,7 @@ export class Data extends Client {
     }
 
     // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
-    const PlaceholderGroup = this._protoRoot.lookupType(
+    const PlaceholderGroup = this.milvusProto.lookupType(
       'milvus.proto.common.PlaceholderGroup'
     );
     // tag $0 is hard code in milvus, when dsltype is expr
@@ -374,7 +365,7 @@ export class Data extends Client {
     ).finish();
 
     const promise: SearchRes = await promisify(
-      this.client,
+      this.grpcClient,
       'Search',
       {
         ...data,
@@ -465,7 +456,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).dataManager.flush({
+   *  new milvusClient(MILUVS_ADDRESS).flush({
    *     collection_names: ['my_collection'],
    *  });
    * ```
@@ -478,7 +469,7 @@ export class Data extends Client {
     ) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
-    const res = await promisify(this.client, 'Flush', data, data.timeout);
+    const res = await promisify(this.grpcClient, 'Flush', data, data.timeout);
     return res;
   }
 
@@ -501,7 +492,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).dataManager.flushSync({
+   *  new milvusClient(MILUVS_ADDRESS).flushSync({
    *     collection_names: ['my_collection'],
    *  });
    * ```
@@ -515,7 +506,7 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     // copy flushed collection names
-    const res = await promisify(this.client, 'Flush', data, data.timeout);
+    const res = await promisify(this.grpcClient, 'Flush', data, data.timeout);
     // After flush will return collection segment ids, need use GetPersistentSegmentInfo to check segment flush status.
     const segIDs = Object.keys(res.coll_segIDs)
       .map(v => res.coll_segIDs[v].data)
@@ -556,7 +547,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).dataManager.query({
+   *  new milvusClient(MILUVS_ADDRESS).query({
    *    collection_name: 'my_collection',
    *    expr: "age in [1,2,3,4,5,6,7,8]",
    *    output_fields: ["age"],
@@ -577,7 +568,7 @@ export class Data extends Client {
     }
 
     const promise: QueryRes = await promisify(
-      this.client,
+      this.grpcClient,
       'Query',
       {
         ...data,
@@ -667,7 +658,7 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.GET_METRIC_CHECK_PARAMS);
     }
     const res: GetMetricsResponse = await promisify(
-      this.client,
+      this.grpcClient,
       'GetMetrics',
       {
         request: JSON.stringify(data.request),
@@ -702,7 +693,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *   const res = await milvusClient.dataManager.getFlushState({
+   *   const res = await milvusClient.getFlushState({
    *    segmentIDs: segIds,
    *   });
    * ```
@@ -712,7 +703,7 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
     }
     const res = await promisify(
-      this.client,
+      this.grpcClient,
       'GetFlushState',
       data,
       data.timeout
@@ -742,7 +733,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *   const res = await dataManager.loadBalance({
+   *   const res = await loadBalance({
    *      src_nodeID: 31,
    *   });
    * ```
@@ -751,7 +742,12 @@ export class Data extends Client {
     if (!data || !data.src_nodeID) {
       throw new Error(ERROR_REASONS.LOAD_BALANCE_CHECK_PARAMS);
     }
-    const res = await promisify(this.client, 'LoadBalance', data, data.timeout);
+    const res = await promisify(
+      this.grpcClient,
+      'LoadBalance',
+      data,
+      data.timeout
+    );
     return res;
   }
 
@@ -775,7 +771,7 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *   const res = await dataManager.getQuerySegmentInfo({
+   *   const res = await getQuerySegmentInfo({
    *      collectionName: COLLECTION,
    *    });
    * ```
@@ -787,7 +783,7 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.grpcClient,
       'GetQuerySegmentInfo',
       data,
       data.timeout
@@ -815,12 +811,13 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *   const res = await dataManager.bulkInsert({
+   *   const res = await bulkInsert({
    *      collection_name: COLLECTION,
    *      files: [`path-to-data-file.json`]
    *    });
    * ```
    */
+  /* istanbul ignore next */
   async bulkInsert(data: ImportReq): Promise<ImportResponse> {
     if (!data || !data.collection_name) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
@@ -830,7 +827,7 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.IMPORT_FILE_CHECK);
     }
     const res = await promisify(
-      this.client,
+      this.grpcClient,
       'Import',
       {
         ...data,
@@ -865,11 +862,12 @@ export class Data extends Client {
    * #### Example
    *
    * ```
-   *   const res = await dataManager.listImportTasks({
+   *   const res = await listImportTasks({
    *      collection_name: COLLECTION
    *    });
    * ```
    */
+  /* istanbul ignore next */
   async listImportTasks(
     data: ListImportTasksReq
   ): Promise<ListImportTasksResponse> {
@@ -877,7 +875,7 @@ export class Data extends Client {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.grpcClient,
       'ListImportTasks',
       {
         ...data,

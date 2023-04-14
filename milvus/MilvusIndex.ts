@@ -1,7 +1,6 @@
 import { promisify } from '../utils';
-import { Client } from './Client';
-import { checkCollectionName } from './utils/Validate';
-import { parseToKeyValue } from './utils/Format';
+import { Data } from './Data';
+import { checkCollectionName, parseToKeyValue } from '../utils';
 import {
   CreateIndexReq,
   DescribeIndexReq,
@@ -12,9 +11,9 @@ import {
   DescribeIndexResponse,
   GetIndexStateResponse,
   GetIndexBuildProgressResponse,
-} from './types';
+} from '.';
 
-export class Index extends Client {
+export class Index extends Data {
   /**
    * Create an index on a vector field. Note that index building is an async progress.
    *
@@ -38,7 +37,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).collectionManager.createIndex({
+   *  new milvusClient(MILUVS_ADDRESS).createIndex({
    *     collection_name: 'my_collection',
    *     field_name: "vector_01",
    *     extra_params: {
@@ -57,7 +56,7 @@ export class Index extends Client {
       extra_params: parseToKeyValue(data.extra_params),
     };
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'CreateIndex',
       params,
       data.timeout
@@ -85,7 +84,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).indexManager.describeIndex({
+   *  new milvusClient(MILUVS_ADDRESS).describeIndex({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -93,7 +92,7 @@ export class Index extends Client {
   async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DescribeIndex',
       data,
       data.timeout
@@ -122,7 +121,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).indexManager.getIndexState({
+   *  new milvusClient(MILUVS_ADDRESS).getIndexState({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -130,7 +129,7 @@ export class Index extends Client {
   async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'GetIndexState',
       data,
       data.timeout
@@ -161,7 +160,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).indexManager.getIndexBuildProgress({
+   *  new milvusClient(MILUVS_ADDRESS).getIndexBuildProgress({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -171,7 +170,7 @@ export class Index extends Client {
   ): Promise<GetIndexBuildProgressResponse> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'GetIndexBuildProgress',
       data,
       data.timeout
@@ -199,7 +198,7 @@ export class Index extends Client {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).indexManager.dropIndex({
+   *  new milvusClient(MILUVS_ADDRESS).dropIndex({
    *     collection_name: 'my_collection',
    *  });
    * ```
@@ -207,7 +206,7 @@ export class Index extends Client {
   async dropIndex(data: DropIndexReq): Promise<ResStatus> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DropIndex',
       data,
       data.timeout

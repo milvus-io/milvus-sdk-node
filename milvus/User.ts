@@ -1,9 +1,9 @@
-import { promisify } from '../utils';
-import { Client } from './Client';
-import { ERROR_REASONS } from './const/ErrorReason';
-import { stringToBase64 } from './utils/Format';
-import { OperateUserRoleType, OperatePrivilegeType } from './const/Milvus';
+import { promisify, stringToBase64 } from '../utils';
+import { Resource } from './Resource';
 import {
+  ERROR_REASONS,
+  OperateUserRoleType,
+  OperatePrivilegeType,
   CreateUserReq,
   DeleteUserReq,
   ListUsersReq,
@@ -25,9 +25,9 @@ import {
   SelectUserResponse,
   SelectGrantResponse,
   HasRoleResponse,
-} from './types';
+} from '.';
 
-export class User extends Client {
+export class User extends Resource {
   /**
    * Create user in milvus
    *
@@ -47,7 +47,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.createUser({
+   *  milvusClient.createUser({
    *    username: NAME,
    *    password: PASSWORD,
    *  });
@@ -59,7 +59,7 @@ export class User extends Client {
     }
     const encryptedPassword = stringToBase64(data.password);
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'CreateCredential',
       {
         username: data.username,
@@ -89,7 +89,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.updateUser({
+   *  milvusClient.updateUser({
    *    username: NAME,
    *    newPassword: PASSWORD,
    *    oldPassword: PASSWORD,
@@ -108,7 +108,7 @@ export class User extends Client {
     const encryptedNewPwd = stringToBase64(data.newPassword);
 
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'UpdateCredential',
       {
         username: data.username,
@@ -138,7 +138,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.deleteUser({
+   *  milvusClient.deleteUser({
    *    username: NAME,
    *  });
    * ```
@@ -148,7 +148,7 @@ export class User extends Client {
       throw new Error(ERROR_REASONS.USERNAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DeleteCredential',
       {
         username: data.username,
@@ -175,12 +175,12 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.listUsers();
+   *  milvusClient.listUsers();
    * ```
    */
   async listUsers(data?: ListUsersReq): Promise<ListCredUsersResponse> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'ListCredUsers',
       {},
       data?.timeout
@@ -206,12 +206,12 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.createRole({roleName: 'myrole'});
+   *  milvusClient.createRole({roleName: 'myrole'});
    * ```
    */
   async createRole(data: CreateRoleReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'CreateRole',
       {
         entity: { name: data.roleName },
@@ -239,12 +239,12 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.dropRole({roleName: 'myrole'});
+   *  milvusClient.dropRole({roleName: 'myrole'});
    * ```
    */
   async dropRole(data: DropRoleReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'DropRole',
       {
         role_name: data.roleName,
@@ -273,12 +273,12 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.addUserToRole({username: 'my', roleName: 'myrole'});
+   *  milvusClient.addUserToRole({username: 'my', roleName: 'myrole'});
    * ```
    */
   async addUserToRole(data: AddUserToRoleReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'OperateUserRole',
       {
         username: data.username,
@@ -309,12 +309,12 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.removeUserFromRole({username: 'my', roleName: 'myrole'});
+   *  milvusClient.removeUserFromRole({username: 'my', roleName: 'myrole'});
    * ```
    */
   async removeUserFromRole(data: RemoveUserFromRoleReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'OperateUserRole',
       {
         username: data.username,
@@ -345,12 +345,12 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.selectRole({roleName: 'myrole'});
+   *  milvusClient.selectRole({roleName: 'myrole'});
    * ```
    */
   async selectRole(data: SelectRoleReq): Promise<SelectRoleResponse> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'SelectRole',
       {
         role: { name: data.roleName },
@@ -379,12 +379,12 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.listRoles();
+   *  milvusClient.listRoles();
    * ```
    */
   async listRoles(data?: GrpcTimeOut): Promise<SelectRoleResponse> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'SelectRole',
       {},
       data?.timeout
@@ -411,12 +411,12 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.selectUser({username: 'name'});
+   *  milvusClient.selectUser({username: 'name'});
    * ```
    */
   async selectUser(data: SelectUserReq): Promise<SelectUserResponse> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'SelectUser',
       {
         user: { name: data.username },
@@ -449,7 +449,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.grantRolePrivilege({
+   *  milvusClient.grantRolePrivilege({
    *    roleName: 'roleName',
    *    object: '*',
    *    objectName: 'Collection',
@@ -459,7 +459,7 @@ export class User extends Client {
    */
   async grantRolePrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'OperatePrivilege',
       {
         entity: {
@@ -499,7 +499,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.grantRolePrivilege({
+   *  milvusClient.grantRolePrivilege({
    *    roleName: 'roleName',
    *    object: '*',
    *    objectName: 'Collection',
@@ -509,7 +509,7 @@ export class User extends Client {
    */
   async revokeRolePrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'OperatePrivilege',
       {
         entity: {
@@ -544,7 +544,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.revokeAllRolesPrivileges();
+   *  milvusClient.revokeAllRolesPrivileges();
    * ```
    */
   async dropAllRoles(data?: GrpcTimeOut): Promise<ResStatus[]> {
@@ -606,7 +606,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.selectGrant({
+   *  milvusClient.selectGrant({
    *    roleName: 'roleName',
    *    object: '*',
    *    objectName: 'Collection',
@@ -616,7 +616,7 @@ export class User extends Client {
    */
   async selectGrant(data: SelectGrantReq): Promise<SelectGrantResponse> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'SelectGrant',
       {
         entity: {
@@ -651,14 +651,14 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.listGrants({
+   *  milvusClient.listGrants({
    *    roleName: 'roleName',
    * });
    * ```
    */
   async listGrants(data: ListGrantsReq): Promise<SelectGrantResponse> {
     const promise = await promisify(
-      this.client,
+      this.grpcClient,
       'SelectGrant',
       {
         entity: {
@@ -688,7 +688,7 @@ export class User extends Client {
    * #### Example
    *
    * ```
-   *  milvusClient.userManager.hasRole({
+   *  milvusClient.hasRole({
    *    roleName: 'roleName',
    * });
    * ```

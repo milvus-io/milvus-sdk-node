@@ -1,6 +1,6 @@
-import { ERROR_REASONS } from '../const/ErrorReason';
-import { FieldType } from '../types/Collection';
-import { DataType } from '../const/Milvus';
+import { ERROR_REASONS } from '../milvus/const/ErrorReason';
+import { FieldType } from '../milvus/types/Collection';
+import { DataType } from '../milvus/const/Milvus';
 
 /**
  * when create collection, field must contain 2 Fields.

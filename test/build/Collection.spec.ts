@@ -1,10 +1,12 @@
 /** This file only test build files. */
-import { MilvusClient } from '../../dist/milvus';
+import {
+  MilvusClient,
+  DataType,
+  ErrorCode,
+  ShowCollectionsType,
+  ERROR_REASONS,
+} from '../../dist/milvus';
 import { IP } from '../../const';
-import { DataType } from '../../milvus/const/Milvus';
-import { ErrorCode } from '../../milvus/types/Response';
-import { ShowCollectionsType } from '../../milvus/types/Collection';
-import { ERROR_REASONS } from '../../milvus/const/ErrorReason';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
@@ -12,13 +14,12 @@ import {
 } from '../../utils/test';
 
 const milvusClient = new MilvusClient(IP);
-const collectionManager = milvusClient.collectionManager;
 const COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 
 describe('Collection Api', () => {
   it(`Create Collection Successful`, async () => {
-    const res = await collectionManager.createCollection(
+    const res = await milvusClient.createCollection(
       genCollectionParams(COLLECTION_NAME, '128')
     );
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -26,7 +27,7 @@ describe('Collection Api', () => {
 
   it(`Create Collection validate fields`, async () => {
     try {
-      await collectionManager.createCollection({
+      await milvusClient.createCollection({
         collection_name: 'zxc',
         fields: [
           {
@@ -43,7 +44,7 @@ describe('Collection Api', () => {
     }
 
     try {
-      await collectionManager.createCollection({
+      await milvusClient.createCollection({
         collection_name: 'zxc',
         fields: [
           {
@@ -63,7 +64,7 @@ describe('Collection Api', () => {
 
   it(`Create Collection expect dim error`, async () => {
     try {
-      await collectionManager.createCollection({
+      await milvusClient.createCollection({
         collection_name: 'zxc',
         fields: [
           {
@@ -86,9 +87,7 @@ describe('Collection Api', () => {
     }
 
     try {
-      await collectionManager.createCollection(
-        genCollectionParams('any', '10')
-      );
+      await milvusClient.createCollection(genCollectionParams('any', '10'));
     } catch (error) {
       expect(error.message).toEqual(
         ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM
@@ -97,7 +96,7 @@ describe('Collection Api', () => {
   });
 
   it(`Create load Collection Successful`, async () => {
-    const res = await collectionManager.createCollection(
+    const res = await milvusClient.createCollection(
       genCollectionParams(LOAD_COLLECTION_NAME, '128')
     );
     // console.log(res);
@@ -105,7 +104,7 @@ describe('Collection Api', () => {
   });
 
   it(`Has collection `, async () => {
-    const res = await collectionManager.hasCollection({
+    const res = await milvusClient.hasCollection({
       collection_name: COLLECTION_NAME,
     });
     // console.log('----has collection', res);
@@ -114,21 +113,21 @@ describe('Collection Api', () => {
   });
 
   it(`Has collection not exist`, async () => {
-    const res = await collectionManager.hasCollection({
+    const res = await milvusClient.hasCollection({
       collection_name: 'collection_not_exist',
     });
     expect(res.value).toEqual(false);
   });
 
   it(`Show all collections`, async () => {
-    const res = await collectionManager.showCollections();
+    const res = await milvusClient.showCollections();
     // console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
   });
 
   it(`Get Collection Statistics`, async () => {
-    const res = await collectionManager.getCollectionStatistics({
+    const res = await milvusClient.getCollectionStatistics({
       collection_name: COLLECTION_NAME,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -137,7 +136,7 @@ describe('Collection Api', () => {
   });
 
   it('Describe Collection info', async () => {
-    const res = await collectionManager.describeCollection({
+    const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
     // console.log(res);
@@ -149,7 +148,7 @@ describe('Collection Api', () => {
   });
 
   it(`Load Collection`, async () => {
-    await milvusClient.indexManager.createIndex({
+    await milvusClient.createIndex({
       collection_name: LOAD_COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
@@ -158,14 +157,14 @@ describe('Collection Api', () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    const res = await collectionManager.loadCollectionSync({
+    const res = await milvusClient.loadCollectionSync({
       collection_name: LOAD_COLLECTION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Show loaded collections expect contain one`, async () => {
-    const res = await collectionManager.showCollections({
+    const res = await milvusClient.showCollections({
       type: ShowCollectionsType.Loaded,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -176,17 +175,17 @@ describe('Collection Api', () => {
   });
 
   it(`Release Collection`, async () => {
-    const res = await collectionManager.releaseCollection({
+    const res = await milvusClient.releaseCollection({
       collection_name: COLLECTION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Drop Collection`, async () => {
-    const res = await collectionManager.dropCollection({
+    const res = await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
-    await collectionManager.dropCollection({
+    await milvusClient.dropCollection({
       collection_name: LOAD_COLLECTION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
