@@ -29,32 +29,15 @@ The following collection shows Milvus versions and recommended @zilliz/milvus2-s
 npm install @zilliz/milvus2-sdk-node
 ```
 
-## SDK
-
-- [Client](./milvus/Index.ts)
-- [Collection](./milvus/Collection.ts)
-- [Index](./milvus/MilvusIndex.ts)
-  - [FLAT](https://github.com/milvus-io/milvus-sdk-node/blob/main/test/Index.spec.ts#L63)
-  - [IVF_FLAT](https://github.com/milvus-io/milvus-sdk-node/blob/main/test/Index.spec.ts#L76)
-  - [IVF_SQ8](https://github.com/milvus-io/milvus-sdk-node/blob/main/test/Index.spec.ts#L91)
-  - [IVF_PQ](https://github.com/milvus-io/milvus-sdk-node/blob/main/test/Index.spec.ts#L106)
-  - [HNSW](https://github.com/milvus-io/milvus-sdk-node/blob/main/test/Index.spec.ts#L121)
-  - [ANNOY](https://github.com/milvus-io/milvus-sdk-node/blob/main/test/Index.spec.ts#L136)
-  - DISKANN (not supported yet)
-- [Partition](./milvus/Partition.ts)
-- [User](./milvus/User.ts)
-- [Utils](./milvus/Utils.ts)
-- [Data](./milvus/Data.ts)
-
 More documentation, you can refer [Milvus offical website](https://milvus.io/).
 
 ## Example
 
 1. [Hello World](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/HelloMilvus.ts)
-2. [How to operate collection](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
-3. [How to insert data](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Insert.ts)
-4. [Vector similarity search on float field](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Search.ts)
-5. [Vector similarity search on binary field](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/BinarySearch.ts)
+2. [Create a collection](https://milvus.io/docs/create_collection.md)
+3. [Insert data](https://milvus.io/docs/insert_data.md)
+4. [Build index](https://milvus.io/docs/build_index.md)
+5. [Do vector search](https://milvus.io/docs/search.md)
 
 ## How to contribute
 

@@ -1,15 +1,13 @@
-import { MilvusClient } from '../milvus/index';
+import { MilvusClient, DataType, InsertReq } from '@zilliz/milvus2-sdk-node';
 import { IP } from '../const';
-import { DataType } from '../milvus/const/Milvus';
-import { generateInsertData, GENERATE_NAME } from '../utils/test';
-import { InsertReq } from '../milvus/types/Data';
-import { genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
+import { generateInsertData, GENERATE_NAME, genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 const ALIAS_NAME = GENERATE_NAME();
 
 const Search = async () => {
-  let res: any = await milvusClient.collectionManager.createCollection(
+  // create collection
+  let res: any = await milvusClient.createCollection(
     genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
   );
 
@@ -24,23 +22,22 @@ const Search = async () => {
       name: 'age',
     },
   ];
+  // build example data
   const vectorsData = generateInsertData(fields, 100);
   const params: InsertReq = {
     collection_name: COLLECTION_NAME,
     fields_data: vectorsData,
   };
-  await milvusClient.dataManager.insert(params);
+  // insert data into collection
+  await milvusClient.insert(params);
 
-  // await milvusClient.dataManager.deleteEntities({
+  // await milvusClient.deleteEntities({
   //   collection_name: COLLECTION_NAME,
   //   expr: `age in [${vectorsData[0].age}]`,
   // });
 
-  res = await milvusClient.dataManager.flushSync({
-    collection_names: [COLLECTION_NAME],
-  });
-
-  await milvusClient.indexManager.createIndex({
+  // create index
+  await milvusClient.createIndex({
     collection_name: COLLECTION_NAME,
     field_name: VECTOR_FIELD_NAME,
     extra_params: {
@@ -49,12 +46,15 @@ const Search = async () => {
       params: JSON.stringify({ nlist: 10 }),
     },
   });
+
   // need load collection before search
-  res = await milvusClient.collectionManager.loadCollectionSync({
+  res = await milvusClient.loadCollectionSync({
     collection_name: COLLECTION_NAME,
   });
   console.log('--- load done ----', res);
-  const result = await milvusClient.dataManager.search({
+
+  // do the search
+  const result = await milvusClient.search({
     collection_name: COLLECTION_NAME,
     // partition_names: [],
     // expr: "rich == true",
@@ -71,12 +71,14 @@ const Search = async () => {
   });
   console.log('----search result----', result);
 
-  await milvusClient.collectionManager.createAlias({
+  // create collection alias
+  await milvusClient.createAlias({
     collection_name: COLLECTION_NAME,
     alias: ALIAS_NAME,
   });
 
-  const aliasResult = await milvusClient.dataManager.search({
+  // search with alias
+  const aliasResult = await milvusClient.search({
     collection_name: COLLECTION_NAME,
     // partition_names: [],
     // expr: "rich == true",
@@ -93,7 +95,8 @@ const Search = async () => {
   });
   console.log('---- alias search result----', aliasResult);
 
-  await milvusClient.collectionManager.dropCollection({
+  // delete collection
+  await milvusClient.dropCollection({
     collection_name: COLLECTION_NAME,
   });
 };
@@ -103,7 +106,7 @@ Search();
 // When created collection, all bool value will store as false.
 // After Milvus has more test about bool,we can test this.
 // const BoolExprSearch = async () => {
-//   let res: any = await milvusClient.collectionManager.createCollection({
+//   let res: any = await milvusClient.createCollection({
 //     collection_name: COLLECTION_NAME,
 //     fields: [
 //       {
@@ -150,26 +153,26 @@ Search();
 //     collection_name: COLLECTION_NAME,
 //     fields_data: vectorsData,
 //   };
-//   res = await milvusClient.dataManager.insert(params);
+//   res = await milvusClient.insert(params);
 //   console.log("--- insert ---", res);
 
-//   res = await milvusClient.dataManager.flushSync({
+//   res = await milvusClient.flushSync({
 //     collection_names: [COLLECTION_NAME],
 //   });
 
 //   console.log("--- flush ---", res);
 
 //   // need load collection before search
-//   res = await milvusClient.collectionManager.loadCollectionSync({
+//   res = await milvusClient.loadCollectionSync({
 //     collection_name: COLLECTION_NAME,
 //   });
 //   console.log("--- load ---", res);
-//   res = await milvusClient.dataManager.flushSync({
+//   res = await milvusClient.flushSync({
 //     collection_names: [COLLECTION_NAME],
 //   });
 //   console.log("--- flush ---", res);
 
-//   res = await milvusClient.dataManager.search({
+//   res = await milvusClient.search({
 //     collection_name: COLLECTION_NAME,
 //     // partition_names: [],
 //     // expr: "rich == true",
@@ -185,7 +188,7 @@ Search();
 //     vector_type: DataType.FloatVector,
 //   });
 //   console.log("---- search result ----", res);
-//   await milvusClient.collectionManager.dropCollection({
+//   await milvusClient.dropCollection({
 //     collection_name: COLLECTION_NAME,
 //   });
 // };

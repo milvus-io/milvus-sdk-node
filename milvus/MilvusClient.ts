@@ -1,4 +1,4 @@
-import { ErrorCode, GetVersionResponse, CheckHealthResponse } from '.';
+import { GetVersionResponse, CheckHealthResponse } from '.';
 import sdkInfo from '../sdk.json';
 import { User } from './User';
 import { promisify } from '../utils';

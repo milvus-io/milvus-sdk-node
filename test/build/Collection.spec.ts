@@ -1,10 +1,12 @@
 /** This file only test build files. */
-import { MilvusClient } from '../../dist/milvus';
+import {
+  MilvusClient,
+  DataType,
+  ErrorCode,
+  ShowCollectionsType,
+  ERROR_REASONS,
+} from '../../dist/milvus';
 import { IP } from '../../const';
-import { DataType } from '../../milvus/const/Milvus';
-import { ErrorCode } from '../../milvus/types/Response';
-import { ShowCollectionsType } from '../../milvus/types/Collection';
-import { ERROR_REASONS } from '../../milvus/const/ErrorReason';
 import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
@@ -85,9 +87,7 @@ describe('Collection Api', () => {
     }
 
     try {
-      await milvusClient.createCollection(
-        genCollectionParams('any', '10')
-      );
+      await milvusClient.createCollection(genCollectionParams('any', '10'));
     } catch (error) {
       expect(error.message).toEqual(
         ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM
