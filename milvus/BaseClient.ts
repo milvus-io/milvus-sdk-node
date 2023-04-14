@@ -19,11 +19,6 @@ export class BaseClient {
 
   /**
    * Connect to milvus grpc client.
-   * CollectionManager: control collection crud api
-   * PartitionManager: control partition crud api
-   * IndexManager: control index crud api
-   * DataManager: Search | Query | Insert | Flush
-   * UserManager: control user crud api
    *
    * @param address milvus address like: 127.0.0.1:19530
    * @param ssl ssl connect or not, default is false
