@@ -1,10 +1,10 @@
 export enum ERROR_REASONS {
   MILVUS_ADDRESS_IS_REQUIRED = 'Milvus addres is required.',
 
-  CREATE_COLLECTION_CHECK_PARAMS = 'fields and collection_name is needed',
+  CREATE_COLLECTION_CHECK_PARAMS = 'fields and collection_name are needed',
   CREATE_COLLECTION_CHECK_PRIMARY_KEY = 'Fields must contain one data_type = int64 and is_primary_key = true',
   CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST = 'Fields must contain one vector field column',
-  CREATE_COLLECTION_CHECK_MISS_DIM = 'Vector field need dim in type params',
+  CREATE_COLLECTION_CHECK_MISS_DIM = 'Vector field needs dim in type params',
   CREATE_COLLECTION_CHECK_BINARY_DIM = 'Binary vector field dim need mutiples of 8',
 
   COLLECTION_NAME_IS_REQUIRED = 'Collection name is required',
@@ -13,17 +13,17 @@ export enum ERROR_REASONS {
 
   INSERT_CHECK_MISS_FIELD = 'Insert fail: missing some field for this collection in line ',
   INSERT_CHECK_FILEDS_DATA_IS_REQUIRED = 'fields_data is required as array.',
-  INSERT_CHECK_WRONG_FIELD = 'Insert fail: some field is not exist for this collection in line',
-  INSERT_CHECK_WRONG_DIM = 'Insert fail: Binary vector data length need to equal (dimension / 8) ',
-  INSERT_CHECK_WRONG_DATA_TYPE = 'Some field type in collection schema is not belong to DataType.  ',
+  INSERT_CHECK_WRONG_FIELD = 'Insert fail: some field does not exist for this collection in line',
+  INSERT_CHECK_WRONG_DIM = 'Insert fail: Binary vector data length needs to be (dimension / 8) ',
+  INSERT_CHECK_WRONG_DATA_TYPE = 'Some field type in collection schema is not belong to DataType. ',
 
   SEARCH_MISS_VECTOR_TYPE = 'Miss vector_type, need to be binary or float vector field type.',
-  SEARCH_NOT_FIND_VECTOR_FIELD = 'Your anns_field cannot find in this collection.',
-  SEARCH_DIM_NOT_MATCH = 'Your vector dimension is not match your anns_field dimension',
-  SEARCH_PARAMS_IS_REQUIRED = 'search_params must contains anns_field, metric_type, topk and params.',
+  SEARCH_NOT_FIND_VECTOR_FIELD = 'Your anns_field was not found in this collection.',
+  SEARCH_DIM_NOT_MATCH = 'Your vector dimension does not match your anns_field dimension',
+  SEARCH_PARAMS_IS_REQUIRED = 'search_params must contain anns_field, metric_type, topk and params.',
   SEARCH_ROUND_DECIMAL_NOT_VALID = 'round_decimal should be an integer greater than -2 and less than 7',
 
-  DELETE_PARAMS_CHECK = 'Collection name and expr is required.',
+  DELETE_PARAMS_CHECK = 'Collection name and expr are required.',
 
   GET_METRIC_CHECK_PARAMS = 'request.metric_type is required.',
 
