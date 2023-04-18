@@ -135,46 +135,33 @@ export enum StateCode {
 }
 
 export enum MetricType {
-  GHOST = 0,
   // L2 euclidean distance
-  L2 = 1,
+  L2 = 'L2',
   // IP inner product
-  IP = 2,
+  IP = 'IP',
   // HAMMING hamming distance
-  HAMMING = 3,
+  HAMMING = 'HAMMING',
   // JACCARD jaccard distance
-  JACCARD = 4,
+  JACCARD = 'JACCARD',
   // TANIMOTO tanimoto distance
-  TANIMOTO = 5,
+  TANIMOTO = 'TANIMOTO',
   // SUBSTRUCTURE substructure distance
-  SUBSTRUCTURE = 6,
+  SUBSTRUCTURE = 'SUBSTRUCTURE',
   // SUPERSTRUCTURE superstructure
-  SUPERSTRUCTURE = 7,
+  SUPERSTRUCTURE = 'SUPERSTRUCTURE',
 }
 
 export enum IndexType {
-  // INVALID invald index type
-  INVALID = 0,
-  // FLAT flat
-  FLAT = 1,
-  // IVFFLAT ivfflat
-  IVFFLAT = 2,
-  // IVFSQ8 ivfsq8
-  IVFSQ8 = 3,
-  //RNSG rnsg
-  RNSG = 4,
-  // IVFSQ8H ivfsq8h
-  IVFSQ8H = 5,
-  // IVFPQ ivfpq
-  IVFPQ = 6,
-  // SPTAGKDT sptagkdt
-  SPTAGKDT = 7,
-  // SPTAGBKT sptagbkt
-  SPTAGBKT = 8,
-  // HNSW hnsw
-  HNSW = 11,
-  // ANNOY annoy
-  ANNOY = 12,
+  FLAT = 'FLAT',
+  IVF_FLAT = 'IVF_FLAT',
+  IVF_SQ8 = 'IVF_SQ8',
+  IVF_PQ = 'IVF_PQ',
+  HNSW = 'HNSW',
+  ANNOY = 'ANNOY',
+  BIN_FLAT = 'BIN_FLAT',
+  BIN_IVF_FLAT = 'BIN_IVF_FLAT',
+  DISKANN = 'DISKANN',
+  AUTOINDEX = 'AUTOINDEX',
 }
 
 export enum MsgType {
