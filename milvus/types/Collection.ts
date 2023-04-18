@@ -43,15 +43,19 @@ export interface ReplicaInfo {
   node_ids: number[];
 }
 
+export type TypeParam = string | number;
+export type TypeParamKey = 'dim' | 'max_length';
+
 export interface FieldType {
   name: string;
-  description: string;
+  description?: string;
   data_type?: DataType;
   is_primary_key?: boolean;
   type_params?: {
-    dim?: string;
-    max_length?: string;
+    [key in TypeParamKey]?: TypeParam;
   };
+  dim?: TypeParam;
+  max_length?: TypeParam;
   autoID?: boolean;
 }
 
