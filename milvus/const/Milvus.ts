@@ -367,3 +367,10 @@ export const Privileges = {
 };
 
 export const DEFAULT_RESOURCE_GROUP = '__default_resource_group';
+
+export enum LoadState {
+  LoadStateNotExist = 'LoadStateNotExist',
+  LoadStateNotLoad = 'LoadStateNotLoad',
+  LoadStateLoading = 'LoadStateLoading',
+  LoadStateLoaded = 'LoadStateLoaded',
+}
