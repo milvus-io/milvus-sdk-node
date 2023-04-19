@@ -52,11 +52,11 @@ export interface FieldType {
   data_type?: DataType;
   is_primary_key?: boolean;
   type_params?: {
-    [key in TypeParamKey]?: TypeParam;
+    [key: string]: TypeParam;
   };
+  autoID?: boolean;
   dim?: TypeParam;
   max_length?: TypeParam;
-  autoID?: boolean;
 }
 
 export enum ShowCollectionsType {

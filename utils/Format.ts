@@ -195,7 +195,7 @@ export const formatAddress = (address: string) => {
  */
 export const assignTypeParams = (
   field: FieldType,
-  typeParamKeys: TypeParamKey[] = ['dim', 'max_length']
+  typeParamKeys: string[] = ['dim', 'max_length']
 ) => {
   let newField = JSON.parse(JSON.stringify(field));
   typeParamKeys.forEach(key => {
