@@ -33,9 +33,9 @@ export const parseToKeyValue = (data?: {
 }): KeyValuePair[] => {
   return data
     ? Object.keys(data).reduce(
-      (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
-      []
-    )
+        (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
+        []
+      )
     : [];
 };
 
@@ -193,21 +193,24 @@ export const formatAddress = (address: string) => {
  * @param field The `FieldType` object to modify.
  * @returns The modified `FieldType` object.
  */
-export const assignTypeParams = (field: FieldType) => {
-  const typeParamKeys: TypeParamKey[] = ['dim', 'max_length'];
+export const assignTypeParams = (
+  field: FieldType,
+  typeParamKeys: TypeParamKey[]
+) => {
+  let newField = JSON.parse(JSON.stringify(field));
   typeParamKeys.forEach(key => {
-    if (field.hasOwnProperty(key)) {
+    if (newField.hasOwnProperty(key)) {
       // if the property exists in the field object, assign it to the type_params object
-      field.type_params = field.type_params || {};
-      field.type_params[key] = String(field[key]);
+      newField.type_params = newField.type_params || {};
+      newField.type_params[key] = String(newField[key]);
       // delete the property from the field object
-      delete field[key];
+      delete newField[key];
     }
 
-    if (field.type_params && field.type_params[key]) {
+    if (newField.type_params && newField.type_params[key]) {
       // if the property already exists in the type_params object, convert it to a string
-      field.type_params[key] = String(field.type_params[key]);
+      newField.type_params[key] = String(newField.type_params[key]);
     }
   });
-  return field;
+  return newField;
 };
