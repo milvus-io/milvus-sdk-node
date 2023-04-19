@@ -1,7 +1,11 @@
 import { findKeyValue } from './';
-import { DEFAULT_MILVUS_PORT } from '../milvus/const/Milvus';
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
-import { KeyValuePair } from '../milvus/types/Common';
+import {
+  ERROR_REASONS,
+  DEFAULT_MILVUS_PORT,
+  KeyValuePair,
+  TypeParamKey,
+  FieldType,
+} from '../milvus';
 
 /**
  *  parse [{key:"row_count",value:4}] to {row_count:4}
@@ -162,11 +166,51 @@ export const datetimeToHybrids = (datetime: Date) => {
   return unixtimeToHybridts((datetime.getTime() / 1000).toString());
 };
 
+/**
+ * Converts a string to base64 encoding.
+ * @param str The string to convert.
+ * @returns The base64 encoded string.
+ */
 export const stringToBase64 = (str: string) =>
   Buffer.from(str, 'utf-8').toString('base64');
 
+/**
+ * Formats the given address by removing the http or https prefix and appending the default Milvus port if necessary.
+ * @param address The address to format.
+ * @returns The formatted address.
+ */
 export const formatAddress = (address: string) => {
   // remove http or https prefix from address
   const ip = address.replace(/(http|https)*:\/\//, '');
   return ip.includes(':') ? ip : `${ip}:${DEFAULT_MILVUS_PORT}`;
+};
+
+/**
+ * Assigns properties with keys `dim` or `max_length` to the `type_params` object of a `FieldType` object.
+ * If the property exists in the `field` object, it is converted to a string and then deleted from the `field` object.
+ * If the property already exists in the `type_params` object, it is also converted to a string.
+ *
+ * @param field The `FieldType` object to modify.
+ * @returns The modified `FieldType` object.
+ */
+export const assignTypeParams = (
+  field: FieldType,
+  typeParamKeys: string[] = ['dim', 'max_length']
+) => {
+  let newField = JSON.parse(JSON.stringify(field));
+  typeParamKeys.forEach(key => {
+    if (newField.hasOwnProperty(key)) {
+      // if the property exists in the field object, assign it to the type_params object
+      newField.type_params = newField.type_params || {};
+      newField.type_params[key] = String(newField[key]);
+      // delete the property from the field object
+      delete newField[key];
+    }
+
+    if (newField.type_params && newField.type_params[key]) {
+      // if the property already exists in the type_params object, convert it to a string
+      newField.type_params[key] = String(newField.type_params[key]);
+    }
+  });
+  return newField;
 };

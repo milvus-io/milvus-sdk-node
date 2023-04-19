@@ -15,6 +15,7 @@ import { timeoutTest } from './common/timeout';
 
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
+const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
 const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
@@ -25,6 +26,14 @@ describe(`Collection API`, () => {
   it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
       ...genCollectionParams(COLLECTION_NAME, '128'),
+      consistency_level: 'Eventually',
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create Collection with number dim Successful`, async () => {
+    const res = await milvusClient.createCollection({
+      ...genCollectionParams(NUMBER_DIM_COLLECTION_NAME, 128),
       consistency_level: 'Eventually',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -484,11 +493,15 @@ describe(`Collection API`, () => {
     const res5 = await milvusClient.dropCollection({
       collection_name: 'any',
     });
+    const res6 = await milvusClient.dropCollection({
+      collection_name: NUMBER_DIM_COLLECTION_NAME,
+    });
 
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res3.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res4.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res5.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res6.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });

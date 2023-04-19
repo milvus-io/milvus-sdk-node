@@ -4,7 +4,7 @@ export const VECTOR_FIELD_NAME = 'vector_field';
 export const INDEX_NAME = 'index_name';
 export const genCollectionParams = (
   collectionName: string,
-  dim: string,
+  dim: string | number,
   vectorType:
     | DataType.FloatVector
     | DataType.BinaryVector = DataType.FloatVector,

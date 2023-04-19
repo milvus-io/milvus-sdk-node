@@ -38,6 +38,7 @@ import {
   StatisticsResponse,
   ReplicasResponse,
 } from '.';
+import { assignTypeParams } from '../utils';
 
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
@@ -112,7 +113,10 @@ export class Collection extends BaseClient {
       description: description || '',
       fields: [],
     };
+
     data.fields.forEach(field => {
+      field = assignTypeParams(field);
+
       const value = {
         ...field,
         typeParams: parseToKeyValue(field.type_params),
@@ -125,7 +129,7 @@ export class Collection extends BaseClient {
     });
 
     const collectionParams = CollectionSchema.create(payload);
-    const schemaBtyes = CollectionSchema.encode(collectionParams).finish();
+    const schemaBytes = CollectionSchema.encode(collectionParams).finish();
     const level = Object.keys(ConsistencyLevelEnum).includes(consistency_level)
       ? ConsistencyLevelEnum[consistency_level]
       : ConsistencyLevelEnum['Bounded'];
@@ -134,7 +138,7 @@ export class Collection extends BaseClient {
       'CreateCollection',
       {
         ...data,
-        schema: schemaBtyes,
+        schema: schemaBytes,
         consistency_level: level,
       },
       data.timeout
