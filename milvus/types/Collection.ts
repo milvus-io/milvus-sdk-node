@@ -9,6 +9,7 @@ import {
   ConsistencyLevelEnum,
   CompactionState,
   DataType,
+  LoadState,
 } from '../const/Milvus';
 
 export interface FieldSchema {
@@ -29,18 +30,18 @@ export interface CollectionData {
 }
 
 export interface ShardReplica {
-  leaderID: number;
+  leaderID: string;
   leader_addr: string;
   dm_channel_name: string;
-  node_ids: number[];
+  node_ids: string[];
 }
 
 export interface ReplicaInfo {
-  replicaID: number;
-  collectionID: number;
-  partition_ids: number[];
+  replicaID: string;
+  collectionID: string;
+  partition_ids: string[];
   shard_replicas: ShardReplica[];
-  node_ids: number[];
+  node_ids: string[];
 }
 
 export type TypeParam = string | number;
@@ -148,7 +149,7 @@ export interface BoolResponse {
 }
 export interface CompactionResponse {
   status: ResStatus;
-  compactionID: number;
+  compactionID: string;
 }
 
 export interface CollectionSchema {
@@ -170,15 +171,15 @@ export interface DescribeCollectionResponse extends TimeStamp {
 export interface GetCompactionPlansResponse {
   status: ResStatus;
   state: CompactionState;
-  mergeInfos: { sources: number[]; target: number }[];
+  mergeInfos: { sources: string[]; target: string }[];
 }
 
 export interface GetCompactionStateResponse {
   status: ResStatus;
   state: CompactionState;
-  executingPlanNo: number;
-  timeoutPlanNo: number;
-  completedPlanNo: number;
+  executingPlanNo: string;
+  timeoutPlanNo: string;
+  completedPlanNo: string;
 }
 
 export interface ShowCollectionsResponse extends TimeStampArray {
@@ -195,4 +196,19 @@ export interface StatisticsResponse {
 export interface ReplicasResponse {
   status: ResStatus;
   replicas: ReplicaInfo[];
+}
+
+export interface GetLoadingProgressReq extends GrpcTimeOut {
+  collection_name: string;
+  partition_names?: string[];
+}
+export interface GetLoadingProgressResponse {
+  status: ResStatus;
+  progress: string;
+}
+
+export interface GetLoadStateReq extends GetLoadingProgressReq {}
+export interface GetLoadStateResponse {
+  status: ResStatus;
+  state: LoadState;
 }

@@ -4,6 +4,7 @@ import {
   ErrorCode,
   ShowCollectionsType,
   ERROR_REASONS,
+  LoadState,
 } from '../milvus';
 import { IP } from '../const';
 import {
@@ -308,6 +309,24 @@ describe(`Collection API`, () => {
       collection_name: LOAD_COLLECTION_NAME_SYNC,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Get loading progress success`, async () => {
+    const res = await milvusClient.getLoadingProgress({
+      collection_name: LOAD_COLLECTION_NAME_SYNC,
+    });
+    // console.log('loadingProgess', loadingProgess);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(typeof res.progress).toEqual('string'); // int64 in node is string
+  });
+
+  it(`Get load state success`, async () => {
+    const res = await milvusClient.getLoadState({
+      collection_name: LOAD_COLLECTION_NAME_SYNC,
+    });
+    // console.log('load state', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(Object.values(LoadState).includes(res.state));
   });
 
   it(`Load Collection Sync with replica no enough node error `, async () => {
