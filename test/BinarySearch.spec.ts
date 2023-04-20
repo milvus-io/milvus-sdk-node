@@ -7,7 +7,7 @@ import {
   generateInsertData,
 } from '../utils/test';
 
-let milvusClient = new MilvusClient(IP);
+let milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 
 describe(`Bianary search API`, () => {

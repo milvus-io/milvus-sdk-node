@@ -14,7 +14,7 @@ import {
 } from '../utils/test';
 import { timeoutTest } from './common/timeout';
 
-let milvusClient = new MilvusClient(IP);
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const fields = [
   {

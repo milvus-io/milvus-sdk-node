@@ -1,10 +1,10 @@
 import path from 'path';
 import protobuf, { Root } from 'protobufjs';
 import { credentials, Client } from '@grpc/grpc-js';
-import { ERROR_REASONS } from '.';
+import { ERROR_REASONS, MilvusClientConfig } from '.';
 import { getGRPCService, formatAddress, getAuthInterceptor } from '../utils';
 
-// pathes
+// path
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
 const schemaProtoPath = path.resolve(__dirname, '../proto/proto/schema.proto');
 
@@ -18,27 +18,61 @@ export class BaseClient {
   grpcClient: Client;
 
   /**
-   * Connect to milvus grpc client.
+   * Connect to a Milvus gRPC client using one config object
    *
-   * @param address milvus address like: 127.0.0.1:19530
-   * @param ssl ssl connect or not, default is false
-   * @param username After created user in Milvus, username is required
-   * @param password After created user in Milvus, password is required
+   * @param config The configuration object.
+   */
+  constructor(config: MilvusClientConfig);
+  /**
+   * Connect to a Milvus gRPC client.
    *
+   * @param address The Milvus address as a string.
+   * @param ssl Whether to use SSL or not. Default is false.
+   * @param username The username for authentication. Required if password is provided.
+   * @param password The password for authentication. Required if username is provided.
    */
   constructor(
     address: string,
     ssl?: boolean,
     username?: string,
     password?: string
+  );
+  /**
+   * Connect to a Milvus gRPC client.
+   *
+   * @param configOrAddress The configuration object or the Milvus address as a string.
+   * @param ssl Whether to use SSL or not. Default is false.
+   * @param username The username for authentication. Required if password is provided.
+   * @param password The password for authentication. Required if username is provided.
+   */
+  constructor(
+    configOrAddress: MilvusClientConfig | string,
+    ssl?: boolean,
+    username?: string,
+    password?: string
   ) {
+    let config: MilvusClientConfig;
+
+    // If a configuration object is provided, use it. Otherwise, create a new object with the provided parameters.
+    if (typeof configOrAddress === 'object') {
+      config = configOrAddress;
+    } else {
+      config = {
+        address: configOrAddress,
+        ssl,
+        username,
+        password,
+      };
+    }
+
     // check if address is set
-    if (!address) {
+    if (!config.address) {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
 
     // if we need to create auth interceptors
-    const needAuth = username !== undefined && password !== undefined;
+    const needAuth =
+      config.username !== undefined && config.password !== undefined;
 
     // get Milvus GRPC service
     const MilvusService = getGRPCService({
@@ -48,7 +82,7 @@ export class BaseClient {
 
     // create interceptors
     const interceptors = needAuth
-      ? getAuthInterceptor(username, password)
+      ? getAuthInterceptor(config.username!, config.password!)
       : null;
 
     // load proto
@@ -57,7 +91,7 @@ export class BaseClient {
 
     // create grpc client
     this.grpcClient = new MilvusService(
-      formatAddress(address), // format the address
+      formatAddress(config.address), // format the address
       ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
       {
         interceptors: [interceptors],

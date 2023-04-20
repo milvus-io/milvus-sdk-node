@@ -12,7 +12,7 @@ import { timeoutTest } from './common/timeout';
 
 import { genCollectionParams, GENERATE_NAME } from '../utils/test';
 
-let milvusClient = new MilvusClient(IP);
+const milvusClient = new MilvusClient({ address: IP });
 let authClient: MilvusClient;
 const USERNAME = 'nameczz';
 const PASSWORD = '123456';
@@ -66,7 +66,12 @@ describe(`User Api`, () => {
   });
 
   it(`Auth client list user expect success`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
+    authClient = new MilvusClient({
+      address: IP,
+      ssl: false,
+      username: USERNAME,
+      password: PASSWORD,
+    });
     const res = await authClient.listUsers();
     expect(res.usernames).toEqual([USERNAME, 'root']);
   });
@@ -102,7 +107,12 @@ describe(`User Api`, () => {
   });
 
   it(`It should create role successfully`, async () => {
-    authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
+    authClient = new MilvusClient({
+      address: IP,
+      ssl: false,
+      username: USERNAME,
+      password: NEW_PASSWORD,
+    });
     const res = await authClient.createRole({
       roleName: ROLENAME,
     });

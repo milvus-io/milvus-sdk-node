@@ -7,7 +7,7 @@ import {
 } from '../utils/test';
 import { timeoutTest } from './common/timeout';
 
-const milvusClient = new MilvusClient(IP);
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const PARTITION_NAME = GENERATE_NAME('partition');
 

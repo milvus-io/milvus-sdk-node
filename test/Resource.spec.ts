@@ -6,7 +6,7 @@ import {
   GENERATE_NAME,
 } from '../utils/test';
 
-let milvusClient = new MilvusClient(IP);
+const milvusClient = new MilvusClient({ address: IP });
 
 const DEFAULT_RESOURCE_GROUP = '__default_resource_group';
 const COLLECTION_NAME = GENERATE_NAME('col');
