@@ -311,6 +311,14 @@ describe(`Collection API`, () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`Get load loading progress throw COLLECTION_NAME_IS_REQUIRED`, async () => {
+    try {
+      await milvusClient.getLoadingProgress({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+  });
+
   it(`Get loading progress success`, async () => {
     const res = await milvusClient.getLoadingProgress({
       collection_name: LOAD_COLLECTION_NAME_SYNC,
@@ -318,6 +326,14 @@ describe(`Collection API`, () => {
     // console.log('loadingProgess', loadingProgess);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(typeof res.progress).toEqual('string'); // int64 in node is string
+  });
+
+  it(`Get load state throw COLLECTION_NAME_IS_REQUIRED`, async () => {
+    try {
+      await milvusClient.getLoadState({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
   });
 
   it(`Get load state success`, async () => {

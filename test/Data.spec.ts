@@ -26,6 +26,11 @@ const fields = [
     isVector: false,
     name: 'age',
   },
+  {
+    isVector: false,
+    isVarChar: true,
+    name: 'name',
+  },
 ];
 const vectorsData = generateInsertData(fields, 10);
 const params: InsertReq = {
@@ -36,7 +41,16 @@ const params: InsertReq = {
 describe(`Data.API`, () => {
   beforeAll(async () => {
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
+      genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false, [
+        {
+          name: 'name',
+          data_type: DataType.VarChar,
+          type_params: {
+            max_length: 16,
+          },
+          description: '',
+        },
+      ])
     );
 
     await milvusClient.insert(params);
