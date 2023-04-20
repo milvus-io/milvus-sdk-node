@@ -52,42 +52,57 @@ describe(`Utils`, () => {
     expect(checkTimeParam([])).toBe(false);
     expect(checkTimeParam(() => {})).toBe(false);
   });
-  it(`Promisify should catch  obj[target] is not a function`, async () => {
-    let a = {};
-    try {
-      await promisify(a, 'a', {});
-      expect('a').toEqual('b');
-    } catch (error) {
-      expect(error.message).toContain('obj[target] is not a function');
-    }
-  });
-
-  it(`Promisify should catch error`, async () => {
-    let a = {
-      a: () => {
-        throw new Error('123');
+  it('should resolve with the result of the target function call', async () => {
+    const obj = {
+      target: (params: any, options: any, callback: any) => {
+        callback(null, 'result');
       },
     };
-    try {
-      await promisify(a, 'a', {});
-      expect('a').toEqual('b');
-    } catch (error) {
-      expect(error.message).toContain('123');
-    }
+    const target = 'target';
+    const params = {};
+    const timeout = 1000;
+    const result = await promisify(obj, target, params, timeout);
+    expect(result).toEqual('result');
   });
 
-  it(`Promisify should reject`, async () => {
-    let a = {
-      a: (params = {}, {}, callback = (err: any) => {}) => {
-        callback('123');
+  it('should reject with the error if there was an error', async () => {
+    const obj = {
+      target: (params: any, options: any, callback: any) => {
+        callback(new Error('error'));
       },
     };
-    try {
-      await promisify(a, 'a', {});
-      expect('a').toEqual('b');
-    } catch (error) {
-      expect(error.message).toContain('123');
-    }
+    const target = 'target';
+    const params = {};
+    const timeout = 1000;
+    await expect(promisify(obj, target, params, timeout)).rejects.toThrow(
+      'error'
+    );
+  });
+
+  it('should reject with the error if there was an exception', async () => {
+    const obj = {
+      target: () => {
+        throw new Error('exception');
+      },
+    };
+    const target = 'target';
+    const params = {};
+    const timeout = 1000;
+    await expect(promisify(obj, target, params, timeout)).rejects.toThrow(
+      'exception'
+    );
+  });
+
+  it('should use the default timeout if no timeout is provided', async () => {
+    const obj = {
+      target: (params: any, options: any, callback: any) => {
+        callback(null, 'result');
+      },
+    };
+    const target = 'target';
+    const params = {};
+    const result = await promisify(obj, target, params);
+    expect(result).toEqual('result');
   });
 
   it(`hybridtsToUnixtime should success`, async () => {
