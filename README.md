@@ -128,19 +128,18 @@ await client.createCollection({
 ```javascript
 // generate mock data
 const fields_data = [];
-Array(1000)
-  .fill(1)
-  .forEach(() => {
-    let r = {};
-    schema.forEach(s => {
-      r = {
-        book_id: Math.floor(Math.random() * 100000),
-        word_count: Math.floor(Math.random() * 1000),
-        book_intro: [...Array(dim)].map(() => Math.random()),
-      };
-    });
-    fields_data.push(r);
-  });
+
+// generate mock data
+for (let i = 0; i < 1000; i++) {
+  // create a new object with random values for each field
+  const r = {
+    book_id: Math.floor(Math.random() * 100000), // generate a random book ID
+    word_count: Math.floor(Math.random() * 1000), // generate a random word count
+    book_intro: [...Array(dim)].map(() => Math.random()), // generate a random vector for book_intro
+  };
+  // add the new object to the fields_data array
+  fields_data.push(r);
+}
 ```
 
 ### insert data into collection
@@ -156,13 +155,12 @@ await client.insert({
 
 ```javascript
 // create index
-console.time(`Create index successfully`);
 await client.createIndex({
   collection_name,
   field_name: 'book_intro',
   index_name: 'myindex',
   extra_params: {
-    index_type: 'AUTOINDEX',
+    index_type: 'IVF_FLAT',
     metric_type: 'L2',
   },
 });
@@ -175,19 +173,21 @@ await client.loadCollectionSync({
 ### vector search
 
 ```javascript
-// vector search
+// Generate a random search vector
 const searchVector = [...Array(dim)].map(() => Math.random());
+
+// Perform a vector search on the collection
 const res = await client.search({
   collection_name,
   vectors: [searchVector],
   search_params: {
-    anns_field: 'book_intro',
-    metric_type: 'L2',
-    params: JSON.stringify({ nprobe: 64 }),
-    topk: 1,
+    anns_field: 'book_intro', // specify the field to search on
+    metric_type: 'L2', // specify the distance metric to use
+    params: JSON.stringify({ nprobe: 64 }), // specify the search parameters
+    topk: 1, // specify the number of nearest neighbors to return
   },
-  output_fields: ['book_id', 'word_count'],
-  vector_type: DataType.FloatVector,
+  output_fields: ['book_id', 'word_count'], // specify the fields to return in the search results
+  vector_type: DataType.FloatVector, // specify the data type of the vectors
 });
 ```
 
