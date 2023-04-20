@@ -189,9 +189,9 @@ test();
 
 ### Run your app from the command line with:
 
-···
+```
 node app.js
-···
+```
 
 The application should **print Connected successfully to server to the console**.
 
