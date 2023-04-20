@@ -37,7 +37,7 @@ This will download the Milvus node.js client and add a dependency entry in your 
 
 ## Quick Start
 
-This guide will show you how to set up a simple application using Node.js and Milvus. Its scope is only how to set up the node.js client and perform the simple CRUD operations. For more in-depth coverage, see the [Milvus offical website](https://milvus.io/).
+This guide will show you how to set up a simple application using Node.js and Milvus. Its scope is only how to set up the node.js client and perform the simple CRUD operations. For more in-depth coverage, see the [Milvus official website](https://milvus.io/).
 
 ### Create the package.json file
 
@@ -75,15 +75,17 @@ sudo docker-compose up -d
 Create a new app.js file and add the following code to try out some basic vector operations using the Milvus node.js client.
 
 ```javascript
-import { MilvusClient, DataType } from "@zilliz/milvus2-sdk-node";
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
 
-const IP = 'your-milvus-ip'
+const IP = 'your-milvus-ip';
 
-// connecting
-console.info(`Connecting to DB: ${IP}`);
+// connect to milvus
 const client = new MilvusClient(IP);
-console.info(`Success!`);
+```
 
+### define schema for collection
+
+```javascript
 // define schema
 const collection_name = `book`;
 const dim = 128;
@@ -109,90 +111,85 @@ const schema = [
     },
   },
 ];
+```
 
-const test = async () => {
-  // create colleciton
-  console.time(`Creating example collection: ${collection_name}`);
-  console.info(`Schema: `, schema);
-  await client.createCollection({
-    collection_name,
-    description: `my first collection`,
-    fields: schema,
-  });
+### create collection
 
-  console.timeEnd(`Creating example collection: ${collection_name}`);
+```javascript
+await client.createCollection({
+  collection_name,
+  description: `my first collection`,
+  fields: schema,
+});
+```
 
- // generate mock data
-  const fields_data = [];
-  Array(1000)
-    .fill(1)
-    .forEach(() => {
-      let r = {};
-      schema.forEach((s) => {
-        r = {
-          book_id: Math.floor(Math.random() * 100000),
-          word_count: Math.floor(Math.random() * 1000),
-          book_intro: [...Array(dim)].map(() => Math.random()),
-        };
-      });
-      fields_data.push(r);
+### prepare data
+
+```javascript
+// generate mock data
+const fields_data = [];
+Array(1000)
+  .fill(1)
+  .forEach(() => {
+    let r = {};
+    schema.forEach(s => {
+      r = {
+        book_id: Math.floor(Math.random() * 100000),
+        word_count: Math.floor(Math.random() * 1000),
+        book_intro: [...Array(dim)].map(() => Math.random()),
+      };
     });
-  // inserting
-  console.time(`Inserting 1000 entities successfully`);
-  await client.insert({
-    collection_name,
-    fields_data,
+    fields_data.push(r);
   });
-  console.timeEnd(`Inserting 1000 entities successfully`);
-
-  // create index
-  console.time(`Create index successfully`);
-  await client.createIndex({
-    collection_name,
-    field_name: "book_intro",
-    index_name: "myindex",
-    extra_params: {
-      index_type: "AUTOINDEX",
-      metric_type: "L2",
-    },
-  });
-  console.timeEnd(`Create index successfully`);
-  // load collection
-  console.time(`Load Collection successfully`);
-  await client.loadCollectionSync({
-    collection_name,
-  });
-  console.timeEnd(`Load Collection successfully`);
-
-  // vector search
-  console.time(`Searching vector:`);
-  const searchVector = [...Array(dim)].map(() => Math.random());
-  const res = await client.search({
-    collection_name,
-    vectors: [searchVector],
-    search_params: {
-      anns_field: "book_intro",
-      metric_type: "L2",
-      params: JSON.stringify({ nprobe: 64 }),
-      topk: 1,
-    },
-    output_fields: ['book_id', 'word_count'],
-    vector_type: DataType.FloatVector,
-  });
-  console.timeEnd(`Searching vector:`);
-  console.log(res);
-};
-
-test();
 ```
 
-### Run your app from the command line with:
+### insert data into collection
 
-```
-node app.js
+```javascript
+await client.insert({
+  collection_name,
+  fields_data,
+});
 ```
 
-The application should **print Connected successfully to server to the console**.
+### create index and load collection into memory
+
+```javascript
+// create index
+console.time(`Create index successfully`);
+await client.createIndex({
+  collection_name,
+  field_name: 'book_intro',
+  index_name: 'myindex',
+  extra_params: {
+    index_type: 'AUTOINDEX',
+    metric_type: 'L2',
+  },
+});
+// load collection
+await client.loadCollectionSync({
+  collection_name,
+});
+```
+
+### vector search
+
+```javascript
+// vector search
+const searchVector = [...Array(dim)].map(() => Math.random());
+const res = await client.search({
+  collection_name,
+  vectors: [searchVector],
+  search_params: {
+    anns_field: 'book_intro',
+    metric_type: 'L2',
+    params: JSON.stringify({ nprobe: 64 }),
+    topk: 1,
+  },
+  output_fields: ['book_id', 'word_count'],
+  vector_type: DataType.FloatVector,
+});
+```
 
 ## Next Steps
 
