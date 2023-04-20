@@ -4,6 +4,7 @@ import {
   parseToKeyValue,
   checkCollectionFields,
   checkCollectionName,
+  sleep,
 } from '../utils';
 import { BaseClient } from './BaseClient';
 import {
@@ -400,9 +401,8 @@ export class Collection extends BaseClient {
 
     let loadedPercentage = 0;
     while (Number(loadedPercentage) < 100) {
-      let res = await this.showCollections({
-        collection_names: [data.collection_name],
-        type: ShowCollectionsType.Loaded,
+      let res = await this.getLoadingProgress({
+        collection_name: data.collection_name,
       });
 
       if (res.status.error_code !== ErrorCode.SUCCESS) {
@@ -410,8 +410,9 @@ export class Collection extends BaseClient {
           `ErrorCode: ${res.status.error_code}. Reason: ${res.status.reason}`
         );
       }
-      // Because we pass collection_names in showCollections, so it will only this collection in result.
-      loadedPercentage = Number(res.data[0].loadedPercentage);
+      loadedPercentage = Number(res.progress);
+      // sleep 400ms
+      await sleep(400);
     }
 
     return promise;
@@ -812,31 +813,31 @@ export class Collection extends BaseClient {
   }
 
   /**
- * Get loading progress of a collection
- *
- * @param data
- *  | Property | Type | Description |
- *  | :-- | :-- | :-- |
- *  | collection_name | string | the name of the collection |
- *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
- *
- * @returns
- *  | Property | Description |
- *  | :-- | :-- |
- *  | status | { error_code: number, reason: string } |
- *  | total_row_num | the total number of rows in the collection |
- *  | total_loaded_row_num | the total number of loaded rows in the collection |
- *
- * @throws {Error} if `collection_name` property is not present in `data`
- *
- * #### Example
- *
- * ```
- *  new milvusClient(MILUVS_ADDRESS).getLoadingProgress({
- *    collection_name: 'my_collection',
- *  });
- * ```
- */
+   * Get loading progress of a collection
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | string | the name of the collection |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *
+   * @returns
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | total_row_num | the total number of rows in the collection |
+   *  | total_loaded_row_num | the total number of loaded rows in the collection |
+   *
+   * @throws {Error} if `collection_name` property is not present in `data`
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).getLoadingProgress({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
   async getLoadingProgress(
     data: GetLoadingProgressReq
   ): Promise<GetLoadingProgressResponse> {
@@ -853,30 +854,30 @@ export class Collection extends BaseClient {
   }
 
   /**
- * Get the loading state of a collection
- *
- * @param data
- *  | Property | Type | Description |
- *  | :-- | :-- | :-- |
- *  | collection_name | string | the name of the collection |
- *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
- *
- * @returns
- *  | Property | Description |
- *  | :-- | :-- |
- *  | status | { error_code: number, reason: string } |
- *  | state | the loading state of the collection |
- *
- * @throws {Error} if `collection_name` property is not present in `data`
- *
- * #### Example
- *
- * ```
- *  new milvusClient(MILUVS_ADDRESS).getLoadState({
- *    collection_name: 'my_collection',
- *  });
- * ```
- */
+   * Get the loading state of a collection
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | string | the name of the collection |
+   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   *
+   * @returns
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *  | state | the loading state of the collection |
+   *
+   * @throws {Error} if `collection_name` property is not present in `data`
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).getLoadState({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
   async getLoadState(data: GetLoadStateReq): Promise<GetLoadStateResponse> {
     if (!data || !data.collection_name) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);

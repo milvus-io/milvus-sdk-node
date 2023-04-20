@@ -15,6 +15,7 @@ import {
   assignTypeParams,
 } from '../utils';
 import { ERROR_REASONS } from '../milvus';
+import { generateInsertData } from '../utils/test';
 import { InterceptingCall } from '@grpc/grpc-js';
 // mock
 jest.mock('@grpc/grpc-js', () => {
@@ -286,5 +287,76 @@ describe(`Utils`, () => {
       },
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);
+  });
+
+  it('should generate the correct number of data points', () => {
+    const fields = [
+      { name: 'field1', isVector: false },
+      { name: 'field2', isVector: true, dim: 10 },
+      { name: 'field3', isVector: false },
+    ];
+    const count = 100;
+    const data = generateInsertData(fields, count);
+    expect(data.length).toBe(count);
+  });
+
+  it('should generate data with the correct fields', () => {
+    const fields = [
+      { name: 'field1', isVector: false },
+      { name: 'field2', isVector: true, dim: 10 },
+      { name: 'field3', isVector: false },
+    ];
+    const count = 1;
+    const data = generateInsertData(fields, count);
+    expect(data[0]).toHaveProperty('field1');
+    expect(data[0]).toHaveProperty('field2');
+    expect(data[0]).toHaveProperty('field3');
+  });
+
+  it('should generate vector data with the correct length', () => {
+    const fields = [
+      { name: 'field1', isVector: false },
+      { name: 'field2', isVector: true, dim: 10 },
+      { name: 'field3', isVector: false },
+    ];
+    const count = 1;
+    const data = generateInsertData(fields, count);
+    expect(data[0].field2.length).toBe(10);
+  });
+
+  it('should generate boolean data with the correct values', () => {
+    const fields = [
+      { name: 'field1', isVector: false },
+      { name: 'field2', isVector: false, isBool: true },
+      { name: 'field3', isVector: false },
+    ];
+    const count = 2;
+    const data = generateInsertData(fields, count);
+    expect(data[0].field2).toBe(true);
+    expect(data[1].field2).toBe(false);
+  });
+
+  it('should generate varchar data with the correct length', () => {
+    const fields = [
+      { name: 'field1', isVector: false },
+      { name: 'field2', isVector: false, isVarChar: true },
+      { name: 'field3', isVector: false },
+    ];
+    const count = 1;
+    const data = generateInsertData(fields, count);
+    expect(data[0].field2.length).toBeGreaterThanOrEqual(2);
+    expect(data[0].field2.length).toBeLessThanOrEqual(15);
+  });
+
+  it('should generate integer data with the correct range', () => {
+    const fields = [
+      { name: 'field1', isVector: false },
+      { name: 'field2', isVector: false },
+      { name: 'field3', isVector: false },
+    ];
+    const count = 1;
+    const data = generateInsertData(fields, count);
+    expect(data[0].field1).toBeGreaterThanOrEqual(0);
+    expect(data[0].field1).toBeLessThanOrEqual(100000);
   });
 });

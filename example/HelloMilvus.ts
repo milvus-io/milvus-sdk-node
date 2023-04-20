@@ -6,7 +6,7 @@ const generateInsertData = function generateInsertData(
   fields: { isVector: boolean; dim?: number; name: string; isBool?: boolean }[],
   count: number
 ) {
-  const results = [];
+  const results: any = [];
   while (count > 0) {
     let value: any = {};
 
@@ -15,8 +15,8 @@ const generateInsertData = function generateInsertData(
       value[name] = isVector
         ? [...Array(dim)].map(() => Math.random() * 10)
         : isBool
-          ? count % 2 === 0
-          : count;
+        ? count % 2 === 0
+        : count;
     });
 
     value['count'] = count;
@@ -65,7 +65,7 @@ const hello_milvus = async () => {
 
   const hasCollectionRes = await milvusClient.hasCollection({
     collection_name: collectionName,
-  }); 
+  });
   console.log(
     '--- Has collection (' + collectionName + ') ---',
     hasCollectionRes
