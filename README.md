@@ -67,7 +67,6 @@ npm install @zilliz/milvus2-sdk-node
 $ wget https://github.com/milvus-io/milvus/releases/download/v2.2.6/milvus-standalone-docker-compose.yml -O docker-compose.yml
 
 # start the milvus server
-```shell
 sudo docker-compose up -d
 ```
 
