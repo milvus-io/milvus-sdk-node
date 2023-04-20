@@ -4,6 +4,7 @@ import {
   parseToKeyValue,
   checkCollectionFields,
   checkCollectionName,
+  sleep,
 } from '../utils';
 import { BaseClient } from './BaseClient';
 import {
@@ -410,6 +411,8 @@ export class Collection extends BaseClient {
         );
       }
       loadedPercentage = Number(res.progress);
+      // sleep 400ms
+      await sleep(400);
     }
 
     return promise;

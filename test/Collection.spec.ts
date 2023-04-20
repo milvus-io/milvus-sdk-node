@@ -384,6 +384,30 @@ describe(`Collection API`, () => {
     }
   });
 
+  it(`Load Collection Sync throw error from getLoadingProgress`, async () => {
+    const fakeClient = new MilvusClient(IP);
+
+    fakeClient.getLoadingProgress = () => {
+      return new Promise(res => {
+        res({
+          status: {
+            error_code: 'error',
+            reason: '123',
+          },
+        } as any);
+      });
+    };
+    try {
+      await fakeClient.loadCollectionSync({
+        collection_name: LOAD_COLLECTION_NAME,
+      });
+    } catch (error) {
+      expect(typeof error.message).toBe('string');
+    } finally {
+      fakeClient.closeConnection();
+    }
+  });
+
   it(`Load Collection Async throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
       await milvusClient.loadCollectionSync({} as any);
