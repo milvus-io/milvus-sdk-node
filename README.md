@@ -196,8 +196,8 @@ The application should **print Connected successfully to server to the console**
 
 ## Next Steps
 
-- [What is Milvus](https://milvus.io/).
-- [Mivlus node client API reference](https://milvus.io/api-reference/node/v2.2.x/About.md)
+- [What is Milvus](https://milvus.io/)
+- [Milvus Node SDK API reference](https://milvus.io/api-reference/node/v2.2.x/About.md)
 - [Attu, Milvus GUI tool, based on Milvus node.js SDK](https://github.com/zilliztech/attu)
 - [Feder, anns index visuliazation tool](https://github.com/zilliztech/feder)
 
