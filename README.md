@@ -50,32 +50,32 @@ cd myProject
 
 Enter the following command and answer the questions to create the initial structure for your new project:
 
-```
+```shell
 npm init -y
 ```
 
 Next, install this client as a dependency.
 
-```
+```shell
 npm install @zilliz/milvus2-sdk-node
 ```
 
 ### Start a milvus server
 
-```
+```shell
 # Download the milvus standalone yaml file
 $ wget https://github.com/milvus-io/milvus/releases/download/v2.2.6/milvus-standalone-docker-compose.yml -O docker-compose.yml
 
 # start the milvus server
+```shell
 sudo docker-compose up -d
-
 ```
 
 ### Connect to Milvus
 
 Create a new app.js file and add the following code to try out some basic vector operations using the Milvus node.js client.
 
-```
+```javascript
 import { MilvusClient, DataType } from "@zilliz/milvus2-sdk-node";
 
 const IP = 'your-milvus-ip'
