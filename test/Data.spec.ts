@@ -132,6 +132,27 @@ describe(`Data.API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`Expr Search with round decimal should success`, async () => {
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      // partition_names: [],
+      expr: '',
+      vectors: [[1, 2, 3, 4]],
+      search_params: {
+        anns_field: VECTOR_FIELD_NAME,
+        topk: '4',
+        metric_type: 'L2',
+        params: JSON.stringify({ nprobe: 1024 }),
+        round_decimal: -1,
+      },
+      output_fields: ['age'],
+      vector_type: DataType.FloatVector,
+    });
+
+    // console.log('----search ----', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`Expr Search should throw SEARCH_NOT_FIND_VECTOR_FIELD`, async () => {
     try {
       await milvusClient.search({
