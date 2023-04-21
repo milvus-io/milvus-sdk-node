@@ -12,9 +12,13 @@ const COLLECTION_NAME = GENERATE_NAME();
 
 describe(`Bianary search API`, () => {
   beforeAll(async () => {
-    await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '128', DataType.BinaryVector, false)
+    const createCollectionParams = genCollectionParams(
+      COLLECTION_NAME,
+      128,
+      DataType.BinaryVector,
+      false
     );
+    await milvusClient.createCollection(createCollectionParams);
     // create index before load
     await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
@@ -28,18 +32,8 @@ describe(`Bianary search API`, () => {
     await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
-    const fields = [
-      {
-        isVector: true,
-        dim: 16, // 128 / 8
-        name: VECTOR_FIELD_NAME,
-      },
-      {
-        isVector: false,
-        name: 'age',
-      },
-    ];
-    const vectorsData = generateInsertData(fields, 10);
+
+    const vectorsData = generateInsertData(createCollectionParams.fields, 10);
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
       fields_data: vectorsData,

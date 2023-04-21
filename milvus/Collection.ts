@@ -93,62 +93,54 @@ export class Collection extends BaseClient {
    * ```
    */
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
-    const {
-      fields,
-      collection_name,
-      description,
-      consistency_level = 'Bounded',
-    } = data || {};
-    if (!fields || !fields.length || !collection_name) {
+    // Destructure the data object and set default values for consistency_level and description.
+    const { fields, collection_name, description, consistency_level = 'Bounded' } = data || {};
+
+    // Check if fields and collection_name are present, otherwise throw an error.
+    if (!fields?.length || !collection_name) {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
     }
+
+    // Check if the fields are valid.
     checkCollectionFields(fields);
 
-    // When data type is bytes, use protobufjs to transform data to buffer bytes.
-    const CollectionSchema = this.schemaProto.lookupType(
-      'milvus.proto.schema.CollectionSchema'
-    );
+    // Get the CollectionSchema and FieldSchema from the schemaProto object.
+    const CollectionSchema = this.schemaProto.lookupType('milvus.proto.schema.CollectionSchema');
+    const FieldSchema = this.schemaProto.lookupType('milvus.proto.schema.FieldSchema');
 
-    const FieldSchema = this.schemaProto.lookupType(
-      'milvus.proto.schema.FieldSchema'
-    );
-
-    let payload: any = {
+    // Create the payload object with the collection_name, description, and fields.
+    const payload = {
       name: collection_name,
       description: description || '',
-      fields: [],
+      fields: fields.map((field) => {
+        // Assign the typeParams property to the result of parseToKeyValue(type_params).
+        const { type_params, ...rest } = assignTypeParams(field);
+        return FieldSchema.create({
+          ...rest,
+          typeParams: parseToKeyValue(type_params),
+          dataType: field.data_type,
+          isPrimaryKey: field.is_primary_key,
+        });
+      }),
     };
 
-    data.fields.forEach(field => {
-      field = assignTypeParams(field);
-
-      const value = {
-        ...field,
-        typeParams: parseToKeyValue(field.type_params),
-        dataType: field.data_type,
-        isPrimaryKey: field.is_primary_key,
-      };
-      const fieldParams = FieldSchema.create(value);
-
-      payload.fields.push(fieldParams);
-    });
-
+    // Create the collectionParams object from the payload.
     const collectionParams = CollectionSchema.create(payload);
-    const schemaBytes = CollectionSchema.encode(collectionParams).finish();
-    const level = Object.keys(ConsistencyLevelEnum).includes(consistency_level)
-      ? ConsistencyLevelEnum[consistency_level]
-      : ConsistencyLevelEnum['Bounded'];
-    const promise = await promisify(
-      this.grpcClient,
-      'CreateCollection',
-      {
-        ...data,
-        schema: schemaBytes,
-        consistency_level: level,
-      },
-      data.timeout
-    );
 
+    // Encode the collectionParams object to bytes.
+    const schemaBytes = CollectionSchema.encode(collectionParams).finish();
+
+    // Get the consistency level value from the ConsistencyLevelEnum object.
+    const level = ConsistencyLevelEnum[consistency_level] ?? ConsistencyLevelEnum.Bounded;
+
+    // Call the promisify function to create the collection.
+    const promise = await promisify(this.grpcClient, 'CreateCollection', {
+      ...data,
+      schema: schemaBytes,
+      consistency_level: level,
+    }, data.timeout);
+
+    // Return the promise.
     return promise;
   }
 

@@ -1,10 +1,4 @@
-import {
-  MilvusClient,
-  DataType,
-  ErrorCode,
-  InsertReq,
-  ERROR_REASONS,
-} from '../milvus';
+import { MilvusClient, DataType, ErrorCode, ERROR_REASONS } from '../milvus';
 import { IP } from '../const';
 import { generateInsertData } from '../utils/test';
 import {
@@ -16,44 +10,22 @@ import { timeoutTest } from './common/timeout';
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
-const fields = [
-  {
-    isVector: true,
-    dim: 4,
-    name: VECTOR_FIELD_NAME,
-  },
-  {
-    isVector: false,
-    name: 'age',
-  },
-  {
-    isVector: false,
-    isVarChar: true,
-    name: 'name',
-  },
-];
-const vectorsData = generateInsertData(fields, 10);
-const params: InsertReq = {
-  collection_name: COLLECTION_NAME,
-  fields_data: vectorsData,
-};
 
 describe(`Data.API`, () => {
   beforeAll(async () => {
-    await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false, [
-        {
-          name: 'name',
-          data_type: DataType.VarChar,
-          type_params: {
-            max_length: 16,
-          },
-          description: '',
-        },
-      ])
+    const createCollectionParams = genCollectionParams(
+      COLLECTION_NAME,
+      4,
+      DataType.FloatVector,
+      false
     );
+    await milvusClient.createCollection(createCollectionParams);
 
-    await milvusClient.insert(params);
+    await milvusClient.insert({
+      collection_name: COLLECTION_NAME,
+      fields_data: generateInsertData(createCollectionParams.fields),
+    });
+
     await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
@@ -151,6 +123,27 @@ describe(`Data.API`, () => {
         metric_type: 'L2',
         params: JSON.stringify({ nprobe: 1024 }),
         round_decimal: 2,
+      },
+      output_fields: ['age'],
+      vector_type: DataType.FloatVector,
+    });
+
+    // console.log('----search ----', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Expr Search with round decimal should success`, async () => {
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      // partition_names: [],
+      expr: '',
+      vectors: [[1, 2, 3, 4]],
+      search_params: {
+        anns_field: VECTOR_FIELD_NAME,
+        topk: '4',
+        metric_type: 'L2',
+        params: JSON.stringify({ nprobe: 1024 }),
+        round_decimal: -1,
       },
       output_fields: ['age'],
       vector_type: DataType.FloatVector,

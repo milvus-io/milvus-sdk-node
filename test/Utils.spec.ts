@@ -13,8 +13,9 @@ import {
   getAuthInterceptor,
   checkTimeParam,
   assignTypeParams,
+  checkCollectionFields,
 } from '../utils';
-import { ERROR_REASONS } from '../milvus';
+import { ERROR_REASONS, FieldType, DataType } from '../milvus';
 import { generateInsertData } from '../utils/test';
 import { InterceptingCall } from '@grpc/grpc-js';
 // mock
@@ -32,6 +33,135 @@ jest.mock('@grpc/grpc-js', () => {
 describe(`Utils`, () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+  it('should throw an error if a field is missing the data_type property', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_MISS_DATA_TYPE
+    );
+  });
+
+  it('should throw an error if a primary key is missing or has an unsupported data type', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.Float,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY
+    );
+  });
+
+  it('should throw an error if a vector field is missing or has an unsupported data type', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST
+    );
+  });
+
+  it('should throw an error if a vector field is missing the dimension property', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.BinaryVector,
+        is_primary_key: false,
+      },
+      {
+        name: 'field2',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM
+    );
+  });
+
+  it('should throw an error if a binary vector field has a dimension that is not a multiple of 8', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.BinaryVector,
+        is_primary_key: false,
+        type_params: {
+          dim: 7,
+        },
+      },
+      {
+        name: 'field2',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM
+    );
+  });
+
+  it('should throw an error if a varchar field is missing the max_length property', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.VarChar,
+        is_primary_key: false,
+      },
+      {
+        name: 'field1',
+        data_type: DataType.BinaryVector,
+        is_primary_key: false,
+        type_params: {
+          dim: 7,
+        },
+      },
+      {
+        name: 'field2',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAXLENGTH
+    );
+  });
+
+  it('should return true if all fields are valid', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.BinaryVector,
+        is_primary_key: false,
+        type_params: {
+          dim: 16,
+        },
+      },
+      {
+        name: 'field2',
+        data_type: DataType.VarChar,
+        is_primary_key: false,
+        type_params: {
+          max_length: 10,
+        },
+      },
+      {
+        name: 'field3',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
   });
   it(`should return true for a bigint input`, () => {
     expect(checkTimeParam(BigInt(123))).toBe(true);
@@ -304,74 +434,107 @@ describe(`Utils`, () => {
     expect(assignTypeParams(field)).toEqual(expectedOutput);
   });
 
-  it('should generate the correct number of data points', () => {
+  it('should generate data for a collection with a vector field of type DataType.FloatVector', () => {
     const fields = [
-      { name: 'field1', isVector: false },
-      { name: 'field2', isVector: true, dim: 10 },
-      { name: 'field3', isVector: false },
+      {
+        name: 'vector_field',
+        description: 'vector field',
+        data_type: DataType.FloatVector,
+        dim: 10,
+      },
+      {
+        name: 'age',
+        description: '',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+        autoID: true,
+      },
     ];
-    const count = 100;
-    const data = generateInsertData(fields, count);
-    expect(data.length).toBe(count);
+    const data = generateInsertData(fields, 10);
+    expect(data.length).toBe(10);
+    expect(data[0].vector_field.length).toBe(10);
   });
 
-  it('should generate data with the correct fields', () => {
+  it('should generate data for a collection with a vector field of type DataType.BinaryVector', () => {
     const fields = [
-      { name: 'field1', isVector: false },
-      { name: 'field2', isVector: true, dim: 10 },
-      { name: 'field3', isVector: false },
+      {
+        name: 'vector_field',
+        description: 'vector field',
+        data_type: DataType.BinaryVector,
+        dim: 80,
+      },
+      {
+        name: 'age',
+        description: '',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+        autoID: true,
+      },
     ];
-    const count = 1;
-    const data = generateInsertData(fields, count);
-    expect(data[0]).toHaveProperty('field1');
-    expect(data[0]).toHaveProperty('field2');
-    expect(data[0]).toHaveProperty('field3');
+    const data = generateInsertData(fields, 10);
+    expect(data.length).toBe(10);
+    expect(data[0].vector_field.length).toBe(10);
   });
 
-  it('should generate vector data with the correct length', () => {
+  it('should generate data for a collection with a non-vector field of type DataType.Bool', () => {
     const fields = [
-      { name: 'field1', isVector: false },
-      { name: 'field2', isVector: true, dim: 10 },
-      { name: 'field3', isVector: false },
+      {
+        name: 'bool_field',
+        description: 'bool field',
+        data_type: DataType.Bool,
+      },
+      {
+        name: 'age',
+        description: '',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+        autoID: true,
+      },
     ];
-    const count = 1;
-    const data = generateInsertData(fields, count);
-    expect(data[0].field2.length).toBe(10);
+    const data = generateInsertData(fields, 10);
+    expect(data.length).toBe(10);
+    expect(typeof data[0].bool_field).toBe('boolean');
   });
 
-  it('should generate boolean data with the correct values', () => {
+  it('should generate data for a collection with a non-vector field of type DataType.VarChar', () => {
     const fields = [
-      { name: 'field1', isVector: false },
-      { name: 'field2', isVector: false, isBool: true },
-      { name: 'field3', isVector: false },
+      {
+        name: 'varchar_field',
+        description: 'varchar field',
+        data_type: DataType.VarChar,
+        max_length: 10,
+      },
+      {
+        name: 'age',
+        description: '',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+        autoID: true,
+      },
     ];
-    const count = 2;
-    const data = generateInsertData(fields, count);
-    expect(data[0].field2).toBe(true);
-    expect(data[1].field2).toBe(false);
+    const data = generateInsertData(fields, 10);
+    expect(data.length).toBe(10);
+    expect(typeof data[0].varchar_field).toBe('string');
+    expect(data[0].varchar_field.length).toBeLessThanOrEqual(5);
   });
 
-  it('should generate varchar data with the correct length', () => {
+  it('should generate data for a collection with a non-vector field of a data type other than DataType.Bool or DataType.VarChar', () => {
     const fields = [
-      { name: 'field1', isVector: false },
-      { name: 'field2', isVector: false, isVarChar: true },
-      { name: 'field3', isVector: false },
+      {
+        name: 'int_field',
+        description: 'int field',
+        data_type: DataType.Int32,
+      },
+      {
+        name: 'age',
+        description: '',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+        autoID: true,
+      },
     ];
-    const count = 1;
-    const data = generateInsertData(fields, count);
-    expect(data[0].field2.length).toBeGreaterThanOrEqual(2);
-    expect(data[0].field2.length).toBeLessThanOrEqual(15);
-  });
-
-  it('should generate integer data with the correct range', () => {
-    const fields = [
-      { name: 'field1', isVector: false },
-      { name: 'field2', isVector: false },
-      { name: 'field3', isVector: false },
-    ];
-    const count = 1;
-    const data = generateInsertData(fields, count);
-    expect(data[0].field1).toBeGreaterThanOrEqual(0);
-    expect(data[0].field1).toBeLessThanOrEqual(100000);
+    const data = generateInsertData(fields, 10);
+    expect(data.length).toBe(10);
+    expect(typeof data[0].int_field).toBe('number');
   });
 });

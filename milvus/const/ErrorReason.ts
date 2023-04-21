@@ -1,10 +1,12 @@
 export enum ERROR_REASONS {
-  MILVUS_ADDRESS_IS_REQUIRED = 'Milvus addres is required.',
+  MILVUS_ADDRESS_IS_REQUIRED = 'Milvus address is required.',
 
+  CREATE_COLLECTION_MISS_DATA_TYPE = 'field object must contains the `data_type` property',
   CREATE_COLLECTION_CHECK_PARAMS = 'fields and collection_name are needed',
   CREATE_COLLECTION_CHECK_PRIMARY_KEY = 'Fields must contain one data_type = int64 and is_primary_key = true',
   CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST = 'Fields must contain one vector field column',
-  CREATE_COLLECTION_CHECK_MISS_DIM = 'Vector field needs dim in type params',
+  CREATE_COLLECTION_CHECK_MISS_DIM = 'Vector field needs dim',
+  CREATE_COLLECTION_CHECK_MISS_MAXLENGTH = 'Vector field needs max_length',
   CREATE_COLLECTION_CHECK_BINARY_DIM = 'Binary vector field dim need mutiples of 8',
 
   COLLECTION_NAME_IS_REQUIRED = 'Collection name is required',
