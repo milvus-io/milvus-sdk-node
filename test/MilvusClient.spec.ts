@@ -10,12 +10,12 @@ describe(`Milvus client`, () => {
   });
 
   test(`should create a grpc client without SSL credentials when ssl is false`, () => {
-    const client = new MilvusClient(
-      'localhost:19530',
-      false,
-      'username',
-      'password'
-    );
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      ssl: false,
+      username: 'username',
+      password: 'password',
+    });
     expect(client.grpcClient).toBeDefined();
   });
 

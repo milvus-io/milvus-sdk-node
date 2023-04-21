@@ -6,7 +6,7 @@ import {
   GENERATE_NAME,
 } from '../utils/test';
 
-let milvusClient = new MilvusClient(IP);
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 
 describe(`Replica API`, () => {

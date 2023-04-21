@@ -10,5 +10,6 @@ export * from './types/Partition';
 export * from './types/Response';
 export * from './types/User';
 export * from './types/Resource';
+export * from './types/Client';
 // client
 export * from './MilvusClient';

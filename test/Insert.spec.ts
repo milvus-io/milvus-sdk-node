@@ -13,7 +13,7 @@ import {
   GENERATE_NAME,
 } from '../utils/test';
 
-let milvusClient = new MilvusClient(IP);
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const BINARY_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
