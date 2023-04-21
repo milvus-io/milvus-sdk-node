@@ -1,4 +1,4 @@
-import { DataType } from '../milvus/const/Milvus';
+import { DataType, FieldType } from '../milvus';
 
 export const VECTOR_FIELD_NAME = 'vector_field';
 export const INDEX_NAME = 'index_name';
@@ -19,7 +19,7 @@ export const genCollectionParams = (
         name: VECTOR_FIELD_NAME,
         description: 'vector field',
         data_type: vectorType,
-        dim: 16,
+        dim: Number(dim),
       },
       {
         name: 'age',
@@ -48,31 +48,35 @@ export const GENERATE_NAME = (pre = 'collection') =>
  * @param count The number of data points to generate
  * @returns An array of objects representing the generated data
  */
-export function generateInsertData(
-  fields: {
-    isVector: boolean;
-    dim?: number;
-    name: string;
-    isBool?: boolean;
-    isVarChar?: boolean;
-  }[],
-  count: number
-) {
+export function generateInsertData(fields: FieldType[], count: number = 10) {
   const results: any = []; // Initialize an empty array to store the generated data
   while (count > 0) {
     // Loop until we've generated the desired number of data points
     let value: any = {}; // Initialize an empty object to store the generated values for this data point
 
     fields.forEach(v => {
+      // bypass autoID
+      if (v.autoID) {
+        return;
+      }
       // Loop through each field we need to generate data for
-      const { isVector, dim, name, isBool, isVarChar } = v; // Destructure the field object to get its properties
+      const { name } = v; // Destructure the field object to get its properties
+      const isVector =
+        v.data_type === DataType.BinaryVector ||
+        v.data_type === DataType.FloatVector;
+      let dim = v.dim || (v.type_params && v.type_params.dim);
+      const isBool = v.data_type === DataType.Bool;
+      const isVarChar = v.data_type === DataType.VarChar;
+
+      dim = v.data_type === DataType.BinaryVector ? (dim as number) / 8 : dim;
+
       value[name] = isVector // If the field is a vector field
-        ? [...Array(dim)].map(() => Math.random() * 10) // Generate an array of random numbers between 0 and 10 with length equal to the vector dimension
+        ? [...Array(Number(dim))].map(() => Math.random()) // Generate an array of random numbers between 0 and 10 with length equal to the vector dimension
         : isBool // If the field is a boolean field
-        ? count % 2 === 0 // Generate a random boolean value based on the current count
-        : isVarChar // If the field is a varchar field
-        ? Math.random().toString(36).substring(2, 15) // Generate a random string of characters
-        : Math.floor(Math.random() * 100000); // Otherwise, generate a random integer between 0 and 100000
+          ? count % 2 === 0 // Generate a random boolean value based on the current count
+          : isVarChar // If the field is a varchar field
+            ? Math.random().toString(36).substring(2, 7) // Generate a random string of characters
+            : Math.floor(Math.random() * 100000); // Otherwise, generate a random integer between 0 and 100000
     });
     results.push(value); // Add the generated values for this data point to the results array
     count--; // Decrement the count to keep track of how many data points we've generated so far

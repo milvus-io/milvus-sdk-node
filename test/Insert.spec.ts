@@ -18,14 +18,24 @@ const COLLECTION_NAME = GENERATE_NAME();
 const BINARY_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
 const MORE_SCALAR_COLLECTION_NAME = GENERATE_NAME();
+const COLLECTION_NAME_PARAMS = genCollectionParams(
+  COLLECTION_NAME,
+  '4',
+  DataType.FloatVector,
+  false
+);
+const COLLECTION_NAME_AUTO_ID_PARAMS = genCollectionParams(
+  COLLECTION_NAME_AUTO_ID,
+  4,
+  DataType.FloatVector,
+  true
+);
 
 const PARTITION_NAME = 'test';
 describe(`Insert API`, () => {
   beforeAll(async () => {
     // create collection autoid = false and float_vector
-    await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
-    );
+    await milvusClient.createCollection(COLLECTION_NAME_PARAMS);
     // create index before load
     await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
@@ -38,9 +48,7 @@ describe(`Insert API`, () => {
     });
 
     // create collection autoid = true and float_vector
-    await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME_AUTO_ID, '4')
-    );
+    await milvusClient.createCollection(COLLECTION_NAME_AUTO_ID_PARAMS);
 
     // create collection autoid = false and binary_vector
 
@@ -135,14 +143,10 @@ describe(`Insert API`, () => {
   });
 
   it(`Insert Data on float field and autoId is true expect success`, async () => {
-    const fields = [
-      {
-        isVector: true,
-        dim: 4,
-        name: VECTOR_FIELD_NAME,
-      },
-    ];
-    const vectorsData = generateInsertData(fields, 10);
+    const vectorsData = generateInsertData(
+      COLLECTION_NAME_AUTO_ID_PARAMS.fields,
+      10
+    );
 
     const params: InsertReq = {
       collection_name: COLLECTION_NAME_AUTO_ID,
@@ -150,7 +154,12 @@ describe(`Insert API`, () => {
     };
 
     const res = await milvusClient.insert(params);
-    // console.log('----generateInsertData ----', res);
+    // console.log(
+    //   '----generateInsertData ----',
+    //   COLLECTION_NAME_AUTO_ID_PARAMS.fields,
+    //   vectorsData,
+    //   res
+    // );
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -269,18 +278,7 @@ describe(`Insert API`, () => {
   });
 
   it(`Insert Data on float field expect success`, async () => {
-    const fields = [
-      {
-        isVector: true,
-        dim: 4,
-        name: VECTOR_FIELD_NAME,
-      },
-      {
-        isVector: false,
-        name: 'age',
-      },
-    ];
-    const vectorsData = generateInsertData(fields, 10);
+    const vectorsData = generateInsertData(COLLECTION_NAME_PARAMS.fields, 10);
 
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
