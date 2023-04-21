@@ -18,26 +18,6 @@ export class BaseClient {
   grpcClient: Client;
 
   /**
-   * Connect to a Milvus gRPC client using one config object
-   *
-   * @param config The configuration object.
-   */
-  constructor(config: MilvusClientConfig);
-  /**
-   * Connect to a Milvus gRPC client.
-   *
-   * @param address The Milvus address as a string.
-   * @param ssl Whether to use SSL or not. Default is false.
-   * @param username The username for authentication. Required if password is provided.
-   * @param password The password for authentication. Required if username is provided.
-   */
-  constructor(
-    address: string,
-    ssl?: boolean,
-    username?: string,
-    password?: string
-  );
-  /**
    * Connect to a Milvus gRPC client.
    *
    * @param configOrAddress The configuration object or the Milvus address as a string.
