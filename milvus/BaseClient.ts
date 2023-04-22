@@ -1,6 +1,6 @@
 import path from 'path';
 import protobuf, { Root } from 'protobufjs';
-import { credentials, Client } from '@grpc/grpc-js';
+import { credentials, Client, ChannelOptions } from '@grpc/grpc-js';
 import { ERROR_REASONS, MilvusClientConfig } from '.';
 import { getGRPCService, formatAddress, getAuthInterceptor } from '../utils';
 
@@ -29,7 +29,8 @@ export class BaseClient {
     configOrAddress: MilvusClientConfig | string,
     ssl?: boolean,
     username?: string,
-    password?: string
+    password?: string,
+    channelOptions?: ChannelOptions
   ) {
     let config: MilvusClientConfig;
 
@@ -42,6 +43,7 @@ export class BaseClient {
         ssl,
         username,
         password,
+        channelOptions,
       };
     }
 
@@ -69,16 +71,19 @@ export class BaseClient {
     this.schemaProto = protobuf.loadSync(schemaProtoPath);
     this.milvusProto = protobuf.loadSync(protoPath);
 
+    // options
+    const options: ChannelOptions = {
+      interceptors: [interceptors],
+      // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
+      // So SDK should support max_receive_message_length unlimited.
+      'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
+    };
+
     // create grpc client
     this.grpcClient = new MilvusService(
       formatAddress(config.address), // format the address
       ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
-      {
-        interceptors: [interceptors],
-        // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
-        // So SDK should support max_receive_message_length unlimited.
-        'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
-      }
+      Object.assign(options, config.channelOptions)
     );
   }
 }
