@@ -1,51 +1,38 @@
 export enum ERROR_REASONS {
-  MILVUS_ADDRESS_IS_REQUIRED = 'Milvus address is required.',
+  MILVUS_ADDRESS_IS_REQUIRED = 'The `address` property is missing.',
 
-  CREATE_COLLECTION_MISS_DATA_TYPE = 'field object must contains the `data_type` property',
-  CREATE_COLLECTION_CHECK_PARAMS = 'fields and collection_name are needed',
-  CREATE_COLLECTION_CHECK_PRIMARY_KEY = 'Fields must contain one data_type = int64 and is_primary_key = true',
-  CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST = 'Fields must contain one vector field column',
-  CREATE_COLLECTION_CHECK_MISS_DIM = 'Vector field needs dim',
-  CREATE_COLLECTION_CHECK_MISS_MAXLENGTH = 'Vector field needs max_length',
-  CREATE_COLLECTION_CHECK_BINARY_DIM = 'Binary vector field dim need mutiples of 8',
+  CREATE_COLLECTION_MISS_DATA_TYPE = 'The `data_type` property is missing in the `field` object.',
+  CREATE_COLLECTION_CHECK_PARAMS = 'The `fields` or `collection_name` property is missing.',
+  CREATE_COLLECTION_CHECK_PRIMARY_KEY = 'The `data_type` for the primary key field must be DataType.Int64.',
+  CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST = 'The `data_type` of a vector field  must be either DataType.FloatVector or DataType.BinaryVector.',
+  CREATE_COLLECTION_CHECK_MISS_DIM = 'The `dim` property is missing.',
+  CREATE_COLLECTION_CHECK_MISS_MAXLENGTH = 'The `max_length` property is missing',
+  CREATE_COLLECTION_CHECK_BINARY_DIM = 'The `dim` property of the Binary vector should be value mutiples of 8.',
+  COLLECTION_NAME_IS_REQUIRED = 'The `collection_name` property is missing.',
+  COLLECTION_ID_IS_REQUIRED = 'The `collectionID` property is missing.',
+  COLLECTION_PARTITION_NAME_ARE_REQUIRED = 'The `collection_name` or the `partition_name` property is missing.',
 
-  COLLECTION_NAME_IS_REQUIRED = 'Collection name is required',
-  COLLECTION_ID_IS_REQUIRED = 'Collection ID is required',
-  COLLECTION_PARTITION_NAME_ARE_REQUIRED = 'Collection and partition name are required',
+  INSERT_CHECK_FILEDS_DATA_IS_REQUIRED = 'The type of the `fields_data` should be an array.',
+  INSERT_CHECK_WRONG_FIELD = 'Insert fail: some field does not exist for this collection in line.',
+  INSERT_CHECK_WRONG_DIM = 'Insert fail: the length of the binary vector should be (dimension / 8).',
+  INSERT_CHECK_WRONG_DATA_TYPE = 'The value of the `data_type` property is not supported:',
 
-  INSERT_CHECK_MISS_FIELD = 'Insert fail: missing some field for this collection in line ',
-  INSERT_CHECK_FILEDS_DATA_IS_REQUIRED = 'fields_data is required as array.',
-  INSERT_CHECK_WRONG_FIELD = 'Insert fail: some field does not exist for this collection in line',
-  INSERT_CHECK_WRONG_DIM = 'Insert fail: Binary vector data length needs to be (dimension / 8) ',
-  INSERT_CHECK_WRONG_DATA_TYPE = 'Some field type in collection schema is not belong to DataType. ',
+  SEARCH_MISS_VECTOR_TYPE = 'The `vector_type` should be DataType.FloatVector or DataType.BinaryVector.',
+  SEARCH_NOT_FIND_VECTOR_FIELD = 'The `anns_field` was not matched in this collection.',
+  SEARCH_DIM_NOT_MATCH = 'The vector dimension does not match your anns_field dimension.',
+  SEARCH_PARAMS_IS_REQUIRED = 'The `search_params` must contain the `anns_field`, `metric_type`, `topk` and `params`.',
+  SEARCH_ROUND_DECIMAL_NOT_VALID = 'The `round_decimal` should be an integer greater than -2 and less than 7',
 
-  SEARCH_MISS_VECTOR_TYPE = 'Miss vector_type, need to be binary or float vector field type.',
-  SEARCH_NOT_FIND_VECTOR_FIELD = 'Your anns_field was not found in this collection.',
-  SEARCH_DIM_NOT_MATCH = 'Your vector dimension does not match your anns_field dimension',
-  SEARCH_PARAMS_IS_REQUIRED = 'search_params must contain anns_field, metric_type, topk and params.',
-  SEARCH_ROUND_DECIMAL_NOT_VALID = 'round_decimal should be an integer greater than -2 and less than 7',
-
-  DELETE_PARAMS_CHECK = 'Collection name and expr are required.',
-
-  GET_METRIC_CHECK_PARAMS = 'request.metric_type is required.',
-
-  GET_FLUSH_STATE_CHECK_PARAMS = 'segmentIDs is required as array',
-
-  LOAD_BALANCE_CHECK_PARAMS = 'src_nodeID is required',
-
-  PARTITION_NAMES_IS_REQUIRED = 'partition_names is required',
-
-  ALIAS_NAME_IS_REQUIRED = 'alias is required',
-
-  COMPACTIONID_IS_REQUIRED = 'compactionID is required',
-
-  USERNAME_PWD_ARE_REQUIRED = 'username and password are required',
-  USERNAME_OLD_NEW_PWD_ARE_REQUIRED = 'username, old password and new password are required',
-
-  USERNAME_IS_REQUIRED = 'username is required',
-
-  TIMESTAMP_PARAM_CHECK = 'type should be string (only contains number) or bigint',
-
-  DATE_TYPE_CHECK = 'type should be Date',
-  IMPORT_FILE_CHECK = 'files is required',
+  DELETE_PARAMS_CHECK = 'The `collection_name` or the `expr` property is missing.',
+  GET_METRIC_CHECK_PARAMS = 'The `metric_type` property is missing.',
+  GET_FLUSH_STATE_CHECK_PARAMS = 'The type of the `segmentIDs` property should be an array.',
+  LOAD_BALANCE_CHECK_PARAMS = 'The `src_nodeID` property is missing.',
+  PARTITION_NAMES_IS_REQUIRED = 'The `partition_names` property is missing.',
+  ALIAS_NAME_IS_REQUIRED = 'The `alias` property is missing.',
+  COMPACTIONID_IS_REQUIRED = 'The `compactionID` property is missing.',
+  USERNAME_PWD_ARE_REQUIRED = 'The `username` or `password` property is missing.',
+  USERNAME_IS_REQUIRED = 'The `username` property is missing.',
+  TIMESTAMP_PARAM_CHECK = 'The type of the `hybridts` property should be string (only contains number) or bigint.',
+  DATE_TYPE_CHECK = 'The type of the `datetime` property should be Date.',
+  IMPORT_FILE_CHECK = 'The `files` property is missing.',
 }
