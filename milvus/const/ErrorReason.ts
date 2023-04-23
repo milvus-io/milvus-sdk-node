@@ -1,7 +1,7 @@
 export enum ERROR_REASONS {
   MILVUS_ADDRESS_IS_REQUIRED = 'The `address` property is missing.',
 
-  CREATE_COLLECTION_MISS_DATA_TYPE = 'The field object must contain the `data_type` property.',
+  CREATE_COLLECTION_MISS_DATA_TYPE = 'The `data_type` property is missing in the `field` object.',
   CREATE_COLLECTION_CHECK_PARAMS = 'The `fields` or `collection_name` property is missing.',
   CREATE_COLLECTION_CHECK_PRIMARY_KEY = 'The `data_type` for the primary key field must be DataType.Int64.',
   CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST = 'The `data_type` of a vector field  must be either DataType.FloatVector or DataType.BinaryVector.',
