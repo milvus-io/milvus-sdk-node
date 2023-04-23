@@ -176,7 +176,7 @@ export class Data extends Collection {
           dataKey = 'string_data';
           break;
         default:
-          throw new Error(`${type} ${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE}`);
+          throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE} "${v.type}."`);
       }
       return {
         type,

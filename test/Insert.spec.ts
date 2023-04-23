@@ -251,7 +251,7 @@ describe(`Insert API`, () => {
       expect('a').toEqual('b');
     } catch (error) {
       // console.log('---error----', error);
-      expect(error.message).toEqual(ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE);
+      expect(error.message).toContain(ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE);
     } finally {
       fakeClient.closeConnection();
     }

@@ -15,7 +15,7 @@ export enum ERROR_REASONS {
   INSERT_CHECK_FILEDS_DATA_IS_REQUIRED = 'The type of the `fields_data` should be an array.',
   INSERT_CHECK_WRONG_FIELD = 'Insert fail: some field does not exist for this collection in line.',
   INSERT_CHECK_WRONG_DIM = 'Insert fail: the length of the binary vector should be (dimension / 8).',
-  INSERT_CHECK_WRONG_DATA_TYPE = 'is not supported.',
+  INSERT_CHECK_WRONG_DATA_TYPE = 'The value of the `data_type` property is not supported:',
 
   SEARCH_MISS_VECTOR_TYPE = 'The `vector_type` should be DataType.FloatVector or DataType.BinaryVector.',
   SEARCH_NOT_FIND_VECTOR_FIELD = 'The `anns_field` was not matched in this collection.',
