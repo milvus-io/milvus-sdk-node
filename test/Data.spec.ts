@@ -111,6 +111,23 @@ describe(`Data.API`, () => {
     }
   });
 
+
+  it(`Expr simple Search should success`, async () => {
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      // partition_names: [],
+      filter: '',
+      vector: [1, 2, 3, 4],
+      limit: 4,
+      offset: 0,
+      params: { nprobe: 1024 },
+      output_fields: ['age'],
+    });
+
+    // console.log('----search ----', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`Expr Search should success`, async () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,

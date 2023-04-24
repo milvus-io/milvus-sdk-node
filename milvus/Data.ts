@@ -37,6 +37,7 @@ import {
   QueryRes,
   SearchReq,
   SearchRes,
+  SearchSimpleReq,
 } from '.';
 import { Collection } from './Collection';
 
@@ -298,52 +299,57 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  async search(data: SearchReq): Promise<SearchResults> {
+  async search(data: SearchReq | SearchSimpleReq) {
     checkCollectionName(data);
-    if (
-      !data.search_params ||
-      !data.search_params.anns_field ||
-      !data.search_params.metric_type ||
-      !data.search_params.topk ||
-      !data.search_params.params
-    ) {
-      throw new Error(ERROR_REASONS.SEARCH_PARAMS_IS_REQUIRED);
-    }
-    if (!this.vectorTypes.includes(data.vector_type))
-      throw new Error(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
 
+    // get collection info
     const collectionInfo = await this.describeCollection({
       collection_name: data.collection_name,
     });
 
-    // anns_field is the vector field column user want to compare.
-    const targetField = collectionInfo.schema.fields.find(
-      v => v.name === data.search_params.anns_field
-    );
-    if (!targetField) {
-      throw new Error(ERROR_REASONS.SEARCH_NOT_FIND_VECTOR_FIELD);
-    }
+    // get vector field
+    const vField = collectionInfo.schema.fields.find(v => {
+      const vType = DataTypeMap[v.data_type.toLowerCase()];
+      return vType === DataType.FloatVector || vType === DataType.BinaryVector;
+    });
 
-    const dim = findKeyValue(targetField.type_params, 'dim');
-    const vectorType = DataTypeMap[targetField.data_type.toLowerCase()];
-    const dimension =
-      vectorType === DataType.BinaryVector ? Number(dim) / 8 : Number(dim);
+    // get vector type
+    const vectorType = DataTypeMap[vField!.data_type.toLowerCase()];
 
-    if (!data.vectors[0] || data.vectors[0].length !== dimension) {
-      throw new Error(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
-    }
+    // create search params
+    const search_params = (data as SearchReq).search_params || {
+      anns_field: vField!.name,
+      topk: (data as SearchSimpleReq).limit,
+      offset: (data as SearchSimpleReq).offset || 0,
+      metric_type: 'L2',
+      params: (data as SearchSimpleReq).params,
+    };
 
-    const round_decimal = data.search_params.round_decimal;
-    if (
-      round_decimal !== undefined &&
-      (!Number.isInteger(round_decimal) ||
-        round_decimal < -1 ||
-        round_decimal > 6)
-    ) {
-      throw new Error(ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
-    }
+    const searchVectors = (data as SearchReq).vectors || [
+      (data as SearchSimpleReq).vector,
+    ];
 
-    // when data type is bytes , we need use protobufjs to transform data to buffer bytes.
+    // // anns_field is the vector field column user want to compare.
+
+    // const dim = findKeyValue(targetField.type_params, 'dim');
+    // const vectorType = DataTypeMap[targetField.data_type.toLowerCase()];
+    // const dimension =
+    //   vectorType === DataType.BinaryVector ? Number(dim) / 8 : Number(dim);
+
+    // if (!data.vectors[0] || data.vectors[0].length !== dimension) {
+    //   throw new Error(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
+    // }
+
+    // const round_decimal = data.search_params.round_decimal;
+    // if (
+    //   round_decimal !== undefined &&
+    //   (!Number.isInteger(round_decimal) ||
+    //     round_decimal < -1 ||
+    //     round_decimal > 6)
+    // ) {
+    //   throw new Error(ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
+    // }
+
     const PlaceholderGroup = this.milvusProto.lookupType(
       'milvus.proto.common.PlaceholderGroup'
     );
@@ -352,9 +358,9 @@ export class Data extends Collection {
       placeholders: [
         {
           tag: '$0',
-          type: data.vector_type,
-          values: data.vectors.map(v =>
-            data.vector_type === DataType.BinaryVector
+          type: vectorType,
+          values: searchVectors.map(v =>
+            vectorType === DataType.BinaryVector
               ? parseBinaryVectorToBytes(v)
               : parseFloatVectorToBytes(v)
           ),
@@ -370,12 +376,14 @@ export class Data extends Collection {
       this.grpcClient,
       'Search',
       {
-        ...data,
-        nq: data.nq || data.vectors.length,
-        dsl: data.expr || '',
+        collection_name: data.collection_name,
+        partition_names: data.partition_names,
+        output_fields: data.output_fields,
+        nq: (data as SearchReq).nq || searchVectors.length,
+        dsl: (data as SearchReq).expr || (data as SearchSimpleReq).filter || '',
         dsl_type: DslType.BoolExprV1,
         placeholder_group: placeholderGroupBytes,
-        search_params: parseToKeyValue(data.search_params),
+        search_params: parseToKeyValue(search_params),
       },
       data.timeout || this.timeout
     );
