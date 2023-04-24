@@ -14,6 +14,7 @@ import {
   checkTimeParam,
   assignTypeParams,
   checkCollectionFields,
+  parseTimeToken,
 } from '../utils';
 import { ERROR_REASONS, FieldType, DataType } from '../milvus';
 import { generateInsertData } from '../utils/test';
@@ -231,7 +232,7 @@ describe(`Utils`, () => {
     };
     const target = 'target';
     const params = {};
-    const result = await promisify(obj, target, params);
+    const result = await promisify(obj, target, params, 0);
     expect(result).toEqual('result');
   });
 
@@ -536,5 +537,20 @@ describe(`Utils`, () => {
     const data = generateInsertData(fields, 10);
     expect(data.length).toBe(10);
     expect(typeof data[0].int_field).toBe('number');
+  });
+  test('parses time tokens correctly', () => {
+    expect(parseTimeToken('1s')).toBe(1000);
+    expect(parseTimeToken('2m')).toBe(120000);
+    expect(parseTimeToken('3h')).toBe(10800000);
+    expect(parseTimeToken('4d')).toBe(345600000);
+    expect(parseTimeToken('1w')).toBe(604800000);
+    expect(parseTimeToken('1M')).toBe(2592000000);
+    expect(parseTimeToken('1Y')).toBe(31536000000);
+  });
+
+  test('throws an error for invalid time tokens', () => {
+    expect(() => parseTimeToken('')).toThrow('Invalid time token: ');
+    expect(() => parseTimeToken('1')).toThrow('Invalid time token: 1');
+    expect(() => parseTimeToken('1x')).toThrow('Invalid time token: 1x');
   });
 });

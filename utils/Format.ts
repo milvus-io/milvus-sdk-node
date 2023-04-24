@@ -214,3 +214,33 @@ export const assignTypeParams = (
   });
   return newField;
 };
+
+/**
+ * Parses a time token and returns the corresponding number of milliseconds.
+ *
+ * @param {string} token - The time token to parse.
+ * @returns {number} The number of milliseconds corresponding to the time token.
+ * @throws {Error} If the time token is invalid.
+ */
+export const parseTimeToken = (token: string): number => {
+  const num = parseInt(token.slice(0, -1));
+  const unit = token.slice(-1);
+  switch (unit) {
+    case 's':
+      return num * 1000;
+    case 'm':
+      return num * 60 * 1000;
+    case 'h':
+      return num * 60 * 60 * 1000;
+    case 'd':
+      return num * 24 * 60 * 60 * 1000;
+    case 'w':
+      return num * 7 * 24 * 60 * 60 * 1000;
+    case 'M':
+      return num * 30 * 24 * 60 * 60 * 1000;
+    case 'Y':
+      return num * 365 * 24 * 60 * 60 * 1000;
+    default:
+      throw new Error(`Invalid time token: ${token}`);
+  }
+};

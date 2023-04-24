@@ -42,7 +42,7 @@ export class Resource extends Partition {
       this.grpcClient,
       'CreateResourceGroup',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -71,7 +71,7 @@ export class Resource extends Partition {
       this.grpcClient,
       'ListResourceGroups',
       {},
-      data?.timeout
+      data?.timeout || this.timeout
     );
     return promise;
   }
@@ -111,7 +111,7 @@ export class Resource extends Partition {
       this.grpcClient,
       'DescribeResourceGroup',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -143,7 +143,7 @@ export class Resource extends Partition {
       this.grpcClient,
       'DropResourceGroup',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -183,7 +183,7 @@ export class Resource extends Partition {
       this.grpcClient,
       'TransferReplica',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -221,7 +221,7 @@ export class Resource extends Partition {
       this.grpcClient,
       'TransferNode',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }

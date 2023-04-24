@@ -1,4 +1,4 @@
-import { MilvusClient } from  '@zilliz/milvus2-sdk-node';
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
 import { IP } from '../const';
 import {
   genCollectionParams,
@@ -42,24 +42,23 @@ const test = async () => {
   await milvusClient.createIndex({
     collection_name: COLLECTION_NAME,
     field_name: VECTOR_FIELD_NAME,
-    extra_params: {
-      index_type: 'IVF_FLAT',
-      metric_type: 'L2',
-      params: JSON.stringify({ nlist: 1024 }),
-    },
+    index_name: 'index',
+    index_type: 'IVF_FLAT',
+    metric_type: 'L2',
+    params: { nlist: 1024 },
   });
 
   // load the collection synchronously
   res = await milvusClient.loadCollectionSync({
     collection_name: COLLECTION_NAME,
   });
-  console.log('loadCollectionSync result', res.schema.fields);
+  console.log('loadCollectionSync result', res);
 
   // describe the collection
   res = await milvusClient.describeCollection({
     collection_name: COLLECTION_NAME,
   });
-  console.log('describeCollection result', res.schema.fields);
+  console.log('describeCollection result', res);
 
   // release the collection
   res = await milvusClient.releaseCollection({

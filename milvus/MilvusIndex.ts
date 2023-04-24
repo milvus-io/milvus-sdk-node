@@ -76,7 +76,7 @@ export class Index extends Data {
       this.grpcClient,
       'CreateIndex',
       params,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -112,7 +112,7 @@ export class Index extends Data {
       this.grpcClient,
       'DescribeIndex',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -148,7 +148,7 @@ export class Index extends Data {
       this.grpcClient,
       'GetIndexState',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -189,7 +189,7 @@ export class Index extends Data {
       this.grpcClient,
       'GetIndexBuildProgress',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -227,7 +227,7 @@ export class Index extends Data {
       this.grpcClient,
       'DropIndex',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }

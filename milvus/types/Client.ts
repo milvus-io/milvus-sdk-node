@@ -6,4 +6,5 @@ export interface MilvusClientConfig {
   username?: string;
   password?: string;
   channelOptions?: ChannelOptions;
+  timeout?: number | string;
 }
