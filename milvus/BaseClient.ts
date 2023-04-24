@@ -2,7 +2,12 @@ import path from 'path';
 import protobuf, { Root } from 'protobufjs';
 import { credentials, Client, ChannelOptions } from '@grpc/grpc-js';
 import { ERROR_REASONS, MilvusClientConfig, DEFAULT_CONNECT_TIMEOUT } from '.';
-import { getGRPCService, formatAddress, getAuthInterceptor } from '../utils';
+import {
+  getGRPCService,
+  formatAddress,
+  getAuthInterceptor,
+  parseTimeToken,
+} from '../utils';
 
 // path
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
@@ -17,7 +22,7 @@ export class BaseClient {
   // client
   grpcClient: Client;
   // grpc timeout in milliseconds, by default 10s
-  timeout: number;
+  timeout: string | number;
 
   /**
    * Connect to a Milvus gRPC client.
@@ -74,7 +79,10 @@ export class BaseClient {
     this.milvusProto = protobuf.loadSync(protoPath);
 
     // setup timeout
-    this.timeout = config.timeout || DEFAULT_CONNECT_TIMEOUT;
+    this.timeout =
+      typeof config.timeout === 'string'
+        ? parseTimeToken(config.timeout)
+        : config.timeout || DEFAULT_CONNECT_TIMEOUT;
 
     // options
     const options: ChannelOptions = {
