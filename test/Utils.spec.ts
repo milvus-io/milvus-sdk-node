@@ -231,7 +231,7 @@ describe(`Utils`, () => {
     };
     const target = 'target';
     const params = {};
-    const result = await promisify(obj, target, params);
+    const result = await promisify(obj, target, params, 0);
     expect(result).toEqual('result');
   });
 

@@ -53,7 +53,7 @@ export class Partition extends Index {
       this.grpcClient,
       'CreatePartition',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -90,7 +90,7 @@ export class Partition extends Index {
       this.grpcClient,
       'HasPartition',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -129,7 +129,7 @@ export class Partition extends Index {
       this.grpcClient,
       'ShowPartitions',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -170,7 +170,7 @@ export class Partition extends Index {
       this.grpcClient,
       'GetPartitionStatistics',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     promise.data = formatKeyValueData(promise.stats, ['row_count']);
     return promise;
@@ -212,7 +212,7 @@ export class Partition extends Index {
       this.grpcClient,
       'LoadPartitions',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -252,7 +252,7 @@ export class Partition extends Index {
       this.grpcClient,
       'ReleasePartitions',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -295,7 +295,7 @@ export class Partition extends Index {
       this.grpcClient,
       'DropPartition',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }

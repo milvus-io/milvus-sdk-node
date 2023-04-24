@@ -94,7 +94,12 @@ export class Collection extends BaseClient {
    */
   async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
     // Destructure the data object and set default values for consistency_level and description.
-    const { fields, collection_name, description, consistency_level = 'Bounded' } = data || {};
+    const {
+      fields,
+      collection_name,
+      description,
+      consistency_level = 'Bounded',
+    } = data || {};
 
     // Check if fields and collection_name are present, otherwise throw an error.
     if (!fields?.length || !collection_name) {
@@ -105,14 +110,18 @@ export class Collection extends BaseClient {
     checkCollectionFields(fields);
 
     // Get the CollectionSchema and FieldSchema from the schemaProto object.
-    const CollectionSchema = this.schemaProto.lookupType('milvus.proto.schema.CollectionSchema');
-    const FieldSchema = this.schemaProto.lookupType('milvus.proto.schema.FieldSchema');
+    const CollectionSchema = this.schemaProto.lookupType(
+      'milvus.proto.schema.CollectionSchema'
+    );
+    const FieldSchema = this.schemaProto.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
 
     // Create the payload object with the collection_name, description, and fields.
     const payload = {
       name: collection_name,
       description: description || '',
-      fields: fields.map((field) => {
+      fields: fields.map(field => {
         // Assign the typeParams property to the result of parseToKeyValue(type_params).
         const { type_params, ...rest } = assignTypeParams(field);
         return FieldSchema.create({
@@ -131,14 +140,20 @@ export class Collection extends BaseClient {
     const schemaBytes = CollectionSchema.encode(collectionParams).finish();
 
     // Get the consistency level value from the ConsistencyLevelEnum object.
-    const level = ConsistencyLevelEnum[consistency_level] ?? ConsistencyLevelEnum.Bounded;
+    const level =
+      ConsistencyLevelEnum[consistency_level] ?? ConsistencyLevelEnum.Bounded;
 
     // Call the promisify function to create the collection.
-    const promise = await promisify(this.grpcClient, 'CreateCollection', {
-      ...data,
-      schema: schemaBytes,
-      consistency_level: level,
-    }, data.timeout);
+    const promise = await promisify(
+      this.grpcClient,
+      'CreateCollection',
+      {
+        ...data,
+        schema: schemaBytes,
+        consistency_level: level,
+      },
+      data.timeout || this.timeout
+    );
 
     // Return the promise.
     return promise;
@@ -175,7 +190,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'HasCollection',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -214,7 +229,7 @@ export class Collection extends BaseClient {
         type: data ? data.type : ShowCollectionsType.All,
         collection_names: data?.collection_names || [],
       },
-      data?.timeout
+      data?.timeout || this.timeout
     );
     const result: CollectionData[] = [];
     promise.collection_names.forEach((name: string, index: number) => {
@@ -264,7 +279,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'DescribeCollection',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -303,7 +318,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'GetCollectionStatistics',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
 
     promise.data = formatKeyValueData(promise.stats, ['row_count']);
@@ -344,7 +359,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'LoadCollection',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -382,7 +397,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'LoadCollection',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
 
     if (promise.error_code !== ErrorCode.SUCCESS) {
@@ -441,7 +456,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'ReleaseCollection',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -479,7 +494,7 @@ export class Collection extends BaseClient {
         oldName: data.collection_name,
         newName: data.new_collection_name,
       },
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -514,7 +529,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'DropCollection',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -554,7 +569,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'CreateAlias',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -593,7 +608,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'DropAlias',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -633,7 +648,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'AlterAlias',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -670,7 +685,7 @@ export class Collection extends BaseClient {
       {
         collectionID: collectionInfo.collectionID,
       },
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }
@@ -708,7 +723,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'GetCompactionState',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }
@@ -746,7 +761,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'GetCompactionStateWithPlans',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }
@@ -799,7 +814,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'GetReplicas',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }
@@ -840,7 +855,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'GetLoadingProgress',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }
@@ -878,7 +893,7 @@ export class Collection extends BaseClient {
       this.grpcClient,
       'GetLoadState',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }

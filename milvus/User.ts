@@ -65,7 +65,7 @@ export class User extends Resource {
         username: data.username,
         password: encryptedPassword,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -115,7 +115,7 @@ export class User extends Resource {
         oldPassword: encryptedOldPwd,
         newPassword: encryptedNewPwd,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -153,7 +153,7 @@ export class User extends Resource {
       {
         username: data.username,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -183,7 +183,7 @@ export class User extends Resource {
       this.grpcClient,
       'ListCredUsers',
       {},
-      data?.timeout
+      data?.timeout || this.timeout
     );
     return promise;
   }
@@ -216,7 +216,7 @@ export class User extends Resource {
       {
         entity: { name: data.roleName },
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -249,7 +249,7 @@ export class User extends Resource {
       {
         role_name: data.roleName,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -285,7 +285,7 @@ export class User extends Resource {
         role_name: data.roleName,
         type: OperateUserRoleType.AddUserToRole,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -321,7 +321,7 @@ export class User extends Resource {
         role_name: data.roleName,
         type: OperateUserRoleType.RemoveUserFromRole,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -356,7 +356,7 @@ export class User extends Resource {
         role: { name: data.roleName },
         include_user_info: data.includeUserInfo || true,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
 
     return promise;
@@ -387,7 +387,7 @@ export class User extends Resource {
       this.grpcClient,
       'SelectRole',
       {},
-      data?.timeout
+      data?.timeout || this.timeout
     );
     return promise;
   }
@@ -422,7 +422,7 @@ export class User extends Resource {
         user: { name: data.username },
         include_role_info: data.includeRoleInfo || true,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
 
     return promise;
@@ -472,7 +472,7 @@ export class User extends Resource {
         },
         type: OperatePrivilegeType.Grant,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
 
     return promise;
@@ -522,7 +522,7 @@ export class User extends Resource {
         },
         type: OperatePrivilegeType.Revoke,
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
 
     return promise;
@@ -628,7 +628,7 @@ export class User extends Resource {
           },
         },
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
 
     return promise;
@@ -665,7 +665,7 @@ export class User extends Resource {
           role: { name: data.roleName },
         },
       },
-      data?.timeout
+      data.timeout || this.timeout
     );
 
     return promise;

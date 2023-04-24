@@ -65,11 +65,11 @@ export class MilvusClient extends User {
 
   // This method returns the version of the Milvus server.
   async getVersion(): Promise<GetVersionResponse> {
-    return await promisify(this.grpcClient, 'GetVersion', {});
+    return await promisify(this.grpcClient, 'GetVersion', {}, this.timeout);
   }
 
   // This method checks the health of the Milvus server.
   async checkHealth(): Promise<CheckHealthResponse> {
-    return await promisify(this.grpcClient, 'CheckHealth', {});
+    return await promisify(this.grpcClient, 'CheckHealth', {}, this.timeout);
   }
 }

@@ -176,7 +176,9 @@ export class Data extends Collection {
           dataKey = 'string_data';
           break;
         default:
-          throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE} "${v.type}."`);
+          throw new Error(
+            `${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE} "${v.type}."`
+          );
       }
       return {
         type,
@@ -206,7 +208,7 @@ export class Data extends Collection {
       this.grpcClient,
       'Insert',
       params,
-      data.timeout
+      data.timeout || this.timeout
     );
 
     return promise;
@@ -248,7 +250,7 @@ export class Data extends Collection {
       this.grpcClient,
       'Delete',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return promise;
   }
@@ -375,7 +377,7 @@ export class Data extends Collection {
         placeholder_group: placeholderGroupBytes,
         search_params: parseToKeyValue(data.search_params),
       },
-      data.timeout
+      data.timeout || this.timeout
     );
 
     const results: any[] = [];
@@ -469,7 +471,12 @@ export class Data extends Collection {
     ) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
-    const res = await promisify(this.grpcClient, 'Flush', data, data.timeout);
+    const res = await promisify(
+      this.grpcClient,
+      'Flush',
+      data,
+      data.timeout || this.timeout
+    );
     return res;
   }
 
@@ -506,7 +513,12 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     // copy flushed collection names
-    const res = await promisify(this.grpcClient, 'Flush', data, data.timeout);
+    const res = await promisify(
+      this.grpcClient,
+      'Flush',
+      data,
+      data.timeout || this.timeout
+    );
     // After flush will return collection segment ids, need use GetPersistentSegmentInfo to check segment flush status.
     const segIDs = Object.keys(res.coll_segIDs)
       .map(v => res.coll_segIDs[v].data)
@@ -574,7 +586,7 @@ export class Data extends Collection {
         ...data,
         query_params: parseToKeyValue({ ...limits, ...offset }),
       },
-      data.timeout
+      data.timeout || this.timeout
     );
 
     const results: { [x: string]: any }[] = [];
@@ -663,7 +675,7 @@ export class Data extends Collection {
       {
         request: JSON.stringify(data.request),
       },
-      data.timeout
+      data.timeout || this.timeout
     );
 
     return {
@@ -706,7 +718,7 @@ export class Data extends Collection {
       this.grpcClient,
       'GetFlushState',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }
@@ -746,7 +758,7 @@ export class Data extends Collection {
       this.grpcClient,
       'LoadBalance',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }
@@ -786,7 +798,7 @@ export class Data extends Collection {
       this.grpcClient,
       'GetQuerySegmentInfo',
       data,
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }
@@ -833,7 +845,7 @@ export class Data extends Collection {
         ...data,
         options: data.options || [],
       },
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }
@@ -881,7 +893,7 @@ export class Data extends Collection {
         ...data,
         limit: data.limit || 0,
       },
-      data.timeout
+      data.timeout || this.timeout
     );
     return res;
   }

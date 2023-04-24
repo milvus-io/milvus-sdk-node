@@ -13,12 +13,10 @@ export function promisify(
   obj: any,
   target: string,
   params: any,
-  timeout?: number
+  timeout: number
 ): Promise<any> {
   // Calculate the deadline for the function call
-  const deadline = timeout
-    ? new Date(Date.now() + timeout)
-    : new Date(Date.now() + DEFAULT_CONNECT_TIMEOUT);
+  const deadline = new Date(Date.now() + timeout);
 
   // Create a new Promise that wraps the target function call
   const res = new Promise((resolve, reject) => {
