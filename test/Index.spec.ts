@@ -64,10 +64,9 @@ describe(`Index API`, () => {
       collection_name: COL_FLAT,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
-      extra_params: {
-        index_type: 'FLAT',
-        metric_type: 'L2',
-      },
+      index_type: 'FLAT',
+      metric_type: 'L2',
+      params: { nlist: 1024 },
     });
     // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);

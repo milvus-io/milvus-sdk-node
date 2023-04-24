@@ -65,3 +65,7 @@ export interface TimeStampArray {
   created_timestamps: string[];
   created_utc_timestamps: string[];
 }
+
+export interface keyValueObj {
+  [key: string]: string | number;
+}
