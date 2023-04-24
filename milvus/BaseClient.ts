@@ -22,7 +22,7 @@ export class BaseClient {
   // client
   grpcClient: Client;
   // grpc timeout in milliseconds, by default 10s
-  timeout: string | number;
+  timeout: number;
 
   /**
    * Connect to a Milvus gRPC client.
