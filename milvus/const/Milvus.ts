@@ -139,6 +139,8 @@ export enum MetricType {
   L2 = 'L2',
   // IP inner product
   IP = 'IP',
+  // support cosine 2.3
+  // COSINE = 'COSINE',
   // HAMMING hamming distance
   HAMMING = 'HAMMING',
   // JACCARD jaccard distance
@@ -162,6 +164,8 @@ export enum IndexType {
   BIN_IVF_FLAT = 'BIN_IVF_FLAT',
   DISKANN = 'DISKANN',
   AUTOINDEX = 'AUTOINDEX',
+  // GPU_IVF_FLAT = 'GPU_IVF_FLAT', // 2.3
+  // GPU_IVF_PQ = 'GPU_IVF_PQ' // 2.3
 }
 
 export enum MsgType {

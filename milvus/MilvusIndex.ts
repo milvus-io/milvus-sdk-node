@@ -11,6 +11,7 @@ import {
   DescribeIndexResponse,
   GetIndexStateResponse,
   GetIndexBuildProgressResponse,
+  CreateIndexSimpleReq,
 } from '.';
 
 export class Index extends Data {
@@ -39,23 +40,38 @@ export class Index extends Data {
    *   collection_name: 'my_collection',
    *   field_name: 'vector_01',
    *   index_name: 'my_index',
-   *   extra_params: {
-   *     index_type: 'IVF_FLAT',
-   *     metric_type: 'IP',
-   *     params: JSON.stringify({ nlist: 10 }),
-   *   },
+   *   index_type: 'IVF_FLAT',
+   *   metric_type: 'IP',
+   *   params: { nlist: 10 },
    * };
    * const res = await milvusClient.createIndex(createIndexReq);
    * console.log(res);
    * ```
    */
-  async createIndex(data: CreateIndexReq): Promise<ResStatus> {
+  async createIndex(
+    data: CreateIndexReq | CreateIndexSimpleReq
+  ): Promise<ResStatus> {
     checkCollectionName(data);
 
+    // Set the extra_params object based on the input data
+    const extra_params = (data as CreateIndexReq).extra_params || {
+      index_type: (data as CreateIndexSimpleReq).index_type,
+      metric_type: (data as CreateIndexSimpleReq).metric_type,
+    };
+
+    // If index_params is present, add it to the extra_params object
+    if ((data as CreateIndexSimpleReq).params) {
+      extra_params.params = JSON.stringify(
+        (data as CreateIndexSimpleReq).params
+      );
+    }
+
+    // Combine the input data and extra_params into a single object
     const params = {
       ...data,
-      extra_params: parseToKeyValue(data.extra_params),
+      extra_params: parseToKeyValue(extra_params),
     };
+    // Call the 'CreateIndex' gRPC method and return the result
     const promise = await promisify(
       this.grpcClient,
       'CreateIndex',
