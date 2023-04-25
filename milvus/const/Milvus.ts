@@ -1,5 +1,7 @@
 export const DEFAULT_MILVUS_PORT = 19530; // default milvus port
 export const DEFAULT_CONNECT_TIMEOUT = 10 * 1000; // 10s
+export const DEFAULT_TOPK = 10; // default topk
+export const DEFAULT_METRIC_TYPE = 'L2';
 
 enum ErrorCode {
   Success = 0,

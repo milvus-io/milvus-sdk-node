@@ -1,4 +1,10 @@
-import { MilvusClient, DataType, ErrorCode, ERROR_REASONS } from '../milvus';
+import {
+  MilvusClient,
+  DataType,
+  ErrorCode,
+  ERROR_REASONS,
+  SEARCH_ERROR_REASONS,
+} from '../milvus';
 import { IP } from '../const';
 import { generateInsertData } from '../utils/test';
 import {
@@ -29,11 +35,9 @@ describe(`Data.API`, () => {
     await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
-      extra_params: {
-        index_type: 'IVF_FLAT',
-        metric_type: 'L2',
-        params: JSON.stringify({ nlist: 1024 }),
-      },
+      index_type: 'IVF_FLAT',
+      metric_type: 'L2',
+      params: { nlist: 1024 },
     });
     await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
@@ -107,20 +111,42 @@ describe(`Data.API`, () => {
     try {
       await milvusClient.search({ collection_name: 'asd' } as any);
     } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.SEARCH_PARAMS_IS_REQUIRED);
+      expect(error.message).toEqual(SEARCH_ERROR_REASONS.VECTORS_REQUIRED);
     }
   });
 
+  it(`Expr simple Search without params and output fields should success`, async () => {
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: '',
+      vector: [1, 2, 3, 4],
+      limit: 4,
+    });
 
-  it(`Expr simple Search should success`, async () => {
+    console.log('----search ----', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Expr simple Search with params should success`, async () => {
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: '',
+      vector: [1, 2, 3, 4],
+      limit: 4,
+      params: { nprobe: 1024 },
+    });
+
+    // console.log('----search ----', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Expr simple Search with outputfields should success`, async () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       filter: '',
       vector: [1, 2, 3, 4],
       limit: 4,
-      offset: 0,
-      params: { nprobe: 1024 },
       output_fields: ['age'],
     });
 
@@ -168,54 +194,6 @@ describe(`Data.API`, () => {
 
     // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
-  it(`Expr Search should throw SEARCH_NOT_FIND_VECTOR_FIELD`, async () => {
-    try {
-      await milvusClient.search({
-        collection_name: COLLECTION_NAME,
-        // partition_names: [],
-        expr: '',
-        vectors: [[1, 2, 3, 4]],
-        search_params: {
-          anns_field: 'not exist',
-          topk: '4',
-          metric_type: 'L2',
-          params: JSON.stringify({ nprobe: 1024 }),
-          round_decimal: -1,
-        },
-        output_fields: ['age'],
-        vector_type: DataType.FloatVector,
-        nq: 1,
-      });
-      expect('a').toEqual('b');
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.SEARCH_NOT_FIND_VECTOR_FIELD);
-    }
-  });
-
-  it(`Expr Search should throw SEARCH_MISS_VECTOR_TYPE`, async () => {
-    try {
-      await milvusClient.search({
-        collection_name: COLLECTION_NAME,
-        // partition_names: [],
-        expr: '',
-        vectors: [[1, 2, 3, 4]],
-        search_params: {
-          anns_field: 'not exist',
-          topk: '4',
-          metric_type: 'L2',
-          params: JSON.stringify({ nprobe: 1024 }),
-          round_decimal: -1,
-        },
-        output_fields: ['age'],
-        vector_type: DataType.Bool as DataType.BinaryVector,
-        nq: 1,
-      });
-      expect('a').toEqual('b');
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.SEARCH_MISS_VECTOR_TYPE);
-    }
   });
 
   it(`Expr Search should throw SEARCH_DIM_NOT_MATCH`, async () => {

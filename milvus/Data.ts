@@ -5,6 +5,7 @@ import {
   formatNumberPrecision,
   parseToKeyValue,
   checkCollectionName,
+  checkSearchParams,
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
 } from '../utils';
@@ -38,6 +39,8 @@ import {
   SearchReq,
   SearchRes,
   SearchSimpleReq,
+  DEFAULT_TOPK,
+  DEFAULT_METRIC_TYPE,
 } from '.';
 import { Collection } from './Collection';
 
@@ -271,15 +274,12 @@ export class Data extends Collection {
    *  | vector_type | enum | Binary field -> 100, Float field -> 101 |
    *  | travel_timestamp | number |  We can get timestamp after insert success. Use this timestamp we can time travel in vector search.|
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
    *
    * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status | { error_code: number, reason: string } |
    *  | results | {score:number,id:string}[]; |
-   *
-   *
    *
    * #### Example
    *
@@ -299,77 +299,83 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  async search(data: SearchReq | SearchSimpleReq) {
-    checkCollectionName(data);
+  async search(data: SearchReq | SearchSimpleReq): Promise<SearchResults> {
+    // params check
+    checkSearchParams(data);
 
     // get collection info
     const collectionInfo = await this.describeCollection({
       collection_name: data.collection_name,
     });
 
-    // get vector field
-    const vField = collectionInfo.schema.fields.find(v => {
-      const vType = DataTypeMap[v.data_type.toLowerCase()];
-      return vType === DataType.FloatVector || vType === DataType.BinaryVector;
-    });
+    // get infomation from collection info
+    let vectorType: DataType;
+    let defaultOutputFields = [];
+    let dim: number = 0;
+    let anns_field: string;
+    for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
+      const f = collectionInfo.schema.fields[i];
+      const type = DataTypeMap[f.data_type.toLowerCase()];
 
-    // get vector type
-    const vectorType = DataTypeMap[vField!.data_type.toLowerCase()];
+      // filter vector field
+      if (type === DataType.FloatVector || type === DataType.BinaryVector) {
+        // get dimension
+        dim = Number(findKeyValue(f.type_params, 'dim') as number);
+        // correct dimension
+        dim = type! === DataType.BinaryVector ? dim / 8 : dim;
+        // anns field
+        anns_field = f.name;
+        // vector type
+        vectorType = type;
+      } else {
+        // save field name
+        defaultOutputFields.push(f.name);
+      }
+    }
 
     // create search params
     const search_params = (data as SearchReq).search_params || {
-      anns_field: vField!.name,
-      topk: (data as SearchSimpleReq).limit,
+      anns_field: anns_field!,
+      topk: (data as SearchSimpleReq).limit || DEFAULT_TOPK,
       offset: (data as SearchSimpleReq).offset || 0,
-      metric_type: 'L2',
-      params: (data as SearchSimpleReq).params,
+      metric_type: (data as SearchSimpleReq).metric_type || DEFAULT_METRIC_TYPE,
+      params: JSON.stringify((data as SearchSimpleReq).params || {}),
     };
 
+    // create search vectors
     const searchVectors = (data as SearchReq).vectors || [
       (data as SearchSimpleReq).vector,
     ];
 
-    // // anns_field is the vector field column user want to compare.
+    // check dimensions
+    if (!searchVectors[0] || searchVectors[0].length !== dim) {
+      throw new Error(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
+    }
 
-    // const dim = findKeyValue(targetField.type_params, 'dim');
-    // const vectorType = DataTypeMap[targetField.data_type.toLowerCase()];
-    // const dimension =
-    //   vectorType === DataType.BinaryVector ? Number(dim) / 8 : Number(dim);
+    // round decimal
+    const round_decimal =
+      (data as SearchReq).search_params?.round_decimal ??
+      ((data as SearchSimpleReq).params?.round_decimal as number);
 
-    // if (!data.vectors[0] || data.vectors[0].length !== dimension) {
-    //   throw new Error(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
-    // }
-
-    // const round_decimal = data.search_params.round_decimal;
-    // if (
-    //   round_decimal !== undefined &&
-    //   (!Number.isInteger(round_decimal) ||
-    //     round_decimal < -1 ||
-    //     round_decimal > 6)
-    // ) {
-    //   throw new Error(ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
-    // }
-
+    // create placeholder_group
     const PlaceholderGroup = this.milvusProto.lookupType(
       'milvus.proto.common.PlaceholderGroup'
     );
     // tag $0 is hard code in milvus, when dsltype is expr
-    const placeholderGroupParams = PlaceholderGroup.create({
-      placeholders: [
-        {
-          tag: '$0',
-          type: vectorType,
-          values: searchVectors.map(v =>
-            vectorType === DataType.BinaryVector
-              ? parseBinaryVectorToBytes(v)
-              : parseFloatVectorToBytes(v)
-          ),
-        },
-      ],
-    });
-
     const placeholderGroupBytes = PlaceholderGroup.encode(
-      placeholderGroupParams
+      PlaceholderGroup.create({
+        placeholders: [
+          {
+            tag: '$0',
+            type: vectorType!,
+            values: searchVectors.map(v =>
+              vectorType === DataType.BinaryVector
+                ? parseBinaryVectorToBytes(v)
+                : parseFloatVectorToBytes(v)
+            ),
+          },
+        ],
+      })
     ).finish();
 
     const promise: SearchRes = await promisify(
@@ -378,7 +384,7 @@ export class Data extends Collection {
       {
         collection_name: data.collection_name,
         partition_names: data.partition_names,
-        output_fields: data.output_fields,
+        output_fields: data.output_fields || defaultOutputFields,
         nq: (data as SearchReq).nq || searchVectors.length,
         dsl: (data as SearchReq).expr || (data as SearchSimpleReq).filter || '',
         dsl_type: DslType.BoolExprV1,

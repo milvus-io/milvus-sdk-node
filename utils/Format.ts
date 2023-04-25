@@ -3,7 +3,6 @@ import {
   ERROR_REASONS,
   DEFAULT_MILVUS_PORT,
   KeyValuePair,
-  TypeParamKey,
   FieldType,
 } from '../milvus';
 

@@ -17,9 +17,7 @@ export enum ERROR_REASONS {
   INSERT_CHECK_WRONG_DIM = 'Insert fail: the length of the binary vector should be (dimension / 8).',
   INSERT_CHECK_WRONG_DATA_TYPE = 'The value of the `data_type` property is not supported:',
 
-  SEARCH_MISS_VECTOR_TYPE = 'The `vector_type` should be DataType.FloatVector or DataType.BinaryVector.',
-  SEARCH_NOT_FIND_VECTOR_FIELD = 'The `anns_field` was not matched in this collection.',
-  SEARCH_DIM_NOT_MATCH = 'The vector dimension does not match your anns_field dimension.',
+  SEARCH_DIM_NOT_MATCH = 'The searching vector dimension does not match your vector field dimension.',
   SEARCH_PARAMS_IS_REQUIRED = 'The `search_params` must contain the `anns_field`, `metric_type`, `topk` and `params`.',
   SEARCH_ROUND_DECIMAL_NOT_VALID = 'The `round_decimal` should be an integer greater than -2 and less than 7',
 
@@ -35,4 +33,24 @@ export enum ERROR_REASONS {
   TIMESTAMP_PARAM_CHECK = 'The type of the `hybridts` property should be string (only contains number) or bigint.',
   DATE_TYPE_CHECK = 'The type of the `datetime` property should be Date.',
   IMPORT_FILE_CHECK = 'The `files` property is missing.',
+}
+
+export enum SEARCH_ERROR_REASONS {
+  COLLECTION_NAME_REQUIRED = 'Collection name is required',
+  VECTORS_REQUIRED = 'vectors or vector is required and should be a non-empty array',
+  PARTITION_NAMES_ARRAY = 'partition_names should be an array',
+  EXPR_STRING = 'expr should be a string',
+  SEARCH_PARAMS_OBJECT = 'search_params is required and should be an object',
+  ANNS_FIELD_STRING = 'anns_field is required and should be a string',
+  TOPK_STRING = 'topk is required and should be a string',
+  METRIC_TYPE_STRING = 'metric_type is required and should be a string',
+  PARAMS_STRING = 'params is required and should be a string',
+  ROUND_DECIMAL_NUMBER = 'round_decimal should be a number',
+  VECTOR_TYPE_REQUIRED = 'vector_type is required and should be either BinaryVector or FloatVector',
+  NQ_NUMBER = 'nq should be a number',
+  LIMIT_NUMBER = 'limit should be a number',
+  OFFSET_NUMBER = 'offset should be a number',
+  FILTER_STRING = 'filter should be a string',
+  PARAMS_OBJECT = 'params should be an object',
+  METRIC_TYPE_STRING_SIMPLE_REQ = 'metric_type should be a string',
 }

@@ -168,12 +168,13 @@ export interface SearchParam {
 export interface SearchSimpleReq extends GrpcTimeOut {
   collection_name: string;
   vector: number[];
-  output_fields: string[];
-  limit: number;
+  output_fields?: string[];
+  limit?: number;
   offset?: number;
   filter?: string;
   partition_names?: string[];
   params?: keyValueObj;
+  metric_type?: string;
 }
 
 export interface SearchReq extends GrpcTimeOut {
