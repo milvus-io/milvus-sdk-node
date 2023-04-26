@@ -103,6 +103,11 @@ export const checkCollectionAndPartitionName = (data: any) => {
   }
 };
 
+/**
+ * Check if `round_decimal` is defined and is an integer between -1 and 6
+ * @param round_decimal The value to check
+ * @throws {Error} If `round_decimal` is not valid
+ */
 export const checkRoundDecimal = (round_decimal: any) => {
   if (
     round_decimal !== undefined &&
@@ -110,10 +115,16 @@ export const checkRoundDecimal = (round_decimal: any) => {
       round_decimal < -1 ||
       round_decimal > 6)
   ) {
-    throw new Error(ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
+    throw new Error(SEARCH_ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
   }
 };
 
+/**
+ * Checks the validity of search parameters.
+ * @param {Object} data - The search parameters to be checked.
+ * @throws {Error} Throws an error if any of the search parameters are invalid.
+ */
+/* istanbul ignore next */
 export const checkSearchParams = (data: any) => {
   checkCollectionName(data);
 

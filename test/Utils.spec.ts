@@ -15,6 +15,7 @@ import {
   assignTypeParams,
   checkCollectionFields,
   parseTimeToken,
+  checkRoundDecimal,
 } from '../utils';
 import { ERROR_REASONS, FieldType, DataType } from '../milvus';
 import { generateInsertData } from '../utils/test';
@@ -552,5 +553,21 @@ describe(`Utils`, () => {
     expect(() => parseTimeToken('')).toThrow('Invalid time token: ');
     expect(() => parseTimeToken('1')).toThrow('Invalid time token: 1');
     expect(() => parseTimeToken('1x')).toThrow('Invalid time token: 1x');
+  });
+
+  it('should not throw an error when round_decimal is undefined', () => {
+    expect(() => checkRoundDecimal(undefined)).not.toThrow();
+  });
+
+  it('should not throw an error when round_decimal is an integer between -1 and 6', () => {
+    expect(() => checkRoundDecimal(0)).not.toThrow();
+    expect(() => checkRoundDecimal(-1)).not.toThrow();
+    expect(() => checkRoundDecimal(6)).not.toThrow();
+  });
+
+  it('should throw an error when round_decimal is not an integer between -1 and 6', () => {
+    expect(() => checkRoundDecimal(1.5)).toThrow();
+    expect(() => checkRoundDecimal(-2)).toThrow();
+    expect(() => checkRoundDecimal(7)).toThrow();
   });
 });

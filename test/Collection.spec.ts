@@ -291,7 +291,7 @@ describe(`Collection API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
-    expect(res.schema.fields.length).toEqual(3);
+    expect(res.schema.fields.length).toEqual(4);
     expect(res.schema.fields[0].name).toEqual(VECTOR_FIELD_NAME);
     expect(res.schema.fields[1].name).toEqual('age');
   });

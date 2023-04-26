@@ -41,6 +41,7 @@ import {
   SearchSimpleReq,
   DEFAULT_TOPK,
   DEFAULT_METRIC_TYPE,
+  SEARCH_ERROR_REASONS,
 } from '.';
 import { Collection } from './Collection';
 
@@ -321,7 +322,7 @@ export class Data extends Collection {
       if (type === DataType.FloatVector || type === DataType.BinaryVector) {
         // get dimension
         dim = Number(findKeyValue(f.type_params, 'dim') as number);
-        // correct dimension
+        // correcting dimension if necessary for binary vectors
         dim = type! === DataType.BinaryVector ? dim / 8 : dim;
         // anns field
         anns_field = f.name;
@@ -349,10 +350,15 @@ export class Data extends Collection {
 
     // check dimensions
     if (!searchVectors[0] || searchVectors[0].length !== dim) {
-      throw new Error(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
+      throw new Error(SEARCH_ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
     }
 
-    // round decimal
+    /**
+     *  It will decide the score precision.
+     *  If round_decimal is 3, need return like 3.142
+     *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
+     *  So the score need to slice by round_decimal
+     */
     const round_decimal =
       (data as SearchReq).search_params?.round_decimal ??
       ((data as SearchSimpleReq).params?.round_decimal as number);
@@ -395,19 +401,14 @@ export class Data extends Collection {
     );
 
     const results: any[] = [];
-    /**
-     *  It will decide the score precision.
-     *  If round_decimal is 3, need return like 3.142
-     *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
-     *  So the score need to slice by round_decimal
-     */
+
     if (promise.results) {
       /**
        *  fields_data:  what you pass in output_fields, only support non vector fields.
        *  ids: vector id array
        *  scores: distance array
        *  topks: if you use mutiple query to search , will return mutiple topk.
-       * */
+       */
       const { topks, scores, fields_data, ids } = promise.results;
       const fieldsData = fields_data.map((item, i) => {
         // if search result is empty, will cause value is undefined.
@@ -421,10 +422,10 @@ export class Data extends Collection {
       // verctor id support int / str id.
       const idData = ids ? ids[ids.id_field]?.data : undefined;
       /**
-       *  milvus support mutilple querys to search
-       *  milvus will return all columns data
-       *  so we need to format value to row data for easy to use
-       *  topk is the key we can splice data for every search result
+       * This code block formats the search results returned by Milvus into row data for easier use.
+       * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
+       * The `topk` variable is the key we use to splice data for every search result.
+       * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
        */
       topks.forEach((v, index) => {
         const topk = Number(v);

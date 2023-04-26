@@ -17,10 +17,6 @@ export enum ERROR_REASONS {
   INSERT_CHECK_WRONG_DIM = 'Insert fail: the length of the binary vector should be (dimension / 8).',
   INSERT_CHECK_WRONG_DATA_TYPE = 'The value of the `data_type` property is not supported:',
 
-  SEARCH_DIM_NOT_MATCH = 'The searching vector dimension does not match your vector field dimension.',
-  SEARCH_PARAMS_IS_REQUIRED = 'The `search_params` must contain the `anns_field`, `metric_type`, `topk` and `params`.',
-  SEARCH_ROUND_DECIMAL_NOT_VALID = 'The `round_decimal` should be an integer greater than -2 and less than 7',
-
   DELETE_PARAMS_CHECK = 'The `collection_name` or the `expr` property is missing.',
   GET_METRIC_CHECK_PARAMS = 'The `metric_type` property is missing.',
   GET_FLUSH_STATE_CHECK_PARAMS = 'The type of the `segmentIDs` property should be an array.',
@@ -36,6 +32,9 @@ export enum ERROR_REASONS {
 }
 
 export enum SEARCH_ERROR_REASONS {
+  SEARCH_DIM_NOT_MATCH = 'The searching vector dimension does not match your vector field dimension.',
+  SEARCH_PARAMS_IS_REQUIRED = 'The `search_params` must contain the `anns_field`, `metric_type`, `topk` and `params`.',
+  SEARCH_ROUND_DECIMAL_NOT_VALID = 'The `round_decimal` should be an integer greater than -2 and less than 7',
   COLLECTION_NAME_REQUIRED = 'Collection name is required',
   VECTORS_REQUIRED = 'vectors or vector is required and should be a non-empty array',
   PARTITION_NAMES_ARRAY = 'partition_names should be an array',

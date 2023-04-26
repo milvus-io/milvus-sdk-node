@@ -4,6 +4,7 @@ import {
   ErrorCode,
   ERROR_REASONS,
   SEARCH_ERROR_REASONS,
+  DEFAULT_TOPK
 } from '../milvus';
 import { IP } from '../const';
 import { generateInsertData } from '../utils/test';
@@ -99,7 +100,7 @@ describe(`Data.API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Expr Search should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
+  it(`Exec search should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
       await milvusClient.search({} as any);
     } catch (error) {
@@ -107,7 +108,7 @@ describe(`Data.API`, () => {
     }
   });
 
-  it(`Expr Search should throw SEARCH_PARAMS_IS_REQUIRED`, async () => {
+  it(`Exec search should throw SEARCH_PARAMS_IS_REQUIRED`, async () => {
     try {
       await milvusClient.search({ collection_name: 'asd' } as any);
     } catch (error) {
@@ -115,32 +116,78 @@ describe(`Data.API`, () => {
     }
   });
 
-  it(`Expr simple Search without params and output fields should success`, async () => {
+  it(`Exec simple search without params and output fields should success`, async () => {
+    const limit = 4;
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
       vector: [1, 2, 3, 4],
-      limit: 4,
-    });
-
-    console.log('----search ----', res);
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
-  it(`Expr simple Search with params should success`, async () => {
-    const res = await milvusClient.search({
-      collection_name: COLLECTION_NAME,
-      filter: '',
-      vector: [1, 2, 3, 4],
-      limit: 4,
-      params: { nprobe: 1024 },
+      limit: limit,
     });
 
     // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results.length).toEqual(limit);
   });
 
-  it(`Expr simple Search with outputfields should success`, async () => {
+  it(`Exec simple search without params and output fields and limit should success`, async () => {
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: '',
+      vector: [1, 2, 3, 4],
+    });
+
+    // console.log('----search ----', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results.length).toEqual(DEFAULT_TOPK);
+  });
+
+  it(`Exec simple search with params should success`, async () => {
+    const limit = 8;
+    const offset = 2;
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: '',
+      vector: [1, 2, 3, 4],
+      limit: limit,
+      params: { nprobe: 1024 },
+    });
+
+    // console.log('----search without ----', res);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results.length).toEqual(limit);
+
+    const res2 = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: '',
+      vector: [1, 2, 3, 4],
+      limit: limit,
+      offset: 2,
+      params: { nprobe: 1024 },
+    });
+
+    // console.log(res.results, res2.results)
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.results[0].id).toEqual(res.results[offset].id);
+  });
+
+  it(`Exec simple search with filter should success`, async () => {
+    const limit = 8;
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: 'height < 10000',
+      vector: [1, 2, 3, 4],
+      limit: limit,
+      params: { nprobe: 1024 },
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    res.results.forEach(r => {
+      expect(Number(r.height)).toBeLessThan(10000);
+    });
+  });
+
+  it(`Exec simple search with outputfields should success`, async () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
@@ -152,9 +199,14 @@ describe(`Data.API`, () => {
 
     // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(
+      res.results.forEach(r => {
+        expect(Object.keys(r).length).toEqual(3); // id, score, age
+      })
+    );
   });
 
-  it(`Expr Search should success`, async () => {
+  it(`Exec complex search should success`, async () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
@@ -215,7 +267,7 @@ describe(`Data.API`, () => {
         nq: 1,
       });
     } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
+      expect(error.message).toEqual(SEARCH_ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
     }
   });
 
@@ -237,7 +289,9 @@ describe(`Data.API`, () => {
         nq: 1,
       });
     } catch (err) {
-      expect(err.message).toEqual(ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
+      expect(err.message).toEqual(
+        SEARCH_ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID
+      );
     }
   });
 
