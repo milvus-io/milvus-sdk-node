@@ -30,7 +30,7 @@ describe(`Data.API`, () => {
 
     await milvusClient.insert({
       collection_name: COLLECTION_NAME,
-      fields_data: generateInsertData(createCollectionParams.fields),
+      fields_data: generateInsertData(createCollectionParams.fields, 150),
     });
 
     await milvusClient.createIndex({
