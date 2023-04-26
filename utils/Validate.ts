@@ -1,9 +1,4 @@
-import {
-  ERROR_REASONS,
-  FieldType,
-  DataType,
-  SEARCH_ERROR_REASONS,
-} from '../milvus';
+import { ERROR_REASONS, FieldType, DataType } from '../milvus';
 
 /**
  * when create collection, field must contain 2 Fields.
@@ -104,115 +99,14 @@ export const checkCollectionAndPartitionName = (data: any) => {
 };
 
 /**
- * Check if `round_decimal` is defined and is an integer between -1 and 6
- * @param round_decimal The value to check
- * @throws {Error} If `round_decimal` is not valid
- */
-export const checkRoundDecimal = (round_decimal: any) => {
-  if (
-    round_decimal !== undefined &&
-    (!Number.isInteger(round_decimal) ||
-      round_decimal < -1 ||
-      round_decimal > 6)
-  ) {
-    throw new Error(SEARCH_ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID);
-  }
-};
-
-/**
  * Checks the validity of search parameters.
  * @param {Object} data - The search parameters to be checked.
  * @throws {Error} Throws an error if any of the search parameters are invalid.
  */
-/* istanbul ignore next */
 export const checkSearchParams = (data: any) => {
   checkCollectionName(data);
 
   if (!data.vectors && !data.vector) {
-    throw new Error(SEARCH_ERROR_REASONS.VECTORS_REQUIRED);
-  }
-
-  if (data.partition_names && !Array.isArray(data.partition_names)) {
-    throw new Error(SEARCH_ERROR_REASONS.PARTITION_NAMES_ARRAY);
-  }
-
-  if (data.vectors) {
-    // SearchReq
-    if (data.expr && typeof data.expr !== 'string') {
-      throw new Error(SEARCH_ERROR_REASONS.EXPR_STRING);
-    }
-    if (!data.search_params || typeof data.search_params !== 'object') {
-      throw new Error(SEARCH_ERROR_REASONS.SEARCH_PARAMS_OBJECT);
-    }
-
-    const { anns_field, topk, metric_type, params, round_decimal } =
-      data.search_params;
-
-    if (!anns_field || typeof anns_field !== 'string') {
-      throw new Error(SEARCH_ERROR_REASONS.ANNS_FIELD_STRING);
-    }
-
-    if (!topk || typeof topk !== 'string') {
-      throw new Error(SEARCH_ERROR_REASONS.TOPK_STRING);
-    }
-
-    if (!metric_type || typeof metric_type !== 'string') {
-      throw new Error(SEARCH_ERROR_REASONS.METRIC_TYPE_STRING);
-    }
-
-    if (!params || typeof params !== 'string') {
-      throw new Error(SEARCH_ERROR_REASONS.PARAMS_STRING);
-    }
-
-    if (round_decimal && typeof round_decimal !== 'number') {
-      throw new Error(SEARCH_ERROR_REASONS.ROUND_DECIMAL_NUMBER);
-    }
-
-    if (
-      !data.vector_type ||
-      (data.vector_type !== DataType.BinaryVector &&
-        data.vector_type !== DataType.FloatVector)
-    ) {
-      throw new Error(SEARCH_ERROR_REASONS.VECTOR_TYPE_REQUIRED);
-    }
-
-    if (data.nq && typeof data.nq !== 'number') {
-      throw new Error(SEARCH_ERROR_REASONS.NQ_NUMBER);
-    }
-
-    checkRoundDecimal(round_decimal);
-  } else {
-    // SearchSimpleReq
-
-    if (data.limit && typeof data.limit !== 'number') {
-      throw new Error(SEARCH_ERROR_REASONS.LIMIT_NUMBER);
-    }
-
-    if (data.offset && typeof data.offset !== 'number') {
-      throw new Error(SEARCH_ERROR_REASONS.OFFSET_NUMBER);
-    }
-
-    if (data.filter && typeof data.filter !== 'string') {
-      throw new Error(SEARCH_ERROR_REASONS.FILTER_STRING);
-    }
-    if (data.params && typeof data.params !== 'object') {
-      throw new Error(SEARCH_ERROR_REASONS.PARAMS_OBJECT);
-    }
-
-    if (data.metric_type && typeof data.metric_type !== 'string') {
-      throw new Error(SEARCH_ERROR_REASONS.METRIC_TYPE_STRING);
-    }
-
-    if (
-      data.params &&
-      data.params.round_decimal &&
-      typeof data.params.round_decimal !== 'number'
-    ) {
-      throw new Error(SEARCH_ERROR_REASONS.ROUND_DECIMAL_NUMBER);
-    }
-
-    if (data.params) {
-      checkRoundDecimal(data.params.round_decimal);
-    }
+    throw new Error(ERROR_REASONS.VECTORS_OR_VECTOR_IS_MISSING);
   }
 };

@@ -41,7 +41,6 @@ import {
   SearchSimpleReq,
   DEFAULT_TOPK,
   DEFAULT_METRIC_TYPE,
-  SEARCH_ERROR_REASONS,
 } from '.';
 import { Collection } from './Collection';
 
@@ -267,14 +266,14 @@ export class Data extends Collection {
    *  | Property | Type | Description |
    *  | :--- | :-- | :-- |
    *  | collection_name | String | Collection name |
+   *  | vectors or vector | Number[][] or Number[] | Original vector to search with |
    *  | partition_names(optional)| String[] | Array of partition names |
-   *  | expr(optional) | String | Scalar field filter expression |
-   *  | search_params | Object | anns_field: vector field name <br/> topk: search result counts <br/> [metric_type](https://milvus.io/docs/v2.0.0/metric.md#floating#Similarity-Metrics) <br/>params: search params |
-   *  | vectors | Number[][] | Original vector to search with |
-   *  | output_fields(optional) | String[] |  Support scalar field |
-   *  | vector_type | enum | Binary field -> 100, Float field -> 101 |
-   *  | travel_timestamp | number |  We can get timestamp after insert success. Use this timestamp we can time travel in vector search.|
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | limit(optional) | number | topk |
+   *  | offset(optional) | number | offset |
+   *  | filter(optional) | String | Scalar field filter expression |
+   *  | output_fields(optional) | String[] | Support scalar field |
+   *  | metric_type(optional) | String | similarity metric |
+   *  | params(optional) | key value object | search params |
    *
    * @returns
    * | Property | Description |
@@ -287,16 +286,7 @@ export class Data extends Collection {
    * ```
    *  new milvusClient(MILUVS_ADDRESS).search({
    *   collection_name: COLLECTION_NAME,
-   *   expr: "",
-   *   vectors: [[1, 2, 3, 4]],
-   *   search_params: {
-   *     anns_field: VECTOR_FIELD_NAME,
-   *     topk: "4",
-   *     metric_type: "L2",
-   *     params: JSON.stringify({ nprobe: 1024 }),
-   *   },
-   *   output_fields: ["age", "time"],
-   *   vector_type: 100,
+   *   vector: [1, 2, 3, 4],
    *  });
    * ```
    */
@@ -304,155 +294,157 @@ export class Data extends Collection {
     // params check
     checkSearchParams(data);
 
-    // get collection info
-    const collectionInfo = await this.describeCollection({
-      collection_name: data.collection_name,
-    });
-
-    // get infomation from collection info
-    let vectorType: DataType;
-    let defaultOutputFields = [];
-    let dim: number = 0;
-    let anns_field: string;
-    for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
-      const f = collectionInfo.schema.fields[i];
-      const type = DataTypeMap[f.data_type.toLowerCase()];
-
-      // filter vector field
-      if (type === DataType.FloatVector || type === DataType.BinaryVector) {
-        // get dimension
-        dim = Number(findKeyValue(f.type_params, 'dim') as number);
-        // correcting dimension if necessary for binary vectors
-        dim = type! === DataType.BinaryVector ? dim / 8 : dim;
-        // anns field
-        anns_field = f.name;
-        // vector type
-        vectorType = type;
-      } else {
-        // save field name
-        defaultOutputFields.push(f.name);
-      }
-    }
-
-    // create search params
-    const search_params = (data as SearchReq).search_params || {
-      anns_field: anns_field!,
-      topk: (data as SearchSimpleReq).limit || DEFAULT_TOPK,
-      offset: (data as SearchSimpleReq).offset || 0,
-      metric_type: (data as SearchSimpleReq).metric_type || DEFAULT_METRIC_TYPE,
-      params: JSON.stringify((data as SearchSimpleReq).params || {}),
-    };
-
-    // create search vectors
-    const searchVectors = (data as SearchReq).vectors || [
-      (data as SearchSimpleReq).vector,
-    ];
-
-    // check dimensions
-    if (!searchVectors[0] || searchVectors[0].length !== dim) {
-      throw new Error(SEARCH_ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
-    }
-
-    /**
-     *  It will decide the score precision.
-     *  If round_decimal is 3, need return like 3.142
-     *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
-     *  So the score need to slice by round_decimal
-     */
-    const round_decimal =
-      (data as SearchReq).search_params?.round_decimal ??
-      ((data as SearchSimpleReq).params?.round_decimal as number);
-
-    // create placeholder_group
-    const PlaceholderGroup = this.milvusProto.lookupType(
-      'milvus.proto.common.PlaceholderGroup'
-    );
-    // tag $0 is hard code in milvus, when dsltype is expr
-    const placeholderGroupBytes = PlaceholderGroup.encode(
-      PlaceholderGroup.create({
-        placeholders: [
-          {
-            tag: '$0',
-            type: vectorType!,
-            values: searchVectors.map(v =>
-              vectorType === DataType.BinaryVector
-                ? parseBinaryVectorToBytes(v)
-                : parseFloatVectorToBytes(v)
-            ),
-          },
-        ],
-      })
-    ).finish();
-
-    const promise: SearchRes = await promisify(
-      this.grpcClient,
-      'Search',
-      {
+    try {
+      // get collection info
+      const collectionInfo = await this.describeCollection({
         collection_name: data.collection_name,
-        partition_names: data.partition_names,
-        output_fields: data.output_fields || defaultOutputFields,
-        nq: (data as SearchReq).nq || searchVectors.length,
-        dsl: (data as SearchReq).expr || (data as SearchSimpleReq).filter || '',
-        dsl_type: DslType.BoolExprV1,
-        placeholder_group: placeholderGroupBytes,
-        search_params: parseToKeyValue(search_params),
-      },
-      data.timeout || this.timeout
-    );
-
-    const results: any[] = [];
-
-    if (promise.results) {
-      /**
-       *  fields_data:  what you pass in output_fields, only support non vector fields.
-       *  ids: vector id array
-       *  scores: distance array
-       *  topks: if you use mutiple query to search , will return mutiple topk.
-       */
-      const { topks, scores, fields_data, ids } = promise.results;
-      const fieldsData = fields_data.map((item, i) => {
-        // if search result is empty, will cause value is undefined.
-        const value = item.field ? item[item.field] : undefined;
-        return {
-          type: item.type,
-          field_name: item.field_name,
-          data: value ? value[value?.data].data : '',
-        };
       });
-      // verctor id support int / str id.
-      const idData = ids ? ids[ids.id_field]?.data : undefined;
+
+      // get infomation from collection info
+      let vectorType: DataType;
+      let defaultOutputFields = [];
+      let dim: number = 0;
+      let anns_field: string;
+      for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
+        const f = collectionInfo.schema.fields[i];
+        const type = DataTypeMap[f.data_type.toLowerCase()];
+
+        // filter vector field
+        if (type === DataType.FloatVector || type === DataType.BinaryVector) {
+          // get dimension
+          dim = Number(findKeyValue(f.type_params, 'dim') as number);
+          // correcting dimension if necessary for binary vectors
+          dim = type! === DataType.BinaryVector ? dim / 8 : dim;
+          // anns field
+          anns_field = f.name;
+          // vector type
+          vectorType = type;
+        } else {
+          // save field name
+          defaultOutputFields.push(f.name);
+        }
+      }
+
+      // create search params
+      const search_params = (data as SearchReq).search_params || {
+        anns_field: anns_field!,
+        topk: (data as SearchSimpleReq).limit || DEFAULT_TOPK,
+        offset: (data as SearchSimpleReq).offset || 0,
+        metric_type:
+          (data as SearchSimpleReq).metric_type || DEFAULT_METRIC_TYPE,
+        params: JSON.stringify((data as SearchSimpleReq).params || {}),
+      };
+
+      // create search vectors
+      const searchVectors = (data as SearchReq).vectors || [
+        (data as SearchSimpleReq).vector,
+      ];
+
       /**
-       * This code block formats the search results returned by Milvus into row data for easier use.
-       * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
-       * The `topk` variable is the key we use to splice data for every search result.
-       * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
+       *  It will decide the score precision.
+       *  If round_decimal is 3, need return like 3.142
+       *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
+       *  So the score need to slice by round_decimal
        */
-      topks.forEach((v, index) => {
-        const topk = Number(v);
+      const round_decimal =
+        (data as SearchReq).search_params?.round_decimal ??
+        ((data as SearchSimpleReq).params?.round_decimal as number);
 
-        scores.splice(0, topk).forEach((score, scoreIndex) => {
-          const i = index === 0 ? scoreIndex : scoreIndex + topk;
-          const fixedScore =
-            typeof round_decimal === 'undefined' || round_decimal === -1
-              ? score
-              : formatNumberPrecision(score, round_decimal);
+      // create placeholder_group
+      const PlaceholderGroup = this.milvusProto.lookupType(
+        'milvus.proto.common.PlaceholderGroup'
+      );
+      // tag $0 is hard code in milvus, when dsltype is expr
+      const placeholderGroupBytes = PlaceholderGroup.encode(
+        PlaceholderGroup.create({
+          placeholders: [
+            {
+              tag: '$0',
+              type: vectorType!,
+              values: searchVectors.map(v =>
+                vectorType === DataType.BinaryVector
+                  ? parseBinaryVectorToBytes(v)
+                  : parseFloatVectorToBytes(v)
+              ),
+            },
+          ],
+        })
+      ).finish();
 
-          const result: any = {
-            score: fixedScore,
-            id: idData ? idData[i] : '',
+      const promise: SearchRes = await promisify(
+        this.grpcClient,
+        'Search',
+        {
+          collection_name: data.collection_name,
+          partition_names: data.partition_names,
+          output_fields: data.output_fields || defaultOutputFields,
+          nq: (data as SearchReq).nq || searchVectors.length,
+          dsl:
+            (data as SearchReq).expr || (data as SearchSimpleReq).filter || '',
+          dsl_type: DslType.BoolExprV1,
+          placeholder_group: placeholderGroupBytes,
+          search_params: parseToKeyValue(search_params),
+        },
+        data.timeout || this.timeout
+      );
+
+      const results: any[] = [];
+
+      if (promise.results) {
+        /**
+         *  fields_data:  what you pass in output_fields, only support non vector fields.
+         *  ids: vector id array
+         *  scores: distance array
+         *  topks: if you use mutiple query to search , will return mutiple topk.
+         */
+        const { topks, scores, fields_data, ids } = promise.results;
+        const fieldsData = fields_data.map((item, i) => {
+          // if search result is empty, will cause value is undefined.
+          const value = item.field ? item[item.field] : undefined;
+          return {
+            type: item.type,
+            field_name: item.field_name,
+            data: value ? value[value?.data].data : '',
           };
-          fieldsData.forEach(field => {
-            result[field.field_name] = field.data[i];
-          });
-          results.push(result);
         });
-      });
-    }
+        // verctor id support int / str id.
+        const idData = ids ? ids[ids.id_field]?.data : undefined;
+        /**
+         * This code block formats the search results returned by Milvus into row data for easier use.
+         * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
+         * The `topk` variable is the key we use to splice data for every search result.
+         * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
+         */
+        topks.forEach((v, index) => {
+          const topk = Number(v);
 
-    return {
-      status: promise.status,
-      results,
-    };
+          scores.splice(0, topk).forEach((score, scoreIndex) => {
+            const i = index === 0 ? scoreIndex : scoreIndex + topk;
+            const fixedScore =
+              typeof round_decimal === 'undefined' || round_decimal === -1
+                ? score
+                : formatNumberPrecision(score, round_decimal);
+
+            const result: any = {
+              score: fixedScore,
+              id: idData ? idData[i] : '',
+            };
+            fieldsData.forEach(field => {
+              result[field.field_name] = field.data[i];
+            });
+            results.push(result);
+          });
+        });
+      }
+
+      return {
+        status: promise.status,
+        results,
+      };
+    } catch (err) {
+      /* istanbul ignore next */
+      throw new Error(err);
+    }
   }
 
   /**

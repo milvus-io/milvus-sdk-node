@@ -167,7 +167,8 @@ export interface SearchParam {
 
 export interface SearchSimpleReq extends GrpcTimeOut {
   collection_name: string;
-  vector: number[];
+  vector?: number[];
+  vectors?: number[][];
   output_fields?: string[];
   limit?: number;
   offset?: number;

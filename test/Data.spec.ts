@@ -3,8 +3,7 @@ import {
   DataType,
   ErrorCode,
   ERROR_REASONS,
-  SEARCH_ERROR_REASONS,
-  DEFAULT_TOPK
+  DEFAULT_TOPK,
 } from '../milvus';
 import { IP } from '../const';
 import { generateInsertData } from '../utils/test';
@@ -112,7 +111,17 @@ describe(`Data.API`, () => {
     try {
       await milvusClient.search({ collection_name: 'asd' } as any);
     } catch (error) {
-      expect(error.message).toEqual(SEARCH_ERROR_REASONS.VECTORS_REQUIRED);
+      expect(error.message).toEqual(ERROR_REASONS.VECTORS_OR_VECTOR_IS_MISSING);
+    }
+  });
+
+  it(`Exec search should throw error`, async () => {
+    try {
+      await milvusClient.search({
+        collection_name: COLLECTION_NAME,
+      } as any);
+    } catch (error) {
+      expect(error).toBeDefined();
     }
   });
 
@@ -160,7 +169,7 @@ describe(`Data.API`, () => {
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
-      vector: [1, 2, 3, 4],
+      vectors: [[1, 2, 3, 4]],
       limit: limit,
       offset: 2,
       params: { nprobe: 1024 },
@@ -248,7 +257,7 @@ describe(`Data.API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Expr Search should throw SEARCH_DIM_NOT_MATCH`, async () => {
+  it(`Expr Search with wrong vector dimension should throw error`, async () => {
     try {
       await milvusClient.search({
         collection_name: COLLECTION_NAME,
@@ -260,38 +269,12 @@ describe(`Data.API`, () => {
           topk: '4',
           metric_type: 'L2',
           params: JSON.stringify({ nprobe: 1024 }),
-          round_decimal: -1,
         },
-        output_fields: ['age'],
         vector_type: DataType.FloatVector,
         nq: 1,
       });
     } catch (error) {
-      expect(error.message).toEqual(SEARCH_ERROR_REASONS.SEARCH_DIM_NOT_MATCH);
-    }
-  });
-
-  it(`Expr Search should throw SEARCH_ROUND_DECIMAL_NOT_VALID`, async () => {
-    try {
-      await milvusClient.search({
-        collection_name: COLLECTION_NAME,
-        expr: '',
-        vectors: [[1, 2, 3, 4]],
-        search_params: {
-          anns_field: VECTOR_FIELD_NAME,
-          topk: '4',
-          metric_type: 'L2',
-          params: JSON.stringify({ nprobe: 1024 }),
-          round_decimal: 7,
-        },
-        output_fields: ['age'],
-        vector_type: DataType.FloatVector,
-        nq: 1,
-      });
-    } catch (err) {
-      expect(err.message).toEqual(
-        SEARCH_ERROR_REASONS.SEARCH_ROUND_DECIMAL_NOT_VALID
-      );
+      expect(error).toBeDefined();
     }
   });
 
