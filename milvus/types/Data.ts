@@ -4,8 +4,11 @@ import {
   ResStatus,
   NumberArrayId,
   StringArrayId,
-} from './Common';
-import { DataType, SegmentState, ImportState } from '../const/Milvus';
+  keyValueObj,
+  DataType,
+  SegmentState,
+  ImportState,
+} from '../';
 
 export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
@@ -161,6 +164,20 @@ export interface SearchParam {
   params: string;
   round_decimal?: number;
 }
+
+export interface SearchSimpleReq extends GrpcTimeOut {
+  collection_name: string;
+  vector?: number[];
+  vectors?: number[][];
+  output_fields?: string[];
+  limit?: number;
+  offset?: number;
+  filter?: string;
+  partition_names?: string[];
+  params?: keyValueObj;
+  metric_type?: string;
+}
+
 export interface SearchReq extends GrpcTimeOut {
   collection_name: string;
   partition_names?: string[];

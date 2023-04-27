@@ -17,12 +17,6 @@ export enum ERROR_REASONS {
   INSERT_CHECK_WRONG_DIM = 'Insert fail: the length of the binary vector should be (dimension / 8).',
   INSERT_CHECK_WRONG_DATA_TYPE = 'The value of the `data_type` property is not supported:',
 
-  SEARCH_MISS_VECTOR_TYPE = 'The `vector_type` should be DataType.FloatVector or DataType.BinaryVector.',
-  SEARCH_NOT_FIND_VECTOR_FIELD = 'The `anns_field` was not matched in this collection.',
-  SEARCH_DIM_NOT_MATCH = 'The vector dimension does not match your anns_field dimension.',
-  SEARCH_PARAMS_IS_REQUIRED = 'The `search_params` must contain the `anns_field`, `metric_type`, `topk` and `params`.',
-  SEARCH_ROUND_DECIMAL_NOT_VALID = 'The `round_decimal` should be an integer greater than -2 and less than 7',
-
   DELETE_PARAMS_CHECK = 'The `collection_name` or the `expr` property is missing.',
   GET_METRIC_CHECK_PARAMS = 'The `metric_type` property is missing.',
   GET_FLUSH_STATE_CHECK_PARAMS = 'The type of the `segmentIDs` property should be an array.',
@@ -35,4 +29,6 @@ export enum ERROR_REASONS {
   TIMESTAMP_PARAM_CHECK = 'The type of the `hybridts` property should be string (only contains number) or bigint.',
   DATE_TYPE_CHECK = 'The type of the `datetime` property should be Date.',
   IMPORT_FILE_CHECK = 'The `files` property is missing.',
+  SEARCH_PARAMS_IS_NOT_MATCH = 'Some of the search parameters are not match.',
+  VECTORS_OR_VECTOR_IS_MISSING = 'The `vector` or `vectors` property is missing.'
 }

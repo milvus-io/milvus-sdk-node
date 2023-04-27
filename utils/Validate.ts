@@ -1,6 +1,4 @@
-import { ERROR_REASONS } from '../milvus/const/ErrorReason';
-import { FieldType } from '../milvus/types/Collection';
-import { DataType } from '../milvus/const/Milvus';
+import { ERROR_REASONS, FieldType, DataType } from '../milvus';
 
 /**
  * when create collection, field must contain 2 Fields.
@@ -97,5 +95,18 @@ export const checkCollectionName = (data: any) => {
 export const checkCollectionAndPartitionName = (data: any) => {
   if (!data || !data.collection_name || !data.partition_name) {
     throw new Error(ERROR_REASONS.COLLECTION_PARTITION_NAME_ARE_REQUIRED);
+  }
+};
+
+/**
+ * Checks the validity of search parameters.
+ * @param {Object} data - The search parameters to be checked.
+ * @throws {Error} Throws an error if any of the search parameters are invalid.
+ */
+export const checkSearchParams = (data: any) => {
+  checkCollectionName(data);
+
+  if (!data.vectors && !data.vector) {
+    throw new Error(ERROR_REASONS.VECTORS_OR_VECTOR_IS_MISSING);
   }
 };

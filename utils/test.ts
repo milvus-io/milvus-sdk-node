@@ -29,6 +29,11 @@ export const genCollectionParams = (
         autoID,
       },
       {
+        name: 'height',
+        description: '',
+        data_type: DataType.Int64,
+      },
+      {
         name: 'name',
         description: '',
         data_type: DataType.VarChar,
