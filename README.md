@@ -176,7 +176,7 @@ const searchVector = [...Array(dim)].map(() => Math.random());
 // Perform a vector search on the collection
 const res = await client.search({
   collection_name,
-  vectors: [searchVector],
+  vectors: [0.1, 0.2, 0.3, 0.4],
   filter: 'word_count > 0', // optional, filter
   params: { nprobe: 64 }, // optional, specify the search parameters
   limit: 1, // specify the number of nearest neighbors to return
