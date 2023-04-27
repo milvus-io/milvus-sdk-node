@@ -106,9 +106,7 @@ const schema = [
     name: `book_intro`,
     description: `word count`,
     data_type: DataType.FloatVector,
-    type_params: {
-      dim: dim,
-    },
+    dim: dim,
   },
 ];
 ```
@@ -159,10 +157,8 @@ await client.createIndex({
   collection_name,
   field_name: 'book_intro',
   index_name: 'myindex',
-  extra_params: {
-    index_type: 'IVF_FLAT',
-    metric_type: 'L2',
-  },
+  index_type: 'IVF_FLAT',
+  metric_type: 'L2',
 });
 // load collection
 await client.loadCollectionSync({
@@ -180,14 +176,10 @@ const searchVector = [...Array(dim)].map(() => Math.random());
 const res = await client.search({
   collection_name,
   vectors: [searchVector],
-  search_params: {
-    anns_field: 'book_intro', // specify the field to search on
-    metric_type: 'L2', // specify the distance metric to use
-    params: JSON.stringify({ nprobe: 64 }), // specify the search parameters
-    topk: 1, // specify the number of nearest neighbors to return
-  },
-  output_fields: ['book_id', 'word_count'], // specify the fields to return in the search results
-  vector_type: DataType.FloatVector, // specify the data type of the vectors
+  filter: 'word_count > 0', // optional, filter
+  params: { nprobe: 64 }, // optional, specify the search parameters
+  limit: 1, // specify the number of nearest neighbors to return
+  output_fields: ['book_id', 'word_count'], // optional, specify the fields to return in the search results
 });
 ```
 
