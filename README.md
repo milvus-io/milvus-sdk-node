@@ -20,7 +20,8 @@ The following collection shows Milvus versions and recommended @zilliz/milvus2-s
 
 ## Dependencies
 
-- Milvus: v2+
+- [Milvus](https://milvus.io/)
+- [Zilliz Cloud](https://cloud.zilliz.com/signup)
 - Node: v12+
 
 ## Installation
