@@ -268,9 +268,11 @@ export class Data extends Collection {
    *  | collection_name | String | Collection name |
    *  | vectors or vector | Number[][] or Number[] | Original vector to search with |
    *  | partition_names(optional)| String[] | Array of partition names |
-   *  | limit(optional) | number | topk |
+   *  | limit(optional) | number | topk alias |
+   *  | topk(optional) | number | topk |
    *  | offset(optional) | number | offset |
    *  | filter(optional) | String | Scalar field filter expression |
+   *  | expr(optional) | String | filter alias |
    *  | output_fields(optional) | String[] | Support scalar field |
    *  | metric_type(optional) | String | similarity metric |
    *  | params(optional) | key value object | search params |
@@ -328,7 +330,10 @@ export class Data extends Collection {
       // create search params
       const search_params = (data as SearchReq).search_params || {
         anns_field: anns_field!,
-        topk: (data as SearchSimpleReq).limit || DEFAULT_TOPK,
+        topk:
+          (data as SearchSimpleReq).limit ||
+          (data as SearchSimpleReq).topk ||
+          DEFAULT_TOPK,
         offset: (data as SearchSimpleReq).offset || 0,
         metric_type:
           (data as SearchSimpleReq).metric_type || DEFAULT_METRIC_TYPE,

@@ -137,6 +137,15 @@ describe(`Data.API`, () => {
     // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results.length).toEqual(limit);
+
+    const res2 = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: '',
+      vector: [1, 2, 3, 4],
+      topk: limit,
+    });
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.results.length).toEqual(limit);
   });
 
   it(`Exec simple search without params and output fields and limit should success`, async () => {
@@ -192,6 +201,18 @@ describe(`Data.API`, () => {
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     res.results.forEach(r => {
+      expect(Number(r.height)).toBeLessThan(10000);
+    });
+
+    const res2 = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      expr: 'height < 10000',
+      vector: [1, 2, 3, 4],
+      limit: limit,
+      params: { nprobe: 1024 },
+    });
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    res2.results.forEach(r => {
       expect(Number(r.height)).toBeLessThan(10000);
     });
   });
