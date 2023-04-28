@@ -171,8 +171,10 @@ export interface SearchSimpleReq extends GrpcTimeOut {
   vectors?: number[][];
   output_fields?: string[];
   limit?: number;
+  topk?: number; // alias
   offset?: number;
   filter?: string;
+  expr?: string; // alias
   partition_names?: string[];
   params?: keyValueObj;
   metric_type?: string;
