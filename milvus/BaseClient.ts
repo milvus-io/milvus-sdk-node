@@ -1,7 +1,7 @@
 import path from 'path';
 import protobuf, { Root } from 'protobufjs';
 import { credentials, Client, ChannelOptions } from '@grpc/grpc-js';
-import { ERROR_REASONS, MilvusClientConfig, DEFAULT_CONNECT_TIMEOUT } from '.';
+import { ERROR_REASONS, GRPCClientConfig, DEFAULT_CONNECT_TIMEOUT } from '.';
 import {
   getGRPCService,
   formatAddress,
@@ -33,13 +33,13 @@ export class BaseClient {
    * @param password The password for authentication. Required if username is provided.
    */
   constructor(
-    configOrAddress: MilvusClientConfig | string,
+    configOrAddress: GRPCClientConfig | string,
     ssl?: boolean,
     username?: string,
     password?: string,
     channelOptions?: ChannelOptions
   ) {
-    let config: MilvusClientConfig;
+    let config: GRPCClientConfig;
 
     // If a configuration object is provided, use it. Otherwise, create a new object with the provided parameters.
     if (typeof configOrAddress === 'object') {

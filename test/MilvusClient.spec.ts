@@ -16,6 +16,7 @@ describe(`Milvus client`, () => {
       username: 'username',
       password: 'password',
     });
+
     expect(client.grpcClient).toBeDefined();
   });
 
