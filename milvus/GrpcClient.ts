@@ -1,9 +1,86 @@
-import { GetVersionResponse, CheckHealthResponse } from '.';
+import path from 'path';
+import { GetVersionResponse, CheckHealthResponse, GRPCClientConfig } from '.';
 import { User } from './User';
 import { promisify } from '../utils';
 import sdkInfo from '../sdk.json';
+import protobuf, { Root } from 'protobufjs';
+import { Client, credentials, ChannelOptions } from '@grpc/grpc-js';
+import { getGRPCService, formatAddress, getAuthInterceptor } from '../utils';
 
-export class GRPCClient extends User {
+// path
+const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
+const schemaProtoPath = path.resolve(__dirname, '../proto/proto/schema.proto');
+
+export class GrpcClient extends User {
+  // client
+  grpcClient: Client | undefined;
+  // schema proto
+  schemaProto: Root;
+  // milvus proto
+  milvusProto: Root;
+  // path
+  protoPath: string;
+
+  /**
+   * Connect to a Milvus gRPC client.
+   *
+   * @param configOrAddress The configuration object or the Milvus address as a string.
+   * @param ssl Whether to use SSL or not. Default is false.
+   * @param username The username for authentication. Required if password is provided.
+   * @param password The password for authentication. Required if username is provided.
+   */
+  constructor(
+    configOrAddress: GRPCClientConfig | string,
+    ssl?: boolean,
+    username?: string,
+    password?: string,
+    channelOptions?: ChannelOptions
+  ) {
+    // setup configuration object
+    super(configOrAddress, ssl, username, password, channelOptions);
+    // load proto
+    this.protoPath = protoPath;
+    this.schemaProto = protobuf.loadSync(schemaProtoPath);
+    this.milvusProto = protobuf.loadSync(protoPath);
+
+    // connect
+    this.connect();
+  }
+
+  // overload
+  connect() {
+    // if we need to create auth interceptors
+    const needAuth =
+      this.config.username !== undefined && this.config.password !== undefined;
+
+    // get Milvus GRPC service
+    const MilvusService = getGRPCService({
+      protoPath: this.protoPath,
+      serviceName: 'milvus.proto.milvus.MilvusService', // the name of the Milvus service
+    });
+
+    // create interceptors
+    const interceptors = needAuth
+      ? getAuthInterceptor(this.config.username!, this.config.password!)
+      : null;
+
+    // options
+    const options: ChannelOptions = {
+      interceptors: [interceptors],
+      // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
+      // So SDK should support max_receive_message_length unlimited.
+      'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
+      ...this.config.channelOptions,
+    };
+
+    // create grpc client
+    this.grpcClient = new MilvusService(
+      formatAddress(this.config.address), // format the address
+      this.config.ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
+      options
+    );
+  }
+
   static get sdkInfo() {
     return {
       version: sdkInfo.version,
@@ -58,9 +135,13 @@ export class GRPCClient extends User {
   // This method closes the gRPC client connection and returns the connectivity state of the channel.
   closeConnection() {
     // Close the gRPC client connection
-    this.grpcClient.close();
+    if (this.grpcClient) {
+      this.grpcClient.close();
+    }
     // grpc client closed -> 4, connected -> 0
-    return this.grpcClient.getChannel().getConnectivityState(true);
+    if (this.grpcClient) {
+      return this.grpcClient.getChannel().getConnectivityState(true);
+    }
   }
 
   // This method returns the version of the Milvus server.
