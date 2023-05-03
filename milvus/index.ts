@@ -13,5 +13,5 @@ export * from './types/Resource';
 export * from './types/Client';
 // client
 export * from './BaseClient';
-export * from './GrpcClient';
+export * from './GRPCClient';
 export * from './MilvusClient';

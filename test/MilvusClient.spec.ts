@@ -10,24 +10,24 @@ describe(`Milvus client`, () => {
   });
 
   test(`should create a grpc client without SSL credentials when ssl is false`, () => {
-    const client = new MilvusClient({
+    const milvusClient = new MilvusClient({
       address: 'localhost:19530',
       ssl: false,
       username: 'username',
       password: 'password',
     });
 
-    expect(client.grpcClient).toBeDefined();
+    expect(milvusClient.client).toBeDefined();
   });
 
   test(`should create a grpc client without authentication when username and password are not provided`, () => {
-    const client = new MilvusClient(`localhost:19530`, false);
-    expect(client.grpcClient).toBeDefined();
+    const milvusClient = new MilvusClient(`localhost:19530`, false);
+    expect(milvusClient.client).toBeDefined();
   });
 
   test(`should create a grpc client with authentication when username and password are provided`, () => {
-    const client = new MilvusClient(IP, false, `username`, `password`);
-    expect(client.grpcClient).toBeDefined();
+    const milvusClient = new MilvusClient(IP, false, `username`, `password`);
+    expect(milvusClient.client).toBeDefined();
   });
 
   it(`Should throw MILVUS_ADDRESS_IS_REQUIRED`, async () => {

@@ -1,10 +1,19 @@
 import { ChannelOptions } from '@grpc/grpc-js';
 
-export interface GRPCClientConfig {
+/**
+ * Configuration options for the Milvus client.
+ */
+export interface ClientConfig {
+  // The address of the Milvus server.
   address: string;
+  // Whether to use SSL encryption.
   ssl?: boolean;
+  // The username to use for authentication.
   username?: string;
+  // The password to use for authentication.
   password?: string;
+  // Additional options to pass to the gRPC channel.
   channelOptions?: ChannelOptions;
+  // The timeout for requests, in milliseconds.
   timeout?: number | string;
 }

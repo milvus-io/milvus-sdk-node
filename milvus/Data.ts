@@ -209,7 +209,7 @@ export class Data extends Collection {
     });
 
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'Insert',
       params,
       data.timeout || this.timeout
@@ -251,7 +251,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.DELETE_PARAMS_CHECK);
     }
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'Delete',
       data,
       data.timeout || this.timeout
@@ -377,7 +377,7 @@ export class Data extends Collection {
       ).finish();
 
       const promise: SearchRes = await promisify(
-        this.grpcClient,
+        this.client,
         'Search',
         {
           collection_name: data.collection_name,
@@ -484,7 +484,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'Flush',
       data,
       data.timeout || this.timeout
@@ -526,7 +526,7 @@ export class Data extends Collection {
     }
     // copy flushed collection names
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'Flush',
       data,
       data.timeout || this.timeout
@@ -592,7 +592,7 @@ export class Data extends Collection {
     }
 
     const promise: QueryRes = await promisify(
-      this.grpcClient,
+      this.client,
       'Query',
       {
         ...data,
@@ -682,7 +682,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.GET_METRIC_CHECK_PARAMS);
     }
     const res: GetMetricsResponse = await promisify(
-      this.grpcClient,
+      this.client,
       'GetMetrics',
       {
         request: JSON.stringify(data.request),
@@ -727,7 +727,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'GetFlushState',
       data,
       data.timeout || this.timeout
@@ -767,7 +767,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.LOAD_BALANCE_CHECK_PARAMS);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'LoadBalance',
       data,
       data.timeout || this.timeout
@@ -807,7 +807,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'GetQuerySegmentInfo',
       data,
       data.timeout || this.timeout
@@ -851,7 +851,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.IMPORT_FILE_CHECK);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'Import',
       {
         ...data,
@@ -899,7 +899,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'ListImportTasks',
       {
         ...data,

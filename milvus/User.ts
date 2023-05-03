@@ -59,7 +59,7 @@ export class User extends Resource {
     }
     const encryptedPassword = stringToBase64(data.password);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'CreateCredential',
       {
         username: data.username,
@@ -108,7 +108,7 @@ export class User extends Resource {
     const encryptedNewPwd = stringToBase64(data.newPassword);
 
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'UpdateCredential',
       {
         username: data.username,
@@ -148,7 +148,7 @@ export class User extends Resource {
       throw new Error(ERROR_REASONS.USERNAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'DeleteCredential',
       {
         username: data.username,
@@ -180,7 +180,7 @@ export class User extends Resource {
    */
   async listUsers(data?: ListUsersReq): Promise<ListCredUsersResponse> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'ListCredUsers',
       {},
       data?.timeout || this.timeout
@@ -211,7 +211,7 @@ export class User extends Resource {
    */
   async createRole(data: CreateRoleReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'CreateRole',
       {
         entity: { name: data.roleName },
@@ -244,7 +244,7 @@ export class User extends Resource {
    */
   async dropRole(data: DropRoleReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'DropRole',
       {
         role_name: data.roleName,
@@ -278,7 +278,7 @@ export class User extends Resource {
    */
   async addUserToRole(data: AddUserToRoleReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'OperateUserRole',
       {
         username: data.username,
@@ -314,7 +314,7 @@ export class User extends Resource {
    */
   async removeUserFromRole(data: RemoveUserFromRoleReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'OperateUserRole',
       {
         username: data.username,
@@ -350,7 +350,7 @@ export class User extends Resource {
    */
   async selectRole(data: SelectRoleReq): Promise<SelectRoleResponse> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'SelectRole',
       {
         role: { name: data.roleName },
@@ -384,7 +384,7 @@ export class User extends Resource {
    */
   async listRoles(data?: GrpcTimeOut): Promise<SelectRoleResponse> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'SelectRole',
       {},
       data?.timeout || this.timeout
@@ -416,7 +416,7 @@ export class User extends Resource {
    */
   async selectUser(data: SelectUserReq): Promise<SelectUserResponse> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'SelectUser',
       {
         user: { name: data.username },
@@ -459,7 +459,7 @@ export class User extends Resource {
    */
   async grantRolePrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'OperatePrivilege',
       {
         entity: {
@@ -509,7 +509,7 @@ export class User extends Resource {
    */
   async revokeRolePrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'OperatePrivilege',
       {
         entity: {
@@ -616,7 +616,7 @@ export class User extends Resource {
    */
   async selectGrant(data: SelectGrantReq): Promise<SelectGrantResponse> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'SelectGrant',
       {
         entity: {
@@ -658,7 +658,7 @@ export class User extends Resource {
    */
   async listGrants(data: ListGrantsReq): Promise<SelectGrantResponse> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'SelectGrant',
       {
         entity: {

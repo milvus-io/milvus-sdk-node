@@ -1,19 +1,17 @@
 import path from 'path';
-import { GetVersionResponse, CheckHealthResponse, GRPCClientConfig } from '.';
+import { GetVersionResponse, CheckHealthResponse, ClientConfig } from '.';
 import { User } from './User';
 import { promisify } from '../utils';
 import sdkInfo from '../sdk.json';
 import protobuf, { Root } from 'protobufjs';
-import { Client, credentials, ChannelOptions } from '@grpc/grpc-js';
+import { credentials, ChannelOptions } from '@grpc/grpc-js';
 import { getGRPCService, formatAddress, getAuthInterceptor } from '../utils';
 
 // path
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
 const schemaProtoPath = path.resolve(__dirname, '../proto/proto/schema.proto');
 
-export class GrpcClient extends User {
-  // client
-  grpcClient: Client | undefined;
+export class GRPCClient extends User {
   // schema proto
   schemaProto: Root;
   // milvus proto
@@ -30,7 +28,7 @@ export class GrpcClient extends User {
    * @param password The password for authentication. Required if username is provided.
    */
   constructor(
-    configOrAddress: GRPCClientConfig | string,
+    configOrAddress: ClientConfig | string,
     ssl?: boolean,
     username?: string,
     password?: string,
@@ -42,9 +40,6 @@ export class GrpcClient extends User {
     this.protoPath = protoPath;
     this.schemaProto = protobuf.loadSync(schemaProtoPath);
     this.milvusProto = protobuf.loadSync(protoPath);
-
-    // connect
-    this.connect();
   }
 
   // overload
@@ -60,13 +55,13 @@ export class GrpcClient extends User {
     });
 
     // create interceptors
-    const interceptors = needAuth
+    const authInterceptor = needAuth
       ? getAuthInterceptor(this.config.username!, this.config.password!)
       : null;
 
     // options
     const options: ChannelOptions = {
-      interceptors: [interceptors],
+      interceptors: [authInterceptor],
       // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
       // So SDK should support max_receive_message_length unlimited.
       'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
@@ -74,7 +69,7 @@ export class GrpcClient extends User {
     };
 
     // create grpc client
-    this.grpcClient = new MilvusService(
+    this.client = new MilvusService(
       formatAddress(this.config.address), // format the address
       this.config.ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
       options
@@ -135,22 +130,22 @@ export class GrpcClient extends User {
   // This method closes the gRPC client connection and returns the connectivity state of the channel.
   closeConnection() {
     // Close the gRPC client connection
-    if (this.grpcClient) {
-      this.grpcClient.close();
+    if (this.client) {
+      this.client.close();
     }
     // grpc client closed -> 4, connected -> 0
-    if (this.grpcClient) {
-      return this.grpcClient.getChannel().getConnectivityState(true);
+    if (this.client) {
+      return this.client.getChannel().getConnectivityState(true);
     }
   }
 
   // This method returns the version of the Milvus server.
   async getVersion(): Promise<GetVersionResponse> {
-    return await promisify(this.grpcClient, 'GetVersion', {}, this.timeout);
+    return await promisify(this.client, 'GetVersion', {}, this.timeout);
   }
 
   // This method checks the health of the Milvus server.
   async checkHealth(): Promise<CheckHealthResponse> {
-    return await promisify(this.grpcClient, 'CheckHealth', {}, this.timeout);
+    return await promisify(this.client, 'CheckHealth', {}, this.timeout);
   }
 }

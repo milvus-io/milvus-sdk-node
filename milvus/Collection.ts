@@ -145,7 +145,7 @@ export class Collection extends BaseClient {
 
     // Call the promisify function to create the collection.
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'CreateCollection',
       {
         ...data,
@@ -187,7 +187,7 @@ export class Collection extends BaseClient {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'HasCollection',
       data,
       data.timeout || this.timeout
@@ -223,7 +223,7 @@ export class Collection extends BaseClient {
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'ShowCollections',
       {
         type: data ? data.type : ShowCollectionsType.All,
@@ -276,7 +276,7 @@ export class Collection extends BaseClient {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'DescribeCollection',
       data,
       data.timeout || this.timeout
@@ -315,7 +315,7 @@ export class Collection extends BaseClient {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'GetCollectionStatistics',
       data,
       data.timeout || this.timeout
@@ -356,7 +356,7 @@ export class Collection extends BaseClient {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'LoadCollection',
       data,
       data.timeout || this.timeout
@@ -394,7 +394,7 @@ export class Collection extends BaseClient {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'LoadCollection',
       data,
       data.timeout || this.timeout
@@ -453,7 +453,7 @@ export class Collection extends BaseClient {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'ReleaseCollection',
       data,
       data.timeout || this.timeout
@@ -488,7 +488,7 @@ export class Collection extends BaseClient {
    */
   async renameCollection(data: RenameCollectionReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'RenameCollection',
       {
         oldName: data.collection_name,
@@ -526,7 +526,7 @@ export class Collection extends BaseClient {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'DropCollection',
       data,
       data.timeout || this.timeout
@@ -566,7 +566,7 @@ export class Collection extends BaseClient {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'CreateAlias',
       data,
       data.timeout || this.timeout
@@ -605,7 +605,7 @@ export class Collection extends BaseClient {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'DropAlias',
       data,
       data.timeout || this.timeout
@@ -645,7 +645,7 @@ export class Collection extends BaseClient {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'AlterAlias',
       data,
       data.timeout || this.timeout
@@ -680,7 +680,7 @@ export class Collection extends BaseClient {
     checkCollectionName(data);
     const collectionInfo = await this.describeCollection(data);
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'ManualCompaction',
       {
         collectionID: collectionInfo.collectionID,
@@ -720,7 +720,7 @@ export class Collection extends BaseClient {
       throw new Error(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'GetCompactionState',
       data,
       data.timeout || this.timeout
@@ -758,7 +758,7 @@ export class Collection extends BaseClient {
       throw new Error(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'GetCompactionStateWithPlans',
       data,
       data.timeout || this.timeout
@@ -811,7 +811,7 @@ export class Collection extends BaseClient {
       throw new Error(ERROR_REASONS.COLLECTION_ID_IS_REQUIRED);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'GetReplicas',
       data,
       data.timeout || this.timeout
@@ -852,7 +852,7 @@ export class Collection extends BaseClient {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'GetLoadingProgress',
       data,
       data.timeout || this.timeout
@@ -890,7 +890,7 @@ export class Collection extends BaseClient {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.grpcClient,
+      this.client,
       'GetLoadState',
       data,
       data.timeout || this.timeout

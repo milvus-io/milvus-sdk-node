@@ -1,12 +1,7 @@
 import path from 'path';
 import protobuf, { Root } from 'protobufjs';
-import { ChannelOptions } from '@grpc/grpc-js';
-import {
-  ERROR_REASONS,
-  GRPCClientConfig,
-  ClientConfig,
-  DEFAULT_CONNECT_TIMEOUT,
-} from '.';
+import { Client, ChannelOptions } from '@grpc/grpc-js';
+import { ERROR_REASONS, ClientConfig, DEFAULT_CONNECT_TIMEOUT } from '.';
 import { parseTimeToken } from '../utils';
 
 // path
@@ -15,6 +10,8 @@ const schemaProtoPath = path.resolve(__dirname, '../proto/proto/schema.proto');
 
 // Base Client
 export class BaseClient {
+  // client
+  client: Client | undefined;
   protoPath: string;
   // schema proto
   schemaProto: Root;
@@ -35,13 +32,13 @@ export class BaseClient {
    * @param password The password for authentication. Required if username is provided.
    */
   constructor(
-    configOrAddress: GRPCClientConfig | string,
+    configOrAddress: ClientConfig | string,
     ssl?: boolean,
     username?: string,
     password?: string,
     channelOptions?: ChannelOptions
   ) {
-    let config: GRPCClientConfig;
+    let config: ClientConfig;
 
     // If a configuration object is provided, use it. Otherwise, create a new object with the provided parameters.
     if (typeof configOrAddress === 'object') {
