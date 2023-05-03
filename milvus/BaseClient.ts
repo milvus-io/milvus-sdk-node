@@ -96,7 +96,7 @@ export class BaseClient {
     // create grpc client
     this.grpcClient = new MilvusService(
       formatAddress(config.address), // format the address
-      ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
+      config.ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
       options
     );
   }
