@@ -243,3 +243,14 @@ export const parseTimeToken = (token: string): number => {
       throw new Error(`Invalid time token: ${token}`);
   }
 };
+
+/**
+ * Extracts the method name from a URL path.
+ *
+ * @param {string} query - The URL path to extract the method name from.
+ * @returns {string} The extracted method name.
+ */
+export const extractMethodName = (query: string): string => {
+  const parts = query.split('/');
+  return parts[parts.length - 1];
+};

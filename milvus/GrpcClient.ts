@@ -1,5 +1,12 @@
 import path from 'path';
-import { GetVersionResponse, CheckHealthResponse, ClientConfig } from '.';
+import {
+  GetVersionResponse,
+  CheckHealthResponse,
+  ClientConfig,
+  DEFAULT_MAX_RETRIES,
+  DEFAULT_RETRY_DELAY,
+  DEBUG,
+} from '.';
 import { User } from './User';
 import { promisify } from '../utils';
 import sdkInfo from '../sdk.json';
@@ -64,7 +71,11 @@ export class GRPCClient extends User {
       ? getAuthInterceptor(this.config.username!, this.config.password!)
       : null;
     // retry interceptor
-    const retryInterceptor = getRetryInterceptor(this.config.maxRetries);
+    const retryInterceptor = getRetryInterceptor({
+      maxRetries: this.config.maxRetries || DEFAULT_MAX_RETRIES,
+      retryDelay: this.config.retryDelay || DEFAULT_RETRY_DELAY,
+      debug: this.config.debug || DEBUG,
+    });
     // interceptors
     const interceptors = [authInterceptor, retryInterceptor];
 

@@ -18,4 +18,8 @@ export interface ClientConfig {
   timeout?: number | string;
   // number of retries
   maxRetries?: number;
+  // retry delay
+  retryDelay?: number;
+  // open debug logs
+  debug?: boolean;
 }

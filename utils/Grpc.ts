@@ -7,6 +7,7 @@ import {
   InterceptingCall,
   status as grpcStatus,
 } from '@grpc/grpc-js';
+import { extractMethodName, isStatusCodeMatched } from './';
 
 const PROTO_OPTIONS = {
   keepCase: true,
@@ -75,21 +76,40 @@ export const getAuthInterceptor = (username: string, password: string) =>
   };
 
 /**
- * Returns an interceptor function that retries a failed gRPC call a specified number of times.
- * @param {number} maxRetries - The maximum number of times to retry the call.
- * @param {number} retryDelay - The delay (in milliseconds) between retries.
- * @returns {function} - The interceptor function.
+ * Returns a gRPC interceptor function that retries failed requests up to a maximum number of times.
+ *
+ * @param {Object} options - The options object.
+ * @param {number} options.maxRetries - The maximum number of times to retry a failed request.
+ * @param {number} options.retryDelay - The delay in milliseconds between retries.
+ * @param {boolean} options.debug - Whether to log debug information.
+ * @returns {Function} The gRPC interceptor function.
  */
 /* istanbul ignore next */
-export const getRetryInterceptor = (
-  maxRetries: number = 3,
-  retryDelay: number = 30
-) =>
+export const getRetryInterceptor = ({
+  maxRetries = 3,
+  retryDelay = 30,
+  debug = true,
+}: {
+  maxRetries: number;
+  retryDelay: number;
+  debug: boolean;
+}) =>
   function (options: any, nextCall: any) {
     let savedMetadata: any;
     let savedSendMessage: any;
     let savedReceiveMessage: any;
     let savedMessageNext: any;
+
+    // deadline
+    const deadline = options.deadline;
+
+    // get method name
+    const methodName = extractMethodName(options.method_definition.path);
+
+    // start time
+    const startTime = new Date();
+
+    // requester, used to reexecute method
     let requester = {
       start: function (metadata: any, listener: any, next: any) {
         savedMetadata = metadata;
@@ -100,21 +120,39 @@ export const getRetryInterceptor = (
             savedMessageNext = next;
           },
           onReceiveStatus: function (status: any, next: any) {
+            // retry count
             let retries = 0;
+            // retry function
             let retry = function (message: any, metadata: any) {
               retries++;
               let newCall = nextCall(options);
+              // retry
               newCall.start(metadata, {
                 onReceiveMessage: function (message: any) {
                   savedReceiveMessage = message;
                 },
                 onReceiveStatus: function (status: any) {
-                  if (status.code !== grpcStatus.OK) {
-                    if (retries <= maxRetries) {
+                  if (isStatusCodeMatched(status.code)) {
+                    if (retries < maxRetries) {
                       setTimeout(() => {
                         retry(message, metadata);
+                        // double increase delay every retry
                       }, Math.pow(2, retries) * retryDelay);
                     } else {
+                      if (debug) {
+                        if (deadline > startTime) {
+                          console.info(
+                            `${methodName} is timout, it's timeout value is: ${
+                              deadline.getTime() - startTime.getTime()
+                            }ms.`
+                          );
+                        } else {
+                          console.info(
+                            `${methodName} retry run out of ${retries} times.`
+                          );
+                        }
+                      }
+
                       savedMessageNext(savedReceiveMessage);
                       next(status);
                     }
@@ -125,9 +163,16 @@ export const getRetryInterceptor = (
                 },
               });
             };
-            if (status.code !== grpcStatus.OK) {
+
+            if (isStatusCodeMatched(status.code)) {
               retry(savedSendMessage, savedMetadata);
             } else {
+              debug &&
+                console.info(
+                  `${methodName} executed in ${
+                    Date.now() - startTime.getTime()
+                  }ms.`
+                );
               savedMessageNext(savedReceiveMessage);
               next(status);
             }
