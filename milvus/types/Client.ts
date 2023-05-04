@@ -16,4 +16,6 @@ export interface ClientConfig {
   channelOptions?: ChannelOptions;
   // The timeout for requests, in milliseconds.
   timeout?: number | string;
+  // number of retries
+  maxRetries?: number;
 }

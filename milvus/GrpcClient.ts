@@ -5,7 +5,12 @@ import { promisify } from '../utils';
 import sdkInfo from '../sdk.json';
 import protobuf, { Root } from 'protobufjs';
 import { credentials, ChannelOptions } from '@grpc/grpc-js';
-import { getGRPCService, formatAddress, getAuthInterceptor } from '../utils';
+import {
+  getGRPCService,
+  formatAddress,
+  getAuthInterceptor,
+  getRetryInterceptor,
+} from '../utils';
 
 // path
 const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
@@ -54,14 +59,18 @@ export class GRPCClient extends User {
       serviceName: 'milvus.proto.milvus.MilvusService', // the name of the Milvus service
     });
 
-    // create interceptors
+    // auth interceptor
     const authInterceptor = needAuth
       ? getAuthInterceptor(this.config.username!, this.config.password!)
       : null;
+    // retry interceptor
+    const retryInterceptor = getRetryInterceptor(this.config.maxRetries);
+    // interceptors
+    const interceptors = [authInterceptor, retryInterceptor];
 
     // options
     const options: ChannelOptions = {
-      interceptors: [authInterceptor],
+      interceptors,
       // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
       // So SDK should support max_receive_message_length unlimited.
       'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited

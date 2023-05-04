@@ -5,6 +5,7 @@ import {
   ServiceClientConstructor,
   GrpcObject,
   InterceptingCall,
+  status as grpcStatus,
 } from '@grpc/grpc-js';
 
 const PROTO_OPTIONS = {
@@ -71,4 +72,74 @@ export const getAuthInterceptor = (username: string, password: string) =>
         next(metadata, listener);
       },
     });
+  };
+
+/**
+ * Returns an interceptor function that retries a failed gRPC call a specified number of times.
+ * @param {number} maxRetries - The maximum number of times to retry the call.
+ * @param {number} retryDelay - The delay (in milliseconds) between retries.
+ * @returns {function} - The interceptor function.
+ */
+/* istanbul ignore next */
+export const getRetryInterceptor = (
+  maxRetries: number = 3,
+  retryDelay: number = 30
+) =>
+  function (options: any, nextCall: any) {
+    let savedMetadata: any;
+    let savedSendMessage: any;
+    let savedReceiveMessage: any;
+    let savedMessageNext: any;
+    let requester = {
+      start: function (metadata: any, listener: any, next: any) {
+        savedMetadata = metadata;
+
+        const newListener = {
+          onReceiveMessage: function (message: any, next: any) {
+            savedReceiveMessage = message;
+            savedMessageNext = next;
+          },
+          onReceiveStatus: function (status: any, next: any) {
+            let retries = 0;
+            let retry = function (message: any, metadata: any) {
+              retries++;
+              let newCall = nextCall(options);
+              newCall.start(metadata, {
+                onReceiveMessage: function (message: any) {
+                  savedReceiveMessage = message;
+                },
+                onReceiveStatus: function (status: any) {
+                  if (status.code !== grpcStatus.OK) {
+                    if (retries <= maxRetries) {
+                      setTimeout(() => {
+                        retry(message, metadata);
+                      }, Math.pow(2, retries) * retryDelay);
+                    } else {
+                      savedMessageNext(savedReceiveMessage);
+                      next(status);
+                    }
+                  } else {
+                    savedMessageNext(savedReceiveMessage);
+                    next({ code: grpcStatus.OK });
+                  }
+                },
+              });
+            };
+            if (status.code !== grpcStatus.OK) {
+              console.log(status.code, ' grpcStatus.OK', grpcStatus, grpcStatus.OK);
+              retry(savedSendMessage, savedMetadata);
+            } else {
+              savedMessageNext(savedReceiveMessage);
+              next(status);
+            }
+          },
+        };
+        next(metadata, newListener);
+      },
+      sendMessage: function (message: any, next: any) {
+        savedSendMessage = message;
+        next(message);
+      },
+    };
+    return new InterceptingCall(nextCall(options), requester);
   };
