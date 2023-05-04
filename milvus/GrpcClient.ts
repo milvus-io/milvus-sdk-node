@@ -72,8 +72,14 @@ export class GRPCClient extends User {
       : null;
     // retry interceptor
     const retryInterceptor = getRetryInterceptor({
-      maxRetries: this.config.maxRetries || DEFAULT_MAX_RETRIES,
-      retryDelay: this.config.retryDelay || DEFAULT_RETRY_DELAY,
+      maxRetries:
+        typeof this.config.maxRetries === 'undefined'
+          ? DEFAULT_MAX_RETRIES
+          : this.config.maxRetries,
+      retryDelay:
+        typeof this.config.retryDelay === 'undefined'
+          ? DEFAULT_RETRY_DELAY
+          : this.config.retryDelay,
       debug: this.config.debug || DEFAULT_DEBUG,
     });
     // interceptors
