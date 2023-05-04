@@ -65,7 +65,7 @@ npm install @zilliz/milvus2-sdk-node
 
 ```shell
 # Download the milvus standalone yaml file
-$ wget https://github.com/milvus-io/milvus/releases/download/v2.2.6/milvus-standalone-docker-compose.yml -O docker-compose.yml
+$ wget https://github.com/milvus-io/milvus/releases/download/v2.2.8/milvus-standalone-docker-compose.yml -O docker-compose.yml
 
 # start the milvus server
 sudo docker-compose up -d
@@ -175,11 +175,12 @@ const searchVector = [...Array(dim)].map(() => Math.random());
 
 // Perform a vector search on the collection
 const res = await client.search({
-  collection_name,
-  vectors: [0.1, 0.2, 0.3, 0.4],
+  collection_name, // required, the collection name
+  vectors: [0.1, 0.2, 0.3, 0.4], // required, vector used to compare other vectors in milvus
   filter: 'word_count > 0', // optional, filter
   params: { nprobe: 64 }, // optional, specify the search parameters
   limit: 1, // specify the number of nearest neighbors to return
+  metric_type: 'L2', // optional, metric to calculate similarity of two vectors
   output_fields: ['book_id', 'word_count'], // optional, specify the fields to return in the search results
 });
 ```
