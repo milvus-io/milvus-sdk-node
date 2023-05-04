@@ -14,7 +14,7 @@ import {
 } from '../utils/test';
 import { timeoutTest } from './common/timeout';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, debug: true });
 const COLLECTION_NAME = GENERATE_NAME();
 const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();

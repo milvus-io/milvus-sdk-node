@@ -73,7 +73,7 @@ export class Index extends Data {
     };
     // Call the 'CreateIndex' gRPC method and return the result
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'CreateIndex',
       params,
       data.timeout || this.timeout
@@ -109,7 +109,7 @@ export class Index extends Data {
   async describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'DescribeIndex',
       data,
       data.timeout || this.timeout
@@ -145,7 +145,7 @@ export class Index extends Data {
   async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'GetIndexState',
       data,
       data.timeout || this.timeout
@@ -186,7 +186,7 @@ export class Index extends Data {
   ): Promise<GetIndexBuildProgressResponse> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'GetIndexBuildProgress',
       data,
       data.timeout || this.timeout
@@ -224,7 +224,7 @@ export class Index extends Data {
   async dropIndex(data: DropIndexReq): Promise<ResStatus> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'DropIndex',
       data,
       data.timeout || this.timeout

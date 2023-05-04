@@ -1,4 +1,5 @@
 import { ERROR_REASONS, FieldType, DataType } from '../milvus';
+import { status as grpcStatus } from '@grpc/grpc-js';
 
 /**
  * when create collection, field must contain 2 Fields.
@@ -109,4 +110,24 @@ export const checkSearchParams = (data: any) => {
   if (!data.vectors && !data.vector) {
     throw new Error(ERROR_REASONS.VECTORS_OR_VECTOR_IS_MISSING);
   }
+};
+
+/**
+ * Checks if a gRPC status code matches any of the given codes.
+ * DEADLINE_EXCEEDED means that the task wat not completed
+ * UNAVAILABLE means that the service is not reachable currently
+ * Reference: https://grpc.github.io/grpc/python/grpc.html#grpc-status-code
+ *
+ * @param {number} code - The gRPC status code to check.
+ * @param {number[]} [codesToCheck=[grpcStatus.DEADLINE_EXCEEDED, grpcStatus.UNAVAILABLE]] - An array of gRPC status codes to check against.
+ * @returns {boolean} Whether the gRPC status code matches any of the given codes.
+ */
+export const isStatusCodeMatched = (
+  code: number,
+  codesToCheck: number[] = [
+    grpcStatus.DEADLINE_EXCEEDED,
+    grpcStatus.UNAVAILABLE,
+  ]
+): boolean => {
+  return codesToCheck.includes(code);
 };

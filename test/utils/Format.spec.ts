@@ -9,6 +9,7 @@ import {
   datetimeToHybrids,
   checkSearchParams,
   parseTimeToken,
+  extractMethodName,
 } from '../../utils';
 import { ERROR_REASONS } from '../../milvus';
 
@@ -136,5 +137,11 @@ describe('utils/format', () => {
 
     expect(() => checkSearchParams(data1)).not.toThrow();
     expect(() => checkSearchParams(data2)).not.toThrow();
+  });
+
+  it('extracts the method name from a URL path', () => {
+    const query = '/api/v1/users/123';
+    const methodName = extractMethodName(query);
+    expect(methodName).toBe('123');
   });
 });

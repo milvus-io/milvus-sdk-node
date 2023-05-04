@@ -1,4 +1,5 @@
-import { checkSearchParams } from '../../utils';
+import { status as grpcStatus } from '@grpc/grpc-js';
+import { checkSearchParams, isStatusCodeMatched } from '../../utils';
 import { ERROR_REASONS } from '../../milvus';
 
 describe('utils/validate', () => {
@@ -25,5 +26,31 @@ describe('utils/validate', () => {
 
     expect(() => checkSearchParams(data1)).not.toThrow();
     expect(() => checkSearchParams(data2)).not.toThrow();
+  });
+
+  it('should return true if the code matches any of the given codes', () => {
+    const code = grpcStatus.DEADLINE_EXCEEDED;
+    const codesToCheck = [grpcStatus.DEADLINE_EXCEEDED, grpcStatus.UNAVAILABLE];
+    const result = isStatusCodeMatched(code, codesToCheck);
+    expect(result).toBe(true);
+  });
+
+  it('should return false if the code does not match any of the given codes', () => {
+    const code = grpcStatus.OK;
+    const codesToCheck = [grpcStatus.DEADLINE_EXCEEDED, grpcStatus.UNAVAILABLE];
+    const result = isStatusCodeMatched(code, codesToCheck);
+    expect(result).toBe(false);
+  });
+
+  it('should return true if the code matches the default codes to check', () => {
+    const code = grpcStatus.DEADLINE_EXCEEDED;
+    const result = isStatusCodeMatched(code);
+    expect(result).toBe(true);
+  });
+
+  it('should return false if the code does not match the default codes to check', () => {
+    const code = grpcStatus.OK;
+    const result = isStatusCodeMatched(code);
+    expect(result).toBe(false);
   });
 });

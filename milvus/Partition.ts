@@ -50,7 +50,7 @@ export class Partition extends Index {
   async createPartition(data: CreatePartitionReq): Promise<ResStatus> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'CreatePartition',
       data,
       data.timeout || this.timeout
@@ -87,7 +87,7 @@ export class Partition extends Index {
   async hasPartition(data: HasPartitionReq): Promise<BoolResponse> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'HasPartition',
       data,
       data.timeout || this.timeout
@@ -126,7 +126,7 @@ export class Partition extends Index {
   ): Promise<ShowPartitionsResponse> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'ShowPartitions',
       data,
       data.timeout || this.timeout
@@ -167,7 +167,7 @@ export class Partition extends Index {
   ): Promise<StatisticsResponse> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'GetPartitionStatistics',
       data,
       data.timeout || this.timeout
@@ -209,7 +209,7 @@ export class Partition extends Index {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'LoadPartitions',
       data,
       data.timeout || this.timeout
@@ -249,7 +249,7 @@ export class Partition extends Index {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'ReleasePartitions',
       data,
       data.timeout || this.timeout
@@ -292,7 +292,7 @@ export class Partition extends Index {
   async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.grpcClient,
+      this.client,
       'DropPartition',
       data,
       data.timeout || this.timeout
