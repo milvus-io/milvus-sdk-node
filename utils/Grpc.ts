@@ -126,7 +126,6 @@ export const getRetryInterceptor = (
               });
             };
             if (status.code !== grpcStatus.OK) {
-              console.log(status.code, ' grpcStatus.OK', grpcStatus, grpcStatus.OK);
               retry(savedSendMessage, savedMetadata);
             } else {
               savedMessageNext(savedReceiveMessage);
