@@ -183,7 +183,7 @@ await client.insert({
 });
 ```
 
-### create index and load collection into memory
+### create index
 
 By creating an index and loading the collection into memory, you can improve the performance of search and retrieval operations in Milvus, making it faster and more efficient to work with large-scale datasets.
 
@@ -212,6 +212,10 @@ Milvus supports [several different types of indexes](https://milvus.io/docs/inde
 `param`: The index build parameters, please refer to the [index docs](https://milvus.io/docs/index.md).
 
 `metric_type`: The distance metric to use when computing the similarity between vectors. In this case, the metric type is set to L2, which is a commonly used metric for computing the Euclidean distance between vectors.
+
+### load collection
+
+When you create a collection in Milvus, the collection data is initially stored on disk, and it is not immediately available for search and retrieval. In order to search or retrieve data from the collection, you must first load the collection into memory using the loadCollectionSync method.
 
 ```javascript
 // load collection
@@ -256,8 +260,6 @@ First, a random search vector is generated. Then, the `client.search()` method i
 `metric_type`: Optional. Specifies the metric used to calculate the similarity of two vectors. The example code sets this to `"L2"`. By default, it will be `"L2"`.
 
 `output_fields`: Optional. Specifies which fields to include in the search results. The example code specifies the `book_id` and `word_count` fields, by default the node sdk will output all fields.
-
-
 
 ## Next Steps
 
