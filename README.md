@@ -1,6 +1,6 @@
 [![typescript](https://badges.aleen42.com/src/typescript.svg)](https://badges.aleen42.com/src/typescript.svg)
-[![version](https://img.shields.io/npm/v/@zilliz/milvus2-sdk-node)](https://img.shields.io/npm/v/@zilliz/milvus2-sdk-node)
-[![downloads](https://img.shields.io/npm/dw/@zilliz/milvus2-sdk-node)](https://img.shields.io/npm/dw/@zilliz/milvus2-sdk-node)
+[![version](https://img.shields.io/npm/v/@zilliz/milvus2-sdk-node?color=bright-green)](https://img.shields.io/npm/v/@zilliz/milvus2-sdk-node)
+[![downloads](https://img.shields.io/npm/dw/@zilliz/milvus2-sdk-node?color=bright-green)](https://img.shields.io/npm/dw/@zilliz/milvus2-sdk-node)
 [![codecov](https://codecov.io/gh/milvus-io/milvus-sdk-node/branch/main/graph/badge.svg?token=Zu5FwWstwI)](https://codecov.io/gh/milvus-io/milvus-sdk-node)
 
 # Milvus2-sdk-node
@@ -78,11 +78,23 @@ Create a new app.js file and add the following code to try out some basic vector
 ```javascript
 import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
 
-const IP = 'your-milvus-ip';
+const address = 'your-milvus-ip';
+const username = 'your-milvus-username'; // optional username
+const password = 'your-milvus-password'; // optional password
+const ssl = false; // secure or not
 
 // connect to milvus
-const client = new MilvusClient(IP);
+const client = new MilvusClient({ address, ssl, username, password });
 ```
+
+| Parameters  | Description                                                                       | Type    | Example             |
+| ----------- | --------------------------------------------------------------------------------- | ------- | ------------------- |
+| address     | The Milvus IP address                                                             | String  | '192.168.0.1:19530' |
+| ssl?        | SSL connection. It is false by default.                                           | Boolean | false               |
+| username?   | The username used to connect to Milvus                                            | String  | milvus              |
+| address?    | The password used to connect to Milvus                                            | String  | milvus              |
+| maxRetries? | The number of retries for the grpc method, by default: 3                          | Number  | 3                   |
+| retryDelay? | The delay between attempts at retrying a failed grpc method in ms, by default: 30 | Number  | 30                  |
 
 ### define schema for collection
 
