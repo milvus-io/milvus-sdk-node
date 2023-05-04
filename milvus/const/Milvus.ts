@@ -4,7 +4,7 @@ export const DEFAULT_TOPK = 100; // default topk
 export const DEFAULT_METRIC_TYPE = 'L2';
 export const DEFAULT_MAX_RETRIES = 3; // max retry time
 export const DEFAULT_RETRY_DELAY = 30; // retry delay, 30ms
-export const DEBUG = false;
+export const DEFAULT_DEBUG = false;
 
 enum ErrorCode {
   Success = 0,

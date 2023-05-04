@@ -104,6 +104,17 @@ export const getRetryInterceptor = ({
     const deadline = options.deadline;
 
     // get method name
+    // option example 
+    // {
+    //   deadline: 2023-05-04T09:04:16.231Z,
+    //   method_definition: {
+    //     path: '/milvus.proto.milvus.MilvusService/ListCredUsers',
+    //     requestStream: false,
+    //     responseStream: false,
+    //     requestSerialize: [Function: serialize],
+    //     responseDeserialize: [Function: deserialize]
+    //   }
+    // }
     const methodName = extractMethodName(options.method_definition.path);
 
     // start time

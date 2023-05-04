@@ -5,7 +5,7 @@ import {
   ClientConfig,
   DEFAULT_MAX_RETRIES,
   DEFAULT_RETRY_DELAY,
-  DEBUG,
+  DEFAULT_DEBUG,
 } from '.';
 import { User } from './User';
 import { promisify } from '../utils';
@@ -74,7 +74,7 @@ export class GRPCClient extends User {
     const retryInterceptor = getRetryInterceptor({
       maxRetries: this.config.maxRetries || DEFAULT_MAX_RETRIES,
       retryDelay: this.config.retryDelay || DEFAULT_RETRY_DELAY,
-      debug: this.config.debug || DEBUG,
+      debug: this.config.debug || DEFAULT_DEBUG,
     });
     // interceptors
     const interceptors = [authInterceptor, retryInterceptor];
