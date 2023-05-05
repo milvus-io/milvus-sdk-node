@@ -102,14 +102,6 @@ export class Data extends Collection {
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
-    // const fieldsData = collectionInfo.schema.fields
-    //   .filter(v => !v.is_primary_key || !v.autoID)
-    //   .map(v => ({
-    //     name: v.name,
-    //     type: v.data_type,
-    //     dim: Number(findKeyValue(v.type_params, 'dim')),
-    //     value: [] as number[],
-    //   }));
     const fieldsData = new Map<
       string,
       { name: string; type: string; dim: number; value: number[] }
