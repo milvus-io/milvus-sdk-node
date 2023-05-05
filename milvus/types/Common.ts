@@ -3,7 +3,7 @@ import {
   UserPrivileges,
   GlobalPrivileges,
   MsgType,
-} from '../const/Milvus';
+} from '../';
 
 export interface MsgBase {
   base: {

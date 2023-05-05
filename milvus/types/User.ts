@@ -1,5 +1,5 @@
 import { GrpcTimeOut, PrivilegesTypes, ResStatus } from './Common';
-import { RbacObjects } from '../const/Milvus';
+import { RbacObjects } from '../';
 
 export interface UpdateUserReq extends GrpcTimeOut {
   username: string;

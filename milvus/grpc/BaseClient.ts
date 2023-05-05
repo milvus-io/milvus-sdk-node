@@ -1,30 +1,35 @@
 import path from 'path';
 import protobuf, { Root } from 'protobufjs';
 import { Client, ChannelOptions } from '@grpc/grpc-js';
-import { ERROR_REASONS, ClientConfig, DEFAULT_CONNECT_TIMEOUT } from '.';
-import { parseTimeToken } from '../utils';
+import { ERROR_REASONS, ClientConfig, DEFAULT_CONNECT_TIMEOUT } from '..';
+import { parseTimeToken } from '../../utils';
 
 // path
-const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
-const schemaProtoPath = path.resolve(__dirname, '../proto/proto/schema.proto');
+const protoPath = path.resolve(__dirname, '../../proto/proto/milvus.proto');
+const schemaProtoPath = path.resolve(__dirname, '../../proto/proto/schema.proto');
 
-// Base Client
+/**
+ * Base gRPC client, setup all configuration here
+ */
 export class BaseClient {
-  // client
+  // The gRPC client instance.
   client: Client | undefined;
+  // The path to the Milvus protobuf file.
   protoPath: string;
-  // schema proto
+  // The protobuf schema.
   schemaProto: Root;
-  // milvus proto
+  // The Milvus protobuf.
   milvusProto: Root;
-  // config
+  // The client configuration.
   config: ClientConfig;
+  // The name of the Milvus service.
+  serviceName: string = 'milvus.proto.milvus.MilvusService';
 
-  // timeout:
+  // The timeout for connecting to the Milvus service.
   timeout: number = DEFAULT_CONNECT_TIMEOUT;
 
   /**
-   * setup the configuration object
+   * Sets up the configuration object for the gRPC client.
    *
    * @param configOrAddress The configuration object or the Milvus address as a string.
    * @param ssl Whether to use SSL or not. Default is false.
@@ -53,25 +58,22 @@ export class BaseClient {
       };
     }
 
-    // check if address is set
+    // Check if the Milvus address is set.
     if (!config.address) {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
 
-    // assign config
+    // Assign the configuration object.
     this.config = config;
-    // load proto
+    // Load the Milvus protobuf.
     this.protoPath = protoPath;
     this.schemaProto = protobuf.loadSync(schemaProtoPath);
     this.milvusProto = protobuf.loadSync(protoPath);
 
-    // setup timeout
+    // Set up the timeout for connecting to the Milvus service.
     this.timeout =
       typeof config.timeout === 'string'
         ? parseTimeToken(config.timeout)
         : config.timeout || DEFAULT_CONNECT_TIMEOUT;
   }
-
-  // connect interface
-  connect() {}
 }

@@ -1,3 +1,4 @@
+import path from 'path';
 import {
   promisify,
   formatKeyValueData,
@@ -5,7 +6,7 @@ import {
   checkCollectionFields,
   checkCollectionName,
   sleep,
-} from '../utils';
+} from '../../utils';
 import { BaseClient } from './BaseClient';
 import {
   ERROR_REASONS,
@@ -42,8 +43,8 @@ import {
   ReplicasResponse,
   GetLoadingProgressResponse,
   GetLoadStateResponse,
-} from '.';
-import { assignTypeParams } from '../utils';
+} from '..';
+import { assignTypeParams } from '../../utils';
 
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)

@@ -4,7 +4,7 @@ import {
   checkCollectionName,
   checkCollectionAndPartitionName,
   formatKeyValueData,
-} from '../utils';
+} from '../../utils';
 import {
   ERROR_REASONS,
   CreatePartitionReq,
@@ -18,7 +18,7 @@ import {
   BoolResponse,
   ShowPartitionsResponse,
   StatisticsResponse,
-} from '.';
+} from '..';
 
 export class Partition extends Index {
   /**

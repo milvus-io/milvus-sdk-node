@@ -10,7 +10,7 @@ import {
   CompactionState,
   DataType,
   LoadState,
-} from '../const/Milvus';
+} from '../';
 
 export interface FieldSchema {
   name: string;

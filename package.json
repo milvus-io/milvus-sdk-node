@@ -12,7 +12,7 @@
     "build": "tsc --declaration && node build.js",
     "testAll": "jest --testPathIgnorePatterns=/test/build/",
     "test": "jest",
-    "coverage": "jest --coverage=true --config jest.config.js --no-cache --testPathIgnorePatterns=/test/build/ test/User.spec.ts ",
+    "coverage": "jest --coverage=true --config jest.config.js --no-cache --testPathIgnorePatterns=/test/build/",
     "build-test": "yarn build && jest test/build/Collection.spec.ts",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc",

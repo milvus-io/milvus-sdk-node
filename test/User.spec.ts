@@ -9,7 +9,6 @@ import {
 } from '../milvus';
 import { IP } from '../const';
 import { timeoutTest } from './common/timeout';
-
 import { genCollectionParams, GENERATE_NAME } from '../utils/test';
 
 const milvusClient = new MilvusClient({ address: IP });
@@ -95,6 +94,17 @@ describe(`User Api`, () => {
       newPassword: NEW_PASSWORD,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Auth client update user expect error`, async () => {
+    try {
+      await authClient!.updateUser({
+        username: USERNAME,
+        newPassword: NEW_PASSWORD,
+      } as any);
+    } catch (err) {
+      expect(err.message).toEqual(ERROR_REASONS.USERNAME_PWD_ARE_REQUIRED);
+    }
   });
 
   it(`Old pwd client should not valid`, async () => {
@@ -224,6 +234,14 @@ describe(`User Api`, () => {
     });
     // console.log('dropRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Auth client delete user expect error`, async () => {
+    try {
+      await authClient.deleteUser({} as any);
+    } catch (err) {
+      expect(err.message).toEqual(ERROR_REASONS.USERNAME_IS_REQUIRED);
+    }
   });
 
   // last test
