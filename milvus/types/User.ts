@@ -1,4 +1,4 @@
-import { GrpcTimeOut, PrivilegesTypes, ResStatus } from '.';
+import { GrpcTimeOut, PrivilegesTypes, ResStatus } from './Common';
 import { RbacObjects } from '../';
 
 export interface UpdateUserReq extends GrpcTimeOut {

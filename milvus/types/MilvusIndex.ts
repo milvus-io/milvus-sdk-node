@@ -1,10 +1,5 @@
-import {
-  GrpcTimeOut,
-  ResStatus,
-  KeyValuePair,
-  IndexState,
-  keyValueObj,
-} from '../';
+import { KeyValuePair, IndexState, keyValueObj } from '../';
+import { GrpcTimeOut, ResStatus } from './Common';
 
 export interface CreateIndexParam {
   index_type: string;

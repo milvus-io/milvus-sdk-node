@@ -4,8 +4,13 @@ import {
   GrpcTimeOut,
   TimeStamp,
   TimeStampArray,
-} from '.';
-import { ConsistencyLevelEnum, CompactionState, DataType, LoadState } from '../';
+} from './Common';
+import {
+  ConsistencyLevelEnum,
+  CompactionState,
+  DataType,
+  LoadState,
+} from '../';
 
 export interface FieldSchema {
   name: string;

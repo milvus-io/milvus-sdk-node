@@ -1,4 +1,4 @@
-import { GrpcTimeOut, ResStatus } from '.';
+import { GrpcTimeOut, ResStatus } from './Common';
 
 export interface CreateResourceGroupReq extends GrpcTimeOut {
   resource_group: string;

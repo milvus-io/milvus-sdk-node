@@ -1,4 +1,4 @@
-import { GrpcTimeOut, ResStatus, TimeStampArray } from '.';
+import { GrpcTimeOut, ResStatus, TimeStampArray } from './Common';
 
 interface PartitionParent extends GrpcTimeOut {
   collection_name: string;
