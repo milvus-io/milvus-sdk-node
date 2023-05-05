@@ -2,6 +2,16 @@ import { DataType, FieldType } from '../milvus';
 
 export const VECTOR_FIELD_NAME = 'vector_field';
 export const INDEX_NAME = 'index_name';
+
+/**
+ * Generates collection parameters with default fields for a given collection name, dimension, vector type, and optional fields array.
+ * @param {string} collectionName Name of the collection
+ * @param {string | number} dim Dimension of the vector field
+ * @param {DataType.FloatVector | DataType.BinaryVector} vectorType Type of vector field
+ * @param {boolean} [autoID=true] Whether to automatically generate IDs
+ * @param {any[]} [fields=[]] Optional array of additional fields
+ * @returns {{ collection_name: string, fields: any[] }} Object containing the collection name and a fields array
+ */
 export const genCollectionParams = (
   collectionName: string,
   dim: string | number,
@@ -44,6 +54,11 @@ export const genCollectionParams = (
   };
 };
 
+/**
+ * Generates a random collection name with a prefix and a random string appended to it.
+ * @param {string} [pre='collection'] - The prefix to use for the collection name.
+ * @returns {string} The generated collection name.
+ */
 export const GENERATE_NAME = (pre = 'collection') =>
   `${pre}_${Math.random().toString(36).substr(2, 8)}`;
 
@@ -78,10 +93,10 @@ export function generateInsertData(fields: FieldType[], count: number = 10) {
       value[name] = isVector // If the field is a vector field
         ? [...Array(Number(dim))].map(() => Math.random()) // Generate an array of random numbers between 0 and 10 with length equal to the vector dimension
         : isBool // If the field is a boolean field
-          ? count % 2 === 0 // Generate a random boolean value based on the current count
-          : isVarChar // If the field is a varchar field
-            ? Math.random().toString(36).substring(2, 7) // Generate a random string of characters
-            : Math.floor(Math.random() * 100000); // Otherwise, generate a random integer between 0 and 100000
+        ? count % 2 === 0 // Generate a random boolean value based on the current count
+        : isVarChar // If the field is a varchar field
+        ? Math.random().toString(36).substring(2, 7) // Generate a random string of characters
+        : Math.floor(Math.random() * 100000); // Otherwise, generate a random integer between 0 and 100000
     });
     results.push(value); // Add the generated values for this data point to the results array
     count--; // Decrement the count to keep track of how many data points we've generated so far

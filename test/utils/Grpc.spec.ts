@@ -19,7 +19,7 @@ describe(`utils/grpc`, () => {
   });
 
   it(`should return a service client constructor`, () => {
-    const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
+    const protoPath = path.resolve(__dirname, '../../proto/proto/milvus.proto');
     const proto = {
       protoPath,
       serviceName: `milvus.proto.milvus.MilvusService`,
@@ -29,7 +29,7 @@ describe(`utils/grpc`, () => {
   });
 
   it(`should throw an error if the service object is invalid`, () => {
-    const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
+    const protoPath = path.resolve(__dirname, '../../proto/proto/milvus.proto');
     const proto = {
       protoPath,
       serviceName: `milvus.proto.milvus.MilvusService2`,
