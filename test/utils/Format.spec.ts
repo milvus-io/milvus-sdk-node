@@ -10,8 +10,8 @@ import {
   checkSearchParams,
   parseTimeToken,
   extractMethodName,
-} from '../../utils';
-import { ERROR_REASONS } from '../../milvus';
+  ERROR_REASONS,
+} from '../../milvus';
 
 describe('utils/format', () => {
   it(`all kinds of url should be supported`, async () => {

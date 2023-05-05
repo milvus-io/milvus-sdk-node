@@ -4,13 +4,8 @@ import {
   GrpcTimeOut,
   TimeStamp,
   TimeStampArray,
-} from './Common';
-import {
-  ConsistencyLevelEnum,
-  CompactionState,
-  DataType,
-  LoadState,
-} from '../const/Milvus';
+} from '.';
+import { ConsistencyLevelEnum, CompactionState, DataType, LoadState } from '..';
 
 export interface FieldSchema {
   name: string;

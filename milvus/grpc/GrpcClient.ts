@@ -1,60 +1,23 @@
-import path from 'path';
+import { credentials, ChannelOptions } from '@grpc/grpc-js';
 import {
   GetVersionResponse,
   CheckHealthResponse,
-  ClientConfig,
   DEFAULT_MAX_RETRIES,
   DEFAULT_RETRY_DELAY,
   DEFAULT_DEBUG,
-} from '.';
-import { User } from './User';
-import { promisify } from '../utils';
-import sdkInfo from '../sdk.json';
-import protobuf, { Root } from 'protobufjs';
-import { credentials, ChannelOptions } from '@grpc/grpc-js';
-import {
+  promisify,
   getGRPCService,
   formatAddress,
   getAuthInterceptor,
   getRetryInterceptor,
-} from '../utils';
+} from '..';
+import { User } from './User';
 
-// path
-const protoPath = path.resolve(__dirname, '../proto/proto/milvus.proto');
-const schemaProtoPath = path.resolve(__dirname, '../proto/proto/schema.proto');
-
+/**
+ * A client for interacting with the Milvus server via gRPC.
+ */
 export class GRPCClient extends User {
-  // schema proto
-  schemaProto: Root;
-  // milvus proto
-  milvusProto: Root;
-  // path
-  protoPath: string;
-
-  /**
-   * Connect to a Milvus gRPC client.
-   *
-   * @param configOrAddress The configuration object or the Milvus address as a string.
-   * @param ssl Whether to use SSL or not. Default is false.
-   * @param username The username for authentication. Required if password is provided.
-   * @param password The password for authentication. Required if username is provided.
-   */
-  constructor(
-    configOrAddress: ClientConfig | string,
-    ssl?: boolean,
-    username?: string,
-    password?: string,
-    channelOptions?: ChannelOptions
-  ) {
-    // setup configuration object
-    super(configOrAddress, ssl, username, password, channelOptions);
-    // load proto
-    this.protoPath = protoPath;
-    this.schemaProto = protobuf.loadSync(schemaProtoPath);
-    this.milvusProto = protobuf.loadSync(protoPath);
-  }
-
-  // overload
+  // create a grpc service client(connect)
   connect() {
     // if we need to create auth interceptors
     const needAuth =
@@ -63,7 +26,7 @@ export class GRPCClient extends User {
     // get Milvus GRPC service
     const MilvusService = getGRPCService({
       protoPath: this.protoPath,
-      serviceName: 'milvus.proto.milvus.MilvusService', // the name of the Milvus service
+      serviceName: this.serviceName, // the name of the Milvus service
     });
 
     // auth interceptor
@@ -100,13 +63,6 @@ export class GRPCClient extends User {
       this.config.ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
       options
     );
-  }
-
-  static get sdkInfo() {
-    return {
-      version: sdkInfo.version,
-      recommandMilvus: sdkInfo.milvusVersion,
-    };
   }
 
   // @deprecated
@@ -153,7 +109,17 @@ export class GRPCClient extends User {
     return this;
   }
 
-  // This method closes the gRPC client connection and returns the connectivity state of the channel.
+  /**
+   * Closes the gRPC client connection and returns the connectivity state of the channel.
+   * This method should be called before terminating the application or when the client is no longer needed.
+   * This method returns a number that represents the connectivity state of the channel:
+   * - 0: CONNECTING
+   * - 1: READY
+   * - 2: IDLE
+   * - 3: TRANSIENT FAILURE
+   * - 4: FATAL FAILURE
+   * - 5: SHUTDOWN
+   */
   closeConnection() {
     // Close the gRPC client connection
     if (this.client) {
@@ -165,12 +131,18 @@ export class GRPCClient extends User {
     }
   }
 
-  // This method returns the version of the Milvus server.
+  /**
+   * Returns version information for the Milvus server.
+   * This method returns a Promise that resolves with a `GetVersionResponse` object.
+   */
   async getVersion(): Promise<GetVersionResponse> {
     return await promisify(this.client, 'GetVersion', {}, this.timeout);
   }
 
-  // This method checks the health of the Milvus server.
+  /**
+   * Checks the health of the Milvus server.
+   * This method returns a Promise that resolves with a `CheckHealthResponse` object.
+   */
   async checkHealth(): Promise<CheckHealthResponse> {
     return await promisify(this.client, 'CheckHealth', {}, this.timeout);
   }

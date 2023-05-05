@@ -1,6 +1,9 @@
 import { status as grpcStatus } from '@grpc/grpc-js';
-import { checkSearchParams, isStatusCodeMatched } from '../../utils';
-import { ERROR_REASONS } from '../../milvus';
+import {
+  checkSearchParams,
+  isStatusCodeMatched,
+  ERROR_REASONS,
+} from '../../milvus';
 
 describe('utils/validate', () => {
   it('throws an error if vectors and vector are undefined', () => {

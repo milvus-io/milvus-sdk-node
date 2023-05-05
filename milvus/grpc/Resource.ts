@@ -1,4 +1,4 @@
-import { promisify } from '../utils';
+import { promisify } from '../../utils';
 import { Partition } from './Partition';
 import {
   DEFAULT_RESOURCE_GROUP,
@@ -11,7 +11,7 @@ import {
   DescribeResourceGroupResponse,
   TransferNodeReq,
   TransferReplicaReq,
-} from '.';
+} from '..';
 
 export class Resource extends Partition {
   /**

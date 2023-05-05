@@ -8,7 +8,7 @@ import {
   checkSearchParams,
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
-} from '../utils';
+} from '../../utils';
 import {
   DataType,
   DataTypeMap,
@@ -41,11 +41,13 @@ import {
   SearchSimpleReq,
   DEFAULT_TOPK,
   DEFAULT_METRIC_TYPE,
-} from '.';
+} from '..';
 import { Collection } from './Collection';
 
 export class Data extends Collection {
+  // vectorTypes
   vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
+
   /**
    * Insert data into Milvus.
    *
