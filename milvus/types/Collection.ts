@@ -5,7 +5,7 @@ import {
   TimeStamp,
   TimeStampArray,
 } from '.';
-import { ConsistencyLevelEnum, CompactionState, DataType, LoadState } from '..';
+import { ConsistencyLevelEnum, CompactionState, DataType, LoadState } from '../';
 
 export interface FieldSchema {
   name: string;

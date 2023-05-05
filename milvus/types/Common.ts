@@ -3,7 +3,7 @@ import {
   UserPrivileges,
   GlobalPrivileges,
   MsgType,
-} from '..';
+} from '../';
 
 export interface MsgBase {
   base: {

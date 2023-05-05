@@ -4,7 +4,7 @@ import {
   KeyValuePair,
   IndexState,
   keyValueObj,
-} from '..';
+} from '../';
 
 export interface CreateIndexParam {
   index_type: string;
