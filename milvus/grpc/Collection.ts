@@ -46,8 +46,6 @@ import {
 } from '..';
 import { assignTypeParams } from '../../utils';
 
-const schemaProtoPath = path.resolve(__dirname, '../proto/proto/schema.proto');
-
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
  */
