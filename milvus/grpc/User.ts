@@ -547,6 +547,7 @@ export class User extends Resource {
    *  milvusClient.revokeAllRolesPrivileges();
    * ```
    */
+  /* istanbul ignore next */
   async dropAllRoles(data?: GrpcTimeOut): Promise<ResStatus[]> {
     // find all roles
     const res = await this.listRoles({ timeout: data?.timeout });

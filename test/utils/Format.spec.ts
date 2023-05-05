@@ -10,6 +10,7 @@ import {
   checkSearchParams,
   parseTimeToken,
   extractMethodName,
+  assignTypeParams,
   ERROR_REASONS,
 } from '../../milvus';
 
@@ -143,5 +144,57 @@ describe('utils/format', () => {
     const query = '/api/v1/users/123';
     const methodName = extractMethodName(query);
     expect(methodName).toBe('123');
+  });
+
+  it('should assign properties with keys `dim` or `max_length` to the `type_params` object and delete them from the `field` object', () => {
+    const field = {
+      name: 'vector',
+      type: 'BinaryVector',
+      dim: 128,
+      max_length: 100,
+    };
+    const expectedOutput = {
+      name: 'vector',
+      type: 'BinaryVector',
+      type_params: {
+        dim: '128',
+        max_length: '100',
+      },
+    };
+    expect(assignTypeParams(field)).toEqual(expectedOutput);
+  });
+
+  it('should not modify the `field` object if it does not have properties with keys `dim` or `max_length`', () => {
+    const field = {
+      name: 'id',
+      type: 'Int64',
+    };
+    const expectedOutput = {
+      name: 'id',
+      type: 'Int64',
+    };
+    expect(assignTypeParams(field)).toEqual(expectedOutput);
+  });
+
+  it('should convert properties with keys `dim` or `max_length` to strings if they already exist in the `type_params` object', () => {
+    const field = {
+      name: 'text',
+      type: 'String',
+      type_params: {
+        dim: 100,
+        max_length: 50,
+      },
+      dim: 200,
+      max_length: 75,
+    };
+    const expectedOutput = {
+      name: 'text',
+      type: 'String',
+      type_params: {
+        dim: '200',
+        max_length: '75',
+      },
+    };
+    expect(assignTypeParams(field)).toEqual(expectedOutput);
   });
 });
