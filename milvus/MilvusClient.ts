@@ -1,5 +1,6 @@
 import { ChannelOptions } from '@grpc/grpc-js';
 import { GRPCClient, ClientConfig } from '.';
+import { Collection } from './high-level';
 import sdkInfo from '../sdk.json';
 
 /**
@@ -44,5 +45,12 @@ export class MilvusClient extends GRPCClient {
    */
   connect() {
     super.connect();
+  }
+
+  /**
+   * High-level collection method, return a 
+   */
+  collection() {
+    return new Collection({ name: 'd', client: this });
   }
 }
