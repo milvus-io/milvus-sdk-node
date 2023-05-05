@@ -110,7 +110,6 @@ export class Data extends Collection {
     //     dim: Number(findKeyValue(v.type_params, 'dim')),
     //     value: [] as number[],
     //   }));
-
     const fieldsData = new Map<
       string,
       { name: string; type: string; dim: number; value: number[] }
@@ -716,8 +715,6 @@ export class Data extends Collection {
    *  | :--- | :-- | :-- |
    *  | segmentIDs | Array | The segment ids |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
-   *
    *
    * @returns
    * | Property | Description |
