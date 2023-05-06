@@ -127,6 +127,7 @@ export const isStatusCodeMatched = (
   codesToCheck: number[] = [
     grpcStatus.DEADLINE_EXCEEDED,
     grpcStatus.UNAVAILABLE,
+    grpcStatus.INTERNAL,
   ]
 ): boolean => {
   return codesToCheck.includes(code);
