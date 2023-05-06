@@ -10,12 +10,13 @@ import {
   CompactionState,
   DataType,
   LoadState,
+  DataTypeMap,
 } from '../';
 
 export interface FieldSchema {
   name: string;
   description: string;
-  data_type: string;
+  data_type: keyof typeof DataType;
   is_primary_key?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
@@ -50,7 +51,7 @@ export type TypeParamKey = 'dim' | 'max_length';
 export interface FieldType {
   name: string;
   description?: string;
-  data_type?: DataType;
+  data_type?: DataType | keyof typeof DataTypeMap;
   is_primary_key?: boolean;
   type_params?: {
     [key: string]: TypeParam;
