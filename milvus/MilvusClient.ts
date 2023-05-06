@@ -50,10 +50,27 @@ export class MilvusClient extends GRPCClient {
   /**
    * High-level collection method, return a collection
    */
-  collection() {
-    return new Collection({
-      data: { name: 'd', dimension: 1024 },
-      client: this,
-    });
+  async collection({ name, dimension }: any) {
+    let collection: Collection;
+
+    // check exist
+    const exist = await this.hasCollection({ collection_name: name });
+
+    // not exist, create a new one
+    if (!exist.value) {
+      collection = new Collection({
+        data: { name, dimension },
+        client: this,
+      });
+      // init
+      await collection.init();
+      // return collection
+      return collection;
+    }
+
+    // get existing collection
+    const existCollection = this.describeCollection({ collection_name: name });
+
+    return existCollection;
   }
 }

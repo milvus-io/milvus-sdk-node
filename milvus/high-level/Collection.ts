@@ -1,10 +1,12 @@
-import { MilvusClient, DataType, MetricType } from '../';
+import { MilvusClient, DataType, MetricType, FieldType } from '../';
 
 interface collectionProps {
   data: {
     name: string;
     dimension: number;
+    description?: string;
     metric?: MetricType;
+    fields?: FieldType[];
   };
   client: MilvusClient;
 }
@@ -15,11 +17,16 @@ export class Collection {
   /**
    * The name of the collection.
    */
-  name: string;
+  readonly name: string;
   /**
    * The Milvus client used to interact with the collection.
    */
-  client: MilvusClient;
+  #client: MilvusClient;
+
+  readonly dimension: number;
+  readonly metric: MetricType;
+  readonly fields: FieldType[];
+  readonly description: string;
 
   /**
    * Creates a new collection.
@@ -28,88 +35,93 @@ export class Collection {
    * @param {MilvusClient} props.client - The Milvus client used to interact with the collection.
    */
   constructor({ data, client }: collectionProps) {
-    const { name, dimension, metric = MetricType.L2 } = data;
-    // assign value
-    this.name = name;
-    this.client = client;
+    const {
+      name,
+      dimension,
+      fields,
+      metric = MetricType.L2,
+      description = '',
+    } = data;
 
-    // create collection
-    this.client.createCollection({
+    // assign private client
+    this.#client = client;
+
+    // assign public values
+    this.name = name;
+    this.dimension = dimension;
+    this.metric = metric;
+    this.fields = fields ?? [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+        autoID: true,
+      },
+      {
+        name: 'vector',
+        data_type: DataType.FloatVector,
+        dim: this.dimension,
+      },
+    ];
+    this.description = description;
+  }
+
+  // create collection here
+  async init() {
+    await this.#client.createCollection({
       collection_name: this.name,
-      description: '',
-      fields: [
-        {
-          name: 'id',
-          data_type: DataType.Int64,
-          is_primary_key: true,
-          autoID: true,
-        },
-        {
-          name: 'vector',
-          data_type: DataType.FloatVector,
-          dim: dimension,
-        },
-      ],
+      description: this.description,
+      fields: this.fields,
     });
 
-    // create index
+    setTimeout(async () => {
+      const newCol = await this.#client.describeCollection({
+        collection_name: this.name,
+      });
 
-    // load
+      console.log(2222, newCol);
+    }, 1000);
   }
 
   /**
    * Returns the number of entities in the collection.
    */
-  get count() {
+  async getCount() {
     return 'num of entities';
-  }
-
-  /**
-   * Returns information about the collection.
-   */
-  get info() {
-    return 'collection info';
-  }
-
-  /**
-   * Returns the schema of the collection.
-   */
-  get schema() {
-    return 'schema';
   }
 
   /**
    * Searches for entities in the collection.
    */
-  search() {
+  async search() {
     return 'search result';
   }
 
   /**
    * Returns the entities that match the query.
    */
-  get() {
+  async get() {
     return 'query result';
   }
 
   /**
    * Inserts or upserts entities into the collection.
    */
-  insert() {
+  async insert() {
     return 'insert or upsert entities';
   }
 
   /**
    * Deletes entities from the collection.
    */
-  delete() {
+  async delete() {
     return 'delete entities';
   }
 
   /**
    * destroy the collection.
    */
-  destroy() {
+  async destroy() {
     return 'delete self';
   }
 }
