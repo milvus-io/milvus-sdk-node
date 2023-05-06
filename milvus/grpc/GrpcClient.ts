@@ -54,6 +54,10 @@ export class GRPCClient extends User {
       // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
       // So SDK should support max_receive_message_length unlimited.
       'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
+      'grpc.max_send_message_length': -1, // set max_send_message_length to unlimited
+      'grpc.keepalive_time_ms': 10 * 1000, // Send keepalive pings every 10 seconds, default is 2 hours.
+      'grpc.keepalive_timeout_ms': 10 * 1000, // Keepalive ping timeout after 10 seconds, default is 20 seconds.
+      'grpc.keepalive_permit_without_calls': 1, // Allow keepalive pings when there are no gRPC calls.
       ...this.config.channelOptions,
     };
 
