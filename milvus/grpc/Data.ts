@@ -102,42 +102,43 @@ export class Data extends Collection {
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
-    const fieldsData = collectionInfo.schema.fields
-      .filter(v => !v.is_primary_key || !v.autoID)
-      .map(v => ({
-        name: v.name,
-        type: v.data_type,
-        dim: Number(findKeyValue(v.type_params, 'dim')),
-        value: [] as number[],
-      }));
+    const fieldsData = new Map<
+      string,
+      { name: string; type: string; dim: number; value: number[] }
+    >(
+      collectionInfo.schema.fields
+        .filter(v => !v.is_primary_key || !v.autoID)
+        .map(v => [
+          v.name,
+          {
+            name: v.name,
+            type: v.data_type,
+            dim: Number(findKeyValue(v.type_params, 'dim')),
+            value: [] as number[],
+          },
+        ])
+    );
 
     // The actual data we pass to Milvus gRPC.
     const params: any = { ...data, num_rows: data.fields_data.length };
 
-    // You need to parse the original row data to column data for Milvus.
+    // Loop through each row and set the corresponding field values in the Map.
     data.fields_data.forEach((v, i) => {
-      // Set the key as the field name to get all names in a row.
       const fieldNames = Object.keys(v);
-
       fieldNames.forEach(name => {
-        const target = fieldsData.find((item: any) => item.name === name);
+        const target = fieldsData.get(name);
         if (!target) {
           throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
         }
         const isVector = this.vectorTypes.includes(
           DataTypeMap[target.type.toLowerCase()]
         );
-
-        // Check if the dimension is matched when the data type is BinaryVector.
         if (
           DataTypeMap[target.type.toLowerCase()] === DataType.BinaryVector &&
           v[name].length !== target.dim / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
-
-        // Value in vector field should be array. Therefore you need concat it.
-        // but array.concat is slow, we need for loop to push the value one by one
         if (isVector) {
           for (let val of v[name]) {
             target.value.push(val);
@@ -148,7 +149,7 @@ export class Data extends Collection {
       });
     });
 
-    params.fields_data = fieldsData.map(v => {
+    params.fields_data = Array.from(fieldsData.values()).map(v => {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may casue we cant find value.
       const type = DataTypeMap[v.type.toLowerCase()];
@@ -706,8 +707,6 @@ export class Data extends Collection {
    *  | :--- | :-- | :-- |
    *  | segmentIDs | Array | The segment ids |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
-   *
    *
    * @returns
    * | Property | Description |
