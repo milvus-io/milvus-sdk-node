@@ -1,7 +1,11 @@
-import { MilvusClient, DataType } from '../';
+import { MilvusClient, DataType, MetricType } from '../';
 
 interface collectionProps {
-  name: string;
+  data: {
+    name: string;
+    dimension: number;
+    metric?: MetricType;
+  };
   client: MilvusClient;
 }
 /**
@@ -23,7 +27,8 @@ export class Collection {
    * @param {string} props.name - The name of the collection.
    * @param {MilvusClient} props.client - The Milvus client used to interact with the collection.
    */
-  constructor({ name, client }: collectionProps) {
+  constructor({ data, client }: collectionProps) {
+    const { name, dimension, metric = MetricType.L2 } = data;
     // assign value
     this.name = name;
     this.client = client;
@@ -42,10 +47,14 @@ export class Collection {
         {
           name: 'vector',
           data_type: DataType.FloatVector,
-          dim: 128,
+          dim: dimension,
         },
       ],
     });
+
+    // create index
+
+    // load
   }
 
   /**

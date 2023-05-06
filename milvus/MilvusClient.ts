@@ -48,9 +48,12 @@ export class MilvusClient extends GRPCClient {
   }
 
   /**
-   * High-level collection method, return a 
+   * High-level collection method, return a collection
    */
   collection() {
-    return new Collection({ name: 'd', client: this });
+    return new Collection({
+      data: { name: 'd', dimension: 1024 },
+      client: this,
+    });
   }
 }
