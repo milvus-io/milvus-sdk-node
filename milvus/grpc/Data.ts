@@ -1,15 +1,4 @@
 import {
-  promisify,
-  findKeyValue,
-  sleep,
-  formatNumberPrecision,
-  parseToKeyValue,
-  checkCollectionName,
-  checkSearchParams,
-  parseBinaryVectorToBytes,
-  parseFloatVectorToBytes,
-} from '../../utils';
-import {
   DataType,
   DataTypeMap,
   ERROR_REASONS,
@@ -41,7 +30,16 @@ import {
   SearchSimpleReq,
   DEFAULT_TOPK,
   DEFAULT_METRIC_TYPE,
-} from '..';
+  promisify,
+  findKeyValue,
+  sleep,
+  formatNumberPrecision,
+  parseToKeyValue,
+  checkCollectionName,
+  checkSearchParams,
+  parseBinaryVectorToBytes,
+  parseFloatVectorToBytes,
+} from '../';
 import { Collection } from './Collection';
 
 export class Data extends Collection {

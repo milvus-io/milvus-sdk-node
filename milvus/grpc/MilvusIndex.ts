@@ -1,6 +1,4 @@
-import { promisify } from '../../utils';
 import { Data } from './Data';
-import { checkCollectionName, parseToKeyValue } from '../../utils';
 import {
   CreateIndexReq,
   DescribeIndexReq,
@@ -12,6 +10,9 @@ import {
   GetIndexStateResponse,
   GetIndexBuildProgressResponse,
   CreateIndexSimpleReq,
+  checkCollectionName,
+  parseToKeyValue,
+  promisify,
 } from '../';
 
 export class Index extends Data {

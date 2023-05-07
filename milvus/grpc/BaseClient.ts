@@ -1,8 +1,12 @@
 import path from 'path';
 import protobuf, { Root, Type } from 'protobufjs';
 import { Client, ChannelOptions } from '@grpc/grpc-js';
-import { ERROR_REASONS, ClientConfig, DEFAULT_CONNECT_TIMEOUT } from '../';
-import { parseTimeToken } from '../../utils';
+import {
+  ERROR_REASONS,
+  ClientConfig,
+  DEFAULT_CONNECT_TIMEOUT,
+  parseTimeToken,
+} from '../';
 
 // path
 const protoPath = path.resolve(__dirname, '../../proto/proto/milvus.proto');

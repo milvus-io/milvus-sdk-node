@@ -41,7 +41,6 @@ import {
   sleep,
   formatCreateColReq,
 } from '../';
-import { assignTypeParams } from '../../utils';
 
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
