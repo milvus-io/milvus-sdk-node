@@ -1,3 +1,5 @@
+import path from 'path';
+import protobuf from 'protobufjs';
 import {
   formatNumberPrecision,
   parseToKeyValue,
@@ -15,6 +17,7 @@ import {
   convertToDataType,
   DataType,
   FieldType,
+  formatCreateColReq,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -221,5 +224,72 @@ describe('utils/format', () => {
     expect(() => convertToDataType(999 as any)).toThrow(
       new Error(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT)
     );
+  });
+
+  it('formats input data correctly', () => {
+    const data = {
+      collection_name: 'testCollection',
+      description: 'Test Collection for Jest',
+      fields: [
+        {
+          name: 'testField1',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+          description: 'Test PRIMARY KEY field',
+        },
+        {
+          name: 'testField2',
+          data_type: DataType.FloatVector,
+          is_primary_key: false,
+          description: 'Test VECTOR field',
+          dim: 64,
+        },
+      ],
+    };
+
+    const schemaProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/schema.proto'
+    );
+    const schemaProto = protobuf.loadSync(schemaProtoPath);
+
+    const fieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
+
+    const expectedResult = {
+      name: 'testCollection',
+      description: 'Test Collection for Jest',
+      fields: [
+        {
+          typeParams: [],
+          indexParams: [],
+          name: 'testField1',
+          data_type: 5,
+          is_primary_key: true,
+          description: 'Test PRIMARY KEY field',
+          dataType: 5,
+          isPrimaryKey: true,
+        },
+        {
+          typeParams: [
+            {
+              key: 'dim',
+              value: '64',
+            },
+          ],
+          indexParams: [],
+          name: 'testField2',
+          data_type: 101,
+          is_primary_key: false,
+          description: 'Test VECTOR field',
+          dataType: 101,
+          isPrimaryKey: false,
+        },
+      ],
+    };
+
+    const payload = formatCreateColReq(data, fieldSchemaType);
+    expect(payload).toEqual(expectedResult);
   });
 });

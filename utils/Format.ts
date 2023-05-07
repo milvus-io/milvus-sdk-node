@@ -276,13 +276,16 @@ export const convertToDataType = (
   throw new Error(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT);
 };
 
-export const cloneObject = (obj: object): object => {
-  return JSON.parse(JSON.stringify(obj));
-};
-
+/**
+ * Formats the input data into a request payload for creating a collection.
+ *
+ * @param {CreateCollectionReq} data - The input data for creating a collection.
+ * @param {Type} schemaType - The schema type for the collection.
+ * @returns {Object} The formatted request payload.
+ */
 export const formatCreateColReq = (
   data: CreateCollectionReq,
-  schemaType: Type
+  grpcMsgType: Type
 ): { [k: string]: any } => {
   const { fields, collection_name, description } = data;
 
@@ -292,7 +295,7 @@ export const formatCreateColReq = (
     fields: fields.map(field => {
       // Assign the typeParams property to the result of parseToKeyValue(type_params).
       const { type_params, ...rest } = assignTypeParams(field);
-      return schemaType.create({
+      return grpcMsgType.create({
         ...rest,
         typeParams: parseToKeyValue(type_params),
         dataType: convertToDataType(field.data_type),
