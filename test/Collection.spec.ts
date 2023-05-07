@@ -14,7 +14,7 @@ import {
 } from '../utils/test';
 import { timeoutTest } from './common/timeout';
 
-const milvusClient = new MilvusClient({ address: IP, debug: true });
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
@@ -58,6 +58,7 @@ describe(`Collection API`, () => {
             name: 'vector_01',
             description: 'vector field',
             data_type: DataType.FloatVector,
+            dim: 128,
           },
         ],
       });
@@ -516,7 +517,7 @@ describe(`Collection API`, () => {
         compactionID: undefined as any,
       });
     } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+      expect(error.message).toEqual(ERROR_REASONS.COMPACTION_ID_IS_REQUIRED);
     }
 
     try {
@@ -524,7 +525,7 @@ describe(`Collection API`, () => {
         compactionID: undefined as any,
       });
     } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+      expect(error.message).toEqual(ERROR_REASONS.COMPACTION_ID_IS_REQUIRED);
     }
   });
 

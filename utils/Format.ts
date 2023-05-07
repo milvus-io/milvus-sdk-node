@@ -1,9 +1,13 @@
+import { Type } from 'protobufjs';
 import { findKeyValue } from './';
 import {
   ERROR_REASONS,
   DEFAULT_MILVUS_PORT,
   KeyValuePair,
   FieldType,
+  DataTypeMap,
+  DataType,
+  CreateCollectionReq,
 } from '../milvus';
 
 /**
@@ -253,4 +257,49 @@ export const parseTimeToken = (token: string): number => {
 export const extractMethodName = (query: string): string => {
   const parts = query.split('/');
   return parts[parts.length - 1];
+};
+
+/**
+ * Converts a `key` of type `keyof typeof DataTypeMap | DataType` to a `DataType`.
+ *
+ * @param {keyof typeof DataTypeMap | DataType} key - The key to convert.
+ * @returns {DataType} The converted `DataType`.
+ */
+export const convertToDataType = (
+  key: keyof typeof DataTypeMap | DataType
+): DataType => {
+  if (typeof key === 'string' && key in DataTypeMap) {
+    return DataType[key as keyof typeof DataTypeMap];
+  } else if (typeof key === 'number' && Object.values(DataType).includes(key)) {
+    return key as DataType;
+  }
+  throw new Error(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT);
+};
+
+export const cloneObject = (obj: object): object => {
+  return JSON.parse(JSON.stringify(obj));
+};
+
+export const formatCreateColReq = (
+  data: CreateCollectionReq,
+  schemaType: Type
+): { [k: string]: any } => {
+  const { fields, collection_name, description } = data;
+
+  const payload = {
+    name: collection_name,
+    description: description || '',
+    fields: fields.map(field => {
+      // Assign the typeParams property to the result of parseToKeyValue(type_params).
+      const { type_params, ...rest } = assignTypeParams(field);
+      return schemaType.create({
+        ...rest,
+        typeParams: parseToKeyValue(type_params),
+        dataType: convertToDataType(field.data_type),
+        isPrimaryKey: field.is_primary_key,
+      });
+    }),
+  };
+
+  return payload;
 };

@@ -89,7 +89,7 @@ export class Data extends Collection {
       !Array.isArray(data.fields_data) ||
       !data.fields_data.length
     ) {
-      throw new Error(ERROR_REASONS.INSERT_CHECK_FILEDS_DATA_IS_REQUIRED);
+      throw new Error(ERROR_REASONS.INSERT_CHECK_FIELD_DATA_IS_REQUIRED);
     }
     const { collection_name } = data;
     const collectionInfo = await this.describeCollection({

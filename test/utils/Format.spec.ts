@@ -12,6 +12,9 @@ import {
   extractMethodName,
   assignTypeParams,
   ERROR_REASONS,
+  convertToDataType,
+  DataType,
+  FieldType,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -149,13 +152,13 @@ describe('utils/format', () => {
   it('should assign properties with keys `dim` or `max_length` to the `type_params` object and delete them from the `field` object', () => {
     const field = {
       name: 'vector',
-      type: 'BinaryVector',
+      data_type: 'BinaryVector',
       dim: 128,
       max_length: 100,
-    };
+    } as FieldType;
     const expectedOutput = {
       name: 'vector',
-      type: 'BinaryVector',
+      data_type: 'BinaryVector',
       type_params: {
         dim: '128',
         max_length: '100',
@@ -167,11 +170,11 @@ describe('utils/format', () => {
   it('should not modify the `field` object if it does not have properties with keys `dim` or `max_length`', () => {
     const field = {
       name: 'id',
-      type: 'Int64',
-    };
+      data_type: 'Int64',
+    } as FieldType;
     const expectedOutput = {
       name: 'id',
-      type: 'Int64',
+      data_type: 'Int64',
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);
   });
@@ -179,22 +182,44 @@ describe('utils/format', () => {
   it('should convert properties with keys `dim` or `max_length` to strings if they already exist in the `type_params` object', () => {
     const field = {
       name: 'text',
-      type: 'String',
+      data_type: 'Int64',
       type_params: {
         dim: 100,
         max_length: 50,
       },
       dim: 200,
       max_length: 75,
-    };
+    } as FieldType;
     const expectedOutput = {
       name: 'text',
-      type: 'String',
+      data_type: 'Int64',
       type_params: {
         dim: '200',
         max_length: '75',
       },
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);
+  });
+
+  it('should return the corresponding DataType when given a valid string key in DataTypeMap', () => {
+    expect(convertToDataType('Int32')).toEqual(DataType.Int32);
+  });
+
+  it('should return the corresponding DataType when given a valid number value in DataType', () => {
+    expect(convertToDataType(DataType.FloatVector)).toEqual(
+      DataType.FloatVector
+    );
+  });
+
+  it('should throw an error when given an invalid key', () => {
+    expect(() => convertToDataType('INVALID_KEY' as any)).toThrow(
+      new Error(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT)
+    );
+  });
+
+  it('should throw an error when given an invalid value', () => {
+    expect(() => convertToDataType(999 as any)).toThrow(
+      new Error(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT)
+    );
   });
 });

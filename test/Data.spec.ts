@@ -14,7 +14,7 @@ import {
 } from '../utils/test';
 import { timeoutTest } from './common/timeout';
 
-const milvusClient = new MilvusClient({ address: IP, debug: true });
+const milvusClient = new MilvusClient({ address: IP, debug: false });
 const COLLECTION_NAME = GENERATE_NAME();
 
 describe(`Data.API`, () => {

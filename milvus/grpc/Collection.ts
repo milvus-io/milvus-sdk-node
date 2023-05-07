@@ -1,11 +1,3 @@
-import {
-  promisify,
-  formatKeyValueData,
-  parseToKeyValue,
-  checkCollectionFields,
-  checkCollectionName,
-  sleep,
-} from '../../utils';
 import { BaseClient } from './BaseClient';
 import {
   ERROR_REASONS,
@@ -42,7 +34,13 @@ import {
   ReplicasResponse,
   GetLoadingProgressResponse,
   GetLoadStateResponse,
-} from '..';
+  promisify,
+  formatKeyValueData,
+  checkCollectionFields,
+  checkCollectionName,
+  sleep,
+  formatCreateColReq,
+} from '../';
 import { assignTypeParams } from '../../utils';
 
 /**
@@ -97,7 +95,6 @@ export class Collection extends BaseClient {
     const {
       fields,
       collection_name,
-      description,
       consistency_level = 'Bounded',
     } = data || {};
 
@@ -109,35 +106,16 @@ export class Collection extends BaseClient {
     // Check if the fields are valid.
     checkCollectionFields(fields);
 
-    // Get the CollectionSchema and FieldSchema from the schemaProto object.
-    const CollectionSchema = this.schemaProto.lookupType(
-      'milvus.proto.schema.CollectionSchema'
-    );
-    const FieldSchema = this.schemaProto.lookupType(
-      'milvus.proto.schema.FieldSchema'
-    );
-
     // Create the payload object with the collection_name, description, and fields.
-    const payload = {
-      name: collection_name,
-      description: description || '',
-      fields: fields.map(field => {
-        // Assign the typeParams property to the result of parseToKeyValue(type_params).
-        const { type_params, ...rest } = assignTypeParams(field);
-        return FieldSchema.create({
-          ...rest,
-          typeParams: parseToKeyValue(type_params),
-          dataType: field.data_type,
-          isPrimaryKey: field.is_primary_key,
-        });
-      }),
-    };
+    const payload = formatCreateColReq(data, this.fieldSchemaType);
 
     // Create the collectionParams object from the payload.
-    const collectionParams = CollectionSchema.create(payload);
+    const collectionParams = this.collectionSchemaType.create(payload);
 
     // Encode the collectionParams object to bytes.
-    const schemaBytes = CollectionSchema.encode(collectionParams).finish();
+    const schemaBytes = this.collectionSchemaType
+      .encode(collectionParams)
+      .finish();
 
     // Get the consistency level value from the ConsistencyLevelEnum object.
     const level =
@@ -717,7 +695,7 @@ export class Collection extends BaseClient {
     data: GetCompactionStateReq
   ): Promise<GetCompactionStateResponse> {
     if (!data || !data.compactionID) {
-      throw new Error(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+      throw new Error(ERROR_REASONS.COMPACTION_ID_IS_REQUIRED);
     }
     const res = await promisify(
       this.client,
@@ -755,7 +733,7 @@ export class Collection extends BaseClient {
     data: GetCompactionPlansReq
   ): Promise<GetCompactionPlansResponse> {
     if (!data || !data.compactionID) {
-      throw new Error(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+      throw new Error(ERROR_REASONS.COMPACTION_ID_IS_REQUIRED);
     }
     const res = await promisify(
       this.client,

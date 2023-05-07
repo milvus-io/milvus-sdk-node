@@ -18,7 +18,7 @@ import {
   BoolResponse,
   ShowPartitionsResponse,
   StatisticsResponse,
-} from '..';
+} from '../';
 
 export class Partition extends Index {
   /**

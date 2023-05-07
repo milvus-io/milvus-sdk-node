@@ -12,7 +12,7 @@ import {
   GetIndexStateResponse,
   GetIndexBuildProgressResponse,
   CreateIndexSimpleReq,
-} from '..';
+} from '../';
 
 export class Index extends Data {
   /**

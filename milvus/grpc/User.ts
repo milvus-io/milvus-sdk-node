@@ -25,7 +25,7 @@ import {
   SelectUserResponse,
   SelectGrantResponse,
   HasRoleResponse,
-} from '..';
+} from '../';
 
 export class User extends Resource {
   /**

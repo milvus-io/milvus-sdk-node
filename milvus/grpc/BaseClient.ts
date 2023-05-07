@@ -1,12 +1,15 @@
 import path from 'path';
-import protobuf, { Root } from 'protobufjs';
+import protobuf, { Root, Type } from 'protobufjs';
 import { Client, ChannelOptions } from '@grpc/grpc-js';
-import { ERROR_REASONS, ClientConfig, DEFAULT_CONNECT_TIMEOUT } from '..';
+import { ERROR_REASONS, ClientConfig, DEFAULT_CONNECT_TIMEOUT } from '../';
 import { parseTimeToken } from '../../utils';
 
 // path
 const protoPath = path.resolve(__dirname, '../../proto/proto/milvus.proto');
-const schemaProtoPath = path.resolve(__dirname, '../../proto/proto/schema.proto');
+const schemaProtoPath = path.resolve(
+  __dirname,
+  '../../proto/proto/schema.proto'
+);
 
 /**
  * Base gRPC client, setup all configuration here
@@ -20,10 +23,18 @@ export class BaseClient {
   schemaProto: Root;
   // The Milvus protobuf.
   milvusProto: Root;
+  // The milvus collection schema Type
+  collectionSchemaType: Type;
+  // The milvus field schema Type
+  fieldSchemaType: Type;
   // The client configuration.
   config: ClientConfig;
-  // The name of the Milvus service.
-  serviceName: string = 'milvus.proto.milvus.MilvusService';
+  // milvus proto
+  protoInternalPath = {
+    serviceName: 'milvus.proto.milvus.MilvusService',
+    collectionSchema: 'milvus.proto.schema.CollectionSchema',
+    fieldSchema: 'milvus.proto.schema.FieldSchema',
+  };
 
   // The timeout for connecting to the Milvus service.
   timeout: number = DEFAULT_CONNECT_TIMEOUT;
@@ -69,6 +80,14 @@ export class BaseClient {
     this.protoPath = protoPath;
     this.schemaProto = protobuf.loadSync(schemaProtoPath);
     this.milvusProto = protobuf.loadSync(protoPath);
+
+    // Get the CollectionSchemaType and FieldSchemaType from the schemaProto object.
+    this.collectionSchemaType = this.schemaProto.lookupType(
+      this.protoInternalPath.collectionSchema
+    );
+    this.fieldSchemaType = this.schemaProto.lookupType(
+      this.protoInternalPath.fieldSchema
+    );
 
     // Set up the timeout for connecting to the Milvus service.
     this.timeout =

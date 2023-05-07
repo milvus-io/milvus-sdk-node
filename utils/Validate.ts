@@ -1,4 +1,9 @@
-import { ERROR_REASONS, FieldType, DataType } from '../milvus';
+import {
+  ERROR_REASONS,
+  FieldType,
+  DataType,
+  convertToDataType,
+} from '../milvus';
 import { status as grpcStatus } from '@grpc/grpc-js';
 
 /**
@@ -21,7 +26,7 @@ export const checkCollectionFields = (fields: FieldType[]) => {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_MISS_DATA_TYPE);
     }
 
-    const dataType = field.data_type;
+    const dataType = convertToDataType(field.data_type);
     const isPrimaryKey = field.is_primary_key;
     const typeParams = field.type_params;
     const isVectorField = vectorDataTypes.includes(dataType!);
@@ -46,7 +51,7 @@ export const checkCollectionFields = (fields: FieldType[]) => {
     if (dataType === DataType.VarChar) {
       const maxLength = typeParams?.max_length ?? field.max_length;
       if (!maxLength) {
-        throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAXLENGTH);
+        throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAX_LENGTH);
       }
     }
   });

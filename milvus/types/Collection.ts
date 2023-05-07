@@ -48,10 +48,11 @@ export interface ReplicaInfo {
 export type TypeParam = string | number;
 export type TypeParamKey = 'dim' | 'max_length';
 
+// create collection
 export interface FieldType {
   name: string;
   description?: string;
-  data_type?: DataType | keyof typeof DataTypeMap;
+  data_type: DataType | keyof typeof DataTypeMap;
   is_primary_key?: boolean;
   type_params?: {
     [key: string]: TypeParam;
@@ -153,6 +154,7 @@ export interface CompactionResponse {
   compactionID: string;
 }
 
+// type returned from milvus describe
 export interface CollectionSchema {
   name: string;
   description: string;

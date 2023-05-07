@@ -8,7 +8,7 @@ import {
 } from '../utils/test';
 import { timeoutTest } from './common/timeout';
 
-const milvusClient = new MilvusClient({ address: IP, debug: true });
+const milvusClient = new MilvusClient({ address: IP, debug: false });
 // names
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_WITHOUT_INDEX_NAME = GENERATE_NAME();
