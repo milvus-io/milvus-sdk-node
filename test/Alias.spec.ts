@@ -1,6 +1,5 @@
 import { MilvusClient, ERROR_REASONS, ErrorCode } from '../milvus';
-import { IP } from '../const';
-import { genCollectionParams, GENERATE_NAME } from '../utils/test';
+import { IP, genCollectionParams, GENERATE_NAME } from './tools';
 
 let milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();

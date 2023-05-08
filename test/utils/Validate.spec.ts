@@ -66,7 +66,7 @@ describe('utils/validate', () => {
       {
         name: 'field1',
         is_primary_key: true,
-      },
+      } as any,
     ];
     expect(() => checkCollectionFields(fields)).toThrowError(
       ERROR_REASONS.CREATE_COLLECTION_MISS_DATA_TYPE
@@ -147,7 +147,7 @@ describe('utils/validate', () => {
       },
       {
         name: 'field1',
-        data_type: DataType.BinaryVector,
+        data_type: 'BinaryVector',
         is_primary_key: false,
         type_params: {
           dim: 7,
@@ -160,7 +160,7 @@ describe('utils/validate', () => {
       },
     ];
     expect(() => checkCollectionFields(fields)).toThrowError(
-      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAXLENGTH
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAX_LENGTH
     );
   });
 

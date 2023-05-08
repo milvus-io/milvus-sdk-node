@@ -1,11 +1,11 @@
 import { MilvusClient, DataType, ErrorCode, InsertReq } from '../milvus';
-import { IP } from '../const';
 import {
+  IP,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
   generateInsertData,
-} from '../utils/test';
+} from './tools';
 
 let milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();

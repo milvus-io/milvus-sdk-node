@@ -8,7 +8,7 @@ export interface DropResourceGroupsReq extends GrpcTimeOut {
   resource_group: string;
 }
 
-export interface DesribeResourceGroupsReq extends GrpcTimeOut {
+export interface DescribeResourceGroupsReq extends GrpcTimeOut {
   resource_group: string;
 }
 

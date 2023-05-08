@@ -1,11 +1,5 @@
 import { Index } from './MilvusIndex';
 import {
-  promisify,
-  checkCollectionName,
-  checkCollectionAndPartitionName,
-  formatKeyValueData,
-} from '../../utils';
-import {
   ERROR_REASONS,
   CreatePartitionReq,
   DropPartitionReq,
@@ -18,7 +12,11 @@ import {
   BoolResponse,
   ShowPartitionsResponse,
   StatisticsResponse,
-} from '..';
+  promisify,
+  checkCollectionName,
+  checkCollectionAndPartitionName,
+  formatKeyValueData,
+} from '../';
 
 export class Partition extends Index {
   /**

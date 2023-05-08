@@ -1,7 +1,21 @@
-import { DataType, FieldType } from '../milvus';
+import { DataType, FieldType, convertToDataType } from '../../milvus';
 
+export const IP = '127.0.0.1:19530';
 export const VECTOR_FIELD_NAME = 'vector_field';
 export const INDEX_NAME = 'index_name';
+export const DIMENSION = 4;
+export const INDEX_FILE_SIZE = 1024;
+export const PARTITION_TAG = 'random';
+
+export const timeoutTest = (func: Function, args?: { [x: string]: any }) => {
+  return async () => {
+    try {
+      await func({ ...(args || {}), timeout: 1 });
+    } catch (error) {
+      expect(error.toString()).toContain('DEADLINE_EXCEEDED');
+    }
+  };
+};
 
 /**
  * Generates collection parameters with default fields for a given collection name, dimension, vector type, and optional fields array.
@@ -41,7 +55,7 @@ export const genCollectionParams = (
       {
         name: 'height',
         description: '',
-        data_type: DataType.Int64,
+        data_type: 'Int64',
       },
       {
         name: 'name',
@@ -68,7 +82,7 @@ export const GENERATE_NAME = (pre = 'collection') =>
  * @param count The number of data points to generate
  * @returns An array of objects representing the generated data
  */
-export function generateInsertData(fields: FieldType[], count: number = 10) {
+export const generateInsertData = (fields: FieldType[], count: number = 10) => {
   const results: any = []; // Initialize an empty array to store the generated data
   while (count > 0) {
     // Loop until we've generated the desired number of data points
@@ -79,14 +93,16 @@ export function generateInsertData(fields: FieldType[], count: number = 10) {
       if (v.autoID) {
         return;
       }
+      // convert to data type
+      const data_type = convertToDataType(v.data_type);
       // Loop through each field we need to generate data for
       const { name } = v; // Destructure the field object to get its properties
       const isVector =
-        v.data_type === DataType.BinaryVector ||
-        v.data_type === DataType.FloatVector;
+        data_type === DataType.BinaryVector ||
+        data_type === DataType.FloatVector;
       let dim = v.dim || (v.type_params && v.type_params.dim);
-      const isBool = v.data_type === DataType.Bool;
-      const isVarChar = v.data_type === DataType.VarChar;
+      const isBool = data_type === DataType.Bool;
+      const isVarChar = data_type === DataType.VarChar;
 
       dim = v.data_type === DataType.BinaryVector ? (dim as number) / 8 : dim;
 
@@ -102,4 +118,4 @@ export function generateInsertData(fields: FieldType[], count: number = 10) {
     count--; // Decrement the count to keep track of how many data points we've generated so far
   }
   return results; // Return the array of generated data
-}
+};

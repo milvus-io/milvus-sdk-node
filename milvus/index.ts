@@ -1,7 +1,7 @@
 // consts
 export * from './const';
 // utils
-export * from '../utils';
+export * from './utils';
 // types
 export * from './types';
 // clients

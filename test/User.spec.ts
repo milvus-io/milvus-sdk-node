@@ -7,9 +7,8 @@ import {
   Privileges,
   RbacObjects,
 } from '../milvus';
-import { IP } from '../const';
-import { timeoutTest } from './common/timeout';
-import { genCollectionParams, GENERATE_NAME } from '../utils/test';
+import { timeoutTest } from './tools';
+import { IP, genCollectionParams, GENERATE_NAME } from './tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 let authClient: MilvusClient;

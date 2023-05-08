@@ -6,14 +6,14 @@ import {
   ShowCollectionsType,
   ERROR_REASONS,
 } from '../../dist/milvus';
-import { IP } from '../../const';
 import {
+  IP,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
-} from '../../utils/test';
+} from '../tools';
 
-const milvusClient = new MilvusClient(IP);
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 
@@ -34,6 +34,7 @@ describe('Collection Api', () => {
             name: 'vector_01',
             description: 'vector field',
             data_type: DataType.FloatVector,
+            dim: 128,
           },
         ],
       });
@@ -70,7 +71,7 @@ describe('Collection Api', () => {
           {
             name: 'vector_01',
             description: 'vector field',
-            data_type: DataType.FloatVector,
+            data_type: 'FloatVector',
           },
           {
             name: 'age',
@@ -151,11 +152,9 @@ describe('Collection Api', () => {
     await milvusClient.createIndex({
       collection_name: LOAD_COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
-      extra_params: {
-        index_type: 'IVF_FLAT',
-        metric_type: 'L2',
-        params: JSON.stringify({ nlist: 1024 }),
-      },
+      index_type: 'IVF_FLAT',
+      metric_type: 'L2',
+      params: { nlist: 1024 },
     });
     const res = await milvusClient.loadCollectionSync({
       collection_name: LOAD_COLLECTION_NAME,

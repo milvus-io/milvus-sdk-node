@@ -10,12 +10,14 @@ import {
   CompactionState,
   DataType,
   LoadState,
+  DataTypeMap,
 } from '../';
 
 export interface FieldSchema {
   name: string;
   description: string;
-  data_type: string;
+  data_type: keyof typeof DataType;
+  dataType?: DataType;
   is_primary_key?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
@@ -47,10 +49,11 @@ export interface ReplicaInfo {
 export type TypeParam = string | number;
 export type TypeParamKey = 'dim' | 'max_length';
 
+// create collection
 export interface FieldType {
   name: string;
   description?: string;
-  data_type?: DataType;
+  data_type: DataType | keyof typeof DataTypeMap;
   is_primary_key?: boolean;
   type_params?: {
     [key: string]: TypeParam;
@@ -152,6 +155,7 @@ export interface CompactionResponse {
   compactionID: string;
 }
 
+// type returned from milvus describe
 export interface CollectionSchema {
   name: string;
   description: string;

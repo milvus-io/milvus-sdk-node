@@ -1,3 +1,5 @@
+import path from 'path';
+import protobuf from 'protobufjs';
 import {
   formatNumberPrecision,
   parseToKeyValue,
@@ -12,6 +14,14 @@ import {
   extractMethodName,
   assignTypeParams,
   ERROR_REASONS,
+  convertToDataType,
+  DataType,
+  FieldType,
+  formatCreateColReq,
+  cloneObj,
+  DescribeCollectionResponse,
+  formatDescribedCol,
+  ConsistencyLevelEnum,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -149,13 +159,13 @@ describe('utils/format', () => {
   it('should assign properties with keys `dim` or `max_length` to the `type_params` object and delete them from the `field` object', () => {
     const field = {
       name: 'vector',
-      type: 'BinaryVector',
+      data_type: 'BinaryVector',
       dim: 128,
       max_length: 100,
-    };
+    } as FieldType;
     const expectedOutput = {
       name: 'vector',
-      type: 'BinaryVector',
+      data_type: 'BinaryVector',
       type_params: {
         dim: '128',
         max_length: '100',
@@ -167,11 +177,11 @@ describe('utils/format', () => {
   it('should not modify the `field` object if it does not have properties with keys `dim` or `max_length`', () => {
     const field = {
       name: 'id',
-      type: 'Int64',
-    };
+      data_type: 'Int64',
+    } as FieldType;
     const expectedOutput = {
       name: 'id',
-      type: 'Int64',
+      data_type: 'Int64',
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);
   });
@@ -179,22 +189,168 @@ describe('utils/format', () => {
   it('should convert properties with keys `dim` or `max_length` to strings if they already exist in the `type_params` object', () => {
     const field = {
       name: 'text',
-      type: 'String',
+      data_type: 'Int64',
       type_params: {
         dim: 100,
         max_length: 50,
       },
       dim: 200,
       max_length: 75,
-    };
+    } as FieldType;
     const expectedOutput = {
       name: 'text',
-      type: 'String',
+      data_type: 'Int64',
       type_params: {
         dim: '200',
         max_length: '75',
       },
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);
+  });
+
+  it('should return the corresponding DataType when given a valid string key in DataTypeMap', () => {
+    expect(convertToDataType('Int32')).toEqual(DataType.Int32);
+  });
+
+  it('should return the corresponding DataType when given a valid number value in DataType', () => {
+    expect(convertToDataType(DataType.FloatVector)).toEqual(
+      DataType.FloatVector
+    );
+  });
+
+  it('should throw an error when given an invalid key', () => {
+    expect(() => convertToDataType('INVALID_KEY' as any)).toThrow(
+      new Error(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT)
+    );
+  });
+
+  it('should throw an error when given an invalid value', () => {
+    expect(() => convertToDataType(999 as any)).toThrow(
+      new Error(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT)
+    );
+  });
+
+  it('formats input data correctly', () => {
+    const data = {
+      collection_name: 'testCollection',
+      description: 'Test Collection for Jest',
+      fields: [
+        {
+          name: 'testField1',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+          description: 'Test PRIMARY KEY field',
+        },
+        {
+          name: 'testField2',
+          data_type: DataType.FloatVector,
+          is_primary_key: false,
+          description: 'Test VECTOR field',
+          dim: 64,
+        },
+      ],
+    };
+
+    const schemaProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/schema.proto'
+    );
+    const schemaProto = protobuf.loadSync(schemaProtoPath);
+
+    const fieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
+
+    const expectedResult = {
+      name: 'testCollection',
+      description: 'Test Collection for Jest',
+      fields: [
+        {
+          typeParams: [],
+          indexParams: [],
+          name: 'testField1',
+          data_type: 5,
+          is_primary_key: true,
+          description: 'Test PRIMARY KEY field',
+          dataType: 5,
+          isPrimaryKey: true,
+        },
+        {
+          typeParams: [
+            {
+              key: 'dim',
+              value: '64',
+            },
+          ],
+          indexParams: [],
+          name: 'testField2',
+          data_type: 101,
+          is_primary_key: false,
+          description: 'Test VECTOR field',
+          dataType: 101,
+          isPrimaryKey: false,
+        },
+      ],
+    };
+
+    const payload = formatCreateColReq(data, fieldSchemaType);
+    expect(payload).toEqual(expectedResult);
+  });
+
+  it('cloneObj should create a deep copy of the object', () => {
+    const obj = { a: 1, b: { c: 2 } };
+    const clonedObj = cloneObj(obj);
+    expect(clonedObj).toEqual(obj);
+    expect(clonedObj).not.toBe(obj);
+    expect(clonedObj.b).toEqual(obj.b);
+    expect(clonedObj.b).not.toBe(obj.b);
+  });
+
+  it('adds a dataType property to each field object in the schema', () => {
+    const response: DescribeCollectionResponse = {
+      virtual_channel_names: [
+        'by-dev-rootcoord-dml_4_441190990484912096v0',
+        'by-dev-rootcoord-dml_5_441190990484912096v1',
+      ],
+      physical_channel_names: [
+        'by-dev-rootcoord-dml_4',
+        'by-dev-rootcoord-dml_5',
+      ],
+      aliases: [],
+      status: { error_code: 'Success', reason: '' },
+      schema: {
+        fields: [
+          {
+            type_params: [{ key: 'dim', value: '128' }],
+            index_params: [],
+            name: 'vector_field',
+            is_primary_key: false,
+            description: 'vector field',
+            data_type: 'FloatVector',
+            autoID: false,
+          },
+          {
+            type_params: [],
+            index_params: [],
+            name: 'age',
+            is_primary_key: true,
+            description: '',
+            data_type: 'Int64',
+            autoID: true,
+          },
+        ],
+        name: 'collection_v8mt0v7x',
+        description: '',
+      },
+      collectionID: '441190990484912096',
+      created_timestamp: '441323423932350466',
+      created_utc_timestamp: '1683515258531',
+      consistency_level: ConsistencyLevelEnum.Bounded,
+    };
+
+    const formatted = formatDescribedCol(response);
+
+    expect(formatted.schema.fields[0].dataType).toBe(101);
+    expect(formatted.schema.fields[1].dataType).toBe(5);
   });
 });

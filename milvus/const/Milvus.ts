@@ -298,19 +298,19 @@ export enum DataType {
   FloatVector = 101,
 }
 
-export const DataTypeMap: { [x: string]: number } = {
-  none: 0,
-  bool: 1,
-  int8: 2,
-  int16: 3,
-  int32: 4,
-  int64: 5,
-  float: 10,
-  double: 11,
-  string: 20,
-  varchar: 21,
-  binaryvector: 100,
-  floatvector: 101,
+export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
+  None: 0,
+  Bool: 1,
+  Int8: 2,
+  Int16: 3,
+  Int32: 4,
+  Int64: 5,
+  Float: 10,
+  Double: 11,
+  String: 20,
+  VarChar: 21,
+  BinaryVector: 100,
+  FloatVector: 101,
 };
 
 export enum OperateUserRoleType {

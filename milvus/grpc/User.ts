@@ -1,4 +1,3 @@
-import { promisify, stringToBase64 } from '../../utils';
 import { Resource } from './Resource';
 import {
   ERROR_REASONS,
@@ -25,7 +24,9 @@ import {
   SelectUserResponse,
   SelectGrantResponse,
   HasRoleResponse,
-} from '..';
+  promisify,
+  stringToBase64,
+} from '../';
 
 export class User extends Resource {
   /**
