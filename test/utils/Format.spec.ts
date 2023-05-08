@@ -18,6 +18,10 @@ import {
   DataType,
   FieldType,
   formatCreateColReq,
+  cloneObj,
+  DescribeCollectionResponse,
+  formatDescribedCol,
+  ConsistencyLevelEnum,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -291,5 +295,62 @@ describe('utils/format', () => {
 
     const payload = formatCreateColReq(data, fieldSchemaType);
     expect(payload).toEqual(expectedResult);
+  });
+
+  it('cloneObj should create a deep copy of the object', () => {
+    const obj = { a: 1, b: { c: 2 } };
+    const clonedObj = cloneObj(obj);
+    expect(clonedObj).toEqual(obj);
+    expect(clonedObj).not.toBe(obj);
+    expect(clonedObj.b).toEqual(obj.b);
+    expect(clonedObj.b).not.toBe(obj.b);
+  });
+
+  it('adds a dataType property to each field object in the schema', () => {
+    const response: DescribeCollectionResponse = {
+      virtual_channel_names: [
+        'by-dev-rootcoord-dml_4_441190990484912096v0',
+        'by-dev-rootcoord-dml_5_441190990484912096v1',
+      ],
+      physical_channel_names: [
+        'by-dev-rootcoord-dml_4',
+        'by-dev-rootcoord-dml_5',
+      ],
+      aliases: [],
+      status: { error_code: 'Success', reason: '' },
+      schema: {
+        fields: [
+          {
+            type_params: [{ key: 'dim', value: '128' }],
+            index_params: [],
+            name: 'vector_field',
+            is_primary_key: false,
+            description: 'vector field',
+            data_type: 'FloatVector',
+            autoID: false,
+          },
+          {
+            type_params: [],
+            index_params: [],
+            name: 'age',
+            is_primary_key: true,
+            description: '',
+            data_type: 'Int64',
+            autoID: true,
+          },
+        ],
+        name: 'collection_v8mt0v7x',
+        description: '',
+      },
+      collectionID: '441190990484912096',
+      created_timestamp: '441323423932350466',
+      created_utc_timestamp: '1683515258531',
+      consistency_level: ConsistencyLevelEnum.Bounded,
+    };
+
+    const formatted = formatDescribedCol(response);
+
+    expect(formatted.schema.fields[0].dataType).toBe(101);
+    expect(formatted.schema.fields[1].dataType).toBe(5);
   });
 });

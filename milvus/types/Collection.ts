@@ -17,6 +17,7 @@ export interface FieldSchema {
   name: string;
   description: string;
   data_type: keyof typeof DataType;
+  dataType?: DataType;
   is_primary_key?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];

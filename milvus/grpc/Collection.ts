@@ -40,6 +40,7 @@ import {
   checkCollectionName,
   sleep,
   formatCreateColReq,
+  formatDescribedCol,
 } from '../';
 
 /**
@@ -258,7 +259,8 @@ export class Collection extends BaseClient {
       data,
       data.timeout || this.timeout
     );
-    return promise;
+
+    return formatDescribedCol(promise);
   }
 
   /**
