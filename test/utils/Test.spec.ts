@@ -1,4 +1,4 @@
-import { generateInsertData } from '../../utils/test';
+import { generateInsertData } from '../tools';
 import { DataType } from '../../milvus';
 
 describe(`utils/test`, () => {

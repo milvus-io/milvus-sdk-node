@@ -5,7 +5,7 @@ import {
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
 } from './tools';
-import { timeoutTest } from ''./tools'/timeout';
+import { timeoutTest } from './tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();

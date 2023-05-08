@@ -6,7 +6,7 @@ import {
   INDEX_NAME,
   GENERATE_NAME,
 } from './tools';
-import { timeoutTest } from ''./tools'/timeout';
+import { timeoutTest } from './tools';
 
 const milvusClient = new MilvusClient({ address: IP, debug: false });
 // names
