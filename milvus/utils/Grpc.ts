@@ -7,7 +7,7 @@ import {
   InterceptingCall,
   status as grpcStatus,
 } from '@grpc/grpc-js';
-import { extractMethodName, isStatusCodeMatched } from './';
+import { extractMethodName, isStatusCodeMatched } from '.';
 
 const PROTO_OPTIONS = {
   keepCase: true,

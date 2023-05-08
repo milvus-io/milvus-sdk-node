@@ -3,7 +3,7 @@ import {
   FieldType,
   DataType,
   convertToDataType,
-} from '../milvus';
+} from '..';
 import { status as grpcStatus } from '@grpc/grpc-js';
 
 /**

@@ -5,13 +5,13 @@ import {
   InsertReq,
   ERROR_REASONS,
 } from '../milvus';
-import { IP } from '../const';
 import {
+  IP,
   generateInsertData,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
-} from '../utils/test';
+} from './tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();

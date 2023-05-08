@@ -4,7 +4,7 @@ import {
   genCollectionParams,
   GENERATE_NAME,
   VECTOR_FIELD_NAME,
-} from '../utils/test';
+} from './tools';
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 

@@ -1,5 +1,5 @@
 import { Type } from 'protobufjs';
-import { findKeyValue } from './';
+import { findKeyValue } from '.';
 import {
   ERROR_REASONS,
   DEFAULT_MILVUS_PORT,
@@ -8,7 +8,7 @@ import {
   DataTypeMap,
   DataType,
   CreateCollectionReq,
-} from '../milvus';
+} from '..';
 
 /**
  *  parse [{key:"row_count",value:4}] to {row_count:4}

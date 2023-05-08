@@ -1,5 +1,5 @@
-import { DEFAULT_CONNECT_TIMEOUT } from '../milvus/const/Milvus';
-import { KeyValuePair } from '../milvus/types/Common';
+import { DEFAULT_CONNECT_TIMEOUT } from '../const/Milvus';
+import { KeyValuePair } from '../types/Common';
 
 /**
  * Promisify a function call with optional timeout

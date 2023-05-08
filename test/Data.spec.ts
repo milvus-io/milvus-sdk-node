@@ -5,14 +5,14 @@ import {
   ERROR_REASONS,
   DEFAULT_TOPK,
 } from '../milvus';
-import { IP } from '../const';
-import { generateInsertData } from '../utils/test';
 import {
+  IP,
+  generateInsertData,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
-} from '../utils/test';
-import { timeoutTest } from './common/timeout';
+} from './tools';
+import { timeoutTest } from ''./tools'/timeout';
 
 const milvusClient = new MilvusClient({ address: IP, debug: false });
 const COLLECTION_NAME = GENERATE_NAME();
