@@ -1,15 +1,4 @@
 import {
-  promisify,
-  findKeyValue,
-  sleep,
-  formatNumberPrecision,
-  parseToKeyValue,
-  checkCollectionName,
-  checkSearchParams,
-  parseBinaryVectorToBytes,
-  parseFloatVectorToBytes,
-} from '../../utils';
-import {
   DataType,
   DataTypeMap,
   ERROR_REASONS,
@@ -41,7 +30,16 @@ import {
   SearchSimpleReq,
   DEFAULT_TOPK,
   DEFAULT_METRIC_TYPE,
-} from '..';
+  promisify,
+  findKeyValue,
+  sleep,
+  formatNumberPrecision,
+  parseToKeyValue,
+  checkCollectionName,
+  checkSearchParams,
+  parseBinaryVectorToBytes,
+  parseFloatVectorToBytes,
+} from '../';
 import { Collection } from './Collection';
 
 export class Data extends Collection {
@@ -89,7 +87,7 @@ export class Data extends Collection {
       !Array.isArray(data.fields_data) ||
       !data.fields_data.length
     ) {
-      throw new Error(ERROR_REASONS.INSERT_CHECK_FILEDS_DATA_IS_REQUIRED);
+      throw new Error(ERROR_REASONS.INSERT_CHECK_FIELD_DATA_IS_REQUIRED);
     }
     const { collection_name } = data;
     const collectionInfo = await this.describeCollection({
@@ -102,10 +100,7 @@ export class Data extends Collection {
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
-    const fieldsData = new Map<
-      string,
-      { name: string; type: string; dim: number; value: number[] }
-    >(
+    const fieldsData = new Map(
       collectionInfo.schema.fields
         .filter(v => !v.is_primary_key || !v.autoID)
         .map(v => [
@@ -130,11 +125,9 @@ export class Data extends Collection {
         if (!target) {
           throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
         }
-        const isVector = this.vectorTypes.includes(
-          DataTypeMap[target.type.toLowerCase()]
-        );
+        const isVector = this.vectorTypes.includes(DataTypeMap[target.type]);
         if (
-          DataTypeMap[target.type.toLowerCase()] === DataType.BinaryVector &&
+          DataTypeMap[target.type] === DataType.BinaryVector &&
           v[name].length !== target.dim / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
@@ -152,7 +145,7 @@ export class Data extends Collection {
     params.fields_data = Array.from(fieldsData.values()).map(v => {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may casue we cant find value.
-      const type = DataTypeMap[v.type.toLowerCase()];
+      const type = DataTypeMap[v.type];
       const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
       let dataKey = 'float_vector';
       switch (type) {
@@ -312,7 +305,7 @@ export class Data extends Collection {
       let anns_field: string;
       for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
         const f = collectionInfo.schema.fields[i];
-        const type = DataTypeMap[f.data_type.toLowerCase()];
+        const type = DataTypeMap[f.data_type];
 
         // filter vector field
         if (type === DataType.FloatVector || type === DataType.BinaryVector) {

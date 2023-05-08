@@ -1,10 +1,15 @@
-import { findKeyValue } from './';
+import { Type } from 'protobufjs';
+import { findKeyValue } from '.';
 import {
   ERROR_REASONS,
   DEFAULT_MILVUS_PORT,
   KeyValuePair,
   FieldType,
-} from '../milvus';
+  DataTypeMap,
+  DataType,
+  CreateCollectionReq,
+  DescribeCollectionResponse,
+} from '../';
 
 /**
  *  parse [{key:"row_count",value:4}] to {row_count:4}
@@ -196,14 +201,14 @@ export const assignTypeParams = (
   field: FieldType,
   typeParamKeys: string[] = ['dim', 'max_length']
 ) => {
-  let newField = JSON.parse(JSON.stringify(field));
+  let newField = cloneObj<FieldType>(field);
   typeParamKeys.forEach(key => {
     if (newField.hasOwnProperty(key)) {
       // if the property exists in the field object, assign it to the type_params object
       newField.type_params = newField.type_params || {};
-      newField.type_params[key] = String(newField[key]);
+      newField.type_params[key] = String(newField[key as keyof FieldType]);
       // delete the property from the field object
-      delete newField[key];
+      delete newField[key as keyof FieldType];
     }
 
     if (newField.type_params && newField.type_params[key]) {
@@ -253,4 +258,84 @@ export const parseTimeToken = (token: string): number => {
 export const extractMethodName = (query: string): string => {
   const parts = query.split('/');
   return parts[parts.length - 1];
+};
+
+/**
+ * Converts a `key` of type `keyof typeof DataTypeMap | DataType` to a `DataType`.
+ *
+ * @param {keyof typeof DataTypeMap | DataType} key - The key to convert.
+ * @returns {DataType} The converted `DataType`.
+ */
+export const convertToDataType = (
+  key: keyof typeof DataTypeMap | DataType
+): DataType => {
+  if (typeof key === 'string' && key in DataTypeMap) {
+    return DataType[key as keyof typeof DataTypeMap];
+  } else if (typeof key === 'number' && Object.values(DataType).includes(key)) {
+    return key as DataType;
+  }
+  throw new Error(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT);
+};
+
+/**
+ * Creates a deep copy of the provided object using JSON.parse and JSON.stringify.
+ * Note that this function is not efficient and may cause performance issues if used with large or complex objects. It also does not handle cases where the object being cloned contains functions or prototype methods.
+ *
+ * @typeparam T The type of object being cloned.
+ * @param {T} obj - The object to clone.
+ * @returns {T} A new object with the same properties and values as the original.
+ */
+export const cloneObj = <T>(obj: T): T => {
+  return JSON.parse(JSON.stringify(obj));
+};
+
+/**
+ * Formats the input data into a request payload for creating a collection.
+ *
+ * @param {CreateCollectionReq} data - The input data for creating a collection.
+ * @param {Type} schemaType - The schema type for the collection.
+ * @returns {Object} The formatted request payload.
+ */
+export const formatCreateColReq = (
+  data: CreateCollectionReq,
+  grpcMsgType: Type
+): { [k: string]: any } => {
+  const { fields, collection_name, description } = data;
+
+  const payload = {
+    name: collection_name,
+    description: description || '',
+    fields: fields.map(field => {
+      // Assign the typeParams property to the result of parseToKeyValue(type_params).
+      const { type_params, ...rest } = assignTypeParams(field);
+      return grpcMsgType.create({
+        ...rest,
+        typeParams: parseToKeyValue(type_params),
+        dataType: convertToDataType(field.data_type),
+        isPrimaryKey: field.is_primary_key,
+      });
+    }),
+  };
+
+  return payload;
+};
+
+/**
+ * Formats a `DescribeCollectionResponse` object by adding a `dataType` property to each field object in its `schema` array.
+ * The `dataType` property represents the numerical value of the `data_type` property.
+ *
+ * @param {DescribeCollectionResponse} data - The `DescribeCollectionResponse` object to format.
+ * @returns {DescribeCollectionResponse} A new `DescribeCollectionResponse` object with the updated `dataType` properties.
+ */
+export const formatDescribedCol = (
+  data: DescribeCollectionResponse
+): DescribeCollectionResponse => {
+  // clone object
+  const newData = cloneObj<DescribeCollectionResponse>(data);
+  // add a dataType property which indicate datatype number
+  newData.schema.fields.forEach(f => {
+    f.dataType = DataTypeMap[f.data_type];
+  });
+
+  return newData;
 };

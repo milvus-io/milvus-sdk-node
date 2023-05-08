@@ -1,4 +1,3 @@
-import { promisify } from '../../utils';
 import { Partition } from './Partition';
 import {
   DEFAULT_RESOURCE_GROUP,
@@ -7,11 +6,12 @@ import {
   CreateResourceGroupReq,
   DropResourceGroupsReq,
   ListResourceGroupsResponse,
-  DesribeResourceGroupsReq,
+  DescribeResourceGroupsReq,
   DescribeResourceGroupResponse,
   TransferNodeReq,
   TransferReplicaReq,
-} from '..';
+  promisify,
+} from '../';
 
 export class Resource extends Partition {
   /**
@@ -105,7 +105,7 @@ export class Resource extends Partition {
    * ```
    */
   async describeResourceGroup(
-    data: DesribeResourceGroupsReq
+    data: DescribeResourceGroupsReq
   ): Promise<DescribeResourceGroupResponse> {
     const promise = await promisify(
       this.client,

@@ -5,13 +5,13 @@ import {
   InsertReq,
   ERROR_REASONS,
 } from '../milvus';
-import { IP } from '../const';
 import {
+  IP,
   generateInsertData,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
-} from '../utils/test';
+} from './tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
@@ -137,7 +137,7 @@ describe(`Insert API`, () => {
       await milvusClient.insert({ collection_name: 'asd' } as any);
     } catch (error) {
       expect(error.message).toEqual(
-        ERROR_REASONS.INSERT_CHECK_FILEDS_DATA_IS_REQUIRED
+        ERROR_REASONS.INSERT_CHECK_FIELD_DATA_IS_REQUIRED
       );
     }
   });
@@ -251,7 +251,9 @@ describe(`Insert API`, () => {
       expect('a').toEqual('b');
     } catch (error) {
       // console.log('---error----', error);
-      expect(error.message).toContain(ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE);
+      expect(error.message).toContain(
+        ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE
+      );
     } finally {
       fakeClient.closeConnection();
     }
@@ -297,12 +299,12 @@ describe(`Insert API`, () => {
   it(`Insert data on float field expect missing field throw error`, async () => {
     const fields = [
       {
-        isVector: true,
+        data_type: DataType.FloatVector,
         dim: 4,
         name: VECTOR_FIELD_NAME,
       },
       {
-        isVector: false,
+        data_type: DataType.Int16,
         name: 'age',
       },
     ];
@@ -324,12 +326,12 @@ describe(`Insert API`, () => {
   it(`Insert data on float field expect throw wrong field error`, async () => {
     const fields = [
       {
-        isVector: true,
+        data_type: DataType.FloatVector,
         dim: 4,
         name: 'float_vector2',
       },
       {
-        isVector: false,
+        data_type: DataType.Int16,
         name: 'age',
       },
     ];
@@ -351,12 +353,12 @@ describe(`Insert API`, () => {
   it(`Insert data on float field expect throw dimension equal error`, async () => {
     const fields = [
       {
-        isVector: true,
+        data_type: DataType.FloatVector,
         dim: 2,
         name: VECTOR_FIELD_NAME,
       },
       {
-        isVector: false,
+        data_type: DataType.Int16,
         name: 'age',
       },
     ];
@@ -406,7 +408,7 @@ describe(`Insert API`, () => {
   it(`Insert into binary field should throw error`, async () => {
     const fields = [
       {
-        isVector: true,
+        data_type: DataType.FloatVector,
         dim: 8,
         name: VECTOR_FIELD_NAME,
       },

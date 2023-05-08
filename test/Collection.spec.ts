@@ -6,15 +6,15 @@ import {
   ERROR_REASONS,
   LoadState,
 } from '../milvus';
-import { IP } from '../const';
 import {
+  IP,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
-} from '../utils/test';
-import { timeoutTest } from './common/timeout';
+} from './tools';
+import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP, debug: true });
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
@@ -58,6 +58,7 @@ describe(`Collection API`, () => {
             name: 'vector_01',
             description: 'vector field',
             data_type: DataType.FloatVector,
+            dim: 128,
           },
         ],
       });
@@ -287,11 +288,15 @@ describe(`Collection API`, () => {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    // console.log('---- describe collection ---', res);
+    console.log('---- describe collection ---', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
     expect(res.schema.fields.length).toEqual(4);
+    res.schema.fields.forEach(f => {
+      expect(typeof f.dataType).toEqual('number');
+      expect(typeof f.data_type).toEqual('string');
+    });
     expect(res.schema.fields[0].name).toEqual(VECTOR_FIELD_NAME);
     expect(res.schema.fields[1].name).toEqual('age');
   });
@@ -516,7 +521,7 @@ describe(`Collection API`, () => {
         compactionID: undefined as any,
       });
     } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+      expect(error.message).toEqual(ERROR_REASONS.COMPACTION_ID_IS_REQUIRED);
     }
 
     try {
@@ -524,7 +529,7 @@ describe(`Collection API`, () => {
         compactionID: undefined as any,
       });
     } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.COMPACTIONID_IS_REQUIRED);
+      expect(error.message).toEqual(ERROR_REASONS.COMPACTION_ID_IS_REQUIRED);
     }
   });
 

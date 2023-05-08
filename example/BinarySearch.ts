@@ -5,7 +5,7 @@ import {
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
   generateInsertData,
-} from '../utils/test';
+} from './tools';
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 

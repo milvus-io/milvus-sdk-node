@@ -1,4 +1,9 @@
-import { ERROR_REASONS, FieldType, DataType } from '../milvus';
+import {
+  ERROR_REASONS,
+  FieldType,
+  DataType,
+  convertToDataType,
+} from '../';
 import { status as grpcStatus } from '@grpc/grpc-js';
 
 /**
@@ -13,66 +18,51 @@ export const checkCollectionFields = (fields: FieldType[]) => {
   const vectorDataTypes = [DataType.BinaryVector, DataType.FloatVector];
   const primaryKeyDataTypes = [DataType.Int64, DataType.VarChar];
 
-  // Check if every field in the `fields` array has a `data_type` property
-  const hasDataTypeKey = fields.every(field => {
-    return field.hasOwnProperty('data_type');
-  });
-
-  // If `hasDataTypeKey` is false, an error is thrown indicating that the `data_type` property is missing
-  if (!hasDataTypeKey) {
-    throw new Error(ERROR_REASONS.CREATE_COLLECTION_MISS_DATA_TYPE);
-  }
-
-  // Check if at least one field in the `fields` array is a primary key with a supported data type
-  const hasPrimaryKey = fields.some(field => {
-    const isPrimaryKey = field.is_primary_key;
-    const isSupportedDataType = primaryKeyDataTypes.includes(field.data_type!);
-    return isPrimaryKey && isSupportedDataType;
-  });
-
-  // If `hasPrimaryKey` is false, an error is thrown indicating that a primary key is missing or has an unsupported data type
-  if (!hasPrimaryKey) {
-    throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY);
-  }
-
-  // Check if at least one field in the `fields` array is a vector field with a supported data type
-  const hasVectorField = fields.some(field => {
-    const isVectorField = vectorDataTypes.includes(field.data_type!);
-    return isVectorField;
-  });
-
-  // If `hasVectorField` is false, an error is thrown indicating that a vector field is missing or has an unsupported data type
-  if (!hasVectorField) {
-    throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST);
-  }
+  let hasPrimaryKey = false;
+  let hasVectorField = false;
 
   fields.forEach(field => {
-    const dataType = field.data_type;
+    if (!field.hasOwnProperty('data_type')) {
+      throw new Error(ERROR_REASONS.CREATE_COLLECTION_MISS_DATA_TYPE);
+    }
+
+    const dataType = convertToDataType(field.data_type);
+    const isPrimaryKey = field.is_primary_key;
     const typeParams = field.type_params;
     const isVectorField = vectorDataTypes.includes(dataType!);
 
-    // Check if field is a vector field
+    if (isPrimaryKey && primaryKeyDataTypes.includes(dataType!)) {
+      hasPrimaryKey = true;
+    }
+
     if (isVectorField) {
       const dim = Number(typeParams?.dim ?? field.dim);
-      // Check if vector field has a dimension
       if (!dim) {
         throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM);
       }
 
-      // Check if binary vector field has a dimension that is a multiple of 8
       if (dataType === DataType.BinaryVector && dim % 8 !== 0) {
         throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM);
       }
+
+      hasVectorField = true;
     }
 
-    // Check if varchar field has a max length
     if (dataType === DataType.VarChar) {
       const maxLength = typeParams?.max_length ?? field.max_length;
       if (!maxLength) {
-        throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAXLENGTH);
+        throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAX_LENGTH);
       }
     }
   });
+
+  if (!hasPrimaryKey) {
+    throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY);
+  }
+
+  if (!hasVectorField) {
+    throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST);
+  }
 
   return true;
 };

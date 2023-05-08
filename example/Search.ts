@@ -1,6 +1,6 @@
 import { MilvusClient, DataType, InsertReq } from '@zilliz/milvus2-sdk-node';
 import { IP } from '../const';
-import { generateInsertData, GENERATE_NAME, genCollectionParams, VECTOR_FIELD_NAME } from '../utils/test';
+import { generateInsertData, GENERATE_NAME, genCollectionParams, VECTOR_FIELD_NAME } from './tools';
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 const ALIAS_NAME = GENERATE_NAME();

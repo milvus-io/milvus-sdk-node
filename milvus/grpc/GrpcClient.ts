@@ -10,7 +10,7 @@ import {
   formatAddress,
   getAuthInterceptor,
   getRetryInterceptor,
-} from '..';
+} from '../';
 import { User } from './User';
 
 /**
@@ -26,7 +26,7 @@ export class GRPCClient extends User {
     // get Milvus GRPC service
     const MilvusService = getGRPCService({
       protoPath: this.protoPath,
-      serviceName: this.serviceName, // the name of the Milvus service
+      serviceName: this.protoInternalPath.serviceName, // the name of the Milvus service
     });
 
     // auth interceptor
