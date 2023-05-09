@@ -1,6 +1,5 @@
 import { MilvusClient, ERROR_REASONS } from '../milvus';
-import { IP } from '../const';
-import { genCollectionParams, GENERATE_NAME } from '../utils/test';
+import { IP, genCollectionParams, GENERATE_NAME } from './tools';
 
 let milvusClient = new MilvusClient({ address: IP });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
@@ -25,14 +24,18 @@ describe(`High level API`, () => {
   it(`Create collection successfully`, async () => {
     // get my collection
     console.time('create collection');
-    const collection = await milvusClient.collection({
+    await milvusClient.collection({
       name: NEW_COLLECTION_NAME,
-      dimension: '8',
+      dimension: 8,
     });
+
+    const collections = await milvusClient.showCollections();
 
     console.timeEnd('create collection');
 
-    console.log('collection', collection);
+    console.log('collection', collections);
+
+    expect(collections.data.length).toEqual(2);
     // insert
   });
 

@@ -73,14 +73,6 @@ export class Collection {
       description: this.description,
       fields: this.fields,
     });
-
-    setTimeout(async () => {
-      const newCol = await this.#client.describeCollection({
-        collection_name: this.name,
-      });
-
-      console.log(2222, newCol);
-    }, 1000);
   }
 
   /**
