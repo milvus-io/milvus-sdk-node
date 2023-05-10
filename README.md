@@ -78,7 +78,7 @@ Create a new app.js file and add the following code to try out some basic vector
 ```javascript
 import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
 
-const address = 'your-milvus-ip';
+const address = 'your-milvus-ip-with-port';
 const username = 'your-milvus-username'; // optional username
 const password = 'your-milvus-password'; // optional password
 const ssl = false; // secure or not
