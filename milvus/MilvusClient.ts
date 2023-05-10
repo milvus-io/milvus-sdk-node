@@ -53,7 +53,7 @@ export class MilvusClient extends GRPCClient {
   }
 
   /**
-   * High-level collection method, return a collection
+   * High-level collection method, return a collection that has it's own methods
    */
   async collection({ name, dimension }: any) {
     // collection data

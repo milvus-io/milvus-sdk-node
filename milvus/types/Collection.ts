@@ -6,7 +6,6 @@ import {
   TimeStampArray,
 } from './Common';
 import {
-  ConsistencyLevelEnum,
   CompactionState,
   DataType,
   LoadState,
