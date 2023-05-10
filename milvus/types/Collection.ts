@@ -166,10 +166,15 @@ export interface DescribeCollectionResponse extends TimeStamp {
   status: ResStatus;
   schema: CollectionSchema;
   collectionID: string;
-  consistency_level: ConsistencyLevelEnum;
+  consistency_level: string;
   aliases: string[];
   virtual_channel_names: string[]; // not useful for now
   physical_channel_names: string[]; // not useful for now
+  start_positions: string[];
+  properties: string[];
+  created_timestamp: string;
+  created_utc_timestamp: string;
+  shards_num: number;
 }
 
 export interface GetCompactionPlansResponse {

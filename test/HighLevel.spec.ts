@@ -24,7 +24,7 @@ describe(`High level API`, () => {
   it(`Create collection successfully`, async () => {
     // get my collection
     console.time('create collection');
-    await milvusClient.collection({
+    const collection = await milvusClient.collection({
       name: NEW_COLLECTION_NAME,
       dimension: 8,
     });
@@ -33,7 +33,7 @@ describe(`High level API`, () => {
 
     console.timeEnd('create collection');
 
-    console.log('collection', collections);
+    console.log('create collection', collection);
 
     expect(collections.data.length).toEqual(2);
     // insert
@@ -48,7 +48,7 @@ describe(`High level API`, () => {
 
     console.timeEnd('get existing collection');
 
-    console.log('existing collection', collection.schema.fields);
+    console.log('existing collection', collection);
     // insert
   });
 });

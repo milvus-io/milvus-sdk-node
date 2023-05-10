@@ -1,5 +1,10 @@
 import { ChannelOptions } from '@grpc/grpc-js';
-import { GRPCClient, ClientConfig } from '.';
+import {
+  GRPCClient,
+  ClientConfig,
+  DataType,
+  DescribeCollectionResponse,
+} from '.';
 import { Collection } from './high-level';
 import sdkInfo from '../sdk.json';
 
@@ -51,26 +56,44 @@ export class MilvusClient extends GRPCClient {
    * High-level collection method, return a collection
    */
   async collection({ name, dimension }: any) {
-    let collection: Collection;
-
+    // collection data
+    let data: DescribeCollectionResponse;
     // check exist
     const exist = await this.hasCollection({ collection_name: name });
 
     // not exist, create a new one
     if (!exist.value) {
-      collection = new Collection({
-        data: { name, dimension },
-        client: this,
+      // create a new collection with fixed schema
+      await this.createCollection({
+        collection_name: name,
+        fields: [
+          {
+            name: 'id',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+            autoID: true,
+          },
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: dimension,
+          },
+        ],
       });
-      // init
-      await collection.init();
-      // return collection
-      return collection;
+
+      // get collection data
+      data = await this.describeCollection({
+        collection_name: name,
+      });
     }
 
     // get existing collection
-    const existCollection = this.describeCollection({ collection_name: name });
+    data = await this.describeCollection({ collection_name: name });
 
-    return existCollection;
+    // return collection object
+    return new Collection({
+      data: data,
+      client: this,
+    });
   }
 }
