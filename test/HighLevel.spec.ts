@@ -9,15 +9,47 @@ import {
 let milvusClient = new MilvusClient({ address: IP });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
-const params = genCollectionParams(EXIST_COLLECTION_NAME, '8');
+const EXIST_COLLECTION_PARAMS = genCollectionParams(EXIST_COLLECTION_NAME, '8');
+const EXIST_LOADED_COLLECTION_NAME = GENERATE_NAME();
+const EXIST_LOADED_COLLECTION_PARAMS = genCollectionParams(
+  EXIST_LOADED_COLLECTION_NAME,
+  '8'
+);
+const EXIST_INDEXED_COLLECTION_NAME = GENERATE_NAME();
+const EXIST_INDEXED_COLLECTION_PARAMS = genCollectionParams(
+  EXIST_INDEXED_COLLECTION_NAME,
+  '8'
+);
 
-const data = generateInsertData(params.fields, 10);
+const data = generateInsertData(EXIST_COLLECTION_PARAMS.fields, 10);
 
 // console.log('data to insert', data);
 
 describe(`High level API`, () => {
   beforeAll(async () => {
-    await milvusClient.createCollection(params);
+    // empty collection
+    await milvusClient.createCollection(EXIST_COLLECTION_PARAMS);
+    // index only collection
+    await milvusClient.createCollection(EXIST_INDEXED_COLLECTION_PARAMS);
+    await milvusClient.createIndex({
+      collection_name: EXIST_INDEXED_COLLECTION_NAME,
+      field_name: 'vector',
+      index_type: 'HNSW',
+      metric_type: 'L2',
+      params: { efConstruction: 10, M: 4 },
+    });
+    // loaded collection
+    await milvusClient.createCollection(EXIST_LOADED_COLLECTION_PARAMS);
+    await milvusClient.createIndex({
+      collection_name: EXIST_LOADED_COLLECTION_NAME,
+      field_name: 'vector',
+      index_type: 'HNSW',
+      metric_type: 'L2',
+      params: { efConstruction: 10, M: 4 },
+    });
+    await milvusClient.loadCollectionSync({
+      collection_name: EXIST_LOADED_COLLECTION_NAME,
+    });
   });
 
   afterAll(async () => {
@@ -26,6 +58,12 @@ describe(`High level API`, () => {
     });
     await milvusClient.dropCollection({
       collection_name: EXIST_COLLECTION_NAME,
+    });
+    await milvusClient.dropCollection({
+      collection_name: EXIST_INDEXED_COLLECTION_NAME,
+    });
+    await milvusClient.dropCollection({
+      collection_name: EXIST_LOADED_COLLECTION_NAME,
     });
   });
 
@@ -43,7 +81,12 @@ describe(`High level API`, () => {
 
     console.log('create collection', collection);
 
-    expect(collections.data.length).toEqual(2);
+    expect(collections.data.length).toEqual(4);
+    expect(collection.name).toEqual(NEW_COLLECTION_NAME);
+    expect(collection.schema.fields.length).toEqual(2); // TODO: json
+
+    const sts = await collection.get();
+    console.log('sts', sts);
     // insert
   });
 
@@ -56,7 +99,29 @@ describe(`High level API`, () => {
 
     console.timeEnd('get existing collection');
 
-    console.log('existing collection', collection);
+    expect(collection.name).toEqual(EXIST_COLLECTION_NAME);
+    expect(collection.schema.fields.length).toEqual(4);
+
+    // insert
+  });
+
+  it(`get exsiting indexed collection successfully`, async () => {
+    // get my collection
+    const collection: any = await milvusClient.collection({
+      name: EXIST_INDEXED_COLLECTION_NAME,
+    });
+
+    expect(collection.name).toEqual(EXIST_INDEXED_COLLECTION_NAME);
+    // insert
+  });
+
+  it(`get exsiting loaded collection successfully`, async () => {
+    // get my collection
+    const collection: any = await milvusClient.collection({
+      name: EXIST_LOADED_COLLECTION_NAME,
+    });
+
+    expect(collection.name).toEqual(EXIST_LOADED_COLLECTION_NAME);
     // insert
   });
 
@@ -78,7 +143,7 @@ describe(`High level API`, () => {
 
     console.timeEnd('insert data');
 
-    console.log('insert collection', dd);
+    // console.log('insert collection', dd);
     // insert
   });
 });

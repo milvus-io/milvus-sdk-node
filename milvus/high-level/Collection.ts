@@ -51,6 +51,14 @@ export class Collection {
     );
   }
 
+  get name() {
+    return this.data && this.data.collection_name;
+  }
+
+  get schema() {
+    return this.data && this.data.schema;
+  }
+
   async load(data: Omit<LoadCollectionReq, 'collection_name'> = {}) {
     const loadCollectionReq = cloneObj(data) as LoadCollectionReq;
 
