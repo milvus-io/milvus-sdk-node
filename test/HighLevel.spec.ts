@@ -1,11 +1,19 @@
 import { MilvusClient, ERROR_REASONS } from '../milvus';
-import { IP, genCollectionParams, GENERATE_NAME } from './tools';
+import {
+  IP,
+  genCollectionParams,
+  GENERATE_NAME,
+  generateInsertData,
+} from './tools';
 
 let milvusClient = new MilvusClient({ address: IP });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
-
 const params = genCollectionParams(EXIST_COLLECTION_NAME, '8');
+
+const data = generateInsertData(params.fields, 10);
+
+// console.log('data to insert', data);
 
 describe(`High level API`, () => {
   beforeAll(async () => {
@@ -49,6 +57,28 @@ describe(`High level API`, () => {
     console.timeEnd('get existing collection');
 
     console.log('existing collection', collection);
+    // insert
+  });
+
+  it(`insert data successfully`, async () => {
+    // get my collection
+    console.time('insert data');
+    const collection = await milvusClient.collection({
+      name: EXIST_COLLECTION_NAME,
+    });
+
+    // insert data
+    await collection.insert({ fields_data: data });
+
+    // get
+    const dd = await collection.query({
+      expr: 'height > 0',
+      output_fields: ['height', 'age'],
+    });
+
+    console.timeEnd('insert data');
+
+    console.log('insert collection', dd);
     // insert
   });
 });

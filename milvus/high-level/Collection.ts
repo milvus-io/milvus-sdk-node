@@ -4,7 +4,8 @@ import {
   SearchSimpleReq,
   DeleteEntitiesReq,
   QueryReq,
-  GetCollectionStatisticsReq,
+  CreateIndexSimpleReq,
+  LoadCollectionReq,
   DescribeCollectionResponse,
   cloneObj,
 } from '../';
@@ -22,7 +23,7 @@ export class Collection {
    */
   #client: MilvusClient;
 
-  readonly data: any;
+  readonly data: DescribeCollectionResponse;
 
   /**
    * Creates a new collection.
@@ -40,20 +41,37 @@ export class Collection {
   /**
    * Returns the number of entities in the collection.
    */
-  async getCount(data: Exclude<GetCollectionStatisticsReq, 'collection_name'>) {
-    const getCollectionStatisticsReq = cloneObj(data);
-    getCollectionStatisticsReq.collection_name = this.data.collection_name;
+  async get() {
+    const getCollectionStatisticsReq = {
+      collection_name: this.data.collection_name,
+    };
 
     return await this.#client.getCollectionStatistics(
       getCollectionStatisticsReq
     );
   }
 
+  async load(data: Omit<LoadCollectionReq, 'collection_name'> = {}) {
+    const loadCollectionReq = cloneObj(data) as LoadCollectionReq;
+
+    loadCollectionReq.collection_name = this.data.collection_name;
+
+    return await this.#client.loadCollectionSync(loadCollectionReq);
+  }
+
+  async createIndex(data: Omit<CreateIndexSimpleReq, 'collection_name'>) {
+    const createIndexReq = cloneObj(data) as CreateIndexSimpleReq;
+
+    createIndexReq.collection_name = this.data.collection_name;
+    // console.log('createIndexReq', createIndexReq);
+    return await this.#client.createIndex(createIndexReq);
+  }
+
   /**
    * Searches for entities in the collection.
    */
-  async search(data: Exclude<SearchSimpleReq, 'collection_name'>) {
-    const searchSimpleReq = cloneObj(data);
+  async search(data: Omit<SearchSimpleReq, 'collection_name'>) {
+    const searchSimpleReq = cloneObj(data) as SearchSimpleReq;
     searchSimpleReq.collection_name = this.data.collection_name;
 
     return await this.#client.search(searchSimpleReq);
@@ -62,8 +80,8 @@ export class Collection {
   /**
    * Returns the entities that match the query.
    */
-  async get(data: Exclude<QueryReq, 'collection_name'>) {
-    const queryReq = cloneObj(data);
+  async query(data: Omit<QueryReq, 'collection_name'>) {
+    const queryReq = cloneObj(data) as QueryReq;
     queryReq.collection_name = this.data.collection_name;
 
     return await this.#client.query(queryReq);
@@ -72,8 +90,8 @@ export class Collection {
   /**
    * Inserts or upserts entities into the collection.
    */
-  async insert(data: Exclude<InsertReq, 'collection_name'>) {
-    const insertReq = cloneObj(data);
+  async insert(data: Omit<InsertReq, 'collection_name'>) {
+    const insertReq = cloneObj(data) as InsertReq;
     insertReq.collection_name = this.data.collection_name;
 
     return await this.#client.insert(insertReq);
@@ -82,8 +100,8 @@ export class Collection {
   /**
    * Deletes entities from the collection.
    */
-  async delete(data: Exclude<DeleteEntitiesReq, 'collection_name'>) {
-    const deleteEntitiesReq = cloneObj(data);
+  async delete(data: Omit<DeleteEntitiesReq, 'collection_name'>) {
+    const deleteEntitiesReq = cloneObj(data) as DeleteEntitiesReq;
     deleteEntitiesReq.collection_name = this.data.collection_name;
 
     return await this.#client.deleteEntities(deleteEntitiesReq);

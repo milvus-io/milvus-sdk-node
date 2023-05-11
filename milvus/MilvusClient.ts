@@ -71,7 +71,7 @@ export class MilvusClient extends GRPCClient {
             name: 'id',
             data_type: DataType.Int64,
             is_primary_key: true,
-            autoID: true,
+            autoID: false,
           },
           {
             name: 'vector',
@@ -91,9 +91,25 @@ export class MilvusClient extends GRPCClient {
     data = await this.describeCollection({ collection_name: name });
 
     // return collection object
-    return new Collection({
+    const col = new Collection({
       data: data,
       client: this,
     });
+
+    // create index + load
+    try {
+      await col.createIndex({
+        field_name: 'vector',
+        index_type: 'HNSW',
+        metric_type: 'L2',
+        params: { efConstruction: 10, M: 4 },
+      });
+      // load
+      await col.load();
+    } catch (error) {
+      console.log('error ', error);
+    }
+
+    return col;
   }
 }

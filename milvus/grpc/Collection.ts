@@ -95,7 +95,7 @@ export class Collection extends BaseClient {
     const {
       fields,
       collection_name,
-      consistency_level = 'Bounded',
+      consistency_level = 'Strong',
     } = data || {};
 
     // Check if fields and collection_name are present, otherwise throw an error.

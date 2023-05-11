@@ -174,6 +174,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   created_timestamp: string;
   created_utc_timestamp: string;
   shards_num: number;
+  collection_name: string;
 }
 
 export interface GetCompactionPlansResponse {
