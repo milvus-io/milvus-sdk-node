@@ -194,7 +194,7 @@ await client.createIndex({
   field_name: 'book_intro',
   index_name: 'myindex',
   index_type: 'HNSW',
-  param: { ef: 5 },
+  param: { efConstruction: 5, M: 4 },
   metric_type: 'L2',
 });
 ```
