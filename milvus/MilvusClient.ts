@@ -1,10 +1,5 @@
 import { ChannelOptions } from '@grpc/grpc-js';
-import {
-  GRPCClient,
-  ClientConfig,
-  DataType,
-  DescribeCollectionResponse,
-} from '.';
+import { GRPCClient, ClientConfig, DataType } from '.';
 import { Collection } from './high-level';
 import sdkInfo from '../sdk.json';
 
@@ -56,13 +51,12 @@ export class MilvusClient extends GRPCClient {
    * High-level collection method, return a collection that has it's own methods
    */
   async collection({ name, dimension }: any) {
-    // collection data
-    let data: DescribeCollectionResponse;
     // check exist
     const exist = await this.hasCollection({ collection_name: name });
 
     // not exist, create a new one
     if (!exist.value) {
+      console.time('create collection');
       // create a new collection with fixed schema
       await this.createCollection({
         collection_name: name,
@@ -80,32 +74,31 @@ export class MilvusClient extends GRPCClient {
           },
         ],
       });
-
-      // get collection data
-      data = await this.describeCollection({
-        collection_name: name,
-      });
+      console.timeEnd('create collection');
     }
-
-    // get existing collection
-    data = await this.describeCollection({ collection_name: name });
 
     // return collection object
     const col = new Collection({
-      data: data,
+      name: name,
       client: this,
     });
 
     // create index + load
     try {
+      console.time('create index');
       await col.createIndex({
         field_name: 'vector',
         index_type: 'HNSW',
         metric_type: 'L2',
         params: { efConstruction: 10, M: 4 },
       });
+      console.timeEnd('create index');
+
       // load
+      console.time('load index');
+
       await col.load();
+      console.timeEnd('load index');
     } catch (error) {
       console.log('error ', error);
     }

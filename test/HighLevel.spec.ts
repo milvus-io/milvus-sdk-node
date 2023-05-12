@@ -1,4 +1,4 @@
-import { MilvusClient, ERROR_REASONS } from '../milvus';
+import { MilvusClient, ErrorCode } from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -69,38 +69,33 @@ describe(`High level API`, () => {
 
   it(`Create collection successfully`, async () => {
     // get my collection
-    console.time('create collection');
     const collection = await milvusClient.collection({
       name: NEW_COLLECTION_NAME,
       dimension: 8,
     });
 
     const collections = await milvusClient.showCollections();
-
-    console.timeEnd('create collection');
-
-    console.log('create collection', collection);
-
     expect(collections.data.length).toEqual(4);
     expect(collection.name).toEqual(NEW_COLLECTION_NAME);
-    expect(collection.schema.fields.length).toEqual(2); // TODO: json
+    const collectionInfo = await collection.info();
+    expect(collectionInfo.schema.fields.length).toEqual(2); // TODO: json
 
-    const sts = await collection.get();
-    console.log('sts', sts);
+    const count = await collection.count();
+    expect(typeof count).toEqual('number');
     // insert
   });
 
   it(`get exsiting collection successfully`, async () => {
     // get my collection
-    console.time('get existing collection');
     const collection: any = await milvusClient.collection({
       name: EXIST_COLLECTION_NAME,
     });
 
-    console.timeEnd('get existing collection');
+    const collectionInfo = await collection.info();
 
     expect(collection.name).toEqual(EXIST_COLLECTION_NAME);
-    expect(collection.schema.fields.length).toEqual(4);
+
+    expect(collectionInfo.schema.fields.length).toEqual(4);
 
     // insert
   });
@@ -125,9 +120,8 @@ describe(`High level API`, () => {
     // insert
   });
 
-  it(`insert data successfully`, async () => {
+  it(`insert/search/query/delete successfully`, async () => {
     // get my collection
-    console.time('insert data');
     const collection = await milvusClient.collection({
       name: EXIST_COLLECTION_NAME,
     });
@@ -135,15 +129,43 @@ describe(`High level API`, () => {
     // insert data
     await collection.insert({ fields_data: data });
 
-    // get
-    const dd = await collection.query({
-      expr: 'height > 0',
-      output_fields: ['height', 'age'],
+    // search
+    const searchRes = await collection.search({
+      vector: [1, 2, 3, 4, 5, 6, 7, 8],
+      limit: 2,
     });
 
-    console.timeEnd('insert data');
+    expect(searchRes.results.length).toEqual(2);
 
-    // console.log('insert collection', dd);
-    // insert
+    // console.log('searchRes', searchRes);
+
+    // query
+    const queryRes = await collection.query({
+      expr: 'height > 0',
+      output_fields: ['height', 'age'],
+      limit: 2,
+    });
+
+    expect(queryRes.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(queryRes.data.length).toEqual(2);
+
+    // get
+    const getRes = await collection.get({
+      expr: 'height > 0',
+      output_fields: ['height', 'age'],
+      limit: 2,
+    });
+
+    expect(getRes.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(getRes.data.length).toEqual(2);
+
+    // delete
+    const deleteRes = await collection.delete({
+      expr: `age in [${queryRes.data.map(d => d.age).join(',')}]`,
+    });
+
+    // console.log('deleteRes', queryRes, deleteRes);
+    expect(deleteRes.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(Number(deleteRes.delete_cnt)).toEqual(2);
   });
 });

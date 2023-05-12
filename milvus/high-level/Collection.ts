@@ -6,63 +6,49 @@ import {
   QueryReq,
   CreateIndexSimpleReq,
   LoadCollectionReq,
-  DescribeCollectionResponse,
   cloneObj,
 } from '../';
 
 interface collectionProps {
-  data: DescribeCollectionResponse;
+  name: string;
   client: MilvusClient;
 }
-/**
- * Represents a collection in Milvus.
- */
+
 export class Collection {
-  /**
-   * The Milvus client used to interact with the collection.
-   */
   #client: MilvusClient;
 
-  readonly data: DescribeCollectionResponse;
+  readonly name: string;
 
-  /**
-   * Creates a new collection.
-   * @param {Object} props - The properties of the collection.
-   * @param {string} props.name - The name of the collection.
-   * @param {MilvusClient} props.client - The Milvus client used to interact with the collection.
-   */
-  constructor({ data, client }: collectionProps) {
-    this.data = data;
-
+  constructor({ name, client }: collectionProps) {
+    // set name
+    this.name = name;
     // assign private client
     this.#client = client;
   }
 
-  /**
-   * Returns the number of entities in the collection.
-   */
-  async get() {
+  async count() {
     const getCollectionStatisticsReq = {
-      collection_name: this.data.collection_name,
+      collection_name: this.name,
     };
 
-    return await this.#client.getCollectionStatistics(
+    const stats = await this.#client.getCollectionStatistics(
       getCollectionStatisticsReq
     );
+
+    return Number(stats.data.row_count);
   }
 
-  get name() {
-    return this.data && this.data.collection_name;
-  }
-
-  get schema() {
-    return this.data && this.data.schema;
+  async info() {
+    // return this.data && this.data.schema;
+    return await this.#client.describeCollection({
+      collection_name: this.name,
+    });
   }
 
   async load(data: Omit<LoadCollectionReq, 'collection_name'> = {}) {
     const loadCollectionReq = cloneObj(data) as LoadCollectionReq;
 
-    loadCollectionReq.collection_name = this.data.collection_name;
+    loadCollectionReq.collection_name = this.name;
 
     return await this.#client.loadCollectionSync(loadCollectionReq);
   }
@@ -70,55 +56,38 @@ export class Collection {
   async createIndex(data: Omit<CreateIndexSimpleReq, 'collection_name'>) {
     const createIndexReq = cloneObj(data) as CreateIndexSimpleReq;
 
-    createIndexReq.collection_name = this.data.collection_name;
+    createIndexReq.collection_name = this.name;
     // console.log('createIndexReq', createIndexReq);
     return await this.#client.createIndex(createIndexReq);
   }
 
-  /**
-   * Searches for entities in the collection.
-   */
   async search(data: Omit<SearchSimpleReq, 'collection_name'>) {
     const searchSimpleReq = cloneObj(data) as SearchSimpleReq;
-    searchSimpleReq.collection_name = this.data.collection_name;
+    searchSimpleReq.collection_name = this.name;
 
     return await this.#client.search(searchSimpleReq);
   }
 
-  /**
-   * Returns the entities that match the query.
-   */
   async query(data: Omit<QueryReq, 'collection_name'>) {
     const queryReq = cloneObj(data) as QueryReq;
-    queryReq.collection_name = this.data.collection_name;
+    queryReq.collection_name = this.name;
 
     return await this.#client.query(queryReq);
   }
+  // alias
+  get = this.query;
 
-  /**
-   * Inserts or upserts entities into the collection.
-   */
   async insert(data: Omit<InsertReq, 'collection_name'>) {
     const insertReq = cloneObj(data) as InsertReq;
-    insertReq.collection_name = this.data.collection_name;
+    insertReq.collection_name = this.name;
 
     return await this.#client.insert(insertReq);
   }
 
-  /**
-   * Deletes entities from the collection.
-   */
   async delete(data: Omit<DeleteEntitiesReq, 'collection_name'>) {
     const deleteEntitiesReq = cloneObj(data) as DeleteEntitiesReq;
-    deleteEntitiesReq.collection_name = this.data.collection_name;
+    deleteEntitiesReq.collection_name = this.name;
 
     return await this.#client.deleteEntities(deleteEntitiesReq);
-  }
-
-  /**
-   * destroy the collection.
-   */
-  async destroy() {
-    return 'delete self';
   }
 }
