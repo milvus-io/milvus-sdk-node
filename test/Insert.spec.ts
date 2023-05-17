@@ -132,7 +132,7 @@ describe(`Insert API`, () => {
     }
   });
 
-  it(`Insert should throw INSERT_CHECK_FILEDS_DATA_IS_REQUIRED`, async () => {
+  it(`Insert should throw INSERT_CHECK_FIELD_DATA_IS_REQUIRED`, async () => {
     try {
       await milvusClient.insert({ collection_name: 'asd' } as any);
     } catch (error) {
@@ -289,11 +289,17 @@ describe(`Insert API`, () => {
     };
 
     const res = await milvusClient.insert(params);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'age > 0',
+      output_fields: ['meta', 'age'],
+    });
 
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    console.log('query', query);
   });
 
   it(`Insert data on float field expect missing field throw error`, async () => {

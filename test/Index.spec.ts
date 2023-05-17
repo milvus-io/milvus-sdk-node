@@ -167,12 +167,12 @@ describe(`Index API`, () => {
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
-        index_type: 'BIN_IVF_FLAT',
-        metric_type: 'HAMMING',
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    // console.log(res);
+    console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -181,8 +181,8 @@ describe(`Index API`, () => {
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
-        index_type: 'BIN_IVF_FLAT',
-        metric_type: 'HAMMING',
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
         params: JSON.stringify({ nlist: 1024 }),
       },
     });

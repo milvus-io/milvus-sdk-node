@@ -292,7 +292,7 @@ describe(`Collection API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
-    expect(res.schema.fields.length).toEqual(4);
+    expect(res.schema.fields.length).toEqual(5);
     res.schema.fields.forEach(f => {
       expect(typeof f.dataType).toEqual('number');
       expect(typeof f.data_type).toEqual('string');

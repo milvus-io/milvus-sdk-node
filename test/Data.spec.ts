@@ -58,7 +58,7 @@ describe(`Data.API`, () => {
     }
   });
 
-  it(`Flush Sync shoulud success`, async () => {
+  it(`Flush Sync should success`, async () => {
     const res = await milvusClient.flushSync({
       collection_names: [COLLECTION_NAME],
     });
@@ -66,7 +66,7 @@ describe(`Data.API`, () => {
   });
 
   it(
-    `Test Flush Sync shoulud timeout`,
+    `Test Flush Sync should timeout`,
     timeoutTest(milvusClient.flushSync.bind(milvusClient), {
       collection_names: [COLLECTION_NAME],
     })
@@ -217,21 +217,21 @@ describe(`Data.API`, () => {
     });
   });
 
-  it(`Exec simple search with outputfields should success`, async () => {
+  it(`Exec simple search with outputFields should success`, async () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       filter: '',
       vector: [1, 2, 3, 4],
       limit: 4,
-      output_fields: ['age'],
+      output_fields: ['age', 'meta'],
     });
 
-    // console.log('----search ----', res);
+    // console.log('----search ----', res.results);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
       res.results.forEach(r => {
-        expect(Object.keys(r).length).toEqual(3); // id, score, age
+        expect(Object.keys(r).length).toEqual(4); // id, score, age, meta
       })
     );
   });
