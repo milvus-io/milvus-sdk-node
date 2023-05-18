@@ -288,7 +288,7 @@ describe(`Collection API`, () => {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log('---- describe collection ---', res);
+    // console.log('---- describe collection ---', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);

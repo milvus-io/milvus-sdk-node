@@ -236,6 +236,25 @@ describe(`Data.API`, () => {
     );
   });
 
+  it(`Exec simple search with JSON filter should success`, async () => {
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      // partition_names: [],
+      filter: 'meta["number"] >= 0',
+      vector: [1, 2, 3, 4],
+      limit: 4,
+      output_fields: ['age', 'meta'],
+    });
+
+    // console.log('----search ----', res.results);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(
+      res.results.forEach(r => {
+        expect(Object.keys(r).length).toEqual(4); // id, score, age, meta
+      })
+    );
+  });
+
   it(`Exec complex search should success`, async () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
@@ -312,13 +331,42 @@ describe(`Data.API`, () => {
   });
 
   it(`Query with data limit only`, async () => {
-    const res2 = await milvusClient.query({
+    const expr = 'age > 0';
+    const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
-      expr: 'age > 0',
-      output_fields: ['age', VECTOR_FIELD_NAME],
+      expr: expr,
+      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
       limit: 3,
     });
-    expect(res2.data.length).toBe(3);
+
+    // console.log('----query ---', expr, res.data);
+    expect(res.data.length).toBe(3);
+  });
+
+  it(`Query JSON data with float filter`, async () => {
+    const expr = 'meta["float"] >= 1.0';
+    const res = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: expr,
+      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
+      offset: 0,
+      limit: 3,
+    });
+    // console.log('----query JSON data with float ---', expr, res.data);
+    expect(res.data.length).toBe(3);
+  });
+
+  it(`Query JSON data with number filter`, async () => {
+    const expr = 'meta["number"] >= 1.0';
+    const res = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: expr,
+      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
+      offset: 0,
+      limit: 3,
+    });
+    // console.log('----query JSON data with number filter ---', expr, res.data);
+    expect(res.data.length).toBe(3);
   });
 
   it(`Query with data without limit and offset`, async () => {

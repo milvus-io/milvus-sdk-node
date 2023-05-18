@@ -141,7 +141,8 @@ export class Data extends Collection {
             }
             break;
           case DataType.JSON:
-            target.value[i] = Buffer.from(JSON.stringify(v[name]));
+            // ensure empty string
+            target.value[i] = Buffer.from(JSON.stringify(v[name] || {}));
             break;
           default:
             target.value[i] = v[name];

@@ -41,31 +41,31 @@ export const genCollectionParams = (
     fields: [
       {
         name: VECTOR_FIELD_NAME,
-        description: 'vector field',
+        description: 'Vector field',
         data_type: vectorType,
         dim: Number(dim),
       },
       {
         name: 'age',
-        description: '',
+        description: 'ID field',
         data_type: DataType.Int64,
         is_primary_key: true,
         autoID,
       },
       {
         name: 'height',
-        description: '',
+        description: 'int64 field',
         data_type: 'Int64',
       },
       {
         name: 'name',
-        description: '',
+        description: 'VarChar field',
         data_type: DataType.VarChar,
         max_length: 128,
       },
       {
         name: 'meta',
-        description: '',
+        description: 'JSON field',
         data_type: DataType.JSON,
       },
       ...fields,
@@ -117,10 +117,13 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
         : isBool // If the field is a boolean field
         ? count % 2 === 0 // Generate a random boolean value based on the current count
         : isJson // If the field is a boolean field
-        ? {
-            property: Math.random().toString(36).substring(2, 7),
-            value: Math.floor(Math.random() * 100000),
-          } // Generate a random boolean value based on the current count
+        ? Math.random() > 0.4
+          ? {
+              string: Math.random().toString(36).substring(2, 7),
+              float: 1 + Math.random(),
+              number: Math.floor(Math.random() * 100000),
+            }
+          : {} // Generate a random boolean value based on the current count
         : isVarChar // If the field is a varchar field
         ? Math.random().toString(36).substring(2, 7) // Generate a random string of characters
         : Math.floor(Math.random() * 100000); // Otherwise, generate a random integer between 0 and 100000
