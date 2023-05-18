@@ -14,7 +14,7 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, debug: true });
 const COLLECTION_NAME = GENERATE_NAME();
 const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
@@ -288,11 +288,11 @@ describe(`Collection API`, () => {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log('---- describe collection ---', res);
+    // console.log('---- describe collection ---', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
-    expect(res.schema.fields.length).toEqual(4);
+    expect(res.schema.fields.length).toEqual(5);
     res.schema.fields.forEach(f => {
       expect(typeof f.dataType).toEqual('number');
       expect(typeof f.data_type).toEqual('string');
@@ -328,7 +328,7 @@ describe(`Collection API`, () => {
     const res = await milvusClient.getLoadingProgress({
       collection_name: LOAD_COLLECTION_NAME_SYNC,
     });
-    // console.log('loadingProgess', loadingProgess);
+    // console.log('loadingProgress', loadingProgress);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(typeof res.progress).toEqual('string'); // int64 in node is string
   });
@@ -464,7 +464,7 @@ describe(`Collection API`, () => {
     }
   });
 
-  it(`Create alais success`, async () => {
+  it(`Create alias success`, async () => {
     try {
       await milvusClient.createAlias({
         collection_name: LOAD_COLLECTION_NAME,
@@ -481,7 +481,7 @@ describe(`Collection API`, () => {
     }
   });
 
-  it(`Alter alais success`, async () => {
+  it(`Alter alias success`, async () => {
     try {
       await milvusClient.alterAlias({
         collection_name: LOAD_COLLECTION_NAME_SYNC,
@@ -496,7 +496,7 @@ describe(`Collection API`, () => {
     }
   });
 
-  it(`Drop alais success`, async () => {
+  it(`Drop alias success`, async () => {
     try {
       await milvusClient.dropAlias({
         alias: ALIAS,

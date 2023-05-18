@@ -109,7 +109,7 @@ export class Data extends Collection {
             name: v.name,
             type: v.data_type,
             dim: Number(findKeyValue(v.type_params, 'dim')),
-            value: [] as number[],
+            value: [] as any,
           },
         ])
     );
@@ -125,26 +125,35 @@ export class Data extends Collection {
         if (!target) {
           throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
         }
-        const isVector = this.vectorTypes.includes(DataTypeMap[target.type]);
         if (
           DataTypeMap[target.type] === DataType.BinaryVector &&
           v[name].length !== target.dim / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
-        if (isVector) {
-          for (let val of v[name]) {
-            target.value.push(val);
-          }
-        } else {
-          target.value[i] = v[name];
+
+        // encode data
+        switch (DataTypeMap[target.type]) {
+          case DataType.BinaryVector:
+          case DataType.FloatVector:
+            for (let val of v[name]) {
+              target.value.push(val);
+            }
+            break;
+          case DataType.JSON:
+            // ensure empty string
+            target.value[i] = Buffer.from(JSON.stringify(v[name] || {}));
+            break;
+          default:
+            target.value[i] = v[name];
+            break;
         }
       });
     });
 
     params.fields_data = Array.from(fieldsData.values()).map(v => {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
-      // but if milvus change the string, may casue we cant find value.
+      // but if milvus change the string, may cause we cant find value.
       const type = DataTypeMap[v.type];
       const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
       let dataKey = 'float_vector';
@@ -174,6 +183,9 @@ export class Data extends Collection {
           break;
         case DataType.VarChar:
           dataKey = 'string_data';
+          break;
+        case DataType.JSON:
+          dataKey = 'json_data';
           break;
         default:
           throw new Error(
@@ -396,7 +408,7 @@ export class Data extends Collection {
          *  fields_data:  what you pass in output_fields, only support non vector fields.
          *  ids: vector id array
          *  scores: distance array
-         *  topks: if you use mutiple query to search , will return mutiple topk.
+         *  topks: if you use multiple query to search , will return multiple topk.
          */
         const { topks, scores, fields_data, ids } = promise.results;
         const fieldsData = fields_data.map((item, i) => {
@@ -408,7 +420,7 @@ export class Data extends Collection {
             data: value ? value[value?.data].data : '',
           };
         });
-        // verctor id support int / str id.
+        // vector id support int / str id.
         const idData = ids ? ids[ids.id_field]?.data : undefined;
         /**
          * This code block formats the search results returned by Milvus into row data for easier use.
@@ -431,7 +443,17 @@ export class Data extends Collection {
               id: idData ? idData[i] : '',
             };
             fieldsData.forEach(field => {
-              result[field.field_name] = field.data[i];
+              // decode json
+              switch (field.type) {
+                case 'JSON':
+                  result[field.field_name] = JSON.parse(
+                    field.data[i].toString()
+                  );
+                  break;
+                default:
+                  result[field.field_name] = field.data[i];
+                  break;
+              }
             });
             results.push(result);
           });
@@ -638,6 +660,17 @@ export class Data extends Collection {
 
       const key = item.scalars!.data;
       const scalarValue = item.scalars![key]!.data;
+
+      // decode json
+      switch (key) {
+        case 'json_data':
+          scalarValue.forEach((buffer: any, i: number) => {
+            scalarValue[i] = JSON.parse(buffer.toString());
+          });
+          break;
+        default:
+          break;
+      }
 
       return {
         field_name: item.field_name,
