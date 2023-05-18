@@ -153,7 +153,7 @@ export const getRetryInterceptor = ({
                       if (debug) {
                         if (deadline > startTime) {
                           console.info(
-                            `${methodName} is timout, it's timeout value is: ${
+                            `${methodName} is timeout, timeout set: ${
                               deadline.getTime() - startTime.getTime()
                             }ms.`
                           );
