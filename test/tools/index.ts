@@ -84,7 +84,6 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
   };
 
   if (partitionKeyEnabled && typeof numPartitions === 'number') {
-    params.partition_key_field_name = 'name';
     params.num_partitions = numPartitions;
   }
 

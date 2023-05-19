@@ -39,8 +39,10 @@ export const checkCollectionFields = (fields: FieldType[]) => {
     }
 
     // if partition key is set, it should be set on int64 or varchar and non-primary key field
-    if (isPartitionKey && !int64VarCharTypes.includes(dataType!)) {
-      throw new Error(ERROR_REASONS.INVALID_PARTITION_KEY_FIELD_TYPE);
+    if (isPartitionKey) {
+      if (!int64VarCharTypes.includes(dataType!) || isPrimaryKey) {
+        throw new Error(ERROR_REASONS.INVALID_PARTITION_KEY_FIELD_TYPE);
+      }
     }
 
     // if this is the partition key field, check the limit
