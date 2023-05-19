@@ -274,6 +274,7 @@ describe('utils/format', () => {
           description: 'Test PRIMARY KEY field',
           dataType: 5,
           isPrimaryKey: true,
+          isPartitionKey: false,
         },
         {
           typeParams: [
@@ -289,6 +290,7 @@ describe('utils/format', () => {
           description: 'Test VECTOR field',
           dataType: 101,
           isPrimaryKey: false,
+          isPartitionKey: false,
         },
       ],
     };

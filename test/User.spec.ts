@@ -22,7 +22,12 @@ describe(`User Api`, () => {
   beforeAll(async () => {
     authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     await authClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
+      genCollectionParams({
+        collectionName: COLLECTION_NAME,
+        dim: '4',
+        vectorType: DataType.FloatVector,
+        autoID: false,
+      })
     );
   });
 
