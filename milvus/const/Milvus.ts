@@ -5,6 +5,9 @@ export const DEFAULT_METRIC_TYPE = 'L2';
 export const DEFAULT_MAX_RETRIES = 3; // max retry time
 export const DEFAULT_RETRY_DELAY = 30; // retry delay, 30ms
 export const DEFAULT_DEBUG = false;
+export const DEFAULT_PARTITIONS_NUMBER = 64;
+export const MAX_PARTITION_KEY_FIELD_COUNT = 1;
+export const MAX_PARTITIONS_NUMBER = 4096;
 
 enum ErrorCode {
   Success = 0,

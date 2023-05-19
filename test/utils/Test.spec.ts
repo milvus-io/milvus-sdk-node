@@ -5,7 +5,7 @@ describe(`utils/test`, () => {
   it('should generate data for a collection with a vector field of type DataType.FloatVector', () => {
     const fields = [
       {
-        name: 'vector_field',
+        name: 'vector',
         description: 'vector field',
         data_type: DataType.FloatVector,
         dim: 10,
@@ -20,13 +20,13 @@ describe(`utils/test`, () => {
     ];
     const data = generateInsertData(fields, 10);
     expect(data.length).toBe(10);
-    expect(data[0].vector_field.length).toBe(10);
+    expect(data[0].vector.length).toBe(10);
   });
 
   it('should generate data for a collection with a vector field of type DataType.BinaryVector', () => {
     const fields = [
       {
-        name: 'vector_field',
+        name: 'vector',
         description: 'vector field',
         data_type: DataType.BinaryVector,
         dim: 80,
@@ -41,7 +41,7 @@ describe(`utils/test`, () => {
     ];
     const data = generateInsertData(fields, 10);
     expect(data.length).toBe(10);
-    expect(data[0].vector_field.length).toBe(10);
+    expect(data[0].vector.length).toBe(10);
   });
 
   it('should generate data for a collection with a non-vector field of type DataType.Bool', () => {

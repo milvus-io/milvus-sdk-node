@@ -12,12 +12,12 @@ const COLLECTION_NAME = GENERATE_NAME();
 
 describe(`Bianary search API`, () => {
   beforeAll(async () => {
-    const createCollectionParams = genCollectionParams(
-      COLLECTION_NAME,
-      128,
-      DataType.BinaryVector,
-      false
-    );
+    const createCollectionParams = genCollectionParams({
+      collectionName: COLLECTION_NAME,
+      dim: 128,
+      vectorType: DataType.BinaryVector,
+      autoID: false,
+    });
     await milvusClient.createCollection(createCollectionParams);
     // create index before load
     await milvusClient.createIndex({

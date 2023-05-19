@@ -323,7 +323,7 @@ describe('utils/format', () => {
           {
             type_params: [{ key: 'dim', value: '128' }],
             index_params: [],
-            name: 'vector_field',
+            name: 'vector',
             is_primary_key: false,
             description: 'vector field',
             data_type: 'FloatVector',

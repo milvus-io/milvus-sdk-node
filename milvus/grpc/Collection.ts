@@ -41,6 +41,7 @@ import {
   sleep,
   formatCreateColReq,
   formatDescribedCol,
+  validatePartitionNumbers,
 } from '../';
 
 /**
@@ -55,6 +56,7 @@ export class Collection extends BaseClient {
    *  | :-- | :-- | :-- |
    *  | collection_name | String | Collection name |
    *  | description | String | Collection description |
+   *  | num_partitions | number | number of partitions allowed |
    *  | consistency_level | String | "Strong"(Milvus default) | "Session" | "Bounded"| "Eventually" | "Customized"; |
    *  | fields | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> | Field data |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
@@ -96,6 +98,7 @@ export class Collection extends BaseClient {
       fields,
       collection_name,
       consistency_level = 'Bounded',
+      num_partitions,
     } = data || {};
 
     // Check if fields and collection_name are present, otherwise throw an error.
@@ -106,7 +109,13 @@ export class Collection extends BaseClient {
     // Check if the fields are valid.
     checkCollectionFields(fields);
 
+    // if num_partitions is set, validate it
+    if (typeof num_partitions !== 'undefined') {
+      validatePartitionNumbers(num_partitions);
+    }
+
     // Create the payload object with the collection_name, description, and fields.
+    // it should follow CollectionSchema in schema.proto
     const payload = formatCreateColReq(data, this.fieldSchemaType);
 
     // Create the collectionParams object from the payload.

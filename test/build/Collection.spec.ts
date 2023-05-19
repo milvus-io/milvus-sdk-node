@@ -20,7 +20,7 @@ const LOAD_COLLECTION_NAME = GENERATE_NAME();
 describe('Collection Api', () => {
   it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '128')
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 })
     );
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -88,7 +88,9 @@ describe('Collection Api', () => {
     }
 
     try {
-      await milvusClient.createCollection(genCollectionParams('any', '10'));
+      await milvusClient.createCollection(
+        genCollectionParams({ collectionName: 'any', dim: 8 })
+      );
     } catch (error) {
       expect(error.message).toEqual(
         ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM
@@ -98,7 +100,7 @@ describe('Collection Api', () => {
 
   it(`Create load Collection Successful`, async () => {
     const res = await milvusClient.createCollection(
-      genCollectionParams(LOAD_COLLECTION_NAME, '128')
+      genCollectionParams({ collectionName: LOAD_COLLECTION_NAME, dim: 128 })
     );
     // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);

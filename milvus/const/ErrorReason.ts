@@ -1,4 +1,8 @@
-import { DataTypeMap } from './Milvus';
+import {
+  DataTypeMap,
+  MAX_PARTITIONS_NUMBER,
+  MAX_PARTITION_KEY_FIELD_COUNT,
+} from './Milvus';
 
 export const ERROR_REASONS = {
   MILVUS_ADDRESS_IS_REQUIRED: 'The `address` property is missing.',
@@ -51,4 +55,9 @@ export const ERROR_REASONS = {
   )
     .filter((d: string) => d !== 'None' && d !== 'String')
     .join(', ')}.`,
+
+  INVALID_PARTITION_NUM: `The partition numbers should between 1 and ${MAX_PARTITIONS_NUMBER}`,
+  INVALID_PARTITION_KEY_FIELD_TYPE:
+    'Only non-primary key Int64 or VarChar field support partition key.',
+  PARTITION_KEY_FIELD_MAXED_OUT: `Only ${MAX_PARTITION_KEY_FIELD_COUNT} field supports partition key. `,
 };

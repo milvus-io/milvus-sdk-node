@@ -19,6 +19,7 @@ export interface FieldSchema {
   data_type: keyof typeof DataType;
   dataType?: DataType;
   is_primary_key?: boolean;
+  is_partition_key?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
   autoID: boolean;
@@ -55,6 +56,7 @@ export interface FieldType {
   description?: string;
   data_type: DataType | keyof typeof DataTypeMap;
   is_primary_key?: boolean;
+  is_partition_key?: boolean;
   type_params?: {
     [key: string]: TypeParam;
   };
@@ -85,6 +87,7 @@ export interface CreateCollectionReq extends GrpcTimeOut {
     | 'Eventually'
     | 'Customized';
   fields: FieldType[];
+  num_partitions?: number;
 }
 
 interface CollectionNameReq extends GrpcTimeOut {
@@ -170,6 +173,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   aliases: string[];
   virtual_channel_names: string[]; // not useful for now
   physical_channel_names: string[]; // not useful for now
+  num_partitions?: string; // int64
 }
 
 export interface GetCompactionPlansResponse {
