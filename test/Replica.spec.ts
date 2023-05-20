@@ -12,7 +12,7 @@ const COLLECTION_NAME = GENERATE_NAME();
 describe(`Replica API`, () => {
   beforeAll(async () => {
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '8')
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
     );
     await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,

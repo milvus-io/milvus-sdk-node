@@ -18,18 +18,18 @@ const COLLECTION_NAME = GENERATE_NAME();
 const BINARY_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
 const MORE_SCALAR_COLLECTION_NAME = GENERATE_NAME();
-const COLLECTION_NAME_PARAMS = genCollectionParams(
-  COLLECTION_NAME,
-  '4',
-  DataType.FloatVector,
-  false
-);
-const COLLECTION_NAME_AUTO_ID_PARAMS = genCollectionParams(
-  COLLECTION_NAME_AUTO_ID,
-  4,
-  DataType.FloatVector,
-  true
-);
+const COLLECTION_NAME_PARAMS = genCollectionParams({
+  collectionName: COLLECTION_NAME,
+  dim: 4,
+  vectorType: DataType.FloatVector,
+  autoID: false,
+});
+const COLLECTION_NAME_AUTO_ID_PARAMS = genCollectionParams({
+  collectionName: COLLECTION_NAME_AUTO_ID,
+  dim: 4,
+  vectorType: DataType.FloatVector,
+  autoID: true,
+});
 
 const PARTITION_NAME = 'test';
 describe(`Insert API`, () => {
@@ -53,12 +53,12 @@ describe(`Insert API`, () => {
     // create collection autoid = false and binary_vector
 
     await milvusClient.createCollection(
-      genCollectionParams(
-        BINARY_COLLECTION_NAME,
-        '8',
-        DataType.BinaryVector,
-        false
-      )
+      genCollectionParams({
+        collectionName: BINARY_COLLECTION_NAME,
+        dim: 8,
+        vectorType: DataType.BinaryVector,
+        autoID: false,
+      })
     );
 
     await milvusClient.createPartition({
@@ -215,7 +215,7 @@ describe(`Insert API`, () => {
           schema: {
             fields: [
               {
-                name: 'vector_field',
+                name: 'vector',
                 data_type: 'Not exist',
                 type_params: [
                   {

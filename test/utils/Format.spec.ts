@@ -274,6 +274,7 @@ describe('utils/format', () => {
           description: 'Test PRIMARY KEY field',
           dataType: 5,
           isPrimaryKey: true,
+          isPartitionKey: false,
         },
         {
           typeParams: [
@@ -289,6 +290,7 @@ describe('utils/format', () => {
           description: 'Test VECTOR field',
           dataType: 101,
           isPrimaryKey: false,
+          isPartitionKey: false,
         },
       ],
     };
@@ -323,7 +325,7 @@ describe('utils/format', () => {
           {
             type_params: [{ key: 'dim', value: '128' }],
             index_params: [],
-            name: 'vector_field',
+            name: 'vector',
             is_primary_key: false,
             description: 'vector field',
             data_type: 'FloatVector',

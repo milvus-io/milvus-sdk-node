@@ -14,7 +14,7 @@ const PARTITION_NAME = GENERATE_NAME('partition');
 describe(`Partition API`, () => {
   beforeAll(async () => {
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '128')
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 })
     );
 
     await milvusClient.createIndex({

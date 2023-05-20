@@ -312,7 +312,8 @@ export const formatCreateColReq = (
         ...rest,
         typeParams: parseToKeyValue(type_params),
         dataType: convertToDataType(field.data_type),
-        isPrimaryKey: field.is_primary_key,
+        isPrimaryKey: !!field.is_primary_key,
+        isPartitionKey: !!field.is_partition_key,
       });
     }),
   };

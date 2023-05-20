@@ -26,7 +26,7 @@ const ALIAS = 'my_alias';
 describe(`Collection API`, () => {
   it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
-      ...genCollectionParams(COLLECTION_NAME, '128'),
+      ...genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 }),
       consistency_level: 'Eventually',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -34,7 +34,10 @@ describe(`Collection API`, () => {
 
   it(`Create Collection with number dim Successful`, async () => {
     const res = await milvusClient.createCollection({
-      ...genCollectionParams(NUMBER_DIM_COLLECTION_NAME, 128),
+      ...genCollectionParams({
+        collectionName: NUMBER_DIM_COLLECTION_NAME,
+        dim: 128,
+      }),
       consistency_level: 'Eventually',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -113,7 +116,7 @@ describe(`Collection API`, () => {
 
     try {
       const d = await milvusClient.createCollection(
-        genCollectionParams('any', '10')
+        genCollectionParams({ collectionName: 'any', dim: 10 })
       );
     } catch (error) {
       expect(error.message).toEqual(
@@ -162,7 +165,10 @@ describe(`Collection API`, () => {
 
   it(`Create collection will be successful even if passed consistency level is invalid`, async () => {
     const res = await milvusClient.createCollection({
-      ...genCollectionParams(TEST_CONSISTENCY_LEVEL_COLLECTION_NAME, '128'),
+      ...genCollectionParams({
+        collectionName: TEST_CONSISTENCY_LEVEL_COLLECTION_NAME,
+        dim: 128,
+      }),
       consistency_level: 'xxx' as any,
     });
 
@@ -171,10 +177,13 @@ describe(`Collection API`, () => {
 
   it(`Create load Collection Successful`, async () => {
     const res1 = await milvusClient.createCollection(
-      genCollectionParams(LOAD_COLLECTION_NAME, '128')
+      genCollectionParams({ collectionName: LOAD_COLLECTION_NAME, dim: 128 })
     );
     const res2 = await milvusClient.createCollection(
-      genCollectionParams(LOAD_COLLECTION_NAME_SYNC, '128')
+      genCollectionParams({
+        collectionName: LOAD_COLLECTION_NAME_SYNC,
+        dim: 128,
+      })
     );
     // make sure load successful
     await milvusClient.createIndex({

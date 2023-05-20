@@ -31,15 +31,18 @@ const [
 describe(`Index API`, () => {
   beforeAll(async () => {
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '8')
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
     );
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME_WITHOUT_INDEX_NAME, '8')
+      genCollectionParams({
+        collectionName: COLLECTION_NAME_WITHOUT_INDEX_NAME,
+        dim: 8,
+      })
     );
 
     for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
       await milvusClient.createCollection(
-        genCollectionParams(INDEX_COLLECTIONS[i], '8')
+        genCollectionParams({ collectionName: INDEX_COLLECTIONS[i], dim: 8 })
       );
     }
   });
@@ -172,7 +175,7 @@ describe(`Index API`, () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    console.log(res);
+    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
