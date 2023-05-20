@@ -78,6 +78,9 @@ export class BaseClient {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
 
+    // if the address starts with https, no need to set the ssl
+    config.ssl = config.address.startsWith('https://') || !!config.ssl;
+
     // Assign the configuration object.
     this.config = config;
     // Load the Milvus protobuf.
