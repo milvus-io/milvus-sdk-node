@@ -23,6 +23,8 @@ describe(`Milvus client`, () => {
 
   it(`should create a grpc client without authentication when username and password are not provided`, () => {
     const milvusClient = new MilvusClient(`localhost:19530`, false);
+
+    console.log('grpc client', milvusClient.client);
     expect(milvusClient.client).toBeDefined();
   });
 

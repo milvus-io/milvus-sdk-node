@@ -1,4 +1,5 @@
 import { credentials, ChannelOptions } from '@grpc/grpc-js';
+import dayjs from 'dayjs';
 import {
   GetVersionResponse,
   CheckHealthResponse,
@@ -66,6 +67,20 @@ export class GRPCClient extends User {
       formatAddress(this.config.address), // format the address
       this.config.ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
       options
+    );
+
+    // connect
+    const userInfo = {
+      ClientInfo: {
+        sdkType: 'nodejs',
+        sdkVersion: 'sdk_version',
+        localTime: dayjs().format(`YYYY-MM-DD HH:mm:ss.SSS`),
+        user: this.config.username,
+      },
+    };
+
+    promisify(this.client, 'Connect', userInfo, this.timeout).then(f =>
+      console.log(f)
     );
   }
 

@@ -80,6 +80,9 @@ export class BaseClient {
 
     // if the address starts with https, no need to set the ssl
     config.ssl = config.address.startsWith('https://') || !!config.ssl;
+    // make sure these are strings
+    config.username = config.username || '';
+    config.password = config.password || '';
 
     // Assign the configuration object.
     this.config = config;
