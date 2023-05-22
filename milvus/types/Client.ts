@@ -6,6 +6,8 @@ import { ChannelOptions } from '@grpc/grpc-js';
 export interface ClientConfig {
   // The address of the Milvus server.
   address: string;
+  // token 
+  token?: string;
   // Whether to use SSL encryption.
   ssl?: boolean;
   // The username to use for authentication.
