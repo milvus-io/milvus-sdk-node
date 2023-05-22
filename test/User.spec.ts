@@ -79,6 +79,16 @@ describe(`User Api`, () => {
     expect(res.usernames).toEqual([USERNAME, 'root']);
   });
 
+  it(`Auth client with token expect success`, async () => {
+    authClient = new MilvusClient({
+      address: IP,
+      ssl: false,
+      token: `${USERNAME}:${PASSWORD}`,
+    });
+    const res = await authClient.listUsers();
+    expect(res.usernames).toEqual([USERNAME, 'root']);
+  });
+
   it(`Clean all role priviledges`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
     await authClient.dropAllRoles();
