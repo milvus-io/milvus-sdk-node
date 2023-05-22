@@ -65,22 +65,16 @@ export const getAuthInterceptor = (data: {
 }) =>
   function (options: any, nextCall: any) {
     const { username, password, token } = data;
+    // build auth string
+    const authString = token ? token : `${username}:${password}`;
     // Create a new InterceptingCall object with nextCall(options) as its first parameter.
     return new InterceptingCall(nextCall(options), {
       // Define the start method of the InterceptingCall object.
       start: function (metadata, listener, next) {
         // Encode the username and password as a base64 string.
-        let auth = Buffer.from(
-          `${username}:${password}`,
-          'utf-8'
-        ).toString('base64');
-        // if token is set, use token instead auth
-        if (token) {
-          auth = token;
-        }
+        let auth = Buffer.from(authString, 'utf-8').toString('base64');
         // Add the authorization header to the metadata object with the key 'authorization'.
         metadata.add('authorization', auth);
-
         // Call next(metadata, listener) to continue the call with the modified metadata.
         next(metadata, listener);
       },

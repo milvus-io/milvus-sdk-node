@@ -96,7 +96,7 @@ describe(`utils/grpc`, () => {
     const interceptor = getAuthInterceptor({ token });
     const interceptedCall = interceptor({}, nextCall);
     (interceptedCall.start as any)(metadata, listener, next);
-    expect(metadata.add).toHaveBeenCalledWith('authorization', token);
+    expect(metadata.add).toHaveBeenCalledWith('authorization', 'dG9rZW4=');
   });
 
   it('should add an authorization header to the metadata of a gRPC call with given token username/pass ', () => {
@@ -126,6 +126,6 @@ describe(`utils/grpc`, () => {
     const interceptor = getAuthInterceptor({ token, username, password });
     const interceptedCall = interceptor({}, nextCall);
     (interceptedCall.start as any)(metadata, listener, next);
-    expect(metadata.add).toHaveBeenCalledWith('authorization', token);
+    expect(metadata.add).toHaveBeenCalledWith('authorization', 'dG9rZW4=');
   });
 });
