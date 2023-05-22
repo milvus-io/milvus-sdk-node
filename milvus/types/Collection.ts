@@ -20,6 +20,7 @@ export interface FieldSchema {
   dataType?: DataType;
   is_primary_key?: boolean;
   is_partition_key?: boolean;
+  is_dynamic?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
   autoID: boolean;
