@@ -51,21 +51,33 @@ export const getGRPCService = (
 };
 
 /**
- * Returns an interceptor function that adds an authorization header to the metadata of a gRPC call.
- * @param username - The username to use for authentication.
- * @param password - The password to use for authentication.
- * @returns An interceptor function.
+ * Returns a gRPC interceptor function that adds an authorization header to the metadata object of a gRPC call.
+ *
+ * @param {string} username - The username to use for authentication.
+ * @param {string} password - The password to use for authentication.
+ * @param {string} [token] - An optional token to use instead of the encoded username and password.
+ * @returns {Function} The gRPC interceptor function.
  */
-export const getAuthInterceptor = (username: string, password: string) =>
+export const getAuthInterceptor = (data: {
+  username?: string;
+  password?: string;
+  token?: string;
+}) =>
   function (options: any, nextCall: any) {
+    const { username, password, token } = data;
     // Create a new InterceptingCall object with nextCall(options) as its first parameter.
     return new InterceptingCall(nextCall(options), {
       // Define the start method of the InterceptingCall object.
       start: function (metadata, listener, next) {
         // Encode the username and password as a base64 string.
-        const auth = Buffer.from(`${username}:${password}`, 'utf-8').toString(
-          'base64'
-        );
+        let auth = Buffer.from(
+          `${username}:${password}`,
+          'utf-8'
+        ).toString('base64');
+        // if token is set, use token instead auth
+        if (token) {
+          auth = token;
+        }
         // Add the authorization header to the metadata object with the key 'authorization'.
         metadata.add('authorization', auth);
 
@@ -104,7 +116,7 @@ export const getRetryInterceptor = ({
     const deadline = options.deadline;
 
     // get method name
-    // option example 
+    // option example
     // {
     //   deadline: 2023-05-04T09:04:16.231Z,
     //   method_definition: {
