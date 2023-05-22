@@ -48,7 +48,13 @@ export class MilvusClient extends GRPCClient {
   }
 
   /**
-   * High-level collection method, return a collection that has it's own methods
+   * Creates a new collection.
+   *
+   * @async
+   * @param {object} options The options for creating the collection.
+   * @param {string} options.name The name of the collection.
+   * @param {number} options.dimension The dimension of the vectors in the collection.
+   * @returns {Promise<Collection>} A promise that resolves with the collection object.
    */
   async collection({ name, dimension }: any) {
     // check exist
