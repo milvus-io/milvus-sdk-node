@@ -85,7 +85,7 @@ export class BaseClient {
     if (typeof config.token !== 'undefined') {
       // get username and password
       let index = config.token.indexOf(':');
-      // only handle we have ':'
+      // only handle ':'
       if (index !== -1) {
         const username = config.token.slice(0, index);
         const password = config.token.slice(index + 1);
