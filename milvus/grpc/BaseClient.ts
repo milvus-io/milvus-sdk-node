@@ -81,20 +81,6 @@ export class BaseClient {
     // if the address starts with https, no need to set the ssl
     config.ssl = config.address.startsWith('https://') || !!config.ssl;
 
-    // setup username and password
-    if (typeof config.token !== 'undefined') {
-      // get username and password
-      let index = config.token.indexOf(':');
-      // only handle ':'
-      if (index !== -1) {
-        const username = config.token.slice(0, index);
-        const password = config.token.slice(index + 1);
-        // overwrite username and password in the config
-        config.username = username || config.username;
-        config.password = password || config.password;
-      }
-    }
-
     // Assign the configuration object.
     this.config = config;
     // Load the Milvus protobuf.

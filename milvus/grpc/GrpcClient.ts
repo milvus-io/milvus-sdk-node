@@ -21,7 +21,9 @@ export class GRPCClient extends User {
   connect() {
     // if we need to create auth interceptors
     const needAuth =
-      this.config.username !== undefined && this.config.password !== undefined;
+      (this.config.username !== undefined &&
+        this.config.password !== undefined) ||
+      this.config.token !== undefined;
 
     // get Milvus GRPC service
     const MilvusService = getGRPCService({
@@ -30,9 +32,7 @@ export class GRPCClient extends User {
     });
 
     // auth interceptor
-    const authInterceptor = needAuth
-      ? getAuthInterceptor(this.config.username!, this.config.password!)
-      : null;
+    const authInterceptor = needAuth ? getAuthInterceptor(this.config) : null;
     // retry interceptor
     const retryInterceptor = getRetryInterceptor({
       maxRetries:
