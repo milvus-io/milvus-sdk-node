@@ -1,4 +1,4 @@
-import { credentials, ChannelOptions } from '@grpc/grpc-js';
+import { credentials } from '@grpc/grpc-js';
 import dayjs from 'dayjs';
 import {
   GetVersionResponse,
