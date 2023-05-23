@@ -1,4 +1,3 @@
-import { DEFAULT_CONNECT_TIMEOUT } from '../const/Milvus';
 import { KeyValuePair } from '../types/Common';
 
 /**
