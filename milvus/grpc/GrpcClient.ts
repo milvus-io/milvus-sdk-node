@@ -52,13 +52,13 @@ export class GRPCClient extends User {
     const interceptors = [authInterceptor, retryInterceptor];
 
     // add interceptors
-    this.options.interceptors = interceptors;
+    this.channelOptions.interceptors = interceptors;
 
     // create grpc client
     this.client = new MilvusService(
       formatAddress(this.config.address), // format the address
       this.config.ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
-      this.options
+      this.channelOptions
     );
 
     // get server info, only works after milvus v2.2.9
@@ -81,7 +81,7 @@ export class GRPCClient extends User {
     return promisify(this.client, 'Connect', userInfo, this.timeout).then(f => {
       // add new indentifier interceptor
       if (f.identifier) {
-        this.options.interceptors.unshift(
+        this.channelOptions.interceptors.unshift(
           getMetaInterceptor([{ identifier: f.identifier }]) // add indentifier
         );
         // setup indentifier

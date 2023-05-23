@@ -45,7 +45,7 @@ export class BaseClient {
   timeout: number = DEFAULT_CONNECT_TIMEOUT;
 
   // grpc options
-  options: ChannelOptions;
+  channelOptions: ChannelOptions;
 
   // server info
   serverInfo: ServerInfo = {};
@@ -107,7 +107,7 @@ export class BaseClient {
     );
 
     // options
-    this.options = {
+    this.channelOptions = {
       // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
       // So SDK should support max_receive_message_length unlimited.
       'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
