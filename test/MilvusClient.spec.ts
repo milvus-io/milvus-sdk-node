@@ -2,7 +2,7 @@ import { MilvusClient, ERROR_REASONS } from '../milvus';
 import sdkInfo from '../sdk.json';
 import { IP } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP, debug: false });
+const milvusClient = new MilvusClient({ address: IP, debug: true });
 
 describe(`Milvus client`, () => {
   afterEach(() => {
@@ -24,7 +24,6 @@ describe(`Milvus client`, () => {
   it(`should create a grpc client without authentication when username and password are not provided`, () => {
     const milvusClient = new MilvusClient(`localhost:19530`, false);
 
-    console.log('grpc client', milvusClient.client);
     expect(milvusClient.client).toBeDefined();
   });
 

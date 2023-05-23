@@ -6,6 +6,7 @@ import {
   ClientConfig,
   DEFAULT_CONNECT_TIMEOUT,
   parseTimeToken,
+  ServerInfo,
 } from '../';
 
 // path
@@ -42,6 +43,12 @@ export class BaseClient {
 
   // The timeout for connecting to the Milvus service.
   timeout: number = DEFAULT_CONNECT_TIMEOUT;
+
+  // grpc options
+  options: ChannelOptions;
+
+  // server info
+  serverInfo: ServerInfo = {};
 
   /**
    * Sets up the configuration object for the gRPC client.
@@ -98,6 +105,18 @@ export class BaseClient {
     this.fieldSchemaType = this.schemaProto.lookupType(
       this.protoInternalPath.fieldSchema
     );
+
+    // options
+    this.options = {
+      // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
+      // So SDK should support max_receive_message_length unlimited.
+      'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
+      'grpc.max_send_message_length': -1, // set max_send_message_length to unlimited
+      'grpc.keepalive_time_ms': 10 * 1000, // Send keepalive pings every 10 seconds, default is 2 hours.
+      'grpc.keepalive_timeout_ms': 10 * 1000, // Keepalive ping timeout after 10 seconds, default is 20 seconds.
+      'grpc.keepalive_permit_without_calls': 1, // Allow keepalive pings when there are no gRPC calls.
+      ...this.config.channelOptions,
+    };
 
     // Set up the timeout for connecting to the Milvus service.
     this.timeout =

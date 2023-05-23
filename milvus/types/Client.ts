@@ -25,3 +25,12 @@ export interface ClientConfig {
   // open debug logs
   debug?: boolean;
 }
+
+export interface ServerInfo {
+  build_tags?: string;
+  build_time?: string;
+  git_commit?: string;
+  go_version?: string;
+  deploy_mode?: string;
+  reserved?: { [key: string]: any };
+}

@@ -11,6 +11,7 @@ import {
   formatAddress,
   getAuthInterceptor,
   getRetryInterceptor,
+  getMetaInterceptor,
 } from '../';
 import { User } from './User';
 
@@ -19,7 +20,7 @@ import { User } from './User';
  */
 export class GRPCClient extends User {
   // create a grpc service client(connect)
-  connect() {
+  connect(sdkVersion: string) {
     // if we need to create auth interceptors
     const needAuth =
       (this.config.username !== undefined &&
@@ -34,6 +35,7 @@ export class GRPCClient extends User {
 
     // auth interceptor
     const authInterceptor = needAuth ? getAuthInterceptor(this.config) : null;
+
     // retry interceptor
     const retryInterceptor = getRetryInterceptor({
       maxRetries:
@@ -49,39 +51,43 @@ export class GRPCClient extends User {
     // interceptors
     const interceptors = [authInterceptor, retryInterceptor];
 
-    // options
-    const options: ChannelOptions = {
-      interceptors,
-      // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
-      // So SDK should support max_receive_message_length unlimited.
-      'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
-      'grpc.max_send_message_length': -1, // set max_send_message_length to unlimited
-      'grpc.keepalive_time_ms': 10 * 1000, // Send keepalive pings every 10 seconds, default is 2 hours.
-      'grpc.keepalive_timeout_ms': 10 * 1000, // Keepalive ping timeout after 10 seconds, default is 20 seconds.
-      'grpc.keepalive_permit_without_calls': 1, // Allow keepalive pings when there are no gRPC calls.
-      ...this.config.channelOptions,
-    };
+    // add interceptors
+    this.options.interceptors = interceptors;
 
     // create grpc client
     this.client = new MilvusService(
       formatAddress(this.config.address), // format the address
       this.config.ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
-      options
+      this.options
     );
 
-    // connect
+    // get server info, only works after milvus v2.2.9
+    try {
+      this._getServerInfo(sdkVersion);
+    } catch (e) {}
+  }
+
+  private async _getServerInfo(sdkVersion: string) {
+    // build user info
     const userInfo = {
-      ClientInfo: {
-        sdkType: 'nodejs',
-        sdkVersion: 'sdk_version',
-        localTime: dayjs().format(`YYYY-MM-DD HH:mm:ss.SSS`),
+      client_info: {
+        sdk_type: 'nodejs',
+        sdk_version: sdkVersion,
+        local_time: dayjs().format(`YYYY-MM-DD HH:mm:ss.SSS`),
         user: this.config.username,
       },
     };
 
-    promisify(this.client, 'Connect', userInfo, this.timeout).then(f =>
-      console.log(f)
-    );
+    return promisify(this.client, 'Connect', userInfo, this.timeout).then(f => {
+      // add new indentifier interceptor
+      if (f.identifier) {
+        this.options.interceptors.unshift(
+          getMetaInterceptor([{ identifier: f.identifier }]) // add indentifier
+        );
+        // setup indentifier
+        this.serverInfo = f.server_info;
+      }
+    });
   }
 
   // @deprecated
