@@ -261,7 +261,7 @@ First, a random search vector is generated. Then, the `client.search()` method i
 
 `output_fields`: Optional. Specifies which fields to include in the search results. The example code specifies the `book_id` and `word_count` fields, by default the node sdk will output all fields.
 
-### vector search
+### TLS (1-way and 2-way authorization)
 
 Built-In TLS support will be added soon, in the meantime, please refer to [this guide](/tlspatch/README.md) if you require secure communication.
 
