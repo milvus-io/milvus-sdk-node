@@ -2,7 +2,7 @@
 
 This guide assumes you have already gone through the steps outlined on the [Milvus Documentation](https://milvus.io/docs/tls.md#Connect-to-the-Milvus-server-with-TLS).
 
-This guide explains how to enable TLS based connections for the Milvus Node SDK. Support to this feature is coming soon, but in the mean time, in order to ensure secure connections you can use this patch. To achieve this, you need to execute a patch that modifies the installed `node_modules` package to support one-way and two-way TLS connections. If the packages are not present or are updated, the patch needs to be run again.
+This guide explains how to enable TLS based connections for the Milvus Node SDK. Support to this feature is coming soon, but in the mean time, in order to ensure secure connections you can use this patch. To achieve this, you need to execute a script that modifies the installed `node_modules` package to support one-way and two-way TLS connections. If the packages are not present or are updated, the patch needs to be run again.
 
 ## Patch Arguments
 
