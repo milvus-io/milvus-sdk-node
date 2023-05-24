@@ -1,4 +1,5 @@
 // export types
+export * from './Database';
 export * from './Collection';
 export * from './Data';
 export * from './Common';
