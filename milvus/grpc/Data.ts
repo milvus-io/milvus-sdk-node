@@ -621,6 +621,7 @@ export class Data extends Collection {
   async query(data: QueryReq): Promise<QueryResults> {
     checkCollectionName(data);
 
+    // Set up limits and offset for the query
     let limits: { limit: number } | undefined;
     let offset: { offset: number } | undefined;
 
@@ -631,6 +632,7 @@ export class Data extends Collection {
       offset = { offset: data.offset };
     }
 
+    // Execute the query and get the results
     const promise: QueryRes = await promisify(
       this.client,
       'Query',
@@ -645,18 +647,20 @@ export class Data extends Collection {
     const output_fields =
       promise.output_fields || promise.fields_data.map(f => f.field_name);
 
+    // Initialize an array to hold the query results
     const results: { [x: string]: any }[] = [];
 
     /**
-     * type: DataType
-     * field_name: Field name
-     * field_id: enum DataType
-     * field: decide the key we can use. If return 'vectors', we can use item.vectors.
-     * vectors: vector data.
-     * scalars: scalar data
+     * Check the data type of each field and parse the data accordingly.
+     * If the field is a vector, split the data into chunks of the appropriate size.
+     * If the field is a scalar, decode the JSON data if necessary.
      */
     const fieldsDataMap = new Map();
     promise.fields_data.forEach((item, i) => {
+      // field data
+      let field_data: any;
+
+      // parse vector data
       if (item.field === 'vectors') {
         const key = item.vectors!.data;
         const vectorValue =
@@ -669,46 +673,54 @@ export class Data extends Collection {
           item.vectors?.data === 'float_vector'
             ? Number(item.vectors!.dim)
             : Number(item.vectors!.dim) / 8;
-        const data: number[][] = [];
+        field_data = [];
 
         // parse number[] to number[][] by dim
         vectorValue.forEach((v, i) => {
           const index = Math.floor(i / dim);
-          if (!data[index]) {
-            data[index] = [];
+          if (!field_data[index]) {
+            field_data[index] = [];
           }
-          data[index].push(v);
+          field_data[index].push(v);
         });
+      } else {
+        // parse scalar data
+        const key = item.scalars!.data;
+        field_data = item.scalars![key]!.data;
 
-        return {
-          field_name: item.field_name,
-          data,
-        };
+        // decode json
+        switch (key) {
+          case 'json_data':
+            field_data.forEach((buffer: any, i: number) => {
+              // console.log(JSON.parse(buffer.toString()));
+              field_data[i] = JSON.parse(buffer.toString());
+            });
+            break;
+          default:
+            break;
+        }
       }
 
-      const key = item.scalars!.data;
-      const scalarValue = item.scalars![key]!.data;
-
-      // decode json
-      switch (key) {
-        case 'json_data':
-          scalarValue.forEach((buffer: any, i: number) => {
-            // console.log(JSON.parse(buffer.toString()));
-            scalarValue[i] = JSON.parse(buffer.toString());
-          });
-          break;
-        default:
-          break;
-      }
-
-      fieldsDataMap.set(item.field_name, scalarValue);
+      // Add the parsed data to the fieldsDataMap
+      fieldsDataMap.set(item.field_name, field_data);
     });
 
+    // For each output field, check if it has a fixed schema or not
     const fieldData = output_fields.map(field_name => {
+      // Check if the field_name exists in the fieldsDataMap
+      const isFixedSchema = fieldsDataMap.has(field_name);
+
+      // Get the data for the field_name from the fieldsDataMap
+      // If the field_name is not in the fieldsDataMap, use the DEFAULT_DYNAMIC_FIELD
+      const data = fieldsDataMap.get(
+        isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
+      );
+
+      // Return an object containing the field_name and its corresponding data
+      // If the schema is fixed, use the data directly
+      // If the schema is not fixed, map the data to extract the field_name values
       return {
-        data: fieldsDataMap.get(
-          fieldsDataMap.has(field_name) ? field_name : DEFAULT_DYNAMIC_FIELD
-        ),
+        data: isFixedSchema ? data : data.map((d: any) => d[field_name]),
         field_name,
       };
     });

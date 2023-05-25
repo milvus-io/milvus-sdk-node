@@ -121,17 +121,50 @@ describe(`Dynamic schema API`, () => {
 
   it(`query with dynamic field should success`, async () => {
     try {
-      // create index
+      // query
       const query = await milvusClient.query({
         collection_name: COLLECTION,
         limit: 10,
         expr: 'age > 0',
-        output_fields: ['meta', 'age', 'dynamic_int64', 'dynamic_varChar'],
+        output_fields: [
+          'meta',
+          'vector',
+          'age',
+          'dynamic_int64',
+          'dynamic_varChar',
+        ],
       });
 
-      console.log('query', query);
+      // console.log('query', query.data);
 
       expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+      expect(query.data.length).toEqual(10);
+    } catch (error) {
+      console.log(error);
+    }
+  });
+
+  it(`search with dynamic field should success`, async () => {
+    try {
+      // query
+      const query = await milvusClient.search({
+        collection_name: COLLECTION,
+        limit: 10,
+        vector: [1, 2, 3, 4],
+        expr: 'age > 0',
+        output_fields: [
+          'meta',
+          'vector',
+          'age',
+          'dynamic_int64',
+          'dynamic_varChar',
+        ],
+      });
+
+      // console.log('query', query.data);
+
+      expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+      expect(query.results.length).toEqual(10);
     } catch (error) {
       console.log(error);
     }
