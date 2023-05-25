@@ -1,4 +1,4 @@
-import { MilvusClient, DataType, ErrorCode, ERROR_REASONS } from '../milvus';
+import { MilvusClient, DataType, ErrorCode } from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -7,7 +7,7 @@ import {
 } from './tools';
 
 const milvusClient = new MilvusClient({ address: IP, debug: false });
-const COLLLECTION = GENERATE_NAME();
+const COLLECTION = GENERATE_NAME();
 const numPartitions = 3;
 
 const dynamicFields = [
@@ -31,7 +31,7 @@ const dynamicFields = [
 
 // create
 const createCollectionParams = genCollectionParams({
-  collectionName: COLLLECTION,
+  collectionName: COLLECTION,
   dim: 4,
   vectorType: DataType.FloatVector,
   autoID: false,
@@ -49,7 +49,7 @@ describe(`Dynamic schema API`, () => {
   });
   afterAll(async () => {
     await milvusClient.dropCollection({
-      collection_name: COLLLECTION,
+      collection_name: COLLECTION,
     });
   });
 
@@ -63,7 +63,7 @@ describe(`Dynamic schema API`, () => {
 
       // describe
       const describe = await milvusClient.describeCollection({
-        collection_name: COLLLECTION,
+        collection_name: COLLECTION,
       });
 
       // console.log('describe', describe);
@@ -81,7 +81,7 @@ describe(`Dynamic schema API`, () => {
 
       // console.log(data);
       const insert = await milvusClient.insert({
-        collection_name: COLLLECTION,
+        collection_name: COLLECTION,
         fields_data: data,
       });
 
@@ -96,7 +96,7 @@ describe(`Dynamic schema API`, () => {
     try {
       // create index
       const createIndex = await milvusClient.createIndex({
-        collection_name: COLLLECTION,
+        collection_name: COLLECTION,
         index_name: 't',
         field_name: 'vector',
         index_type: 'IVF_FLAT',
@@ -110,7 +110,7 @@ describe(`Dynamic schema API`, () => {
 
       // load
       const load = await milvusClient.loadCollectionSync({
-        collection_name: COLLLECTION,
+        collection_name: COLLECTION,
       });
 
       expect(load.error_code).toEqual(ErrorCode.SUCCESS);
@@ -123,7 +123,7 @@ describe(`Dynamic schema API`, () => {
     try {
       // create index
       const query = await milvusClient.query({
-        collection_name: COLLLECTION,
+        collection_name: COLLECTION,
         limit: 10,
         expr: 'age > 0',
         output_fields: ['meta', 'age', 'dynamic_int64', 'dynamic_varChar'],

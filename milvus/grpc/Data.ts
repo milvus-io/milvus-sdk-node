@@ -41,6 +41,7 @@ import {
   parseFloatVectorToBytes,
   DEFAULT_DYNAMIC_FIELD,
   generateDynamicRow,
+  cloneObj,
 } from '../';
 import { Collection } from './Collection';
 
@@ -331,7 +332,7 @@ export class Data extends Collection {
         collection_name: data.collection_name,
       });
 
-      // get infomation from collection info
+      // get information from collection info
       let vectorType: DataType;
       let defaultOutputFields = [];
       let dim: number = 0;
@@ -493,7 +494,7 @@ export class Data extends Collection {
 
   /**
    * Milvus temporarily buffers the newly inserted vectors in the cache. Call `flush()` to persist them to the object storage.
-   * It's async function, so it's will take some times to excute.
+   * It's async function, so it's will take some times to execute.
    * @param data
    *  | Property | Type | Description |
    *  | :--- | :-- | :-- |
@@ -640,6 +641,10 @@ export class Data extends Collection {
       data.timeout || this.timeout
     );
 
+    // compatible with milvus before v2.2.9
+    const output_fields =
+      promise.output_fields || promise.fields_data.map(f => f.field_name);
+
     const results: { [x: string]: any }[] = [];
 
     /**
@@ -650,7 +655,8 @@ export class Data extends Collection {
      * vectors: vector data.
      * scalars: scalar data
      */
-    const fieldsData = promise.fields_data.map((item, i) => {
+    const fieldsDataMap = new Map();
+    promise.fields_data.forEach((item, i) => {
       if (item.field === 'vectors') {
         const key = item.vectors!.data;
         const vectorValue =
@@ -695,15 +701,20 @@ export class Data extends Collection {
           break;
       }
 
+      fieldsDataMap.set(item.field_name, scalarValue);
+    });
+
+    const fieldData = output_fields.map(field_name => {
       return {
-        field_name: item.field_name,
-        data: scalarValue,
+        data: fieldsDataMap.get(
+          fieldsDataMap.has(field_name) ? field_name : DEFAULT_DYNAMIC_FIELD
+        ),
+        field_name,
       };
     });
 
     // parse column data to [{fieldname:value}]
-
-    fieldsData.forEach(v => {
+    fieldData.forEach((v: any) => {
       v.data.forEach((d: string | number[], i: number) => {
         if (!results[i]) {
           results[i] = {
@@ -717,6 +728,7 @@ export class Data extends Collection {
         }
       });
     });
+
     return {
       status: promise.status,
       data: results,
@@ -802,7 +814,7 @@ export class Data extends Collection {
    * | Property | Description |
    *  | :--- | :-- |
    *  | status | { error_code: number,reason:string } |
-   *  | infos | segments infomations |
+   *  | infos | segments information |
    *
    *
    * #### Example
