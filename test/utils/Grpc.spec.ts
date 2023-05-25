@@ -1,6 +1,10 @@
 import path from 'path';
 import { InterceptingCall } from '@grpc/grpc-js';
-import { getGRPCService, getAuthInterceptor } from '../../milvus';
+import {
+  getGRPCService,
+  getAuthInterceptor,
+  getMetaInterceptor,
+} from '../../milvus';
 // mock
 jest.mock('@grpc/grpc-js', () => {
   const actual = jest.requireActual(`@grpc/grpc-js`);
@@ -127,5 +131,36 @@ describe(`utils/grpc`, () => {
     const interceptedCall = interceptor({}, nextCall);
     (interceptedCall.start as any)(metadata, listener, next);
     expect(metadata.add).toHaveBeenCalledWith('authorization', 'dG9rZW4=');
+  });
+
+  it('adds custom metadata to the gRPC call', () => {
+    const meta = [{ key: 'value' }, { key2: 'value2' }];
+    const metadata = {
+      add: jest.fn(),
+    };
+    const listener = {};
+    const next = jest.fn();
+
+    const nextCall = jest.fn(() => ({
+      start: (metadata: any, listener: any, next: any) => {
+        next(metadata, listener);
+      },
+    }));
+
+    (InterceptingCall as any).mockImplementationOnce(
+      (call: any, options: any) => {
+        return {
+          call,
+          options,
+          start: options.start,
+        };
+      }
+    );
+
+    const interceptor = getMetaInterceptor(meta);
+    const interceptedCall = interceptor({}, nextCall);
+    (interceptedCall.start as any)(metadata, listener, next);
+    expect(metadata.add).toHaveBeenCalledWith('key', 'value');
+    expect(metadata.add).toHaveBeenCalledWith('key2', 'value2');
   });
 });

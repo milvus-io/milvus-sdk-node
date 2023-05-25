@@ -8,6 +8,7 @@ export const DEFAULT_DEBUG = false;
 export const DEFAULT_PARTITIONS_NUMBER = 64;
 export const MAX_PARTITION_KEY_FIELD_COUNT = 1;
 export const MAX_PARTITIONS_NUMBER = 4096;
+export const DEFAULT_DB = 'default';
 
 enum ErrorCode {
   Success = 0,

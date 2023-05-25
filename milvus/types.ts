@@ -1,4 +1,5 @@
 // @deprecated
+export * from './types/Database';
 export * from './types/Collection';
 export * from './types/Data';
 export * from './types/Common';
