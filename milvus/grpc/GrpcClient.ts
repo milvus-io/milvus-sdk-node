@@ -12,6 +12,9 @@ import {
   getAuthInterceptor,
   getRetryInterceptor,
   getMetaInterceptor,
+  ErrorCode,
+  DEFAULT_DB,
+  ResStatus,
 } from '../';
 import { User } from './User';
 
@@ -67,6 +70,20 @@ export class GRPCClient extends User {
     } catch (e) {
       console.error(e);
     }
+  }
+
+  // use db
+  async use(data?: { database: string }): Promise<ResStatus> {
+    return new Promise(resolve => {
+      if (!data || data.database === '') {
+        console.warn(`No database name provided, using default database: ${DEFAULT_DB}`);
+      }
+      this.channelOptions.interceptors.unshift(
+        getMetaInterceptor([{ dbname: (data && data.database) || DEFAULT_DB }]) // add database indentifier
+      );
+
+      resolve({ error_code: ErrorCode.SUCCESS, reason: '' });
+    });
   }
 
   private async _getServerInfo(sdkVersion: string) {

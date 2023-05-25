@@ -1,4 +1,4 @@
-import { BaseClient } from './BaseClient';
+import { Database } from './Database';
 import {
   ERROR_REASONS,
   ConsistencyLevelEnum,
@@ -47,7 +47,7 @@ import {
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
  */
-export class Collection extends BaseClient {
+export class Collection extends Database {
   /**
    * Create a collection in Milvus.
    *
