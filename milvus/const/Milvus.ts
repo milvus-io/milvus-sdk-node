@@ -1,15 +1,3 @@
-export const DEFAULT_MILVUS_PORT = 19530; // default milvus port
-export const DEFAULT_CONNECT_TIMEOUT = 10 * 1000; // 10s
-export const DEFAULT_TOPK = 100; // default topk
-export const DEFAULT_METRIC_TYPE = 'L2';
-export const DEFAULT_MAX_RETRIES = 3; // max retry time
-export const DEFAULT_RETRY_DELAY = 30; // retry delay, 30ms
-export const DEFAULT_DEBUG = false;
-export const DEFAULT_PARTITIONS_NUMBER = 64;
-export const MAX_PARTITION_KEY_FIELD_COUNT = 1;
-export const MAX_PARTITIONS_NUMBER = 4096;
-export const DEFAULT_DB = 'default';
-
 enum ErrorCode {
   Success = 0,
   UnexpectedError = 1,
@@ -380,8 +368,6 @@ export const Privileges = {
   ...UserPrivileges,
   ...GlobalPrivileges,
 };
-
-export const DEFAULT_RESOURCE_GROUP = '__default_resource_group';
 
 export enum LoadState {
   LoadStateNotExist = 'LoadStateNotExist',

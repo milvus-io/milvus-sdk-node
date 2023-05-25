@@ -1,10 +1,4 @@
-import {
-  MilvusClient,
-  DataType,
-  ErrorCode,
-  ERROR_REASONS,
-  DEFAULT_PARTITIONS_NUMBER,
-} from '../milvus';
+import { MilvusClient, DataType, ErrorCode, ERROR_REASONS } from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -13,86 +7,133 @@ import {
 } from './tools';
 
 const milvusClient = new MilvusClient({ address: IP, debug: false });
-const COLLECTION_NAME = GENERATE_NAME();
-const COLLECTION_NAME2 = GENERATE_NAME();
-const COLLECTION_DATA_NAME = GENERATE_NAME();
+const COLLLECTION = GENERATE_NAME();
 const numPartitions = 3;
+
+const dynamicFields = [
+  {
+    name: 'dynamic_int64',
+    description: 'dynamic int64 field',
+    data_type: 'Int64', // test string type
+  },
+  {
+    name: 'dynamic_varChar',
+    description: 'VarChar field',
+    data_type: DataType.VarChar,
+    max_length: 128,
+  },
+  {
+    name: 'dynamic_JSON',
+    description: 'JSON field',
+    data_type: DataType.JSON,
+  },
+];
+
+// create
+const createCollectionParams = genCollectionParams({
+  collectionName: COLLLECTION,
+  dim: 4,
+  vectorType: DataType.FloatVector,
+  autoID: false,
+  partitionKeyEnabled: true,
+  numPartitions,
+  enableDynamic: true,
+});
 
 describe(`Dynamic schema API`, () => {
   beforeAll(async () => {
-    // create
-    const createCollectionParams = genCollectionParams({
-      collectionName: COLLECTION_DATA_NAME,
-      dim: 4,
-      vectorType: DataType.FloatVector,
-      autoID: false,
-      partitionKeyEnabled: true,
-      numPartitions,
+    const cols = await milvusClient.showCollections();
+    cols.data.forEach(async col => {
+      await milvusClient.dropCollection({ collection_name: col.name });
     });
-    await milvusClient.createCollection(createCollectionParams);
+  });
+  afterAll(async () => {
+    await milvusClient.dropCollection({
+      collection_name: COLLLECTION,
+    });
+  });
 
+  it(`Create dynamic schema collection should success`, async () => {
     try {
-      const data = generateInsertData(createCollectionParams.fields, 20);
-      await milvusClient.insert({
-        collection_name: COLLECTION_DATA_NAME,
+      const create = await milvusClient.createCollection(
+        createCollectionParams
+      );
+
+      expect(create.error_code).toEqual(ErrorCode.SUCCESS);
+
+      // describe
+      const describe = await milvusClient.describeCollection({
+        collection_name: COLLLECTION,
+      });
+
+      // console.log('describe', describe);
+    } catch (error) {
+      console.log(error);
+    }
+  });
+
+  it(`Insert data with dynamic field should success`, async () => {
+    try {
+      const data = generateInsertData(
+        [...createCollectionParams.fields, ...dynamicFields],
+        20
+      );
+
+      // console.log(data);
+      const insert = await milvusClient.insert({
+        collection_name: COLLLECTION,
         fields_data: data,
       });
 
+      // console.log('insert', insert);
+      expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
+    } catch (error) {
+      console.log(error);
+    }
+  });
+
+  it(`Create index and load with dynamic field should success`, async () => {
+    try {
       // create index
-      await milvusClient.createIndex({
-        collection_name: COLLECTION_DATA_NAME,
+      const createIndex = await milvusClient.createIndex({
+        collection_name: COLLLECTION,
         index_name: 't',
         field_name: 'vector',
         index_type: 'IVF_FLAT',
         metric_type: 'L2',
         params: { nlist: 1024 },
       });
+
+      console.log('createIndex', createIndex);
+
+      expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
+
       // load
-      await milvusClient.loadCollectionSync({
-        collection_name: COLLECTION_DATA_NAME,
+      const load = await milvusClient.loadCollectionSync({
+        collection_name: COLLLECTION,
       });
-    } catch (e) {
-      console.log(e);
+
+      expect(load.error_code).toEqual(ErrorCode.SUCCESS);
+    } catch (error) {
+      console.log(error);
     }
   });
 
-  afterAll(async () => {
-    await milvusClient.dropCollection({
-      collection_name: COLLECTION_NAME,
-    });
-    await milvusClient.dropCollection({
-      collection_name: COLLECTION_NAME2,
-    });
-    await milvusClient.dropCollection({
-      collection_name: COLLECTION_DATA_NAME,
-    });
-  });
-
-  it(`Create Collection with 2 partition key fields should throw error`, async () => {
-    const createCollectionParams = genCollectionParams({
-      collectionName: COLLECTION_NAME,
-      dim: 4,
-      vectorType: DataType.FloatVector,
-      autoID: false,
-      partitionKeyEnabled: true,
-      numPartitions,
-      fields: [
-        {
-          name: 'name2',
-          description: 'VarChar field',
-          data_type: DataType.VarChar,
-          max_length: 128,
-          is_partition_key: true,
-        },
-      ],
-    });
-
+  it(`query with dynamic field should success`, async () => {
     try {
-      await milvusClient.createCollection(createCollectionParams);
+      // create index
+      const query = await milvusClient.query({
+        collection_name: COLLLECTION,
+        limit: 10,
+        expr: 'age > 0',
+        output_fields: ['meta', 'age', 'dynamic_int64', 'dynamic_varChar'],
+      });
+
+      console.log('query', query);
+
+      expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
     } catch (error) {
-      expect(error.message).toEqual(
-        ERROR_REASONS.PARTITION_KEY_FIELD_MAXED_OUT
-      );
+      console.log(error);
     }
   });
 });

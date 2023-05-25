@@ -17,11 +17,12 @@ import {
   convertToDataType,
   DataType,
   FieldType,
-  formatCreateColReq,
+  formatCollectionSchema,
   cloneObj,
   DescribeCollectionResponse,
   formatDescribedCol,
   ConsistencyLevelEnum,
+  generateDynamicRow,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -264,6 +265,7 @@ describe('utils/format', () => {
     const expectedResult = {
       name: 'testCollection',
       description: 'Test Collection for Jest',
+      enableDynamicField: false,
       fields: [
         {
           typeParams: [],
@@ -295,7 +297,7 @@ describe('utils/format', () => {
       ],
     };
 
-    const payload = formatCreateColReq(data, fieldSchemaType);
+    const payload = formatCollectionSchema(data, fieldSchemaType);
     expect(payload).toEqual(expectedResult);
   });
 
@@ -343,16 +345,71 @@ describe('utils/format', () => {
         ],
         name: 'collection_v8mt0v7x',
         description: '',
+        enable_dynamic_field: false,
       },
       collectionID: '441190990484912096',
       created_timestamp: '441323423932350466',
       created_utc_timestamp: '1683515258531',
       consistency_level: ConsistencyLevelEnum.Bounded,
+      num_partitions: '0',
+      db_name: '',
     };
 
     const formatted = formatDescribedCol(response);
 
     expect(formatted.schema.fields[0].dataType).toBe(101);
     expect(formatted.schema.fields[1].dataType).toBe(5);
+  });
+
+  it('should return an empty object when data is empty', () => {
+    const data = {};
+    const fieldsDataMap = new Map();
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({});
+  });
+
+  it('should return an object with dynamicField key when all data contains keys not in fieldsDataMap', () => {
+    const data = { key: 'value' };
+    const fieldsDataMap = new Map();
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({ [dynamicField]: { key: 'value' } });
+  });
+
+  it('should return an object with dynamicField key when some data contains keys not in fieldsDataMap', () => {
+    const data = { key1: 'value1', key2: 'value2' };
+    const fieldsDataMap = new Map([['key1', 'value1']]);
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({
+      key1: 'value1',
+      [dynamicField]: { key2: 'value2' },
+    });
+  });
+
+  it('should return an object with keys from data and fieldsDataMap', () => {
+    const data = { key1: 'value1', key2: 'value2' };
+    const fieldsDataMap = new Map([
+      ['key1', 'value1'],
+      ['key2', 'value2'],
+    ]);
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({
+      key1: 'value1',
+      key2: 'value2',
+    });
+  });
+
+  it('should return an object with dynamicField key when data contains keys not in fieldsDataMap', () => {
+    const data = { key1: 'value1', key2: 'value2' };
+    const fieldsDataMap = new Map([['key1', 'value1']]);
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({
+      key1: 'value1',
+      [dynamicField]: { key2: 'value2' },
+    });
   });
 });

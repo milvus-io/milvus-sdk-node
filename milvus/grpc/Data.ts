@@ -39,6 +39,8 @@ import {
   checkSearchParams,
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
+  DEFAULT_DYNAMIC_FIELD,
+  generateDynamicRow,
 } from '../';
 import { Collection } from './Collection';
 
@@ -100,7 +102,7 @@ export class Data extends Collection {
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
-    const fieldsData = new Map(
+    const fieldsDataMap = new Map(
       collectionInfo.schema.fields
         .filter(v => !v.is_primary_key || !v.autoID)
         .map(v => [
@@ -109,19 +111,36 @@ export class Data extends Collection {
             name: v.name,
             type: v.data_type,
             dim: Number(findKeyValue(v.type_params, 'dim')),
-            value: [] as any,
-          },
+            value: [], // value container
+          } as any,
         ])
     );
 
     // The actual data we pass to Milvus gRPC.
     const params: any = { ...data, num_rows: data.fields_data.length };
 
+    // dynamic field is enabled, create $meta field
+    const isDynamic = collectionInfo.schema.enable_dynamic_field;
+    if (isDynamic) {
+      fieldsDataMap.set(DEFAULT_DYNAMIC_FIELD, {
+        name: DEFAULT_DYNAMIC_FIELD,
+        type: 'JSON',
+        value: [], // value container
+      });
+    }
+
     // Loop through each row and set the corresponding field values in the Map.
     data.fields_data.forEach((v, i) => {
+      // if support dynamic field, all field not in the schema would be grouped to a dynamic field
+      v = isDynamic
+        ? generateDynamicRow(v, fieldsDataMap, DEFAULT_DYNAMIC_FIELD)
+        : v;
+
+      // get each fieldname in the data object
       const fieldNames = Object.keys(v);
+      // go through each fieldname and encode or format data
       fieldNames.forEach(name => {
-        const target = fieldsData.get(name);
+        const target = fieldsDataMap.get(name);
         if (!target) {
           throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
         }
@@ -151,7 +170,8 @@ export class Data extends Collection {
       });
     });
 
-    params.fields_data = Array.from(fieldsData.values()).map(v => {
+    // transform data from map to array, milvus grpc params
+    params.fields_data = Array.from(fieldsDataMap.values()).map(v => {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may cause we cant find value.
       const type = DataTypeMap[v.type];
@@ -195,6 +215,7 @@ export class Data extends Collection {
       return {
         type,
         field_name: v.name,
+        is_dynamic: v.name === DEFAULT_DYNAMIC_FIELD,
         [key]:
           type === DataType.FloatVector
             ? {
@@ -620,6 +641,7 @@ export class Data extends Collection {
     );
 
     const results: { [x: string]: any }[] = [];
+
     /**
      * type: DataType
      * field_name: Field name
@@ -665,6 +687,7 @@ export class Data extends Collection {
       switch (key) {
         case 'json_data':
           scalarValue.forEach((buffer: any, i: number) => {
+            // console.log(JSON.parse(buffer.toString()));
             scalarValue[i] = JSON.parse(buffer.toString());
           });
           break;
@@ -679,6 +702,7 @@ export class Data extends Collection {
     });
 
     // parse column data to [{fieldname:value}]
+
     fieldsData.forEach(v => {
       v.data.forEach((d: string | number[], i: number) => {
         if (!results[i]) {

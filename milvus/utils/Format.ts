@@ -1,6 +1,6 @@
 import { Type } from 'protobufjs';
-import { findKeyValue } from '.';
 import {
+  findKeyValue,
   ERROR_REASONS,
   DEFAULT_MILVUS_PORT,
   KeyValuePair,
@@ -296,15 +296,16 @@ export const cloneObj = <T>(obj: T): T => {
  * @param {Type} schemaType - The schema type for the collection.
  * @returns {Object} The formatted request payload.
  */
-export const formatCreateColReq = (
+export const formatCollectionSchema = (
   data: CreateCollectionReq,
   grpcMsgType: Type
 ): { [k: string]: any } => {
-  const { fields, collection_name, description } = data;
+  const { fields, collection_name, description, enable_dynamic_field } = data;
 
   const payload = {
     name: collection_name,
     description: description || '',
+    enableDynamicField: !!enable_dynamic_field,
     fields: fields.map(field => {
       // Assign the typeParams property to the result of parseToKeyValue(type_params).
       const { type_params, ...rest } = assignTypeParams(field);
@@ -339,4 +340,35 @@ export const formatDescribedCol = (
   });
 
   return newData;
+};
+
+/**
+ * Generates a dynamic row object by separating fields into a dynamic field and non-dynamic fields.
+ *
+ * @param {Record<string, any>} data - The input data object.
+ * @param {Map<string, any>} fieldsDataMap - A map of field names to their corresponding data.
+ * @param {string} dynamicField - The name of the dynamic field.
+ * @returns {Record<string, any>} The generated dynamic row object.
+ */
+export const generateDynamicRow = (
+  data: Record<string, any>,
+  fieldsDataMap: Map<string, any>,
+  dynamicField: string
+) => {
+  const originRow = cloneObj(data);
+
+  const row: Record<string, any> = {};
+  // iterate through each key in the input data object
+  for (let key in originRow) {
+    if (fieldsDataMap.has(key)) {
+      // if the key is in the fieldsDataMap, add it to the non-dynamic fields
+      row[key] = originRow[key];
+    } else {
+      // otherwise, add it to the dynamic field
+      row[dynamicField] = row[dynamicField] || {}; // initialize the dynamic field object
+      row[dynamicField][key] = originRow[key];
+    }
+  }
+
+  return row; // return the generated dynamic row object
 };

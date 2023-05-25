@@ -89,6 +89,7 @@ export interface CreateCollectionReq extends GrpcTimeOut {
     | 'Customized';
   fields: FieldType[];
   num_partitions?: number;
+  enable_dynamic_field?: boolean;
 }
 
 interface CollectionNameReq extends GrpcTimeOut {
@@ -163,6 +164,7 @@ export interface CompactionResponse {
 export interface CollectionSchema {
   name: string;
   description: string;
+  enable_dynamic_field: boolean;
   fields: FieldSchema[];
 }
 
@@ -175,6 +177,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   virtual_channel_names: string[]; // not useful for now
   physical_channel_names: string[]; // not useful for now
   num_partitions?: string; // int64
+  db_name: string;
 }
 
 export interface GetCompactionPlansResponse {

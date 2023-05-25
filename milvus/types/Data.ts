@@ -250,6 +250,8 @@ export interface QueryRes {
       data: string;
     };
   }[];
+  output_fields: string[];
+  collection_name: string;
 }
 
 export interface FlushResult {

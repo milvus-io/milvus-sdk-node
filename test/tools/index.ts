@@ -34,6 +34,7 @@ type generateCollectionParameters = {
   fields?: any[];
   partitionKeyEnabled?: boolean;
   numPartitions?: number;
+  enableDynamic?: boolean;
 };
 export const genCollectionParams = (data: generateCollectionParameters) => {
   const {
@@ -44,6 +45,7 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
     fields = [],
     partitionKeyEnabled,
     numPartitions,
+    enableDynamic = false,
   } = data;
 
   const params: any = {
@@ -81,6 +83,7 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
       },
       ...fields,
     ],
+    enable_dynamic_field: !!enableDynamic,
   };
 
   if (partitionKeyEnabled && typeof numPartitions === 'number') {
