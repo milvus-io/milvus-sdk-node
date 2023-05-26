@@ -41,12 +41,12 @@ const createCollectionParams = genCollectionParams({
 });
 
 describe(`Dynamic schema API`, () => {
-  beforeAll(async () => {
-    const cols = await milvusClient.showCollections();
-    cols.data.forEach(async col => {
-      await milvusClient.dropCollection({ collection_name: col.name });
-    });
-  });
+  // beforeAll(async () => {
+  //   const cols = await milvusClient.showCollections();
+  //   cols.data.forEach(async col => {
+  //     await milvusClient.dropCollection({ collection_name: col.name });
+  //   });
+  // });
   afterAll(async () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION,
@@ -54,119 +54,104 @@ describe(`Dynamic schema API`, () => {
   });
 
   it(`Create dynamic schema collection should success`, async () => {
-    try {
-      const create = await milvusClient.createCollection(
-        createCollectionParams
-      );
+    const create = await milvusClient.createCollection(createCollectionParams);
 
-      expect(create.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(create.error_code).toEqual(ErrorCode.SUCCESS);
 
-      // describe
-      const describe = await milvusClient.describeCollection({
-        collection_name: COLLECTION,
-      });
+    // describe
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION,
+    });
 
-      // console.log('describe', describe);
-    } catch (error) {
-      console.log(error);
-    }
+    // console.log('describe', describe);
   });
 
   it(`Insert data with dynamic field should success`, async () => {
-    try {
-      const data = generateInsertData(
-        [...createCollectionParams.fields, ...dynamicFields],
-        20
-      );
+    const data = generateInsertData(
+      [...createCollectionParams.fields, ...dynamicFields],
+      20
+    );
 
-      // console.log(data);
-      const insert = await milvusClient.insert({
-        collection_name: COLLECTION,
-        fields_data: data,
-      });
+    // console.log(data);
+    const insert = await milvusClient.insert({
+      collection_name: COLLECTION,
+      fields_data: data,
+    });
 
-      // console.log('insert', insert);
-      expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
-    } catch (error) {
-      console.log(error);
-    }
+    // console.log('insert', insert);
+    expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Create index and load with dynamic field should success`, async () => {
-    try {
-      // create index
-      const createIndex = await milvusClient.createIndex({
-        collection_name: COLLECTION,
-        index_name: 't',
-        field_name: 'vector',
-        index_type: 'IVF_FLAT',
-        metric_type: 'L2',
-        params: { nlist: 1024 },
-      });
+    // create index
+    const createIndex = await milvusClient.createIndex({
+      collection_name: COLLECTION,
+      index_name: 't',
+      field_name: 'vector',
+      index_type: 'IVF_FLAT',
+      metric_type: 'L2',
+      params: { nlist: 1024 },
+    });
 
-      console.log('createIndex', createIndex);
+    // console.log('createIndex', createIndex);
+    expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
 
-      expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
+    // load
+    const load = await milvusClient.loadCollectionSync({
+      collection_name: COLLECTION,
+    });
 
-      // load
-      const load = await milvusClient.loadCollectionSync({
-        collection_name: COLLECTION,
-      });
-
-      expect(load.error_code).toEqual(ErrorCode.SUCCESS);
-    } catch (error) {
-      console.log(error);
-    }
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`query with dynamic field should success`, async () => {
-    try {
-      // query
-      const query = await milvusClient.query({
-        collection_name: COLLECTION,
-        limit: 10,
-        expr: 'age > 0',
-        output_fields: [
-          'meta',
-          'vector',
-          'age',
-          'dynamic_int64',
-          'dynamic_varChar',
-        ],
-      });
+    // query
+    const query = await milvusClient.query({
+      collection_name: COLLECTION,
+      limit: 10,
+      expr: 'age > 0',
+      output_fields: [
+        'meta',
+        'vector',
+        'age',
+        'dynamic_int64',
+        'dynamic_varChar',
+      ],
+    });
 
-      // console.log('query', query.data);
+    // console.log('query', query.data);
 
-      expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
-      expect(query.data.length).toEqual(10);
-    } catch (error) {
-      console.log(error);
-    }
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(query.data.length).toEqual(10);
   });
 
   it(`search with dynamic field should success`, async () => {
-    try {
-      // query
-      const query = await milvusClient.search({
-        collection_name: COLLECTION,
-        limit: 10,
-        vector: [1, 2, 3, 4],
-        expr: 'age > 0',
-        output_fields: [
-          'meta',
-          'vector',
-          'age',
-          'dynamic_int64',
-          'dynamic_varChar',
-        ],
-      });
+    // query
+    const search = await milvusClient.search({
+      collection_name: COLLECTION,
+      limit: 10,
+      vectors: [
+        [1, 2, 3, 4],
+        [1, 2, 3, 4],
+      ],
+      expr: 'age > 0',
+      output_fields: ['*'],
+    });
 
-      // console.log('query', query.data);
+    // console.log('search', search);
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(2);
+    expect(search.results[0].length).toEqual(10);
 
-      expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
-      expect(query.results.length).toEqual(10);
-    } catch (error) {
-      console.log(error);
-    }
+    // query
+    const search2 = await milvusClient.search({
+      collection_name: COLLECTION,
+      limit: 10,
+      vector: [1, 2, 3, 4],
+      expr: 'age > 0',
+      output_fields: ['meta', 'age', 'dynamic_int64', 'dynamic_varChar'],
+    });
+    expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search2.results.length).toEqual(10);
   });
 });

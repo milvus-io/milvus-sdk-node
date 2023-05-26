@@ -372,3 +372,63 @@ export const generateDynamicRow = (
 
   return row; // return the generated dynamic row object
 };
+
+/**
+ * Check the data type of each field and parse the data accordingly.
+ * If the field is a vector, split the data into chunks of the appropriate size.
+ * If the field is a scalar, decode the JSON data if necessary.
+ */
+export const getFieldDataMap = (fields_data: any[]) => {
+  const fieldsDataMap = new Map<string, any>();
+
+  fields_data.forEach((item, i) => {
+    // field data
+    let field_data: any;
+
+    // parse vector data
+    if (item.field === 'vectors') {
+      const key = item.vectors!.data;
+      const vectorValue =
+        key === 'float_vector'
+          ? item.vectors![key]!.data
+          : item.vectors![key]!.toJSON().data;
+
+      // if binary vector , need use dim / 8 to split vector data
+      const dim =
+        item.vectors?.data === 'float_vector'
+          ? Number(item.vectors!.dim)
+          : Number(item.vectors!.dim) / 8;
+      field_data = [];
+
+      // parse number[] to number[][] by dim
+      vectorValue.forEach((v: any, i: number) => {
+        const index = Math.floor(i / dim);
+        if (!field_data[index]) {
+          field_data[index] = [];
+        }
+        field_data[index].push(v);
+      });
+    } else {
+      // parse scalar data
+      const key = item.scalars!.data;
+      field_data = item.scalars![key]!.data;
+
+      // decode json
+      switch (key) {
+        case 'json_data':
+          field_data.forEach((buffer: any, i: number) => {
+            // console.log(JSON.parse(buffer.toString()));
+            field_data[i] = JSON.parse(buffer.toString());
+          });
+          break;
+        default:
+          break;
+      }
+    }
+
+    // Add the parsed data to the fieldsDataMap
+    fieldsDataMap.set(item.field_name, field_data);
+  });
+
+  return fieldsDataMap;
+};

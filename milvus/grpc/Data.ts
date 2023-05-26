@@ -41,7 +41,7 @@ import {
   parseFloatVectorToBytes,
   DEFAULT_DYNAMIC_FIELD,
   generateDynamicRow,
-  cloneObj,
+  getFieldDataMap,
 } from '../';
 import { Collection } from './Collection';
 
@@ -423,68 +423,76 @@ export class Data extends Collection {
         data.timeout || this.timeout
       );
 
+      // if search failed, return empty with status
+      if (promise.status.error_code !== ErrorCode.SUCCESS) {
+        return {
+          status: promise.status,
+          results: [],
+        };
+      }
+
       const results: any[] = [];
 
-      if (promise.results) {
-        /**
-         *  fields_data:  what you pass in output_fields, only support non vector fields.
-         *  ids: vector id array
-         *  scores: distance array
-         *  topks: if you use multiple query to search , will return multiple topk.
-         */
-        const { topks, scores, fields_data, ids } = promise.results;
-        const fieldsData = fields_data.map((item, i) => {
-          // if search result is empty, will cause value is undefined.
-          const value = item.field ? item[item.field] : undefined;
-          return {
-            type: item.type,
-            field_name: item.field_name,
-            data: value ? value[value?.data].data : '',
-          };
-        });
-        // vector id support int / str id.
-        const idData = ids ? ids[ids.id_field]?.data : undefined;
-        /**
-         * This code block formats the search results returned by Milvus into row data for easier use.
-         * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
-         * The `topk` variable is the key we use to splice data for every search result.
-         * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
-         */
-        topks.forEach((v, index) => {
-          const topk = Number(v);
+      /**
+       *  fields_data:  what you pass in output_fields, only support non vector fields.
+       *  ids: vector id array
+       *  scores: distance array
+       *  topks: if you use multiple query to search , will return multiple topk.
+       */
+      const { topks, scores, fields_data, ids } = promise.results;
+      const fieldsDataMap = getFieldDataMap(fields_data);
+      const output_fields = [
+        'id',
+        ...(promise.results.output_fields ||
+          fields_data.map(f => f.field_name)),
+      ];
 
-          scores.splice(0, topk).forEach((score, scoreIndex) => {
-            const i = index === 0 ? scoreIndex : scoreIndex + topk;
-            const fixedScore =
-              typeof round_decimal === 'undefined' || round_decimal === -1
-                ? score
-                : formatNumberPrecision(score, round_decimal);
+      // vector id support int / str id.
+      const idData = ids ? ids[ids.id_field]?.data : undefined;
+      fieldsDataMap.set('id', idData);
+      // fieldsDataMap.set('score', scores); TODO: fieldDataMap to support formatter
 
-            const result: any = {
-              score: fixedScore,
-              id: idData ? idData[i] : '',
-            };
-            fieldsData.forEach(field => {
-              // decode json
-              switch (field.type) {
-                case 'JSON':
-                  result[field.field_name] = JSON.parse(
-                    field.data[i].toString()
-                  );
-                  break;
-                default:
-                  result[field.field_name] = field.data[i];
-                  break;
-              }
-            });
-            results.push(result);
+      /**
+       * This code block formats the search results returned by Milvus into row data for easier use.
+       * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
+       * The `topk` variable is the key we use to splice data for every search result.
+       * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
+       */
+      topks.forEach((v, index) => {
+        const topk = Number(v);
+
+        scores.splice(0, topk).forEach((score, scoreIndex) => {
+          // get correct index
+          const i = index === 0 ? scoreIndex : scoreIndex + topk;
+          // fix round_decimal
+          const fixedScore =
+            typeof round_decimal === 'undefined' || round_decimal === -1
+              ? score
+              : formatNumberPrecision(score, round_decimal);
+
+          const result: any = { score: fixedScore };
+
+          output_fields.forEach(field_name => {
+            // Check if the field_name exists in the fieldsDataMap
+            const isFixedSchema = fieldsDataMap.has(field_name);
+
+            // Get the data for the field_name from the fieldsDataMap
+            // If the field_name is not in the fieldsDataMap, use the DEFAULT_DYNAMIC_FIELD
+            const data = fieldsDataMap.get(
+              isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
+            );
+
+            result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
           });
+
+          results[index] = results[index] || [];
+          results[index].push(result);
         });
-      }
+      });
 
       return {
         status: promise.status,
-        results,
+        results: searchVectors.length === 1 ? results[0] : results,
       };
     } catch (err) {
       /* istanbul ignore next */
@@ -650,60 +658,7 @@ export class Data extends Collection {
     // Initialize an array to hold the query results
     const results: { [x: string]: any }[] = [];
 
-    /**
-     * Check the data type of each field and parse the data accordingly.
-     * If the field is a vector, split the data into chunks of the appropriate size.
-     * If the field is a scalar, decode the JSON data if necessary.
-     */
-    const fieldsDataMap = new Map();
-    promise.fields_data.forEach((item, i) => {
-      // field data
-      let field_data: any;
-
-      // parse vector data
-      if (item.field === 'vectors') {
-        const key = item.vectors!.data;
-        const vectorValue =
-          key === 'float_vector'
-            ? item.vectors![key]!.data
-            : item.vectors![key]!.toJSON().data;
-
-        // if binary vector , need use dim / 8 to split vector data
-        const dim =
-          item.vectors?.data === 'float_vector'
-            ? Number(item.vectors!.dim)
-            : Number(item.vectors!.dim) / 8;
-        field_data = [];
-
-        // parse number[] to number[][] by dim
-        vectorValue.forEach((v, i) => {
-          const index = Math.floor(i / dim);
-          if (!field_data[index]) {
-            field_data[index] = [];
-          }
-          field_data[index].push(v);
-        });
-      } else {
-        // parse scalar data
-        const key = item.scalars!.data;
-        field_data = item.scalars![key]!.data;
-
-        // decode json
-        switch (key) {
-          case 'json_data':
-            field_data.forEach((buffer: any, i: number) => {
-              // console.log(JSON.parse(buffer.toString()));
-              field_data[i] = JSON.parse(buffer.toString());
-            });
-            break;
-          default:
-            break;
-        }
-      }
-
-      // Add the parsed data to the fieldsDataMap
-      fieldsDataMap.set(item.field_name, field_data);
-    });
+    const fieldsDataMap = getFieldDataMap(promise.fields_data);
 
     // For each output field, check if it has a fixed schema or not
     const fieldData = output_fields.map(field_name => {
