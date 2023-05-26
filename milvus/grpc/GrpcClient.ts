@@ -76,7 +76,9 @@ export class GRPCClient extends User {
   async use(data?: { database: string }): Promise<ResStatus> {
     return new Promise(resolve => {
       if (!data || data.database === '') {
-        console.warn(`No database name provided, using default database: ${DEFAULT_DB}`);
+        console.warn(
+          `No database name provided, using default database: ${DEFAULT_DB}`
+        );
       }
       this.channelOptions.interceptors.unshift(
         getMetaInterceptor([{ dbname: (data && data.database) || DEFAULT_DB }]) // add database indentifier
