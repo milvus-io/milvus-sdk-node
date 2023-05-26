@@ -200,9 +200,19 @@ export interface SearchRes {
     fields_data: {
       type: string;
       field_name: string;
-      field: 'scalars';
+      field_id: number;
+      field: 'vectors' | 'scalars';
+      vectors?: {
+        dim: string;
+        data: 'float_vector' | 'binary_vector';
+        float_vector?: {
+          data: number[];
+        };
+        binary_vector?: Buffer;
+      };
       scalars: {
         [x: string]: any;
+        data: string;
       };
     }[];
     scores: number[];
@@ -217,6 +227,7 @@ export interface SearchRes {
     };
     num_queries: number;
     topks: number[];
+    output_fields: string[];
   };
 }
 
@@ -250,6 +261,8 @@ export interface QueryRes {
       data: string;
     };
   }[];
+  output_fields: string[];
+  collection_name: string;
 }
 
 export interface FlushResult {

@@ -2,7 +2,7 @@ import {
   DataTypeMap,
   MAX_PARTITIONS_NUMBER,
   MAX_PARTITION_KEY_FIELD_COUNT,
-} from './Milvus';
+} from './';
 
 export const ERROR_REASONS = {
   MILVUS_ADDRESS_IS_REQUIRED: 'The `address` property is missing.',

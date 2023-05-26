@@ -39,7 +39,7 @@ import {
   checkCollectionFields,
   checkCollectionName,
   sleep,
-  formatCreateColReq,
+  formatCollectionSchema,
   formatDescribedCol,
   validatePartitionNumbers,
 } from '../';
@@ -116,7 +116,7 @@ export class Collection extends Database {
 
     // Create the payload object with the collection_name, description, and fields.
     // it should follow CollectionSchema in schema.proto
-    const payload = formatCreateColReq(data, this.fieldSchemaType);
+    const payload = formatCollectionSchema(data, this.fieldSchemaType);
 
     // Create the collectionParams object from the payload.
     const collectionParams = this.collectionSchemaType.create(payload);

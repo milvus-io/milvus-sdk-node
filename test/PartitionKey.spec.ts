@@ -178,7 +178,7 @@ describe(`Partition key API`, () => {
   });
 
   it(`Search Collection with partition specified should get error`, async () => {
-    const res = await milvusClient.search({
+    const search = await milvusClient.search({
       collection_name: COLLECTION_DATA_NAME,
       partition_names: ['p'],
       vector: [1, 2, 3, 4],
@@ -186,7 +186,6 @@ describe(`Partition key API`, () => {
       output_fields: ['name'],
     });
 
-    // console.log(res);
-    expect(res.status.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+    expect(search.status.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
   });
 });
