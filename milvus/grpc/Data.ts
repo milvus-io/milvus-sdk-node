@@ -431,16 +431,12 @@ export class Data extends Collection {
         };
       }
 
+      // build final results array
       const results: any[] = [];
-
-      /**
-       *  fields_data:  what you pass in output_fields, only support non vector fields.
-       *  ids: vector id array
-       *  scores: distance array
-       *  topks: if you use multiple query to search , will return multiple topk.
-       */
       const { topks, scores, fields_data, ids } = promise.results;
+      // build fields data map
       const fieldsDataMap = getFieldDataMap(fields_data);
+      // build output name array
       const output_fields = [
         'id',
         ...(promise.results.output_fields ||
@@ -449,6 +445,7 @@ export class Data extends Collection {
 
       // vector id support int / str id.
       const idData = ids ? ids[ids.id_field]?.data : undefined;
+      // add id column
       fieldsDataMap.set('id', idData);
       // fieldsDataMap.set('score', scores); TODO: fieldDataMap to support formatter
 
@@ -470,8 +467,10 @@ export class Data extends Collection {
               ? score
               : formatNumberPrecision(score, round_decimal);
 
+          // init result object
           const result: any = { score: fixedScore };
 
+          // build result,
           output_fields.forEach(field_name => {
             // Check if the field_name exists in the fieldsDataMap
             const isFixedSchema = fieldsDataMap.has(field_name);
@@ -482,16 +481,20 @@ export class Data extends Collection {
               isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
             );
 
+            // extract dynamic info from dynamic field if necessary
             result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
           });
 
+          // init result slot
           results[index] = results[index] || [];
+          // push result data
           results[index].push(result);
         });
       });
 
       return {
         status: promise.status,
+        // if only searching 1 vector, return the first object of results array
         results: searchVectors.length === 1 ? results[0] : results,
       };
     } catch (err) {
