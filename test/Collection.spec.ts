@@ -14,7 +14,7 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP, debug: false });
+const milvusClient = new MilvusClient({ address: IP, debug: true });
 const COLLECTION_NAME = GENERATE_NAME();
 const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
@@ -23,7 +23,19 @@ const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
 const ALIAS = 'my_alias';
 
+const dbParam = {
+  db_name: 'Collection',
+};
+
 describe(`Collection API`, () => {
+  beforeAll(async () => {
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
+  });
+
+  afterAll(async () => {
+    await milvusClient.dropDatabase(dbParam);
+  });
   it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
       ...genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 }),
@@ -445,6 +457,7 @@ describe(`Collection API`, () => {
       type: ShowCollectionsType.Loaded,
     });
 
+    console.log('show——loaded', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

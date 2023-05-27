@@ -86,11 +86,6 @@ export class GRPCClient extends User {
       metadata.add(key, value);
     }
 
-    // console log metadata if debug is on
-    if (this.config.debug) {
-      console.log('metadata', this.metadata);
-    }
-
     return metadata;
   }
 
@@ -99,17 +94,17 @@ export class GRPCClient extends User {
    * @param data An optional object containing the name of the database to use.
    * @returns A Promise that resolves with a `ResStatus` object.
    */
-  async use(data?: { database: string }): Promise<ResStatus> {
+  async use(data?: { db_name: string }): Promise<ResStatus> {
     return new Promise(resolve => {
-      if (!data || data.database === '') {
-        console.warn(
+      if (!data || data.db_name === '') {
+        console.info(
           `No database name provided, using default database: ${DEFAULT_DB}`
         );
       }
       // update database
       this.metadata.set(
         METADATA.DATABASE,
-        (data && data.database) || DEFAULT_DB
+        (data && data.db_name) || DEFAULT_DB
       );
 
       resolve({ error_code: ErrorCode.SUCCESS, reason: '' });

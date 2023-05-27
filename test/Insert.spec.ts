@@ -32,8 +32,15 @@ const COLLECTION_NAME_AUTO_ID_PARAMS = genCollectionParams({
 });
 
 const PARTITION_NAME = 'test';
+const dbParam = {
+  db_name: 'Insert',
+};
+
 describe(`Insert API`, () => {
   beforeAll(async () => {
+    // create db and use db
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
     // create collection autoid = false and float_vector
     await milvusClient.createCollection(COLLECTION_NAME_PARAMS);
     // create index before load
@@ -122,6 +129,7 @@ describe(`Insert API`, () => {
     await milvusClient.dropCollection({
       collection_name: MORE_SCALAR_COLLECTION_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Insert should throw COLLECTION_NAME_IS_REQUIRED`, async () => {

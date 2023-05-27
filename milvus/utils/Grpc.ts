@@ -8,6 +8,7 @@ import {
   status as grpcStatus,
 } from '@grpc/grpc-js';
 import { extractMethodName, isStatusCodeMatched } from '.';
+import { DEFAULT_DB } from '../const';
 
 const PROTO_OPTIONS = {
   keepCase: true,
@@ -130,6 +131,9 @@ export const getRetryInterceptor = ({
       start: function (metadata: any, listener: any, next: any) {
         savedMetadata = metadata;
 
+        // get db name
+        const dbname = metadata.get('dbname') || DEFAULT_DB;
+
         const newListener = {
           onReceiveMessage: function (message: any, next: any) {
             savedReceiveMessage = message;
@@ -158,13 +162,13 @@ export const getRetryInterceptor = ({
                       if (debug) {
                         if (deadline > startTime) {
                           console.info(
-                            `${methodName} is timeout, timeout set: ${
+                            `[DB:${dbname}:${methodName}] is timeout, timeout set: ${
                               deadline.getTime() - startTime.getTime()
                             }ms.`
                           );
                         } else {
                           console.info(
-                            `${methodName} retry run out of ${retries} times.`
+                            `[DB:${dbname}:${methodName}] retry run out of ${retries} times.`
                           );
                         }
                       }
@@ -185,7 +189,7 @@ export const getRetryInterceptor = ({
             } else {
               debug &&
                 console.info(
-                  `${methodName} executed in ${
+                  `[DB:${dbname}:${methodName}] executed in ${
                     Date.now() - startTime.getTime()
                   }ms.`
                 );

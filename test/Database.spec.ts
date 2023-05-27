@@ -1,54 +1,34 @@
-import { MilvusClient, ErrorCode } from '../milvus';
+import { MilvusClient, ErrorCode, DEFAULT_DB } from '../milvus';
 import { IP, genCollectionParams, GENERATE_NAME } from './tools';
 
-let milvusClient = new MilvusClient({ address: IP, debug: true });
+let milvusClient = new MilvusClient({ address: IP, debug: false });
 const DB_NAME = GENERATE_NAME('database');
 const COLLECTION_NAME = GENERATE_NAME();
 
 describe(`Database API`, () => {
-  // beforeAll(async () => {
-  //   const cols = await milvusClient.showCollections();
-  //   cols.data.forEach(async col => {
-  //     await milvusClient.dropCollection({ collection_name: col.name });
-  //   });
-  // });
-
   it(`create database should be ok`, async () => {
-    try {
-      const res = await milvusClient.createDatabase({
-        db_name: DB_NAME,
-      });
+    await milvusClient.use({ db_name: DEFAULT_DB });
 
-      expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-    } catch (error) {
-      console.log('create err', error);
-    }
+    const res = await milvusClient.createDatabase({
+      db_name: DB_NAME,
+    });
+
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`using database should be ok`, async () => {
     // use db
-    const createDb = await milvusClient.use({ database: DB_NAME });
-    expect(createDb!.error_code).toEqual(ErrorCode.SUCCESS);
+    const useDB = await milvusClient.use({ db_name: DB_NAME });
+    expect(useDB!.error_code).toEqual(ErrorCode.SUCCESS);
 
     // create collection on another db
-    const createdbRes = await milvusClient.createCollection(
+    const create = await milvusClient.createCollection(
       genCollectionParams({ collectionName: COLLECTION_NAME, dim: 4 })
     );
-    expect(createdbRes.error_code).toEqual(ErrorCode.SUCCESS);
-
-    // back to default
-    const useDefaultDB = await milvusClient.use({ database: 'default' });
-    expect(useDefaultDB.error_code).toEqual(ErrorCode.SUCCESS);
-
-    const ShowCollectionsDefault = await milvusClient.showCollections();
-    expect(ShowCollectionsDefault.data.length).toEqual(0);
-
-    // back to db
-    const useDB = await milvusClient.use({ database: DB_NAME });
-    expect(useDB.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(create.error_code).toEqual(ErrorCode.SUCCESS);
 
     const ShowCollections = await milvusClient.showCollections();
-    expect(ShowCollections.data.length).toEqual(1);
+    expect(ShowCollections.data.length).toBeGreaterThan(0);
 
     // drop collection
     const dropCollections = await milvusClient.dropCollection({
@@ -56,26 +36,35 @@ describe(`Database API`, () => {
     });
 
     expect(dropCollections.error_code).toEqual(ErrorCode.SUCCESS);
-
-    // back to default
-    const useDefaultDB2 = await milvusClient.use();
-    expect(useDefaultDB2.error_code).toEqual(ErrorCode.SUCCESS);
-
-    const ShowCollectionsDefault2 = await milvusClient.showCollections();
-    expect(ShowCollectionsDefault2.data.length).toEqual(0);
   });
 
   it(`ListDatabases should be ok`, async () => {
-    const res = await milvusClient.listDatabases();
-
-    expect(res.db_names.length).toEqual(2);
+    const allDatabases = await milvusClient.listDatabases();
+    // console.log(allDatabases);
+    expect(allDatabases.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(allDatabases.db_names.length).toBeGreaterThan(1);
   });
 
   it(`drop database should be ok`, async () => {
-    const drop = await milvusClient.dropDatabase({
-      db_name: DB_NAME,
-    });
-
+    const drop = await milvusClient.dropDatabase({ db_name: DB_NAME });
+    // console.log(drop, name);
     expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
   });
+
+  // it(`drop database should be ok`, async () => {
+  //   const all = await milvusClient.listDatabases();
+
+  //   for (let i = 0; i < all.db_names.length; i++) {
+  //     if (all.db_names[i] !== DEFAULT_DB) {
+  //       const drop = await milvusClient.dropDatabase({
+  //         db_name: all.db_names[i],
+  //       });
+  //       // console.log(drop, name);
+  //       expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
+  //     }
+  //   }
+
+  //   const allAfter = await milvusClient.listDatabases();
+  //   expect(allAfter.db_names.length).toEqual(1);
+  // });
 });
