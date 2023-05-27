@@ -2,16 +2,16 @@ import { MilvusClient, ErrorCode } from '../milvus';
 import { IP, genCollectionParams, GENERATE_NAME } from './tools';
 
 let milvusClient = new MilvusClient({ address: IP, debug: true });
-const DB_NAME = GENERATE_NAME();
+const DB_NAME = GENERATE_NAME('database');
 const COLLECTION_NAME = GENERATE_NAME();
 
 describe(`Database API`, () => {
-  beforeAll(async () => {
-    const cols = await milvusClient.showCollections();
-    cols.data.forEach(async col => {
-      await milvusClient.dropCollection({ collection_name: col.name });
-    });
-  });
+  // beforeAll(async () => {
+  //   const cols = await milvusClient.showCollections();
+  //   cols.data.forEach(async col => {
+  //     await milvusClient.dropCollection({ collection_name: col.name });
+  //   });
+  // });
 
   it(`create database should be ok`, async () => {
     try {
