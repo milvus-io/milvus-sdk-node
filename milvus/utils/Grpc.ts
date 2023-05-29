@@ -122,14 +122,17 @@ export const getRetryInterceptor = ({
 
     // start time
     const startTime = new Date();
+    let dbname = '';
 
-    // requester, used to reexecute method
+    // requester, used to re-execute method
     let requester = {
       start: function (metadata: any, listener: any, next: any) {
         savedMetadata = metadata;
 
         // get db name
-        const dbname = metadata.get('dbname') || DEFAULT_DB;
+        dbname = metadata.get('dbname') || DEFAULT_DB;
+
+        // logger.debug(`[DB:${dbname}:${methodName}] started.`);
 
         const newListener = {
           onReceiveMessage: function (message: any, next: any) {
@@ -141,19 +144,22 @@ export const getRetryInterceptor = ({
             let retries = 0;
             // retry function
             let retry = function (message: any, metadata: any) {
+              // retry count
+              retries++;
+              // retry delay
               const _retryDelay = Math.pow(2, retries) * retryDelay;
+
+              // timeout
+              const _timeout = deadline.getTime() - startTime.getTime();
+              // log
               logger.debug(
-                `[DB:${dbname}:${methodName}] excuted failed, status: ${
+                `[DB:${dbname}:${methodName}] executed failed, status: ${
                   grpcStatus[status.code]
-                }, timeout set: ${
-                  deadline.getTime() - startTime.getTime()
-                }ms, retry after ${_retryDelay} ms.`
+                }, timeout set: ${_timeout}ms, retry after ${_retryDelay} ms.`
               );
 
-              retries++;
-              let newCall = nextCall(options);
-              // retry
-              newCall.start(metadata, {
+              // retry listener
+              const retryListener = {
                 onReceiveMessage: function (message: any) {
                   savedReceiveMessage = message;
                 },
@@ -161,6 +167,7 @@ export const getRetryInterceptor = ({
                   if (isStatusCodeMatched(status.code)) {
                     if (retries < maxRetries) {
                       setTimeout(() => {
+                        // need to update the deadline
                         retry(message, metadata);
                         // double increase delay every retry
                       }, _retryDelay);
@@ -184,7 +191,11 @@ export const getRetryInterceptor = ({
                     next({ code: grpcStatus.OK });
                   }
                 },
-              });
+              };
+              // retry, update deadline
+              options.deadline = new Date(Date.now() + _timeout);
+              let newCall = nextCall(options);
+              newCall.start(metadata, retryListener);
             };
 
             if (isStatusCodeMatched(status.code)) {
@@ -204,6 +215,9 @@ export const getRetryInterceptor = ({
         next(metadata, newListener);
       },
       sendMessage: function (message: any, next: any) {
+        logger.silly(
+          `[DB:${dbname}:${methodName}] returns ${JSON.stringify(message)}`
+        );
         savedSendMessage = message;
         next(message);
       },

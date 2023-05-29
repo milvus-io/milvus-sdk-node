@@ -15,7 +15,6 @@ describe(`Milvus client`, () => {
       ssl: false,
       username: 'username',
       password: 'password',
-      logLevel: 'debug',
     });
 
     expect(milvusClient.client).toBeDefined();

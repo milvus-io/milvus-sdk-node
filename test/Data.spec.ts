@@ -17,7 +17,7 @@ import { timeoutTest } from './tools';
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
-  db_name: 'Alias',
+  db_name: 'Data',
 };
 
 describe(`Data.API`, () => {
