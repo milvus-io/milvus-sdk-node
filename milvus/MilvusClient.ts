@@ -41,7 +41,7 @@ export class MilvusClient extends GRPCClient {
   }
 
   /**
-   * Creates a new collection.
+   * returns a collection object
    *
    * @async
    * @param {object} options The options for creating the collection.
@@ -55,7 +55,6 @@ export class MilvusClient extends GRPCClient {
 
     // not exist, create a new one
     if (!exist.value) {
-      console.time('create collection');
       // create a new collection with fixed schema
       await this.createCollection({
         collection_name: name,
@@ -73,7 +72,6 @@ export class MilvusClient extends GRPCClient {
           },
         ],
       });
-      console.timeEnd('create collection');
     }
 
     // return collection object
@@ -84,22 +82,17 @@ export class MilvusClient extends GRPCClient {
 
     // create index + load
     try {
-      console.time('create index');
       await col.createIndex({
         field_name: 'vector',
         index_type: 'HNSW',
         metric_type: 'L2',
         params: { efConstruction: 10, M: 4 },
       });
-      console.timeEnd('create index');
 
       // load
-      console.time('load index');
-
       await col.load();
-      console.timeEnd('load index');
     } catch (error) {
-      console.log('error ', error);
+      console.log('creation error ', error);
     }
 
     return col;

@@ -6,7 +6,7 @@ import {
   generateInsertData,
 } from './tools';
 
-let milvusClient = new MilvusClient({ address: IP });
+let milvusClient = new MilvusClient({ address: IP, debug: false });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
 const EXIST_COLLECTION_PARAMS = genCollectionParams({
@@ -103,12 +103,8 @@ describe(`High level API`, () => {
     });
 
     const collectionInfo = await collection.info();
-
     expect(collection.name).toEqual(EXIST_COLLECTION_NAME);
-
-    expect(collectionInfo.schema.fields.length).toEqual(4);
-
-    // insert
+    expect(collectionInfo.schema.fields.length).toEqual(5);
   });
 
   it(`get exsiting indexed collection successfully`, async () => {
