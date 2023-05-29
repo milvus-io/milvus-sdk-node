@@ -1,6 +1,6 @@
 import { Type } from 'protobufjs';
-import { findKeyValue } from '.';
 import {
+  findKeyValue,
   ERROR_REASONS,
   DEFAULT_MILVUS_PORT,
   KeyValuePair,
@@ -296,15 +296,16 @@ export const cloneObj = <T>(obj: T): T => {
  * @param {Type} schemaType - The schema type for the collection.
  * @returns {Object} The formatted request payload.
  */
-export const formatCreateColReq = (
+export const formatCollectionSchema = (
   data: CreateCollectionReq,
   grpcMsgType: Type
 ): { [k: string]: any } => {
-  const { fields, collection_name, description } = data;
+  const { fields, collection_name, description, enable_dynamic_field } = data;
 
   const payload = {
     name: collection_name,
     description: description || '',
+    enableDynamicField: !!enable_dynamic_field,
     fields: fields.map(field => {
       // Assign the typeParams property to the result of parseToKeyValue(type_params).
       const { type_params, ...rest } = assignTypeParams(field);
@@ -312,7 +313,8 @@ export const formatCreateColReq = (
         ...rest,
         typeParams: parseToKeyValue(type_params),
         dataType: convertToDataType(field.data_type),
-        isPrimaryKey: field.is_primary_key,
+        isPrimaryKey: !!field.is_primary_key,
+        isPartitionKey: !!field.is_partition_key,
       });
     }),
   };
@@ -338,4 +340,120 @@ export const formatDescribedCol = (
   });
 
   return newData;
+};
+
+/**
+ * Generates a dynamic row object by separating fields into a dynamic field and non-dynamic fields.
+ *
+ * @param {Record<string, any>} data - The input data object.
+ * @param {Map<string, any>} fieldsDataMap - A map of field names to their corresponding data.
+ * @param {string} dynamicField - The name of the dynamic field.
+ * @returns {Record<string, any>} The generated dynamic row object.
+ */
+export const generateDynamicRow = (
+  data: Record<string, any>,
+  fieldsDataMap: Map<string, any>,
+  dynamicField: string
+) => {
+  const originRow = cloneObj(data);
+
+  const row: Record<string, any> = {};
+  // iterate through each key in the input data object
+  for (let key in originRow) {
+    if (fieldsDataMap.has(key)) {
+      // if the key is in the fieldsDataMap, add it to the non-dynamic fields
+      row[key] = originRow[key];
+    } else {
+      // otherwise, add it to the dynamic field
+      row[dynamicField] = row[dynamicField] || {}; // initialize the dynamic field object
+      row[dynamicField][key] = originRow[key];
+    }
+  }
+
+  return row; // return the generated dynamic row object
+};
+
+/**
+ * Check the data type of each field and parse the data accordingly.
+ * If the field is a vector, split the data into chunks of the appropriate size.
+ * If the field is a scalar, decode the JSON data if necessary.
+ */
+export const getFieldDataMap = (fields_data: any[]) => {
+  const fieldsDataMap = new Map<string, any>();
+
+  fields_data.forEach((item, i) => {
+    // field data
+    let field_data: any;
+
+    // parse vector data
+    if (item.field === 'vectors') {
+      const key = item.vectors!.data;
+      const vectorValue =
+        key === 'float_vector'
+          ? item.vectors![key]!.data
+          : item.vectors![key]!.toJSON().data;
+
+      // if binary vector , need use dim / 8 to split vector data
+      const dim =
+        item.vectors?.data === 'float_vector'
+          ? Number(item.vectors!.dim)
+          : Number(item.vectors!.dim) / 8;
+      field_data = [];
+
+      // parse number[] to number[][] by dim
+      vectorValue.forEach((v: any, i: number) => {
+        const index = Math.floor(i / dim);
+        if (!field_data[index]) {
+          field_data[index] = [];
+        }
+        field_data[index].push(v);
+      });
+    } else {
+      // parse scalar data
+      const key = item.scalars!.data;
+      field_data = item.scalars![key]!.data;
+
+      // decode json
+      switch (key) {
+        case 'json_data':
+          field_data.forEach((buffer: any, i: number) => {
+            // console.log(JSON.parse(buffer.toString()));
+            field_data[i] = JSON.parse(buffer.toString());
+          });
+          break;
+        default:
+          break;
+      }
+    }
+
+    // Add the parsed data to the fieldsDataMap
+    fieldsDataMap.set(item.field_name, field_data);
+  });
+
+  return fieldsDataMap;
+};
+
+/**
+ * Generates an authentication string based on the provided credentials.
+ *
+ * @param {Object} data - An object containing the authentication credentials.
+ * @param {string} [data.username] - The username to use for authentication.
+ * @param {string} [data.password] - The password to use for authentication.
+ * @param {string} [data.token] - The token to use for authentication.
+ * @returns {string} The authentication string.
+ */
+export const getAuthString = (data: {
+  username?: string;
+  password?: string;
+  token?: string;
+}) => {
+  const { username, password, token } = data;
+  // build auth string
+  const authString = token ? token : `${username}:${password}`;
+  // Encode the username and password as a base64 string.
+  let auth = Buffer.from(authString, 'utf-8').toString('base64');
+
+  // if we need to create auth interceptors
+  const needAuth = (!!username && !!password) || !!token;
+  return needAuth ? auth : '';
 };

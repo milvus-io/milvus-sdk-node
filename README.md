@@ -78,7 +78,7 @@ Create a new app.js file and add the following code to try out some basic vector
 ```javascript
 import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
 
-const address = 'your-milvus-ip';
+const address = 'your-milvus-ip-with-port';
 const username = 'your-milvus-username'; // optional username
 const password = 'your-milvus-password'; // optional password
 const ssl = false; // secure or not
@@ -95,7 +95,7 @@ const client = new MilvusClient({ address, ssl, username, password });
 | address?        | The password used to connect to Milvus                                                                                   | String  | milvus              |
 | maxRetries?     | The number of retries for the grpc method, by default: 3                                                                 | Number  | 3                   |
 | retryDelay?     | The delay between attempts at retrying a failed grpc method in ms, by default: 30                                        | Number  | 30                  |
-| channelOptions? | an optional configuration object that can be passed to a gRPC client when creating a channel to connect to a gRPC server | Number  | 30                  |
+| channelOptions? | an optional configuration object that can be passed to a gRPC client when creating a channel to connect to a gRPC server | Object  |                     |
 
 ### define schema for collection
 
@@ -194,7 +194,7 @@ await client.createIndex({
   field_name: 'book_intro',
   index_name: 'myindex',
   index_type: 'HNSW',
-  param: { ef: 5 },
+  params: { efConstruction: 10, M: 4 },
   metric_type: 'L2',
 });
 ```

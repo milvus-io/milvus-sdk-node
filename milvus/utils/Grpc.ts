@@ -8,6 +8,7 @@ import {
   status as grpcStatus,
 } from '@grpc/grpc-js';
 import { extractMethodName, isStatusCodeMatched } from '.';
+import { DEFAULT_DB } from '../const';
 
 const PROTO_OPTIONS = {
   keepCase: true,
@@ -51,24 +52,29 @@ export const getGRPCService = (
 };
 
 /**
- * Returns an interceptor function that adds an authorization header to the metadata of a gRPC call.
- * @param username - The username to use for authentication.
- * @param password - The password to use for authentication.
- * @returns An interceptor function.
+ * Returns a gRPC interceptor function that adds metadata to outgoing requests.
+ *
+ * @param {Function} onInvoked - A function to be called with the modified metadata.
+ * @param {Object[]} initValues - An array of objects containing key-value pairs to add to the metadata.
+ * @returns {Function} The gRPC interceptor function.
  */
-export const getAuthInterceptor = (username: string, password: string) =>
+export const getMetaInterceptor = (
+  onInvoked: Function,
+  initValues: { [key: string]: any }[] = []
+) =>
   function (options: any, nextCall: any) {
     // Create a new InterceptingCall object with nextCall(options) as its first parameter.
     return new InterceptingCall(nextCall(options), {
       // Define the start method of the InterceptingCall object.
       start: function (metadata, listener, next) {
-        // Encode the username and password as a base64 string.
-        const auth = Buffer.from(`${username}:${password}`, 'utf-8').toString(
-          'base64'
-        );
-        // Add the authorization header to the metadata object with the key 'authorization'.
-        metadata.add('authorization', auth);
-
+        initValues.forEach(obj => {
+          Object.entries(obj).forEach(([key, value]) => {
+            metadata.add(key, value);
+          });
+        });
+        if (onInvoked) {
+          onInvoked(metadata);
+        }
         // Call next(metadata, listener) to continue the call with the modified metadata.
         next(metadata, listener);
       },
@@ -104,7 +110,7 @@ export const getRetryInterceptor = ({
     const deadline = options.deadline;
 
     // get method name
-    // option example 
+    // option example
     // {
     //   deadline: 2023-05-04T09:04:16.231Z,
     //   method_definition: {
@@ -124,6 +130,9 @@ export const getRetryInterceptor = ({
     let requester = {
       start: function (metadata: any, listener: any, next: any) {
         savedMetadata = metadata;
+
+        // get db name
+        const dbname = metadata.get('dbname') || DEFAULT_DB;
 
         const newListener = {
           onReceiveMessage: function (message: any, next: any) {
@@ -153,13 +162,13 @@ export const getRetryInterceptor = ({
                       if (debug) {
                         if (deadline > startTime) {
                           console.info(
-                            `${methodName} is timout, it's timeout value is: ${
+                            `[DB:${dbname}:${methodName}] is timeout, timeout set: ${
                               deadline.getTime() - startTime.getTime()
                             }ms.`
                           );
                         } else {
                           console.info(
-                            `${methodName} retry run out of ${retries} times.`
+                            `[DB:${dbname}:${methodName}] retry run out of ${retries} times.`
                           );
                         }
                       }
@@ -180,7 +189,7 @@ export const getRetryInterceptor = ({
             } else {
               debug &&
                 console.info(
-                  `${methodName} executed in ${
+                  `[DB:${dbname}:${methodName}] executed in ${
                     Date.now() - startTime.getTime()
                   }ms.`
                 );
@@ -189,6 +198,7 @@ export const getRetryInterceptor = ({
             }
           },
         };
+
         next(metadata, newListener);
       },
       sendMessage: function (message: any, next: any) {

@@ -6,6 +6,8 @@ import { ChannelOptions } from '@grpc/grpc-js';
 export interface ClientConfig {
   // The address of the Milvus server.
   address: string;
+  // token
+  token?: string;
   // Whether to use SSL encryption.
   ssl?: boolean;
   // The username to use for authentication.
@@ -20,6 +22,17 @@ export interface ClientConfig {
   maxRetries?: number;
   // retry delay
   retryDelay?: number;
+  // database
+  database?: string;
   // open debug logs
   debug?: boolean;
+}
+
+export interface ServerInfo {
+  build_tags?: string;
+  build_time?: string;
+  git_commit?: string;
+  go_version?: string;
+  deploy_mode?: string;
+  reserved?: { [key: string]: any };
 }

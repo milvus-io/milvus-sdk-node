@@ -7,17 +7,24 @@ import {
   generateInsertData,
 } from './tools';
 
-let milvusClient = new MilvusClient({ address: IP });
+let milvusClient = new MilvusClient({ address: IP, debug: false });
 const COLLECTION_NAME = GENERATE_NAME();
+const dbParam = {
+  db_name: 'BinarySearch',
+};
 
-describe(`Bianary search API`, () => {
+describe(`Binary search API`, () => {
   beforeAll(async () => {
-    const createCollectionParams = genCollectionParams(
-      COLLECTION_NAME,
-      128,
-      DataType.BinaryVector,
-      false
-    );
+    // create db and use db
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
+
+    const createCollectionParams = genCollectionParams({
+      collectionName: COLLECTION_NAME,
+      dim: 128,
+      vectorType: DataType.BinaryVector,
+      autoID: false,
+    });
     await milvusClient.createCollection(createCollectionParams);
     // create index before load
     await milvusClient.createIndex({
@@ -48,6 +55,7 @@ describe(`Bianary search API`, () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Expr Vector Search on`, async () => {

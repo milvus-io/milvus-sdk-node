@@ -12,8 +12,11 @@ const milvusClient = new MilvusClient({ address: IP, debug: false });
 // names
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_WITHOUT_INDEX_NAME = GENERATE_NAME();
-const INDEX_COLLECTIONS = Array(7).fill(1);
+const dbParam = {
+  db_name: 'MilvusIndex',
+};
 
+const INDEX_COLLECTIONS = Array(7).fill(1);
 for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
   INDEX_COLLECTIONS[i] = GENERATE_NAME();
 }
@@ -28,18 +31,24 @@ const [
   DISKANN,
 ] = INDEX_COLLECTIONS;
 
-describe(`Index API`, () => {
+describe(`Milvus Index API`, () => {
   beforeAll(async () => {
+    // create db and use db
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '8')
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
     );
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME_WITHOUT_INDEX_NAME, '8')
+      genCollectionParams({
+        collectionName: COLLECTION_NAME_WITHOUT_INDEX_NAME,
+        dim: 8,
+      })
     );
 
     for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
       await milvusClient.createCollection(
-        genCollectionParams(INDEX_COLLECTIONS[i], '8')
+        genCollectionParams({ collectionName: INDEX_COLLECTIONS[i], dim: 8 })
       );
     }
   });
@@ -57,6 +66,7 @@ describe(`Index API`, () => {
         collection_name: INDEX_COLLECTIONS[i],
       });
     }
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create FLAT index should success`, async () => {
@@ -167,8 +177,8 @@ describe(`Index API`, () => {
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
-        index_type: 'BIN_IVF_FLAT',
-        metric_type: 'HAMMING',
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
@@ -181,8 +191,8 @@ describe(`Index API`, () => {
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
-        index_type: 'BIN_IVF_FLAT',
-        metric_type: 'HAMMING',
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
         params: JSON.stringify({ nlist: 1024 }),
       },
     });

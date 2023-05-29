@@ -1,4 +1,4 @@
-import { BaseClient } from './BaseClient';
+import { Database } from './Database';
 import {
   ERROR_REASONS,
   ConsistencyLevelEnum,
@@ -39,14 +39,15 @@ import {
   checkCollectionFields,
   checkCollectionName,
   sleep,
-  formatCreateColReq,
+  formatCollectionSchema,
   formatDescribedCol,
+  validatePartitionNumbers,
 } from '../';
 
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
  */
-export class Collection extends BaseClient {
+export class Collection extends Database {
   /**
    * Create a collection in Milvus.
    *
@@ -55,6 +56,7 @@ export class Collection extends BaseClient {
    *  | :-- | :-- | :-- |
    *  | collection_name | String | Collection name |
    *  | description | String | Collection description |
+   *  | num_partitions | number | number of partitions allowed |
    *  | consistency_level | String | "Strong"(Milvus default) | "Session" | "Bounded"| "Eventually" | "Customized"; |
    *  | fields | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> | Field data |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
@@ -95,7 +97,8 @@ export class Collection extends BaseClient {
     const {
       fields,
       collection_name,
-      consistency_level = 'Strong',
+      consistency_level = 'Bounded',
+      num_partitions,
     } = data || {};
 
     // Check if fields and collection_name are present, otherwise throw an error.
@@ -106,8 +109,14 @@ export class Collection extends BaseClient {
     // Check if the fields are valid.
     checkCollectionFields(fields);
 
+    // if num_partitions is set, validate it
+    if (typeof num_partitions !== 'undefined') {
+      validatePartitionNumbers(num_partitions);
+    }
+
     // Create the payload object with the collection_name, description, and fields.
-    const payload = formatCreateColReq(data, this.fieldSchemaType);
+    // it should follow CollectionSchema in schema.proto
+    const payload = formatCollectionSchema(data, this.fieldSchemaType);
 
     // Create the collectionParams object from the payload.
     const collectionParams = this.collectionSchemaType.create(payload);

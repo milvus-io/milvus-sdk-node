@@ -17,11 +17,13 @@ import {
   convertToDataType,
   DataType,
   FieldType,
-  formatCreateColReq,
+  formatCollectionSchema,
   cloneObj,
   DescribeCollectionResponse,
   formatDescribedCol,
   ConsistencyLevelEnum,
+  generateDynamicRow,
+  getAuthString,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -264,6 +266,7 @@ describe('utils/format', () => {
     const expectedResult = {
       name: 'testCollection',
       description: 'Test Collection for Jest',
+      enableDynamicField: false,
       fields: [
         {
           typeParams: [],
@@ -274,6 +277,7 @@ describe('utils/format', () => {
           description: 'Test PRIMARY KEY field',
           dataType: 5,
           isPrimaryKey: true,
+          isPartitionKey: false,
         },
         {
           typeParams: [
@@ -289,11 +293,12 @@ describe('utils/format', () => {
           description: 'Test VECTOR field',
           dataType: 101,
           isPrimaryKey: false,
+          isPartitionKey: false,
         },
       ],
     };
 
-    const payload = formatCreateColReq(data, fieldSchemaType);
+    const payload = formatCollectionSchema(data, fieldSchemaType);
     expect(payload).toEqual(expectedResult);
   });
 
@@ -316,6 +321,7 @@ describe('utils/format', () => {
         'by-dev-rootcoord-dml_4',
         'by-dev-rootcoord-dml_5',
       ],
+      properties: [],
       aliases: [],
       status: { error_code: 'Success', reason: '' },
       schema: {
@@ -323,7 +329,7 @@ describe('utils/format', () => {
           {
             type_params: [{ key: 'dim', value: '128' }],
             index_params: [],
-            name: 'vector_field',
+            name: 'vector',
             is_primary_key: false,
             description: 'vector field',
             data_type: 'FloatVector',
@@ -341,16 +347,91 @@ describe('utils/format', () => {
         ],
         name: 'collection_v8mt0v7x',
         description: '',
+        enable_dynamic_field: false,
       },
+      shards_num: 1,
+      start_positions: [],
       collectionID: '441190990484912096',
       created_timestamp: '441323423932350466',
       created_utc_timestamp: '1683515258531',
-      consistency_level: ConsistencyLevelEnum.Bounded,
+      consistency_level: 'Bounded',
+      num_partitions: '0',
+      db_name: '',
     };
 
     const formatted = formatDescribedCol(response);
 
     expect(formatted.schema.fields[0].dataType).toBe(101);
     expect(formatted.schema.fields[1].dataType).toBe(5);
+  });
+
+  it('should return an empty object when data is empty', () => {
+    const data = {};
+    const fieldsDataMap = new Map();
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({});
+  });
+
+  it('should return an object with dynamicField key when all data contains keys not in fieldsDataMap', () => {
+    const data = { key: 'value' };
+    const fieldsDataMap = new Map();
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({ [dynamicField]: { key: 'value' } });
+  });
+
+  it('should return an object with dynamicField key when some data contains keys not in fieldsDataMap', () => {
+    const data = { key1: 'value1', key2: 'value2' };
+    const fieldsDataMap = new Map([['key1', 'value1']]);
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({
+      key1: 'value1',
+      [dynamicField]: { key2: 'value2' },
+    });
+  });
+
+  it('should return an object with keys from data and fieldsDataMap', () => {
+    const data = { key1: 'value1', key2: 'value2' };
+    const fieldsDataMap = new Map([
+      ['key1', 'value1'],
+      ['key2', 'value2'],
+    ]);
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({
+      key1: 'value1',
+      key2: 'value2',
+    });
+  });
+
+  it('should return an object with dynamicField key when data contains keys not in fieldsDataMap', () => {
+    const data = { key1: 'value1', key2: 'value2' };
+    const fieldsDataMap = new Map([['key1', 'value1']]);
+    const dynamicField = 'dynamic';
+    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    expect(result).toEqual({
+      key1: 'value1',
+      [dynamicField]: { key2: 'value2' },
+    });
+  });
+
+  it('should return an empty string if no credentials are provided', () => {
+    const authString = getAuthString({});
+    expect(authString).toEqual('');
+  });
+
+  it('should return a token if a token is provided', () => {
+    const authString = getAuthString({ token: 'mytoken' });
+    expect(authString).toEqual('bXl0b2tlbg==');
+  });
+
+  it('should return a base64-encoded string if a username and password are provided', () => {
+    const authString = getAuthString({
+      username: 'myusername',
+      password: 'mypassword',
+    });
+    expect(authString).toEqual('bXl1c2VybmFtZTpteXBhc3N3b3Jk');
   });
 });

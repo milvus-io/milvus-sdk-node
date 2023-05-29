@@ -1,4 +1,5 @@
-import { credentials, ChannelOptions } from '@grpc/grpc-js';
+import { credentials, Metadata } from '@grpc/grpc-js';
+import dayjs from 'dayjs';
 import {
   GetVersionResponse,
   CheckHealthResponse,
@@ -8,8 +9,13 @@ import {
   promisify,
   getGRPCService,
   formatAddress,
-  getAuthInterceptor,
+  getAuthString,
   getRetryInterceptor,
+  getMetaInterceptor,
+  ErrorCode,
+  DEFAULT_DB,
+  ResStatus,
+  METADATA,
 } from '../';
 import { User } from './User';
 
@@ -18,21 +24,18 @@ import { User } from './User';
  */
 export class GRPCClient extends User {
   // create a grpc service client(connect)
-  connect() {
-    // if we need to create auth interceptors
-    const needAuth =
-      this.config.username !== undefined && this.config.password !== undefined;
-
+  connect(sdkVersion: string) {
     // get Milvus GRPC service
     const MilvusService = getGRPCService({
       protoPath: this.protoPath,
       serviceName: this.protoInternalPath.serviceName, // the name of the Milvus service
     });
 
-    // auth interceptor
-    const authInterceptor = needAuth
-      ? getAuthInterceptor(this.config.username!, this.config.password!)
-      : null;
+    // meta interceptor, add the injector
+    const metaInterceptor = getMetaInterceptor(
+      this.onMetadataUpdated.bind(this)
+    );
+
     // retry interceptor
     const retryInterceptor = getRetryInterceptor({
       maxRetries:
@@ -46,27 +49,89 @@ export class GRPCClient extends User {
       debug: this.config.debug || DEFAULT_DEBUG,
     });
     // interceptors
-    const interceptors = [authInterceptor, retryInterceptor];
+    const interceptors = [metaInterceptor, retryInterceptor];
 
-    // options
-    const options: ChannelOptions = {
-      interceptors,
-      // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
-      // So SDK should support max_receive_message_length unlimited.
-      'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
-      'grpc.max_send_message_length': -1, // set max_send_message_length to unlimited
-      'grpc.keepalive_time_ms': 10 * 1000, // Send keepalive pings every 10 seconds, default is 2 hours.
-      'grpc.keepalive_timeout_ms': 10 * 1000, // Keepalive ping timeout after 10 seconds, default is 20 seconds.
-      'grpc.keepalive_permit_without_calls': 1, // Allow keepalive pings when there are no gRPC calls.
-      ...this.config.channelOptions,
-    };
+    // add interceptors
+    this.channelOptions.interceptors = interceptors;
+
+    // setup auth if necessary
+    const auth = getAuthString(this.config);
+    if (auth.length > 0) {
+      this.metadata.set(METADATA.AUTH, auth);
+    }
 
     // create grpc client
     this.client = new MilvusService(
       formatAddress(this.config.address), // format the address
       this.config.ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
-      options
+      this.channelOptions
     );
+
+    // get server info, only works after milvus v2.2.9
+    try {
+      this._getServerInfo(sdkVersion);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  /**
+   * Injects client metadata into the metadata of the gRPC client.
+   * @param metadata The metadata object of the gRPC client.
+   * @returns The updated metadata object.
+   */
+  protected onMetadataUpdated(metadata: Metadata) {
+    // inject client metadata into the metadata of the grpc client
+    for (var [key, value] of this.metadata) {
+      metadata.add(key, value);
+    }
+
+    return metadata;
+  }
+
+  /**
+   * Sets the active database for the gRPC client.
+   * @param data An optional object containing the name of the database to use.
+   * @returns A Promise that resolves with a `ResStatus` object.
+   */
+  async use(data?: { db_name: string }): Promise<ResStatus> {
+    return new Promise(resolve => {
+      if (!data || data.db_name === '') {
+        console.info(
+          `No database name provided, using default database: ${DEFAULT_DB}`
+        );
+      }
+      // update database
+      this.metadata.set(
+        METADATA.DATABASE,
+        (data && data.db_name) || DEFAULT_DB
+      );
+
+      resolve({ error_code: ErrorCode.SUCCESS, reason: '' });
+    });
+  }
+
+  private async _getServerInfo(sdkVersion: string) {
+    // build user info
+    const userInfo = {
+      client_info: {
+        sdk_type: 'nodejs',
+        sdk_version: sdkVersion,
+        local_time: dayjs().format(`YYYY-MM-DD HH:mm:ss.SSS`),
+        user: this.config.username,
+      },
+    };
+
+    return promisify(this.client, 'Connect', userInfo, this.timeout).then(f => {
+      // add new identifier interceptor
+      if (f.identifier) {
+        // update identifier
+        this.metadata.set(METADATA.CLIENT_ID, f.identifier);
+
+        // setup identifier
+        this.serverInfo = f.server_info;
+      }
+    });
   }
 
   // @deprecated

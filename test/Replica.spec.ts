@@ -9,10 +9,17 @@ import {
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 
+const dbParam = {
+  db_name: 'Replica',
+};
+
 describe(`Replica API`, () => {
   beforeAll(async () => {
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
+
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '8')
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
     );
     await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
@@ -33,6 +40,7 @@ describe(`Replica API`, () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Testing getReplica`, async () => {

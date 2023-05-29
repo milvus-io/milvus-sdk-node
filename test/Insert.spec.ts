@@ -18,22 +18,29 @@ const COLLECTION_NAME = GENERATE_NAME();
 const BINARY_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
 const MORE_SCALAR_COLLECTION_NAME = GENERATE_NAME();
-const COLLECTION_NAME_PARAMS = genCollectionParams(
-  COLLECTION_NAME,
-  '4',
-  DataType.FloatVector,
-  false
-);
-const COLLECTION_NAME_AUTO_ID_PARAMS = genCollectionParams(
-  COLLECTION_NAME_AUTO_ID,
-  4,
-  DataType.FloatVector,
-  true
-);
+const COLLECTION_NAME_PARAMS = genCollectionParams({
+  collectionName: COLLECTION_NAME,
+  dim: 4,
+  vectorType: DataType.FloatVector,
+  autoID: false,
+});
+const COLLECTION_NAME_AUTO_ID_PARAMS = genCollectionParams({
+  collectionName: COLLECTION_NAME_AUTO_ID,
+  dim: 4,
+  vectorType: DataType.FloatVector,
+  autoID: true,
+});
 
 const PARTITION_NAME = 'test';
+const dbParam = {
+  db_name: 'Insert',
+};
+
 describe(`Insert API`, () => {
   beforeAll(async () => {
+    // create db and use db
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
     // create collection autoid = false and float_vector
     await milvusClient.createCollection(COLLECTION_NAME_PARAMS);
     // create index before load
@@ -53,12 +60,12 @@ describe(`Insert API`, () => {
     // create collection autoid = false and binary_vector
 
     await milvusClient.createCollection(
-      genCollectionParams(
-        BINARY_COLLECTION_NAME,
-        '8',
-        DataType.BinaryVector,
-        false
-      )
+      genCollectionParams({
+        collectionName: BINARY_COLLECTION_NAME,
+        dim: 8,
+        vectorType: DataType.BinaryVector,
+        autoID: false,
+      })
     );
 
     await milvusClient.createPartition({
@@ -122,6 +129,7 @@ describe(`Insert API`, () => {
     await milvusClient.dropCollection({
       collection_name: MORE_SCALAR_COLLECTION_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Insert should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
@@ -132,7 +140,7 @@ describe(`Insert API`, () => {
     }
   });
 
-  it(`Insert should throw INSERT_CHECK_FILEDS_DATA_IS_REQUIRED`, async () => {
+  it(`Insert should throw INSERT_CHECK_FIELD_DATA_IS_REQUIRED`, async () => {
     try {
       await milvusClient.insert({ collection_name: 'asd' } as any);
     } catch (error) {
@@ -215,7 +223,7 @@ describe(`Insert API`, () => {
           schema: {
             fields: [
               {
-                name: 'vector_field',
+                name: 'vector',
                 data_type: 'Not exist',
                 type_params: [
                   {
@@ -289,11 +297,17 @@ describe(`Insert API`, () => {
     };
 
     const res = await milvusClient.insert(params);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'age > 0',
+      output_fields: ['meta', 'age'],
+    });
 
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    console.log('query', query);
   });
 
   it(`Insert data on float field expect missing field throw error`, async () => {

@@ -18,6 +18,8 @@ export interface FieldSchema {
   data_type: keyof typeof DataType;
   dataType?: DataType;
   is_primary_key?: boolean;
+  is_partition_key?: boolean;
+  is_dynamic?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
   autoID: boolean;
@@ -54,6 +56,7 @@ export interface FieldType {
   description?: string;
   data_type: DataType | keyof typeof DataTypeMap;
   is_primary_key?: boolean;
+  is_partition_key?: boolean;
   type_params?: {
     [key: string]: TypeParam;
   };
@@ -84,6 +87,8 @@ export interface CreateCollectionReq extends GrpcTimeOut {
     | 'Eventually'
     | 'Customized';
   fields: FieldType[];
+  num_partitions?: number;
+  enable_dynamic_field?: boolean;
 }
 
 interface CollectionNameReq extends GrpcTimeOut {
@@ -158,6 +163,7 @@ export interface CompactionResponse {
 export interface CollectionSchema {
   name: string;
   description: string;
+  enable_dynamic_field: boolean;
   fields: FieldSchema[];
 }
 
@@ -174,7 +180,8 @@ export interface DescribeCollectionResponse extends TimeStamp {
   created_timestamp: string;
   created_utc_timestamp: string;
   shards_num: number;
-  collection_name: string;
+  num_partitions?: string; // int64
+  db_name: string;
 }
 
 export interface GetCompactionPlansResponse {

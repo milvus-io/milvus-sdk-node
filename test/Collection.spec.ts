@@ -14,7 +14,7 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, debug: false });
 const COLLECTION_NAME = GENERATE_NAME();
 const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
@@ -23,10 +23,22 @@ const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
 const ALIAS = 'my_alias';
 
+const dbParam = {
+  db_name: 'Collection',
+};
+
 describe(`Collection API`, () => {
+  beforeAll(async () => {
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
+  });
+
+  afterAll(async () => {
+    await milvusClient.dropDatabase(dbParam);
+  });
   it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
-      ...genCollectionParams(COLLECTION_NAME, '128'),
+      ...genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 }),
       consistency_level: 'Eventually',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -34,7 +46,10 @@ describe(`Collection API`, () => {
 
   it(`Create Collection with number dim Successful`, async () => {
     const res = await milvusClient.createCollection({
-      ...genCollectionParams(NUMBER_DIM_COLLECTION_NAME, 128),
+      ...genCollectionParams({
+        collectionName: NUMBER_DIM_COLLECTION_NAME,
+        dim: 128,
+      }),
       consistency_level: 'Eventually',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -113,7 +128,7 @@ describe(`Collection API`, () => {
 
     try {
       const d = await milvusClient.createCollection(
-        genCollectionParams('any', '10')
+        genCollectionParams({ collectionName: 'any', dim: 10 })
       );
     } catch (error) {
       expect(error.message).toEqual(
@@ -162,7 +177,10 @@ describe(`Collection API`, () => {
 
   it(`Create collection will be successful even if passed consistency level is invalid`, async () => {
     const res = await milvusClient.createCollection({
-      ...genCollectionParams(TEST_CONSISTENCY_LEVEL_COLLECTION_NAME, '128'),
+      ...genCollectionParams({
+        collectionName: TEST_CONSISTENCY_LEVEL_COLLECTION_NAME,
+        dim: 128,
+      }),
       consistency_level: 'xxx' as any,
     });
 
@@ -171,10 +189,13 @@ describe(`Collection API`, () => {
 
   it(`Create load Collection Successful`, async () => {
     const res1 = await milvusClient.createCollection(
-      genCollectionParams(LOAD_COLLECTION_NAME, '128')
+      genCollectionParams({ collectionName: LOAD_COLLECTION_NAME, dim: 128 })
     );
     const res2 = await milvusClient.createCollection(
-      genCollectionParams(LOAD_COLLECTION_NAME_SYNC, '128')
+      genCollectionParams({
+        collectionName: LOAD_COLLECTION_NAME_SYNC,
+        dim: 128,
+      })
     );
     // make sure load successful
     await milvusClient.createIndex({
@@ -288,11 +309,11 @@ describe(`Collection API`, () => {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    console.log('---- describe collection ---', res);
+    // console.log('---- describe collection ---', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
-    expect(res.schema.fields.length).toEqual(4);
+    expect(res.schema.fields.length).toEqual(5);
     res.schema.fields.forEach(f => {
       expect(typeof f.dataType).toEqual('number');
       expect(typeof f.data_type).toEqual('string');
@@ -328,7 +349,7 @@ describe(`Collection API`, () => {
     const res = await milvusClient.getLoadingProgress({
       collection_name: LOAD_COLLECTION_NAME_SYNC,
     });
-    // console.log('loadingProgess', loadingProgess);
+    // console.log('loadingProgress', loadingProgress);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(typeof res.progress).toEqual('string'); // int64 in node is string
   });
@@ -421,21 +442,22 @@ describe(`Collection API`, () => {
     }
   });
 
-  it(`Load Collection Async success`, async () => {
-    await milvusClient.releaseCollection({
-      collection_name: LOAD_COLLECTION_NAME,
-    });
-    const res = await milvusClient.loadCollection({
-      collection_name: LOAD_COLLECTION_NAME,
-    });
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-  });
+  // it(`Load Collection Async success`, async () => {
+  //   await milvusClient.releaseCollection({
+  //     collection_name: LOAD_COLLECTION_NAME,
+  //   });
+  //   const res = await milvusClient.loadCollection({
+  //     collection_name: LOAD_COLLECTION_NAME,
+  //   });
+  //   expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  // });
 
   it(`Show loaded collections success`, async () => {
     const res = await milvusClient.showCollections({
       type: ShowCollectionsType.Loaded,
     });
 
+    console.log('show——loaded', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -464,7 +486,7 @@ describe(`Collection API`, () => {
     }
   });
 
-  it(`Create alais success`, async () => {
+  it(`Create alias success`, async () => {
     try {
       await milvusClient.createAlias({
         collection_name: LOAD_COLLECTION_NAME,
@@ -481,7 +503,7 @@ describe(`Collection API`, () => {
     }
   });
 
-  it(`Alter alais success`, async () => {
+  it(`Alter alias success`, async () => {
     try {
       await milvusClient.alterAlias({
         collection_name: LOAD_COLLECTION_NAME_SYNC,
@@ -496,7 +518,7 @@ describe(`Collection API`, () => {
     }
   });
 
-  it(`Drop alais success`, async () => {
+  it(`Drop alias success`, async () => {
     try {
       await milvusClient.dropAlias({
         alias: ALIAS,

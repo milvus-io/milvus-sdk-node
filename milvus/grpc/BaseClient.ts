@@ -6,6 +6,7 @@ import {
   ClientConfig,
   DEFAULT_CONNECT_TIMEOUT,
   parseTimeToken,
+  ServerInfo,
 } from '../';
 
 // path
@@ -19,29 +20,37 @@ const schemaProtoPath = path.resolve(
  * Base gRPC client, setup all configuration here
  */
 export class BaseClient {
-  // The gRPC client instance.
-  client: Client | undefined;
+  // metadata
+  protected metadata: Map<string, string> = new Map<string, string>();
   // The path to the Milvus protobuf file.
-  protoPath: string;
+  protected protoPath: string;
   // The protobuf schema.
-  schemaProto: Root;
+  protected schemaProto: Root;
   // The Milvus protobuf.
-  milvusProto: Root;
+  protected milvusProto: Root;
   // The milvus collection schema Type
-  collectionSchemaType: Type;
+  protected collectionSchemaType: Type;
   // The milvus field schema Type
-  fieldSchemaType: Type;
-  // The client configuration.
-  config: ClientConfig;
+  protected fieldSchemaType: Type;
+
   // milvus proto
-  protoInternalPath = {
+  protected protoInternalPath = {
     serviceName: 'milvus.proto.milvus.MilvusService',
     collectionSchema: 'milvus.proto.schema.CollectionSchema',
     fieldSchema: 'milvus.proto.schema.FieldSchema',
   };
 
+  // The client configuration.
+  public config: ClientConfig;
+  // grpc options
+  public channelOptions: ChannelOptions;
+  // The gRPC client instance.
+  public client: Client | undefined;
+  // server info
+  public serverInfo: ServerInfo = {};
+
   // The timeout for connecting to the Milvus service.
-  timeout: number = DEFAULT_CONNECT_TIMEOUT;
+  public timeout: number = DEFAULT_CONNECT_TIMEOUT;
 
   /**
    * Sets up the configuration object for the gRPC client.
@@ -78,6 +87,12 @@ export class BaseClient {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
 
+    // if the address starts with https, no need to set the ssl
+    config.ssl = config.address.startsWith('https://') || !!config.ssl;
+    // make sure these are strings
+    config.username = config.username || '';
+    config.password = config.password || '';
+
     // Assign the configuration object.
     this.config = config;
     // Load the Milvus protobuf.
@@ -92,6 +107,18 @@ export class BaseClient {
     this.fieldSchemaType = this.schemaProto.lookupType(
       this.protoInternalPath.fieldSchema
     );
+
+    // options
+    this.channelOptions = {
+      // Milvus default max_receive_message_length is 100MB, but Milvus support change max_receive_message_length .
+      // So SDK should support max_receive_message_length unlimited.
+      'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
+      'grpc.max_send_message_length': -1, // set max_send_message_length to unlimited
+      'grpc.keepalive_time_ms': 10 * 1000, // Send keepalive pings every 10 seconds, default is 2 hours.
+      'grpc.keepalive_timeout_ms': 10 * 1000, // Keepalive ping timeout after 10 seconds, default is 20 seconds.
+      'grpc.keepalive_permit_without_calls': 1, // Allow keepalive pings when there are no gRPC calls.
+      ...this.config.channelOptions,
+    };
 
     // Set up the timeout for connecting to the Milvus service.
     this.timeout =

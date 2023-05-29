@@ -13,11 +13,16 @@ const COLLECTION_NAME = GENERATE_NAME('col');
 const resource_group = GENERATE_NAME('rg');
 const resource_group2 = GENERATE_NAME('rg');
 const resource_group3 = GENERATE_NAME('rg');
-
+const dbParam = {
+  db_name: 'Resource',
+};
 let runRgTransferTest = false;
 
 describe(`Resource API`, () => {
   beforeAll(async () => {
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
+
     // [TODO]: move getMetric to client
     const metrics = await milvusClient.getMetric({
       request: {
@@ -33,7 +38,7 @@ describe(`Resource API`, () => {
 
     // create collection
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '128')
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 })
     );
 
     await milvusClient.createIndex({
@@ -51,6 +56,7 @@ describe(`Resource API`, () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create resource group should be successful`, async () => {

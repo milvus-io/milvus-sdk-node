@@ -9,17 +9,24 @@ import {
 let milvusClient = new MilvusClient({ address: IP });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
-const EXIST_COLLECTION_PARAMS = genCollectionParams(EXIST_COLLECTION_NAME, '8');
+const EXIST_COLLECTION_PARAMS = genCollectionParams({
+  collectionName: EXIST_COLLECTION_NAME,
+  dim: '8',
+});
 const EXIST_LOADED_COLLECTION_NAME = GENERATE_NAME();
-const EXIST_LOADED_COLLECTION_PARAMS = genCollectionParams(
-  EXIST_LOADED_COLLECTION_NAME,
-  '8'
-);
+const EXIST_LOADED_COLLECTION_PARAMS = genCollectionParams({
+  collectionName: EXIST_LOADED_COLLECTION_NAME,
+  dim: '8',
+});
 const EXIST_INDEXED_COLLECTION_NAME = GENERATE_NAME();
-const EXIST_INDEXED_COLLECTION_PARAMS = genCollectionParams(
-  EXIST_INDEXED_COLLECTION_NAME,
-  '8'
-);
+const EXIST_INDEXED_COLLECTION_PARAMS = genCollectionParams({
+  collectionName: EXIST_INDEXED_COLLECTION_NAME,
+  dim: '8',
+});
+
+const dbParam = {
+  db_name: 'HighLevel',
+};
 
 const data = generateInsertData(EXIST_COLLECTION_PARAMS.fields, 10);
 
@@ -27,6 +34,9 @@ const data = generateInsertData(EXIST_COLLECTION_PARAMS.fields, 10);
 
 describe(`High level API`, () => {
   beforeAll(async () => {
+    // create db and use db
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
     // empty collection
     await milvusClient.createCollection(EXIST_COLLECTION_PARAMS);
     // index only collection
@@ -65,6 +75,7 @@ describe(`High level API`, () => {
     await milvusClient.dropCollection({
       collection_name: EXIST_LOADED_COLLECTION_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create collection successfully`, async () => {

@@ -39,6 +39,9 @@ import {
   checkSearchParams,
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
+  DEFAULT_DYNAMIC_FIELD,
+  generateDynamicRow,
+  getFieldDataMap,
 } from '../';
 import { Collection } from './Collection';
 
@@ -100,7 +103,7 @@ export class Data extends Collection {
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
-    const fieldsData = new Map(
+    const fieldsDataMap = new Map(
       collectionInfo.schema.fields
         .filter(v => !v.is_primary_key || !v.autoID)
         .map(v => [
@@ -109,42 +112,69 @@ export class Data extends Collection {
             name: v.name,
             type: v.data_type,
             dim: Number(findKeyValue(v.type_params, 'dim')),
-            value: [] as number[],
-          },
+            value: [], // value container
+          } as any,
         ])
     );
 
     // The actual data we pass to Milvus gRPC.
     const params: any = { ...data, num_rows: data.fields_data.length };
 
+    // dynamic field is enabled, create $meta field
+    const isDynamic = collectionInfo.schema.enable_dynamic_field;
+    if (isDynamic) {
+      fieldsDataMap.set(DEFAULT_DYNAMIC_FIELD, {
+        name: DEFAULT_DYNAMIC_FIELD,
+        type: 'JSON',
+        value: [], // value container
+      });
+    }
+
     // Loop through each row and set the corresponding field values in the Map.
     data.fields_data.forEach((v, i) => {
+      // if support dynamic field, all field not in the schema would be grouped to a dynamic field
+      v = isDynamic
+        ? generateDynamicRow(v, fieldsDataMap, DEFAULT_DYNAMIC_FIELD)
+        : v;
+
+      // get each fieldname in the data object
       const fieldNames = Object.keys(v);
+      // go through each fieldname and encode or format data
       fieldNames.forEach(name => {
-        const target = fieldsData.get(name);
+        const target = fieldsDataMap.get(name);
         if (!target) {
           throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
         }
-        const isVector = this.vectorTypes.includes(DataTypeMap[target.type]);
         if (
           DataTypeMap[target.type] === DataType.BinaryVector &&
           v[name].length !== target.dim / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
-        if (isVector) {
-          for (let val of v[name]) {
-            target.value.push(val);
-          }
-        } else {
-          target.value[i] = v[name];
+
+        // encode data
+        switch (DataTypeMap[target.type]) {
+          case DataType.BinaryVector:
+          case DataType.FloatVector:
+            for (let val of v[name]) {
+              target.value.push(val);
+            }
+            break;
+          case DataType.JSON:
+            // ensure empty string
+            target.value[i] = Buffer.from(JSON.stringify(v[name] || {}));
+            break;
+          default:
+            target.value[i] = v[name];
+            break;
         }
       });
     });
 
-    params.fields_data = Array.from(fieldsData.values()).map(v => {
+    // transform data from map to array, milvus grpc params
+    params.fields_data = Array.from(fieldsDataMap.values()).map(v => {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
-      // but if milvus change the string, may casue we cant find value.
+      // but if milvus change the string, may cause we cant find value.
       const type = DataTypeMap[v.type];
       const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
       let dataKey = 'float_vector';
@@ -175,6 +205,9 @@ export class Data extends Collection {
         case DataType.VarChar:
           dataKey = 'string_data';
           break;
+        case DataType.JSON:
+          dataKey = 'json_data';
+          break;
         default:
           throw new Error(
             `${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE} "${v.type}."`
@@ -183,6 +216,7 @@ export class Data extends Collection {
       return {
         type,
         field_name: v.name,
+        is_dynamic: v.name === DEFAULT_DYNAMIC_FIELD,
         [key]:
           type === DataType.FloatVector
             ? {
@@ -298,7 +332,7 @@ export class Data extends Collection {
         collection_name: data.collection_name,
       });
 
-      // get infomation from collection info
+      // get information from collection info
       let vectorType: DataType;
       let defaultOutputFields = [];
       let dim: number = 0;
@@ -389,58 +423,79 @@ export class Data extends Collection {
         data.timeout || this.timeout
       );
 
-      const results: any[] = [];
-
-      if (promise.results) {
-        /**
-         *  fields_data:  what you pass in output_fields, only support non vector fields.
-         *  ids: vector id array
-         *  scores: distance array
-         *  topks: if you use mutiple query to search , will return mutiple topk.
-         */
-        const { topks, scores, fields_data, ids } = promise.results;
-        const fieldsData = fields_data.map((item, i) => {
-          // if search result is empty, will cause value is undefined.
-          const value = item.field ? item[item.field] : undefined;
-          return {
-            type: item.type,
-            field_name: item.field_name,
-            data: value ? value[value?.data].data : '',
-          };
-        });
-        // verctor id support int / str id.
-        const idData = ids ? ids[ids.id_field]?.data : undefined;
-        /**
-         * This code block formats the search results returned by Milvus into row data for easier use.
-         * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
-         * The `topk` variable is the key we use to splice data for every search result.
-         * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
-         */
-        topks.forEach((v, index) => {
-          const topk = Number(v);
-
-          scores.splice(0, topk).forEach((score, scoreIndex) => {
-            const i = index === 0 ? scoreIndex : scoreIndex + topk;
-            const fixedScore =
-              typeof round_decimal === 'undefined' || round_decimal === -1
-                ? score
-                : formatNumberPrecision(score, round_decimal);
-
-            const result: any = {
-              score: fixedScore,
-              id: idData ? idData[i] : '',
-            };
-            fieldsData.forEach(field => {
-              result[field.field_name] = field.data[i];
-            });
-            results.push(result);
-          });
-        });
+      // if search failed, return empty with status
+      if (promise.status.error_code !== ErrorCode.SUCCESS) {
+        return {
+          status: promise.status,
+          results: [],
+        };
       }
+
+      // build final results array
+      const results: any[] = [];
+      const { topks, scores, fields_data, ids } = promise.results;
+      // build fields data map
+      const fieldsDataMap = getFieldDataMap(fields_data);
+      // build output name array
+      const output_fields = [
+        'id',
+        ...(promise.results.output_fields ||
+          fields_data.map(f => f.field_name)),
+      ];
+
+      // vector id support int / str id.
+      const idData = ids ? ids[ids.id_field]?.data : undefined;
+      // add id column
+      fieldsDataMap.set('id', idData);
+      // fieldsDataMap.set('score', scores); TODO: fieldDataMap to support formatter
+
+      /**
+       * This code block formats the search results returned by Milvus into row data for easier use.
+       * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
+       * The `topk` variable is the key we use to splice data for every search result.
+       * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
+       */
+      topks.forEach((v, index) => {
+        const topk = Number(v);
+
+        scores.splice(0, topk).forEach((score, scoreIndex) => {
+          // get correct index
+          const i = index === 0 ? scoreIndex : scoreIndex + topk;
+          // fix round_decimal
+          const fixedScore =
+            typeof round_decimal === 'undefined' || round_decimal === -1
+              ? score
+              : formatNumberPrecision(score, round_decimal);
+
+          // init result object
+          const result: any = { score: fixedScore };
+
+          // build result,
+          output_fields.forEach(field_name => {
+            // Check if the field_name exists in the fieldsDataMap
+            const isFixedSchema = fieldsDataMap.has(field_name);
+
+            // Get the data for the field_name from the fieldsDataMap
+            // If the field_name is not in the fieldsDataMap, use the DEFAULT_DYNAMIC_FIELD
+            const data = fieldsDataMap.get(
+              isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
+            );
+
+            // extract dynamic info from dynamic field if necessary
+            result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
+          });
+
+          // init result slot
+          results[index] = results[index] || [];
+          // push result data
+          results[index].push(result);
+        });
+      });
 
       return {
         status: promise.status,
-        results,
+        // if only searching 1 vector, return the first object of results array
+        results: searchVectors.length === 1 ? results[0] : results,
       };
     } catch (err) {
       /* istanbul ignore next */
@@ -450,7 +505,7 @@ export class Data extends Collection {
 
   /**
    * Milvus temporarily buffers the newly inserted vectors in the cache. Call `flush()` to persist them to the object storage.
-   * It's async function, so it's will take some times to excute.
+   * It's async function, so it's will take some times to execute.
    * @param data
    *  | Property | Type | Description |
    *  | :--- | :-- | :-- |
@@ -577,6 +632,7 @@ export class Data extends Collection {
   async query(data: QueryReq): Promise<QueryResults> {
     checkCollectionName(data);
 
+    // Set up limits and offset for the query
     let limits: { limit: number } | undefined;
     let offset: { offset: number } | undefined;
 
@@ -587,6 +643,7 @@ export class Data extends Collection {
       offset = { offset: data.offset };
     }
 
+    // Execute the query and get the results
     const promise: QueryRes = await promisify(
       this.client,
       'Query',
@@ -597,56 +654,37 @@ export class Data extends Collection {
       data.timeout || this.timeout
     );
 
+    // compatible with milvus before v2.2.9
+    const output_fields =
+      promise.output_fields || promise.fields_data.map(f => f.field_name);
+
+    // Initialize an array to hold the query results
     const results: { [x: string]: any }[] = [];
-    /**
-     * type: DataType
-     * field_name: Field name
-     * field_id: enum DataType
-     * field: decide the key we can use. If return 'vectors', we can use item.vectors.
-     * vectors: vector data.
-     * scalars: scalar data
-     */
-    const fieldsData = promise.fields_data.map((item, i) => {
-      if (item.field === 'vectors') {
-        const key = item.vectors!.data;
-        const vectorValue =
-          key === 'float_vector'
-            ? item.vectors![key]!.data
-            : item.vectors![key]!.toJSON().data;
 
-        // if binary vector , need use dim / 8 to split vector data
-        const dim =
-          item.vectors?.data === 'float_vector'
-            ? Number(item.vectors!.dim)
-            : Number(item.vectors!.dim) / 8;
-        const data: number[][] = [];
+    const fieldsDataMap = getFieldDataMap(promise.fields_data);
 
-        // parse number[] to number[][] by dim
-        vectorValue.forEach((v, i) => {
-          const index = Math.floor(i / dim);
-          if (!data[index]) {
-            data[index] = [];
-          }
-          data[index].push(v);
-        });
+    // For each output field, check if it has a fixed schema or not
+    const fieldData = output_fields.map(field_name => {
+      // Check if the field_name exists in the fieldsDataMap
+      const isFixedSchema = fieldsDataMap.has(field_name);
 
-        return {
-          field_name: item.field_name,
-          data,
-        };
-      }
+      // Get the data for the field_name from the fieldsDataMap
+      // If the field_name is not in the fieldsDataMap, use the DEFAULT_DYNAMIC_FIELD
+      const data = fieldsDataMap.get(
+        isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
+      );
 
-      const key = item.scalars!.data;
-      const scalarValue = item.scalars![key]!.data;
-
+      // Return an object containing the field_name and its corresponding data
+      // If the schema is fixed, use the data directly
+      // If the schema is not fixed, map the data to extract the field_name values
       return {
-        field_name: item.field_name,
-        data: scalarValue,
+        data: isFixedSchema ? data : data.map((d: any) => d[field_name]),
+        field_name,
       };
     });
 
     // parse column data to [{fieldname:value}]
-    fieldsData.forEach(v => {
+    fieldData.forEach((v: any) => {
       v.data.forEach((d: string | number[], i: number) => {
         if (!results[i]) {
           results[i] = {
@@ -660,6 +698,7 @@ export class Data extends Collection {
         }
       });
     });
+
     return {
       status: promise.status,
       data: results,
@@ -745,7 +784,7 @@ export class Data extends Collection {
    * | Property | Description |
    *  | :--- | :-- |
    *  | status | { error_code: number,reason:string } |
-   *  | infos | segments infomations |
+   *  | infos | segments information |
    *
    *
    * #### Example

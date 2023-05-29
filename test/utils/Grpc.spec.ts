@@ -1,6 +1,6 @@
 import path from 'path';
 import { InterceptingCall } from '@grpc/grpc-js';
-import { getGRPCService, getAuthInterceptor } from '../../milvus';
+import { getGRPCService, getMetaInterceptor } from '../../milvus';
 // mock
 jest.mock('@grpc/grpc-js', () => {
   const actual = jest.requireActual(`@grpc/grpc-js`);
@@ -43,6 +43,7 @@ describe(`utils/grpc`, () => {
     const metadata = {
       add: jest.fn(),
     };
+    const mockListener = jest.fn();
     const listener = jest.fn();
     const next = jest.fn();
     const nextCall = jest.fn(() => ({
@@ -60,14 +61,16 @@ describe(`utils/grpc`, () => {
       }
     );
 
-    const interceptor = getAuthInterceptor(username, password);
+    const interceptor = getMetaInterceptor(mockListener, [
+      { username, password },
+    ]);
     const interceptedCall = interceptor({}, nextCall);
 
     (interceptedCall.start as any)(metadata, listener, next);
 
-    expect(metadata.add).toHaveBeenCalledWith(
-      'authorization',
-      'dGVzdHVzZXI6dGVzdHBhc3N3b3Jk'
-    );
+    expect(metadata.add).toHaveBeenCalledWith('username', 'testuser');
+    expect(metadata.add).toHaveBeenCalledWith('password', 'testpassword');
+    expect(mockListener).toHaveBeenCalledTimes(1);
+    expect(mockListener).toHaveBeenCalledWith(metadata);
   });
 });

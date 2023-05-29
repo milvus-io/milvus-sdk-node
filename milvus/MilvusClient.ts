@@ -36,15 +36,8 @@ export class MilvusClient extends GRPCClient {
   ) {
     // setup the configuration
     super(configOrAddress, ssl, username, password, channelOptions);
-    // connect here
-    this.connect();
-  }
-
-  /**
-   * Overloads the original connect function in GRPCClient to add additional functionality.
-   */
-  connect() {
-    super.connect();
+    // connect();
+    this.connect(MilvusClient.sdkInfo.version);
   }
 
   /**

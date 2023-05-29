@@ -3,6 +3,8 @@ import {
   FieldType,
   DataType,
   convertToDataType,
+  MAX_PARTITIONS_NUMBER,
+  MAX_PARTITION_KEY_FIELD_COUNT,
 } from '../';
 import { status as grpcStatus } from '@grpc/grpc-js';
 
@@ -16,25 +18,41 @@ import { status as grpcStatus } from '@grpc/grpc-js';
 export const checkCollectionFields = (fields: FieldType[]) => {
   // Define arrays of data types that are allowed for vector fields and primary keys, respectively
   const vectorDataTypes = [DataType.BinaryVector, DataType.FloatVector];
-  const primaryKeyDataTypes = [DataType.Int64, DataType.VarChar];
+  const int64VarCharTypes = [DataType.Int64, DataType.VarChar];
 
   let hasPrimaryKey = false;
   let hasVectorField = false;
+  let partitionKeyCount = 0;
 
   fields.forEach(field => {
     if (!field.hasOwnProperty('data_type')) {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_MISS_DATA_TYPE);
     }
 
+    // get data type
     const dataType = convertToDataType(field.data_type);
     const isPrimaryKey = field.is_primary_key;
-    const typeParams = field.type_params;
-    const isVectorField = vectorDataTypes.includes(dataType!);
+    const isPartitionKey = field.is_partition_key;
 
-    if (isPrimaryKey && primaryKeyDataTypes.includes(dataType!)) {
+    if (isPrimaryKey && int64VarCharTypes.includes(dataType!)) {
       hasPrimaryKey = true;
     }
 
+    // if partition key is set, it should be set on int64 or varchar and non-primary key field
+    if (isPartitionKey) {
+      if (!int64VarCharTypes.includes(dataType!) || isPrimaryKey) {
+        throw new Error(ERROR_REASONS.INVALID_PARTITION_KEY_FIELD_TYPE);
+      }
+    }
+
+    // if this is the partition key field, check the limit
+    if (isPartitionKey) {
+      partitionKeyCount++;
+    }
+
+    // if this is the vector field, check dimension
+    const isVectorField = vectorDataTypes.includes(dataType!);
+    const typeParams = field.type_params;
     if (isVectorField) {
       const dim = Number(typeParams?.dim ?? field.dim);
       if (!dim) {
@@ -48,6 +66,7 @@ export const checkCollectionFields = (fields: FieldType[]) => {
       hasVectorField = true;
     }
 
+    // if this is a varchar field, check max_length
     if (dataType === DataType.VarChar) {
       const maxLength = typeParams?.max_length ?? field.max_length;
       if (!maxLength) {
@@ -56,12 +75,18 @@ export const checkCollectionFields = (fields: FieldType[]) => {
     }
   });
 
+  // if no primary key field is found, throw error
   if (!hasPrimaryKey) {
     throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY);
   }
 
+  // if no vector field is found, throw error
   if (!hasVectorField) {
     throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST);
+  }
+
+  if (partitionKeyCount > MAX_PARTITION_KEY_FIELD_COUNT) {
+    throw new Error(ERROR_REASONS.PARTITION_KEY_FIELD_MAXED_OUT);
   }
 
   return true;
@@ -121,4 +146,15 @@ export const isStatusCodeMatched = (
   ]
 ): boolean => {
   return codesToCheck.includes(code);
+};
+
+/**
+ * Validates the number of partitions.
+ * @param {number} num_partitions - The number of partitions to validate.
+ * @throws {Error} Throws an error if the number of partitions is invalid.
+ */
+export const validatePartitionNumbers = (num_partitions: number) => {
+  if (num_partitions < 1 || num_partitions > MAX_PARTITIONS_NUMBER) {
+    throw new Error(ERROR_REASONS.INVALID_PARTITION_NUM);
+  }
 };

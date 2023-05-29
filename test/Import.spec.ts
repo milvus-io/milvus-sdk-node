@@ -9,11 +9,23 @@ import {
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
+const dbParam = {
+  db_name: 'MilvusIndex',
+};
 
 describe(`Import API`, () => {
   beforeAll(async () => {
+    // create db and use db
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
+
     await milvusClient.createCollection(
-      genCollectionParams(COLLECTION_NAME, '4', DataType.FloatVector, false)
+      genCollectionParams({
+        collectionName: COLLECTION_NAME,
+        dim: '4',
+        vectorType: DataType.FloatVector,
+        autoID: false,
+      })
     );
 
     await milvusClient.createIndex({
@@ -34,6 +46,7 @@ describe(`Import API`, () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`list import tasks should be zero`, async () => {
