@@ -1,5 +1,5 @@
 import { ChannelOptions } from '@grpc/grpc-js';
-import { GRPCClient, ClientConfig } from '.';
+import { GRPCClient, ClientConfig, logger } from '.';
 import sdkInfo from '../sdk.json';
 
 /**
@@ -35,6 +35,7 @@ export class MilvusClient extends GRPCClient {
   ) {
     // setup the configuration
     super(configOrAddress, ssl, username, password, channelOptions);
+    logger.info(`SDK version: ${MilvusClient.sdkInfo.version}`);
     // connect();
     this.connect(MilvusClient.sdkInfo.version);
   }

@@ -7,7 +7,7 @@ import {
   InterceptingCall,
   status as grpcStatus,
 } from '@grpc/grpc-js';
-import { extractMethodName, isStatusCodeMatched } from '.';
+import { extractMethodName, isStatusCodeMatched, logger } from '.';
 import { DEFAULT_DB } from '../const';
 
 const PROTO_OPTIONS = {
@@ -87,18 +87,15 @@ export const getMetaInterceptor = (
  * @param {Object} options - The options object.
  * @param {number} options.maxRetries - The maximum number of times to retry a failed request.
  * @param {number} options.retryDelay - The delay in milliseconds between retries.
- * @param {boolean} options.debug - Whether to log debug information.
  * @returns {Function} The gRPC interceptor function.
  */
 /* istanbul ignore next */
 export const getRetryInterceptor = ({
   maxRetries = 3,
   retryDelay = 30,
-  debug = true,
 }: {
   maxRetries: number;
   retryDelay: number;
-  debug: boolean;
 }) =>
   function (options: any, nextCall: any) {
     let savedMetadata: any;
@@ -144,6 +141,15 @@ export const getRetryInterceptor = ({
             let retries = 0;
             // retry function
             let retry = function (message: any, metadata: any) {
+              const _retryDelay = Math.pow(2, retries) * retryDelay;
+              logger.debug(
+                `[DB:${dbname}:${methodName}] excuted failed, status: ${
+                  grpcStatus[status.code]
+                }, timeout set: ${
+                  deadline.getTime() - startTime.getTime()
+                }ms, retry after ${_retryDelay} ms.`
+              );
+
               retries++;
               let newCall = nextCall(options);
               // retry
@@ -157,26 +163,23 @@ export const getRetryInterceptor = ({
                       setTimeout(() => {
                         retry(message, metadata);
                         // double increase delay every retry
-                      }, Math.pow(2, retries) * retryDelay);
+                      }, _retryDelay);
                     } else {
-                      if (debug) {
-                        if (deadline > startTime) {
-                          console.info(
-                            `[DB:${dbname}:${methodName}] is timeout, timeout set: ${
-                              deadline.getTime() - startTime.getTime()
-                            }ms.`
-                          );
-                        } else {
-                          console.info(
-                            `[DB:${dbname}:${methodName}] retry run out of ${retries} times.`
-                          );
-                        }
-                      }
+                      logger.debug(
+                        `[DB:${dbname}:${methodName}] retry run out of ${retries} times.`
+                      );
 
+                      // we still pop up server information to client
                       savedMessageNext(savedReceiveMessage);
+                      // and do the next call if there is
                       next(status);
                     }
                   } else {
+                    logger.debug(
+                      `[DB:${dbname}:${methodName}] retried successfully in ${
+                        Date.now() - startTime.getTime()
+                      }ms.`
+                    );
                     savedMessageNext(savedReceiveMessage);
                     next({ code: grpcStatus.OK });
                   }
@@ -187,12 +190,11 @@ export const getRetryInterceptor = ({
             if (isStatusCodeMatched(status.code)) {
               retry(savedSendMessage, savedMetadata);
             } else {
-              debug &&
-                console.info(
-                  `[DB:${dbname}:${methodName}] executed in ${
-                    Date.now() - startTime.getTime()
-                  }ms.`
-                );
+              logger.debug(
+                `[DB:${dbname}:${methodName}] executed in ${
+                  Date.now() - startTime.getTime()
+                }ms.`
+              );
               savedMessageNext(savedReceiveMessage);
               next(status);
             }
