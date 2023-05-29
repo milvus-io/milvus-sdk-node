@@ -20,35 +20,37 @@ const schemaProtoPath = path.resolve(
  * Base gRPC client, setup all configuration here
  */
 export class BaseClient {
-  // The gRPC client instance.
-  client: Client | undefined;
+  // metadata
+  protected metadata: Map<string, string> = new Map<string, string>();
   // The path to the Milvus protobuf file.
-  protoPath: string;
+  protected protoPath: string;
   // The protobuf schema.
-  schemaProto: Root;
+  protected schemaProto: Root;
   // The Milvus protobuf.
-  milvusProto: Root;
+  protected milvusProto: Root;
   // The milvus collection schema Type
-  collectionSchemaType: Type;
+  protected collectionSchemaType: Type;
   // The milvus field schema Type
-  fieldSchemaType: Type;
-  // The client configuration.
-  config: ClientConfig;
+  protected fieldSchemaType: Type;
+
   // milvus proto
-  protoInternalPath = {
+  protected protoInternalPath = {
     serviceName: 'milvus.proto.milvus.MilvusService',
     collectionSchema: 'milvus.proto.schema.CollectionSchema',
     fieldSchema: 'milvus.proto.schema.FieldSchema',
   };
 
-  // The timeout for connecting to the Milvus service.
-  timeout: number = DEFAULT_CONNECT_TIMEOUT;
-
+  // The client configuration.
+  public config: ClientConfig;
   // grpc options
-  channelOptions: ChannelOptions;
-
+  public channelOptions: ChannelOptions;
+  // The gRPC client instance.
+  public client: Client | undefined;
   // server info
-  serverInfo: ServerInfo = {};
+  public serverInfo: ServerInfo = {};
+
+  // The timeout for connecting to the Milvus service.
+  public timeout: number = DEFAULT_CONNECT_TIMEOUT;
 
   /**
    * Sets up the configuration object for the gRPC client.

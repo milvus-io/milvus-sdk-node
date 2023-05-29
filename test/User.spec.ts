@@ -12,10 +12,10 @@ import { IP, genCollectionParams, GENERATE_NAME } from './tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 let authClient: MilvusClient;
-const USERNAME = 'nameczz';
+const USERNAME = 'username';
 const PASSWORD = '123456';
 const NEW_PASSWORD = '1234567';
-const ROLENAME = GENERATE_NAME('role');
+const ROLE_NAME = GENERATE_NAME('role');
 const COLLECTION_NAME = GENERATE_NAME();
 
 describe(`User Api`, () => {
@@ -24,7 +24,7 @@ describe(`User Api`, () => {
     await authClient.createCollection(
       genCollectionParams({
         collectionName: COLLECTION_NAME,
-        dim: '4',
+        dim: 4,
         vectorType: DataType.FloatVector,
         autoID: false,
       })
@@ -76,7 +76,7 @@ describe(`User Api`, () => {
       password: PASSWORD,
     });
     const res = await authClient.listUsers();
-    expect(res.usernames).toEqual([USERNAME, 'root']);
+    expect(res.usernames).toEqual(['root', USERNAME]);
   });
 
   it(`Auth client with token expect success`, async () => {
@@ -86,10 +86,10 @@ describe(`User Api`, () => {
       token: `${USERNAME}:${PASSWORD}`,
     });
     const res = await authClient.listUsers();
-    expect(res.usernames).toEqual([USERNAME, 'root']);
+    expect(res.usernames).toEqual(['root', USERNAME]);
   });
 
-  it(`Clean all role priviledges`, async () => {
+  it(`Clean all role privileges`, async () => {
     authClient = new MilvusClient(IP, false, USERNAME, PASSWORD);
     await authClient.dropAllRoles();
     const res = await authClient.listRoles();
@@ -138,7 +138,7 @@ describe(`User Api`, () => {
       password: NEW_PASSWORD,
     });
     const res = await authClient.createRole({
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
     });
     // console.log('createRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -147,7 +147,7 @@ describe(`User Api`, () => {
   it(`It should add user to role successfully`, async () => {
     const res = await authClient.addUserToRole({
       username: USERNAME,
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
     });
     // console.log('addUserToRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -161,12 +161,12 @@ describe(`User Api`, () => {
 
   it(`It should get role successfully`, async () => {
     const res = await authClient.selectRole({
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
     });
     // console.log('selectRole', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].users[0].name).toEqual(USERNAME);
-    expect(res.results[0].role.name).toEqual(ROLENAME);
+    expect(res.results[0].role.name).toEqual(ROLE_NAME);
   });
 
   it(`It should get user successfully`, async () => {
@@ -176,25 +176,25 @@ describe(`User Api`, () => {
     // console.log('selectUser', res.results);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].user.name).toEqual(USERNAME);
-    expect(res.results[0].roles[0].name).toEqual(ROLENAME);
+    expect(res.results[0].roles[0].name).toEqual(ROLE_NAME);
   });
 
   it(`It should grant privilege to role successfully`, async () => {
     const res = await authClient.grantRolePrivilege({
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
       object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
-    // console.log('grant privilege to role', ROLENAME, res);
+    // console.log('grant privilege to role', ROLE_NAME, res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should list grants successfully`, async () => {
     const res = await authClient.listGrants({
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
     });
-    // console.log('list grants', ROLENAME, res);
+    // console.log('list grants', ROLE_NAME, res);
     expect(res.entities.length).toEqual(1);
     expect(res.entities[0].object_name).toEqual(COLLECTION_NAME);
     expect(res.entities[0].object.name).toEqual(RbacObjects.Collection);
@@ -204,39 +204,39 @@ describe(`User Api`, () => {
 
   it(`It should select grant successfully`, async () => {
     const res = await authClient.selectGrant({
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
       object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
-    // console.log('selectGrant', ROLENAME, res);
+    // console.log('selectGrant', ROLE_NAME, res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should check role name  successfully`, async () => {
     const res = await authClient.hasRole({
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
     });
-    // console.log('hasRole', ROLENAME, res);
+    // console.log('hasRole', ROLE_NAME, res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.hasRole).toEqual(true);
   });
 
   it(`It should revoke privilege to role successfully`, async () => {
     const res = await authClient.revokeRolePrivilege({
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
       object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
-    // console.log('revoke privilege to role', ROLENAME, res);
+    // console.log('revoke privilege to role', ROLE_NAME, res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should remove user from role successfully`, async () => {
     const res = await authClient.removeUserFromRole({
       username: USERNAME,
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
     });
     // console.log('addUserToRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -244,7 +244,7 @@ describe(`User Api`, () => {
 
   it(`It should drop role successfully`, async () => {
     const res = await authClient.dropRole({
-      roleName: ROLENAME,
+      roleName: ROLE_NAME,
     });
     // console.log('dropRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);

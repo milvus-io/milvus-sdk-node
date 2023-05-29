@@ -4,9 +4,14 @@ import { IP, genCollectionParams, GENERATE_NAME } from './tools';
 let milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_ALIAS = GENERATE_NAME('alias');
+const dbParam = {
+  db_name: 'Alias',
+};
 
 describe(`Alias API`, () => {
   beforeAll(async () => {
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
     await milvusClient.createCollection(
       genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
     );
@@ -16,6 +21,7 @@ describe(`Alias API`, () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create alias should throw ALIAS_NAME_IS_REQUIRED`, async () => {

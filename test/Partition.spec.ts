@@ -10,9 +10,14 @@ import { timeoutTest } from './tools';
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const PARTITION_NAME = GENERATE_NAME('partition');
+const dbParam = {
+  db_name: 'Partition',
+};
 
 describe(`Partition API`, () => {
   beforeAll(async () => {
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
     await milvusClient.createCollection(
       genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 })
     );
@@ -32,6 +37,7 @@ describe(`Partition API`, () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create Partition`, async () => {

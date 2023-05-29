@@ -12,8 +12,11 @@ const milvusClient = new MilvusClient({ address: IP, debug: false });
 // names
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_WITHOUT_INDEX_NAME = GENERATE_NAME();
-const INDEX_COLLECTIONS = Array(7).fill(1);
+const dbParam = {
+  db_name: 'MilvusIndex',
+};
 
+const INDEX_COLLECTIONS = Array(7).fill(1);
 for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
   INDEX_COLLECTIONS[i] = GENERATE_NAME();
 }
@@ -28,8 +31,11 @@ const [
   DISKANN,
 ] = INDEX_COLLECTIONS;
 
-describe(`Index API`, () => {
+describe(`Milvus Index API`, () => {
   beforeAll(async () => {
+    // create db and use db
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
     await milvusClient.createCollection(
       genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
     );
@@ -60,6 +66,7 @@ describe(`Index API`, () => {
         collection_name: INDEX_COLLECTIONS[i],
       });
     }
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create FLAT index should success`, async () => {

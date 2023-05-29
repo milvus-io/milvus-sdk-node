@@ -17,9 +17,14 @@ const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME2 = GENERATE_NAME();
 const COLLECTION_DATA_NAME = GENERATE_NAME();
 const numPartitions = 3;
+const dbParam = {
+  db_name: 'PartitionKey',
+};
 
 describe(`Partition key API`, () => {
   beforeAll(async () => {
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
     // create
     const createCollectionParams = genCollectionParams({
       collectionName: COLLECTION_DATA_NAME,
@@ -66,6 +71,7 @@ describe(`Partition key API`, () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_DATA_NAME,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create Collection with 2 partition key fields should throw error`, async () => {

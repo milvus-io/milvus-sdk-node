@@ -8,6 +8,9 @@ import {
 
 const milvusClient = new MilvusClient({ address: IP, debug: false });
 const COLLECTION = GENERATE_NAME();
+const dbParam = {
+  db_name: 'MilvusIndex',
+};
 const numPartitions = 3;
 
 const dynamicFields = [
@@ -41,16 +44,16 @@ const createCollectionParams = genCollectionParams({
 });
 
 describe(`Dynamic schema API`, () => {
-  // beforeAll(async () => {
-  //   const cols = await milvusClient.showCollections();
-  //   cols.data.forEach(async col => {
-  //     await milvusClient.dropCollection({ collection_name: col.name });
-  //   });
-  // });
+  beforeAll(async () => {
+    // create db and use db
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
+  });
   afterAll(async () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION,
     });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create dynamic schema collection should success`, async () => {

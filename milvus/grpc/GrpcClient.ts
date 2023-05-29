@@ -1,4 +1,4 @@
-import { credentials } from '@grpc/grpc-js';
+import { credentials, Metadata } from '@grpc/grpc-js';
 import dayjs from 'dayjs';
 import {
   GetVersionResponse,
@@ -9,12 +9,13 @@ import {
   promisify,
   getGRPCService,
   formatAddress,
-  getAuthInterceptor,
+  getAuthString,
   getRetryInterceptor,
   getMetaInterceptor,
   ErrorCode,
   DEFAULT_DB,
   ResStatus,
+  METADATA,
 } from '../';
 import { User } from './User';
 
@@ -24,20 +25,16 @@ import { User } from './User';
 export class GRPCClient extends User {
   // create a grpc service client(connect)
   connect(sdkVersion: string) {
-    // if we need to create auth interceptors
-    const needAuth =
-      (this.config.username !== undefined &&
-        this.config.password !== undefined) ||
-      this.config.token !== undefined;
-
     // get Milvus GRPC service
     const MilvusService = getGRPCService({
       protoPath: this.protoPath,
       serviceName: this.protoInternalPath.serviceName, // the name of the Milvus service
     });
 
-    // auth interceptor
-    const authInterceptor = needAuth ? getAuthInterceptor(this.config) : null;
+    // meta interceptor, add the injector
+    const metaInterceptor = getMetaInterceptor(
+      this.onMetadataUpdated.bind(this)
+    );
 
     // retry interceptor
     const retryInterceptor = getRetryInterceptor({
@@ -52,10 +49,16 @@ export class GRPCClient extends User {
       debug: this.config.debug || DEFAULT_DEBUG,
     });
     // interceptors
-    const interceptors = [authInterceptor, retryInterceptor];
+    const interceptors = [metaInterceptor, retryInterceptor];
 
     // add interceptors
     this.channelOptions.interceptors = interceptors;
+
+    // setup auth if necessary
+    const auth = getAuthString(this.config);
+    if (auth.length > 0) {
+      this.metadata.set(METADATA.AUTH, auth);
+    }
 
     // create grpc client
     this.client = new MilvusService(
@@ -72,14 +75,36 @@ export class GRPCClient extends User {
     }
   }
 
-  // use db
-  async use(data?: { database: string }): Promise<ResStatus> {
+  /**
+   * Injects client metadata into the metadata of the gRPC client.
+   * @param metadata The metadata object of the gRPC client.
+   * @returns The updated metadata object.
+   */
+  protected onMetadataUpdated(metadata: Metadata) {
+    // inject client metadata into the metadata of the grpc client
+    for (var [key, value] of this.metadata) {
+      metadata.add(key, value);
+    }
+
+    return metadata;
+  }
+
+  /**
+   * Sets the active database for the gRPC client.
+   * @param data An optional object containing the name of the database to use.
+   * @returns A Promise that resolves with a `ResStatus` object.
+   */
+  async use(data?: { db_name: string }): Promise<ResStatus> {
     return new Promise(resolve => {
-      if (!data || data.database === '') {
-        console.warn(`No database name provided, using default database: ${DEFAULT_DB}`);
+      if (!data || data.db_name === '') {
+        console.info(
+          `No database name provided, using default database: ${DEFAULT_DB}`
+        );
       }
-      this.channelOptions.interceptors.unshift(
-        getMetaInterceptor([{ dbname: (data && data.database) || DEFAULT_DB }]) // add database indentifier
+      // update database
+      this.metadata.set(
+        METADATA.DATABASE,
+        (data && data.db_name) || DEFAULT_DB
       );
 
       resolve({ error_code: ErrorCode.SUCCESS, reason: '' });
@@ -98,12 +123,12 @@ export class GRPCClient extends User {
     };
 
     return promisify(this.client, 'Connect', userInfo, this.timeout).then(f => {
-      // add new indentifier interceptor
+      // add new identifier interceptor
       if (f.identifier) {
-        this.channelOptions.interceptors.unshift(
-          getMetaInterceptor([{ identifier: f.identifier }]) // add indentifier
-        );
-        // setup indentifier
+        // update identifier
+        this.metadata.set(METADATA.CLIENT_ID, f.identifier);
+
+        // setup identifier
         this.serverInfo = f.server_info;
       }
     });

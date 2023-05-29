@@ -22,6 +22,8 @@ export interface ClientConfig {
   maxRetries?: number;
   // retry delay
   retryDelay?: number;
+  // database
+  database?: string;
   // open debug logs
   debug?: boolean;
 }

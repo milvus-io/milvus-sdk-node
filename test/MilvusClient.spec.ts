@@ -2,7 +2,7 @@ import { MilvusClient, ERROR_REASONS } from '../milvus';
 import sdkInfo from '../sdk.json';
 import { IP } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP, debug: true });
+const milvusClient = new MilvusClient({ address: IP, debug: false });
 
 describe(`Milvus client`, () => {
   afterEach(() => {

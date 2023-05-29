@@ -12,6 +12,7 @@
     "build": "rm -rf dist && tsc --declaration && node build.js",
     "testAll": "jest --testPathIgnorePatterns=/test/build/",
     "test": "jest",
+    "test2": "jest --runInBand",
     "coverage": "jest --coverage=true --config jest.config.js --no-cache --testPathIgnorePatterns=/test/build/",
     "build-test": " yarn build && jest test/build/Collection.spec.ts",
     "example": "npx ts-node",
