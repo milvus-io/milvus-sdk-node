@@ -74,6 +74,7 @@ export class MilvusClient extends GRPCClient {
             dim: dimension,
           },
         ],
+        enable_dynamic_field: true,
       });
     }
 

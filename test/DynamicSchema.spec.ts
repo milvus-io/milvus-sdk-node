@@ -4,6 +4,7 @@ import {
   genCollectionParams,
   GENERATE_NAME,
   generateInsertData,
+  dynamicFields,
 } from './tools';
 
 const milvusClient = new MilvusClient({ address: IP });
@@ -12,25 +13,6 @@ const dbParam = {
   db_name: 'MilvusIndex',
 };
 const numPartitions = 3;
-
-const dynamicFields = [
-  {
-    name: 'dynamic_int64',
-    description: 'dynamic int64 field',
-    data_type: 'Int64', // test string type
-  },
-  {
-    name: 'dynamic_varChar',
-    description: 'VarChar field',
-    data_type: DataType.VarChar,
-    max_length: 128,
-  },
-  {
-    name: 'dynamic_JSON',
-    description: 'JSON field',
-    data_type: DataType.JSON,
-  },
-];
 
 // create
 const createCollectionParams = genCollectionParams({

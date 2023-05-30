@@ -4,31 +4,41 @@ import {
   genCollectionParams,
   GENERATE_NAME,
   generateInsertData,
+  dynamicFields,
 } from './tools';
 
-let milvusClient = new MilvusClient({ address: IP, debug: false });
+let milvusClient = new MilvusClient({ address: IP });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
 const EXIST_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_COLLECTION_NAME,
   dim: '8',
+  enableDynamic: true,
 });
 const EXIST_LOADED_COLLECTION_NAME = GENERATE_NAME();
 const EXIST_LOADED_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_LOADED_COLLECTION_NAME,
   dim: '8',
+  enableDynamic: true,
 });
 const EXIST_INDEXED_COLLECTION_NAME = GENERATE_NAME();
 const EXIST_INDEXED_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_INDEXED_COLLECTION_NAME,
   dim: '8',
+  enableDynamic: true,
 });
 
 const dbParam = {
   db_name: 'HighLevel',
 };
 
-const data = generateInsertData(EXIST_COLLECTION_PARAMS.fields, 10);
+const data = generateInsertData(
+  [...EXIST_COLLECTION_PARAMS.fields, ...dynamicFields],
+  10
+);
+
+console.log(EXIST_COLLECTION_PARAMS.fields);
+console.log(data);
 
 // console.log('data to insert', data);
 
@@ -90,7 +100,7 @@ describe(`High level API`, () => {
     expect(collection.name).toEqual(NEW_COLLECTION_NAME);
     const collectionInfo = await collection.info();
     expect(collectionInfo.schema.fields.length).toEqual(2); // TODO: json
-
+    expect(collectionInfo.schema.enable_dynamic_field).toEqual(true);
     const count = await collection.count();
     expect(typeof count).toEqual('number');
     // insert
