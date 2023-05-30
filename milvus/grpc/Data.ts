@@ -460,7 +460,7 @@ export class Data extends Collection {
 
         scores.splice(0, topk).forEach((score, scoreIndex) => {
           // get correct index
-          const i = index === 0 ? scoreIndex : scoreIndex + topk;
+          const i = index === 0 ? scoreIndex : scoreIndex + topk * index;
           // fix round_decimal
           const fixedScore =
             typeof round_decimal === 'undefined' || round_decimal === -1
