@@ -219,7 +219,7 @@ export const getRetryInterceptor = ({
                 break;
               default:
                 // OK
-                logger.silly(
+                logger.debug(
                   `[DB:${dbname}:${methodName}] executed in ${
                     Date.now() - startTime.getTime()
                   }ms, returns ${JSON.stringify(savedReceiveMessage)}`
