@@ -5,7 +5,6 @@ import {
   CheckHealthResponse,
   DEFAULT_MAX_RETRIES,
   DEFAULT_RETRY_DELAY,
-  DEFAULT_DEBUG,
   promisify,
   getGRPCService,
   formatAddress,
