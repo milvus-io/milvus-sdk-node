@@ -1,7 +1,7 @@
 import { MilvusClient } from '@zilliz/milvus2-sdk-node';
-import { IP } from '../const';
+// import { MilvusClient } from '../dist/milvus';
 
-const milvusClient = new MilvusClient(IP);
+const milvusClient = new MilvusClient({ address: 'localhost' });
 
 const test = async () => {
   let res: any = await milvusClient.getMetric({

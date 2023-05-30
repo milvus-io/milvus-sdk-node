@@ -14,7 +14,7 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP, debug: true });
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
@@ -457,7 +457,7 @@ describe(`Collection API`, () => {
       type: ShowCollectionsType.Loaded,
     });
 
-    console.log('show——loaded', res);
+    // console.log('show——loaded', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

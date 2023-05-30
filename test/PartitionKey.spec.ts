@@ -12,7 +12,7 @@ import {
   generateInsertData,
 } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP, debug: false });
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME2 = GENERATE_NAME();
 const COLLECTION_DATA_NAME = GENERATE_NAME();

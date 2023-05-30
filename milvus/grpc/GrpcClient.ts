@@ -5,7 +5,6 @@ import {
   CheckHealthResponse,
   DEFAULT_MAX_RETRIES,
   DEFAULT_RETRY_DELAY,
-  DEFAULT_DEBUG,
   promisify,
   getGRPCService,
   formatAddress,
@@ -16,6 +15,7 @@ import {
   DEFAULT_DB,
   ResStatus,
   METADATA,
+  logger,
 } from '../';
 import { User } from './User';
 
@@ -33,7 +33,7 @@ export class GRPCClient extends User {
 
     // meta interceptor, add the injector
     const metaInterceptor = getMetaInterceptor(
-      this.onMetadataUpdated.bind(this)
+      this.metadataListener.bind(this)
     );
 
     // retry interceptor
@@ -46,7 +46,6 @@ export class GRPCClient extends User {
         typeof this.config.retryDelay === 'undefined'
           ? DEFAULT_RETRY_DELAY
           : this.config.retryDelay,
-      debug: this.config.debug || DEFAULT_DEBUG,
     });
     // interceptors
     const interceptors = [metaInterceptor, retryInterceptor];
@@ -71,7 +70,7 @@ export class GRPCClient extends User {
     try {
       this._getServerInfo(sdkVersion);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
     }
   }
 
@@ -80,7 +79,7 @@ export class GRPCClient extends User {
    * @param metadata The metadata object of the gRPC client.
    * @returns The updated metadata object.
    */
-  protected onMetadataUpdated(metadata: Metadata) {
+  protected metadataListener(metadata: Metadata) {
     // inject client metadata into the metadata of the grpc client
     for (var [key, value] of this.metadata) {
       metadata.add(key, value);
@@ -97,7 +96,7 @@ export class GRPCClient extends User {
   async use(data?: { db_name: string }): Promise<ResStatus> {
     return new Promise(resolve => {
       if (!data || data.db_name === '') {
-        console.info(
+        logger.info(
           `No database name provided, using default database: ${DEFAULT_DB}`
         );
       }
@@ -137,42 +136,42 @@ export class GRPCClient extends User {
   // @deprecated
   get collectionManager() {
     /* istanbul ignore next */
-    console.warn(
+    logger.warn(
       `collectionManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get partitionManager() {
     /* istanbul ignore next */
-    console.warn(
+    logger.warn(
       `partitionManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get indexManager() {
     /* istanbul ignore next */
-    console.warn(
+    logger.warn(
       `indexManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get dataManager() {
     /* istanbul ignore next */
-    console.warn(
+    logger.warn(
       `dataManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get resourceManager() {
     /* istanbul ignore next */
-    console.warn(
+    logger.warn(
       `resourceManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
   }
   get userManager() {
     /* istanbul ignore next */
-    console.warn(
+    logger.warn(
       `userManager are no longer necessary, you can call methods directly on the client object.`
     );
     return this;
