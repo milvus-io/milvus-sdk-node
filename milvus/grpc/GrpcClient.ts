@@ -68,7 +68,9 @@ export class GRPCClient extends User {
 
     // get server info, only works after milvus v2.2.9
     try {
-      this._getServerInfo(sdkVersion);
+      this._getServerInfo(sdkVersion).then(info => {
+        logger.info(info);
+      });
     } catch (e) {
       logger.error(e);
     }
@@ -93,7 +95,7 @@ export class GRPCClient extends User {
    * @param data An optional object containing the name of the database to use.
    * @returns A Promise that resolves with a `ResStatus` object.
    */
-  async use(data?: { db_name: string }): Promise<ResStatus> {
+  async use(data?: { db_name: string }): Promise<any> {
     return new Promise(resolve => {
       if (!data || data.db_name === '') {
         logger.info(

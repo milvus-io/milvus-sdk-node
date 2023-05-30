@@ -153,9 +153,9 @@ export const getRetryInterceptor = ({
               const _timeout = deadline.getTime() - startTime.getTime();
               // log
               logger.debug(
-                `[DB:${dbname}:${methodName}] executed failed, status: ${
-                  grpcStatus[status.code]
-                }, timeout set: ${_timeout}ms, retry after ${_retryDelay} ms.`
+                `[DB:${dbname}:${methodName}] executed failed, status: ${JSON.stringify(
+                  status
+                )}, timeout set: ${_timeout}ms, retry after ${_retryDelay} ms.`
               );
 
               // retry listener
@@ -200,16 +200,32 @@ export const getRetryInterceptor = ({
               newCall.start(metadata, retryListener);
             };
 
-            if (isStatusCodeMatched(status.code)) {
-              retry(savedSendMessage, savedMetadata);
-            } else {
-              logger.debug(
-                `[DB:${dbname}:${methodName}] executed in ${
-                  Date.now() - startTime.getTime()
-                }ms.`
-              );
-              savedMessageNext(savedReceiveMessage);
-              next(status);
+            // check grpc status
+            switch (status.code) {
+              case grpcStatus.DEADLINE_EXCEEDED:
+              case grpcStatus.UNAVAILABLE:
+              case grpcStatus.INTERNAL:
+                retry(savedSendMessage, savedMetadata);
+                break;
+              case grpcStatus.UNIMPLEMENTED:
+                const returnMsg = { error_code: 'Success', reason: '' };
+                logger.debug(
+                  `[DB:${dbname}:${methodName}] returns ${JSON.stringify(
+                    status
+                  )}`
+                );
+                savedMessageNext(returnMsg);
+                next({ code: grpcStatus.OK });
+                break;
+              default:
+                // OK
+                logger.silly(
+                  `[DB:${dbname}:${methodName}] executed in ${
+                    Date.now() - startTime.getTime()
+                  }ms, returns ${JSON.stringify(savedReceiveMessage)}`
+                );
+                savedMessageNext(savedReceiveMessage);
+                next(status);
             }
           },
         };
@@ -218,7 +234,7 @@ export const getRetryInterceptor = ({
       },
       sendMessage: function (message: any, next: any) {
         logger.silly(
-          `[DB:${dbname}:${methodName}] returns ${JSON.stringify(message)}`
+          `[DB:${dbname}:${methodName}] sending ${JSON.stringify(message)}`
         );
         savedSendMessage = message;
         next(message);
