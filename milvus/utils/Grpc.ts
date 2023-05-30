@@ -173,7 +173,9 @@ export const getRetryInterceptor = ({
                       }, _retryDelay);
                     } else {
                       logger.debug(
-                        `[DB:${dbname}:${methodName}] retry run out of ${retries} times.`
+                        `[DB:${dbname}:${methodName}] retry run out of ${retries} times. ${JSON.stringify(
+                          status
+                        )}`
                       );
 
                       // we still pop up server information to client
