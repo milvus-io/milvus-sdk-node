@@ -24,8 +24,6 @@ export interface ClientConfig {
   retryDelay?: number;
   // database
   database?: string;
-  // open debug logs
-  debug?: boolean;
 }
 
 export interface ServerInfo {

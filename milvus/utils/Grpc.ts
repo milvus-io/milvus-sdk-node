@@ -7,7 +7,7 @@ import {
   InterceptingCall,
   status as grpcStatus,
 } from '@grpc/grpc-js';
-import { extractMethodName, isStatusCodeMatched } from '.';
+import { extractMethodName, isStatusCodeMatched, logger } from '.';
 import { DEFAULT_DB } from '../const';
 
 const PROTO_OPTIONS = {
@@ -87,18 +87,15 @@ export const getMetaInterceptor = (
  * @param {Object} options - The options object.
  * @param {number} options.maxRetries - The maximum number of times to retry a failed request.
  * @param {number} options.retryDelay - The delay in milliseconds between retries.
- * @param {boolean} options.debug - Whether to log debug information.
  * @returns {Function} The gRPC interceptor function.
  */
 /* istanbul ignore next */
 export const getRetryInterceptor = ({
   maxRetries = 3,
   retryDelay = 30,
-  debug = true,
 }: {
   maxRetries: number;
   retryDelay: number;
-  debug: boolean;
 }) =>
   function (options: any, nextCall: any) {
     let savedMetadata: any;
@@ -125,14 +122,17 @@ export const getRetryInterceptor = ({
 
     // start time
     const startTime = new Date();
+    let dbname = '';
 
-    // requester, used to reexecute method
+    // requester, used to re-execute method
     let requester = {
       start: function (metadata: any, listener: any, next: any) {
         savedMetadata = metadata;
 
         // get db name
-        const dbname = metadata.get('dbname') || DEFAULT_DB;
+        dbname = metadata.get('dbname') || DEFAULT_DB;
+
+        // logger.debug(`[DB:${dbname}:${methodName}] started.`);
 
         const newListener = {
           onReceiveMessage: function (message: any, next: any) {
@@ -144,10 +144,22 @@ export const getRetryInterceptor = ({
             let retries = 0;
             // retry function
             let retry = function (message: any, metadata: any) {
+              // retry count
               retries++;
-              let newCall = nextCall(options);
-              // retry
-              newCall.start(metadata, {
+              // retry delay
+              const _retryDelay = Math.pow(2, retries) * retryDelay;
+
+              // timeout
+              const _timeout = deadline.getTime() - startTime.getTime();
+              // log
+              logger.debug(
+                `[DB:${dbname}:${methodName}] executed failed, status: ${JSON.stringify(
+                  status
+                )}, timeout set: ${_timeout}ms, retry after ${_retryDelay} ms.`
+              );
+
+              // retry listener
+              const retryListener = {
                 onReceiveMessage: function (message: any) {
                   savedReceiveMessage = message;
                 },
@@ -155,46 +167,65 @@ export const getRetryInterceptor = ({
                   if (isStatusCodeMatched(status.code)) {
                     if (retries < maxRetries) {
                       setTimeout(() => {
+                        // need to update the deadline
                         retry(message, metadata);
                         // double increase delay every retry
-                      }, Math.pow(2, retries) * retryDelay);
+                      }, _retryDelay);
                     } else {
-                      if (debug) {
-                        if (deadline > startTime) {
-                          console.info(
-                            `[DB:${dbname}:${methodName}] is timeout, timeout set: ${
-                              deadline.getTime() - startTime.getTime()
-                            }ms.`
-                          );
-                        } else {
-                          console.info(
-                            `[DB:${dbname}:${methodName}] retry run out of ${retries} times.`
-                          );
-                        }
-                      }
+                      logger.debug(
+                        `[DB:${dbname}:${methodName}] retry run out of ${retries} times. ${JSON.stringify(
+                          status
+                        )}`
+                      );
 
+                      // we still pop up server information to client
                       savedMessageNext(savedReceiveMessage);
+                      // and do the next call if there is
                       next(status);
                     }
                   } else {
+                    logger.debug(
+                      `[DB:${dbname}:${methodName}] retried successfully in ${
+                        Date.now() - startTime.getTime()
+                      }ms.`
+                    );
                     savedMessageNext(savedReceiveMessage);
                     next({ code: grpcStatus.OK });
                   }
                 },
-              });
+              };
+              // retry, update deadline
+              options.deadline = new Date(Date.now() + _timeout);
+              let newCall = nextCall(options);
+              newCall.start(metadata, retryListener);
             };
 
-            if (isStatusCodeMatched(status.code)) {
-              retry(savedSendMessage, savedMetadata);
-            } else {
-              debug &&
-                console.info(
+            // check grpc status
+            switch (status.code) {
+              case grpcStatus.DEADLINE_EXCEEDED:
+              case grpcStatus.UNAVAILABLE:
+              case grpcStatus.INTERNAL:
+                retry(savedSendMessage, savedMetadata);
+                break;
+              case grpcStatus.UNIMPLEMENTED:
+                const returnMsg = { error_code: 'Success', reason: '' };
+                logger.debug(
+                  `[DB:${dbname}:${methodName}] returns ${JSON.stringify(
+                    status
+                  )}`
+                );
+                savedMessageNext(returnMsg);
+                next({ code: grpcStatus.OK });
+                break;
+              default:
+                // OK
+                logger.debug(
                   `[DB:${dbname}:${methodName}] executed in ${
                     Date.now() - startTime.getTime()
-                  }ms.`
+                  }ms, returns ${JSON.stringify(savedReceiveMessage)}`
                 );
-              savedMessageNext(savedReceiveMessage);
-              next(status);
+                savedMessageNext(savedReceiveMessage);
+                next(status);
             }
           },
         };
@@ -202,6 +233,9 @@ export const getRetryInterceptor = ({
         next(metadata, newListener);
       },
       sendMessage: function (message: any, next: any) {
+        logger.silly(
+          `[DB:${dbname}:${methodName}] sending ${JSON.stringify(message)}`
+        );
         savedSendMessage = message;
         next(message);
       },

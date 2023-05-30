@@ -2,7 +2,7 @@ import { MilvusClient, ERROR_REASONS } from '../milvus';
 import sdkInfo from '../sdk.json';
 import { IP } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP, debug: false });
+const milvusClient = new MilvusClient({ address: IP });
 
 describe(`Milvus client`, () => {
   afterEach(() => {
@@ -15,7 +15,6 @@ describe(`Milvus client`, () => {
       ssl: false,
       username: 'username',
       password: 'password',
-      debug: false,
     });
 
     expect(milvusClient.client).toBeDefined();
