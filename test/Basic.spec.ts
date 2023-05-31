@@ -34,7 +34,6 @@ describe(`Basic API without database`, () => {
     // show collections
     const show = await milvusClient.showCollections();
     expect(show.status.error_code).toEqual(ErrorCode.SUCCESS);
-    console.log('show', show);
 
     // releases
     const release = await milvusClient.releaseCollection({

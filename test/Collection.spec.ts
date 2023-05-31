@@ -218,7 +218,6 @@ describe(`Collection API`, () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    // console.log(res);
     expect(res1.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -235,7 +234,6 @@ describe(`Collection API`, () => {
     const res = await milvusClient.hasCollection({
       collection_name: COLLECTION_NAME,
     });
-    // console.log('----has collection', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.value).toEqual(true);
   });
@@ -278,7 +276,6 @@ describe(`Collection API`, () => {
 
   it(`Show all collections`, async () => {
     const res = await milvusClient.showCollections();
-    // console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
   });
@@ -309,7 +306,6 @@ describe(`Collection API`, () => {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    // console.log('---- describe collection ---', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
@@ -349,7 +345,6 @@ describe(`Collection API`, () => {
     const res = await milvusClient.getLoadingProgress({
       collection_name: LOAD_COLLECTION_NAME_SYNC,
     });
-    // console.log('loadingProgress', loadingProgress);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(typeof res.progress).toEqual('string'); // int64 in node is string
   });
@@ -366,7 +361,6 @@ describe(`Collection API`, () => {
     const res = await milvusClient.getLoadState({
       collection_name: LOAD_COLLECTION_NAME_SYNC,
     });
-    // console.log('load state', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(Object.values(LoadState).includes(res.state));
   });
@@ -442,22 +436,21 @@ describe(`Collection API`, () => {
     }
   });
 
-  // it(`Load Collection Async success`, async () => {
-  //   await milvusClient.releaseCollection({
-  //     collection_name: LOAD_COLLECTION_NAME,
-  //   });
-  //   const res = await milvusClient.loadCollection({
-  //     collection_name: LOAD_COLLECTION_NAME,
-  //   });
-  //   expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
+  it(`Load Collection Async success`, async () => {
+    await milvusClient.releaseCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+    const res = await milvusClient.loadCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
   it(`Show loaded collections success`, async () => {
     const res = await milvusClient.showCollections({
       type: ShowCollectionsType.Loaded,
     });
 
-    // console.log('show——loaded', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

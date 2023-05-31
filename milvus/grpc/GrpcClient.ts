@@ -13,7 +13,6 @@ import {
   getMetaInterceptor,
   ErrorCode,
   DEFAULT_DB,
-  ResStatus,
   METADATA,
   logger,
 } from '../';
@@ -67,11 +66,7 @@ export class GRPCClient extends User {
     );
 
     // get server info, only works after milvus v2.2.9
-    try {
-      this._getServerInfo(sdkVersion);
-    } catch (e) {
-      logger.error(e);
-    }
+    this._getServerInfo(sdkVersion);
   }
 
   /**

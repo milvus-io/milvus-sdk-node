@@ -208,15 +208,15 @@ export const getRetryInterceptor = ({
                 retry(savedSendMessage, savedMetadata);
                 break;
               case grpcStatus.UNIMPLEMENTED:
-                const returnMsg = { error_code: 'Success', reason: '' };
+                // const returnMsg = { error_code: 'Success', reason: '' };
                 logger.debug(
                   `[DB:${dbname}:${methodName}] returns ${JSON.stringify(
                     status
                   )}`
                 );
-                savedMessageNext(returnMsg);
-                next({ code: grpcStatus.OK });
-                break;
+                throw new Error(
+                  'This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.'
+                );
               default:
                 // OK
                 logger.debug(
@@ -233,7 +233,7 @@ export const getRetryInterceptor = ({
         next(metadata, newListener);
       },
       sendMessage: function (message: any, next: any) {
-        logger.silly(
+        logger.debug(
           `[DB:${dbname}:${methodName}] sending ${JSON.stringify(message)}`
         );
         savedSendMessage = message;

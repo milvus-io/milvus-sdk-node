@@ -4,6 +4,7 @@ import {
   ErrorCode,
   ERROR_REASONS,
   DEFAULT_TOPK,
+  ConsistencyLevelEnum,
 } from '../milvus';
 import {
   IP,
@@ -142,7 +143,6 @@ describe(`Data.API`, () => {
       limit: limit,
     });
 
-    // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results.length).toEqual(limit);
 
@@ -163,7 +163,6 @@ describe(`Data.API`, () => {
       vector: [1, 2, 3, 4],
     });
 
-    // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results.length).toEqual(DEFAULT_TOPK);
   });
@@ -179,7 +178,6 @@ describe(`Data.API`, () => {
       params: { nprobe: 1024 },
     });
 
-    // console.log('----search without ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results.length).toEqual(limit);
 
@@ -192,7 +190,6 @@ describe(`Data.API`, () => {
       params: { nprobe: 1024 },
     });
 
-    // console.log(res.results, res2.results)
     expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res2.results[0].id).toEqual(res.results[offset].id);
   });
@@ -235,7 +232,6 @@ describe(`Data.API`, () => {
       output_fields: ['age', 'meta'],
     });
 
-    // console.log('----search ----', res.results);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
       res.results.forEach(r => {
@@ -254,7 +250,6 @@ describe(`Data.API`, () => {
       output_fields: ['age', 'meta'],
     });
 
-    // console.log('----search ----', res.results);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
       res.results.forEach(r => {
@@ -280,7 +275,6 @@ describe(`Data.API`, () => {
       vector_type: DataType.FloatVector,
     });
 
-    // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -301,7 +295,6 @@ describe(`Data.API`, () => {
       vector_type: DataType.FloatVector,
     });
 
-    // console.log('----search ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -334,7 +327,6 @@ describe(`Data.API`, () => {
       offset: 0,
       limit: 3,
     });
-    // console.log('----query with data limit3, offset: 0 ----', res);
     expect(res.data.length).toBe(3);
   });
 
@@ -347,7 +339,6 @@ describe(`Data.API`, () => {
       limit: 3,
     });
 
-    // console.log('----query ---', expr, res.data);
     expect(res.data.length).toBe(3);
   });
 
@@ -360,7 +351,6 @@ describe(`Data.API`, () => {
       offset: 0,
       limit: 3,
     });
-    // console.log('----query JSON data with float ---', expr, res.data);
     expect(res.data.length).toBe(3);
   });
 
@@ -373,7 +363,6 @@ describe(`Data.API`, () => {
       offset: 0,
       limit: 3,
     });
-    // console.log('----query JSON data with number filter ---', expr, res.data);
     expect(res.data.length).toBe(3);
   });
 
@@ -384,7 +373,6 @@ describe(`Data.API`, () => {
       output_fields: ['age', VECTOR_FIELD_NAME],
     });
     expect(res3.status.error_code).toEqual(ErrorCode.SUCCESS);
-    // console.log('----query with data limit: not set, offset: 3 ----', res2);
   });
 
   it(`Query with empty data`, async () => {

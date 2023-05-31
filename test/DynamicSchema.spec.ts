@@ -1,4 +1,9 @@
-import { MilvusClient, DataType, ErrorCode } from '../milvus';
+import {
+  MilvusClient,
+  DataType,
+  ErrorCode,
+  ConsistencyLevelEnum,
+} from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -10,7 +15,7 @@ import {
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
-  db_name: 'MilvusIndex',
+  db_name: 'DynamicSchema',
 };
 const numPartitions = 3;
 
@@ -47,8 +52,6 @@ describe(`Dynamic schema API`, () => {
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION,
     });
-
-    // console.log('describe', describe);
   });
 
   it(`Insert data with dynamic field should success`, async () => {
@@ -57,13 +60,11 @@ describe(`Dynamic schema API`, () => {
       20
     );
 
-    // console.log(data);
     const insert = await milvusClient.insert({
       collection_name: COLLECTION,
       fields_data: data,
     });
 
-    // console.log('insert', insert);
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -78,7 +79,6 @@ describe(`Dynamic schema API`, () => {
       params: { nlist: 1024 },
     });
 
-    // console.log('createIndex', createIndex);
     expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
 
     // load
@@ -102,16 +102,15 @@ describe(`Dynamic schema API`, () => {
         'dynamic_int64',
         'dynamic_varChar',
       ],
+      consistency_level: ConsistencyLevelEnum.Session,
     });
-
-    // console.log('query', query.data);
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(query.data.length).toEqual(10);
   });
 
   it(`search with dynamic field should success`, async () => {
-    // query
+    // search
     const search = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,
@@ -121,14 +120,14 @@ describe(`Dynamic schema API`, () => {
       ],
       expr: 'age > 0',
       output_fields: ['*'],
+      consistency_level: ConsistencyLevelEnum.Session,
     });
 
-    // console.log('search', search);
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toEqual(2);
     expect(search.results[0].length).toEqual(10);
 
-    // query
+    // search
     const search2 = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,

@@ -162,12 +162,6 @@ describe(`Insert API`, () => {
     };
 
     const res = await milvusClient.insert(params);
-    // console.log(
-    //   '----generateInsertData ----',
-    //   COLLECTION_NAME_AUTO_ID_PARAMS.fields,
-    //   vectorsData,
-    //   res
-    // );
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -258,7 +252,6 @@ describe(`Insert API`, () => {
       await fakeClient.insert(params);
       expect('a').toEqual('b');
     } catch (error) {
-      // console.log('---error----', error);
       expect(error.message).toContain(
         ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE
       );
@@ -272,7 +265,6 @@ describe(`Insert API`, () => {
       collection_name: COLLECTION_NAME,
       expr: 'age in [1,2]',
     });
-    // console.log('----deleteEntities ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -306,8 +298,6 @@ describe(`Insert API`, () => {
       expr: 'age > 0',
       output_fields: ['meta', 'age'],
     });
-
-    console.log('query', query);
   });
 
   it(`Insert data on float field expect missing field throw error`, async () => {
@@ -387,7 +377,6 @@ describe(`Insert API`, () => {
     try {
       await milvusClient.insert(params);
     } catch (error) {
-      // console.log(error);
       expect(error.message).toContain('Insert fail');
     }
   });
@@ -412,7 +401,6 @@ describe(`Insert API`, () => {
       });
       expect('a').toEqual('b');
     } catch (error) {
-      // console.log(error);
       expect(error.message).toBe('error');
     } finally {
       fakeClient.closeConnection();
@@ -437,7 +425,6 @@ describe(`Insert API`, () => {
       // If not throw error, test fail
       expect('a').toEqual('b');
     } catch (error) {
-      // console.log(error);
       expect(error.message).toEqual(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
     }
   });

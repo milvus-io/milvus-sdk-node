@@ -52,7 +52,6 @@ describe(`Replica API`, () => {
       collectionID: collectionInfo.collectionID,
     });
 
-    // console.log('----getReplicas ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

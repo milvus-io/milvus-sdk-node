@@ -10,7 +10,7 @@ import {
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
-  db_name: 'MilvusIndex',
+  db_name: 'Import',
 };
 
 describe(`Import API`, () => {
