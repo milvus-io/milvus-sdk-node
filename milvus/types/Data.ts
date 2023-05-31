@@ -8,6 +8,7 @@ import {
   DataType,
   SegmentState,
   ImportState,
+  ConsistencyLevelEnum,
 } from '../';
 
 export interface FlushReq extends GrpcTimeOut {
@@ -178,6 +179,7 @@ export interface SearchSimpleReq extends GrpcTimeOut {
   partition_names?: string[];
   params?: keyValueObj;
   metric_type?: string;
+  consistency_level?: ConsistencyLevelEnum;
 }
 
 export interface SearchReq extends GrpcTimeOut {
@@ -191,6 +193,7 @@ export interface SearchReq extends GrpcTimeOut {
   travel_timestamp?: string;
   vector_type: DataType.BinaryVector | DataType.FloatVector;
   nq?: number;
+  consistency_level?: ConsistencyLevelEnum;
 }
 
 export interface SearchRes {
@@ -238,6 +241,7 @@ export interface QueryReq extends GrpcTimeOut {
   partition_names?: string[];
   offset?: number;
   limit?: number;
+  consistency_level?: ConsistencyLevelEnum,
 }
 
 export interface QueryRes {

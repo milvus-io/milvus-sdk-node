@@ -233,7 +233,7 @@ export const getRetryInterceptor = ({
         next(metadata, newListener);
       },
       sendMessage: function (message: any, next: any) {
-        logger.silly(
+        logger.debug(
           `[DB:${dbname}:${methodName}] sending ${JSON.stringify(message)}`
         );
         savedSendMessage = message;

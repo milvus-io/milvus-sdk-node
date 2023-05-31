@@ -4,6 +4,7 @@ import {
   ErrorCode,
   ERROR_REASONS,
   DEFAULT_TOPK,
+  ConsistencyLevelEnum,
 } from '../milvus';
 import {
   IP,

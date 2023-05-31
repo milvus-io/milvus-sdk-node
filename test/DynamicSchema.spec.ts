@@ -1,4 +1,9 @@
-import { MilvusClient, DataType, ErrorCode } from '../milvus';
+import {
+  MilvusClient,
+  DataType,
+  ErrorCode,
+  ConsistencyLevelEnum,
+} from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -9,7 +14,7 @@ import {
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
-  db_name: 'MilvusIndex',
+  db_name: 'DynamicSchema',
 };
 const numPartitions = 3;
 
@@ -115,6 +120,7 @@ describe(`Dynamic schema API`, () => {
         'dynamic_int64',
         'dynamic_varChar',
       ],
+      consistency_level: ConsistencyLevelEnum.Session,
     });
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -122,7 +128,7 @@ describe(`Dynamic schema API`, () => {
   });
 
   it(`search with dynamic field should success`, async () => {
-    // query
+    // search
     const search = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,
@@ -132,13 +138,14 @@ describe(`Dynamic schema API`, () => {
       ],
       expr: 'age > 0',
       output_fields: ['*'],
+      consistency_level: ConsistencyLevelEnum.Session,
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toEqual(2);
     expect(search.results[0].length).toEqual(10);
 
-    // query
+    // search
     const search2 = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,
