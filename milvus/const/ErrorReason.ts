@@ -43,6 +43,7 @@ export const ERROR_REASONS = {
   USERNAME_PWD_ARE_REQUIRED:
     'The `username` or `password` property is missing.',
   USERNAME_IS_REQUIRED: 'The `username` property is missing.',
+  FILTER_EXPR_REQUIRED: 'The `filter` or the `expr` property is missing.',
   TIMESTAMP_PARAM_CHECK:
     'The type of the `hybridts` property should be string (only contains number) or bigint.',
   DATE_TYPE_CHECK: 'The type of the `datetime` property should be Date.',

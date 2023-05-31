@@ -30,7 +30,8 @@ export interface InsertReq extends GrpcTimeOut {
 
 export interface DeleteEntitiesReq extends GrpcTimeOut {
   collection_name: string;
-  expr: string;
+  expr?: string;
+  filter?: string;
   partition_name?: string;
 }
 
@@ -236,12 +237,13 @@ export interface SearchRes {
 
 export interface QueryReq extends GrpcTimeOut {
   collection_name: string;
-  expr: string;
   output_fields?: string[];
   partition_names?: string[];
+  expr?: string;
+  filter?: string;
   offset?: number;
   limit?: number;
-  consistency_level?: ConsistencyLevelEnum,
+  consistency_level?: ConsistencyLevelEnum;
 }
 
 export interface QueryRes {

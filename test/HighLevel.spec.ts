@@ -12,19 +12,19 @@ const EXIST_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
 const EXIST_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_COLLECTION_NAME,
-  dim: '8',
+  dim: 8,
   enableDynamic: true,
 });
 const EXIST_LOADED_COLLECTION_NAME = GENERATE_NAME();
 const EXIST_LOADED_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_LOADED_COLLECTION_NAME,
-  dim: '8',
+  dim: 8,
   enableDynamic: true,
 });
 const EXIST_INDEXED_COLLECTION_NAME = GENERATE_NAME();
 const EXIST_INDEXED_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_INDEXED_COLLECTION_NAME,
-  dim: '8',
+  dim: 8,
   enableDynamic: true,
 });
 
@@ -36,11 +36,6 @@ const data = generateInsertData(
   [...EXIST_COLLECTION_PARAMS.fields, ...dynamicFields],
   10
 );
-
-console.log(EXIST_COLLECTION_PARAMS.fields);
-console.log(data);
-
-// console.log('data to insert', data);
 
 describe(`High level API`, () => {
   beforeAll(async () => {
@@ -154,11 +149,9 @@ describe(`High level API`, () => {
 
     expect(searchRes.results.length).toEqual(2);
 
-    // console.log('searchRes', searchRes);
-
     // query
     const queryRes = await collection.query({
-      expr: 'height > 0',
+      filter: 'height > 0',
       output_fields: ['height', 'age'],
       limit: 2,
     });
@@ -168,7 +161,7 @@ describe(`High level API`, () => {
 
     // get
     const getRes = await collection.get({
-      expr: 'height > 0',
+      filter: 'height > 0',
       output_fields: ['height', 'age'],
       limit: 2,
     });
@@ -178,10 +171,9 @@ describe(`High level API`, () => {
 
     // delete
     const deleteRes = await collection.delete({
-      expr: `age in [${queryRes.data.map(d => d.age).join(',')}]`,
+      filter: `age in [${queryRes.data.map(d => d.age).join(',')}]`,
     });
 
-    // console.log('deleteRes', queryRes, deleteRes);
     expect(deleteRes.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(Number(deleteRes.delete_cnt)).toEqual(2);
   });
