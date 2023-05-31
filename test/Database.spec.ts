@@ -40,14 +40,12 @@ describe(`Database API`, () => {
 
   it(`ListDatabases should be ok`, async () => {
     const allDatabases = await milvusClient.listDatabases();
-    // console.log(allDatabases);
     expect(allDatabases.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(allDatabases.db_names.length).toBeGreaterThan(1);
   });
 
   it(`drop database should be ok`, async () => {
     const drop = await milvusClient.dropDatabase({ db_name: DB_NAME });
-    // console.log(drop, name);
     expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -59,7 +57,6 @@ describe(`Database API`, () => {
   //       const drop = await milvusClient.dropDatabase({
   //         db_name: all.db_names[i],
   //       });
-  //       // console.log(drop, name);
   //       expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
   //     }
   //   }

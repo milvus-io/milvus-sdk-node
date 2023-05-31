@@ -78,7 +78,6 @@ describe(`Milvus Index API`, () => {
       metric_type: 'L2',
       params: { nlist: 1024 },
     });
-    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -93,7 +92,6 @@ describe(`Milvus Index API`, () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -108,7 +106,6 @@ describe(`Milvus Index API`, () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -123,7 +120,6 @@ describe(`Milvus Index API`, () => {
         params: JSON.stringify({ nlist: 1024, m: 8, nbits: 8 }),
       },
     });
-    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -138,7 +134,6 @@ describe(`Milvus Index API`, () => {
         params: JSON.stringify({ M: 4, efConstruction: 8 }),
       },
     });
-    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -153,7 +148,6 @@ describe(`Milvus Index API`, () => {
         params: JSON.stringify({ n_trees: 8 }),
       },
     });
-    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -167,7 +161,6 @@ describe(`Milvus Index API`, () => {
   //       metric_type: 'L2',
   //     },
   //   });
-  //   console.log(res);
   //   expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   // });
 
@@ -182,7 +175,6 @@ describe(`Milvus Index API`, () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -196,7 +188,6 @@ describe(`Milvus Index API`, () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -218,7 +209,6 @@ describe(`Milvus Index API`, () => {
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
-    // console.log('----describeIndex ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -226,7 +216,6 @@ describe(`Milvus Index API`, () => {
     const res = await milvusClient.describeIndex({
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
     });
-    // console.log('----describeIndex ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -242,7 +231,6 @@ describe(`Milvus Index API`, () => {
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
-    // console.log('----getIndexState ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -251,7 +239,6 @@ describe(`Milvus Index API`, () => {
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
-    // console.log('----getIndexBuildProgress with name ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -260,7 +247,6 @@ describe(`Milvus Index API`, () => {
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
-    // console.log('----getIndexBuildProgress with name ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -270,7 +256,6 @@ describe(`Milvus Index API`, () => {
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
-    // console.log('----drop index ----', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -279,7 +264,6 @@ describe(`Milvus Index API`, () => {
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
-    // console.log('----drop index ----', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -289,7 +273,6 @@ describe(`Milvus Index API`, () => {
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
-    // console.log('----describe index after drop ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
 
     const res2 = await milvusClient.describeIndex({
@@ -297,7 +280,6 @@ describe(`Milvus Index API`, () => {
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
-    // console.log('----describe index after drop ----', res);
     expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
     expect(res2.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
   });
