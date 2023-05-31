@@ -102,7 +102,6 @@ describe('Collection Api', () => {
     const res = await milvusClient.createCollection(
       genCollectionParams({ collectionName: LOAD_COLLECTION_NAME, dim: 128 })
     );
-    // console.log(res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -110,7 +109,6 @@ describe('Collection Api', () => {
     const res = await milvusClient.hasCollection({
       collection_name: COLLECTION_NAME,
     });
-    // console.log('----has collection', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.value).toEqual(true);
   });
@@ -124,7 +122,6 @@ describe('Collection Api', () => {
 
   it(`Show all collections`, async () => {
     const res = await milvusClient.showCollections();
-    // console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
   });
@@ -142,7 +139,6 @@ describe('Collection Api', () => {
     const res = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-    // console.log(res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.schema.name).toEqual(COLLECTION_NAME);
     expect(res.schema.fields.length).toEqual(5);

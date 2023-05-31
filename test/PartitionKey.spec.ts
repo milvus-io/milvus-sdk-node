@@ -36,29 +36,25 @@ describe(`Partition key API`, () => {
     });
     await milvusClient.createCollection(createCollectionParams);
 
-    try {
-      const data = generateInsertData(createCollectionParams.fields, 20);
-      await milvusClient.insert({
-        collection_name: COLLECTION_DATA_NAME,
-        fields_data: data,
-      });
+    const data = generateInsertData(createCollectionParams.fields, 20);
+    await milvusClient.insert({
+      collection_name: COLLECTION_DATA_NAME,
+      fields_data: data,
+    });
 
-      // create index
-      await milvusClient.createIndex({
-        collection_name: COLLECTION_DATA_NAME,
-        index_name: 't',
-        field_name: 'vector',
-        index_type: 'IVF_FLAT',
-        metric_type: 'L2',
-        params: { nlist: 1024 },
-      });
-      // load
-      await milvusClient.loadCollectionSync({
-        collection_name: COLLECTION_DATA_NAME,
-      });
-    } catch (e) {
-      console.log(e);
-    }
+    // create index
+    await milvusClient.createIndex({
+      collection_name: COLLECTION_DATA_NAME,
+      index_name: 't',
+      field_name: 'vector',
+      index_type: 'IVF_FLAT',
+      metric_type: 'L2',
+      params: { nlist: 1024 },
+    });
+    // load
+    await milvusClient.loadCollectionSync({
+      collection_name: COLLECTION_DATA_NAME,
+    });
   });
 
   afterAll(async () => {

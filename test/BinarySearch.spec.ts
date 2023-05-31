@@ -75,7 +75,6 @@ describe(`Binary search API`, () => {
       },
       vector_type: DataType.BinaryVector,
     });
-    // console.log('----- Binary Vector Search  -----', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });

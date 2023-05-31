@@ -72,7 +72,6 @@ describe(`Resource API`, () => {
       resource_group: resource_group3,
     });
 
-    // console.log('create resource group', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res3.error_code).toEqual(ErrorCode.SUCCESS);
@@ -81,7 +80,6 @@ describe(`Resource API`, () => {
   it(`List resource groups should be successful`, async () => {
     const res = await milvusClient.listResourceGroups();
 
-    // console.log('list resource group', res);
     expect(res.resource_groups).toContain(resource_group);
     expect(res.resource_groups).toContain(resource_group2);
     expect(res.resource_groups).toContain(DEFAULT_RESOURCE_GROUP);
@@ -91,7 +89,6 @@ describe(`Resource API`, () => {
     const res = await milvusClient.describeResourceGroup({
       resource_group: DEFAULT_RESOURCE_GROUP,
     });
-    // console.log('describe resource group', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.resource_group).toHaveProperty('name');
     expect(res.resource_group).toHaveProperty('num_available_node');
@@ -109,7 +106,6 @@ describe(`Resource API`, () => {
         num_node: 1,
       });
 
-      // console.log('transferNode', res);
       expect(res.error_code).toEqual(ErrorCode.SUCCESS);
     }
   });
@@ -130,7 +126,6 @@ describe(`Resource API`, () => {
         num_replica: 1,
       });
 
-      // console.log('transfer replica', res);
       expect(res.error_code).toEqual(ErrorCode.SUCCESS);
 
       // release collection

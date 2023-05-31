@@ -140,7 +140,6 @@ describe(`User Api`, () => {
     const res = await authClient.createRole({
       roleName: ROLE_NAME,
     });
-    // console.log('createRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -149,13 +148,11 @@ describe(`User Api`, () => {
       username: USERNAME,
       roleName: ROLE_NAME,
     });
-    // console.log('addUserToRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should list roles successfully`, async () => {
     const res = await authClient.listRoles();
-    // console.log('list roles', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -163,7 +160,6 @@ describe(`User Api`, () => {
     const res = await authClient.selectRole({
       roleName: ROLE_NAME,
     });
-    // console.log('selectRole', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].users[0].name).toEqual(USERNAME);
     expect(res.results[0].role.name).toEqual(ROLE_NAME);
@@ -173,7 +169,6 @@ describe(`User Api`, () => {
     const res = await authClient.selectUser({
       username: USERNAME,
     });
-    // console.log('selectUser', res.results);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].user.name).toEqual(USERNAME);
     expect(res.results[0].roles[0].name).toEqual(ROLE_NAME);
@@ -186,7 +181,6 @@ describe(`User Api`, () => {
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
-    // console.log('grant privilege to role', ROLE_NAME, res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -194,7 +188,6 @@ describe(`User Api`, () => {
     const res = await authClient.listGrants({
       roleName: ROLE_NAME,
     });
-    // console.log('list grants', ROLE_NAME, res);
     expect(res.entities.length).toEqual(1);
     expect(res.entities[0].object_name).toEqual(COLLECTION_NAME);
     expect(res.entities[0].object.name).toEqual(RbacObjects.Collection);
@@ -209,7 +202,6 @@ describe(`User Api`, () => {
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
-    // console.log('selectGrant', ROLE_NAME, res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -217,7 +209,6 @@ describe(`User Api`, () => {
     const res = await authClient.hasRole({
       roleName: ROLE_NAME,
     });
-    // console.log('hasRole', ROLE_NAME, res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.hasRole).toEqual(true);
   });
@@ -229,7 +220,6 @@ describe(`User Api`, () => {
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
-    // console.log('revoke privilege to role', ROLE_NAME, res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -238,7 +228,6 @@ describe(`User Api`, () => {
       username: USERNAME,
       roleName: ROLE_NAME,
     });
-    // console.log('addUserToRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -246,7 +235,6 @@ describe(`User Api`, () => {
     const res = await authClient.dropRole({
       roleName: ROLE_NAME,
     });
-    // console.log('dropRole', res);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

@@ -62,21 +62,18 @@ describe(`Milvus client`, () => {
   it(`Get milvus version`, async () => {
     const res = await milvusClient.getVersion();
 
-    // console.log('----getVersion ----', res);
     expect(res).toHaveProperty('version');
   });
 
   it(`Expect checkHealth success`, async () => {
     const res = await milvusClient.checkHealth();
 
-    // console.log('----checkHealth ----', res);
     expect(typeof res.isHealthy).toEqual('boolean');
     expect(Array.isArray(res.reasons)).toBe(true);
   });
 
   it(`Expect close connection success`, async () => {
     const res = milvusClient.closeConnection();
-    // console.log('----closeConnection ----', res);
     expect(res).toEqual(4);
   });
 
