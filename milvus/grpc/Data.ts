@@ -419,6 +419,7 @@ export class Data extends Collection {
           dsl_type: DslType.BoolExprV1,
           placeholder_group: placeholderGroupBytes,
           search_params: parseToKeyValue(search_params),
+          consistency_level: data.consistency_level,
         },
         data.timeout || this.timeout
       );
