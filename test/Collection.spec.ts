@@ -442,15 +442,15 @@ describe(`Collection API`, () => {
     }
   });
 
-  // it(`Load Collection Async success`, async () => {
-  //   await milvusClient.releaseCollection({
-  //     collection_name: LOAD_COLLECTION_NAME,
-  //   });
-  //   const res = await milvusClient.loadCollection({
-  //     collection_name: LOAD_COLLECTION_NAME,
-  //   });
-  //   expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
+  it(`Load Collection Async success`, async () => {
+    await milvusClient.releaseCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+    const res = await milvusClient.loadCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
   it(`Show loaded collections success`, async () => {
     const res = await milvusClient.showCollections({

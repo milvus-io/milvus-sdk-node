@@ -13,7 +13,6 @@ import {
   getMetaInterceptor,
   ErrorCode,
   DEFAULT_DB,
-  ResStatus,
   METADATA,
   logger,
 } from '../';
