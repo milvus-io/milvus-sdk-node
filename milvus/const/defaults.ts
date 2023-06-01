@@ -1,3 +1,5 @@
+import { DataType } from './';
+
 // defaults
 export const DEFAULT_DEBUG = false;
 
@@ -11,3 +13,17 @@ export const DEFAULT_PARTITIONS_NUMBER = 64;
 export const DEFAULT_RESOURCE_GROUP = '__default_resource_group';
 export const DEFAULT_DB = 'default';
 export const DEFAULT_DYNAMIC_FIELD = '$meta';
+
+export const DEFAULT_HIGH_LEVEL_SCHEMA = (dimension: number) => [
+  {
+    name: 'id',
+    data_type: DataType.Int64,
+    is_primary_key: true,
+    autoID: false,
+  },
+  {
+    name: 'vector',
+    data_type: DataType.FloatVector,
+    dim: dimension,
+  },
+];

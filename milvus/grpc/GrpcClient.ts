@@ -15,7 +15,11 @@ import {
   DEFAULT_DB,
   METADATA,
   logger,
+  FieldType,
+  DEFAULT_HIGH_LEVEL_SCHEMA,
+  ShowCollectionsReq,
 } from '../';
+import { Collection } from '../high-level';
 import { User } from './User';
 
 /**
@@ -128,50 +132,6 @@ export class GRPCClient extends User {
     });
   }
 
-  // @deprecated
-  get collectionManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `collectionManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get partitionManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `partitionManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get indexManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `indexManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get dataManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `dataManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get resourceManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `resourceManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get userManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `userManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-
   /**
    * Closes the gRPC client connection and returns the connectivity state of the channel.
    * This method should be called before terminating the application or when the client is no longer needed.
@@ -208,5 +168,72 @@ export class GRPCClient extends User {
    */
   async checkHealth(): Promise<CheckHealthResponse> {
     return await promisify(this.client, 'CheckHealth', {}, this.timeout);
+  }
+
+  // High-level APIs, orm like
+  /**
+   * Creates a new collection with the given name and schema, or returns an existing one with the same name.
+   * @param data An object containing the collection name, dimension, schema (optional), enable_dynamic_field (optional), and description (optional).
+   * @returns A Collection object representing the newly created or existing collection, and it is indexed and loaded
+   */
+  async collection(data: {
+    name: string;
+    dimension: number;
+    schema?: FieldType[]; // user can overwrite default schema
+    enableDynamicField?: boolean;
+    description?: string;
+    loadOnCreate?: boolean;
+  }): Promise<Collection> {
+    // get params
+    const {
+      name,
+      dimension,
+      schema = DEFAULT_HIGH_LEVEL_SCHEMA(dimension),
+      enableDynamicField = true,
+      loadOnCreate = true,
+    } = data;
+    // check exist
+    const exist = await this.hasCollection({ collection_name: name });
+
+    // not exist, create a new one
+    if (!exist.value) {
+      // create a new collection with fixed schema
+      await this.createCollection({
+        collection_name: name,
+        enable_dynamic_field: enableDynamicField,
+        fields: schema,
+      });
+    }
+
+    // return collection object
+    const col = new Collection({
+      name: name,
+      client: this,
+    });
+
+    try {
+      // index and load
+      if (loadOnCreate) {
+        await col.index();
+        await col.load();
+      }
+    } catch (error) {
+      console.log('creation error ', error);
+    }
+
+    return col;
+  }
+
+  /**
+   * Retrieves a list of collections from the Milvus server.
+   * @param data An optional object containing parameters for filtering the list of collections.
+   * @returns An array of Collection objects representing the collections returned by the server.
+   */
+  async collections(data?: ShowCollectionsReq) {
+    const cols = await this.showCollections(data);
+
+    return cols.data.map(col => {
+      return new Collection({ name: col.name, client: this });
+    });
   }
 }

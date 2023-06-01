@@ -6,6 +6,7 @@ import {
   generateInsertData,
   dynamicFields,
 } from './tools';
+import { Collection } from '../milvus/high-level';
 
 let milvusClient = new MilvusClient({ address: IP });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
@@ -105,6 +106,7 @@ describe(`High level API`, () => {
     // get my collection
     const collection: any = await milvusClient.collection({
       name: EXIST_COLLECTION_NAME,
+      dimension: 8,
     });
 
     const collectionInfo = await collection.info();
@@ -116,6 +118,7 @@ describe(`High level API`, () => {
     // get my collection
     const collection: any = await milvusClient.collection({
       name: EXIST_INDEXED_COLLECTION_NAME,
+      dimension: 8,
     });
 
     expect(collection.name).toEqual(EXIST_INDEXED_COLLECTION_NAME);
@@ -126,6 +129,7 @@ describe(`High level API`, () => {
     // get my collection
     const collection: any = await milvusClient.collection({
       name: EXIST_LOADED_COLLECTION_NAME,
+      dimension: 8,
     });
 
     expect(collection.name).toEqual(EXIST_LOADED_COLLECTION_NAME);
@@ -136,6 +140,7 @@ describe(`High level API`, () => {
     // get my collection
     const collection = await milvusClient.collection({
       name: EXIST_COLLECTION_NAME,
+      dimension: 8,
     });
 
     // insert data
@@ -176,5 +181,24 @@ describe(`High level API`, () => {
 
     expect(deleteRes.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(Number(deleteRes.delete_cnt)).toEqual(2);
+  });
+
+  it(`index successfully`, async () => {
+    // get my collection
+    const collection = await milvusClient.collection({
+      name: EXIST_COLLECTION_NAME,
+      dimension: 128,
+    });
+
+    const index = await collection.index();
+    expect(index.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`get collections successfully`, async () => {
+    const cols = await milvusClient.collections();
+
+    cols.forEach(col => {
+      expect(col instanceof Collection).toEqual(true);
+    });
   });
 });

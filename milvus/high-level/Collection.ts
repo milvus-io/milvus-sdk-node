@@ -5,7 +5,6 @@ import {
   DeleteEntitiesReq,
   QueryReq,
   CreateIndexSimpleReq,
-  LoadCollectionReq,
   cloneObj,
 } from '../';
 
@@ -22,6 +21,11 @@ export class Collection {
   // The name of the collection.
   readonly name: string;
 
+  // param
+  private get param() {
+    return { collection_name: this.name };
+  }
+
   // Creates a new `Collection` instance.
   constructor({ name, client }: collectionProps) {
     // Set the name of the collection.
@@ -32,15 +36,8 @@ export class Collection {
 
   // Returns the number of entities in the collection.
   async count() {
-    // Create a request object to get the collection statistics.
-    const getCollectionStatisticsReq = {
-      collection_name: this.name,
-    };
-
     // Get the collection statistics from Milvus.
-    const stats = await this.#client.getCollectionStatistics(
-      getCollectionStatisticsReq
-    );
+    const stats = await this.#client.getCollectionStatistics(this.param);
 
     // Return the number of entities in the collection.
     return Number(stats.data.row_count);
@@ -48,25 +45,34 @@ export class Collection {
 
   // Returns information about the collection, such as its schema.
   async info() {
-    // Get the information about the collection from Milvus.
-    return await this.#client.describeCollection({
-      collection_name: this.name,
-    });
+    // Get collection info
+    const collectionInfo = await this.#client.describeCollection(this.param);
+    // get Index info
+    const indexInfo = await this.#client.describeIndex(this.param);
+
+    // combine information and return
+    return { ...collectionInfo, ...indexInfo };
   }
 
   // Loads the collection from disk.
-  async load(data: Omit<LoadCollectionReq, 'collection_name'> = {}) {
-    // Create a request object to load the collection.
-    const loadCollectionReq = cloneObj(data) as LoadCollectionReq;
+  async load() {
+    return await this.#client.loadCollectionSync(this.param);
+  }
 
-    // Load the collection from disk.
-    loadCollectionReq.collection_name = this.name;
-
-    return await this.#client.loadCollectionSync(loadCollectionReq);
+  // release the collection from memory.
+  async release() {
+    return await this.#client.releaseCollection(this.param);
   }
 
   // Creates an index for the collection.
-  async createIndex(data: Omit<CreateIndexSimpleReq, 'collection_name'>) {
+  async createIndex(
+    data: Omit<CreateIndexSimpleReq, 'collection_name'> = {
+      field_name: 'vector',
+      index_type: 'HNSW',
+      metric_type: 'L2',
+      params: { efConstruction: 10, M: 4 },
+    }
+  ) {
     // Create a request object to create the index.
     const createIndexReq = cloneObj(data) as CreateIndexSimpleReq;
 
@@ -94,8 +100,6 @@ export class Collection {
 
     return await this.#client.query(queryReq);
   }
-  // alias
-  get = this.query;
 
   // Inserts an entity into the collection.
   async insert(data: Omit<InsertReq, 'collection_name'>) {
@@ -116,4 +120,8 @@ export class Collection {
 
     return await this.#client.deleteEntities(deleteEntitiesReq);
   }
+
+  // alias
+  get = this.query;
+  index = this.createIndex;
 }

@@ -1,5 +1,10 @@
 import { createLogger, transports, format } from 'winston';
 
+const level =
+  process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
+    ? 'debug'
+    : 'info';
+
 export const logger = createLogger({
   transports: [new transports.Console()],
   format: format.combine(
@@ -12,5 +17,5 @@ export const logger = createLogger({
   defaultMeta: {
     service: 'Milvus-sdk-node',
   },
-  level: process.env.NODE_ENV === 'test' ? 'debug' : 'info',
+  level,
 });
