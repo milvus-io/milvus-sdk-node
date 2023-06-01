@@ -1,4 +1,4 @@
-import { MilvusClient, ErrorCode } from '../milvus';
+import { MilvusClient, ErrorCode, DataType } from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -6,7 +6,7 @@ import {
   generateInsertData,
   dynamicFields,
 } from './tools';
-import { Collection } from '../milvus/high-level';
+import { Collection } from '../milvus/orm';
 
 let milvusClient = new MilvusClient({ address: IP });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
@@ -87,9 +87,14 @@ describe(`High level API`, () => {
   it(`Create collection successfully`, async () => {
     // get my collection
     const collection = await milvusClient.collection({
-      name: NEW_COLLECTION_NAME,
+      collection_name: NEW_COLLECTION_NAME,
       dimension: 8,
     });
+
+    expect(collection.pkFieldName).toEqual('id');
+    expect(collection.vectorFieldName).toEqual('vector');
+    expect(collection.dim).toEqual(8);
+    expect(collection.vectorType).toEqual(DataType.FloatVector);
 
     const collections = await milvusClient.showCollections();
     expect(collections.data.length).toEqual(4);
@@ -105,7 +110,7 @@ describe(`High level API`, () => {
   it(`get exsiting collection successfully`, async () => {
     // get my collection
     const collection: any = await milvusClient.collection({
-      name: EXIST_COLLECTION_NAME,
+      collection_name: EXIST_COLLECTION_NAME,
       dimension: 8,
     });
 
@@ -117,7 +122,7 @@ describe(`High level API`, () => {
   it(`get exsiting indexed collection successfully`, async () => {
     // get my collection
     const collection: any = await milvusClient.collection({
-      name: EXIST_INDEXED_COLLECTION_NAME,
+      collection_name: EXIST_INDEXED_COLLECTION_NAME,
       dimension: 8,
     });
 
@@ -128,7 +133,7 @@ describe(`High level API`, () => {
   it(`get exsiting loaded collection successfully`, async () => {
     // get my collection
     const collection: any = await milvusClient.collection({
-      name: EXIST_LOADED_COLLECTION_NAME,
+      collection_name: EXIST_LOADED_COLLECTION_NAME,
       dimension: 8,
     });
 
@@ -139,7 +144,7 @@ describe(`High level API`, () => {
   it(`insert/search/query/delete successfully`, async () => {
     // get my collection
     const collection = await milvusClient.collection({
-      name: EXIST_COLLECTION_NAME,
+      collection_name: EXIST_COLLECTION_NAME,
       dimension: 8,
     });
 
@@ -186,7 +191,7 @@ describe(`High level API`, () => {
   it(`index successfully`, async () => {
     // get my collection
     const collection = await milvusClient.collection({
-      name: EXIST_COLLECTION_NAME,
+      collection_name: EXIST_COLLECTION_NAME,
       dimension: 128,
     });
 

@@ -344,7 +344,6 @@ export class Data extends Collection {
       // get information from collection info
       let vectorType: DataType;
       let defaultOutputFields = [];
-      let dim: number = 0;
       let anns_field: string;
       for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
         const f = collectionInfo.schema.fields[i];
@@ -352,10 +351,6 @@ export class Data extends Collection {
 
         // filter vector field
         if (type === DataType.FloatVector || type === DataType.BinaryVector) {
-          // get dimension
-          dim = Number(findKeyValue(f.type_params, 'dim') as number);
-          // correcting dimension if necessary for binary vectors
-          dim = type! === DataType.BinaryVector ? dim / 8 : dim;
           // anns field
           anns_field = f.name;
           // vector type

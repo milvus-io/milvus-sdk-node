@@ -5,12 +5,7 @@ import {
   TimeStamp,
   TimeStampArray,
 } from './Common';
-import {
-  CompactionState,
-  DataType,
-  LoadState,
-  DataTypeMap,
-} from '../';
+import { CompactionState, DataType, LoadState, DataTypeMap } from '../';
 
 export interface FieldSchema {
   name: string;

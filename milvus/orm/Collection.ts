@@ -6,7 +6,11 @@ import {
   QueryReq,
   CreateIndexSimpleReq,
   cloneObj,
-} from '../';
+  DataTypeMap,
+  DataType,
+  findKeyValue,
+} from '..';
+import { getDefaultIndexParams } from '.';
 
 interface collectionProps {
   name: string;
@@ -26,12 +30,59 @@ export class Collection {
     return { collection_name: this.name };
   }
 
+  // pk field name
+  pkFieldName: string = '';
+  // vector filed name
+  vectorFieldName: string = '';
+  // vector type
+  vectorType: DataType = DataType.FloatVector;
+  // vector dimension
+  dim: number = 0;
+
   // Creates a new `Collection` instance.
   constructor({ name, client }: collectionProps) {
     // Set the name of the collection.
     this.name = name;
     // Assign the private client.
     this.#client = client;
+  }
+
+  // init collection, get key informations from server
+  async init(loadOnInit: boolean) {
+    // update information
+    await this.update();
+    // load
+    if (loadOnInit) {
+      await this.index();
+      await this.load();
+    }
+  }
+
+  // update key information
+  async update() {
+    // Get collection info
+    const collectionInfo = await this.#client.describeCollection(this.param);
+
+    // extract key information
+    for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
+      const f = collectionInfo.schema.fields[i];
+      const type = DataTypeMap[f.data_type];
+
+      // get pk field info
+      if (f.is_primary_key) {
+        this.pkFieldName = f.name;
+      }
+
+      // get vector field info
+      if (type === DataType.FloatVector || type === DataType.BinaryVector) {
+        // vector field
+        this.vectorFieldName = f.name;
+        // vector type
+        this.vectorType = type;
+        // get dimension
+        this.dim = Number(findKeyValue(f.type_params, 'dim') as number);
+      }
+    }
   }
 
   // Returns the number of entities in the collection.
@@ -66,18 +117,17 @@ export class Collection {
 
   // Creates an index for the collection.
   async createIndex(
-    data: Omit<CreateIndexSimpleReq, 'collection_name'> = {
-      field_name: 'vector',
-      index_type: 'HNSW',
-      metric_type: 'L2',
-      params: { efConstruction: 10, M: 4 },
-    }
+    data: Omit<
+      CreateIndexSimpleReq,
+      'collection_name' | 'field_name'
+    > = getDefaultIndexParams()
   ) {
     // Create a request object to create the index.
     const createIndexReq = cloneObj(data) as CreateIndexSimpleReq;
 
+    // build index req parameters
     createIndexReq.collection_name = this.name;
-    // console.log('createIndexReq', createIndexReq);
+    createIndexReq.field_name = this.vectorFieldName;
     return await this.#client.createIndex(createIndexReq);
   }
 

@@ -16,9 +16,9 @@ export interface CreateIndexReq extends GrpcTimeOut {
 export interface CreateIndexSimpleReq extends GrpcTimeOut {
   collection_name: string;
   field_name: string;
-  index_name?: string;
   index_type: string;
   metric_type: string;
+  index_name?: string;
   params?: keyValueObj;
 }
 

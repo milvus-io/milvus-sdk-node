@@ -15,11 +15,11 @@ import {
   DEFAULT_DB,
   METADATA,
   logger,
-  FieldType,
-  DEFAULT_HIGH_LEVEL_SCHEMA,
   ShowCollectionsReq,
+  DataType,
+  CreateColReq,
 } from '../';
-import { Collection } from '../high-level';
+import { Collection, buildSchema } from '../orm';
 import { User } from './User';
 
 /**
@@ -170,36 +170,40 @@ export class GRPCClient extends User {
     return await promisify(this.client, 'CheckHealth', {}, this.timeout);
   }
 
-  // High-level APIs, orm like
+  // ORM-like APIs
   /**
    * Creates a new collection with the given name and schema, or returns an existing one with the same name.
    * @param data An object containing the collection name, dimension, schema (optional), enable_dynamic_field (optional), and description (optional).
    * @returns A Collection object representing the newly created or existing collection, and it is indexed and loaded
    */
-  async collection(data: {
-    name: string;
-    dimension: number;
-    schema?: FieldType[]; // user can overwrite default schema
-    enableDynamicField?: boolean;
-    description?: string;
-    loadOnCreate?: boolean;
-  }): Promise<Collection> {
+  async collection(data: CreateColReq): Promise<Collection> {
     // get params
     const {
-      name,
+      collection_name,
       dimension,
-      schema = DEFAULT_HIGH_LEVEL_SCHEMA(dimension),
+      primary_field_name = 'id',
+      id_type = DataType.Int64,
+      vector_field_name = 'vector',
       enableDynamicField = true,
-      loadOnCreate = true,
+      loadOnInit = true,
     } = data;
+
     // check exist
-    const exist = await this.hasCollection({ collection_name: name });
+    const exist = await this.hasCollection({ collection_name });
+
+    // build schema
+    const schema = buildSchema({
+      primary_field_name,
+      id_type,
+      vector_field_name,
+      dimension,
+    });
 
     // not exist, create a new one
     if (!exist.value) {
       // create a new collection with fixed schema
       await this.createCollection({
-        collection_name: name,
+        collection_name,
         enable_dynamic_field: enableDynamicField,
         fields: schema,
       });
@@ -207,16 +211,13 @@ export class GRPCClient extends User {
 
     // return collection object
     const col = new Collection({
-      name: name,
+      name: collection_name,
       client: this,
     });
 
     try {
-      // index and load
-      if (loadOnCreate) {
-        await col.index();
-        await col.load();
-      }
+      // init
+      await col.init(loadOnInit);
     } catch (error) {
       console.log('creation error ', error);
     }
