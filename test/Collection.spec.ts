@@ -278,6 +278,10 @@ describe(`Collection API`, () => {
     const res = await milvusClient.showCollections();
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
+
+    const res2 = await milvusClient.list_collections();
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
   });
 
   it(
