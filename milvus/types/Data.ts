@@ -24,7 +24,8 @@ export interface FieldData {
 export interface InsertReq extends GrpcTimeOut {
   collection_name: string;
   partition_name?: string;
-  fields_data: { [x: string]: any }[];
+  fields_data?: { [x: string]: any }[];
+  data?: { [x: string]: any }[];
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }
 
@@ -32,6 +33,12 @@ export interface DeleteEntitiesReq extends GrpcTimeOut {
   collection_name: string;
   expr?: string;
   filter?: string;
+  partition_name?: string;
+}
+
+export interface DeleteReq extends GrpcTimeOut {
+  collection_name: string;
+  ids: string[] | number[];
   partition_name?: string;
 }
 
@@ -171,6 +178,7 @@ export interface SearchSimpleReq extends GrpcTimeOut {
   collection_name: string;
   vector?: number[];
   vectors?: number[][];
+  data?: number[][] | number[];
   output_fields?: string[];
   limit?: number;
   topk?: number; // alias
@@ -241,6 +249,16 @@ export interface QueryReq extends GrpcTimeOut {
   partition_names?: string[];
   expr?: string;
   filter?: string;
+  offset?: number;
+  limit?: number;
+  consistency_level?: ConsistencyLevelEnum;
+}
+
+export interface GetReq extends GrpcTimeOut {
+  collection_name: string;
+  ids: string[] | number[];
+  output_fields?: string[];
+  partition_names?: string[];
   offset?: number;
   limit?: number;
   consistency_level?: ConsistencyLevelEnum;

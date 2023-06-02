@@ -234,6 +234,9 @@ export class Collection extends Database {
     return promise;
   }
 
+  // alias
+  list_collections = this.showCollections;
+
   /**
    * Show the details of a collection, e.g. name, schema.
    *
@@ -523,6 +526,9 @@ export class Collection extends Database {
     );
     return promise;
   }
+
+  // alias
+  drop_collection = this.dropCollection;
 
   /**
    * Create collection alias, then you can use alias instead of collection_name when you do vector search
@@ -890,4 +896,47 @@ export class Collection extends Database {
 
   // alias
   listCollections = this.showCollections;
+  /**
+   * Get the primary key field name
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | string | the name of the collection |
+   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   *
+   * @returns
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | pkfield | the primary key field name |
+   *
+   * @throws {Error} if `collection_name` property is not present in `data`
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).getPkFieldName({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
+  async getPkFieldName(data: DescribeCollectionReq): Promise<string> {
+    // get collection info
+    const collectionInfo = await this.describeCollection(data);
+
+    // pk field
+    let pkField = '';
+    // extract key information
+    for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
+      const f = collectionInfo.schema.fields[i];
+
+      // get pk field info
+      if (f.is_primary_key) {
+        pkField = f.name;
+        break;
+      }
+    }
+
+    return pkField;
+  }
 }

@@ -44,6 +44,13 @@ describe(`Collection API`, () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`Should get pk fieldname successfully`, async () => {
+    const res = await milvusClient.getPkFieldName({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(res).toEqual('age');
+  });
+
   it(`Create Collection with number dim Successful`, async () => {
     const res = await milvusClient.createCollection({
       ...genCollectionParams({
@@ -278,6 +285,10 @@ describe(`Collection API`, () => {
     const res = await milvusClient.showCollections();
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
+
+    const res2 = await milvusClient.list_collections();
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.data.filter(v => v.name === COLLECTION_NAME).length).toEqual(1);
   });
 
   it(

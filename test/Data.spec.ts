@@ -4,7 +4,6 @@ import {
   ErrorCode,
   ERROR_REASONS,
   DEFAULT_TOPK,
-  ConsistencyLevelEnum,
 } from '../milvus';
 import {
   IP,
@@ -20,6 +19,12 @@ const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
 };
+const createCollectionParams = genCollectionParams({
+  collectionName: COLLECTION_NAME,
+  dim: 4,
+  vectorType: DataType.FloatVector,
+  autoID: false,
+});
 
 describe(`Data.API`, () => {
   beforeAll(async () => {
@@ -27,17 +32,11 @@ describe(`Data.API`, () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
 
-    const createCollectionParams = genCollectionParams({
-      collectionName: COLLECTION_NAME,
-      dim: 4,
-      vectorType: DataType.FloatVector,
-      autoID: false,
-    });
     await milvusClient.createCollection(createCollectionParams);
 
     await milvusClient.insert({
       collection_name: COLLECTION_NAME,
-      fields_data: generateInsertData(createCollectionParams.fields, 150),
+      data: generateInsertData(createCollectionParams.fields, 50),
     });
 
     await milvusClient.createIndex({
@@ -57,6 +56,21 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
     });
     await milvusClient.dropDatabase(dbParam);
+  });
+
+  it(`it should insert successfully`, async () => {
+    const insert1 = await milvusClient.insert({
+      collection_name: COLLECTION_NAME,
+      fields_data: generateInsertData(createCollectionParams.fields, 50),
+    });
+
+    expect(insert1.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const insert2 = await milvusClient.insert({
+      collection_name: COLLECTION_NAME,
+      data: generateInsertData(createCollectionParams.fields, 50),
+    });
+    expect(insert2.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Flush sync should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
@@ -145,6 +159,26 @@ describe(`Data.API`, () => {
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results.length).toEqual(limit);
+
+    const searchWithData = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: '',
+      data: [1, 2, 3, 4],
+      limit: limit,
+    });
+
+    expect(searchWithData.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(searchWithData.results.length).toEqual(limit);
+
+    const searchWithData2 = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: '',
+      data: [[1, 2, 3, 4]],
+      limit: limit,
+    });
+
+    expect(searchWithData2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(searchWithData2.results.length).toEqual(limit);
 
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
@@ -332,6 +366,26 @@ describe(`Data.API`, () => {
     }
   });
 
+  it(`Get without ids should throw error`, async () => {
+    try {
+      await milvusClient.get({
+        collection_name: COLLECTION_NAME,
+        output_fields: ['age', VECTOR_FIELD_NAME],
+      } as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.IDS_REQUIRED);
+    }
+  });
+
+  it(`Get should success`, async () => {
+    const get = await milvusClient.get({
+      collection_name: COLLECTION_NAME,
+      output_fields: ['age', VECTOR_FIELD_NAME],
+      ids: ['1', '2', '3'],
+    });
+    expect(get.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`Query with data limit and offset`, async () => {
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
@@ -403,6 +457,25 @@ describe(`Data.API`, () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.data.length).toEqual(0);
+  });
+
+  it(`delete without ids should throw error`, async () => {
+    try {
+      await milvusClient.delete({
+        collection_name: COLLECTION_NAME,
+      } as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.IDS_REQUIRED);
+    }
+  });
+
+  it(`delete by ids should success`, async () => {
+    const res = await milvusClient.delete({
+      collection_name: COLLECTION_NAME,
+      ids: [1, 2, 3],
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Get metrics should throw GET_METRIC_CHECK_PARAMS`, async () => {
