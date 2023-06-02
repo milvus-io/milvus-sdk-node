@@ -128,50 +128,6 @@ export class GRPCClient extends User {
     });
   }
 
-  // @deprecated
-  get collectionManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `collectionManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get partitionManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `partitionManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get indexManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `indexManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get dataManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `dataManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get resourceManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `resourceManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-  get userManager() {
-    /* istanbul ignore next */
-    logger.warn(
-      `userManager are no longer necessary, you can call methods directly on the client object.`
-    );
-    return this;
-  }
-
   /**
    * Closes the gRPC client connection and returns the connectivity state of the channel.
    * This method should be called before terminating the application or when the client is no longer needed.

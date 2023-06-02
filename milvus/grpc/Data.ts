@@ -259,7 +259,7 @@ export class Data extends Collection {
    *  | :--- | :-- | :-- |
    *  | collection_name | String | Collection name |
    *  | partition_name(optional)| String | Partition name |
-   *  | expr | String | Boolean expression used to filter attribute. |
+   *  | expr or filter | String | Boolean expression used to filter attribute. |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
@@ -280,9 +280,18 @@ export class Data extends Collection {
    * ```
    */
   async deleteEntities(data: DeleteEntitiesReq): Promise<MutationResult> {
-    if (!data || !data.collection_name || !data.expr) {
-      throw new Error(ERROR_REASONS.DELETE_PARAMS_CHECK);
+    if (!data || !data.collection_name) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
+
+    // check expr or filter
+    if (!data.filter && !data.expr) {
+      throw new Error(ERROR_REASONS.FILTER_EXPR_REQUIRED);
+    }
+
+    // filter > expr
+    data.expr = data.filter || data.expr;
+
     const promise = await promisify(
       this.client,
       'Delete',
@@ -381,7 +390,6 @@ export class Data extends Collection {
       // get information from collection info
       let vectorType: DataType;
       let defaultOutputFields = [];
-      let dim: number = 0;
       let anns_field: string;
       for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
         const f = collectionInfo.schema.fields[i];
@@ -389,10 +397,6 @@ export class Data extends Collection {
 
         // filter vector field
         if (type === DataType.FloatVector || type === DataType.BinaryVector) {
-          // get dimension
-          dim = Number(findKeyValue(f.type_params, 'dim') as number);
-          // correcting dimension if necessary for binary vectors
-          dim = type! === DataType.BinaryVector ? dim / 8 : dim;
           // anns field
           anns_field = f.name;
           // vector type
@@ -534,6 +538,8 @@ export class Data extends Collection {
               isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
             );
 
+            // make data[i] safe
+            data[i] = data[i] || {};
             // extract dynamic info from dynamic field if necessary
             result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
           });
@@ -658,7 +664,7 @@ export class Data extends Collection {
    *  | Property | Type  | Description |
    *  | :--- | :-- | :-- |
    *  | collection_name | String | Collection name |
-   *  | expr | String | Scalar field filter expression |
+   *  | expr or filter | String | Scalar field filter expression |
    *  | partitions_names(optional) | String[] | Array of partition names |
    *  | output_fields | String[] | Vector or scalar field to be returned |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
@@ -695,6 +701,14 @@ export class Data extends Collection {
     if (typeof data.offset === 'number') {
       offset = { offset: data.offset };
     }
+
+    // check expr or filter
+    if (!data.filter && !data.expr) {
+      throw new Error(ERROR_REASONS.FILTER_EXPR_REQUIRED);
+    }
+
+    // filter > expr
+    data.expr = data.filter || data.expr;
 
     // Execute the query and get the results
     const promise: QueryRes = await promisify(

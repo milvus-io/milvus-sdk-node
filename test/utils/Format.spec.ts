@@ -321,6 +321,7 @@ describe('utils/format', () => {
         'by-dev-rootcoord-dml_4',
         'by-dev-rootcoord-dml_5',
       ],
+      properties: [],
       aliases: [],
       status: { error_code: 'Success', reason: '' },
       schema: {
@@ -348,10 +349,12 @@ describe('utils/format', () => {
         description: '',
         enable_dynamic_field: false,
       },
+      shards_num: 1,
+      start_positions: [],
       collectionID: '441190990484912096',
       created_timestamp: '441323423932350466',
       created_utc_timestamp: '1683515258531',
-      consistency_level: ConsistencyLevelEnum.Bounded,
+      consistency_level: 'Bounded',
       num_partitions: '0',
       db_name: '',
     };

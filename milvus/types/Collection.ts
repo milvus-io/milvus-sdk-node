@@ -5,13 +5,7 @@ import {
   TimeStamp,
   TimeStampArray,
 } from './Common';
-import {
-  ConsistencyLevelEnum,
-  CompactionState,
-  DataType,
-  LoadState,
-  DataTypeMap,
-} from '../';
+import { CompactionState, DataType, LoadState, DataTypeMap } from '../';
 
 export interface FieldSchema {
   name: string;
@@ -172,10 +166,15 @@ export interface DescribeCollectionResponse extends TimeStamp {
   status: ResStatus;
   schema: CollectionSchema;
   collectionID: string;
-  consistency_level: ConsistencyLevelEnum;
+  consistency_level: string;
   aliases: string[];
   virtual_channel_names: string[]; // not useful for now
   physical_channel_names: string[]; // not useful for now
+  start_positions: string[];
+  properties: string[];
+  created_timestamp: string;
+  created_utc_timestamp: string;
+  shards_num: number;
   num_partitions?: string; // int64
   db_name: string;
 }

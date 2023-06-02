@@ -353,6 +353,19 @@ describe(`Data.API`, () => {
     }
   });
 
+  it(`Query without expr or filter should throw error`, async () => {
+    try {
+      await milvusClient.query({
+        collection_name: COLLECTION_NAME,
+        output_fields: ['age', VECTOR_FIELD_NAME],
+        offset: 0,
+        limit: 3,
+      });
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.FILTER_EXPR_REQUIRED);
+    }
+  });
+
   it(`Get without ids should throw error`, async () => {
     try {
       await milvusClient.get({

@@ -31,8 +31,6 @@ export const ERROR_REASONS = {
     'Insert fail: the length of the binary vector should be (dimension / 8).',
   INSERT_CHECK_WRONG_DATA_TYPE:
     'The value of the `data_type` property is not supported:',
-  DELETE_PARAMS_CHECK:
-    'The `collection_name` or the `expr` property is missing.',
   GET_METRIC_CHECK_PARAMS: 'The `metric_type` property is missing.',
   GET_FLUSH_STATE_CHECK_PARAMS:
     'The type of the `segmentIDs` property should be an array.',
@@ -43,6 +41,7 @@ export const ERROR_REASONS = {
   USERNAME_PWD_ARE_REQUIRED:
     'The `username` or `password` property is missing.',
   USERNAME_IS_REQUIRED: 'The `username` property is missing.',
+  FILTER_EXPR_REQUIRED: 'The `filter` or the `expr` property is missing.',
   TIMESTAMP_PARAM_CHECK:
     'The type of the `hybridts` property should be string (only contains number) or bigint.',
   DATE_TYPE_CHECK: 'The type of the `datetime` property should be Date.',

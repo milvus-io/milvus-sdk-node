@@ -6,6 +6,24 @@ export const INDEX_NAME = 'index_name';
 export const DIMENSION = 4;
 export const INDEX_FILE_SIZE = 1024;
 export const PARTITION_TAG = 'random';
+export const dynamicFields = [
+  {
+    name: 'dynamic_int64',
+    description: 'dynamic int64 field',
+    data_type: 'Int64', // test string type
+  },
+  {
+    name: 'dynamic_varChar',
+    description: 'VarChar field',
+    data_type: DataType.VarChar,
+    max_length: 128,
+  },
+  {
+    name: 'dynamic_JSON',
+    description: 'JSON field',
+    data_type: DataType.JSON,
+  },
+];
 
 export const timeoutTest = (func: Function, args?: { [x: string]: any }) => {
   return async () => {
