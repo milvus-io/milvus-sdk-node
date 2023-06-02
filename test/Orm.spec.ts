@@ -1,4 +1,4 @@
-import { MilvusClient, ErrorCode, DataType } from '../milvus';
+import { OrmClient as MilvusClient, ErrorCode, DataType } from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -30,7 +30,7 @@ const EXIST_INDEXED_COLLECTION_PARAMS = genCollectionParams({
 });
 
 const dbParam = {
-  db_name: 'HighLevel',
+  db_name: 'ORM_Client',
 };
 
 const data = generateInsertData(
@@ -38,7 +38,7 @@ const data = generateInsertData(
   10
 );
 
-describe(`High level API`, () => {
+describe(`ORM Client API`, () => {
   beforeAll(async () => {
     // create db and use db
     await milvusClient.createDatabase(dbParam);
