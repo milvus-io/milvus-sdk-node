@@ -46,14 +46,8 @@ export class Collection {
     this.#client = client;
   }
 
-  //  get key informations from server
-  async init() {
-    // update information
-    await this.update();
-  }
-
   // update key information
-  async update() {
+  async init() {
     // Get collection info
     const collectionInfo = await this.#client.describeCollection(this.param);
 
