@@ -31,8 +31,6 @@ export const ERROR_REASONS = {
     'Insert fail: the length of the binary vector should be (dimension / 8).',
   INSERT_CHECK_WRONG_DATA_TYPE:
     'The value of the `data_type` property is not supported:',
-  DELETE_PARAMS_CHECK:
-    'The `collection_name` or the `expr` property is missing.',
   GET_METRIC_CHECK_PARAMS: 'The `metric_type` property is missing.',
   GET_FLUSH_STATE_CHECK_PARAMS:
     'The type of the `segmentIDs` property should be an array.',

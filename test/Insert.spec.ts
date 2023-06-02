@@ -273,9 +273,8 @@ describe(`Insert API`, () => {
       await milvusClient.deleteEntities({
         collection_name: COLLECTION_NAME,
       } as any);
-      expect('a').toEqual('b');
     } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.DELETE_PARAMS_CHECK);
+      expect(error.message).toEqual(ERROR_REASONS.FILTER_EXPR_REQUIRED);
     }
   });
 

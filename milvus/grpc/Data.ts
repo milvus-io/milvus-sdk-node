@@ -281,7 +281,7 @@ export class Data extends Collection {
    */
   async deleteEntities(data: DeleteEntitiesReq): Promise<MutationResult> {
     if (!data || !data.collection_name) {
-      throw new Error(ERROR_REASONS.DELETE_PARAMS_CHECK);
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
 
     // check expr or filter
