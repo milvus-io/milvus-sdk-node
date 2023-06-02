@@ -2,7 +2,7 @@ import { ShowCollectionsReq, DataType, CreateColReq, MilvusClient } from './';
 import { Collection, buildSchema } from './orm';
 
 /**
- * Milvus Client class that extends GRPCClient and handles communication with Milvus server.
+ * ORM client that extends Milvus client
  */
 export class OrmClient extends MilvusClient {
   // ORM-like APIs
