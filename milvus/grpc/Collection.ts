@@ -131,7 +131,7 @@ export class Collection extends Database {
       ConsistencyLevelEnum[consistency_level] ?? ConsistencyLevelEnum.Bounded;
 
     // Call the promisify function to create the collection.
-    const create = await promisify(
+    const createPromise = await promisify(
       this.client,
       'CreateCollection',
       {
@@ -145,7 +145,7 @@ export class Collection extends Database {
     // load index
 
     // Return the promise.
-    return create;
+    return createPromise;
   }
 
   /**
