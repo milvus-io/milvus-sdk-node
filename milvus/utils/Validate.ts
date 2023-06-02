@@ -122,7 +122,7 @@ export const checkCollectionAndPartitionName = (data: any) => {
 export const checkSearchParams = (data: any) => {
   checkCollectionName(data);
 
-  if (!data.vectors && !data.vector) {
+  if (!data.vectors && !data.vector && !data.data) {
     throw new Error(ERROR_REASONS.VECTORS_OR_VECTOR_IS_MISSING);
   }
 };

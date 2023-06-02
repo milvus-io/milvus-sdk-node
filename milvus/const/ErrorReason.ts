@@ -60,4 +60,5 @@ export const ERROR_REASONS = {
   INVALID_PARTITION_KEY_FIELD_TYPE:
     'Only non-primary key Int64 or VarChar field support partition key.',
   PARTITION_KEY_FIELD_MAXED_OUT: `Only ${MAX_PARTITION_KEY_FIELD_COUNT} field supports partition key. `,
+  IDS_REQUIRED: 'The `ids` is missing or empty.',
 };

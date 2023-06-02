@@ -24,6 +24,8 @@ import {
   ListImportTasksResponse,
   GetMetricsRequest,
   QueryReq,
+  GetReq,
+  DeleteReq,
   QueryRes,
   SearchReq,
   SearchRes,
@@ -57,8 +59,7 @@ export class Data extends Collection {
    *  | :--- | :-- | :-- |
    *  | collection_name | String | Collection name |
    *  | partition_name(optional)| String | Partition name |
-   *  | fields_data | { [x: string]: any }[] | If the field type is binary, the vector data length needs to be dimension / 8 |
-   *  | hash_keys(optional) | Number[] |  The hash value depends on the primarykey value |
+   *  | fields_data or data | { [x: string]: any }[] | If the field type is binary, the vector data length needs to be dimension / 8 |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
 
    *
@@ -85,6 +86,8 @@ export class Data extends Collection {
    */
   async insert(data: InsertReq): Promise<MutationResult> {
     checkCollectionName(data);
+    // ensure fields data available
+    data.fields_data = data.fields_data || data.data;
     if (
       !data.fields_data ||
       !Array.isArray(data.fields_data) ||
@@ -290,13 +293,56 @@ export class Data extends Collection {
   }
 
   /**
+   * Delete entities in Milvus
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | partition_name(optional)| String | Partition name |
+   *  | ids | String[] or Number[] | ids to delete |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
+   *
+   * @returns
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status |  { error_code: number, reason: string } |
+   *  | IDs | ID array of the successfully deleted data |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).deleteEntities({
+   *    collection_name: COLLECTION_NAME,
+   *    expr: 'id in [1,2,3,4]'
+   *  });
+   * ```
+   */
+  async delete(data: DeleteReq): Promise<MutationResult> {
+    if (!data || !data.collection_name) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+
+    if (!data.ids || data.ids.length === 0) {
+      throw new Error(ERROR_REASONS.IDS_REQUIRED);
+    }
+
+    const pkField = await this.getPkFieldName(data);
+
+    const req = { ...data, expr: `${pkField} in [${data.ids.join(',')}]` };
+    return this.deleteEntities(req);
+  }
+
+  /**
    * Perform vector similarity search.
    *
    * @param data
    *  | Property | Type | Description |
    *  | :--- | :-- | :-- |
    *  | collection_name | String | Collection name |
-   *  | vectors or vector | Number[][] or Number[] | Original vector to search with |
+   *  | vectors or data or (vector) | Number[][] or Number[] | Original vector to search with |
    *  | partition_names(optional)| String[] | Array of partition names |
    *  | limit(optional) | number | topk alias |
    *  | topk(optional) | number | topk |
@@ -371,9 +417,15 @@ export class Data extends Collection {
       };
 
       // create search vectors
-      const searchVectors = (data as SearchReq).vectors || [
-        (data as SearchSimpleReq).vector,
-      ];
+      let searchVectors: number[] | number[][] =
+        (data as SearchReq).vectors ||
+        (data as SearchSimpleReq).data ||
+        (data as SearchSimpleReq).vector;
+
+      // make sure the searchVectors format is correct
+      if (!Array.isArray(searchVectors[0])) {
+        searchVectors = [searchVectors as unknown] as number[][];
+      }
 
       /**
        *  It will decide the score precision.
@@ -704,6 +756,52 @@ export class Data extends Collection {
       status: promise.status,
       data: results,
     };
+  }
+
+  /**
+   * get vector data by providing ids in Milvus
+   *
+   * @param data
+   *  | Property | Type  | Description |
+   *  | :--- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | ids | String[] | ids to get |
+   *  | partitions_names(optional) | String[] | Array of partition names |
+   *  | output_fields | String[] | Vector or scalar field to be returned |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+
+   *  | params | {key: value}[] | An optional key pair json array
+   *
+   * @returns
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number,reason:string } |
+   *  | data | Data of all fields that you defined in `output_fields`, {field_name: value}[] |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).get({
+   *    collection_name: 'my_collection',
+   *    ids: [1,2,3,4,5,6,7,8],
+   *    output_fields: ["age"],
+   *  });
+   * ```
+   */
+  async get(data: GetReq): Promise<QueryResults> {
+    checkCollectionName(data);
+
+    const pkField = await this.getPkFieldName(data);
+
+    if (!data.ids || data.ids.length === 0) {
+      throw new Error(ERROR_REASONS.IDS_REQUIRED);
+    }
+
+    // build query req
+    const req = { ...data, expr: `${pkField} in [${data.ids.join(',')}]` };
+
+    return this.query(req);
   }
 
   /**
