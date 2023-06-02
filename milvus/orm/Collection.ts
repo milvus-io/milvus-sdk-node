@@ -2,15 +2,14 @@ import {
   MilvusClient,
   InsertReq,
   SearchSimpleReq,
-  DeleteEntitiesReq,
+  GetReq,
+  DeleteReq,
   QueryReq,
-  CreateIndexSimpleReq,
   cloneObj,
   DataTypeMap,
   DataType,
   findKeyValue,
 } from '..';
-import { getDefaultIndexParams } from '.';
 
 interface collectionProps {
   name: string;
@@ -47,15 +46,10 @@ export class Collection {
     this.#client = client;
   }
 
-  // init collection, get key informations from server
-  async init(loadOnInit: boolean) {
+  //  get key informations from server
+  async init() {
     // update information
     await this.update();
-    // load
-    if (loadOnInit) {
-      await this.index();
-      await this.load();
-    }
   }
 
   // update key information
@@ -116,19 +110,13 @@ export class Collection {
   }
 
   // Creates an index for the collection.
-  async createIndex(
-    data: Omit<
-      CreateIndexSimpleReq,
-      'collection_name' | 'field_name'
-    > = getDefaultIndexParams()
-  ) {
-    // Create a request object to create the index.
-    const createIndexReq = cloneObj(data) as CreateIndexSimpleReq;
-
+  async index() {
     // build index req parameters
-    createIndexReq.collection_name = this.name;
-    createIndexReq.field_name = this.vectorFieldName;
-    return await this.#client.createIndex(createIndexReq);
+    return await this.#client.createIndex({
+      collection_name: this.name,
+      field_name: this.vectorFieldName,
+      params: {},
+    });
   }
 
   // Searches the collection for entities that match a given query.
@@ -162,16 +150,22 @@ export class Collection {
   }
 
   // Deletes an entity from the collection.
-  async delete(data: Omit<DeleteEntitiesReq, 'collection_name'>) {
+  async delete(data: Omit<DeleteReq, 'collection_name'>) {
     // Create a request object to delete the entity.
-    const deleteEntitiesReq = cloneObj(data) as DeleteEntitiesReq;
+    const deleteReq = cloneObj(data) as DeleteReq;
 
-    deleteEntitiesReq.collection_name = this.name;
+    deleteReq.collection_name = this.name;
 
-    return await this.#client.deleteEntities(deleteEntitiesReq);
+    return await this.#client.delete(deleteReq);
   }
 
-  // alias
-  get = this.query;
-  index = this.createIndex;
+  // get
+  async get(data: Omit<GetReq, 'collection_name'>) {
+    // Create a request object to query the collection.
+    const getReq = cloneObj(data) as GetReq;
+
+    getReq.collection_name = this.name;
+
+    return await this.#client.get(getReq);
+  }
 }

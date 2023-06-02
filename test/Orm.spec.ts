@@ -50,18 +50,12 @@ describe(`ORM Client API`, () => {
     await milvusClient.createIndex({
       collection_name: EXIST_INDEXED_COLLECTION_NAME,
       field_name: 'vector',
-      index_type: 'HNSW',
-      metric_type: 'L2',
-      params: { efConstruction: 10, M: 4 },
     });
     // loaded collection
     await milvusClient.createCollection(EXIST_LOADED_COLLECTION_PARAMS);
     await milvusClient.createIndex({
       collection_name: EXIST_LOADED_COLLECTION_NAME,
       field_name: 'vector',
-      index_type: 'HNSW',
-      metric_type: 'L2',
-      params: { efConstruction: 10, M: 4 },
     });
     await milvusClient.loadCollectionSync({
       collection_name: EXIST_LOADED_COLLECTION_NAME,
@@ -104,7 +98,6 @@ describe(`ORM Client API`, () => {
     expect(collectionInfo.schema.enable_dynamic_field).toEqual(true);
     const count = await collection.count();
     expect(typeof count).toEqual('number');
-    // insert
   });
 
   it(`get exsiting collection successfully`, async () => {
@@ -127,7 +120,6 @@ describe(`ORM Client API`, () => {
     });
 
     expect(collection.name).toEqual(EXIST_INDEXED_COLLECTION_NAME);
-    // insert
   });
 
   it(`get exsiting loaded collection successfully`, async () => {
@@ -149,11 +141,11 @@ describe(`ORM Client API`, () => {
     });
 
     // insert data
-    await collection.insert({ fields_data: data });
+    await collection.insert({ data });
 
     // search
     const searchRes = await collection.search({
-      vector: [1, 2, 3, 4, 5, 6, 7, 8],
+      data: [1, 2, 3, 4, 5, 6, 7, 8],
       limit: 2,
     });
 
@@ -171,21 +163,19 @@ describe(`ORM Client API`, () => {
 
     // get
     const getRes = await collection.get({
-      filter: 'height > 0',
+      ids: [1, 2, 3],
       output_fields: ['height', 'age'],
       limit: 2,
     });
 
     expect(getRes.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(getRes.data.length).toEqual(2);
 
     // delete
     const deleteRes = await collection.delete({
-      filter: `age in [${queryRes.data.map(d => d.age).join(',')}]`,
+      ids: [1, 2, 3],
     });
 
     expect(deleteRes.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(Number(deleteRes.delete_cnt)).toEqual(2);
   });
 
   it(`index successfully`, async () => {

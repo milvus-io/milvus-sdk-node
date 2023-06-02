@@ -54,29 +54,43 @@ export class Index extends Data {
   ): Promise<ResStatus> {
     checkCollectionName(data);
 
-    // Set the extra_params object based on the input data
-    const extra_params = (data as CreateIndexReq).extra_params || {
-      index_type: (data as CreateIndexSimpleReq).index_type,
-      metric_type: (data as CreateIndexSimpleReq).metric_type,
-    };
+    // build extra_params object
+    const extra_params =
+      (data as CreateIndexReq).extra_params || ({} as CreateIndexSimpleReq);
 
-    // If index_params is present, add it to the extra_params object
+    // if params set, build params
     if ((data as CreateIndexSimpleReq).params) {
       extra_params.params = JSON.stringify(
         (data as CreateIndexSimpleReq).params
       );
     }
 
-    // Combine the input data and extra_params into a single object
-    const params = {
+    // if index_type is set, add it to extra_params
+    if ((data as CreateIndexSimpleReq).index_type) {
+      extra_params.index_type = (data as CreateIndexSimpleReq).index_type;
+    }
+
+    // if metric_type is set, add it to extra_params
+    if ((data as CreateIndexSimpleReq).metric_type) {
+      extra_params.metric_type = (data as CreateIndexSimpleReq).metric_type;
+    }
+
+    // build create index param
+    const createIndexParams: any = {
       ...data,
-      extra_params: parseToKeyValue(extra_params),
+      ...extra_params,
     };
+
+    // if extra param is empty, remove it
+    if (Object.keys(extra_params).length > 0) {
+      createIndexParams.extra_params = parseToKeyValue(extra_params);
+    }
+
     // Call the 'CreateIndex' gRPC method and return the result
     const promise = await promisify(
       this.client,
       'CreateIndex',
-      params,
+      createIndexParams,
       data.timeout || this.timeout
     );
     return promise;

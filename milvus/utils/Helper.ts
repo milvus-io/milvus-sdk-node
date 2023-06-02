@@ -1,4 +1,4 @@
-import { DataType, MetricType } from '..';
+import { DataType } from '..';
 
 export const buildSchema = (data: {
   dimension: number;
@@ -20,9 +20,3 @@ export const buildSchema = (data: {
     },
   ];
 };
-
-export const getDefaultIndexParams = () => ({
-  index_type: 'HNSW',
-  metric_type: MetricType.IP,
-  params: { efConstruction: 8, M: 64 },
-});
