@@ -11,6 +11,8 @@ import { Collection } from '../milvus/orm';
 let milvusClient = new MilvusClient({ address: IP });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
+const NEW_COLLECTION_NAME2 = GENERATE_NAME();
+const NEW_COLLECTION_WITH_INDEX_PARAMS = GENERATE_NAME();
 const EXIST_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_COLLECTION_NAME,
   dim: 8,
@@ -61,20 +63,22 @@ describe(`ORM Client API`, () => {
       collection_name: EXIST_LOADED_COLLECTION_NAME,
     });
   });
-
   afterAll(async () => {
-    await milvusClient.dropCollection({
-      collection_name: NEW_COLLECTION_NAME,
-    });
-    await milvusClient.dropCollection({
-      collection_name: EXIST_COLLECTION_NAME,
-    });
-    await milvusClient.dropCollection({
-      collection_name: EXIST_INDEXED_COLLECTION_NAME,
-    });
-    await milvusClient.dropCollection({
-      collection_name: EXIST_LOADED_COLLECTION_NAME,
-    });
+    const cols = [
+      NEW_COLLECTION_NAME,
+      NEW_COLLECTION_NAME2,
+      EXIST_COLLECTION_NAME,
+      EXIST_INDEXED_COLLECTION_NAME,
+      EXIST_LOADED_COLLECTION_NAME,
+      NEW_COLLECTION_WITH_INDEX_PARAMS,
+    ];
+
+    for (let i = 0; i < cols.length; i++) {
+      await milvusClient.dropCollection({
+        collection_name: cols[i],
+      });
+    }
+
     await milvusClient.dropDatabase(dbParam);
   });
 
@@ -195,5 +199,43 @@ describe(`ORM Client API`, () => {
     cols.forEach(col => {
       expect(col instanceof Collection).toEqual(true);
     });
+  });
+
+  it(`create collection with index params successfully`, async () => {
+    const cols = await milvusClient.collection({
+      collection_name: NEW_COLLECTION_WITH_INDEX_PARAMS,
+      dimension: 8,
+      index_params: { metric_type: 'L2' },
+    });
+
+    const info = await cols.info();
+
+    expect(
+      info.index_descriptions[0].params.some(d => {
+        return d.key === 'metric_type' && d.value === 'L2';
+      })
+    ).toEqual(true);
+  });
+
+  it(`create collection should fail`, async () => {
+    const collection = await milvusClient.collection({
+      collection_name: NEW_COLLECTION_NAME2,
+      dimension: 8,
+    });
+
+    expect(collection.pkFieldName).toEqual('id');
+    expect(collection.vectorFieldName).toEqual('vector');
+    expect(collection.dim).toEqual(8);
+    expect(collection.vectorType).toEqual(DataType.FloatVector);
+
+    try {
+      await milvusClient.collection({
+        collection_name: NEW_COLLECTION_NAME2,
+        dimension: 8,
+        index_params: { metric_type: 'L2' },
+      });
+    } catch (error) {
+      expect(error.message).toBeDefined();
+    }
   });
 });

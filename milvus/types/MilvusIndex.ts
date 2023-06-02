@@ -2,7 +2,7 @@ import { KeyValuePair, IndexState, keyValueObj } from '../';
 import { GrpcTimeOut, ResStatus } from './Common';
 
 export interface CreateIndexParam {
-  index_type: string;
+  index_type?: string;
   metric_type: string;
   params?: string;
 }
@@ -16,8 +16,8 @@ export interface CreateIndexReq extends GrpcTimeOut {
 export interface CreateIndexSimpleReq extends GrpcTimeOut {
   collection_name: string;
   field_name: string;
-  index_type: string;
-  metric_type: string;
+  index_type?: string;
+  metric_type?: string;
   index_name?: string;
   params?: keyValueObj;
 }
@@ -51,6 +51,11 @@ export interface IndexDescription {
   indexID: number;
   params: KeyValuePair[];
   field_name: string;
+  indexed_rows: string;
+  total_rows: string;
+  state: string;
+  index_state_fail_reason: string;
+  pending_index_rows: string;
 }
 export interface DescribeIndexResponse {
   status: ResStatus;

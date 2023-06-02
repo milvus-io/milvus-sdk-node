@@ -1,6 +1,6 @@
-import { DataType, MetricType } from '../';
+import { DataType, MetricType, CreateIndexParam } from '../';
 
-// highlevel
+// highlevel，only collection_name and dimension are required
 export interface CreateColReq {
   collection_name: string;
   dimension: number;
@@ -12,6 +12,6 @@ export interface CreateColReq {
   enableDynamicField?: boolean;
   description?: string;
   auto_id?: boolean;
-  num_partitions?: number;
   timeouts?: number;
+  index_params?: CreateIndexParam;
 }

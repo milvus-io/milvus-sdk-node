@@ -6,8 +6,10 @@ import {
   CreateColReq,
   DataType,
   buildDefaultSchema,
+  CreateIndexReq,
   ResStatus,
   ErrorCode,
+  ERROR_REASONS,
 } from '.';
 import sdkInfo from '../sdk.json';
 
@@ -52,6 +54,13 @@ export class MilvusClient extends GRPCClient {
   }
 
   // High level API align with pymilvus
+  /**
+   * Creates a new collection with the given parameters.
+   * @async
+   * @function create_collection
+   * @param {CreateColReq} data - The data required to create the collection.
+   * @returns {Promise<ResStatus>} - The result of the operation.
+   */
   async create_collection(data: CreateColReq): Promise<ResStatus> {
     const {
       collection_name,
@@ -62,15 +71,19 @@ export class MilvusClient extends GRPCClient {
       vector_field_name = 'vector',
       enableDynamicField = true,
       auto_id = true,
-      num_partitions,
+      index_params = {},
       timeout,
     } = data;
 
+    // prepare result
     let result: ResStatus = { error_code: '', reason: '' };
 
+    // check if the collection is existing
     const exist = await this.hasCollection({ collection_name });
 
+    // if not, create one
     if (!exist.value) {
+      // build schema
       const schema = buildDefaultSchema({
         primary_field_name,
         id_type,
@@ -79,40 +92,45 @@ export class MilvusClient extends GRPCClient {
         auto_id,
       });
 
+      // create collection
       result = await this.createCollection({
         collection_name,
         enable_dynamic_field: enableDynamicField,
         fields: schema,
-        num_partitions,
         timeout,
       });
     }
 
     try {
-      const createIndexPromise = this.createIndex({
+      const createIndexParam: CreateIndexReq = {
         collection_name,
         field_name: vector_field_name,
-        metric_type,
-      });
+        extra_params: { metric_type, ...index_params },
+      };
 
-      const loadIndexPromise = this.loadCollectionSync({
+      // create index
+      const createIndexPromise = await this.createIndex(createIndexParam);
+
+      // if failed, throw the error
+      if (createIndexPromise.error_code !== ErrorCode.SUCCESS) {
+        throw new Error(createIndexPromise.reason as string);
+      }
+
+      // load collection
+      const loadIndexPromise = await this.loadCollectionSync({
         collection_name,
       });
 
-      const [createIndexResult, loadIndexResult] = await Promise.all([
-        createIndexPromise,
-        loadIndexPromise,
-      ]);
-
-      if (
-        createIndexResult.error_code !== ErrorCode.SUCCESS ||
-        loadIndexResult.error_code !== ErrorCode.SUCCESS
-      ) {
-        throw new Error();
+      // if failed, throw the error
+      if (loadIndexPromise.error_code !== ErrorCode.SUCCESS) {
+        throw new Error(loadIndexPromise.reason as string);
       }
     } catch (error) {
+      // if error happens, drop the collection
       await this.dropCollection({ collection_name });
-      result.error_code = ErrorCode.UNEXPECTED_ERROR;
+
+      // update result
+      throw new Error(`Create collection failed: ${error.message}`);
     }
 
     return result;

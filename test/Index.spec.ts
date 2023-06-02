@@ -28,7 +28,7 @@ const [
   COL_IVF_PQ,
   COL_HNSW,
   COL_ANNOY,
-  DISKANN,
+  COL_SIMPLE,
 ] = INDEX_COLLECTIONS;
 
 describe(`Milvus Index API`, () => {
@@ -67,6 +67,14 @@ describe(`Milvus Index API`, () => {
       });
     }
     await milvusClient.dropDatabase(dbParam);
+  });
+
+  it(`Create SIMPLE index should success`, async () => {
+    const res = await milvusClient.createIndex({
+      collection_name: COL_SIMPLE,
+      field_name: VECTOR_FIELD_NAME,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Create FLAT index should success`, async () => {
