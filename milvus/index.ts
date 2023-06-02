@@ -7,4 +7,3 @@ export * from './types';
 // clients
 export * from './grpc/GrpcClient';
 export * from './MilvusClient';
-export * from './OrmClient';
