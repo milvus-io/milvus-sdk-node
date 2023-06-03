@@ -14,7 +14,7 @@ The following collection shows Milvus versions and recommended @zilliz/milvus2-s
 | Milvus version | Recommended @zilliz/milvus2-sdk-node version |
 | :------------: | :------------------------------------------: |
 | v2.2.9+ | **v2.2.11+** |
-| v2.2.0 - v2.2.9 | v2.2.10 |
+| v2.2.0 - v2.2.8 | v2.2.10 |
 
 ## Dependencies
 
