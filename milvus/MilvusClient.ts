@@ -52,7 +52,7 @@ export class MilvusClient extends GRPCClient {
     this.connect(MilvusClient.sdkInfo.version);
   }
 
-  // High level API align with pymilvus
+  // High level API: align with pymilvus
   /**
    * Creates a new collection with the given parameters.
    * @function create_collection
@@ -78,6 +78,7 @@ export class MilvusClient extends GRPCClient {
 
     // check if the collection is existing
     const exist = await this.hasCollection({ collection_name });
+    let indexNotExist = true;
 
     // if not, create one
     if (!exist.value) {
@@ -98,23 +99,29 @@ export class MilvusClient extends GRPCClient {
         timeout,
       });
     } else {
-      const info = await this.describeCollection({ collection_name });
-      console.log(info);
+      const info = await this.describeIndex({ collection_name });
+      indexNotExist = info.status.error_code === ErrorCode.INDEX_NOT_EXIST;
     }
 
     try {
-      const createIndexParam: CreateIndexReq = {
-        collection_name,
-        field_name: vector_field_name,
-        extra_params: { metric_type, ...index_params },
-      };
+      if (indexNotExist) {
+        const createIndexParam: CreateIndexReq = {
+          collection_name,
+          field_name: vector_field_name,
+          extra_params: { metric_type, ...index_params },
+        };
 
-      // create index
-      const createIndexPromise = await this.createIndex(createIndexParam);
+        // create index
+        const createIndexPromise = await this.createIndex(createIndexParam);
 
-      // if failed, throw the error
-      if (createIndexPromise.error_code !== ErrorCode.SUCCESS) {
-        throw new Error(createIndexPromise.reason as string);
+        // if failed, throw the error
+        if (createIndexPromise.error_code !== ErrorCode.SUCCESS) {
+          throw new Error(createIndexPromise.reason as string);
+        }
+      } else {
+        logger.info(
+          `Collection ${collection_name} is already existed and indexed, index params ignored.`
+        );
       }
 
       // load collection
