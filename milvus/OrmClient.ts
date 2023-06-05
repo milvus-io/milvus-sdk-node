@@ -1,5 +1,5 @@
-import { ShowCollectionsReq, DataType, CreateColReq, MilvusClient } from './';
-import { Collection, buildSchema } from './orm';
+import { ShowCollectionsReq, CreateColReq, MilvusClient } from './';
+import { Collection } from './orm';
 
 /**
  * ORM client that extends Milvus client
@@ -12,51 +12,12 @@ export class OrmClient extends MilvusClient {
    * @returns A Collection object representing the newly created or existing collection, and it is indexed and loaded
    */
   async collection(data: CreateColReq): Promise<Collection> {
-    // get params
-    const {
-      collection_name,
-      dimension,
-      primary_field_name = 'id',
-      id_type = DataType.Int64,
-      vector_field_name = 'vector',
-      enableDynamicField = true,
-      loadOnInit = true,
-    } = data;
-
-    // check exist
-    const exist = await this.hasCollection({ collection_name });
-
-    // build schema
-    const schema = buildSchema({
-      primary_field_name,
-      id_type,
-      vector_field_name,
-      dimension,
-    });
-
-    // not exist, create a new one
-    if (!exist.value) {
-      // create a new collection with fixed schema
-      await this.createCollection({
-        collection_name,
-        enable_dynamic_field: enableDynamicField,
-        fields: schema,
-      });
-    }
-
+    // create collection using high-level API
+    await this.create_collection(data);
     // return collection object
-    const col = new Collection({
-      name: collection_name,
-      client: this,
-    });
-
-    try {
-      // init
-      await col.init(loadOnInit);
-    } catch (error) {
-      console.log('creation error ', error);
-    }
-
+    const col = new Collection({ name: data.collection_name, client: this });
+    // init 
+    await col.init();
     return col;
   }
 

@@ -1,4 +1,4 @@
-import { KeyValuePair } from '../types/Common';
+import { KeyValuePair, DataType } from '../';
 
 /**
  * Promisify a function call with optional timeout
@@ -47,4 +47,27 @@ export const findKeyValue = (obj: KeyValuePair[], key: string) =>
 
 export const sleep = (time: number) => {
   return new Promise(resolve => setTimeout(resolve, time));
+};
+
+// build default schmea
+export const buildDefaultSchema = (data: {
+  dimension: number;
+  primary_field_name: string;
+  id_type: DataType.Int64 | DataType.VarChar;
+  vector_field_name: string;
+  auto_id: boolean;
+}) => {
+  return [
+    {
+      name: data.primary_field_name,
+      data_type: data.id_type,
+      is_primary_key: true,
+      autoID: data.auto_id,
+    },
+    {
+      name: data.vector_field_name,
+      data_type: DataType.FloatVector,
+      dim: data.dimension,
+    },
+  ];
 };
