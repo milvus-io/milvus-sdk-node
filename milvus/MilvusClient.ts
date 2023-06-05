@@ -103,39 +103,34 @@ export class MilvusClient extends GRPCClient {
       indexNotExist = info.status.error_code === ErrorCode.INDEX_NOT_EXIST;
     }
 
-    try {
-      if (indexNotExist) {
-        const createIndexParam: CreateIndexReq = {
-          collection_name,
-          field_name: vector_field_name,
-          extra_params: { metric_type, ...index_params },
-        };
-
-        // create index
-        const createIndexPromise = await this.createIndex(createIndexParam);
-
-        // if failed, throw the error
-        if (createIndexPromise.error_code !== ErrorCode.SUCCESS) {
-          throw new Error(createIndexPromise.reason as string);
-        }
-      } else {
-        logger.info(
-          `Collection ${collection_name} is already existed and indexed, index params ignored.`
-        );
-      }
-
-      // load collection
-      const loadIndexPromise = await this.loadCollectionSync({
+    if (indexNotExist) {
+      const createIndexParam: CreateIndexReq = {
         collection_name,
-      });
+        field_name: vector_field_name,
+        extra_params: { metric_type, ...index_params },
+      };
+
+      // create index
+      const createIndexPromise = await this.createIndex(createIndexParam);
 
       // if failed, throw the error
-      if (loadIndexPromise.error_code !== ErrorCode.SUCCESS) {
-        throw new Error(loadIndexPromise.reason as string);
+      if (createIndexPromise.error_code !== ErrorCode.SUCCESS) {
+        throw new Error(createIndexPromise.reason as string);
       }
-    } catch (error) {
-      // update result
-      throw new Error(`Create collection failed: ${error.message}`);
+    } else {
+      logger.info(
+        `Collection ${collection_name} is already existed and indexed, index params ignored.`
+      );
+    }
+
+    // load collection
+    const loadIndexPromise = await this.loadCollectionSync({
+      collection_name,
+    });
+
+    // if failed, throw the error
+    if (loadIndexPromise.error_code !== ErrorCode.SUCCESS) {
+      throw new Error(loadIndexPromise.reason as string);
     }
 
     return result;

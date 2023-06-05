@@ -81,7 +81,7 @@ export class Index extends Data {
       ...extra_params,
     };
 
-    // if extra param is empty, remove it
+    // if extra param not empty, overwrite existing
     if (Object.keys(extra_params).length > 0) {
       createIndexParams.extra_params = parseToKeyValue(extra_params);
     }
