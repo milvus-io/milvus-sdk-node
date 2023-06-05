@@ -1,8 +1,8 @@
 {
   "name": "@zilliz/milvus2-sdk-node",
   "author": "ued@zilliz.com",
-  "version": "2.2.10",
-  "milvusVersion": "2.2.0-latest",
+  "version": "2.2.12",
+  "milvusVersion": "v2.2.9",
   "main": "dist/milvus",
   "files": [
     "dist"
@@ -23,7 +23,8 @@
     "@grpc/grpc-js": "^1.8.14",
     "@grpc/proto-loader": "^0.7.7",
     "dayjs": "^1.11.7",
-    "protobufjs": "^7.2.3"
+    "protobufjs": "^7.2.3",
+    "winston": "^3.9.0"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.21.5",
@@ -32,8 +33,7 @@
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
     "typedoc": "^0.24.7",
-    "typescript": "^5.0.4",
-    "winston": "^3.9.0"
+    "typescript": "^5.0.4"
   },
   "publishConfig": {
     "access": "public"
