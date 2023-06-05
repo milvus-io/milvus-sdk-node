@@ -11,10 +11,10 @@ The official [Milvus](https://github.com/milvus-io/milvus) client for Node.js.
 
 The following collection shows Milvus versions and recommended @zilliz/milvus2-sdk-node versions:
 
-| Milvus version | Recommended @zilliz/milvus2-sdk-node version |
-| :------------: | :------------------------------------------: |
-| v2.2.9+ | **v2.2.11+** |
-| v2.2.0 - v2.2.8 | v2.2.10 |
+| Milvus version  | Node sdk version | Installation                               |
+| :-------------: | :--------------: | :----------------------------------------- |
+|     v2.2.9+     |   **v2.2.11+**   | `yarn add @zilliz/milvus2-sdk-node`        |
+| v2.2.0 - v2.2.8 |     v2.2.10      | `yarn add @zilliz/milvus2-sdk-node@2.2.10` |
 
 ## Dependencies
 
