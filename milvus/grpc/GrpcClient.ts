@@ -58,6 +58,11 @@ export class GRPCClient extends User {
       this.metadata.set(METADATA.AUTH, auth);
     }
 
+    // setup database
+    if (this.config.database) {
+      this.metadata.set(METADATA.DATABASE, this.config.database);
+    }
+
     // create grpc client
     this.client = new MilvusService(
       formatAddress(this.config.address), // format the address

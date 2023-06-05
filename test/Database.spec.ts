@@ -38,6 +38,12 @@ describe(`Database API`, () => {
     expect(dropCollections.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`using database with address should be ok`, async () => {
+    // use another client with db
+    const newClient = new MilvusClient({ address: IP, database: DB_NAME });
+    expect(newClient.config.database).toEqual(DB_NAME);
+  });
+
   it(`ListDatabases should be ok`, async () => {
     const allDatabases = await milvusClient.listDatabases();
     expect(allDatabases.status.error_code).toEqual(ErrorCode.SUCCESS);
