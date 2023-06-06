@@ -92,7 +92,7 @@ export class Collection extends Database {
    *  });
    * ```
    */
-  async createCollection(data: CreateCollectionReq): Promise<ResStatus> {
+  async _createCollection(data: CreateCollectionReq): Promise<ResStatus> {
     // Destructure the data object and set default values for consistency_level and description.
     const {
       fields,
@@ -141,8 +141,6 @@ export class Collection extends Database {
       },
       data.timeout || this.timeout
     );
-
-    // load index
 
     // Return the promise.
     return createPromise;

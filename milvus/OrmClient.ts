@@ -13,7 +13,7 @@ export class OrmClient extends MilvusClient {
    */
   async collection(data: CreateColReq): Promise<Collection> {
     // create collection using high-level API
-    await this.create_collection(data);
+    await this.createCollection(data);
     // return collection object
     const col = new Collection({ name: data.collection_name, client: this });
     // init 

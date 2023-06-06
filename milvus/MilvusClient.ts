@@ -9,6 +9,8 @@ import {
   CreateColReq,
   ResStatus,
   DataType,
+  CreateCollectionReq,
+  ERROR_REASONS,
 } from '.';
 import sdkInfo from '../sdk.json';
 
@@ -59,7 +61,19 @@ export class MilvusClient extends GRPCClient {
    * @param {CreateColReq} data - The data required to create the collection.
    * @returns {Promise<ResStatus>} - The result of the operation.
    */
-  async create_collection(data: CreateColReq): Promise<ResStatus> {
+  async createCollection(
+    data: CreateColReq | CreateCollectionReq
+  ): Promise<ResStatus> {
+    // Check if fields and collection_name are present, otherwise throw an error.
+    if (!data.collection_name) {
+      throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
+    }
+
+    // if fields are in the data, use old _createCollection
+    if ('fields' in data) {
+      return await this._createCollection(data);
+    }
+
     const {
       collection_name,
       dimension,
