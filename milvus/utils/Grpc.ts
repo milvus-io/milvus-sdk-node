@@ -214,9 +214,12 @@ export const getRetryInterceptor = ({
                     status
                   )}`
                 );
-                throw new Error(
-                  'This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.'
-                );
+                // throw new Error(
+                //   'This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.'
+                // );
+                // return empty message
+                savedReceiveMessage = {};
+                next({ code: grpcStatus.OK });
               default:
                 // OK
                 logger.debug(

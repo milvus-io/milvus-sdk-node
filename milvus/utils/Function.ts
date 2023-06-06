@@ -49,7 +49,7 @@ export const sleep = (time: number) => {
   return new Promise(resolve => setTimeout(resolve, time));
 };
 
-// build default schmea
+// build default schema
 export const buildDefaultSchema = (data: {
   dimension: number;
   primary_field_name: string;

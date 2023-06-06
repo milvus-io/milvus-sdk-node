@@ -7,6 +7,9 @@ import {
   checkTimeParam,
   DataType,
   FieldType,
+  checkCompatibility,
+  CreateCollectionReq,
+  CreateColReq,
 } from '../../milvus';
 
 describe('utils/validate', () => {
@@ -208,5 +211,96 @@ describe('utils/validate', () => {
     expect(checkTimeParam({})).toBe(false);
     expect(checkTimeParam([])).toBe(false);
     expect(checkTimeParam(() => {})).toBe(false);
+  });
+
+  it('throws an error if the SDK and server are incompatible', () => {
+    const data: CreateCollectionReq = {
+      collection_name: 'test_collection',
+      fields: [
+        {
+          name: 'test_field',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'test_field_2',
+          data_type: DataType.BinaryVector,
+          is_primary_key: false,
+          is_partition_key: true,
+          type_params: {
+            dim: 128,
+          },
+        },
+        {
+          name: 'test_field_3',
+          data_type: DataType.JSON,
+          is_primary_key: false,
+          is_partition_key: false,
+        },
+      ],
+    };
+
+    expect(() => checkCompatibility(data)).toThrow(
+      'This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.'
+    );
+
+    const data2: CreateCollectionReq = {
+      collection_name: 'test_collection',
+      fields: [
+        {
+          name: 'test_field',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'test_field_2',
+          data_type: DataType.BinaryVector,
+          is_primary_key: false,
+          is_partition_key: true,
+          type_params: {
+            dim: 128,
+          },
+        },
+        {
+          name: 'test_field_3',
+          data_type: DataType.JSON,
+          is_primary_key: false,
+          is_partition_key: false,
+        },
+      ],
+    };
+    expect(() => checkCompatibility(data2)).toThrow(
+      'This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.'
+    );
+  });
+
+  it('does not throw an error if the SDK and server are compatible', () => {
+    const data: CreateCollectionReq = {
+      collection_name: 'test_collection',
+      fields: [
+        {
+          name: 'test_field',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'test_field_2',
+          data_type: DataType.BinaryVector,
+          is_primary_key: false,
+          is_partition_key: true,
+          type_params: {
+            dim: 128,
+          },
+        },
+        {
+          name: 'test_field_3',
+          data_type: DataType.Int32,
+          is_primary_key: false,
+          is_partition_key: false,
+        },
+      ],
+    };
+
+    expect(() => checkCompatibility(data)).not.toThrow();
   });
 });

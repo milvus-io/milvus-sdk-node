@@ -11,6 +11,8 @@ import {
   DataType,
   CreateCollectionReq,
   ERROR_REASONS,
+  checkCompatibility,
+  CONNECT_STATUS,
 } from '.';
 import sdkInfo from '../sdk.json';
 
@@ -64,6 +66,15 @@ export class MilvusClient extends GRPCClient {
   async createCollection(
     data: CreateColReq | CreateCollectionReq
   ): Promise<ResStatus> {
+    // wait until connecting finished
+    await this.connectPromise;
+
+    // if the connect command is successful and nothing returned
+    // we need to check the compatibility for older milvus
+    if (this.connectStatus === CONNECT_STATUS.UNIMPLEMENTED) {
+      checkCompatibility(data);
+    }
+
     // Check if fields and collection_name are present, otherwise throw an error.
     if (!data.collection_name) {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
@@ -82,7 +93,7 @@ export class MilvusClient extends GRPCClient {
       metric_type = 'IP',
       vector_field_name = 'vector',
       enableDynamicField = true,
-      auto_id = true,
+      auto_id = false,
       index_params = {},
       timeout,
     } = data;
