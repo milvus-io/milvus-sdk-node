@@ -69,7 +69,7 @@ describe(`Collection API`, () => {
       } as any);
     } catch (error) {
       expect(error.message).toEqual(
-        ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS
+        ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM
       );
     }
     try {
