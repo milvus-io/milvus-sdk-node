@@ -9,7 +9,6 @@ import {
   FieldType,
   checkCreateCollectionCompatibility,
   CreateCollectionReq,
-  CreateColReq,
 } from '../../milvus';
 
 describe('utils/validate', () => {
