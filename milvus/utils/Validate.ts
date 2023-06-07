@@ -5,6 +5,8 @@ import {
   convertToDataType,
   MAX_PARTITIONS_NUMBER,
   MAX_PARTITION_KEY_FIELD_COUNT,
+  CreateColReq,
+  CreateCollectionReq,
 } from '../';
 import { status as grpcStatus } from '@grpc/grpc-js';
 
@@ -156,5 +158,42 @@ export const isStatusCodeMatched = (
 export const validatePartitionNumbers = (num_partitions: number) => {
   if (num_partitions < 1 || num_partitions > MAX_PARTITIONS_NUMBER) {
     throw new Error(ERROR_REASONS.INVALID_PARTITION_NUM);
+  }
+};
+
+/**
+ * Checks if the provided data is compatible with the current version of the SDK and server.
+ * @param {CreateColReq | CreateCollectionReq} data - The data to check for compatibility.
+ * @throws {Error} Throws an error if the SDK and server are incompatible.
+ */
+export const checkCreateCollectionCompatibility = (
+  data: CreateColReq | CreateCollectionReq
+) => {
+  const hasDynamicSchemaEnabled =
+    (data as CreateColReq).enableDynamicField ||
+    (data as CreateCollectionReq).enable_dynamic_field;
+
+  if (hasDynamicSchemaEnabled) {
+    throw new Error(
+      `Your milvus server doesn't support dynmaic schmea, please upgrade your server.`
+    );
+  }
+
+  const fields = (data as CreateCollectionReq).fields;
+
+  if (fields.some(f => f.is_partition_key === true)) {
+    throw new Error(
+      `Your milvus server doesn't support partition key, please upgrade your server.`
+    );
+  }
+
+  const hasJSONField = (data as CreateCollectionReq).fields.some(
+    f => f.data_type === 'JSON' || f.data_type === DataType.JSON
+  );
+
+  if (hasJSONField) {
+    throw new Error(
+      `Your milvus server doesn't support JSON data type, please upgrade your server.`
+    );
   }
 };

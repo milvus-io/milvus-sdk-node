@@ -3,3 +3,10 @@ export enum METADATA {
   AUTH = 'authorization',
   CLIENT_ID = 'identifier',
 }
+
+export enum CONNECT_STATUS {
+  NOT_CONNECTED,
+  CONNECTING,
+  CONNECTED,
+  UNIMPLEMENTED,
+}

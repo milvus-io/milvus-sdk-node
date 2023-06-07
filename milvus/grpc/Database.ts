@@ -31,6 +31,11 @@ export class Database extends BaseClient {
    * ```
    */
   async createDatabase(data: CreateDatabaseRequest): Promise<ResStatus> {
+    // check compatibility
+    await this.checkCompatiblity({
+      message: `createDatabase is not supported on this version of milvus.`,
+    });
+
     const promise = await promisify(
       this.client,
       'CreateDatabase',
@@ -60,7 +65,14 @@ export class Database extends BaseClient {
    *  new milvusClient(MILUVS_ADDRESS).listDatabases();
    * ```
    */
-  async listDatabases(data?: ListDatabasesRequest): Promise<ListDatabasesResponse> {
+  async listDatabases(
+    data?: ListDatabasesRequest
+  ): Promise<ListDatabasesResponse> {
+    // check compatibility
+    await this.checkCompatiblity({
+      message: `listDatabases is not supported on this version of milvus.`,
+    });
+
     const promise = await promisify(
       this.client,
       'ListDatabases',
@@ -92,6 +104,11 @@ export class Database extends BaseClient {
    * ```
    */
   async dropDatabase(data: DropDatabasesRequest): Promise<ResStatus> {
+    // check compatibility
+    await this.checkCompatiblity({
+      message: `dropDatabase is not supported on this version of milvus.`,
+    });
+
     const promise = await promisify(
       this.client,
       'DropDatabase',

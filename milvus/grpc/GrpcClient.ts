@@ -15,6 +15,7 @@ import {
   DEFAULT_DB,
   METADATA,
   logger,
+  CONNECT_STATUS,
 } from '../';
 import { User } from './User';
 
@@ -70,8 +71,8 @@ export class GRPCClient extends User {
       this.channelOptions
     );
 
-    // get server info, only works after milvus v2.2.9
-    this._getServerInfo(sdkVersion);
+    // connect to get identifier
+    this.connectPromise = this._getServerInfo(sdkVersion);
   }
 
   /**
@@ -110,6 +111,11 @@ export class GRPCClient extends User {
     });
   }
 
+  /**
+   * Retrieves server information from the Milvus server.
+   * @param {string} sdkVersion - The version of the SDK being used.
+   * @returns {Promise<void>} - A Promise that resolves when the server information has been retrieved.
+   */
   private async _getServerInfo(sdkVersion: string) {
     // build user info
     const userInfo = {
@@ -121,15 +127,23 @@ export class GRPCClient extends User {
       },
     };
 
+    // update connect status
+    this.connectStatus = CONNECT_STATUS.CONNECTING;
+
     return promisify(this.client, 'Connect', userInfo, this.timeout).then(f => {
       // add new identifier interceptor
-      if (f.identifier) {
+      if (f && f.identifier) {
         // update identifier
         this.metadata.set(METADATA.CLIENT_ID, f.identifier);
 
         // setup identifier
         this.serverInfo = f.server_info;
       }
+      // update connect status
+      this.connectStatus =
+        f && f.identifier
+          ? CONNECT_STATUS.CONNECTED
+          : CONNECT_STATUS.UNIMPLEMENTED;
     });
   }
 

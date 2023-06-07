@@ -1,4 +1,4 @@
-import { MilvusClient, ERROR_REASONS } from '../milvus';
+import { MilvusClient, ERROR_REASONS, CONNECT_STATUS } from '../milvus';
 import sdkInfo from '../sdk.json';
 import { IP } from './tools';
 
@@ -24,6 +24,16 @@ describe(`Milvus client`, () => {
     const milvusClient = new MilvusClient(`localhost:19530`, false);
 
     expect(milvusClient.client).toBeDefined();
+  });
+
+  it(`should have connect promise and connectStatus`, async () => {
+    const milvusClient = new MilvusClient(`localhost:19530`, false);
+    expect(milvusClient.connectPromise).toBeDefined();
+
+    await milvusClient.connectPromise;
+    expect(milvusClient.connectStatus).not.toEqual(
+      CONNECT_STATUS.NOT_CONNECTED
+    );
   });
 
   it(`should create a grpc client with authentication when username and password are provided`, () => {
