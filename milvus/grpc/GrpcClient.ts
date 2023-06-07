@@ -141,7 +141,9 @@ export class GRPCClient extends User {
       }
       // update connect status
       this.connectStatus =
-        CONNECT_STATUS[f && f.identifier ? 'CONNECTED' : 'UNIMPLEMENTED'];
+        f && f.identifier
+          ? CONNECT_STATUS.CONNECTED
+          : CONNECT_STATUS.UNIMPLEMENTED;
     });
   }
 
