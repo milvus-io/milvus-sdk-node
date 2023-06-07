@@ -84,7 +84,7 @@ console.log('response', response);
 Save the file, and then you can run it with the following command:
 
 ```shell
-node index.js
+node LangChain.js
 ```
 
 You should see the inserted vectors and the similar vectors printed in the console.
