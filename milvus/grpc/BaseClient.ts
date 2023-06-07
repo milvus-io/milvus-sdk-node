@@ -7,6 +7,7 @@ import {
   DEFAULT_CONNECT_TIMEOUT,
   parseTimeToken,
   ServerInfo,
+  CONNECT_STATUS,
 } from '../';
 
 // path
@@ -20,6 +21,9 @@ const schemaProtoPath = path.resolve(
  * Base gRPC client, setup all configuration here
  */
 export class BaseClient {
+  // flags to indicate that if the connection is established and its state
+  connectStatus = CONNECT_STATUS.NOT_CONNECTED;
+  connectPromise = Promise.resolve();
   // metadata
   protected metadata: Map<string, string> = new Map<string, string>();
   // The path to the Milvus protobuf file.
@@ -126,5 +130,32 @@ export class BaseClient {
       typeof config.timeout === 'string'
         ? parseTimeToken(config.timeout)
         : config.timeout || DEFAULT_CONNECT_TIMEOUT;
+  }
+
+  /**
+   * Checks the compatibility of the SDK with the Milvus server.
+   *
+   * @param {Object} data - Optional data object.
+   * @param {string} data.message - The error message to throw if the SDK is incompatible.
+   * @param {Function} data.checker - A function to call if the SDK is compatible.
+   * @throws {Error} If the SDK is incompatible with the server.
+   */
+  async checkCompatiblity(data: { message?: string; checker?: Function } = {}) {
+    // wait until connecting finished
+    await this.connectPromise;
+
+    // if the connect command is successful and nothing returned
+    // we need to check the compatibility for older milvus
+    if (this.connectStatus === CONNECT_STATUS.UNIMPLEMENTED) {
+      // if checker available, use checker instead
+      if (data.checker) {
+        return data.checker();
+      }
+
+      throw new Error(
+        data.message ||
+          `This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.`
+      );
+    }
   }
 }

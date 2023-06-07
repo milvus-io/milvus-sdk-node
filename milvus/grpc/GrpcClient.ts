@@ -23,10 +23,6 @@ import { User } from './User';
  * A client for interacting with the Milvus server via gRPC.
  */
 export class GRPCClient extends User {
-  // flag to indicate that if the connection is established
-  connectStatus = CONNECT_STATUS.NOT_CONNECTED;
-  connectPromise = Promise.resolve();
-
   // create a grpc service client(connect)
   connect(sdkVersion: string) {
     // get Milvus GRPC service

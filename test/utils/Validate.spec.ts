@@ -7,7 +7,7 @@ import {
   checkTimeParam,
   DataType,
   FieldType,
-  checkCompatibility,
+  checkCreateCollectionCompatibility,
   CreateCollectionReq,
   CreateColReq,
 } from '../../milvus';
@@ -226,7 +226,7 @@ describe('utils/validate', () => {
           name: 'test_field_2',
           data_type: DataType.BinaryVector,
           is_primary_key: false,
-          is_partition_key: true,
+          is_partition_key: false,
           type_params: {
             dim: 128,
           },
@@ -240,11 +240,39 @@ describe('utils/validate', () => {
       ],
     };
 
-    expect(() => checkCompatibility(data)).toThrow(
-      'This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.'
+    expect(() => checkCreateCollectionCompatibility(data)).toThrow(
+      `Your milvus server doesn't support JSON data type, please upgrade your server.`
     );
 
     const data2: CreateCollectionReq = {
+      collection_name: 'test_collection',
+      fields: [
+        {
+          name: 'test_field',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'test_field_2',
+          data_type: DataType.BinaryVector,
+          is_primary_key: false,
+          type_params: {
+            dim: 128,
+          },
+        },
+        {
+          name: 'test_field_3',
+          data_type: DataType.Int64,
+          is_primary_key: false,
+          is_partition_key: true,
+        },
+      ],
+    };
+    expect(() => checkCreateCollectionCompatibility(data2)).toThrow(
+      `Your milvus server doesn't support partition key, please upgrade your server.`
+    );
+
+    const data3: CreateCollectionReq = {
       collection_name: 'test_collection',
       fields: [
         {
@@ -261,16 +289,12 @@ describe('utils/validate', () => {
             dim: 128,
           },
         },
-        {
-          name: 'test_field_3',
-          data_type: DataType.JSON,
-          is_primary_key: false,
-          is_partition_key: false,
-        },
       ],
+      enable_dynamic_field: true,
     };
-    expect(() => checkCompatibility(data2)).toThrow(
-      'This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.'
+
+    expect(() => checkCreateCollectionCompatibility(data3)).toThrow(
+      `Your milvus server doesn't support dynmaic schmea, please upgrade your server.`
     );
   });
 
@@ -287,7 +311,7 @@ describe('utils/validate', () => {
           name: 'test_field_2',
           data_type: DataType.BinaryVector,
           is_primary_key: false,
-          is_partition_key: true,
+          is_partition_key: false,
           type_params: {
             dim: 128,
           },
@@ -301,6 +325,6 @@ describe('utils/validate', () => {
       ],
     };
 
-    expect(() => checkCompatibility(data)).not.toThrow();
+    expect(() => checkCreateCollectionCompatibility(data)).not.toThrow();
   });
 });

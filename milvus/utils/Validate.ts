@@ -166,23 +166,34 @@ export const validatePartitionNumbers = (num_partitions: number) => {
  * @param {CreateColReq | CreateCollectionReq} data - The data to check for compatibility.
  * @throws {Error} Throws an error if the SDK and server are incompatible.
  */
-export const checkCompatibility = (
+export const checkCreateCollectionCompatibility = (
   data: CreateColReq | CreateCollectionReq
 ) => {
-  const hasDynamicFieldEnabled =
+  const hasDynamicSchemaEnabled =
     (data as CreateColReq).enableDynamicField ||
     (data as CreateCollectionReq).enable_dynamic_field;
 
-  const hasPartitionKeyEnabled = (data as CreateCollectionReq)
-    .enable_dynamic_field;
+  if (hasDynamicSchemaEnabled) {
+    throw new Error(
+      `Your milvus server doesn't support dynmaic schmea, please upgrade your server.`
+    );
+  }
+
+  const fields = (data as CreateCollectionReq).fields;
+
+  if (fields.some(f => f.is_partition_key === true)) {
+    throw new Error(
+      `Your milvus server doesn't support partition key, please upgrade your server.`
+    );
+  }
 
   const hasJSONField = (data as CreateCollectionReq).fields.some(
     f => f.data_type === 'JSON' || f.data_type === DataType.JSON
   );
 
-  if (hasDynamicFieldEnabled || hasPartitionKeyEnabled || hasJSONField) {
+  if (hasJSONField) {
     throw new Error(
-      'This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.'
+      `Your milvus server doesn't support JSON data type, please upgrade your server.`
     );
   }
 };
