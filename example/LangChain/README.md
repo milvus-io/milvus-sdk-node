@@ -87,7 +87,7 @@ Save the file, and then you can run it with the following command:
 node LangChain.js
 ```
 
-You should see the inserted vectors and the similar vectors printed in the console.
+You should see the similarity search result printed in the console.
 
 ```shell
 response [
