@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@zilliz/milvus2-sdk-node": "^2.2.14",
+    "langchain": "^0.0.91"
+  }
+}

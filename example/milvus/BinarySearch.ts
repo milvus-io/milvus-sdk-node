@@ -1,19 +1,23 @@
 import { MilvusClient, DataType, InsertReq } from '@zilliz/milvus2-sdk-node';
-import { IP } from '../const';
 import {
+  IP,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
   generateInsertData,
-} from './tools';
+} from '../../test/tools';
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 const test = async () => {
+  const createParams = genCollectionParams({
+    collectionName: COLLECTION_NAME,
+    dim: '128',
+    vectorType: DataType.BinaryVector,
+    autoID: false,
+  });
   // create new collection
-  await milvusClient.createCollection(
-    genCollectionParams(COLLECTION_NAME, '128', DataType.BinaryVector, false)
-  );
+  await milvusClient.createCollection(createParams);
   console.info(`collection ${COLLECTION_NAME} created`);
 
   // create index before load
@@ -49,7 +53,7 @@ const test = async () => {
     },
   ];
   // generate vector data
-  const vectorsData = generateInsertData(fields, 10);
+  const vectorsData = generateInsertData(createParams.fields, 10);
   const params: InsertReq = {
     collection_name: COLLECTION_NAME,
     fields_data: vectorsData,
