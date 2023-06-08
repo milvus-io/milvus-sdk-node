@@ -559,7 +559,7 @@ export class Data extends Collection {
       return {
         status: promise.status,
         // if only searching 1 vector, return the first object of results array
-        results: searchVectors.length === 1 ? results[0] : results,
+        results: searchVectors.length === 1 ? results[0] || [] : results,
       };
     } catch (err) {
       /* istanbul ignore next */

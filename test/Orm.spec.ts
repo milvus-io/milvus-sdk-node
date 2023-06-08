@@ -1,4 +1,9 @@
-import { OrmClient as MilvusClient, ErrorCode, DataType } from '../milvus';
+import {
+  OrmClient as MilvusClient,
+  ErrorCode,
+  DataType,
+  ConsistencyLevelEnum,
+} from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -151,6 +156,7 @@ describe(`ORM Client API`, () => {
     const searchRes = await collection.search({
       data: [1, 2, 3, 4, 5, 6, 7, 8],
       limit: 2,
+      consistency_level: ConsistencyLevelEnum.Strong,
     });
 
     expect(searchRes.results.length).toEqual(2);
