@@ -92,10 +92,10 @@ const COLLECTION_NAME = GENERATE_NAME();
   const queryRes = await milvusClient.query({
     collection_name: COLLECTION_NAME,
     expr: `age == ${result.results[0].id}`,
-    output_fields: ['age', 'vector_field'],
+    output_fields: ['age', VECTOR_FIELD_NAME],
   });
   console.info(`Query data: age == ${result.results[0].id}`);
-  console.info(`Query data returned`, queryRes.data[0].vector_field);
+  console.info(`Query data returned`, queryRes.data);
 
   // drop collection
   await milvusClient.dropCollection({

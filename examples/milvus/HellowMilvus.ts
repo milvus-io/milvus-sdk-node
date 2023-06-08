@@ -3,7 +3,6 @@ import {
   DataType,
   InsertReq,
   ConsistencyLevelEnum,
-  IndexType,
 } from '../../milvus';
 import {
   generateInsertData,
@@ -32,9 +31,7 @@ const Search = async () => {
   const createIndex = await milvusClient.createIndex({
     collection_name: COLLECTION_NAME,
     field_name: VECTOR_FIELD_NAME,
-    index_type: IndexType.AUTOINDEX,
     metric_type: 'L2',
-    params: {},
   });
 
   console.log('createIndex', createIndex);
@@ -55,15 +52,16 @@ const Search = async () => {
   await milvusClient.insert(params);
 
   // do the search
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 1; i++) {
     console.time('search total');
-
-    await milvusClient.search({
+    const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       vector: vectorsData[i][VECTOR_FIELD_NAME],
       output_fields: ['age'],
+      consistency_level: ConsistencyLevelEnum.Strong,
     });
     console.timeEnd('search total');
+    console.log('search result', search);
   }
 
   // delete collection
