@@ -9,7 +9,7 @@ import {
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
-const test = async () => {
+(async () => {
   const createParams = genCollectionParams({
     collectionName: COLLECTION_NAME,
     dim: '128',
@@ -101,6 +101,4 @@ const test = async () => {
   await milvusClient.dropCollection({
     collection_name: COLLECTION_NAME,
   });
-};
-
-test();
+})();

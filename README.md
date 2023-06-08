@@ -11,10 +11,9 @@ The official [Milvus](https://github.com/milvus-io/milvus) client for Node.js.
 
 The following collection shows Milvus versions and recommended @zilliz/milvus2-sdk-node versions:
 
-| Milvus version  | Node sdk version | Installation                               |
-| :-------------: | :--------------: | :----------------------------------------- |
-|     v2.2.9+     |   **v2.2.11+**   | `yarn add @zilliz/milvus2-sdk-node`        |
-| v2.2.0 - v2.2.8 |     v2.2.10      | `yarn add @zilliz/milvus2-sdk-node@2.2.10` |
+| Milvus version | Node sdk version | Installation                        |
+| :------------: | :--------------: | :---------------------------------- |
+|    v2.2.0+     |    **latest**    | `yarn add @zilliz/milvus2-sdk-node` |
 
 ## Dependencies
 
@@ -63,7 +62,7 @@ npm install @zilliz/milvus2-sdk-node
 
 ```shell
 # Download the milvus standalone yaml file
-$ wget https://github.com/milvus-io/milvus/releases/download/v2.2.8/milvus-standalone-docker-compose.yml -O docker-compose.yml
+$ wget https://github.com/milvus-io/milvus/releases/latest/download/milvus-standalone-docker-compose.yml -O docker-compose.yml
 
 # start the milvus server
 sudo docker-compose up -d
@@ -85,12 +84,16 @@ const ssl = false; // secure or not
 const client = new MilvusClient({ address, ssl, username, password });
 ```
 
+> Starting from v2.2.11+, ssl is no longer needed, we will enable ssl for you if your address starts with `https`;
+
 | Parameters      | Description                                                                                                              | Type    | Example             |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------ | ------- | ------------------- |
 | address         | The Milvus IP address                                                                                                    | String  | '192.168.0.1:19530' |
 | ssl?            | SSL connection. It is false by default.                                                                                  | Boolean | false               |
-| username?       | The username used to connect to Milvus                                                                                   | String  | milvus              |
-| address?        | The password used to connect to Milvus                                                                                   | String  | milvus              |
+| username?       | The username used to connect to Milvus                                                                                   | String  | username            |
+| password?       | The password used to connect to Milvus                                                                                   | String  | password            |
+| token?          | you can use username:password as the token                                                                               | String  | username:password   |
+| database?       | Milvus database                                                                                                          | String  | my-db               |
 | maxRetries?     | The number of retries for the grpc method, by default: 3                                                                 | Number  | 3                   |
 | retryDelay?     | The delay between attempts at retrying a failed grpc method in ms, by default: 30                                        | Number  | 30                  |
 | channelOptions? | an optional configuration object that can be passed to a gRPC client when creating a channel to connect to a gRPC server | Object  |                     |

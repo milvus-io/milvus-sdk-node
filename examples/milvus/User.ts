@@ -1,11 +1,11 @@
 import { MilvusClient } from '@zilliz/milvus2-sdk-node';
-import { IP } from '../const';
+import { IP } from '../../test/tools';
+
 const ROOT_NAME = 'root';
 const ROOT_PASSWORD = 'root';
 const noAuthClient = new MilvusClient(IP); // Normal client
 
-// when test_1 collection includes some data.
-const user = async () => {
+(async () => {
   // create a user
   const createUserRes = await noAuthClient.createUser({
     username: 'nameczz',
@@ -25,6 +25,4 @@ const user = async () => {
     username: ROOT_NAME,
   });
   console.log('--- delete user ---', deleteUserRes);
-};
-
-user();
+})();

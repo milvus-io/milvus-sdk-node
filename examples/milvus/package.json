@@ -1,0 +1,9 @@
+{
+  "name": "milvus-examples",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@zilliz/milvus2-sdk-node": "^2.2.14"
+  }
+}
