@@ -44,6 +44,7 @@ import {
   DEFAULT_DYNAMIC_FIELD,
   generateDynamicRow,
   getFieldDataMap,
+  ConsistencyLevelEnum,
 } from '../';
 import { Collection } from './Collection';
 
@@ -475,7 +476,10 @@ export class Data extends Collection {
           dsl_type: DslType.BoolExprV1,
           placeholder_group: placeholderGroupBytes,
           search_params: parseToKeyValue(search_params),
-          consistency_level: data.consistency_level,
+          consistency_level:
+            typeof data.consistency_level === 'undefined'
+              ? ConsistencyLevelEnum.Bounded
+              : data.consistency_level,
         },
         data.timeout || this.timeout
       );

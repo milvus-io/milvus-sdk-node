@@ -60,10 +60,8 @@ const Search = async () => {
 
     await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vectors: [vectorsData[i][VECTOR_FIELD_NAME]],
-      output_fields: ['id', 'vector'],
-      vector_type: DataType.FloatVector,
-      consistency_level: ConsistencyLevelEnum.Bounded,
+      vector: vectorsData[i][VECTOR_FIELD_NAME],
+      output_fields: ['age'],
     });
     console.timeEnd('search total');
   }
