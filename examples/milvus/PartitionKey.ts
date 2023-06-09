@@ -1,8 +1,7 @@
 import { MilvusClient, InsertReq, DataType } from '@zilliz/milvus2-sdk-node';
 
-const COLLECTION_NAME = 'partition_key_example';
-
 // milvus v2.2.9 only
+const COLLECTION_NAME = 'partition_key_example';
 
 (async () => {
   // build client

@@ -4,9 +4,8 @@ import {
   ConsistencyLevelEnum,
 } from '@zilliz/milvus2-sdk-node';
 
-const COLLECTION_NAME = 'dynamic_schema_example';
-
 // milvus v2.2.9 only
+const COLLECTION_NAME = 'dynamic_schema_example';
 
 (async () => {
   // build client
