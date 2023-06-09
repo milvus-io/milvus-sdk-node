@@ -24,6 +24,12 @@ export interface ClientConfig {
   retryDelay?: number;
   // database
   database?: string;
+  // certfile path
+  rootCerts?: string;
+  // private key
+  privateKey?: string;
+  // certificate
+  certChain?: string;
 }
 
 export interface ServerInfo {

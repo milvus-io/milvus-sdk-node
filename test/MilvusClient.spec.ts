@@ -71,7 +71,6 @@ describe(`Milvus client`, () => {
 
   it(`Get milvus version`, async () => {
     const res = await milvusClient.getVersion();
-
     expect(res).toHaveProperty('version');
   });
 
