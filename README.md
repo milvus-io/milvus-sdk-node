@@ -1,15 +1,15 @@
+# Milvus2-sdk-node
+
 [![typescript](https://badges.aleen42.com/src/typescript.svg)](https://badges.aleen42.com/src/typescript.svg)
 [![version](https://img.shields.io/npm/v/@zilliz/milvus2-sdk-node?color=bright-green)](https://img.shields.io/npm/v/@zilliz/milvus2-sdk-node)
 [![downloads](https://img.shields.io/npm/dw/@zilliz/milvus2-sdk-node?color=bright-green)](https://img.shields.io/npm/dw/@zilliz/milvus2-sdk-node)
 [![codecov](https://codecov.io/gh/milvus-io/milvus-sdk-node/branch/main/graph/badge.svg?token=Zu5FwWstwI)](https://codecov.io/gh/milvus-io/milvus-sdk-node)
 
-# Milvus2-sdk-node
-
 The official [Milvus](https://github.com/milvus-io/milvus) client for Node.js.
 
 ## Compatibility
 
-The following collection shows Milvus versions and recommended @zilliz/milvus2-sdk-node versions:
+The following table shows the recommended `@zilliz/milvus2-sdk-node` versions for different Milvus versions:
 
 | Milvus version | Node sdk version | Installation                        |
 | :------------: | :--------------: | :---------------------------------- |
@@ -23,15 +23,19 @@ The following collection shows Milvus versions and recommended @zilliz/milvus2-s
 
 ## Installation
 
-The recommended way to get started using the Milvus node.js client is by using npm (Node package manager) to install the dependency in your project.
+You can use npm (Node package manager) or Yarn to install the `@zilliz/milvus2-sdk-node` dependency in your project:
 
-```javascript
+```shell
 npm install @zilliz/milvus2-sdk-node
 # or ...
 yarn add @zilliz/milvus2-sdk-node
 ```
 
-This will download the Milvus node.js client and add a dependency entry in your package.json file.
+This will download the Milvus Node.js client and add a dependency entry in your package.json file.
+
+## Code Examples
+
+You can find code examples in the [examples/milvus](./examples/milvus) directory. These examples cover various aspects of working with Milvus, such as connecting to Milvus, vector search, data query, dynamic schema, partition key, and database operations.
 
 ## Quick Start
 
@@ -58,7 +62,7 @@ Next, install this client as a dependency.
 npm install @zilliz/milvus2-sdk-node
 ```
 
-### Start a milvus server
+### Start a Milvus server
 
 ```shell
 # Download the milvus standalone yaml file
@@ -81,7 +85,7 @@ const password = 'your-milvus-password'; // optional password
 const ssl = false; // secure or not
 
 // connect to milvus
-const client = new MilvusClient({ address, ssl, username, password });
+const client = new MilvusClient({ address, username, password, ssl });
 ```
 
 > Starting from v2.2.11+, ssl is no longer needed, we will enable ssl for you if your address starts with `https`;
@@ -92,13 +96,13 @@ const client = new MilvusClient({ address, ssl, username, password });
 | ssl?            | SSL connection. It is false by default.                                                                                  | Boolean | false               |
 | username?       | The username used to connect to Milvus                                                                                   | String  | username            |
 | password?       | The password used to connect to Milvus                                                                                   | String  | password            |
-| token?          | you can use username:password as the token                                                                               | String  | username:password   |
+| token?          | Security token, use the form `username:password` as the token                                                            | String  | username:password   |
 | database?       | Milvus database                                                                                                          | String  | my-db               |
 | maxRetries?     | The number of retries for the grpc method, by default: 3                                                                 | Number  | 3                   |
 | retryDelay?     | The delay between attempts at retrying a failed grpc method in ms, by default: 30                                        | Number  | 30                  |
 | channelOptions? | an optional configuration object that can be passed to a gRPC client when creating a channel to connect to a gRPC server | Object  |                     |
 
-### define schema for collection
+### Define schema for collection
 
 The code shows an example of how to define a schema for a collection in Milvus using the Milvus Node SDK. A schema defines the properties of a collection, such as the names and data types of the fields that make up the vectors.
 
@@ -128,21 +132,7 @@ const schema = [
 ];
 ```
 
-In the code, the schema variable is defined as an array of objects, where each object represents a field in the collection. The fields are defined using the following properties:
-
-`name`: The name of the field, which must be unique within the collection.
-
-`description`: A description of the field, which can be used to provide additional information about the field.
-
-`data_type`: The data type of the field, which can be one of several predefined data types such as Int64 or FloatVector.
-
-`is_primary_key`: A boolean flag that indicates whether the field is a primary key. Primary keys are unique identifiers for each vector in the collection, and can be used to efficiently retrieve specific vectors.
-
-`autoID`: A boolean flag that indicates whether the primary key is automatically generated by Milvus.
-
-`dim`: The dimensionality of the vector field. For fields of type FloatVector, this specifies the number of dimensions in each vector.
-
-### create collection
+### Create a collection
 
 ```javascript
 await client.createCollection({
@@ -152,9 +142,9 @@ await client.createCollection({
 });
 ```
 
-### prepare data
+### Prepare your data
 
-When using the Milvus Node SDK to insert data into a collection, it's important to ensure that the data format of the input matches the schema defined for the collection. The data format used by the Milvus Node SDK consists of an array of objects, where each object represents an entity. Typically, each object contains a unique identifier for the entity, which can be an integer or string, and a vector field that stores the feature values as an array of floating-point numbers.
+The data format used by the Milvus Node SDK consists of an array of objects, where each object represents an entity with a unique identifier (integer or string) and a vector field that stores the feature values as an array of floating-point numbers.
 
 ```javascript
 // generate mock data
@@ -173,7 +163,7 @@ for (let i = 0; i < 1000; i++) {
 }
 ```
 
-### insert data into collection
+### Insert data into collection
 
 Once we have the data, you can insert data into the collection.
 
@@ -184,13 +174,14 @@ await client.insert({
 });
 ```
 
-### create index
+### Ceate index
 
 By creating an index and loading the collection into memory, you can improve the performance of search and retrieval operations in Milvus, making it faster and more efficient to work with large-scale datasets.
 
 ```javascript
 // create index
 await client.createIndex({
+  // required
   collection_name,
   field_name: 'book_intro',
   index_name: 'myindex',
@@ -201,18 +192,6 @@ await client.createIndex({
 ```
 
 Milvus supports [several different types of indexes](https://milvus.io/docs/index.md), each of which is optimized for different use cases and data distributions. Some of the most commonly used index types in Milvus include IVF_FLAT, IVF_SQ8, IVF_PQ, and HNSW. When creating an index in Milvus, you must choose an appropriate index type based on your specific use case and data distribution.
-
-`collection_name`: The name of the collection to create the index for.
-
-`field_name`: The name of the field to create the index on.
-
-`index_name`: The name of the index to create.
-
-`index_type`: The type of index to create.
-
-`param`: The index build parameters, please refer to the [index docs](https://milvus.io/docs/index.md).
-
-`metric_type`: The distance metric to use when computing the similarity between vectors. In this case, the metric type is set to L2, which is a commonly used metric for computing the Euclidean distance between vectors.
 
 ### load collection
 
@@ -236,31 +215,15 @@ const searchVector = [...Array(dim)].map(() => Math.random());
 // Perform a vector search on the collection
 const res = await client.search({
   collection_name, // required, the collection name
-  vector: [0.1, 0.2, 0.3, 0.4], // required, vector used to compare other vectors in milvus
+  vector: searchVector, // required, vector used to compare other vectors in milvus
+  // optionals
   filter: 'word_count > 0', // optional, filter
   params: { nprobe: 64 }, // optional, specify the search parameters
-  limit: 1, // specify the number of nearest neighbors to return
+  limit: 10, // optional, specify the number of nearest neighbors to return
   metric_type: 'L2', // optional, metric to calculate similarity of two vectors
   output_fields: ['book_id', 'word_count'], // optional, specify the fields to return in the search results
 });
 ```
-
-The code snippet performs a vector search on the collection.
-
-First, a random search vector is generated. Then, the `client.search()` method is called with several parameters:
-`collection_name`: Required. Specifies the name of the Milvus collection to search.
-
-`vectors`: Required. Specifies the vector used to compare other vectors in Milvus. The example code passes an array of floating-point numbers as the vector.
-
-`filter` or `expr`: Optional. Specifies a filter to apply to the search query. The example code passes a filter that only includes vectors where the word_count field is greater than 0.
-
-`params`: Optional. Specifies additional search parameters. The example code sets nprobe to 64, which controls the number of clusters to search during the query. By default, nothing will be set.
-
-`limit` or `topk`: Optional. Specifies the number of nearest neighbors to return. The example code sets this to 1. By default, it will be `100`
-
-`metric_type`: Optional. Specifies the metric used to calculate the similarity of two vectors. The example code sets this to `"L2"`. By default, it will be `"L2"`.
-
-`output_fields`: Optional. Specifies which fields to include in the search results. The example code specifies the `book_id` and `word_count` fields, by default the node sdk will output all fields.
 
 ## Next Steps
 
