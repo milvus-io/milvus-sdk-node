@@ -1,6 +1,6 @@
 import { MilvusClient, InsertReq, DataType } from '@zilliz/milvus2-sdk-node';
 
-const COLLECTION_NAME = 'data_query_example';
+const COLLECTION_NAME = 'partition_key_example';
 
 (async () => {
   // build client
@@ -34,6 +34,7 @@ const COLLECTION_NAME = 'data_query_example';
         description: 'VarChar field',
         data_type: DataType.VarChar,
         max_length: 128,
+        is_partition_key: true, // partition key enbabled field
       },
     ],
   });
@@ -48,7 +49,7 @@ const COLLECTION_NAME = 'data_query_example';
         0.8716926129208069, 0.5616972243831446,
       ],
       height: 20405,
-      name: 'zlnmh',
+      name: 'apple',
     },
     {
       vector: [
@@ -57,7 +58,7 @@ const COLLECTION_NAME = 'data_query_example';
         0.795311915725105, 0.9183033261617566,
       ],
       height: 93773,
-      name: '5lr9y',
+      name: 'apple',
     },
     {
       vector: [
@@ -66,7 +67,7 @@ const COLLECTION_NAME = 'data_query_example';
         0.8556140171597648, 0.4043893119391049,
       ],
       height: 85122,
-      name: 'nes0j',
+      name: 'apple',
     },
     {
       vector: [
@@ -75,7 +76,7 @@ const COLLECTION_NAME = 'data_query_example';
         0.7576720055508186, 0.4393152967662368,
       ],
       height: 92037,
-      name: 'ct2li',
+      name: 'banana',
     },
     {
       vector: [
@@ -119,12 +120,26 @@ const COLLECTION_NAME = 'data_query_example';
   });
   console.log('Collection is loaded.', load);
 
+  // do the search
+  for (let i = 0; i < 1; i++) {
+    console.time('Search time');
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      vector: vectorsData[i]['vector'],
+      filter: 'name in ["apple"]',
+      output_fields: ['name'],
+      limit: 5,
+    });
+    console.timeEnd('Search time');
+    console.log('Search result', search);
+  }
+
   // do the query
   console.time('Query time');
   const query = await milvusClient.query({
     collection_name: COLLECTION_NAME,
-    filter: 'age > 0',
-    output_fields: ['age', 'vector'],
+    filter: 'name in ["apple"]',
+    output_fields: ['name', 'vector'],
     limit: 100,
   });
   console.timeEnd('Query time');
