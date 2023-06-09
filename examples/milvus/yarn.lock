@@ -103,10 +103,10 @@
   resolved "https://registry.yarnpkg.com/@types/triple-beam/-/triple-beam-1.3.2.tgz#38ecb64f01aa0d02b7c8f4222d7c38af6316fef8"
   integrity sha512-txGIh+0eDFzKGC25zORnswy+br1Ha7hj5cMVwKIU7+s0U2AxxJru/jZSMU6OC9MJWP6+pc/hc6ZjyZShpsyY2g==
 
-"@zilliz/milvus2-sdk-node@^2.2.14":
-  version "2.2.14"
-  resolved "https://registry.yarnpkg.com/@zilliz/milvus2-sdk-node/-/milvus2-sdk-node-2.2.14.tgz#4ad537dde199fab20da3193a6548f1a447f7ba0f"
-  integrity sha512-uJOqpesCuKgwyIfc+PviTfAvL0msjHbFB71+t4e+zimBqDZOZYO4dpsJAUSx7U2H3NQGNNn9ws4aXIBVNP6Gzw==
+"@zilliz/milvus2-sdk-node@^2.2.15":
+  version "2.2.15"
+  resolved "https://registry.yarnpkg.com/@zilliz/milvus2-sdk-node/-/milvus2-sdk-node-2.2.15.tgz#dd16e9efac3fa6c4693750512d0f4afdd8a8cffa"
+  integrity sha512-qwScWNrmzeTyfPRxuwuIEwwXwrGoIilaISZ3D1QgY7pPMb89OOilArP3UnuNGv9/u0n4gcezPgj4D2PL6FgeaA==
   dependencies:
     "@grpc/grpc-js" "^1.8.14"
     "@grpc/proto-loader" "^0.7.7"
