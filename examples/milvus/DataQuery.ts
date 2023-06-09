@@ -1,19 +1,13 @@
-import {
-  MilvusClient,
-  DataType,
-  InsertReq,
-  ConsistencyLevelEnum,
-} from '@zilliz/milvus2-sdk-node';
+import { MilvusClient, DataType, InsertReq } from '../../milvus';
 import {
   generateInsertData,
   genCollectionParams,
   VECTOR_FIELD_NAME,
 } from '../../test/tools';
 
-const COLLECTION_NAME = 'hello_milvus';
+const COLLECTION_NAME = 'data_query_example_collection';
 
 (async () => {
-  // build client
   const milvusClient = new MilvusClient({
     address: 'localhost',
     username: 'username',
@@ -24,7 +18,7 @@ const COLLECTION_NAME = 'hello_milvus';
 
   const createParams = genCollectionParams({
     collectionName: COLLECTION_NAME,
-    dim: 256,
+    dim: 4,
     vectorType: DataType.FloatVector,
   });
   // // create collection
@@ -56,20 +50,18 @@ const COLLECTION_NAME = 'hello_milvus';
   });
   console.log('Collection is loaded.', load);
 
-  // do the search
-  for (let i = 0; i < 1; i++) {
-    console.time('Search time');
-    const search = await milvusClient.search({
-      collection_name: COLLECTION_NAME,
-      vector: vectorsData[i][VECTOR_FIELD_NAME],
-      output_fields: ['age'],
-      limit: 5,
-    });
-    console.timeEnd('Search time');
-    console.log('Search result', search);
-  }
+  // do the query
+  console.time('Query time');
+  const query = await milvusClient.query({
+    collection_name: COLLECTION_NAME,
+    filter: 'age > 0',
+    output_fields: ['age', 'vector'],
+    limit: 100,
+  });
+  console.timeEnd('Query time');
+  console.log('query result', query);
 
-  // drop collection
+  // delete collection
   await milvusClient.dropCollection({
     collection_name: COLLECTION_NAME,
   });
