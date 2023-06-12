@@ -69,10 +69,10 @@ export class GRPCClient extends User {
     // create credentials
     let creds: ChannelCredentials;
 
-    // assign credents according to the tls mode
+    // assign credentials according to the tls mode
     switch (this.tlsMode) {
       case TLS_MODE.ONE_WAY:
-        // create ssl with empty
+        // create ssl with empty parameters
         creds = credentials.createSsl();
         break;
       case TLS_MODE.TWO_WAY:
