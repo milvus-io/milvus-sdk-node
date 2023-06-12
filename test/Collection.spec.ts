@@ -499,6 +499,7 @@ describe(`Collection API`, () => {
 
       const res = await milvusClient.describeCollection({
         collection_name: LOAD_COLLECTION_NAME,
+        cache: false,
       });
 
       expect(res.aliases[0]).toEqual(ALIAS);
@@ -515,6 +516,7 @@ describe(`Collection API`, () => {
       });
       const res = await milvusClient.describeCollection({
         collection_name: LOAD_COLLECTION_NAME_SYNC,
+        cache: false,
       });
       expect(res.aliases[0]).toEqual(ALIAS);
     } catch (error) {
@@ -529,9 +531,11 @@ describe(`Collection API`, () => {
       });
       const res = await milvusClient.describeCollection({
         collection_name: LOAD_COLLECTION_NAME,
+        cache: false,
       });
       const res2 = await milvusClient.describeCollection({
         collection_name: LOAD_COLLECTION_NAME_SYNC,
+        cache: false,
       });
 
       expect(res.aliases.length).toEqual(0);

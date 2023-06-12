@@ -288,7 +288,7 @@ export class Collection extends Database {
     }`;
 
     // if we have cache return cache data
-    if (this.collectionInfoCache.has(key)) {
+    if (this.collectionInfoCache.has(key) && data.cache !== false) {
       return Promise.resolve(this.collectionInfoCache.get(key)!);
     }
 
@@ -554,6 +554,10 @@ export class Collection extends Database {
       'DropCollection',
       data,
       data.timeout || this.timeout
+    );
+
+    this.collectionInfoCache.delete(
+      `${this.metadata.get(METADATA.DATABASE)}:${data.collection_name}`
     );
     return promise;
   }
