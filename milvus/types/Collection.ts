@@ -94,7 +94,9 @@ interface CollectionNameReq extends GrpcTimeOut {
 }
 export interface HasCollectionReq extends CollectionNameReq {}
 
-export interface DescribeCollectionReq extends CollectionNameReq {}
+export interface DescribeCollectionReq extends CollectionNameReq {
+  cache?: boolean;
+}
 
 export interface GetCollectionStatisticsReq extends CollectionNameReq {}
 

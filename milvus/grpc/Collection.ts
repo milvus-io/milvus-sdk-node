@@ -1,4 +1,5 @@
 import { Database } from './Database';
+import { LRUCache } from 'lru-cache';
 import {
   ERROR_REASONS,
   ConsistencyLevelEnum,
@@ -42,12 +43,29 @@ import {
   formatCollectionSchema,
   formatDescribedCol,
   validatePartitionNumbers,
+  METADATA,
 } from '../';
 
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
  */
 export class Collection extends Database {
+  // LRU cache for describe collection
+  protected collectionInfoCache = new LRUCache<
+    string,
+    DescribeCollectionResponse
+  >({
+    max: 256,
+
+    // how long to live in ms, 12h
+    ttl: 1000 * 60 * 12,
+
+    // return stale items before removing from cache?
+    allowStale: false,
+
+    updateAgeOnGet: false,
+    updateAgeOnHas: false,
+  });
   /**
    * Create a collection in Milvus.
    *
@@ -265,6 +283,16 @@ export class Collection extends Database {
   ): Promise<DescribeCollectionResponse> {
     checkCollectionName(data);
 
+    const key = `${this.metadata.get(METADATA.DATABASE)}:${
+      data.collection_name
+    }`;
+
+    // if we have cache return cache data
+    if (this.collectionInfoCache.has(key) && data.cache !== false) {
+      return Promise.resolve(this.collectionInfoCache.get(key)!);
+    }
+
+    // get new data
     const promise = await promisify(
       this.client,
       'DescribeCollection',
@@ -272,7 +300,12 @@ export class Collection extends Database {
       data.timeout || this.timeout
     );
 
-    return formatDescribedCol(promise);
+    const results = formatDescribedCol(promise);
+
+    // update cache
+    this.collectionInfoCache.set(key, results);
+
+    return results;
   }
 
   /**
@@ -521,6 +554,10 @@ export class Collection extends Database {
       'DropCollection',
       data,
       data.timeout || this.timeout
+    );
+
+    this.collectionInfoCache.delete(
+      `${this.metadata.get(METADATA.DATABASE)}:${data.collection_name}`
     );
     return promise;
   }

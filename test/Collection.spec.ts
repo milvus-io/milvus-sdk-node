@@ -497,10 +497,16 @@ describe(`Collection API`, () => {
         alias: ALIAS,
       });
 
-      const res = await milvusClient.describeCollection({
+      const res0 = await milvusClient.describeCollection({
         collection_name: LOAD_COLLECTION_NAME,
       });
 
+      const res = await milvusClient.describeCollection({
+        collection_name: LOAD_COLLECTION_NAME,
+        cache: false,
+      });
+
+      expect(res0.aliases[0]).not.toEqual(ALIAS);
       expect(res.aliases[0]).toEqual(ALIAS);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
@@ -515,6 +521,7 @@ describe(`Collection API`, () => {
       });
       const res = await milvusClient.describeCollection({
         collection_name: LOAD_COLLECTION_NAME_SYNC,
+        cache: false,
       });
       expect(res.aliases[0]).toEqual(ALIAS);
     } catch (error) {
@@ -529,9 +536,11 @@ describe(`Collection API`, () => {
       });
       const res = await milvusClient.describeCollection({
         collection_name: LOAD_COLLECTION_NAME,
+        cache: false,
       });
       const res2 = await milvusClient.describeCollection({
         collection_name: LOAD_COLLECTION_NAME_SYNC,
+        cache: false,
       });
 
       expect(res.aliases.length).toEqual(0);
