@@ -106,7 +106,10 @@ export class BaseClient {
         ? TLS_MODE.ONE_WAY
         : TLS_MODE.DISABLED;
     // if cert and private keys are available as well, tlsMode = 2(two way auth).
-    this.tlsMode = this.config.tls!.rootCertPath ? TLS_MODE.TWO_WAY : this.tlsMode;
+    this.tlsMode =
+      this.config.tls && this.config.tls.rootCertPath
+        ? TLS_MODE.TWO_WAY
+        : this.tlsMode;
 
     // Load the Milvus protobuf.
     this.protoPath = protoPath;
