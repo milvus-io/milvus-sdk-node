@@ -1,10 +1,19 @@
+// import {
+//   MilvusClient,
+//   InsertReq,
+//   DataType,
+//   FieldType,
+//   convertToDataType,
+// } from '@zilliz/milvus2-sdk-node';
+
 import {
   MilvusClient,
   InsertReq,
   DataType,
   FieldType,
   convertToDataType,
-} from '@zilliz/milvus2-sdk-node';
+} from '../../milvus';
+
 const COLLECTION_NAME = 'bench_milvus';
 const generateString = (index: number, random: boolean = false): string => {
   if (!random) {
@@ -134,10 +143,12 @@ const generateInsertData = (fields: FieldType[], count: number = 10) => {
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       vector: vectorsData[i]['vector'],
-      output_fields: ['age'],
+      output_fields: ['age', 'height', 'name'],
       limit: 5,
     });
     console.timeEnd('Search time');
+    console.log('\n');
+
     // console.log('Search result', search);
   }
 
