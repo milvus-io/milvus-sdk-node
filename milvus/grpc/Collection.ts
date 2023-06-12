@@ -57,8 +57,8 @@ export class Collection extends Database {
   >({
     max: 256,
 
-    // how long to live in ms, 1d
-    ttl: 1000 * 60 * 60 * 24,
+    // how long to live in ms, 1h
+    ttl: 1000 * 60 * 60,
 
     // return stale items before removing from cache?
     allowStale: false,
