@@ -8,6 +8,7 @@ import {
   parseTimeToken,
   ServerInfo,
   CONNECT_STATUS,
+  TLS_MODE,
 } from '../';
 
 // path
@@ -38,21 +39,22 @@ export class BaseClient {
   protected fieldSchemaType: Type;
 
   // milvus proto
-  protected protoInternalPath = {
+  protected readonly protoInternalPath = {
     serviceName: 'milvus.proto.milvus.MilvusService',
     collectionSchema: 'milvus.proto.schema.CollectionSchema',
     fieldSchema: 'milvus.proto.schema.FieldSchema',
   };
 
+  // TLS mode, by default it is disabled
+  public readonly tlsMode: TLS_MODE = TLS_MODE.DISABLED;
   // The client configuration.
-  public config: ClientConfig;
+  public readonly config: ClientConfig;
   // grpc options
-  public channelOptions: ChannelOptions;
-  // The gRPC client instance.
-  public client: Client | undefined;
+  public readonly channelOptions: ChannelOptions;
   // server info
   public serverInfo: ServerInfo = {};
-
+  // The gRPC client instance.
+  public client: Client | undefined;
   // The timeout for connecting to the Milvus service.
   public timeout: number = DEFAULT_CONNECT_TIMEOUT;
 
@@ -91,14 +93,21 @@ export class BaseClient {
       throw new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
 
-    // if the address starts with https, no need to set the ssl
-    config.ssl = config.address.startsWith('https://') || !!config.ssl;
-    // make sure these are strings
+    // make sure these are strings.
     config.username = config.username || '';
     config.password = config.password || '';
 
     // Assign the configuration object.
     this.config = config;
+
+    // if ssl is on or starts with https, tlsMode = 1(one way auth).
+    this.tlsMode =
+      this.config.address.startsWith('https://') || this.config.ssl
+        ? TLS_MODE.ONE_WAY
+        : TLS_MODE.DISABLED;
+    // if cert and private keys are available as well, tlsMode = 2(two way auth).
+    this.tlsMode = this.config.tls!.rootCertPath ? TLS_MODE.TWO_WAY : this.tlsMode;
+
     // Load the Milvus protobuf.
     this.protoPath = protoPath;
     this.schemaProto = protobuf.loadSync(schemaProtoPath);
@@ -124,6 +133,12 @@ export class BaseClient {
       'grpc.enable_retries': 1, // enable retry
       ...this.config.channelOptions,
     };
+
+    // overwrite if server name is provided.
+    if (this.config.tls?.serverName) {
+      this.channelOptions[`grpc.ssl_target_name_override`] =
+        this.config.tls.serverName;
+    }
 
     // Set up the timeout for connecting to the Milvus service.
     this.timeout =

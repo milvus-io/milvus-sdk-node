@@ -9,6 +9,21 @@ describe(`Milvus client`, () => {
     jest.clearAllMocks();
   });
 
+  it(`should create a grpc client with cert file successfully`, () => {
+    const milvusClient = new MilvusClient({
+      address: 'localhost:19530',
+      tls: {
+        rootCertPath: `test/cert/ca.pem`,
+        privateKeyPath: `test/cert/client.key`,
+        certChainPath: `test/cert/client.pem`,
+        serverName: 'localhost',
+      },
+    });
+
+    expect(milvusClient.client).toBeDefined();
+    expect(milvusClient.tlsMode).toEqual(2);
+  });
+
   it(`should create a grpc client without SSL credentials when ssl is false`, () => {
     const milvusClient = new MilvusClient({
       address: 'localhost:19530',
