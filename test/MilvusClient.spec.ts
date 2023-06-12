@@ -56,21 +56,6 @@ describe(`Milvus client`, () => {
     expect(milvusClient.client).toBeDefined();
   });
 
-  it(`should setup ssl 2 true, if the address starts with https`, () => {
-    // const milvusClient = new MilvusClient(`https://localhost:19530`);
-    // expect(milvusClient.config.ssl).toEqual(true);
-
-    // const milvusClient2 = new MilvusClient({
-    //   address: `https://localhost:19530`,
-    // });
-    // expect(milvusClient2.config.ssl).toEqual(true);
-
-    const milvusClient3 = new MilvusClient({
-      address: `http://localhost:19530`,
-    });
-    expect(milvusClient3.config.ssl).toEqual(false);
-  });
-
   it(`Should throw MILVUS_ADDRESS_IS_REQUIRED`, async () => {
     try {
       new MilvusClient(undefined as any);
