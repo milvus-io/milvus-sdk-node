@@ -36,7 +36,7 @@ describe(`Data.API`, () => {
 
     await milvusClient.insert({
       collection_name: COLLECTION_NAME,
-      data: generateInsertData(createCollectionParams.fields, 1028),
+      data: generateInsertData(createCollectionParams.fields, 1024),
     });
 
     await milvusClient.createIndex({
@@ -148,7 +148,7 @@ describe(`Data.API`, () => {
     }
   });
 
-  // it(`Exec simple search without params and output fields should success`, async () => {
+  // it(`Exec simple search with different metric type should failed`, async () => {
   //   const limit = 4;
   //   const res = await milvusClient.search({
   //     collection_name: COLLECTION_NAME,
