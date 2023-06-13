@@ -9,6 +9,21 @@ describe(`Milvus client`, () => {
     jest.clearAllMocks();
   });
 
+  // it(`should create a grpc client with cert file successfully`, () => {
+  //   const milvusClient = new MilvusClient({
+  //     address: 'localhost:19530',
+  //     tls: {
+  //       rootCertPath: `test/cert/ca.pem`,
+  //       privateKeyPath: `test/cert/client.key`,
+  //       certChainPath: `test/cert/client.pem`,
+  //       serverName: 'localhost',
+  //     },
+  //   });
+
+  //   expect(milvusClient.client).toBeDefined();
+  //   expect(milvusClient.tlsMode).toEqual(2);
+  // });
+
   it(`should create a grpc client without SSL credentials when ssl is false`, () => {
     const milvusClient = new MilvusClient({
       address: 'localhost:19530',
@@ -41,21 +56,6 @@ describe(`Milvus client`, () => {
     expect(milvusClient.client).toBeDefined();
   });
 
-  it(`should setup ssl 2 true, if the address starts with https`, () => {
-    // const milvusClient = new MilvusClient(`https://localhost:19530`);
-    // expect(milvusClient.config.ssl).toEqual(true);
-
-    // const milvusClient2 = new MilvusClient({
-    //   address: `https://localhost:19530`,
-    // });
-    // expect(milvusClient2.config.ssl).toEqual(true);
-
-    const milvusClient3 = new MilvusClient({
-      address: `http://localhost:19530`,
-    });
-    expect(milvusClient3.config.ssl).toEqual(false);
-  });
-
   it(`Should throw MILVUS_ADDRESS_IS_REQUIRED`, async () => {
     try {
       new MilvusClient(undefined as any);
@@ -71,7 +71,6 @@ describe(`Milvus client`, () => {
 
   it(`Get milvus version`, async () => {
     const res = await milvusClient.getVersion();
-
     expect(res).toHaveProperty('version');
   });
 

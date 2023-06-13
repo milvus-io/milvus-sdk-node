@@ -1,4 +1,5 @@
-import { credentials, Metadata } from '@grpc/grpc-js';
+import { readFileSync } from 'fs';
+import { credentials, Metadata, ChannelCredentials } from '@grpc/grpc-js';
 import dayjs from 'dayjs';
 import {
   GetVersionResponse,
@@ -16,6 +17,7 @@ import {
   METADATA,
   logger,
   CONNECT_STATUS,
+  TLS_MODE,
 } from '../';
 import { User } from './User';
 
@@ -62,10 +64,56 @@ export class GRPCClient extends User {
     // setup database
     this.metadata.set(METADATA.DATABASE, this.config.database || DEFAULT_DB);
 
+    // create credentials
+    let creds: ChannelCredentials;
+
+    // assign credentials according to the tls mode
+    switch (this.tlsMode) {
+      case TLS_MODE.ONE_WAY:
+        // create ssl with empty parameters
+        creds = credentials.createSsl();
+        break;
+      case TLS_MODE.TWO_WAY:
+        const { rootCertPath, privateKeyPath, certChainPath, verifyOptions } =
+          this.config.tls!;
+
+        // init
+        let rootCertBuff: Buffer | null = null;
+        let privateKeyBuff: Buffer | null = null;
+        let certChainBuff: Buffer | null = null;
+
+        // read root cert file
+        if (rootCertPath) {
+          rootCertBuff = readFileSync(rootCertPath);
+        }
+
+        // read private key file
+        if (privateKeyPath) {
+          privateKeyBuff = readFileSync(privateKeyPath);
+        }
+
+        // read cert chain file
+        if (certChainPath) {
+          certChainBuff = readFileSync(certChainPath);
+        }
+
+        // create credentials
+        creds = credentials.createSsl(
+          rootCertBuff,
+          privateKeyBuff,
+          certChainBuff,
+          verifyOptions
+        );
+        break;
+      default:
+        creds = credentials.createInsecure();
+        break;
+    }
+
     // create grpc client
     this.client = new MilvusService(
       formatAddress(this.config.address), // format the address
-      this.config.ssl ? credentials.createSsl() : credentials.createInsecure(), // create SSL or insecure credentials
+      creds,
       this.channelOptions
     );
 

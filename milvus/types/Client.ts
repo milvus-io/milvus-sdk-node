@@ -24,6 +24,19 @@ export interface ClientConfig {
   retryDelay?: number;
   // database
   database?: string;
+
+  tls?: {
+    // root certificate file path, it can be a CA PEM (Certificate Authority PEM) or Server PEM (Server Certificate PEM):
+    rootCertPath?: string;
+    // private key path
+    privateKeyPath?: string;
+    // certificate path
+    certChainPath?: string;
+    // verify options
+    verifyOptions?: Record<string, any>;
+    // server name
+    serverName?: string;
+  };
 }
 
 export interface ServerInfo {
