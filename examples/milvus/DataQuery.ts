@@ -5,7 +5,7 @@ const COLLECTION_NAME = 'data_query_example';
 (async () => {
   // build client
   const milvusClient = new MilvusClient({
-    address: 'localhost',
+    address: 'localhost:19530',
     username: 'username',
     password: 'Aa12345!!',
   });

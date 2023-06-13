@@ -5,7 +5,7 @@ const COLLECTION_NAME = 'hello_milvus';
 (async () => {
   // build client
   const milvusClient = new MilvusClient({
-    address: 'localhost',
+    address: 'localhost:19530',
     username: 'username',
     password: 'Aa12345!!',
   });

@@ -1,7 +1,7 @@
 import { Milvus } from 'langchain/vectorstores/milvus';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 
-const address = `localhost`; // or your zilliz cloud endpoint
+const address = `localhost:19530`; // or your zilliz cloud endpoint
 const username = `username`;
 const password = `password`;
 const ssl = false; // set it to true if you are using zilliz cloud

@@ -41,7 +41,7 @@ Now let's write the code to use LangChain.js and Milvus together.
 import { Milvus } from 'langchain/vectorstores/milvus';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 
-const address = `localhost`;
+const address = `localhost:19530`;
 const username = `username`;
 const password = `password`;
 const ssl = false;
