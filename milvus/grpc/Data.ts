@@ -31,7 +31,6 @@ import {
   SearchRes,
   SearchSimpleReq,
   DEFAULT_TOPK,
-  DEFAULT_METRIC_TYPE,
   promisify,
   findKeyValue,
   sleep,
@@ -416,8 +415,7 @@ export class Data extends Collection {
           (data as SearchSimpleReq).topk ||
           DEFAULT_TOPK,
         offset: (data as SearchSimpleReq).offset || 0,
-        metric_type:
-          (data as SearchSimpleReq).metric_type || DEFAULT_METRIC_TYPE,
+        metric_type: (data as SearchSimpleReq).metric_type || '', // leave it empty 
         params: JSON.stringify((data as SearchSimpleReq).params || {}),
       };
 

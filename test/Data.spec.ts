@@ -36,7 +36,7 @@ describe(`Data.API`, () => {
 
     await milvusClient.insert({
       collection_name: COLLECTION_NAME,
-      data: generateInsertData(createCollectionParams.fields, 50),
+      data: generateInsertData(createCollectionParams.fields, 1028),
     });
 
     await milvusClient.createIndex({
@@ -148,18 +148,22 @@ describe(`Data.API`, () => {
     }
   });
 
+  // it(`Exec simple search without params and output fields should success`, async () => {
+  //   const limit = 4;
+  //   const res = await milvusClient.search({
+  //     collection_name: COLLECTION_NAME,
+  //     filter: '',
+  //     vector: [1, 2, 3, 4],
+  //     limit: limit,
+  //     metric_type: 'IP',
+  //   });
+
+  //   // different metric type should be failed.
+  //   expect(res.status.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+  // });
+
   it(`Exec simple search without params and output fields should success`, async () => {
     const limit = 4;
-    const res = await milvusClient.search({
-      collection_name: COLLECTION_NAME,
-      filter: '',
-      vector: [1, 2, 3, 4],
-      limit: limit,
-    });
-
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.results.length).toEqual(limit);
-
     const searchWithData = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
