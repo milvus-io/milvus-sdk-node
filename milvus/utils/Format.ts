@@ -2,7 +2,6 @@ import { Type } from 'protobufjs';
 import {
   findKeyValue,
   ERROR_REASONS,
-  DEFAULT_MILVUS_PORT,
   KeyValuePair,
   FieldType,
   DataTypeMap,
