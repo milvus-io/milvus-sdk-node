@@ -21,7 +21,6 @@ import {
   cloneObj,
   DescribeCollectionResponse,
   formatDescribedCol,
-  ConsistencyLevelEnum,
   generateDynamicRow,
   getAuthString,
 } from '../../milvus';
