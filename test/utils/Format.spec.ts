@@ -400,6 +400,7 @@ describe('utils/format', () => {
     const dynamicField = 'dynamic';
     const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
     expect(result).toEqual({
+      [dynamicField]: {},
       key1: 'value1',
       key2: 'value2',
     });
