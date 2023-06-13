@@ -357,14 +357,16 @@ export const generateDynamicRow = (
   const originRow = cloneObj(data);
 
   const row: Record<string, any> = {};
+
   // iterate through each key in the input data object
   for (let key in originRow) {
+    row[dynamicField] = row[dynamicField] || {}; // initialize the dynamic field object
+
     if (fieldsDataMap.has(key)) {
       // if the key is in the fieldsDataMap, add it to the non-dynamic fields
       row[key] = originRow[key];
     } else {
       // otherwise, add it to the dynamic field
-      row[dynamicField] = row[dynamicField] || {}; // initialize the dynamic field object
       row[dynamicField][key] = originRow[key];
     }
   }
