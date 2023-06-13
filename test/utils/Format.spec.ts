@@ -21,7 +21,6 @@ import {
   cloneObj,
   DescribeCollectionResponse,
   formatDescribedCol,
-  ConsistencyLevelEnum,
   generateDynamicRow,
   getAuthString,
 } from '../../milvus';
@@ -36,13 +35,13 @@ describe('utils/format', () => {
     expect(formatAddress(urlWithHttp)).toBe(`my-url:${port}`);
 
     const urlWithoutHttp = `my-url`;
-    expect(formatAddress(urlWithoutHttp)).toBe(`my-url:19530`);
+    expect(formatAddress(urlWithoutHttp)).toBe(`my-url`);
 
     const urlWithoutHttpCustomPort = `my-url:12345`;
     expect(formatAddress(urlWithoutHttpCustomPort)).toBe(`my-url:12345`);
 
     const urlWithEmpty = `://my-url`;
-    expect(formatAddress(urlWithEmpty)).toBe(`my-url:19530`);
+    expect(formatAddress(urlWithEmpty)).toBe(`my-url`);
 
     const urlWithEmptyCustomPort = `://my-url:12345`;
     expect(formatAddress(urlWithEmptyCustomPort)).toBe(`my-url:12345`);
