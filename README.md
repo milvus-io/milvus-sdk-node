@@ -76,9 +76,13 @@ const password = 'your-milvus-password'; // optional password
 const client = new MilvusClient({ address, username, password });
 ```
 
-### Define schema for collection
+### Create a collection
 
-A schema defines the fields of a collection, such as the names and data types of the fields that make up the vectors. More details of how to define schema can be found in [API reference](https://milvus.io/api-reference/node/v2.2.x/Collection/createCollection.md).
+In Milvus, the concept of the collection is like the table in traditional RDBMS, eg: mysql or postgres. Before creating a collection, you need to define a schema, then just call the `createCollection` method.
+
+#### Define schema for collection
+
+A schema defines the fields of a collection, such as the names and data types of the fields that make up the vectors. More details of how to define schema and advanced usage can be found in [API reference](https://milvus.io/api-reference/node/v2.2.x/Collection/createCollection.md).
 
 ```javascript
 // define schema
@@ -108,9 +112,7 @@ const schema = [
 ],
 ```
 
-### Create a collection
-
-Create a collection is very straight forward, just call the `createCollection` method.
+#### Create the collection
 
 ```javascript
 await client.createCollection({
@@ -119,7 +121,7 @@ await client.createCollection({
 });
 ```
 
-### Prepare your data
+### Prepare data
 
 The data format utilized by the Milvus Node SDK comprises an array of objects. In each object, the key should correspond to the field `name` defined in the schema. The value type for the key should match the `data_type` specified in the field of the schema.
 
@@ -187,7 +189,7 @@ Milvus supports [several different types of indexes](https://milvus.io/docs/inde
 
 ### Load collection
 
-When you create a collection in Milvus, the collection data is initially stored on disk, and it is not immediately available for search and retrieval. In order to search or retrieve data from the collection, you must first load the collection into memory using the loadCollectionSync method.
+When you create a collection in Milvus, the collection data is initially stored on disk, and it is not immediately available for search and retrieval. In order to search or retrieve data from the collection, you must first load the collection into memory using the `loadCollectionSync` method.
 
 ```javascript
 // load collection
@@ -201,7 +203,7 @@ await client.loadCollectionSync({
 Now you can perform vector search on your collection.
 
 ```javascript
-// Generate a random search vector
+// get the search vector
 const searchVector = fields_data[0].vector;
 
 // Perform a vector search on the collection
@@ -210,11 +212,11 @@ const res = await client.search({
   collection_name, // required, the collection name
   vector: searchVector, // required, vector used to compare other vectors in milvus
   // optionals
-  filter: 'word_count > 0', // optional, filter
+  filter: 'height > 0', // optional, filter
   params: { nprobe: 64 }, // optional, specify the search parameters
   limit: 10, // optional, specify the number of nearest neighbors to return
   metric_type: 'L2', // optional, metric to calculate similarity of two vectors
-  output_fields: ['book_id', 'word_count'], // optional, specify the fields to return in the search results
+  output_fields: ['height', 'name'], // optional, specify the fields to return in the search results
 });
 ```
 
