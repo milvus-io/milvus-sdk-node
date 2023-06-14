@@ -35,32 +35,21 @@ This will download the Milvus Node.js client and add a dependency entry in your 
 
 ## Code Examples
 
+### Milvus examples
+
 You can find code examples in the [examples/milvus](./examples/milvus) directory. These examples cover various aspects of working with Milvus, such as connecting to Milvus, vector search, data query, dynamic schema, partition key, and database operations.
 
-## Quick Start
+### Langchain.js example
+
+You can find a basic langchain.js example in the [examples/langchain](./examples/langchain) directory.
+
+### next.js example
+
+TBD
+
+## Basic usages
 
 This guide will show you how to set up a simple application using Node.js and Milvus. Its scope is only how to set up the node.js client and perform the simple CRUD operations. For more in-depth coverage, see the [Milvus official website](https://milvus.io/).
-
-### Create the package.json file
-
-First, create a directory where your application will live.
-
-```
-mkdir myProject
-cd myProject
-```
-
-Enter the following command and answer the questions to create the initial structure for your new project:
-
-```shell
-npm init -y
-```
-
-Next, install this client as a dependency.
-
-```shell
-npm install @zilliz/milvus2-sdk-node
-```
 
 ### Start a Milvus server
 
@@ -74,7 +63,7 @@ sudo docker-compose up -d
 
 ### Connect to Milvus
 
-Create a new app.js file and add the following code to try out some basic vector operations using the Milvus node.js client.
+Create a new app.js file and add the following code to try out some basic vector operations using the Milvus node.js client. More details on the [API reference](https://milvus.io/api-reference/node/v2.2.x/Client/MilvusClient.md).
 
 ```javascript
 import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
@@ -82,90 +71,93 @@ import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
 const address = 'your-milvus-ip-with-port';
 const username = 'your-milvus-username'; // optional username
 const password = 'your-milvus-password'; // optional password
-const ssl = false; // secure or not
 
 // connect to milvus
-const client = new MilvusClient({ address, username, password, ssl });
+const client = new MilvusClient({ address, username, password });
 ```
-
-> Starting from v2.2.11+, ssl is no longer needed, we will enable ssl for you if your address starts with `https`;
-
-| Parameters      | Description                                                                                                              | Type    | Example             |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------ | ------- | ------------------- |
-| address         | The Milvus IP address                                                                                                    | String  | '192.168.0.1:19530' |
-| ssl?            | SSL connection. It is false by default.                                                                                  | Boolean | false               |
-| username?       | The username used to connect to Milvus                                                                                   | String  | username            |
-| password?       | The password used to connect to Milvus                                                                                   | String  | password            |
-| token?          | Security token, use the form `username:password` as the token                                                            | String  | username:password   |
-| database?       | Milvus database                                                                                                          | String  | my-db               |
-| maxRetries?     | The number of retries for the grpc method, by default: 3                                                                 | Number  | 3                   |
-| retryDelay?     | The delay between attempts at retrying a failed grpc method in ms, by default: 30                                        | Number  | 30                  |
-| channelOptions? | an optional configuration object that can be passed to a gRPC client when creating a channel to connect to a gRPC server | Object  |                     |
 
 ### Define schema for collection
 
-The code shows an example of how to define a schema for a collection in Milvus using the Milvus Node SDK. A schema defines the properties of a collection, such as the names and data types of the fields that make up the vectors.
+A schema defines the fields of a collection, such as the names and data types of the fields that make up the vectors. More details of how to define schema can be found in [API reference](https://milvus.io/api-reference/node/v2.2.x/Collection/createCollection.md).
 
 ```javascript
 // define schema
-const collection_name = `book`;
+const collection_name = `hello_milvus`;
 const dim = 128;
 const schema = [
   {
-    name: `book_id`,
-    description: `customized primary id`,
+    name: 'age',
+    description: 'ID field',
     data_type: DataType.Int64,
     is_primary_key: true,
-    autoID: false,
+    autoID: true,
   },
   {
-    name: `word_count`,
-    description: `word count`,
-    data_type: DataType.Int64,
-  },
-  {
-    name: `book_intro`,
-    description: `word count`,
+    name: 'vector',
+    description: 'Vector field',
     data_type: DataType.FloatVector,
-    dim: dim,
+    dim: 8,
   },
-];
+  { name: 'height', description: 'int64 field', data_type: DataType.Int64 },
+  {
+    name: 'name',
+    description: 'VarChar field',
+    data_type: DataType.VarChar,
+    max_length: 128,
+  },
+],
 ```
 
 ### Create a collection
 
+Create a collection is very straight forward, just call the `createCollection` method.
+
 ```javascript
 await client.createCollection({
   collection_name,
-  description: `my first collection`,
   fields: schema,
 });
 ```
 
 ### Prepare your data
 
-The data format used by the Milvus Node SDK consists of an array of objects, where each object represents an entity with a unique identifier (integer or string) and a vector field that stores the feature values as an array of floating-point numbers.
+The data format utilized by the Milvus Node SDK comprises an array of objects. In each object, the key should correspond to the field `name` defined in the schema. The value type for the key should match the `data_type` specified in the field of the schema.
 
 ```javascript
-// generate mock data
-const fields_data = [];
-
-// generate mock data
-for (let i = 0; i < 1000; i++) {
-  // create a new object with random values for each field
-  const r = {
-    book_id: Math.floor(Math.random() * 100000), // generate a random book ID
-    word_count: Math.floor(Math.random() * 1000), // generate a random word count
-    book_intro: [...Array(dim)].map(() => Math.random()), // generate a random vector for book_intro
-  };
-  // add the new object to the fields_data array
-  fields_data.push(r);
-}
+const fields_data = [
+  {
+    vector: [
+      0.11878310581111173, 0.9694947902934701, 0.16443679307243175,
+      0.5484226189097237, 0.9839246709011924, 0.5178387104937776,
+      0.8716926129208069, 0.5616972243831446,
+    ],
+    height: 20405,
+    name: 'zlnmh',
+  },
+  {
+    vector: [
+      0.9992090731236536, 0.8248790611809487, 0.8660083940881405,
+      0.09946359318481224, 0.6790698063908669, 0.5013786801063624,
+      0.795311915725105, 0.9183033261617566,
+    ],
+    height: 93773,
+    name: '5lr9y',
+  },
+  {
+    vector: [
+      0.8761291569818763, 0.07127366044153227, 0.775648976160332,
+      0.5619757601304878, 0.6076543120476996, 0.8373907516027586,
+      0.8556140171597648, 0.4043893119391049,
+    ],
+    height: 85122,
+    name: 'nes0j',
+  },
+];
 ```
 
 ### Insert data into collection
 
-Once we have the data, you can insert data into the collection.
+Once we have the data, you can insert data into the collection by calling the `insert` method.
 
 ```javascript
 await client.insert({
@@ -193,7 +185,7 @@ await client.createIndex({
 
 Milvus supports [several different types of indexes](https://milvus.io/docs/index.md), each of which is optimized for different use cases and data distributions. Some of the most commonly used index types in Milvus include IVF_FLAT, IVF_SQ8, IVF_PQ, and HNSW. When creating an index in Milvus, you must choose an appropriate index type based on your specific use case and data distribution.
 
-### load collection
+### Load collection
 
 When you create a collection in Milvus, the collection data is initially stored on disk, and it is not immediately available for search and retrieval. In order to search or retrieve data from the collection, you must first load the collection into memory using the loadCollectionSync method.
 
@@ -210,10 +202,11 @@ Now you can perform vector search on your collection.
 
 ```javascript
 // Generate a random search vector
-const searchVector = [...Array(dim)].map(() => Math.random());
+const searchVector = fields_data[0].vector;
 
 // Perform a vector search on the collection
 const res = await client.search({
+  // required
   collection_name, // required, the collection name
   vector: searchVector, // required, vector used to compare other vectors in milvus
   // optionals
