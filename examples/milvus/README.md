@@ -29,7 +29,7 @@ In the terminal, navigate to the directory containing the example file you want 
 ts-node <example_file_name>.ts
 ```
 
-Replace `<example_file_name>` with the name of the example file you want to run (e.g., `basicOperations.ts`).
+Replace `<example_file_name>` with the name of the example file you want to run (e.g., `HelloMilvus.ts`).
 
 Running the above command will execute the example and produce the corresponding output, demonstrating the functionality being showcased.
 
@@ -41,12 +41,13 @@ Here is a list of some examples in this folder:
 - `DataQuery.ts`: This example demonstrates how to query data from Milvus.
 - `DynamicSchema.ts`: This example demonstrates how to use the dynamic schema feature of Milvus.
 - `Database.ts`: This example demonstrates how to use the database feature of Milvus.
+- `PartitionKey.ts`: This example demonstrates how to use the partition key feature of Milvus.
 
 Feel free to explore the examples and modify them to suit your specific use cases.
 
 ## Troubleshooting
 
-If you encounter any issues while running the examples or have any questions, please refer to the [Milvus SDK Node documentation](https://milvus.io/docs/sdk/node) or [raise an issue](https://github.com/milvus-io/milvus-sdk-node/issues) in the official Milvus SDK Node repository.
+If you encounter any issues while running the examples or have any questions, please refer to the [Milvus SDK Node documentation](https://milvus.io/api-reference/node/v2.2.x/About.md) or [raise an issue](https://github.com/milvus-io/milvus-sdk-node/issues) in the official Milvus SDK Node repository.
 
 ## Contributing
 
