@@ -177,11 +177,11 @@ By creating an index and loading the collection into memory, you can improve the
 await client.createIndex({
   // required
   collection_name,
-  field_name: 'book_intro',
-  index_name: 'myindex',
-  index_type: 'HNSW',
-  params: { efConstruction: 10, M: 4 },
-  metric_type: 'L2',
+  field_name: 'vector', // optional if you are using milvus v2.2.9+
+  index_name: 'myindex', // optional
+  index_type: 'HNSW', // optional if you are using milvus v2.2.9+
+  params: { efConstruction: 10, M: 4 }, // optional if you are using milvus v2.2.9+
+  metric_type: 'L2', // optional if you are using milvus v2.2.9+
 });
 ```
 
