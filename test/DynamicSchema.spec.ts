@@ -12,7 +12,7 @@ import {
   dynamicFields,
 } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'dev' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'DynamicSchema',

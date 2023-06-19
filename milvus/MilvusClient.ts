@@ -48,6 +48,12 @@ export class MilvusClient extends GRPCClient {
   ) {
     // setup the configuration
     super(configOrAddress, ssl, username, password, channelOptions);
+
+    // setup logger level
+    if (this.config.logLevel) {
+      logger.level = this.config.logLevel;
+    }
+
     logger.debug(
       `new client initialized, version: ${MilvusClient.sdkInfo.version} `
     );

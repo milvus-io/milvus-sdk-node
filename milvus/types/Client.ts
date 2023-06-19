@@ -24,6 +24,8 @@ export interface ClientConfig {
   retryDelay?: number;
   // database
   database?: string;
+  // log level
+  logLevel?: string;
 
   tls?: {
     // root certificate file path, it can be a CA PEM (Certificate Authority PEM) or Server PEM (Server Certificate PEM):
