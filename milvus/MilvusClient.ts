@@ -49,7 +49,7 @@ export class MilvusClient extends GRPCClient {
     // setup the configuration
     super(configOrAddress, ssl, username, password, channelOptions);
 
-    // setup logger level
+    // setup logger level if needed, winton logger is following singleton pattern.
     if (this.config.logLevel) {
       logger.level = this.config.logLevel;
     }
