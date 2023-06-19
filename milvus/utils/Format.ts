@@ -309,7 +309,7 @@ export const formatCollectionSchema = (
   const payload = {
     name: collection_name,
     description: description || '',
-    enableDynamicField: enableDynamicField || enable_dynamic_field,
+    enableDynamicField: !!enableDynamicField || !!enable_dynamic_field,
     fields: fields.map(field => {
       // Assign the typeParams property to the result of parseToKeyValue(type_params).
       const { type_params, ...rest } = assignTypeParams(field);
