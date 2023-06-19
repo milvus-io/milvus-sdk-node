@@ -298,12 +298,18 @@ export const formatCollectionSchema = (
   data: CreateCollectionReq,
   grpcMsgType: Type
 ): { [k: string]: any } => {
-  const { fields, collection_name, description, enable_dynamic_field } = data;
+  const {
+    fields,
+    collection_name,
+    description,
+    enable_dynamic_field,
+    enableDynamicField,
+  } = data;
 
   const payload = {
     name: collection_name,
     description: description || '',
-    enableDynamicField: !!enable_dynamic_field,
+    enableDynamicField: enableDynamicField || enable_dynamic_field,
     fields: fields.map(field => {
       // Assign the typeParams property to the result of parseToKeyValue(type_params).
       const { type_params, ...rest } = assignTypeParams(field);

@@ -90,6 +90,7 @@ export class MilvusClient extends GRPCClient {
       metric_type = 'IP',
       vector_field_name = 'vector',
       enableDynamicField = true,
+      enable_dynamic_field = true,
       auto_id = false,
       index_params = {},
       timeout,
@@ -116,7 +117,7 @@ export class MilvusClient extends GRPCClient {
       // create collection
       result = await this.createCollection({
         collection_name,
-        enable_dynamic_field: enableDynamicField,
+        enable_dynamic_field: enableDynamicField || enable_dynamic_field,
         fields: schema,
         timeout,
       });

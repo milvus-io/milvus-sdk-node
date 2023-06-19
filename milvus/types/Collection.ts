@@ -84,6 +84,7 @@ export interface CreateCollectionReq extends GrpcTimeOut {
   fields: FieldType[];
   num_partitions?: number;
   enable_dynamic_field?: boolean;
+  enableDynamicField?: boolean;
 }
 
 interface CollectionNameReq extends GrpcTimeOut {

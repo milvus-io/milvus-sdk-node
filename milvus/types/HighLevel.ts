@@ -9,6 +9,7 @@ export interface CreateColReq {
   vector_field_name?: string;
   metric_type?: string | MetricType;
   timeout?: number;
+  enable_dynamic_field?: boolean;
   enableDynamicField?: boolean;
   description?: string;
   auto_id?: boolean;
