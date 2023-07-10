@@ -3,7 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "bench": "autocannon http://localhost:4000 -c 10 -p 1",
+    "benchp": "autocannon http://localhost:4000 -c 1 -p 10"
+  },
   "dependencies": {
-    "@zilliz/milvus2-sdk-node": "^2.2.15"
+    "@zilliz/milvus2-sdk-node": "^2.2.18",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "autocannon": "^7.11.0"
   }
 }

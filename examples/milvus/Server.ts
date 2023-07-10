@@ -1,17 +1,17 @@
+import http from 'http';
 import { MilvusClient, InsertReq, DataType } from '@zilliz/milvus2-sdk-node';
 import { vectorsData } from './Data';
+const server = http.createServer();
 
+const port = 4000;
+
+// build client
 const COLLECTION_NAME = 'hello_milvus';
+const milvusClient = new MilvusClient({
+  address: 'localhost:19530',
+});
 
-(async () => {
-  // build client
-  const milvusClient = new MilvusClient({
-    address: 'localhost:19530',
-    username: 'username',
-    password: 'Aa12345!!',
-  });
-
-  console.log('Node client is initialized.');
+const prepareMilvus = async () => {
   // create collection
   const create = await milvusClient.createCollection({
     collection_name: COLLECTION_NAME,
@@ -62,22 +62,25 @@ const COLLECTION_NAME = 'hello_milvus';
     collection_name: COLLECTION_NAME,
   });
   console.log('Collection is loaded.', load);
+};
 
-  // do the search
-  for (let i = 0; i < 1; i++) {
-    console.time('Search time');
-    const search = await milvusClient.search({
+server.on('request', (req, res) => {
+  milvusClient
+    .search({
       collection_name: COLLECTION_NAME,
-      vector: vectorsData[i]['vector'],
+      vector: vectorsData[0]['vector'],
       output_fields: ['age'],
-      limit: 5,
+      limit: 1,
+    })
+    .then(() => {
+      return res.end('ok');
     });
-    console.timeEnd('Search time');
-    console.log('Search result', search);
-  }
+});
 
-  // drop collection
-  await milvusClient.dropCollection({
-    collection_name: COLLECTION_NAME,
-  });
-})();
+prepareMilvus().then(() => {
+  // start
+  server.listen(port);
+  console.log(
+    `⚡️[server]: Milvus app benchmark server is running at http://localhost:${port}`
+  );
+});
