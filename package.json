@@ -20,7 +20,7 @@
     "doc-json": "npx typedoc milvus --json"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.8.14",
+    "@grpc/grpc-js": "^1.8.17",
     "@grpc/proto-loader": "^0.7.7",
     "dayjs": "^1.11.7",
     "lru-cache": "^9.1.2",
