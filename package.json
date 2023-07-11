@@ -24,7 +24,7 @@
     "@grpc/proto-loader": "^0.7.7",
     "dayjs": "^1.11.7",
     "lru-cache": "^9.1.2",
-    "protobufjs": "^7.2.3",
+    "protobufjs": "^7.2.4",
     "winston": "^3.9.0"
   },
   "devDependencies": {
