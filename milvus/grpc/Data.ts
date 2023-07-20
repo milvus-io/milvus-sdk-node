@@ -7,6 +7,7 @@ import {
   FlushReq,
   GetFlushStateReq,
   GetQuerySegmentInfoReq,
+  GePersistentSegmentInfoReq,
   InsertReq,
   LoadBalanceReq,
   ImportReq,
@@ -16,6 +17,7 @@ import {
   GetFlushStateResponse,
   GetMetricsResponse,
   GetQuerySegmentInfoResponse,
+  GePersistentSegmentInfoResponse,
   MutationResult,
   QueryResults,
   ResStatus,
@@ -415,7 +417,7 @@ export class Data extends Collection {
           (data as SearchSimpleReq).topk ||
           DEFAULT_TOPK,
         offset: (data as SearchSimpleReq).offset || 0,
-        metric_type: (data as SearchSimpleReq).metric_type || '', // leave it empty 
+        metric_type: (data as SearchSimpleReq).metric_type || '', // leave it empty
         params: JSON.stringify((data as SearchSimpleReq).params || {}),
       };
 
@@ -958,6 +960,46 @@ export class Data extends Collection {
     const res = await promisify(
       this.client,
       'GetQuerySegmentInfo',
+      data,
+      data.timeout || this.timeout
+    );
+    return res;
+  }
+
+  /**data
+   * Notifies Proxy to return segments information from data nodes.
+   *
+   * @param data
+   *  | Property | Type  | Description |
+   *  | :--- | :-- | :-- |
+   *  | collectionName | String | The name of the collection to get segments info. |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *
+   *
+   * @returns
+   * | Property | Description |
+   *  | :--- | :-- |
+   *  | status | { error_code: number,reason:string } |
+   *  | infos | QuerySegmentInfo is the growing segments's information in query cluster. |
+   *
+   *
+   * #### Example
+   *
+   * ```
+   *   const res = await getQuerySegmentInfo({
+   *      collectionName: COLLECTION,
+   *    });
+   * ```
+   */
+  async getPersistentSegmentInfo(
+    data: GePersistentSegmentInfoReq
+  ): Promise<GePersistentSegmentInfoResponse> {
+    if (!data || !data.collectionName) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+    const res = await promisify(
+      this.client,
+      'GetPersistentSegmentInfo',
       data,
       data.timeout || this.timeout
     );

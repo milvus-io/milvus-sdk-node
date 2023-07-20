@@ -65,6 +65,10 @@ export interface GetQuerySegmentInfoReq extends GrpcTimeOut {
   collectionName: string;
 }
 
+export interface GePersistentSegmentInfoReq extends GrpcTimeOut {
+  collectionName: string;
+}
+
 export interface ImportReq extends GrpcTimeOut {
   collection_name: string;
   partition_name?: string;
@@ -102,12 +106,25 @@ export interface QuerySegmentInfo {
   index_name: string;
   indexID: number;
   nodeID: number;
-  state: SegmentState[];
+  state: SegmentState;
+}
+
+export interface PersistentSegmentInfo {
+  segmentID: number;
+  collectionID: number;
+  partitionID: number;
+  num_rows: number;
+  state: SegmentState;
 }
 
 export interface GetQuerySegmentInfoResponse {
   status: ResStatus;
   infos: QuerySegmentInfo[];
+}
+
+export interface GePersistentSegmentInfoResponse {
+  status: ResStatus;
+  infos: PersistentSegmentInfo[];
 }
 
 export interface MutationResult {

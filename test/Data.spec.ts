@@ -512,6 +512,14 @@ describe(`Data.API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`Get persistent segment infos should success`, async () => {
+    const res = await milvusClient.getPersistentSegmentInfo({
+      collectionName: COLLECTION_NAME,
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`Load balance should throw LOAD_BALANCE_CHECK_PARAMS`, async () => {
     try {
       await milvusClient.loadBalance({} as any);
