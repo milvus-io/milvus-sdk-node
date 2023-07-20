@@ -980,13 +980,13 @@ export class Data extends Collection {
    * | Property | Description |
    *  | :--- | :-- |
    *  | status | { error_code: number,reason:string } |
-   *  | infos | QuerySegmentInfo is the growing segments's information in query cluster. |
+   *  | infos | getPersistentSegmentInfo is the growing segments's information in query cluster. |
    *
    *
    * #### Example
    *
    * ```
-   *   const res = await getQuerySegmentInfo({
+   *   const res = await getPersistentSegmentInfo({
    *      collectionName: COLLECTION,
    *    });
    * ```
