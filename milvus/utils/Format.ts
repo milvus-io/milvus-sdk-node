@@ -304,6 +304,7 @@ export const formatCollectionSchema = (
     description,
     enable_dynamic_field,
     enableDynamicField,
+    partition_key_field,
   } = data;
 
   const payload = {
@@ -318,7 +319,8 @@ export const formatCollectionSchema = (
         typeParams: parseToKeyValue(type_params),
         dataType: convertToDataType(field.data_type),
         isPrimaryKey: !!field.is_primary_key,
-        isPartitionKey: !!field.is_partition_key,
+        isPartitionKey:
+          !!field.is_partition_key || field.name === partition_key_field,
       });
     }),
   };

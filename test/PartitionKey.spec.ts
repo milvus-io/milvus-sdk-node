@@ -15,6 +15,7 @@ import {
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME2 = GENERATE_NAME();
+const COLLECTION_NAME3 = GENERATE_NAME();
 const COLLECTION_DATA_NAME = GENERATE_NAME();
 const numPartitions = 3;
 const dbParam = {
@@ -63,6 +64,9 @@ describe(`Partition key API`, () => {
     });
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME2,
+    });
+    await milvusClient.dropCollection({
+      collection_name: COLLECTION_NAME3,
     });
     await milvusClient.dropCollection({
       collection_name: COLLECTION_DATA_NAME,
@@ -120,8 +124,35 @@ describe(`Partition key API`, () => {
       autoID: false,
       partitionKeyEnabled: true,
     });
+    // enable partition key
+    createCollectionParams.partition_key_field = 'name';
     const res = await milvusClient.createCollection(createCollectionParams);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`it should create collection successfully with partition_key_field set`, async () => {
+    const createCollectionParams = genCollectionParams({
+      collectionName: COLLECTION_NAME2,
+      dim: 4,
+      vectorType: DataType.FloatVector,
+      autoID: false,
+      partitionKeyEnabled: false,
+    });
+    // enable partition key
+    createCollectionParams.partition_key_field = 'name';
+    const res = await milvusClient.createCollection(createCollectionParams);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // check schema
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME2,
+    });
+
+    expect(
+      describe.schema.fields.filter(
+        f => f.name === 'name' && f.is_partition_key
+      ).length
+    ).toEqual(1);
   });
 
   it(`it should throw error when creating a partition on a partition-key enabled collection`, async () => {
