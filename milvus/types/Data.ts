@@ -172,6 +172,7 @@ export interface SearchParam {
   metric_type: string;
   params: string;
   round_decimal?: number;
+  ignore_growing?: boolean;
 }
 
 export interface SearchSimpleReq extends GrpcTimeOut {
@@ -189,6 +190,7 @@ export interface SearchSimpleReq extends GrpcTimeOut {
   params?: keyValueObj;
   metric_type?: string;
   consistency_level?: ConsistencyLevelEnum;
+  ignore_growing?: boolean;
 }
 
 export interface SearchReq extends GrpcTimeOut {
