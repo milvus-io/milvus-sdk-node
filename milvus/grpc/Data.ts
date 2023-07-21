@@ -415,8 +415,9 @@ export class Data extends Collection {
           (data as SearchSimpleReq).topk ||
           DEFAULT_TOPK,
         offset: (data as SearchSimpleReq).offset || 0,
-        metric_type: (data as SearchSimpleReq).metric_type || '', // leave it empty 
+        metric_type: (data as SearchSimpleReq).metric_type || '', // leave it empty
         params: JSON.stringify((data as SearchSimpleReq).params || {}),
+        ignore_growing: (data as SearchSimpleReq).ignore_growing || false,
       };
 
       // create search vectors
