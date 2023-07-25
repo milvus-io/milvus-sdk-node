@@ -1,7 +1,7 @@
 {
   "name": "@zilliz/milvus2-sdk-node",
   "author": "ued@zilliz.com",
-  "version": "2.2.20",
+  "version": "2.2.21",
   "milvusVersion": "v2.2.12",
   "main": "dist/milvus",
   "files": [
@@ -20,11 +20,11 @@
     "doc-json": "npx typedoc milvus --json"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.8.17",
-    "@grpc/proto-loader": "^0.7.7",
+    "@grpc/grpc-js": "1.8.17",
+    "@grpc/proto-loader": "0.7.7",
     "dayjs": "^1.11.7",
     "lru-cache": "^9.1.2",
-    "protobufjs": "^7.2.4",
+    "protobufjs": "7.2.4",
     "winston": "^3.9.0"
   },
   "devDependencies": {
