@@ -41,7 +41,7 @@ You can find code examples in the [examples/milvus](./examples/milvus) directory
 
 ### Langchain.js example
 
-You can find a basic langchain.js example in the [examples/langchain](./examples/langchain) directory.
+You can find a basic langchain.js example in the [examples/langchain](./examples/LangChain) directory.
 
 ### next.js example
 
