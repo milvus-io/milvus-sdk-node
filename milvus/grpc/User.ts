@@ -389,7 +389,7 @@ export class User extends Resource {
       this.client,
       'SelectRole',
       {
-        includeUserInfo: data?.includeUserInfo || true,
+        include_user_info: data?.includeUserInfo || true,
       },
       data?.timeout || this.timeout
     );
