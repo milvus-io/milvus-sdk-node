@@ -17,6 +17,7 @@ import {
   SelectGrantReq,
   ListGrantsReq,
   HasRoleReq,
+  listRoleReq,
   GrpcTimeOut,
   ListCredUsersResponse,
   ResStatus,
@@ -383,11 +384,13 @@ export class User extends Resource {
    *  milvusClient.listRoles();
    * ```
    */
-  async listRoles(data?: GrpcTimeOut): Promise<SelectRoleResponse> {
+  async listRoles(data?: listRoleReq): Promise<SelectRoleResponse> {
     const promise = await promisify(
       this.client,
       'SelectRole',
-      {},
+      {
+        includeUserInfo: data?.includeUserInfo || true,
+      },
       data?.timeout || this.timeout
     );
     return promise;
