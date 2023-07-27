@@ -44,6 +44,10 @@ export interface SelectRoleReq extends GrpcTimeOut {
   includeUserInfo?: boolean;
 }
 
+export interface listRoleReq extends GrpcTimeOut {
+  includeUserInfo?: boolean;
+}
+
 export interface SelectUserReq extends GrpcTimeOut {
   username: string;
   includeRoleInfo?: boolean;
