@@ -333,6 +333,7 @@ export enum CollectionPrivileges {
   DropIndex = 'DropIndex',
   IndexDetail = 'IndexDetail',
   Load = 'Load',
+  GetLoadingProgress = 'GetLoadingProgress',
   Release = 'Release',
   Insert = 'Insert',
   Delete = 'Delete',
@@ -356,6 +357,16 @@ export enum GlobalPrivileges {
   DropOwnership = 'DropOwnership',
   SelectOwnership = 'SelectOwnership',
   ManageOwnership = 'ManageOwnership',
+  CreateResourceGroup = 'CreateResourceGroup',
+  DropResourceGroup = 'DropResourceGroup',
+  DescribeResourceGroup = 'DescribeResourceGroup',
+  ListResourceGroups = 'ListResourceGroups',
+  TransferNode = 'TransferNode',
+  TransferReplica = 'TransferReplica',
+  RenameCollection = 'RenameCollection',
+  CreateDatabase = 'CreateDatabase',
+  ListDatabases = 'ListDatabases',
+  DropDatabase = 'DropDatabase',
 }
 
 export enum UserPrivileges {
