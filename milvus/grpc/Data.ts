@@ -342,7 +342,12 @@ export class Data extends Collection {
 
     const pkField = await this.getPkFieldName(data);
 
-    const req = { ...data, expr: `${pkField} in [${data.ids.join(',')}]` };
+    // generate expr by different type of ids
+    const expr =
+      typeof data.ids[0] === "string"
+        ? `${pkField} in ["${data.ids.join('","')}"]`
+        : `${pkField} in [${data.ids.join(",")}]`;
+    const req = { ...data, expr };
     return this.deleteEntities(req);
   }
 
