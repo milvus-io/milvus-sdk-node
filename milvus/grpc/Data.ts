@@ -415,7 +415,7 @@ export class Data extends Collection {
           (data as SearchSimpleReq).topk ||
           DEFAULT_TOPK,
         offset: (data as SearchSimpleReq).offset || 0,
-        metric_type: (data as SearchSimpleReq).metric_type || '', // leave it empty 
+        metric_type: (data as SearchSimpleReq).metric_type || '', // leave it empty
         params: JSON.stringify((data as SearchSimpleReq).params || {}),
       };
 
@@ -540,9 +540,8 @@ export class Data extends Collection {
             const data = fieldsDataMap.get(
               isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
             );
-
-            // make data[i] safe
-            data[i] = data[i] || {};
+            // make dynamic data[i] safe
+            data[i] = isFixedSchema ? data[i] : data[i] || {};
             // extract dynamic info from dynamic field if necessary
             result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
           });
