@@ -548,9 +548,8 @@ export class Data extends Collection {
             const data = fieldsDataMap.get(
               isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
             );
-
-            // make data[i] safe
-            data[i] = data[i] || {};
+            // make dynamic data[i] safe
+            data[i] = isFixedSchema ? data[i] : data[i] || {};
             // extract dynamic info from dynamic field if necessary
             result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
           });
