@@ -243,11 +243,13 @@ export class Data extends Collection {
       };
     });
 
+    const timeout = params.fields_data.length * 100;
+
     const promise = await promisify(
       this.client,
       'Insert',
       params,
-      params.fields_data.length * 100 || this.timeout // default timeout 100ms per row
+      timeout < this.timeout ? this.timeout : timeout // default timeout 100ms per row
     );
 
     return promise;
