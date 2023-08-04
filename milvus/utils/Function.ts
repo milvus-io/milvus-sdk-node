@@ -15,7 +15,7 @@ export function promisify(
   timeout: number
 ): Promise<any> {
   // Calculate the deadline for the function call
-  const deadline = new Date(Date.now() + timeout);
+  const deadline = timeout === 0 ? 0 : new Date(Date.now() + timeout);
 
   // Create a new Promise that wraps the target function call
   const res = new Promise((resolve, reject) => {

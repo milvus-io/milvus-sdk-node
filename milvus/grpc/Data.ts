@@ -243,12 +243,9 @@ export class Data extends Collection {
       };
     });
 
-    const promise = await promisify(
-      this.client,
-      'Insert',
-      params,
-      data.timeout || this.timeout
-    );
+    const timeout = typeof this.timeout !== 'undefined' ? this.timeout : 0;
+
+    const promise = await promisify(this.client, 'Insert', params, timeout);
 
     return promise;
   }
@@ -344,9 +341,9 @@ export class Data extends Collection {
 
     // generate expr by different type of ids
     const expr =
-      typeof data.ids[0] === "string"
+      typeof data.ids[0] === 'string'
         ? `${pkField} in ["${data.ids.join('","')}"]`
-        : `${pkField} in [${data.ids.join(",")}]`;
+        : `${pkField} in [${data.ids.join(',')}]`;
     const req = { ...data, expr };
     return this.deleteEntities(req);
   }
