@@ -243,7 +243,7 @@ export class Data extends Collection {
       };
     });
 
-    const timeout = typeof this.timeout !== 'undefined' ? this.timeout : 0;
+    const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
 
     const promise = await promisify(this.client, 'Insert', params, timeout);
 

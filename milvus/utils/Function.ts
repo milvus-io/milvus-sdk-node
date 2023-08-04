@@ -15,20 +15,24 @@ export function promisify(
   timeout: number
 ): Promise<any> {
   // Calculate the deadline for the function call
-  const deadline = timeout === 0 ? 0 : new Date(Date.now() + timeout);
+  const t = timeout === 0 ? 1000 * 60 * 60 * 24 : timeout;
 
   // Create a new Promise that wraps the target function call
   const res = new Promise((resolve, reject) => {
     try {
       // Call the target function with the provided parameters and deadline
-      obj[target](params, { deadline }, (err: any, result: any) => {
-        if (err) {
-          // If there was an error, reject the Promise with the error
-          reject(err);
+      obj[target](
+        params,
+        { deadline: new Date(Date.now() + t) },
+        (err: any, result: any) => {
+          if (err) {
+            // If there was an error, reject the Promise with the error
+            reject(err);
+          }
+          // Otherwise, resolve the Promise with the result
+          resolve(result);
         }
-        // Otherwise, resolve the Promise with the result
-        resolve(result);
-      });
+      );
     } catch (e: any) {
       // If there was an exception, throw a new Error
       throw new Error(e);
