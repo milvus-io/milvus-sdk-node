@@ -243,14 +243,9 @@ export class Data extends Collection {
       };
     });
 
-    const timeout = params.fields_data.length * 100;
+    const timeout = typeof this.timeout !== 'undefined' ? this.timeout : 0;
 
-    const promise = await promisify(
-      this.client,
-      'Insert',
-      params,
-      timeout < this.timeout ? this.timeout : timeout // default timeout 100ms per row
-    );
+    const promise = await promisify(this.client, 'Insert', params, timeout);
 
     return promise;
   }
