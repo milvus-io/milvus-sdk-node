@@ -247,7 +247,7 @@ export class Data extends Collection {
       this.client,
       'Insert',
       params,
-      data.timeout || this.timeout
+      params.fields_data.length * 100 || this.timeout
     );
 
     return promise;
@@ -344,9 +344,9 @@ export class Data extends Collection {
 
     // generate expr by different type of ids
     const expr =
-      typeof data.ids[0] === "string"
+      typeof data.ids[0] === 'string'
         ? `${pkField} in ["${data.ids.join('","')}"]`
-        : `${pkField} in [${data.ids.join(",")}]`;
+        : `${pkField} in [${data.ids.join(',')}]`;
     const req = { ...data, expr };
     return this.deleteEntities(req);
   }
