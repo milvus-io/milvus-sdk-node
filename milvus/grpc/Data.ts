@@ -247,7 +247,7 @@ export class Data extends Collection {
       this.client,
       'Insert',
       params,
-      params.fields_data.length * 100 || this.timeout
+      params.fields_data.length * 100 || this.timeout // default timeout 100ms per row
     );
 
     return promise;
