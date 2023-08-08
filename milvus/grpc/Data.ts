@@ -503,8 +503,9 @@ export class Data extends Collection {
       // build output name array
       const output_fields = [
         'id',
-        ...(promise.results.output_fields ||
-          fields_data.map(f => f.field_name)),
+        ...(!!promise.results.output_fields?.length
+          ? promise.results.output_fields
+          : fields_data.map(f => f.field_name)),
       ];
 
       // vector id support int / str id.
