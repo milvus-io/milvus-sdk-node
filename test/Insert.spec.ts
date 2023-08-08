@@ -132,6 +132,20 @@ describe(`Insert API`, () => {
     await milvusClient.dropDatabase(dbParam);
   });
 
+  it(`Insert should throw Collection name validation error`, async () => {
+    const errorName = 'my-collection';
+    try {
+      await milvusClient.insert({
+        collection_name: errorName,
+        fields_data: [{}],
+      });
+    } catch (error) {
+      expect(error.message).toEqual(
+        `Invalid collection name: ${errorName}.  collection name can only contain numbers, letters and underscores`
+      );
+    }
+  });
+
   it(`Insert should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
       await milvusClient.insert({} as any);
