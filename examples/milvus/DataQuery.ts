@@ -123,8 +123,8 @@ const COLLECTION_NAME = 'data_query_example';
   console.time('Query time');
   const query = await milvusClient.query({
     collection_name: COLLECTION_NAME,
-    filter: 'age > 0',
-    output_fields: ['age', 'vector'],
+    filter: 'height > 31400',
+    output_fields: ['age', 'height', 'vector'],
     limit: 100,
   });
   console.timeEnd('Query time');

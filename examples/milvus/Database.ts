@@ -3,6 +3,7 @@ import { MilvusClient, InsertReq, DataType } from '@zilliz/milvus2-sdk-node';
 // milvus v2.2.9 only
 const COLLECTION_NAME = 'hello_milvus';
 
+const databaseName = 'my_db';
 (async () => {
   // build client
   const milvusClient = new MilvusClient({
@@ -14,11 +15,11 @@ const COLLECTION_NAME = 'hello_milvus';
   console.log('Node client is initialized.');
 
   // create database
-  const createDb = milvusClient.createDatabase({ db_name: 'my_db' });
+  const createDb = await milvusClient.createDatabase({ db_name: databaseName });
   console.log('Database is created', createDb);
 
   // use that db
-  const useDb = milvusClient.use({ db_name: 'my_db' });
+  const useDb = await milvusClient.use({ db_name: 'my_db' });
   console.log('new Database is using', useDb);
 
   // create collection
