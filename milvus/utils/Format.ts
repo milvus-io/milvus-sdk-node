@@ -341,7 +341,7 @@ export const formatDescribedCol = (
   // clone object
   const newData = cloneObj<DescribeCollectionResponse>(data);
   // add a dataType property which indicate datatype number
-  newData.schema.fields.forEach(f => {
+  newData.schema?.fields?.forEach(f => {
     f.dataType = DataTypeMap[f.data_type];
   });
 
