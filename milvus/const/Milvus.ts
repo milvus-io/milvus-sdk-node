@@ -137,7 +137,7 @@ export enum MetricType {
   // IP inner product
   IP = 'IP',
   // support cosine 2.3
-  // COSINE = 'COSINE',
+  COSINE = 'COSINE',
   // HAMMING hamming distance
   HAMMING = 'HAMMING',
   // JACCARD jaccard distance
