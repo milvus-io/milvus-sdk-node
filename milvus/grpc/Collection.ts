@@ -137,12 +137,14 @@ export class Collection extends Database {
     const payload = formatCollectionSchema(data, this.fieldSchemaType);
 
     // Create the collectionParams object from the payload.
-    const collectionParams = this.collectionSchemaType.create(payload);
+    const collectionSchema = this.collectionSchemaType.create(payload);
 
     // Encode the collectionParams object to bytes.
     const schemaBytes = this.collectionSchemaType
-      .encode(collectionParams)
+      .encode(collectionSchema)
       .finish();
+
+    console.log('decode', this.collectionSchemaType.decode(schemaBytes));
 
     // Get the consistency level value from the ConsistencyLevelEnum object.
     const level =

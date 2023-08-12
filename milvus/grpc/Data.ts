@@ -46,6 +46,7 @@ import {
   generateDynamicRow,
   getFieldDataMap,
   ConsistencyLevelEnum,
+  getDataKey,
 } from '../';
 import { Collection } from './Collection';
 
@@ -105,6 +106,8 @@ export class Data extends Collection {
     if (collectionInfo.status.error_code !== ErrorCode.SUCCESS) {
       throw new Error(collectionInfo.status.reason);
     }
+
+    console.log('xxx', collectionInfo.schema.fields);
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
@@ -182,42 +185,8 @@ export class Data extends Collection {
       // but if milvus change the string, may cause we cant find value.
       const type = DataTypeMap[v.type];
       const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
-      let dataKey = 'float_vector';
-      switch (type) {
-        case DataType.FloatVector:
-          dataKey = 'float_vector';
-          break;
-        case DataType.BinaryVector:
-          dataKey = 'binary_vector';
-          break;
-        case DataType.Double:
-          dataKey = 'double_data';
-          break;
-        case DataType.Float:
-          dataKey = 'float_data';
-          break;
-        case DataType.Int64:
-          dataKey = 'long_data';
-          break;
-        case DataType.Int32:
-        case DataType.Int16:
-        case DataType.Int8:
-          dataKey = 'int_data';
-          break;
-        case DataType.Bool:
-          dataKey = 'bool_data';
-          break;
-        case DataType.VarChar:
-          dataKey = 'string_data';
-          break;
-        case DataType.JSON:
-          dataKey = 'json_data';
-          break;
-        default:
-          throw new Error(
-            `${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE} "${v.type}."`
-          );
-      }
+      let dataKey = getDataKey(type);
+
       return {
         type,
         field_name: v.name,
@@ -243,11 +212,10 @@ export class Data extends Collection {
       };
     });
 
+    // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
-
-    const promise = await promisify(this.client, 'Insert', params, timeout);
-
-    return promise;
+    // execute Insert
+    return await promisify(this.client, 'Insert', params, timeout);
   }
 
   /**
