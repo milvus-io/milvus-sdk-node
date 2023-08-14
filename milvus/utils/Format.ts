@@ -4,10 +4,12 @@ import {
   ERROR_REASONS,
   KeyValuePair,
   FieldType,
+  DefaultValueType,
   DataTypeMap,
   DataType,
   CreateCollectionReq,
   DescribeCollectionResponse,
+  logger,
 } from '../';
 
 /**
@@ -276,6 +278,89 @@ export const convertToDataType = (
 };
 
 /**
+ * Format default value
+ * it should follow ValueField in schema.proto
+ *
+ * @param {DataType} type - The type of the default value
+ * @param {DefaultValueType} data - The data of default value
+ * @returns {Map<string, DefaultValueType>} The formatted `defaultValue`.
+ */
+ export const formatDefaultValue = (
+  type: DataType | keyof typeof DataTypeMap,
+  data : DefaultValueType
+): { [x: string]: any } | undefined => {
+  // compatible if not set default value
+  if (typeof data === 'undefined'){
+    return undefined
+  }
+  console.log("lxg1")
+  console.log(data.toString())
+  const result: { [x: string]: any } = {};
+  let dataKey = 'double_data';
+      switch (type) {
+        case DataType.Double:
+          dataKey = 'double_data';
+          if (typeof data !== 'number'){
+            throw new Error(
+              `${ERROR_REASONS.DEFAULT_VALUE_TYPE_NOT_MATCH}`
+            );
+          }
+          break;
+        case DataType.Float:
+          dataKey = 'float_data';
+          if (typeof data !== 'number'){
+            throw new Error(
+              `${ERROR_REASONS.DEFAULT_VALUE_TYPE_NOT_MATCH}`
+            );
+          }
+          break;
+        case DataType.Int64:
+          dataKey = 'long_data';
+          if (typeof data !== 'number'){
+            throw new Error(
+              `${ERROR_REASONS.DEFAULT_VALUE_TYPE_NOT_MATCH}`
+            );
+          }
+          break;
+        case DataType.Int32:
+        case DataType.Int16:
+        case DataType.Int8:
+          dataKey = 'int_data';
+          if (typeof data !== 'number'){
+            throw new Error(
+              `${ERROR_REASONS.DEFAULT_VALUE_TYPE_NOT_MATCH}`
+            );
+          }
+          break;
+        case DataType.Bool:
+          dataKey = 'bool_data';
+          if (typeof data !== 'boolean'){
+            throw new Error(
+              `${ERROR_REASONS.DEFAULT_VALUE_TYPE_NOT_MATCH}`
+            );
+          }
+          break;
+        case DataType.VarChar:
+          dataKey = 'string_data';
+          if (typeof data !== 'string'){
+            throw new Error(
+              `${ERROR_REASONS.DEFAULT_VALUE_TYPE_NOT_MATCH}`
+            );
+          }
+          break;
+        default:
+          throw new Error(
+            `${ERROR_REASONS.DEFAULT_VALUE_WRONG_TYPE} "${type}."`
+          );
+      }
+
+  result[dataKey] = data
+  console.log("lxg2")
+  console.log(result.toString())
+  return result
+};
+
+/**
  * Creates a deep copy of the provided object using JSON.parse and JSON.stringify.
  * Note that this function is not efficient and may cause performance issues if used with large or complex objects. It also does not handle cases where the object being cloned contains functions or prototype methods.
  *
@@ -321,6 +406,7 @@ export const formatCollectionSchema = (
         isPrimaryKey: !!field.is_primary_key,
         isPartitionKey:
           !!field.is_partition_key || field.name === partition_key_field,
+        default_value: formatDefaultValue(field.data_type, field.default_value),
       });
     }),
   };

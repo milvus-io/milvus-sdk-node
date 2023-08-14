@@ -44,6 +44,9 @@ export interface ReplicaInfo {
 
 export type TypeParam = string | number;
 export type TypeParamKey = 'dim' | 'max_length';
+// default_value support scalar value except json
+export type DefaultValueType = string | number | boolean | undefined
+
 
 // create collection
 export interface FieldType {
@@ -58,6 +61,8 @@ export interface FieldType {
   autoID?: boolean;
   dim?: TypeParam;
   max_length?: TypeParam;
+  // default_value support scalar value except json
+  default_value?: DefaultValueType;
 }
 
 export enum ShowCollectionsType {

@@ -31,6 +31,10 @@ export const ERROR_REASONS = {
     'Insert fail: the length of the binary vector should be (dimension / 8).',
   INSERT_CHECK_WRONG_DATA_TYPE:
     'The value of the `data_type` property is not supported:',
+  DEFAULT_VALUE_WRONG_TYPE:
+    'The default value only support scalar type except json, not support:',
+  DEFAULT_VALUE_TYPE_NOT_MATCH:
+    'The type of the pass in default value is not match with the schema field type',
   GET_METRIC_CHECK_PARAMS: 'The `metric_type` property is missing.',
   GET_FLUSH_STATE_CHECK_PARAMS:
     'The type of the `segmentIDs` property should be an array.',

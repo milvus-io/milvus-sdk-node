@@ -67,11 +67,13 @@ export const buildDefaultSchema = (data: {
       data_type: data.id_type,
       is_primary_key: true,
       autoID: data.auto_id,
+      default_value: undefined,
     },
     {
       name: data.vector_field_name,
       data_type: DataType.FloatVector,
       dim: data.dimension,
+      default_value: undefined,
     },
   ];
 };

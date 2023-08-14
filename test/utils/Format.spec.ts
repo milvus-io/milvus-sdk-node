@@ -23,6 +23,7 @@ import {
   formatDescribedCol,
   generateDynamicRow,
   getAuthString,
+  logger,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -249,6 +250,13 @@ describe('utils/format', () => {
           description: 'Test VECTOR field',
           dim: 64,
         },
+        {
+          name: 'testField3',
+          data_type: DataType.Int64,
+          is_primary_key: false,
+          description: 'Test field with default_value',
+          default_value: 10,
+        },
       ],
     };
 
@@ -294,10 +302,26 @@ describe('utils/format', () => {
           isPrimaryKey: false,
           isPartitionKey: false,
         },
+        {
+          typeParams: [],
+          indexParams: [],
+          name: 'testField3',
+          data_type: 5,
+          is_primary_key: true,
+          description: 'Test field with default_value',
+          dataType: 5,
+          isPrimaryKey: false,
+          isPartitionKey: false,
+          default_value: {
+            'long_data': 10,
+          },
+        },
       ],
     };
 
     const payload = formatCollectionSchema(data, fieldSchemaType);
+    console.log("lxg3")
+    console.log(payload.toString())
     expect(payload).toEqual(expectedResult);
   });
 
