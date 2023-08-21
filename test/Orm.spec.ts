@@ -109,7 +109,7 @@ describe(`ORM Client API`, () => {
     expect(typeof count).toEqual('number');
   });
 
-  it(`get exsiting collection successfully`, async () => {
+  it(`get existing collection successfully`, async () => {
     // get my collection
     const collection: any = await milvusClient.collection({
       collection_name: EXIST_COLLECTION_NAME,
@@ -118,10 +118,12 @@ describe(`ORM Client API`, () => {
 
     const collectionInfo = await collection.info();
     expect(collection.name).toEqual(EXIST_COLLECTION_NAME);
-    expect(collectionInfo.schema.fields.length).toEqual(6);
+    expect(collectionInfo.schema.fields.length).toEqual(
+      EXIST_INDEXED_COLLECTION_PARAMS.fields.length
+    );
   });
 
-  it(`get exsiting indexed collection successfully`, async () => {
+  it(`get existing indexed collection successfully`, async () => {
     // get my collection
     const collection: any = await milvusClient.collection({
       collection_name: EXIST_INDEXED_COLLECTION_NAME,
@@ -131,7 +133,7 @@ describe(`ORM Client API`, () => {
     expect(collection.name).toEqual(EXIST_INDEXED_COLLECTION_NAME);
   });
 
-  it(`get exsiting loaded collection successfully`, async () => {
+  it(`get existing loaded collection successfully`, async () => {
     // get my collection
     const collection: any = await milvusClient.collection({
       collection_name: EXIST_LOADED_COLLECTION_NAME,
