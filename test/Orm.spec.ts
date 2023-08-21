@@ -118,7 +118,7 @@ describe(`ORM Client API`, () => {
 
     const collectionInfo = await collection.info();
     expect(collection.name).toEqual(EXIST_COLLECTION_NAME);
-    expect(collectionInfo.schema.fields.length).toEqual(5);
+    expect(collectionInfo.schema.fields.length).toEqual(6);
   });
 
   it(`get exsiting indexed collection successfully`, async () => {

@@ -107,8 +107,6 @@ export class Data extends Collection {
       throw new Error(collectionInfo.status.reason);
     }
 
-    console.log('xxx', collectionInfo.schema.fields);
-
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
     const fieldsDataMap = new Map(
@@ -702,7 +700,7 @@ export class Data extends Collection {
       promise.output_fields || promise.fields_data.map(f => f.field_name);
 
     // Initialize an array to hold the query results
-    const results: { [x: string]: any }[] = [];
+    let results: { [x: string]: any }[] = [];
 
     const fieldsDataMap = getFieldDataMap(promise.fields_data);
 
@@ -727,20 +725,15 @@ export class Data extends Collection {
     });
 
     // parse column data to [{fieldname:value}]
-    fieldData.forEach((v: any) => {
-      v.data.forEach((d: string | number[], i: number) => {
-        if (!results[i]) {
-          results[i] = {
-            [v.field_name]: d,
-          };
-        } else {
-          results[i] = {
-            ...results[i],
-            [v.field_name]: d,
-          };
-        }
+    results = fieldData.reduce((acc: any, v) => {
+      v.data.forEach((d: any, i: number) => {
+        acc[i] = {
+          ...acc[i],
+          [v.field_name]: d,
+        };
       });
-    });
+      return acc;
+    }, []);
 
     return {
       status: promise.status,
