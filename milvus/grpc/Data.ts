@@ -55,7 +55,21 @@ export class Data extends Collection {
   vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
 
   /**
-   * Insert data into Milvus.
+   * Upsert data into Milvus, view _insert for detail
+   */
+  async upsert(data: InsertReq): Promise<MutationResult> {
+    return this._insert(data, true);
+  }
+
+  /**
+   * Insert data into Milvus, view _insert for detail
+   */
+  async insert(data: InsertReq): Promise<MutationResult> {
+    return this._insert(data);
+  }
+
+  /**
+   * Insert/upsert data into Milvus.
    *
    * @param data
    *  | Property | Type | Description |
@@ -85,9 +99,12 @@ export class Data extends Collection {
    *      scalar_field: 1
    *    }]
    *  });
-   * ```
+   * ``` 
    */
-  async insert(data: InsertReq): Promise<MutationResult> {
+  private async _insert(
+    data: InsertReq,
+    upsert: boolean = false
+  ): Promise<MutationResult> {
     checkCollectionName(data);
     // ensure fields data available
     data.fields_data = data.fields_data || data.data;
@@ -213,7 +230,14 @@ export class Data extends Collection {
     // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
     // execute Insert
-    return await promisify(this.client, 'Insert', params, timeout);
+    const promise = await promisify(
+      this.client,
+      upsert ? 'Upsert' : 'Insert',
+      params,
+      timeout
+    );
+
+    return promise;
   }
 
   /**
