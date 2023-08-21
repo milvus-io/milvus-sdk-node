@@ -14,7 +14,7 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: `10.102.6.73:19530` });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
@@ -256,6 +256,24 @@ describe(`Data.API`, () => {
     });
     expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
     res2.results.forEach(r => {
+      expect(Number(r.height)).toBeLessThan(10000);
+    });
+  });
+
+  it(`Exec simple search with range filter should success`, async () => {
+    const limit = 8;
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: 'height < 10000',
+      vector: [1, 2, 3, 4],
+      limit: limit,
+      params: { nprobe: 1024, radius: 10, range_filter: 20 },
+    });
+
+    console.log('range ', res);
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    res.results.forEach(r => {
       expect(Number(r.height)).toBeLessThan(10000);
     });
   });
