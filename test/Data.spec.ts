@@ -385,7 +385,7 @@ describe(`Data.API`, () => {
   it(`Get should success`, async () => {
     const get = await milvusClient.get({
       collection_name: COLLECTION_NAME,
-      output_fields: ['age', VECTOR_FIELD_NAME, 'default_value'],
+      output_fields: ['age', VECTOR_FIELD_NAME],
       ids: ['1', '2', '3'],
     });
     expect(get.status.error_code).toEqual(ErrorCode.SUCCESS);
