@@ -144,8 +144,6 @@ export class Collection extends Database {
       .encode(collectionSchema)
       .finish();
 
-    console.log('decode', this.collectionSchemaType.decode(schemaBytes));
-
     // Get the consistency level value from the ConsistencyLevelEnum object.
     const level =
       ConsistencyLevelEnum[consistency_level] ?? ConsistencyLevelEnum.Bounded;
