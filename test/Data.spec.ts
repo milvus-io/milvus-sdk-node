@@ -14,7 +14,7 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: `10.102.6.73:19530` });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
@@ -42,9 +42,9 @@ describe(`Data.API`, () => {
     await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
-      index_type: 'IVF_FLAT',
+      index_type: 'HNSW',
       metric_type: 'L2',
-      params: { nlist: 1024 },
+      params: { M: 8, efConstruction: 200 },
     });
     await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
@@ -261,19 +261,21 @@ describe(`Data.API`, () => {
   });
 
   it(`Exec simple search with outputFields should success`, async () => {
-    const res = await milvusClient.search({
+    const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       filter: '',
       vector: [1, 2, 3, 4],
       limit: 4,
-      output_fields: ['age', 'meta'],
+      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
     });
 
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    console.log('search', search);
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
-      res.results.forEach(r => {
-        expect(Object.keys(r).length).toEqual(4); // id, score, age, meta
+      search.results.forEach(r => {
+        expect(Object.keys(r).length).toEqual(5); // id, score, age, meta
       })
     );
   });
@@ -398,6 +400,11 @@ describe(`Data.API`, () => {
       offset: 0,
       limit: 3,
     });
+
+    res.data.forEach(d => {
+      expect(Object.keys(d).indexOf(VECTOR_FIELD_NAME) !== -1).toEqual(true);
+    });
+
     expect(res.data.length).toBe(3);
   });
 
