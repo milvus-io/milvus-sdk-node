@@ -3,6 +3,7 @@ export enum ErrorCode {
   INDEX_NOT_EXIST = 'IndexNotExist',
   UNEXPECTED_ERROR = 'UnexpectedError',
   EMPTY_COLLECTION = 'EmptyCollection',
+  UPSERT_AUTO_ID_TRUE = 'UpsertAutoIDTrue',
   // CONNECT_FAILED = "CONNECT_FAILED",
   // PERMISSION_DENIED = "PERMISSION_DENIED",
   // COLLECTION_NOT_EXISTS = "COLLECTION_NOT_EXISTS",
