@@ -18,6 +18,7 @@ export interface FieldSchema {
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
   autoID: boolean;
+  default_value?: number | string;
 }
 
 export interface CollectionData {
@@ -58,6 +59,7 @@ export interface FieldType {
   autoID?: boolean;
   dim?: TypeParam;
   max_length?: TypeParam;
+  default_value?: number | string;
 }
 
 export enum ShowCollectionsType {

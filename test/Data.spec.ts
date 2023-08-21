@@ -11,6 +11,7 @@ import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
+  DEFAULT_VALUE,
 } from './tools';
 import { timeoutTest } from './tools';
 
@@ -394,9 +395,13 @@ describe(`Data.API`, () => {
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'age > 0',
-      output_fields: ['age', VECTOR_FIELD_NAME],
+      output_fields: ['age', VECTOR_FIELD_NAME, 'default_value'],
       offset: 0,
       limit: 3,
+    });
+
+    res.data.forEach(d => {
+      expect(d.default_value).toEqual(DEFAULT_VALUE);
     });
     expect(res.data.length).toBe(3);
   });
