@@ -261,6 +261,22 @@ describe(`Data.API`, () => {
     });
   });
 
+  it(`Exec simple search with range filter should success`, async () => {
+    const limit = 8;
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: 'height < 10000',
+      vector: [1, 2, 3, 4],
+      limit: limit,
+      params: { nprobe: 1024, radius: 20, range_filter: 15 },
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    res.results.forEach(r => {
+      expect(Number(r.height)).toBeLessThan(10000);
+    });
+  });
+
   it(`Exec simple search with outputFields should success`, async () => {
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
