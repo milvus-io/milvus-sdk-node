@@ -161,8 +161,13 @@ export enum IndexType {
   BIN_IVF_FLAT = 'BIN_IVF_FLAT',
   DISKANN = 'DISKANN',
   AUTOINDEX = 'AUTOINDEX',
-  // GPU_IVF_FLAT = 'GPU_IVF_FLAT', // 2.3
-  // GPU_IVF_PQ = 'GPU_IVF_PQ' // 2.3
+  // 2.3
+  GPU_FLAT = 'GPU_FLAT',
+  GPU_IVF_FLAT = 'GPU_IVF_FLAT',
+  GPU_IVF_PQ = 'GPU_IVF_PQ',
+  GPU_IVF_SQ8 = 'GPU_IVF_SQ8',
+  RAFT_IVF_FLAT = 'RAFT_IVF_FLAT',
+  RAFT_IVF_PQ = 'RAFT_IVF_PQ',
 }
 
 export enum MsgType {
