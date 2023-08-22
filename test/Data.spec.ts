@@ -14,7 +14,7 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: `10.102.6.73:19530` });
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
@@ -267,10 +267,8 @@ describe(`Data.API`, () => {
       filter: 'height < 10000',
       vector: [1, 2, 3, 4],
       limit: limit,
-      params: { nprobe: 1024, radius: 10, range_filter: 20 },
+      params: { nprobe: 1024, radius: 20, range_filter: 15 },
     });
-
-    console.log('range ', res);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     res.results.forEach(r => {

@@ -487,8 +487,13 @@ export class Data extends Collection {
         data.timeout || this.timeout
       );
 
-      // if search failed, return empty with status
-      if (promise.status.error_code !== ErrorCode.SUCCESS) {
+      // if search failed
+      // if nothing returned
+      // return empty with status
+      if (
+        promise.status.error_code !== ErrorCode.SUCCESS ||
+        promise.results.scores.length === 0
+      ) {
         return {
           status: promise.status,
           results: [],
