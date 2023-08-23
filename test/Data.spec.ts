@@ -287,12 +287,10 @@ describe(`Data.API`, () => {
       output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
     });
 
-    console.log('search', search);
-
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
       search.results.forEach(r => {
-        expect(Object.keys(r).length).toEqual(5); // id, score, age, meta
+        expect(Object.keys(r).length).toEqual(5); // id, score, age, meta, vector
       })
     );
   });
