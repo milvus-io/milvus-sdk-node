@@ -1,11 +1,11 @@
 import { Milvus } from 'langchain/vectorstores/milvus';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 
-const address = `localhost:19530`; // or your zilliz cloud endpoint
-const username = `username`;
-const password = `password`;
+const address = `localhot:19530`; // or your zilliz cloud endpoint
 const ssl = false; // set it to true if you are using zilliz cloud
-const openAIApiKey = `openAiApiKey`;
+const token = 'username:passowrd or apikey'; // your zilliz cloud apikey or username:password
+
+const openAIApiKey = ``;
 const collectionName = 'books';
 
 // text sample from Godel, Escher, Bach
@@ -29,10 +29,11 @@ const vectorStore = await Milvus.fromTexts(
   {
     collectionName,
     vectorField: 'vectors',
-    url: address,
-    ssl,
-    username,
-    password,
+    clientConfig: {
+      address,
+      ssl,
+      token,
+    },
   }
 );
 
