@@ -90,7 +90,7 @@ export interface CreateCollectionReq extends GrpcTimeOut {
   enableDynamicField?: boolean;
 }
 
-interface CollectionNameReq extends GrpcTimeOut {
+export interface CollectionNameReq extends GrpcTimeOut {
   /**
    * @param collection_name collection name string
    */

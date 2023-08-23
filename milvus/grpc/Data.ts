@@ -12,6 +12,8 @@ import {
   LoadBalanceReq,
   ImportReq,
   ListImportTasksReq,
+  // ListIndexedSegmentReq,
+  // DescribeSegmentIndexDataReq,
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,
@@ -24,6 +26,8 @@ import {
   SearchResults,
   ImportResponse,
   ListImportTasksResponse,
+  // ListIndexedSegmentResponse,
+  // DescribeSegmentIndexDataResponse,
   GetMetricsRequest,
   QueryReq,
   GetReq,
@@ -1093,4 +1097,88 @@ export class Data extends Collection {
     );
     return res;
   }
+
+  /**
+   * list indexed segments
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | string | the name of the collection |
+   *  | index_name | string | the name of the collection's index |
+   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   *
+   * @returns
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | status |
+   *  | segmentIDs | segment IDs |
+   *
+   * @throws {Error} if `collection_name` property is not present in `data`
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).getPkFieldName({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
+  // async listIndexedSegment(
+  //   data: ListIndexedSegmentReq
+  // ): Promise<ListIndexedSegmentResponse> {
+  //   if (!data || !data.collection_name) {
+  //     throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+  //   }
+
+  //   const res = await promisify(
+  //     this.client,
+  //     'ListIndexedSegment',
+  //     data,
+  //     data.timeout || this.timeout
+  //   );
+  //   return res;
+  // }
+
+  /**
+   * describe segment index data
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | string | the name of the collection |
+   *  | segmentsIDs | number[] | the name of the collection's index |
+   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   *
+   * @returns
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | status |
+   *  | segmentIDs | segment IDs |
+   *
+   * @throws {Error} if `collection_name` property is not present in `data`
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).getPkFieldName({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
+  // async describeSegmentIndexData(
+  //   data: DescribeSegmentIndexDataReq
+  // ): Promise<DescribeSegmentIndexDataResponse> {
+  //   if (!data || !data.collection_name) {
+  //     throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+  //   }
+
+  //   const res = await promisify(
+  //     this.client,
+  //     'DescribeSegmentIndexData',
+  //     data,
+  //     data.timeout || this.timeout
+  //   );
+  //   return res;
+  // }
 }

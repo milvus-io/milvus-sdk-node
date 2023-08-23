@@ -9,6 +9,7 @@ import {
   SegmentState,
   ImportState,
   ConsistencyLevelEnum,
+  CollectionNameReq,
 } from '../';
 
 export interface FlushReq extends GrpcTimeOut {
@@ -311,4 +312,24 @@ export interface QueryRes {
 export interface FlushResult {
   status: ResStatus;
   coll_segIDs: any; // collection segment id array
+}
+
+export interface ListIndexedSegmentReq extends CollectionNameReq {
+  index_name: string;
+}
+
+export interface ListIndexedSegmentResponse {
+  status: ResStatus;
+  segmentIDs: number[];
+}
+
+export interface DescribeSegmentIndexDataReq extends CollectionNameReq {
+  index_name: string;
+  segmentsIDs: number[];
+}
+
+export interface DescribeSegmentIndexDataResponse {
+  status: ResStatus;
+  index_params: any;
+  index_data: any;
 }
