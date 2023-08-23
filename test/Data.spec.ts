@@ -15,7 +15,7 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: '10.102.9.124:19530' });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
@@ -284,13 +284,14 @@ describe(`Data.API`, () => {
       filter: '',
       vector: [1, 2, 3, 4],
       limit: 4,
-      output_fields: ['age', 'meta'],
+      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
       res.results.forEach(r => {
-        expect(Object.keys(r).length).toEqual(4); // id, score, age, meta
+        expect(typeof r[VECTOR_FIELD_NAME] !== 'undefined').toEqual(true);
+        expect(Object.keys(r).length).toEqual(5); // id, score, age, meta, vector
       })
     );
   });
