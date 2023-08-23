@@ -11,10 +11,11 @@ import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
+  DEFAULT_VALUE,
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: `10.102.6.73:19530` });
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
@@ -396,12 +397,13 @@ describe(`Data.API`, () => {
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'age > 0',
-      output_fields: ['age', VECTOR_FIELD_NAME],
+      output_fields: ['age', VECTOR_FIELD_NAME, 'default_value'],
       offset: 0,
       limit: 3,
     });
 
     res.data.forEach(d => {
+      expect(d.default_value).toEqual(DEFAULT_VALUE);
       expect(Object.keys(d).indexOf(VECTOR_FIELD_NAME) !== -1).toEqual(true);
     });
 
