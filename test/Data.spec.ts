@@ -15,7 +15,7 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: '10.102.9.124:19530' });
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
