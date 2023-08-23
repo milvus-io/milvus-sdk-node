@@ -15,7 +15,9 @@ import {
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({
+  address: IP,
+});
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
@@ -26,6 +28,7 @@ const createCollectionParams = genCollectionParams({
   vectorType: DataType.FloatVector,
   autoID: false,
 });
+const INDEX_NAME = 'collection_index';
 
 describe(`Data.API`, () => {
   beforeAll(async () => {
@@ -41,6 +44,7 @@ describe(`Data.API`, () => {
     });
 
     await milvusClient.createIndex({
+      index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       index_type: 'IVF_FLAT',
@@ -122,6 +126,16 @@ describe(`Data.API`, () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
+
+  // it(`List segments should success`, async () => {
+  //   const listIndexedSegment = await milvusClient.listIndexedSegment({
+  //     collection_name: COLLECTION_NAME,
+  //     index_name: INDEX_NAME,
+  //   });
+  //   console.log('list segment', listIndexedSegment);
+
+  //   expect(listIndexedSegment.status.error_code).toEqual(ErrorCode.SUCCESS);
+  // });
 
   it(`Exec search should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
