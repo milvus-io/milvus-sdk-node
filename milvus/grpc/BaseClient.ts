@@ -158,7 +158,7 @@ export class BaseClient {
    * @param {Function} data.checker - A function to call if the SDK is compatible.
    * @throws {Error} If the SDK is incompatible with the server.
    */
-  async checkCompatiblity(data: { message?: string; checker?: Function } = {}) {
+  async checkCompatibility(data: { message?: string; checker?: Function } = {}) {
     // wait until connecting finished
     await this.connectPromise;
 

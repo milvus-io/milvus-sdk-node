@@ -72,7 +72,7 @@ export class MilvusClient extends GRPCClient {
     data: CreateColReq | CreateCollectionReq
   ): Promise<ResStatus> {
     // check compatibility
-    await this.checkCompatiblity({
+    await this.checkCompatibility({
       checker: () => {
         checkCreateCollectionCompatibility(data);
       },
