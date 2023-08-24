@@ -1,4 +1,4 @@
-import { MilvusClient, ErrorCode, MetricType } from '../milvus';
+import { MilvusClient, ErrorCode, MetricType, IndexType } from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -16,7 +16,7 @@ const dbParam = {
   db_name: 'MilvusIndex',
 };
 
-const INDEX_COLLECTIONS = Array(7).fill(1);
+const INDEX_COLLECTIONS = Array(8).fill(1);
 for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
   INDEX_COLLECTIONS[i] = GENERATE_NAME();
 }
@@ -29,6 +29,7 @@ const [
   COL_HNSW,
   COL_SIMPLE,
   DISKANN,
+  ScaNN,
 ] = INDEX_COLLECTIONS;
 
 describe(`Milvus Index API`, () => {
@@ -151,9 +152,21 @@ describe(`Milvus Index API`, () => {
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
-        index_type: 'DISKANN',
+        index_type: IndexType.DISKANN,
         metric_type: 'L2',
       },
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create ScaNN index should success`, async () => {
+    const res = await milvusClient.createIndex({
+      collection_name: ScaNN,
+      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      index_type: IndexType.ScaNN,
+      metric_type: 'L2',
+      params: { nlist: 1024 },
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
