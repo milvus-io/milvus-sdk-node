@@ -1,4 +1,4 @@
-import { MilvusClient, ErrorCode } from '../milvus';
+import { MilvusClient, ErrorCode, MetricType } from '../milvus';
 import {
   IP,
   genCollectionParams,
@@ -27,8 +27,8 @@ const [
   COL_IVF_SQ8,
   COL_IVF_PQ,
   COL_HNSW,
-  COL_ANNOY,
   COL_SIMPLE,
+  DISKANN,
 ] = INDEX_COLLECTIONS;
 
 describe(`Milvus Index API`, () => {
@@ -48,7 +48,7 @@ describe(`Milvus Index API`, () => {
 
     for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
       await milvusClient.createCollection(
-        genCollectionParams({ collectionName: INDEX_COLLECTIONS[i], dim: 8 })
+        genCollectionParams({ collectionName: INDEX_COLLECTIONS[i], dim: 32 })
       );
     }
   });
@@ -83,7 +83,7 @@ describe(`Milvus Index API`, () => {
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       index_type: 'FLAT',
-      metric_type: 'L2',
+      metric_type: MetricType.COSINE,
       params: { nlist: 1024 },
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -145,32 +145,18 @@ describe(`Milvus Index API`, () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Create ANNOY index should success`, async () => {
+  it(`Create DISKANN index should success`, async () => {
     const res = await milvusClient.createIndex({
-      collection_name: COL_ANNOY,
+      collection_name: DISKANN,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
       extra_params: {
-        index_type: 'ANNOY',
+        index_type: 'DISKANN',
         metric_type: 'L2',
-        params: JSON.stringify({ n_trees: 8 }),
       },
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
-
-  // it(`Create DISKANN index should success`, async () => {
-  //   const res = await milvusClient.createIndex({
-  //     collection_name: DISKANN,
-  //     index_name: INDEX_NAME,
-  //     field_name: VECTOR_FIELD_NAME,
-  //     extra_params: {
-  //       index_type: 'DISKANN',
-  //       metric_type: 'L2',
-  //     },
-  //   });
-  //   expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
 
   it(`Create Index with name should success`, async () => {
     const res = await milvusClient.createIndex({

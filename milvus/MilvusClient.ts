@@ -27,7 +27,7 @@ export class MilvusClient extends GRPCClient {
   static get sdkInfo() {
     return {
       version: sdkInfo.version,
-      recommandMilvus: sdkInfo.milvusVersion,
+      recommendMilvus: sdkInfo.milvusVersion,
     };
   }
 

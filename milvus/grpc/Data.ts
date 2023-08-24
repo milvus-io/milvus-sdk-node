@@ -12,6 +12,8 @@ import {
   LoadBalanceReq,
   ImportReq,
   ListImportTasksReq,
+  // ListIndexedSegmentReq,
+  // DescribeSegmentIndexDataReq,
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,
@@ -24,6 +26,8 @@ import {
   SearchResults,
   ImportResponse,
   ListImportTasksResponse,
+  // ListIndexedSegmentResponse,
+  // DescribeSegmentIndexDataResponse,
   GetMetricsRequest,
   QueryReq,
   GetReq,
@@ -46,6 +50,7 @@ import {
   generateDynamicRow,
   getFieldDataMap,
   ConsistencyLevelEnum,
+  getDataKey,
 } from '../';
 import { Collection } from './Collection';
 
@@ -54,7 +59,21 @@ export class Data extends Collection {
   vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
 
   /**
-   * Insert data into Milvus.
+   * Upsert data into Milvus, view _insert for detail
+   */
+  async upsert(data: InsertReq): Promise<MutationResult> {
+    return this._insert(data, true);
+  }
+
+  /**
+   * Insert data into Milvus, view _insert for detail
+   */
+  async insert(data: InsertReq): Promise<MutationResult> {
+    return this._insert(data);
+  }
+
+  /**
+   * Insert/upsert data into Milvus.
    *
    * @param data
    *  | Property | Type | Description |
@@ -84,9 +103,12 @@ export class Data extends Collection {
    *      scalar_field: 1
    *    }]
    *  });
-   * ```
+   * ``` 
    */
-  async insert(data: InsertReq): Promise<MutationResult> {
+  private async _insert(
+    data: InsertReq,
+    upsert: boolean = false
+  ): Promise<MutationResult> {
     checkCollectionName(data);
     // ensure fields data available
     data.fields_data = data.fields_data || data.data;
@@ -182,42 +204,8 @@ export class Data extends Collection {
       // but if milvus change the string, may cause we cant find value.
       const type = DataTypeMap[v.type];
       const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
-      let dataKey = 'float_vector';
-      switch (type) {
-        case DataType.FloatVector:
-          dataKey = 'float_vector';
-          break;
-        case DataType.BinaryVector:
-          dataKey = 'binary_vector';
-          break;
-        case DataType.Double:
-          dataKey = 'double_data';
-          break;
-        case DataType.Float:
-          dataKey = 'float_data';
-          break;
-        case DataType.Int64:
-          dataKey = 'long_data';
-          break;
-        case DataType.Int32:
-        case DataType.Int16:
-        case DataType.Int8:
-          dataKey = 'int_data';
-          break;
-        case DataType.Bool:
-          dataKey = 'bool_data';
-          break;
-        case DataType.VarChar:
-          dataKey = 'string_data';
-          break;
-        case DataType.JSON:
-          dataKey = 'json_data';
-          break;
-        default:
-          throw new Error(
-            `${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE} "${v.type}."`
-          );
-      }
+      let dataKey = getDataKey(type);
+
       return {
         type,
         field_name: v.name,
@@ -243,9 +231,15 @@ export class Data extends Collection {
       };
     });
 
+    // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
-
-    const promise = await promisify(this.client, 'Insert', params, timeout);
+    // execute Insert
+    const promise = await promisify(
+      this.client,
+      upsert ? 'Upsert' : 'Insert',
+      params,
+      timeout
+    );
 
     return promise;
   }
@@ -487,8 +481,13 @@ export class Data extends Collection {
         data.timeout || this.timeout
       );
 
-      // if search failed, return empty with status
-      if (promise.status.error_code !== ErrorCode.SUCCESS) {
+      // if search failed
+      // if nothing returned
+      // return empty with status
+      if (
+        promise.status.error_code !== ErrorCode.SUCCESS ||
+        promise.results.scores.length === 0
+      ) {
         return {
           status: promise.status,
           results: [],
@@ -734,7 +733,7 @@ export class Data extends Collection {
       promise.output_fields || promise.fields_data.map(f => f.field_name);
 
     // Initialize an array to hold the query results
-    const results: { [x: string]: any }[] = [];
+    let results: { [x: string]: any }[] = [];
 
     const fieldsDataMap = getFieldDataMap(promise.fields_data);
 
@@ -759,20 +758,15 @@ export class Data extends Collection {
     });
 
     // parse column data to [{fieldname:value}]
-    fieldData.forEach((v: any) => {
-      v.data.forEach((d: string | number[], i: number) => {
-        if (!results[i]) {
-          results[i] = {
-            [v.field_name]: d,
-          };
-        } else {
-          results[i] = {
-            ...results[i],
-            [v.field_name]: d,
-          };
-        }
+    results = fieldData.reduce((acc: any, v) => {
+      v.data.forEach((d: any, i: number) => {
+        acc[i] = {
+          ...acc[i],
+          [v.field_name]: d,
+        };
       });
-    });
+      return acc;
+    }, []);
 
     return {
       status: promise.status,
@@ -1103,4 +1097,88 @@ export class Data extends Collection {
     );
     return res;
   }
+
+  /**
+   * list indexed segments
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | string | the name of the collection |
+   *  | index_name | string | the name of the collection's index |
+   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   *
+   * @returns
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | status |
+   *  | segmentIDs | segment IDs |
+   *
+   * @throws {Error} if `collection_name` property is not present in `data`
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).getPkFieldName({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
+  // async listIndexedSegment(
+  //   data: ListIndexedSegmentReq
+  // ): Promise<ListIndexedSegmentResponse> {
+  //   if (!data || !data.collection_name) {
+  //     throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+  //   }
+
+  //   const res = await promisify(
+  //     this.client,
+  //     'ListIndexedSegment',
+  //     data,
+  //     data.timeout || this.timeout
+  //   );
+  //   return res;
+  // }
+
+  /**
+   * describe segment index data
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | string | the name of the collection |
+   *  | segmentsIDs | number[] | the name of the collection's index |
+   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   *
+   * @returns
+   *  | Property | Description |
+   *  | :-- | :-- |
+   *  | status | status |
+   *  | segmentIDs | segment IDs |
+   *
+   * @throws {Error} if `collection_name` property is not present in `data`
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).getPkFieldName({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
+  // async describeSegmentIndexData(
+  //   data: DescribeSegmentIndexDataReq
+  // ): Promise<DescribeSegmentIndexDataResponse> {
+  //   if (!data || !data.collection_name) {
+  //     throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+  //   }
+
+  //   const res = await promisify(
+  //     this.client,
+  //     'DescribeSegmentIndexData',
+  //     data,
+  //     data.timeout || this.timeout
+  //   );
+  //   return res;
+  // }
 }

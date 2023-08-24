@@ -11,10 +11,13 @@ import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
+  // DEFAULT_VALUE,
 } from './tools';
 import { timeoutTest } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({
+  address: IP,
+});
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
@@ -25,6 +28,7 @@ const createCollectionParams = genCollectionParams({
   vectorType: DataType.FloatVector,
   autoID: false,
 });
+const INDEX_NAME = 'collection_index';
 
 describe(`Data.API`, () => {
   beforeAll(async () => {
@@ -40,6 +44,7 @@ describe(`Data.API`, () => {
     });
 
     await milvusClient.createIndex({
+      index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
       index_type: 'IVF_FLAT',
@@ -121,6 +126,16 @@ describe(`Data.API`, () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
+
+  // it(`List segments should success`, async () => {
+  //   const listIndexedSegment = await milvusClient.listIndexedSegment({
+  //     collection_name: COLLECTION_NAME,
+  //     index_name: INDEX_NAME,
+  //   });
+  //   console.log('list segment', listIndexedSegment);
+
+  //   expect(listIndexedSegment.status.error_code).toEqual(ErrorCode.SUCCESS);
+  // });
 
   it(`Exec search should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
@@ -260,6 +275,22 @@ describe(`Data.API`, () => {
     });
   });
 
+  it(`Exec simple search with range filter should success`, async () => {
+    const limit = 8;
+    const res = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: 'height < 10000',
+      vector: [1, 2, 3, 4],
+      limit: limit,
+      params: { nprobe: 1024, radius: 20, range_filter: 15 },
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    res.results.forEach(r => {
+      expect(Number(r.height)).toBeLessThan(10000);
+    });
+  });
+
   it(`Exec simple search with outputFields should success`, async () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
@@ -267,13 +298,14 @@ describe(`Data.API`, () => {
       filter: '',
       vector: [1, 2, 3, 4],
       limit: 4,
-      output_fields: ['age', 'meta'],
+      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
       res.results.forEach(r => {
-        expect(Object.keys(r).length).toEqual(4); // id, score, age, meta
+        expect(typeof r[VECTOR_FIELD_NAME] !== 'undefined').toEqual(true);
+        expect(Object.keys(r).length).toEqual(5); // id, score, age, meta, vector
       })
     );
   });
@@ -394,10 +426,14 @@ describe(`Data.API`, () => {
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'age > 0',
-      output_fields: ['age', VECTOR_FIELD_NAME],
+      output_fields: ['age', VECTOR_FIELD_NAME, 'default_value'],
       offset: 0,
       limit: 3,
     });
+
+    // res.data.forEach(d => {
+    //   expect(d.default_value).toEqual(DEFAULT_VALUE);
+    // });
     expect(res.data.length).toBe(3);
   });
 

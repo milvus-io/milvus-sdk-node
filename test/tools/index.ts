@@ -1,4 +1,9 @@
-import { DataType, FieldType, convertToDataType } from '../../milvus';
+import {
+  DataType,
+  FieldType,
+  convertToDataType,
+  ConsistencyLevelEnum,
+} from '../../milvus';
 
 export const IP = '127.0.0.1:19530';
 export const VECTOR_FIELD_NAME = 'vector';
@@ -6,6 +11,7 @@ export const INDEX_NAME = 'index_name';
 export const DIMENSION = 4;
 export const INDEX_FILE_SIZE = 1024;
 export const PARTITION_TAG = 'random';
+export const DEFAULT_VALUE = '100';
 export const dynamicFields = [
   {
     name: 'dynamic_int64',
@@ -68,6 +74,7 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
 
   const params: any = {
     collection_name: collectionName,
+    consistency_level: ConsistencyLevelEnum.Strong,
     fields: [
       {
         name: VECTOR_FIELD_NAME,
@@ -84,6 +91,12 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
       },
       {
         name: 'height',
+        description: 'int64 field',
+        data_type: 'Int64', // test string type
+      },
+      {
+        name: 'default_value',
+        // default_value: DEFAULT_VALUE,
         description: 'int64 field',
         data_type: 'Int64', // test string type
       },
@@ -132,10 +145,11 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
     let value: any = {}; // Initialize an empty object to store the generated values for this data point
 
     fields.forEach(f => {
-      // bypass autoID
-      if (f.autoID) {
+      // bypass autoID &  default value
+      if (f.autoID || typeof f.default_value !== 'undefined') {
         return;
       }
+
       // convert to data type
       const data_type = convertToDataType(f.data_type);
       // Loop through each field we need to generate data for
@@ -147,6 +161,11 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
       const isBool = data_type === DataType.Bool;
       const isVarChar = data_type === DataType.VarChar;
       const isJson = data_type === DataType.JSON;
+      const isDefaultValue = typeof f.default_value !== 'undefined';
+
+      if (isDefaultValue) {
+        return;
+      }
 
       dim = f.data_type === DataType.BinaryVector ? (dim as number) / 8 : dim;
       value[name] = isVector // If the field is a vector field

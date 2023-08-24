@@ -27,6 +27,11 @@ const dbParam = {
   db_name: 'Collection',
 };
 
+const COLLECTION_NAME_PARAMS = genCollectionParams({
+  collectionName: COLLECTION_NAME,
+  dim: 128,
+});
+
 describe(`Collection API`, () => {
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
@@ -38,7 +43,7 @@ describe(`Collection API`, () => {
   });
   it(`Create Collection Successful`, async () => {
     const res = await milvusClient.createCollection({
-      ...genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 }),
+      ...COLLECTION_NAME_PARAMS,
       consistency_level: 'Eventually',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -320,7 +325,7 @@ describe(`Collection API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
-    expect(res.schema.fields.length).toEqual(5);
+    expect(res.schema.fields.length).toEqual(COLLECTION_NAME_PARAMS.fields.length);
     res.schema.fields.forEach(f => {
       expect(typeof f.dataType).toEqual('number');
       expect(typeof f.data_type).toEqual('string');

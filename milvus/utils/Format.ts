@@ -8,6 +8,7 @@ import {
   DataType,
   CreateCollectionReq,
   DescribeCollectionResponse,
+  getDataKey,
 } from '../';
 
 /**
@@ -296,7 +297,7 @@ export const cloneObj = <T>(obj: T): T => {
  */
 export const formatCollectionSchema = (
   data: CreateCollectionReq,
-  grpcMsgType: Type
+  fieldSchemaType: Type
 ): { [k: string]: any } => {
   const {
     fields,
@@ -314,14 +315,23 @@ export const formatCollectionSchema = (
     fields: fields.map(field => {
       // Assign the typeParams property to the result of parseToKeyValue(type_params).
       const { type_params, ...rest } = assignTypeParams(field);
-      return grpcMsgType.create({
+      const createObj: any = {
         ...rest,
         typeParams: parseToKeyValue(type_params),
         dataType: convertToDataType(field.data_type),
         isPrimaryKey: !!field.is_primary_key,
         isPartitionKey:
           !!field.is_partition_key || field.name === partition_key_field,
-      });
+      };
+
+      if (typeof field.default_value !== 'undefined') {
+        const dataKey = getDataKey(createObj.dataType, true);
+
+        createObj.defaultValue = {
+          [dataKey]: field.default_value,
+        };
+      }
+      return fieldSchemaType.create(createObj);
     }),
   };
 

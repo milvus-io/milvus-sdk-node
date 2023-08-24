@@ -1,4 +1,4 @@
-import { KeyValuePair, DataType } from '../';
+import { KeyValuePair, DataType, ERROR_REASONS } from '../';
 
 /**
  * Promisify a function call with optional timeout
@@ -74,4 +74,50 @@ export const buildDefaultSchema = (data: {
       dim: data.dimension,
     },
   ];
+};
+
+function convertToCamelCase(str: string) {
+  return str.replace(/_(.)/g, function (match, letter) {
+    return letter.toUpperCase();
+  });
+}
+
+export const getDataKey = (type: DataType, camelCase: boolean = false) => {
+  let dataKey = '';
+  switch (type) {
+    case DataType.FloatVector:
+      dataKey = 'float_vector';
+      break;
+    case DataType.BinaryVector:
+      dataKey = 'binary_vector';
+      break;
+    case DataType.Double:
+      dataKey = 'double_data';
+      break;
+    case DataType.Float:
+      dataKey = 'float_data';
+      break;
+    case DataType.Int64:
+      dataKey = 'long_data';
+      break;
+    case DataType.Int32:
+    case DataType.Int16:
+    case DataType.Int8:
+      dataKey = 'int_data';
+      break;
+    case DataType.Bool:
+      dataKey = 'bool_data';
+      break;
+    case DataType.VarChar:
+      dataKey = 'string_data';
+      break;
+    case DataType.JSON:
+      dataKey = 'json_data';
+      break;
+    default:
+      throw new Error(
+        `${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE} "${type}."`
+      );
+  }
+  return camelCase ? convertToCamelCase(dataKey) : dataKey;
 };

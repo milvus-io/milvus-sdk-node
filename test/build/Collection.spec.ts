@@ -16,12 +16,14 @@ import {
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
+const COLLECTION_NAME_PARAMS = genCollectionParams({
+  collectionName: COLLECTION_NAME,
+  dim: 128,
+});
 
 describe('Collection Api', () => {
   it(`Create Collection Successful`, async () => {
-    const res = await milvusClient.createCollection(
-      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 })
-    );
+    const res = await milvusClient.createCollection(COLLECTION_NAME_PARAMS);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -141,7 +143,9 @@ describe('Collection Api', () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.schema.name).toEqual(COLLECTION_NAME);
-    expect(res.schema.fields.length).toEqual(5);
+    expect(res.schema.fields.length).toEqual(
+      COLLECTION_NAME_PARAMS.fields.length
+    );
     expect(res.schema.fields[0].name).toEqual(VECTOR_FIELD_NAME);
     expect(res.schema.fields[1].name).toEqual('age');
   });
