@@ -36,13 +36,13 @@ describe(`Milvus client`, () => {
   });
 
   it(`should create a grpc client without authentication when username and password are not provided`, () => {
-    const milvusClient = new MilvusClient(`localhost:19530`, false);
+    const milvusClient = new MilvusClient(IP, false);
 
     expect(milvusClient.client).toBeDefined();
   });
 
   it(`should have connect promise and connectStatus`, async () => {
-    const milvusClient = new MilvusClient(`localhost:19530`, false);
+    const milvusClient = new MilvusClient(IP, false);
     expect(milvusClient.connectPromise).toBeDefined();
 
     await milvusClient.connectPromise;
@@ -66,7 +66,7 @@ describe(`Milvus client`, () => {
 
   it(`Expect get node sdk info`, async () => {
     expect(MilvusClient.sdkInfo.version).toEqual(sdkInfo.version);
-    expect(MilvusClient.sdkInfo.recommandMilvus).toEqual(sdkInfo.milvusVersion);
+    expect(MilvusClient.sdkInfo.recommendMilvus).toEqual(sdkInfo.milvusVersion);
   });
 
   it(`Get milvus version`, async () => {

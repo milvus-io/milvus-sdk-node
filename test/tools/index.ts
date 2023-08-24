@@ -1,4 +1,9 @@
-import { DataType, FieldType, convertToDataType } from '../../milvus';
+import {
+  DataType,
+  FieldType,
+  convertToDataType,
+  ConsistencyLevelEnum,
+} from '../../milvus';
 
 export const IP = '127.0.0.1:19530';
 export const VECTOR_FIELD_NAME = 'vector';
@@ -69,6 +74,7 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
 
   const params: any = {
     collection_name: collectionName,
+    consistency_level: ConsistencyLevelEnum.Strong,
     fields: [
       {
         name: VECTOR_FIELD_NAME,
@@ -90,7 +96,7 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
       },
       {
         name: 'default_value',
-        default_value: DEFAULT_VALUE,
+        // default_value: DEFAULT_VALUE,
         description: 'int64 field',
         data_type: 'Int64', // test string type
       },

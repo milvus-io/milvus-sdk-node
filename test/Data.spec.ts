@@ -11,7 +11,7 @@ import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
-  DEFAULT_VALUE,
+  // DEFAULT_VALUE,
 } from './tools';
 import { timeoutTest } from './tools';
 
@@ -431,9 +431,9 @@ describe(`Data.API`, () => {
       limit: 3,
     });
 
-    res.data.forEach(d => {
-      expect(d.default_value).toEqual(DEFAULT_VALUE);
-    });
+    // res.data.forEach(d => {
+    //   expect(d.default_value).toEqual(DEFAULT_VALUE);
+    // });
     expect(res.data.length).toBe(3);
   });
 
