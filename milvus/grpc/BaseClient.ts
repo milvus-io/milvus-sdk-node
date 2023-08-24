@@ -12,7 +12,10 @@ import {
 } from '../';
 
 // path
-const protoPath = path.resolve(__dirname, '../../proto/proto/milvus.proto');
+const milvusProtoPath = path.resolve(
+  __dirname,
+  '../../proto/proto/milvus.proto'
+);
 const schemaProtoPath = path.resolve(
   __dirname,
   '../../proto/proto/schema.proto'
@@ -28,7 +31,10 @@ export class BaseClient {
   // metadata
   protected metadata: Map<string, string> = new Map<string, string>();
   // The path to the Milvus protobuf file.
-  protected protoPath: string;
+  protected protoFilePath = {
+    milvus: milvusProtoPath,
+    schema: schemaProtoPath,
+  };
   // The protobuf schema.
   protected schemaProto: Root;
   // The Milvus protobuf.
@@ -111,10 +117,16 @@ export class BaseClient {
         ? TLS_MODE.TWO_WAY
         : this.tlsMode;
 
-    // Load the Milvus protobuf.
-    this.protoPath = protoPath;
-    this.schemaProto = protobuf.loadSync(schemaProtoPath);
-    this.milvusProto = protobuf.loadSync(protoPath);
+    // setup proto file path
+    if (this.config.protoFilePath) {
+      const { milvus, schema } = this.config.protoFilePath;
+      this.protoFilePath.milvus = milvus ?? this.protoFilePath.milvus;
+      this.protoFilePath.schema = schema ?? this.protoFilePath.schema;
+    }
+
+    // Load the Milvus protobuf
+    this.schemaProto = protobuf.loadSync(this.protoFilePath.schema);
+    this.milvusProto = protobuf.loadSync(this.protoFilePath.milvus);
 
     // Get the CollectionSchemaType and FieldSchemaType from the schemaProto object.
     this.collectionSchemaType = this.schemaProto.lookupType(
@@ -158,7 +170,9 @@ export class BaseClient {
    * @param {Function} data.checker - A function to call if the SDK is compatible.
    * @throws {Error} If the SDK is incompatible with the server.
    */
-  async checkCompatibility(data: { message?: string; checker?: Function } = {}) {
+  async checkCompatibility(
+    data: { message?: string; checker?: Function } = {}
+  ) {
     // wait until connecting finished
     await this.connectPromise;
 
