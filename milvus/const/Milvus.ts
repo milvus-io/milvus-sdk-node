@@ -142,12 +142,6 @@ export enum MetricType {
   HAMMING = 'HAMMING',
   // JACCARD jaccard distance
   JACCARD = 'JACCARD',
-  // TANIMOTO tanimoto distance
-  TANIMOTO = 'TANIMOTO',
-  // SUBSTRUCTURE substructure distance
-  SUBSTRUCTURE = 'SUBSTRUCTURE',
-  // SUPERSTRUCTURE superstructure
-  SUPERSTRUCTURE = 'SUPERSTRUCTURE',
 }
 
 export enum IndexType {
@@ -156,7 +150,6 @@ export enum IndexType {
   IVF_SQ8 = 'IVF_SQ8',
   IVF_PQ = 'IVF_PQ',
   HNSW = 'HNSW',
-  ANNOY = 'ANNOY',
   BIN_FLAT = 'BIN_FLAT',
   BIN_IVF_FLAT = 'BIN_IVF_FLAT',
   DISKANN = 'DISKANN',
@@ -168,6 +161,7 @@ export enum IndexType {
   GPU_IVF_SQ8 = 'GPU_IVF_SQ8',
   RAFT_IVF_FLAT = 'RAFT_IVF_FLAT',
   RAFT_IVF_PQ = 'RAFT_IVF_PQ',
+  ScaNN = 'SCANN',
 }
 
 export enum MsgType {
