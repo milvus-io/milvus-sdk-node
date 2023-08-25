@@ -4,6 +4,12 @@ import { ChannelOptions } from '@grpc/grpc-js';
  * Configuration options for the Milvus client.
  */
 export interface ClientConfig {
+  // optional proto file paths
+  // refer to https://github.com/milvus-io/milvus-proto
+  protoFilePath?: {
+    milvus?: string; // milvus.proto file path
+    schema?: string; // schema.proto file path
+  };
   // The address of the Milvus server.
   address: string;
   // token
