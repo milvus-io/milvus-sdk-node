@@ -709,13 +709,8 @@ export class Data extends Collection {
       offset = { offset: data.offset };
     }
 
-    // check expr or filter
-    if (!data.filter && !data.expr) {
-      throw new Error(ERROR_REASONS.FILTER_EXPR_REQUIRED);
-    }
-
-    // filter > expr
-    data.expr = data.filter || data.expr;
+    // filter > expr or empty
+    data.expr = data.filter || data.expr || '';
 
     // Execute the query and get the results
     const promise: QueryRes = await promisify(
@@ -728,9 +723,8 @@ export class Data extends Collection {
       data.timeout || this.timeout
     );
 
-    // compatible with milvus before v2.2.9
-    const output_fields =
-      promise.output_fields || promise.fields_data.map(f => f.field_name);
+    // always get output_fields from fields_data
+    const output_fields = promise.fields_data.map(f => f.field_name);
 
     // Initialize an array to hold the query results
     let results: { [x: string]: any }[] = [];

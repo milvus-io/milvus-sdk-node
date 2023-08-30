@@ -437,6 +437,16 @@ describe(`Data.API`, () => {
     expect(res.data.length).toBe(3);
   });
 
+  it(`Query with count(*)`, async () => {
+    const queryString = 'count(*)';
+    const res = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      output_fields: [queryString],
+    });
+
+    expect(res.data.length).toEqual(1);
+  });
+
   it(`Query with data limit only`, async () => {
     const expr = 'age > 0';
     const res = await milvusClient.query({
