@@ -142,6 +142,12 @@ export enum MetricType {
   HAMMING = 'HAMMING',
   // JACCARD jaccard distance
   JACCARD = 'JACCARD',
+  // TANIMOTO tanimoto distance
+  TANIMOTO = 'TANIMOTO',
+  // SUBSTRUCTURE substructure distance
+  SUBSTRUCTURE = 'SUBSTRUCTURE',
+  // SUPERSTRUCTURE superstructure
+  SUPERSTRUCTURE = 'SUPERSTRUCTURE',
 }
 
 export enum IndexType {
@@ -154,6 +160,7 @@ export enum IndexType {
   BIN_IVF_FLAT = 'BIN_IVF_FLAT',
   DISKANN = 'DISKANN',
   AUTOINDEX = 'AUTOINDEX',
+  ANNOY = 'ANNOY',
   // 2.3
   GPU_FLAT = 'GPU_FLAT',
   GPU_IVF_FLAT = 'GPU_IVF_FLAT',
