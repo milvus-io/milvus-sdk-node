@@ -54,6 +54,7 @@ export type PrivilegesTypes =
 export interface ResStatus {
   error_code: string | number;
   reason: string;
+  code?: number;
 }
 
 export interface TimeStamp {

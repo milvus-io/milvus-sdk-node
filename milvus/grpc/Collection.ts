@@ -191,13 +191,18 @@ export class Collection extends Database {
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
     checkCollectionName(data);
 
-    const promise = await promisify(
-      this.client,
-      'HasCollection',
-      data,
-      data.timeout || this.timeout
-    );
-    return promise;
+    let response = {
+      status: { error_code: 'Success', reason: '', code: 0 },
+      value: true,
+    };
+
+    const res = await this.describeCollection(data);
+
+    if (res.status.error_code !== ErrorCode.SUCCESS) {
+      response.value = false;
+    }
+
+    return response;
   }
 
   /**
