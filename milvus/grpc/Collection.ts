@@ -196,7 +196,13 @@ export class Collection extends Database {
       value: true,
     };
 
-    const res = await this.describeCollection(data);
+    // avoid to call describle collection, because it has cache
+    const res = await promisify(
+      this.client,
+      'DescribeCollection',
+      data,
+      data.timeout || this.timeout
+    );
 
     if (res.status.error_code !== ErrorCode.SUCCESS) {
       response.value = false;
