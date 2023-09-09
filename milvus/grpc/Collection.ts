@@ -191,13 +191,24 @@ export class Collection extends Database {
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
     checkCollectionName(data);
 
-    const promise = await promisify(
+    let response = {
+      status: { error_code: 'Success', reason: '', code: 0 },
+      value: true,
+    };
+
+    // avoid to call describle collection, because it has cache
+    const res = await promisify(
       this.client,
-      'HasCollection',
+      'DescribeCollection',
       data,
       data.timeout || this.timeout
     );
-    return promise;
+
+    if (res.status.error_code !== ErrorCode.SUCCESS) {
+      response.value = false;
+    }
+
+    return response;
   }
 
   /**

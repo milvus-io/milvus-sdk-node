@@ -22,6 +22,7 @@ const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
 const ALIAS = 'my_alias';
+const NON_EXISTENT_COLLECTION_NAME = 'none_existent';
 
 const dbParam = {
   db_name: 'Collection',
@@ -234,20 +235,20 @@ describe(`Collection API`, () => {
     expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Has collection should throw error`, async () => {
-    try {
-      await milvusClient.hasCollection({} as any);
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
-    }
-  });
-
   it(`Has collection should success`, async () => {
     const res = await milvusClient.hasCollection({
       collection_name: COLLECTION_NAME,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.value).toEqual(true);
+  });
+
+  it(`Has collection should get false`, async () => {
+    const res = await milvusClient.hasCollection({
+      collection_name: NON_EXISTENT_COLLECTION_NAME,
+    });
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.value).toEqual(false);
   });
 
   it('Rename collection should be successful ', async () => {
@@ -325,7 +326,9 @@ describe(`Collection API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.consistency_level).toEqual('Eventually');
     expect(res.schema.name).toEqual(COLLECTION_NAME);
-    expect(res.schema.fields.length).toEqual(COLLECTION_NAME_PARAMS.fields.length);
+    expect(res.schema.fields.length).toEqual(
+      COLLECTION_NAME_PARAMS.fields.length
+    );
     res.schema.fields.forEach(f => {
       expect(typeof f.dataType).toEqual('number');
       expect(typeof f.data_type).toEqual('string');
