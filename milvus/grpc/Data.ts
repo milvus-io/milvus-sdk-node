@@ -383,6 +383,7 @@ export class Data extends Collection {
       // get collection info
       const collectionInfo = await this.describeCollection({
         collection_name: data.collection_name,
+        cache: true,
       });
 
       // get information from collection info
