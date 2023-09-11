@@ -196,7 +196,7 @@ export class Collection extends Database {
       value: true,
     };
 
-    // avoid to call describle collection, because it has cache
+    // avoid to call describe collection, because it has cache
     const res = await promisify(
       this.client,
       'DescribeCollection',
@@ -299,7 +299,7 @@ export class Collection extends Database {
     }`;
 
     // if we have cache return cache data
-    if (this.collectionInfoCache.has(key) && data.cache !== false) {
+    if (this.collectionInfoCache.has(key) && data.cache === true) {
       return Promise.resolve(this.collectionInfoCache.get(key)!);
     }
 

@@ -499,26 +499,21 @@ describe(`Collection API`, () => {
   });
 
   it(`Create alias success`, async () => {
-    try {
-      await milvusClient.createAlias({
-        collection_name: LOAD_COLLECTION_NAME,
-        alias: ALIAS,
-      });
+    const res0 = await milvusClient.describeCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
 
-      const res0 = await milvusClient.describeCollection({
-        collection_name: LOAD_COLLECTION_NAME,
-      });
+    await milvusClient.createAlias({
+      collection_name: LOAD_COLLECTION_NAME,
+      alias: ALIAS,
+    });
 
-      const res = await milvusClient.describeCollection({
-        collection_name: LOAD_COLLECTION_NAME,
-        cache: false,
-      });
+    const res = await milvusClient.describeCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
 
-      expect(res0.aliases[0]).not.toEqual(ALIAS);
-      expect(res.aliases[0]).toEqual(ALIAS);
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
-    }
+    expect(res0.aliases[0]).not.toEqual(ALIAS);
+    expect(res.aliases[0]).toEqual(ALIAS);
   });
 
   it(`Alter alias success`, async () => {
