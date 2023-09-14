@@ -5,3 +5,4 @@ api
 coverage
 .DS_Store
 yarn-error.log
+.idea
