@@ -103,7 +103,7 @@ export class Data extends Collection {
    *      scalar_field: 1
    *    }]
    *  });
-   * ``` 
+   * ```
    */
   private async _insert(
     data: InsertReq,
@@ -332,10 +332,11 @@ export class Data extends Collection {
     }
 
     const pkField = await this.getPkFieldName(data);
+    const pkFieldType = await this.getPkFieldType(data);
 
-    // generate expr by different type of ids
+    // generate expr by different type of pk
     const expr =
-      typeof data.ids[0] === 'string'
+      DataTypeMap[pkFieldType] === DataType.VarChar
         ? `${pkField} in ["${data.ids.join('","')}"]`
         : `${pkField} in [${data.ids.join(',')}]`;
     const req = { ...data, expr };
@@ -809,9 +810,16 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.IDS_REQUIRED);
     }
 
-    // build query req
-    const req = { ...data, expr: `${pkField} in [${data.ids.join(',')}]` };
+    const pkFieldType = await this.getPkFieldType(data);
 
+    // generate expr by different type of pk
+    const expr =
+      DataTypeMap[pkFieldType] === DataType.VarChar
+        ? `${pkField} in ["${data.ids.join('","')}"]`
+        : `${pkField} in [${data.ids.join(',')}]`;
+
+    // build query req
+    const req = { ...data, expr };
     return this.query(req);
   }
 
