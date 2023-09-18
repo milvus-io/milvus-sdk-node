@@ -52,6 +52,7 @@ describe(`Dynamic schema API`, () => {
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION,
     });
+    expect(describe.schema.enable_dynamic_field).toEqual(true);
   });
 
   it(`Insert data with dynamic field should success`, async () => {
