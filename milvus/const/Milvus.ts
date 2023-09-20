@@ -300,6 +300,7 @@ export enum DataType {
 
   String = 20,
   VarChar = 21, // variable-length strings with a specified maximum length
+  Array = 22,
   JSON = 23,
 
   BinaryVector = 100,
@@ -318,6 +319,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   Double: 11,
   String: 20,
   VarChar: 21,
+  Array: 22,
   JSON: 23,
   BinaryVector: 100,
   FloatVector: 101,

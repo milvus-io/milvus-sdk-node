@@ -43,7 +43,9 @@ import {
   formatCollectionSchema,
   formatDescribedCol,
   validatePartitionNumbers,
-  METADATA, DataTypeMap, DataType,
+  METADATA,
+  DataTypeMap,
+  DataType,
 } from '../';
 
 /**
@@ -1010,7 +1012,9 @@ export class Collection extends Database {
    *  });
    * ```
    */
-  async getPkFieldType(data: DescribeCollectionReq): Promise<keyof typeof DataType> {
+  async getPkFieldType(
+    data: DescribeCollectionReq
+  ): Promise<keyof typeof DataType> {
     // get collection info
     const collectionInfo = await this.describeCollection(data);
 

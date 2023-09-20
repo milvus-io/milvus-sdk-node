@@ -5,7 +5,7 @@ import {
   ConsistencyLevelEnum,
 } from '../../milvus';
 
-export const IP = '127.0.0.1:19530';
+export const IP = '10.102.7.19:19530';
 export const VECTOR_FIELD_NAME = 'vector';
 export const INDEX_NAME = 'index_name';
 export const DIMENSION = 4;
@@ -122,6 +122,21 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
         description: 'JSON field',
         data_type: DataType.JSON,
       },
+      {
+        name: 'int_array',
+        description: 'int array field',
+        data_type: DataType.Array,
+        element_type: DataType.Int16,
+        max_capacity: 128,
+      },
+      {
+        name: 'varChar_array',
+        description: 'varChar array field',
+        data_type: DataType.Array,
+        element_type: DataType.VarChar,
+        max_capacity: 128,
+        max_length: 128,
+      },
       ...fields,
     ],
     enable_dynamic_field: !!enableDynamic,
@@ -141,6 +156,62 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
  */
 export const GENERATE_NAME = (pre = 'collection') =>
   `${pre}_${Math.random().toString(36).substr(2, 8)}`;
+
+/**
+ * Generates a string based on the input flag.
+ * @param {boolean} random Whether to generate a random string or not.
+ * @returns {string} A string.
+ */
+export const genString = (index: number, random: boolean = false): string => {
+  if (!random) {
+    return Math.random().toString(36).substring(2, 7);
+  } else {
+    const fixedStrings = ['apple', 'banana', 'orange'];
+    return fixedStrings[
+      index > fixedStrings.length
+        ? Math.floor(Math.random() * fixedStrings.length)
+        : index
+    ];
+  }
+};
+
+export const genFloatVector = dim =>
+  [...Array(Number(dim))].map(() => Math.random());
+export const genInt = () => Math.floor(Math.random() * 100000);
+export const genBool = () => Math.random() < 0.5;
+export const genFloat = () => Math.random();
+export const genJSON = () => {
+  return Math.random() > 0.4
+    ? {
+        string: genString(4),
+        float: genFloat(),
+        number: genInt(),
+      }
+    : {};
+};
+export const genArray = () => {};
+export const genBinaryVector = (dim: number): number[] => {
+  const numBytes = Math.ceil(dim / 8);
+  const vector: number[] = [];
+  for (let i = 0; i < numBytes; i++) {
+    vector.push(Math.floor(Math.random() * 256));
+  }
+  return vector;
+};
+
+const dataGenMap = {
+  [DataType.Bool]: genBool,
+  [DataType.Float]: genFloat,
+  [DataType.Double]: genFloat,
+  [DataType.VarChar]: genString,
+  [DataType.JSON]: genJSON,
+  [DataType.Array]: genArray,
+  [DataType.Int16]: genInt,
+  [DataType.Int32]: genInt,
+  [DataType.Int64]: genInt,
+  [DataType.BinaryVector]: genBinaryVector,
+  [DataType.FloatVector]: genFloatVector,
+};
 
 /**
  * Generates random data for inserting into a collection
@@ -180,46 +251,19 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
 
       dim = f.data_type === DataType.BinaryVector ? (dim as number) / 8 : dim;
       value[name] = isVector // If the field is a vector field
-        ? [...Array(Number(dim))].map(() => Math.random()) // Generate an array of random numbers between 0 and 10 with length equal to the vector dimension
+        ? genFloatVector(dim) // Generate an array of random numbers between 0 and 10 with length equal to the vector dimension
         : isBool // If the field is a boolean field
-        ? count % 2 === 0 // Generate a random boolean value based on the current count
+        ? genBool()
         : isFloat
-        ? Math.random()
-        : isJson // If the field is a boolean field
-        ? Math.random() > 0.4
-          ? {
-              string: Math.random().toString(36).substring(2, 7),
-              float: 1 + Math.random(),
-              number: Math.floor(Math.random() * 100000),
-            }
-          : {} // Generate a random boolean value based on the current count
+        ? genFloat()
+        : isJson // If the field is a JSON field
+        ? genJSON() // Generate a random boolean value based on the current count
         : isVarChar // If the field is a varchar field
-        ? generateString(count, f.is_partition_key) // Generate a random string of characters
-        : Math.floor(Math.random() * 100000); // Otherwise, generate a random integer between 0 and 100000
+        ? genString(count, f.is_partition_key) // Generate a random string of characters
+        : genInt(); // Otherwise, generate a random integer between 0 and 100000
     });
     results.push(value); // Add the generated values for this data point to the results array
     count--; // Decrement the count to keep track of how many data points we've generated so far
   }
   return results; // Return the array of generated data
-};
-
-/**
- * Generates a string based on the input flag.
- * @param {boolean} random Whether to generate a random string or not.
- * @returns {string} A string.
- */
-export const generateString = (
-  index: number,
-  random: boolean = false
-): string => {
-  if (!random) {
-    return Math.random().toString(36).substring(2, 7);
-  } else {
-    const fixedStrings = ['apple', 'banana', 'orange'];
-    return fixedStrings[
-      index > fixedStrings.length
-        ? Math.floor(Math.random() * fixedStrings.length)
-        : index
-    ];
-  }
 };

@@ -211,12 +211,20 @@ describe('utils/format', () => {
 
   it('should return the corresponding DataType when given a valid string key in DataTypeMap', () => {
     expect(convertToDataType('Int32')).toEqual(DataType.Int32);
+    expect(convertToDataType('Int64')).toEqual(DataType.Int64);
+    expect(convertToDataType('FloatVector')).toEqual(DataType.FloatVector);
+    expect(convertToDataType('Bool')).toEqual(DataType.Bool);
+    expect(convertToDataType('Array')).toEqual(DataType.Array);
+    expect(convertToDataType('JSON')).toEqual(DataType.JSON);
   });
 
   it('should return the corresponding DataType when given a valid number value in DataType', () => {
     expect(convertToDataType(DataType.FloatVector)).toEqual(
       DataType.FloatVector
     );
+    expect(convertToDataType(DataType.Int32)).toEqual(DataType.Int32);
+    expect(convertToDataType(DataType.Array)).toEqual(DataType.Array);
+    expect(convertToDataType(DataType.JSON)).toEqual(DataType.JSON);
   });
 
   it('should throw an error when given an invalid key', () => {
@@ -248,6 +256,13 @@ describe('utils/format', () => {
           is_primary_key: false,
           description: 'Test VECTOR field',
           dim: 64,
+        },
+        {
+          name: 'arrayField',
+          data_type: DataType.Array,
+          description: 'Test Array field',
+          max_capacity: 64,
+          element_type: DataType.Int64,
         },
       ],
     };
@@ -293,6 +308,23 @@ describe('utils/format', () => {
           dataType: 101,
           isPrimaryKey: false,
           isPartitionKey: false,
+        },
+        {
+          typeParams: [
+            {
+              key: 'max_capacity',
+              value: '64',
+            },
+          ],
+          indexParams: [],
+          name: 'arrayField',
+          data_type: 22,
+          description: 'Test Array field',
+          element_type: 5,
+          dataType: 22,
+          isPrimaryKey: false,
+          isPartitionKey: false,
+          elementType: 5,
         },
       ],
     };

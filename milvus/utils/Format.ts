@@ -198,7 +198,7 @@ export const formatAddress = (address: string) => {
  */
 export const assignTypeParams = (
   field: FieldType,
-  typeParamKeys: string[] = ['dim', 'max_length']
+  typeParamKeys: string[] = ['dim', 'max_length', 'max_capacity']
 ) => {
   let newField = cloneObj<FieldType>(field);
   typeParamKeys.forEach(key => {
@@ -315,6 +315,7 @@ export const formatCollectionSchema = (
     fields: fields.map(field => {
       // Assign the typeParams property to the result of parseToKeyValue(type_params).
       const { type_params, ...rest } = assignTypeParams(field);
+      const dataType = convertToDataType(field.data_type);
       const createObj: any = {
         ...rest,
         typeParams: parseToKeyValue(type_params),
@@ -323,6 +324,14 @@ export const formatCollectionSchema = (
         isPartitionKey:
           !!field.is_partition_key || field.name === partition_key_field,
       };
+
+      // if element type exist and
+      if (
+        dataType === DataType.Array &&
+        typeof field.element_type !== 'undefined'
+      ) {
+        createObj.elementType = field.element_type;
+      }
 
       if (typeof field.default_value !== 'undefined') {
         const dataKey = getDataKey(createObj.dataType, true);
