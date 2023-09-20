@@ -13,7 +13,7 @@ const COLLECTION_NAME = 'bench_milvus';
   console.log('Node client is initialized.');
   const fields = [
     {
-      name: 'age',
+      name: 'id',
       description: 'ID field',
       data_type: DataType.Int64,
       is_primary_key: true,
@@ -25,9 +25,9 @@ const COLLECTION_NAME = 'bench_milvus';
       data_type: DataType.FloatVector,
       dim: 1024,
     },
-    { name: 'height', description: 'int64 field', data_type: DataType.Int64 },
+    { name: 'int64', description: 'int64 field', data_type: DataType.Int64 },
     {
-      name: 'name',
+      name: 'varChar',
       description: 'VarChar field',
       data_type: DataType.VarChar,
       max_length: 128,
@@ -71,7 +71,7 @@ const COLLECTION_NAME = 'bench_milvus';
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       vector: vectorsData[i]['vector'],
-      output_fields: ['age', 'height', 'name'],
+      output_fields: ['id', 'int64', 'varChar'],
       limit: 5,
     });
     console.timeEnd('Search time');

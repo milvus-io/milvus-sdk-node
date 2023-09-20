@@ -84,7 +84,7 @@ describe(`Upsert API`, () => {
           },
         },
         {
-          name: 'age',
+          name: 'id',
           data_type: DataType.Int64,
           is_primary_key: true,
           description: '',
@@ -184,7 +184,7 @@ describe(`Upsert API`, () => {
     const dataset = [
       {
         [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
-        age: 1,
+        id: 1,
         bool: false,
         int: 1,
         double: 1.12,
@@ -204,7 +204,7 @@ describe(`Upsert API`, () => {
     const dataset = [
       {
         [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
-        age: 1,
+        id: 1,
         bool: false,
         int: 1,
         double: 1.12,
@@ -242,7 +242,7 @@ describe(`Upsert API`, () => {
                 ],
               },
               {
-                name: 'age',
+                name: 'id',
                 data_type: 'Not exist',
                 type_params: [],
               },
@@ -256,7 +256,7 @@ describe(`Upsert API`, () => {
       const dataset = [
         {
           [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
-          age: 1,
+          id: 1,
         },
       ];
       const params: InsertReq = {
@@ -278,7 +278,7 @@ describe(`Upsert API`, () => {
   it(`Delete Data on float `, async () => {
     const res = await milvusClient.deleteEntities({
       collection_name: COLLECTION_NAME,
-      expr: 'age in [1,2]',
+      expr: 'id in [1,2]',
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -309,9 +309,10 @@ describe(`Upsert API`, () => {
     });
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
-      expr: 'age > 0',
-      output_fields: ['meta', 'age'],
+      expr: 'id > 0',
+      output_fields: ['json', 'id'],
     });
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Upsert data on float field expect missing field throw error`, async () => {
@@ -323,7 +324,7 @@ describe(`Upsert API`, () => {
       },
       {
         data_type: DataType.Int16,
-        name: 'age',
+        name: 'id',
       },
     ];
     const fieldsData = generateInsertData(fields, 10);
@@ -350,7 +351,7 @@ describe(`Upsert API`, () => {
       },
       {
         data_type: DataType.Int16,
-        name: 'age',
+        name: 'id',
       },
     ];
     const fieldsData = generateInsertData(fields, 10);
@@ -377,7 +378,7 @@ describe(`Upsert API`, () => {
       },
       {
         data_type: DataType.Int16,
-        name: 'age',
+        name: 'id',
       },
     ];
     const fieldsData = generateInsertData(fields, 10);

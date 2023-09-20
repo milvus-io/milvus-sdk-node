@@ -251,7 +251,7 @@ describe(`Data.API`, () => {
     const limit = 8;
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      filter: 'height < 10000',
+      filter: 'int64 < 10000',
       vector: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024 },
@@ -259,19 +259,19 @@ describe(`Data.API`, () => {
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     res.results.forEach(r => {
-      expect(Number(r.height)).toBeLessThan(10000);
+      expect(Number(r.int64)).toBeLessThan(10000);
     });
 
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      expr: 'height < 10000',
+      expr: 'int64 < 10000',
       vector: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024 },
     });
     expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
     res2.results.forEach(r => {
-      expect(Number(r.height)).toBeLessThan(10000);
+      expect(Number(r.int64)).toBeLessThan(10000);
     });
   });
 
@@ -279,7 +279,7 @@ describe(`Data.API`, () => {
     const limit = 8;
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      filter: 'height < 10000',
+      filter: 'int64 < 10000',
       vector: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024, radius: 20, range_filter: 15 },
@@ -287,43 +287,49 @@ describe(`Data.API`, () => {
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     res.results.forEach(r => {
-      expect(Number(r.height)).toBeLessThan(10000);
+      expect(Number(r.int64)).toBeLessThan(10000);
     });
   });
 
   it(`Exec simple search with outputFields should success`, async () => {
-    const res = await milvusClient.search({
+    const searchParams = {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       filter: '',
       vector: [1, 2, 3, 4],
       limit: 4,
-      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
-    });
+      output_fields: ['id', 'json', VECTOR_FIELD_NAME],
+    };
+    const res = await milvusClient.search(searchParams);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
       res.results.forEach(r => {
         expect(typeof r[VECTOR_FIELD_NAME] !== 'undefined').toEqual(true);
-        expect(Object.keys(r).length).toEqual(5); // id, score, age, meta, vector
+        expect(Object.keys(r).length).toEqual(
+          searchParams.output_fields.length + 1
+        ); // plus score
       })
     );
   });
 
   it(`Exec simple search with JSON filter should success`, async () => {
-    const res = await milvusClient.search({
+    const searchParams = {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
-      filter: 'meta["number"] >= 0',
+      filter: 'json["number"] >= 0',
       vector: [1, 2, 3, 4],
       limit: 4,
-      output_fields: ['age', 'meta'],
-    });
+      output_fields: ['id', 'json'],
+    };
+    const res = await milvusClient.search(searchParams);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
       res.results.forEach(r => {
-        expect(Object.keys(r).length).toEqual(4); // id, score, age, meta
+        expect(Object.keys(r).length).toEqual(
+          searchParams.output_fields.length + 1
+        );
       })
     );
   });
@@ -341,7 +347,7 @@ describe(`Data.API`, () => {
         params: JSON.stringify({ nprobe: 1024 }),
         round_decimal: 2,
       },
-      output_fields: ['age'],
+      output_fields: ['id'],
       vector_type: DataType.FloatVector,
     });
 
@@ -361,7 +367,7 @@ describe(`Data.API`, () => {
         params: JSON.stringify({ nprobe: 1024 }),
         round_decimal: -1,
       },
-      output_fields: ['age'],
+      output_fields: ['id'],
       vector_type: DataType.FloatVector,
     });
 
@@ -393,7 +399,7 @@ describe(`Data.API`, () => {
     try {
       await milvusClient.query({
         collection_name: COLLECTION_NAME,
-        output_fields: ['age', VECTOR_FIELD_NAME],
+        output_fields: ['id', VECTOR_FIELD_NAME],
         offset: 0,
         limit: 3,
       });
@@ -406,7 +412,7 @@ describe(`Data.API`, () => {
     try {
       await milvusClient.get({
         collection_name: COLLECTION_NAME,
-        output_fields: ['age', VECTOR_FIELD_NAME],
+        output_fields: ['id', VECTOR_FIELD_NAME],
       } as any);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.IDS_REQUIRED);
@@ -416,7 +422,7 @@ describe(`Data.API`, () => {
   it(`Get should success`, async () => {
     const get = await milvusClient.get({
       collection_name: COLLECTION_NAME,
-      output_fields: ['age', VECTOR_FIELD_NAME],
+      output_fields: ['id', VECTOR_FIELD_NAME],
       ids: ['1', '2', '3'],
     });
     expect(get.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -425,8 +431,8 @@ describe(`Data.API`, () => {
   it(`Query with data limit and offset`, async () => {
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
-      expr: 'age > 0',
-      output_fields: ['age', VECTOR_FIELD_NAME, 'default_value'],
+      expr: 'id > 0',
+      output_fields: ['id', VECTOR_FIELD_NAME, 'default_value'],
       offset: 0,
       limit: 3,
     });
@@ -448,11 +454,11 @@ describe(`Data.API`, () => {
   });
 
   it(`Query with data limit only`, async () => {
-    const expr = 'age > 0';
+    const expr = 'id > 0';
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: expr,
-      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
+      output_fields: ['id', 'json', VECTOR_FIELD_NAME],
       limit: 3,
     });
 
@@ -460,11 +466,11 @@ describe(`Data.API`, () => {
   });
 
   it(`Query JSON data with float filter`, async () => {
-    const expr = 'meta["float"] >= 1.0';
+    const expr = 'json["float"] >= 1.0';
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: expr,
-      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
+      output_fields: ['id', 'json', VECTOR_FIELD_NAME],
       offset: 0,
       limit: 3,
     });
@@ -472,11 +478,11 @@ describe(`Data.API`, () => {
   });
 
   it(`Query JSON data with number filter`, async () => {
-    const expr = 'meta["number"] >= 1.0';
+    const expr = 'json["number"] >= 1.0';
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: expr,
-      output_fields: ['age', 'meta', VECTOR_FIELD_NAME],
+      output_fields: ['id', 'json', VECTOR_FIELD_NAME],
       offset: 0,
       limit: 3,
     });
@@ -486,8 +492,8 @@ describe(`Data.API`, () => {
   it(`Query with data without limit and offset`, async () => {
     const res3 = await milvusClient.query({
       collection_name: COLLECTION_NAME,
-      expr: 'age > 0',
-      output_fields: ['age', VECTOR_FIELD_NAME],
+      expr: 'id > 0',
+      output_fields: ['id', VECTOR_FIELD_NAME],
     });
     expect(res3.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -495,13 +501,13 @@ describe(`Data.API`, () => {
   it(`Query with empty data`, async () => {
     await milvusClient.deleteEntities({
       collection_name: COLLECTION_NAME,
-      expr: 'age in [2,6]',
+      expr: 'id in [2,6]',
     });
 
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
-      expr: 'age in [2,4,6,8]',
-      output_fields: ['age', VECTOR_FIELD_NAME],
+      expr: 'id in [2,4,6,8]',
+      output_fields: ['id', VECTOR_FIELD_NAME],
       limit: 3,
       offset: 0,
     });

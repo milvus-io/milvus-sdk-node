@@ -51,7 +51,7 @@ describe('Collection Api', () => {
         collection_name: 'zxc',
         fields: [
           {
-            name: 'age',
+            name: 'id',
             description: '',
             data_type: DataType.Int64,
             is_primary_key: true,
@@ -76,7 +76,7 @@ describe('Collection Api', () => {
             data_type: 'FloatVector',
           },
           {
-            name: 'age',
+            name: 'id',
             description: '',
             data_type: DataType.Int64,
             is_primary_key: true,
@@ -147,7 +147,7 @@ describe('Collection Api', () => {
       COLLECTION_NAME_PARAMS.fields.length
     );
     expect(res.schema.fields[0].name).toEqual(VECTOR_FIELD_NAME);
-    expect(res.schema.fields[1].name).toEqual('age');
+    expect(res.schema.fields[1].name).toEqual('id');
   });
 
   it(`Load Collection`, async () => {

@@ -11,7 +11,7 @@ describe(`utils/test`, () => {
         dim: 10,
       },
       {
-        name: 'age',
+        name: 'id',
         description: '',
         data_type: DataType.Int64,
         is_primary_key: true,
@@ -32,7 +32,7 @@ describe(`utils/test`, () => {
         dim: 80,
       },
       {
-        name: 'age',
+        name: 'id',
         description: '',
         data_type: DataType.Int64,
         is_primary_key: true,
@@ -52,7 +52,7 @@ describe(`utils/test`, () => {
         data_type: DataType.Bool,
       },
       {
-        name: 'age',
+        name: 'id',
         description: '',
         data_type: DataType.Int64,
         is_primary_key: true,
@@ -73,7 +73,7 @@ describe(`utils/test`, () => {
         max_length: 10,
       },
       {
-        name: 'age',
+        name: 'id',
         description: '',
         data_type: DataType.Int64,
         is_primary_key: true,
@@ -94,7 +94,7 @@ describe(`utils/test`, () => {
         data_type: DataType.Int32,
       },
       {
-        name: 'age',
+        name: 'id',
         description: '',
         data_type: DataType.Int64,
         is_primary_key: true,
