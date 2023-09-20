@@ -84,7 +84,7 @@ describe(`Insert API`, () => {
           },
         },
         {
-          name: 'age',
+          name: 'id',
           data_type: DataType.Int64,
           is_primary_key: true,
           description: '',
@@ -183,7 +183,7 @@ describe(`Insert API`, () => {
     const dataset = [
       {
         [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
-        age: 1,
+        id: 1,
         bool: false,
         int: 1,
         double: 1.12,
@@ -203,7 +203,7 @@ describe(`Insert API`, () => {
     const dataset = [
       {
         [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
-        age: 1,
+        id: 1,
         bool: false,
         int: 1,
         double: 1.12,
@@ -241,7 +241,7 @@ describe(`Insert API`, () => {
                 ],
               },
               {
-                name: 'age',
+                name: 'id',
                 data_type: 'Not exist',
                 type_params: [],
               },
@@ -255,7 +255,7 @@ describe(`Insert API`, () => {
       const dataset = [
         {
           [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
-          age: 1,
+          id: 1,
         },
       ];
       const params: InsertReq = {
@@ -277,7 +277,7 @@ describe(`Insert API`, () => {
   it(`Delete Data on float `, async () => {
     const res = await milvusClient.deleteEntities({
       collection_name: COLLECTION_NAME,
-      expr: 'age in [1,2]',
+      expr: 'id in [1,2]',
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -308,9 +308,10 @@ describe(`Insert API`, () => {
     });
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
-      expr: 'age > 0',
-      output_fields: ['meta', 'age'],
+      expr: 'id > 0',
+      output_fields: ['json', 'id'],
     });
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Insert data on float field expect missing field throw error`, async () => {
@@ -322,7 +323,7 @@ describe(`Insert API`, () => {
       },
       {
         data_type: DataType.Int16,
-        name: 'age',
+        name: 'id',
       },
     ];
     const fieldsData = generateInsertData(fields, 10);
@@ -349,7 +350,7 @@ describe(`Insert API`, () => {
       },
       {
         data_type: DataType.Int16,
-        name: 'age',
+        name: 'id',
       },
     ];
     const fieldsData = generateInsertData(fields, 10);
@@ -376,7 +377,7 @@ describe(`Insert API`, () => {
       },
       {
         data_type: DataType.Int16,
-        name: 'age',
+        name: 'id',
       },
     ];
     const fieldsData = generateInsertData(fields, 10);

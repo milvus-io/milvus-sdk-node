@@ -83,16 +83,26 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
         dim: Number(dim),
       },
       {
-        name: 'age',
+        name: 'id',
         description: 'ID field',
         data_type: DataType.Int64,
         is_primary_key: true,
         autoID,
       },
       {
-        name: 'height',
+        name: 'int64',
         description: 'int64 field',
-        data_type: 'Int64', // test string type
+        data_type: 'Int64',
+      },
+      {
+        name: 'float',
+        description: 'Float field',
+        data_type: DataType.Float,
+      },
+      {
+        name: 'bool',
+        description: 'bool field',
+        data_type: DataType.Bool,
       },
       {
         name: 'default_value',
@@ -101,14 +111,14 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
         data_type: 'Int64', // test string type
       },
       {
-        name: 'name',
+        name: 'varChar',
         description: 'VarChar field',
         data_type: DataType.VarChar,
         max_length: 128,
         is_partition_key: partitionKeyEnabled,
       },
       {
-        name: 'meta',
+        name: 'json',
         description: 'JSON field',
         data_type: DataType.JSON,
       },
@@ -161,6 +171,7 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
       const isBool = data_type === DataType.Bool;
       const isVarChar = data_type === DataType.VarChar;
       const isJson = data_type === DataType.JSON;
+      const isFloat = data_type === DataType.Float;
       const isDefaultValue = typeof f.default_value !== 'undefined';
 
       if (isDefaultValue) {
@@ -172,6 +183,8 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
         ? [...Array(Number(dim))].map(() => Math.random()) // Generate an array of random numbers between 0 and 10 with length equal to the vector dimension
         : isBool // If the field is a boolean field
         ? count % 2 === 0 // Generate a random boolean value based on the current count
+        : isFloat
+        ? Math.random()
         : isJson // If the field is a boolean field
         ? Math.random() > 0.4
           ? {

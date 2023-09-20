@@ -95,11 +95,11 @@ describe(`Dynamic schema API`, () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION,
       limit: 10,
-      expr: 'age > 0',
+      expr: 'id > 0',
       output_fields: [
-        'meta',
+        'json',
         'vector',
-        'age',
+        'id',
         'dynamic_int64',
         'dynamic_varChar',
       ],
@@ -119,7 +119,7 @@ describe(`Dynamic schema API`, () => {
         [1, 2, 3, 4],
         [1, 2, 3, 4],
       ],
-      expr: 'age > 0',
+      expr: 'id > 0',
       output_fields: ['*'],
       consistency_level: ConsistencyLevelEnum.Session,
     });
@@ -133,8 +133,8 @@ describe(`Dynamic schema API`, () => {
       collection_name: COLLECTION,
       limit: 10,
       vector: [1, 2, 3, 4],
-      expr: 'age > 0',
-      output_fields: ['meta', 'age', 'dynamic_int64', 'dynamic_varChar'],
+      expr: 'id > 0',
+      output_fields: ['json', 'id', 'dynamic_int64', 'dynamic_varChar'],
     });
     expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search2.results.length).toEqual(10);

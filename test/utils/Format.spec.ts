@@ -337,7 +337,7 @@ describe('utils/format', () => {
           {
             type_params: [],
             index_params: [],
-            name: 'age',
+            name: 'id',
             is_primary_key: true,
             description: '',
             data_type: 'Int64',

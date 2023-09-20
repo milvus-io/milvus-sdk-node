@@ -84,7 +84,7 @@ describe(`Partition key API`, () => {
       numPartitions,
       fields: [
         {
-          name: 'name2',
+          name: 'varChar2',
           description: 'VarChar field',
           data_type: DataType.VarChar,
           max_length: 128,
@@ -125,7 +125,7 @@ describe(`Partition key API`, () => {
       partitionKeyEnabled: true,
     });
     // enable partition key
-    createCollectionParams.partition_key_field = 'name';
+    createCollectionParams.partition_key_field = 'varChar';
     const res = await milvusClient.createCollection(createCollectionParams);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -139,7 +139,7 @@ describe(`Partition key API`, () => {
       partitionKeyEnabled: false,
     });
     // enable partition key
-    createCollectionParams.partition_key_field = 'name';
+    createCollectionParams.partition_key_field = 'varChar';
     const res = await milvusClient.createCollection(createCollectionParams);
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
 
@@ -150,7 +150,7 @@ describe(`Partition key API`, () => {
 
     expect(
       describe.schema.fields.filter(
-        f => f.name === 'name' && f.is_partition_key
+        f => f.name === 'varChar' && f.is_partition_key
       ).length
     ).toEqual(1);
   });
@@ -181,19 +181,19 @@ describe(`Partition key API`, () => {
   it(`Query Collection should be successful`, async () => {
     const res = await milvusClient.query({
       collection_name: COLLECTION_DATA_NAME,
-      expr: 'name in ["apple"]',
-      output_fields: ['name'],
+      expr: 'varChar in ["apple"]',
+      output_fields: ['varChar'],
     });
 
-    expect(res.data.some(data => data.name === 'apple')).toEqual(true);
+    expect(res.data.some(data => data.varChar === 'apple')).toEqual(true);
   });
 
   it(`Query Collection with partition specified should get error`, async () => {
     const res = await milvusClient.query({
       collection_name: COLLECTION_DATA_NAME,
       partition_names: ['p'],
-      expr: 'name in ["apple"]',
-      output_fields: ['name'],
+      expr: 'varChar in ["apple"]',
+      output_fields: ['varChar'],
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
@@ -203,11 +203,11 @@ describe(`Partition key API`, () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_DATA_NAME,
       vector: [1, 2, 3, 4],
-      expr: 'name in ["apple"]',
-      output_fields: ['name'],
+      expr: 'varChar in ["apple"]',
+      output_fields: ['varChar'],
     });
 
-    expect(res.results.some(data => data.name === 'apple')).toEqual(true);
+    expect(res.results.some(data => data.varChar === 'apple')).toEqual(true);
   });
 
   it(`Search Collection with partition specified should get error`, async () => {
@@ -215,8 +215,8 @@ describe(`Partition key API`, () => {
       collection_name: COLLECTION_DATA_NAME,
       partition_names: ['p'],
       vector: [1, 2, 3, 4],
-      expr: 'name in ["apple"]',
-      output_fields: ['name'],
+      expr: 'varChar in ["apple"]',
+      output_fields: ['varChar'],
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);

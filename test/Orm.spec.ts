@@ -165,8 +165,8 @@ describe(`ORM Client API`, () => {
 
     // query
     const queryRes = await collection.query({
-      filter: 'height > 0',
-      output_fields: ['height', 'age'],
+      filter: 'int64 > 0',
+      output_fields: ['int64', 'id'],
       limit: 2,
     });
 
@@ -176,7 +176,7 @@ describe(`ORM Client API`, () => {
     // get
     const getRes = await collection.get({
       ids: [1, 2, 3],
-      output_fields: ['height', 'age'],
+      output_fields: ['int64', 'id'],
       limit: 2,
     });
 

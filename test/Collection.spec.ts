@@ -54,7 +54,7 @@ describe(`Collection API`, () => {
     const res = await milvusClient.getPkFieldName({
       collection_name: COLLECTION_NAME,
     });
-    expect(res).toEqual('age');
+    expect(res).toEqual('id');
   });
 
   it(`Create Collection with number dim Successful`, async () => {
@@ -101,7 +101,7 @@ describe(`Collection API`, () => {
         collection_name: 'zxc',
         fields: [
           {
-            name: 'age',
+            name: 'id',
             description: '',
             data_type: DataType.Int64,
             is_primary_key: true,
@@ -126,7 +126,7 @@ describe(`Collection API`, () => {
             data_type: DataType.FloatVector,
           },
           {
-            name: 'age',
+            name: 'id',
             description: '',
             data_type: DataType.Int64,
             is_primary_key: true,
@@ -164,7 +164,7 @@ describe(`Collection API`, () => {
             },
           },
           {
-            name: 'age',
+            name: 'id',
             description: '',
             data_type: DataType.Int64,
             is_primary_key: true,
@@ -334,7 +334,7 @@ describe(`Collection API`, () => {
       expect(typeof f.data_type).toEqual('string');
     });
     expect(res.schema.fields[0].name).toEqual(VECTOR_FIELD_NAME);
-    expect(res.schema.fields[1].name).toEqual('age');
+    expect(res.schema.fields[1].name).toEqual('id');
   });
 
   it(`Load Collection Sync throw COLLECTION_NAME_IS_REQUIRED`, async () => {
