@@ -20,13 +20,13 @@ export const dynamicFields = [
   },
   {
     name: 'dynamic_varChar',
-    description: 'VarChar field',
+    description: 'dynamic VarChar field',
     data_type: DataType.VarChar,
     max_length: 128,
   },
   {
     name: 'dynamic_JSON',
-    description: 'JSON field',
+    description: 'dynamic JSON field',
     data_type: DataType.JSON,
   },
 ];
@@ -157,61 +157,85 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
 export const GENERATE_NAME = (pre = 'collection') =>
   `${pre}_${Math.random().toString(36).substr(2, 8)}`;
 
+interface genDataParams {
+  dim?: number;
+  len?: number;
+  random?: boolean;
+  element_type?: DataType;
+  max_capacity?: number;
+}
 /**
  * Generates a string based on the input flag.
  * @param {boolean} random Whether to generate a random string or not.
  * @returns {string} A string.
  */
-export const genString = (index: number, random: boolean = false): string => {
+function genString({ len = 0, random = false }: genDataParams): string {
   if (!random) {
-    return Math.random().toString(36).substring(2, 7);
+    return Math.random().toString(36).substring(2, 7) + '';
   } else {
     const fixedStrings = ['apple', 'banana', 'orange'];
     return fixedStrings[
-      index > fixedStrings.length
+      len > fixedStrings.length
         ? Math.floor(Math.random() * fixedStrings.length)
-        : index
+        : len
     ];
   }
-};
+}
 
-export const genFloatVector = dim =>
-  [...Array(Number(dim))].map(() => Math.random());
-export const genInt = () => Math.floor(Math.random() * 100000);
-export const genBool = () => Math.random() < 0.5;
-export const genFloat = () => Math.random();
-export const genJSON = () => {
+function genFloatVector({ dim }: genDataParams) {
+  return [...Array(Number(dim))].map(() => Math.random());
+}
+function genInt() {
+  return Math.floor(Math.random() * 100000);
+}
+function genBool() {
+  return Math.random() < 0.5;
+}
+function genFloat() {
+  return Math.random();
+}
+function genJSON() {
   return Math.random() > 0.4
     ? {
-        string: genString(4),
+        string: genString({ len: 4 }),
         float: genFloat(),
         number: genInt(),
       }
     : {};
-};
-export const genArray = () => {};
-export const genBinaryVector = (dim: number): number[] => {
-  const numBytes = Math.ceil(dim / 8);
+}
+
+function genBinaryVector({ dim }: genDataParams): number[] {
+  const numBytes = Math.ceil(dim! / 8);
   const vector: number[] = [];
   for (let i = 0; i < numBytes; i++) {
     vector.push(Math.floor(Math.random() * 256));
   }
   return vector;
-};
+}
 
 const dataGenMap = {
+  [DataType.None]: () => {},
+  [DataType.String]: () => {},
   [DataType.Bool]: genBool,
   [DataType.Float]: genFloat,
   [DataType.Double]: genFloat,
   [DataType.VarChar]: genString,
   [DataType.JSON]: genJSON,
   [DataType.Array]: genArray,
+  [DataType.Int8]: genInt,
   [DataType.Int16]: genInt,
   [DataType.Int32]: genInt,
   [DataType.Int64]: genInt,
   [DataType.BinaryVector]: genBinaryVector,
   [DataType.FloatVector]: genFloatVector,
 };
+
+function genArray(params: genDataParams): any[] {
+  const { element_type, max_capacity = 0 } = params;
+  return Array.from({ length: max_capacity! }, () => {
+    return dataGenMap[element_type!](params);
+  });
+}
 
 /**
  * Generates random data for inserting into a collection
@@ -220,50 +244,36 @@ const dataGenMap = {
  * @returns An array of objects representing the generated data
  */
 export const generateInsertData = (fields: FieldType[], count: number = 10) => {
-  const results: any = []; // Initialize an empty array to store the generated data
+  const rows: any[] = []; // Initialize an empty array to store the generated data
   while (count > 0) {
     // Loop until we've generated the desired number of data points
-    let value: any = {}; // Initialize an empty object to store the generated values for this data point
+    const value: any = {}; // Initialize an empty object to store the generated values for this data point
 
-    fields.forEach(f => {
-      // bypass autoID &  default value
-      if (f.autoID || typeof f.default_value !== 'undefined') {
-        return;
+    for (const field of fields) {
+      // Skip autoID and fields with default values
+      if (field.autoID || typeof field.default_value !== 'undefined') {
+        continue;
       }
 
-      // convert to data type
-      const data_type = convertToDataType(f.data_type);
-      // Loop through each field we need to generate data for
-      const { name } = f; // Destructure the field object to get its properties
-      const isVector =
-        data_type === DataType.BinaryVector ||
-        data_type === DataType.FloatVector;
-      let dim = f.dim || (f.type_params && f.type_params.dim);
-      const isBool = data_type === DataType.Bool;
-      const isVarChar = data_type === DataType.VarChar;
-      const isJson = data_type === DataType.JSON;
-      const isFloat = data_type === DataType.Float;
-      const isDefaultValue = typeof f.default_value !== 'undefined';
+      // get data type
+      const data_type = convertToDataType(field.data_type);
 
-      if (isDefaultValue) {
-        return;
+      // Skip fields with default values
+      if (typeof field.default_value !== 'undefined') {
+        continue;
       }
 
-      dim = f.data_type === DataType.BinaryVector ? (dim as number) / 8 : dim;
-      value[name] = isVector // If the field is a vector field
-        ? genFloatVector(dim) // Generate an array of random numbers between 0 and 10 with length equal to the vector dimension
-        : isBool // If the field is a boolean field
-        ? genBool()
-        : isFloat
-        ? genFloat()
-        : isJson // If the field is a JSON field
-        ? genJSON() // Generate a random boolean value based on the current count
-        : isVarChar // If the field is a varchar field
-        ? genString(count, f.is_partition_key) // Generate a random string of characters
-        : genInt(); // Otherwise, generate a random integer between 0 and 100000
-    });
-    results.push(value); // Add the generated values for this data point to the results array
+      // Generate data
+      value[field.name] = dataGenMap[data_type]({
+        dim: Number(field.dim || (field.type_params && field.type_params.dim)),
+        len: count,
+        random: field.is_partition_key,
+        element_type: field.element_type && convertToDataType(field.element_type) || DataType.None,
+        max_capacity: Number(field.max_capacity || (field.type_params && field.type_params.max_capacity)),
+      });
+    }
+    rows.push(value); // Add the generated values for this data point to the results array
     count--; // Decrement the count to keep track of how many data points we've generated so far
   }
-  return results; // Return the array of generated data
+  return rows; // Return the array of generated data
 };

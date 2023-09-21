@@ -59,6 +59,7 @@ export interface FieldType {
   };
   autoID?: boolean;
   dim?: TypeParam;
+  max_capacity?: TypeParam;
   max_length?: TypeParam;
   default_value?: number | string;
 }

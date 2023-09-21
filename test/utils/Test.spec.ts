@@ -1,7 +1,18 @@
-import { generateInsertData } from '../tools';
+import { generateInsertData, genCollectionParams } from '../tools';
 import { DataType } from '../../milvus';
 
 describe(`utils/test`, () => {
+  it('should generate data for schema created by genCollectionParams', () => {
+    const param = genCollectionParams({
+      collectionName: 't',
+      dim: 10,
+    });
+    const data = generateInsertData(param.fields, 10);
+    console.log('data', data)
+    expect(data.length).toBe(10);
+    expect(data[0].vector.length).toBe(10);
+  });
+
   it('should generate data for a collection with a vector field of type DataType.FloatVector', () => {
     const fields = [
       {
