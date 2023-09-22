@@ -5,13 +5,15 @@ import {
   ConsistencyLevelEnum,
 } from '../../milvus';
 
-export const IP = '127.0.0.1:19530';
+export const IP = '10.102.7.19:19530';
 export const VECTOR_FIELD_NAME = 'vector';
 export const INDEX_NAME = 'index_name';
 export const DIMENSION = 4;
 export const INDEX_FILE_SIZE = 1024;
 export const PARTITION_TAG = 'random';
 export const DEFAULT_VALUE = '100';
+export const MAX_LENGTH = 4;
+export const MAX_CAPACITY = 4;
 export const dynamicFields = [
   {
     name: 'dynamic_int64',
@@ -22,7 +24,7 @@ export const dynamicFields = [
     name: 'dynamic_varChar',
     description: 'dynamic VarChar field',
     data_type: DataType.VarChar,
-    max_length: 128,
+    max_length: MAX_LENGTH,
   },
   {
     name: 'dynamic_JSON',
@@ -31,25 +33,6 @@ export const dynamicFields = [
   },
 ];
 
-export const timeoutTest = (func: Function, args?: { [x: string]: any }) => {
-  return async () => {
-    try {
-      await func({ ...(args || {}), timeout: 1 });
-    } catch (error) {
-      expect(error.toString()).toContain('DEADLINE_EXCEEDED');
-    }
-  };
-};
-
-/**
- * Generates collection parameters with default fields for a given collection name, dimension, vector type, and optional fields array.
- * @param {string} collectionName Name of the collection
- * @param {string | number} dim Dimension of the vector field
- * @param {DataType.FloatVector | DataType.BinaryVector} vectorType Type of vector field
- * @param {boolean} [autoID=true] Whether to automatically generate IDs
- * @param {any[]} [fields=[]] Optional array of additional fields
- * @returns {{ collection_name: string, fields: any[] }} Object containing the collection name and a fields array
- */
 type generateCollectionParameters = {
   collectionName: string;
   dim: number | string;
@@ -59,7 +42,17 @@ type generateCollectionParameters = {
   partitionKeyEnabled?: boolean;
   numPartitions?: number;
   enableDynamic?: boolean;
+  maxCapacity?: number;
 };
+/**
+ * Generates collection parameters with default fields for a given collection name, dimension, vector type, and optional fields array.
+ * @param {string} collectionName Name of the collection
+ * @param {string | number} dim Dimension of the vector field
+ * @param {DataType.FloatVector | DataType.BinaryVector} vectorType Type of vector field
+ * @param {boolean} [autoID=true] Whether to automatically generate IDs
+ * @param {any[]} [fields=[]] Optional array of additional fields
+ * @returns {{ collection_name: string, fields: any[] }} Object containing the collection name and a fields array
+ */
 export const genCollectionParams = (data: generateCollectionParameters) => {
   const {
     collectionName,
@@ -70,6 +63,7 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
     partitionKeyEnabled,
     numPartitions,
     enableDynamic = false,
+    maxCapacity,
   } = data;
 
   const params: any = {
@@ -114,7 +108,7 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
         name: 'varChar',
         description: 'VarChar field',
         data_type: DataType.VarChar,
-        max_length: 128,
+        max_length: MAX_LENGTH,
         is_partition_key: partitionKeyEnabled,
       },
       {
@@ -127,16 +121,23 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
         description: 'int array field',
         data_type: DataType.Array,
         element_type: DataType.Int16,
-        max_capacity: 128,
+        max_capacity: maxCapacity || MAX_CAPACITY,
       },
-      {
-        name: 'varChar_array',
-        description: 'varChar array field',
-        data_type: DataType.Array,
-        element_type: DataType.VarChar,
-        max_capacity: 128,
-        max_length: 128,
-      },
+      // {
+      //   name: 'float_array',
+      //   description: 'int array field',
+      //   data_type: DataType.Array,
+      //   element_type: DataType.Float,
+      //   max_capacity: maxCapacity || MAX_CAPACITY,
+      // },
+      // {
+      //   name: 'varChar_array',
+      //   description: 'varChar array field',
+      //   data_type: DataType.Array,
+      //   element_type: DataType.VarChar,
+      //   max_capacity: maxCapacity || MAX_CAPACITY,
+      //   max_length: MAX_LENGTH,
+      // },
       ...fields,
     ],
     enable_dynamic_field: !!enableDynamic,
@@ -213,7 +214,7 @@ function genBinaryVector({ dim }: genDataParams): number[] {
   return vector;
 }
 
-const dataGenMap = {
+export const dataGenMap = {
   [DataType.None]: () => {},
   [DataType.String]: () => {},
   [DataType.Bool]: genBool,
@@ -245,8 +246,9 @@ function genArray(params: genDataParams): any[] {
  */
 export const generateInsertData = (fields: FieldType[], count: number = 10) => {
   const rows: any[] = []; // Initialize an empty array to store the generated data
+
+  // Loop until we've generated the desired number of data points
   while (count > 0) {
-    // Loop until we've generated the desired number of data points
     const value: any = {}; // Initialize an empty object to store the generated values for this data point
 
     for (const field of fields) {
@@ -263,17 +265,35 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
         continue;
       }
 
-      // Generate data
-      value[field.name] = dataGenMap[data_type]({
+      // Parameters used to generate all types of data
+      const genDataParams = {
         dim: Number(field.dim || (field.type_params && field.type_params.dim)),
         len: count,
         random: field.is_partition_key,
-        element_type: field.element_type && convertToDataType(field.element_type) || DataType.None,
-        max_capacity: Number(field.max_capacity || (field.type_params && field.type_params.max_capacity)),
-      });
+        element_type:
+          (field.element_type && convertToDataType(field.element_type)) ||
+          DataType.None,
+        max_capacity: Number(
+          field.max_capacity ||
+            (field.type_params && field.type_params.max_capacity)
+        ),
+      };
+
+      // Generate data
+      value[field.name] = dataGenMap[data_type](genDataParams);
     }
     rows.push(value); // Add the generated values for this data point to the results array
     count--; // Decrement the count to keep track of how many data points we've generated so far
   }
   return rows; // Return the array of generated data
+};
+
+export const timeoutTest = (func: Function, args?: { [x: string]: any }) => {
+  return async () => {
+    try {
+      await func({ ...(args || {}), timeout: 1 });
+    } catch (error) {
+      expect(error.toString()).toContain('DEADLINE_EXCEEDED');
+    }
+  };
 };

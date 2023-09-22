@@ -11,6 +11,7 @@ export interface FieldSchema {
   name: string;
   description: string;
   data_type: keyof typeof DataType;
+  element_type?: keyof typeof DataType;
   dataType?: DataType;
   is_primary_key?: boolean;
   is_partition_key?: boolean;

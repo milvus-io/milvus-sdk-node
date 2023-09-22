@@ -23,6 +23,8 @@ import {
   formatDescribedCol,
   generateDynamicRow,
   getAuthString,
+  buildFieldData,
+  FieldData,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -465,5 +467,34 @@ describe('utils/format', () => {
       password: 'mypassword',
     });
     expect(authString).toEqual('bXl1c2VybmFtZTpteXBhc3N3b3Jk');
+  });
+
+  it('should return the value of the field for BinaryVector and FloatVector types', () => {
+    const row = { name: 'John', vector: [1, 2, 3] };
+    const field = { type: 'BinaryVector', name: 'vector' };
+    expect(buildFieldData(row, field as FieldData)).toEqual([1, 2, 3]);
+
+    field.type = 'FloatVector';
+    expect(buildFieldData(row, field as FieldData)).toEqual([1, 2, 3]);
+  });
+
+  it('should return the JSON stringified value of the field for JSON type', () => {
+    const row = { name: 'John', data: { age: 25, city: 'New York' } };
+    const field = { type: 'JSON', name: 'data' };
+    expect(
+      JSON.parse(buildFieldData(row, field as FieldData).toString())
+    ).toEqual({ age: 25, city: 'New York' });
+  });
+
+  it('should recursively call buildFieldData for Array type', () => {
+    const row = { name: 'John', array: [1, 2, 3] };
+    const field = { type: 'Array', elementType: 'Int', name: 'array' };
+    expect(buildFieldData(row, field as FieldData)).toEqual([1, 2, 3]);
+  });
+
+  it('should return the value of the field for other types', () => {
+    const row = { name: 'John', age: 25 };
+    const field = { type: 'Int', name: 'age' };
+    expect(buildFieldData(row, field as FieldData)).toEqual(25);
   });
 });

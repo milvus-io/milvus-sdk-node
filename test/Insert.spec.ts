@@ -13,7 +13,7 @@ import {
   GENERATE_NAME,
 } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION_NAME = GENERATE_NAME();
 const BINARY_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
@@ -176,6 +176,7 @@ describe(`Insert API`, () => {
     };
 
     const res = await milvusClient.insert(params);
+    console.log('xxx', res)
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

@@ -15,11 +15,13 @@ import {
 export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
 }
+
 export interface FieldData {
-  type: DataType;
-  field_name: string;
+  name: string;
+  type: keyof typeof DataType;
+  elementType?: keyof typeof DataType;
   dim?: number;
-  data: Number[];
+  data: any[];
 }
 
 export interface InsertReq extends GrpcTimeOut {

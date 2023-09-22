@@ -9,6 +9,7 @@ import {
   CreateCollectionReq,
   DescribeCollectionResponse,
   getDataKey,
+  FieldData,
 } from '../';
 
 /**
@@ -483,4 +484,27 @@ export const getAuthString = (data: {
   // if we need to create auth interceptors
   const needAuth = (!!username && !!password) || !!token;
   return needAuth ? auth : '';
+};
+
+/**
+ * Builds field data based on the provided parameters.
+ * @param {any} row - The row object containing the data.
+ * @param {FieldData} field - The field object containing information about the column.
+ * @returns {any} - The built column data.
+ * @throws {Error} - If the data type is unsupported.
+ */
+export const buildFieldData = (row: any, field: FieldData): any => {
+  const { type, elementType, name } = field;
+  switch (DataTypeMap[type]) {
+    case DataType.BinaryVector:
+    case DataType.FloatVector:
+      return row[name];
+    case DataType.JSON:
+      return Buffer.from(JSON.stringify(row[name] || {}));
+    case DataType.Array:
+      const elementField = { ...field, type: elementType! };
+      return buildFieldData(row, elementField);
+    default:
+      return row[name];
+  }
 };

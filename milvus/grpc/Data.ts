@@ -51,6 +51,8 @@ import {
   getFieldDataMap,
   ConsistencyLevelEnum,
   getDataKey,
+  FieldData,
+  buildFieldData,
 } from '../';
 import { Collection } from './Collection';
 
@@ -130,22 +132,20 @@ export class Data extends Collection {
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
-    const fieldsDataMap = new Map(
+    const fieldsDataMap = new Map<string, FieldData>(
       collectionInfo.schema.fields
         .filter(v => !v.is_primary_key || !v.autoID)
         .map(v => [
           v.name,
           {
             name: v.name,
-            type: v.data_type,
+            type: v.data_type, // milvus return string here
+            elementType: v.element_type,
             dim: Number(findKeyValue(v.type_params, 'dim')),
-            value: [], // value container
-          } as any,
+            data: [], // values container
+          },
         ])
     );
-
-    // The actual data we pass to Milvus gRPC.
-    const params: any = { ...data, num_rows: data.fields_data.length };
 
     // dynamic field is enabled, create $meta field
     const isDynamic = collectionInfo.schema.enable_dynamic_field;
@@ -153,50 +153,66 @@ export class Data extends Collection {
       fieldsDataMap.set(DEFAULT_DYNAMIC_FIELD, {
         name: DEFAULT_DYNAMIC_FIELD,
         type: 'JSON',
-        value: [], // value container
+        data: [], // value container
       });
     }
 
     // Loop through each row and set the corresponding field values in the Map.
-    data.fields_data.forEach((v, i) => {
+    data.fields_data.forEach((row, rowIndex) => {
       // if support dynamic field, all field not in the schema would be grouped to a dynamic field
-      v = isDynamic
-        ? generateDynamicRow(v, fieldsDataMap, DEFAULT_DYNAMIC_FIELD)
-        : v;
+      row = isDynamic
+        ? generateDynamicRow(row, fieldsDataMap, DEFAULT_DYNAMIC_FIELD)
+        : row;
 
-      // get each fieldname in the data object
-      const fieldNames = Object.keys(v);
+      // get each fieldname from the row object
+      const fieldNames = Object.keys(row);
       // go through each fieldname and encode or format data
       fieldNames.forEach(name => {
-        const target = fieldsDataMap.get(name);
-        if (!target) {
-          throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
+        const field = fieldsDataMap.get(name);
+        if (!field) {
+          throw new Error(
+            `${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${rowIndex}`
+          );
         }
         if (
-          DataTypeMap[target.type] === DataType.BinaryVector &&
-          v[name].length !== target.dim / 8
+          DataTypeMap[field.type] === DataType.BinaryVector &&
+          row[name].length !== field.dim! / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
-        // encode data
-        switch (DataTypeMap[target.type]) {
+        // build field data
+        switch (DataTypeMap[field.type]) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
-            for (let val of v[name]) {
-              target.value.push(val);
-            }
-            break;
-          case DataType.JSON:
-            // ensure empty string
-            target.value[i] = Buffer.from(JSON.stringify(v[name] || {}));
+            field.data = field.data.concat(buildFieldData(row, field));
             break;
           default:
-            target.value[i] = v[name];
+            field.data[rowIndex] = buildFieldData(row, field);
             break;
         }
+
+        // encode data
+        // switch (DataTypeMap[field.type]) {
+        //   case DataType.BinaryVector:
+        //   case DataType.FloatVector:
+        //     for (let val of row[name]) {
+        //       field.data.push(val);
+        //     }
+        //     break;
+        //   case DataType.JSON:
+        //     // ensure empty string
+        //     field.data[rowIndex] = Buffer.from(JSON.stringify(row[name] || {}));
+        //     break;
+        //   default:
+        //     field.data[rowIndex] = row[name];
+        //     break;
+        // }
       });
     });
+
+    // The actual data we pass to Milvus gRPC.
+    const params: any = { ...data, num_rows: data.fields_data.length };
 
     // transform data from map to array, milvus grpc params
     params.fields_data = Array.from(fieldsDataMap.values()).map(v => {
@@ -215,17 +231,17 @@ export class Data extends Collection {
             ? {
                 dim: v.dim,
                 [dataKey]: {
-                  data: v.value,
+                  data: v.data,
                 },
               }
             : type === DataType.BinaryVector
             ? {
                 dim: v.dim,
-                [dataKey]: parseBinaryVectorToBytes(v.value),
+                [dataKey]: parseBinaryVectorToBytes(v.data),
               }
             : {
                 [dataKey]: {
-                  data: v.value,
+                  data: v.data,
                 },
               },
       };

@@ -111,9 +111,13 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.VarChar:
       dataKey = 'string_data';
       break;
+    case DataType.Array:
+      dataKey = 'array_data';
+      break;
     case DataType.JSON:
       dataKey = 'json_data';
       break;
+
     default:
       throw new Error(
         `${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE} "${type}."`
