@@ -147,6 +147,7 @@ export class Data extends Collection {
         ])
     );
 
+    console.log('xx', collectionInfo.schema.fields)
     // dynamic field is enabled, create $meta field
     const isDynamic = collectionInfo.schema.enable_dynamic_field;
     if (isDynamic) {
@@ -220,7 +221,7 @@ export class Data extends Collection {
       // but if milvus change the string, may cause we cant find value.
       const type = DataTypeMap[v.type];
       const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
-      let dataKey = getDataKey(type);
+      const dataKey = getDataKey(type);
 
       return {
         type,
@@ -242,6 +243,7 @@ export class Data extends Collection {
             : {
                 [dataKey]: {
                   data: v.data,
+                  element_type: v.elementType,
                 },
               },
       };
