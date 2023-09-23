@@ -312,6 +312,7 @@ describe(`Insert API`, () => {
       expr: 'id > 0',
       output_fields: ['json', 'id'],
     });
+    console.log(query);
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

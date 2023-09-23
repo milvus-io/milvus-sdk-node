@@ -5,14 +5,14 @@ import {
   ConsistencyLevelEnum,
 } from '../../milvus';
 
-export const IP = '10.102.7.19:19530';
+export const IP = '127.0.0.1:19530';
 export const VECTOR_FIELD_NAME = 'vector';
 export const INDEX_NAME = 'index_name';
 export const DIMENSION = 4;
 export const INDEX_FILE_SIZE = 1024;
 export const PARTITION_TAG = 'random';
 export const DEFAULT_VALUE = '100';
-export const MAX_LENGTH = 4;
+export const MAX_LENGTH = 8;
 export const MAX_CAPACITY = 4;
 export const dynamicFields = [
   {
@@ -123,21 +123,21 @@ export const genCollectionParams = (data: generateCollectionParameters) => {
         element_type: DataType.Int16,
         max_capacity: maxCapacity || MAX_CAPACITY,
       },
-      // {
-      //   name: 'float_array',
-      //   description: 'int array field',
-      //   data_type: DataType.Array,
-      //   element_type: DataType.Float,
-      //   max_capacity: maxCapacity || MAX_CAPACITY,
-      // },
-      // {
-      //   name: 'varChar_array',
-      //   description: 'varChar array field',
-      //   data_type: DataType.Array,
-      //   element_type: DataType.VarChar,
-      //   max_capacity: maxCapacity || MAX_CAPACITY,
-      //   max_length: MAX_LENGTH,
-      // },
+      {
+        name: 'float_array',
+        description: 'int array field',
+        data_type: DataType.Array,
+        element_type: DataType.Float,
+        max_capacity: maxCapacity || MAX_CAPACITY,
+      },
+      {
+        name: 'varChar_array',
+        description: 'varChar array field',
+        data_type: DataType.Array,
+        element_type: DataType.VarChar,
+        max_capacity: maxCapacity || MAX_CAPACITY,
+        max_length: MAX_LENGTH,
+      },
       ...fields,
     ],
     enable_dynamic_field: !!enableDynamic,
@@ -160,25 +160,36 @@ export const GENERATE_NAME = (pre = 'collection') =>
 
 interface genDataParams {
   dim?: number;
-  len?: number;
-  random?: boolean;
+  fixedString?: boolean;
   element_type?: DataType;
+  max_length?: number;
   max_capacity?: number;
+  is_partition_key?: boolean;
+  index?: number;
 }
-/**
- * Generates a string based on the input flag.
- * @param {boolean} random Whether to generate a random string or not.
- * @returns {string} A string.
- */
-function genString({ len = 0, random = false }: genDataParams): string {
-  if (!random) {
-    return Math.random().toString(36).substring(2, 7) + '';
+
+function genString({
+  max_length = MAX_LENGTH,
+  is_partition_key = false,
+  index,
+}: genDataParams): string {
+  if (!is_partition_key) {
+    let result = '';
+    const characters =
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const variableLength = Math.ceil(Math.random() * max_length);
+    for (let i = 0; i < variableLength; i++) {
+      result += characters.charAt(
+        Math.floor(Math.random() * characters.length)
+      );
+    }
+    return result;
   } else {
     const fixedStrings = ['apple', 'banana', 'orange'];
     return fixedStrings[
-      len > fixedStrings.length
+      index! >= fixedStrings.length
         ? Math.floor(Math.random() * fixedStrings.length)
-        : len
+        : index!
     ];
   }
 }
@@ -198,7 +209,7 @@ function genFloat() {
 function genJSON() {
   return Math.random() > 0.4
     ? {
-        string: genString({ len: 4 }),
+        string: genString({ max_length: 4 }),
         float: genFloat(),
         number: genInt(),
       }
@@ -268,15 +279,19 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
       // Parameters used to generate all types of data
       const genDataParams = {
         dim: Number(field.dim || (field.type_params && field.type_params.dim)),
-        len: count,
-        random: field.is_partition_key,
         element_type:
           (field.element_type && convertToDataType(field.element_type)) ||
           DataType.None,
+        max_length: Number(
+          field.max_length ||
+            (field.type_params && field.type_params.max_length)
+        ),
         max_capacity: Number(
           field.max_capacity ||
             (field.type_params && field.type_params.max_capacity)
         ),
+        index: count,
+        is_partition_key: field.is_partition_key,
       };
 
       // Generate data

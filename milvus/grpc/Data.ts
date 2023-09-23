@@ -147,7 +147,6 @@ export class Data extends Collection {
         ])
     );
 
-    console.log('xx', collectionInfo.schema.fields)
     // dynamic field is enabled, create $meta field
     const isDynamic = collectionInfo.schema.enable_dynamic_field;
     if (isDynamic) {
@@ -240,10 +239,16 @@ export class Data extends Collection {
                 dim: v.dim,
                 [dataKey]: parseBinaryVectorToBytes(v.data),
               }
+            : type === DataType.Array
+            ? {
+                [dataKey]: {
+                  data: v.data,
+                  element_type: DataType.Int16, // TODO: fix this after milvus fix describe collection
+                },
+              }
             : {
                 [dataKey]: {
                   data: v.data,
-                  element_type: v.elementType,
                 },
               },
       };
@@ -382,7 +387,7 @@ export class Data extends Collection {
    * @returns
    * | Property | Description |
    *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
+   *  | status | { error_code: number, reason: string } |∂
    *  | results | {score:number,id:string}[]; |
    *
    * #### Example

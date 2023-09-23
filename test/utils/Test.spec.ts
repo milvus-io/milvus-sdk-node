@@ -8,7 +8,6 @@ describe(`utils/test`, () => {
       dim: 10,
     });
     const data = generateInsertData(param.fields, 10);
-    console.log('data', data)
     expect(data.length).toBe(10);
     expect(data[0].vector.length).toBe(10);
   });
@@ -76,25 +75,34 @@ describe(`utils/test`, () => {
   });
 
   it('should generate data for a collection with a non-vector field of type DataType.VarChar', () => {
+    const max_length = 10;
     const fields = [
       {
         name: 'varchar_field',
         description: 'varchar field',
         data_type: DataType.VarChar,
-        max_length: 10,
+        max_length: max_length,
+        is_partition_key: true,
       },
       {
-        name: 'id',
-        description: '',
-        data_type: DataType.Int64,
-        is_primary_key: true,
-        autoID: true,
+        name: 'varchar_field2',
+        description: 'varchar field',
+        data_type: DataType.VarChar,
+        max_length: 10,
+        is_partition_key: false,
       },
     ];
     const data = generateInsertData(fields, 10);
     expect(data.length).toBe(10);
     expect(typeof data[0].varchar_field).toBe('string');
-    expect(data[0].varchar_field.length).toBeLessThanOrEqual(5);
+    expect(data[0].varchar_field.length).toBeLessThanOrEqual(
+      fields[0].max_length!
+    );
+    data.forEach(d => {
+      expect(typeof d.varchar_field).toEqual('string');
+      expect(typeof d.varchar_field2).toEqual('string');
+      expect(d.varchar_field.length <= max_length).toEqual(true);
+    });
   });
 
   it('should generate data for a collection with a non-vector field of a data type other than DataType.Bool or DataType.VarChar', () => {
