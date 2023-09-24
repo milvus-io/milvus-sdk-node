@@ -441,6 +441,10 @@ export const getFieldDataMap = (fields_data: any[]) => {
       const key = item.scalars!.data;
       field_data = item.scalars![key]!.data;
 
+      if (key === 'array_data') {
+        console.log('xx', field_data)
+      }
+
       // decode json
       switch (key) {
         case 'json_data':

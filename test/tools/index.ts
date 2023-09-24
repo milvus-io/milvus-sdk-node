@@ -5,7 +5,7 @@ import {
   ConsistencyLevelEnum,
 } from '../../milvus';
 
-export const IP = '127.0.0.1:19530';
+export const IP = '10.102.9.98:19530';
 export const VECTOR_FIELD_NAME = 'vector';
 export const INDEX_NAME = 'index_name';
 export const DIMENSION = 4;
@@ -14,6 +14,7 @@ export const PARTITION_TAG = 'random';
 export const DEFAULT_VALUE = '100';
 export const MAX_LENGTH = 8;
 export const MAX_CAPACITY = 4;
+export const P_KEY_VALUES = ['apple', 'banana', 'orange'];
 export const dynamicFields = [
   {
     name: 'dynamic_int64',
@@ -185,28 +186,27 @@ function genString({
     }
     return result;
   } else {
-    const fixedStrings = ['apple', 'banana', 'orange'];
-    return fixedStrings[
-      index! >= fixedStrings.length
-        ? Math.floor(Math.random() * fixedStrings.length)
+    return P_KEY_VALUES[
+      index! >= P_KEY_VALUES.length
+        ? Math.floor(Math.random() * P_KEY_VALUES.length)
         : index!
     ];
   }
 }
 
-function genFloatVector({ dim }: genDataParams) {
+export function genFloatVector({ dim }: genDataParams) {
   return [...Array(Number(dim))].map(() => Math.random());
 }
-function genInt() {
+export function genInt() {
   return Math.floor(Math.random() * 100000);
 }
-function genBool() {
+export function genBool() {
   return Math.random() < 0.5;
 }
-function genFloat() {
+export function genFloat() {
   return Math.random();
 }
-function genJSON() {
+export function genJSON() {
   return Math.random() > 0.4
     ? {
         string: genString({ max_length: 4 }),
@@ -216,7 +216,7 @@ function genJSON() {
     : {};
 }
 
-function genBinaryVector({ dim }: genDataParams): number[] {
+export function genBinaryVector({ dim }: genDataParams): number[] {
   const numBytes = Math.ceil(dim! / 8);
   const vector: number[] = [];
   for (let i = 0; i < numBytes; i++) {

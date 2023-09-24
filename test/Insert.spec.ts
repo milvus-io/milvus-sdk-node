@@ -11,6 +11,7 @@ import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
+  genFloatVector,
 } from './tools';
 
 const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
@@ -176,7 +177,7 @@ describe(`Insert API`, () => {
     };
 
     const res = await milvusClient.insert(params);
-    console.log('xxx', res)
+    console.log('xxx', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -310,10 +311,18 @@ describe(`Insert API`, () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'id > 0',
-      output_fields: ['json', 'id'],
+      output_fields: ['json', 'id', 'int_array', 'float_array'],
     });
     console.log(query);
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      vector: genFloatVector({ dim: 4 }),
+      output_fields: ['json', 'id', 'int_array', 'float_array'],
+    });
+    console.log(search);
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Insert data on float field expect missing field throw error`, async () => {
