@@ -14,13 +14,14 @@ const COLLECTION_NAME = 'data_query_example';
   // create collection
   const create = await milvusClient.createCollection({
     collection_name: COLLECTION_NAME,
+    consistency_level: 'Strong',
     fields: [
       {
-        name: 'age',
+        name: 'id',
         description: 'ID field',
         data_type: DataType.Int64,
         is_primary_key: true,
-        autoID: true,
+        autoID: false,
       },
       {
         name: 'vector',
@@ -49,6 +50,7 @@ const COLLECTION_NAME = 'data_query_example';
       ],
       height: 20405,
       name: 'zlnmh',
+      id: 1,
     },
     {
       vector: [
@@ -58,6 +60,7 @@ const COLLECTION_NAME = 'data_query_example';
       ],
       height: 93773,
       name: '5lr9y',
+      id: 2,
     },
     {
       vector: [
@@ -67,6 +70,7 @@ const COLLECTION_NAME = 'data_query_example';
       ],
       height: 85122,
       name: 'nes0j',
+      id: 3,
     },
     {
       vector: [
@@ -76,6 +80,7 @@ const COLLECTION_NAME = 'data_query_example';
       ],
       height: 92037,
       name: 'ct2li',
+      id: 4,
     },
     {
       vector: [
@@ -85,6 +90,7 @@ const COLLECTION_NAME = 'data_query_example';
       ],
       height: 31400,
       name: '6ghrg',
+      id: 5,
     },
     {
       vector: [
@@ -94,6 +100,7 @@ const COLLECTION_NAME = 'data_query_example';
       ],
       height: 1778,
       name: 'sb7mt',
+      id: 6,
     },
   ];
   const params: InsertReq = {
@@ -123,12 +130,30 @@ const COLLECTION_NAME = 'data_query_example';
   console.time('Query time');
   const query = await milvusClient.query({
     collection_name: COLLECTION_NAME,
-    filter: 'height > 31400',
-    output_fields: ['age', 'height', 'vector'],
+    filter: 'id > 0',
+    output_fields: ['id', 'height', 'vector'],
     limit: 100,
   });
   console.timeEnd('Query time');
   console.log('query result', query);
+
+  // delete data
+  const del = await milvusClient.delete({
+    collection_name: COLLECTION_NAME,
+    ids: [1, 2],
+  });
+
+  console.log('del', del);
+  // do the query
+  console.time('Query after del');
+  const queryAfterDel = await milvusClient.query({
+    collection_name: COLLECTION_NAME,
+    filter: 'id > 0',
+    output_fields: ['id', 'height', 'vector'],
+    limit: 100,
+  });
+  console.timeEnd('Query after time');
+  console.log('query after del', queryAfterDel);
 
   // drop collection
   await milvusClient.dropCollection({
