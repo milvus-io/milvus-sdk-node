@@ -17,6 +17,7 @@ import { timeoutTest } from './tools';
 
 const milvusClient = new MilvusClient({
   address: IP,
+  logLevel: 'debug'
 });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
@@ -466,7 +467,7 @@ describe(`Data.API`, () => {
   });
 
   it(`Query JSON data with float filter`, async () => {
-    const expr = 'json["float"] >= 1.0';
+    const expr = 'json["float"] >= 0.1';
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: expr,

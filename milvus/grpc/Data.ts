@@ -748,8 +748,6 @@ export class Data extends Collection {
       data.timeout || this.timeout
     );
 
-    console.log('pro', promise.fields_data)
-
     // always get output_fields from fields_data
     const output_fields = promise.fields_data.map(f => f.field_name);
 
@@ -758,7 +756,6 @@ export class Data extends Collection {
 
     const fieldsDataMap = getFieldDataMap(promise.fields_data);
 
-    console.log('fieldsDataMap', fieldsDataMap)
     // For each output field, check if it has a fixed schema or not
     const fieldData = output_fields.map(field_name => {
       // Check if the field_name exists in the fieldsDataMap

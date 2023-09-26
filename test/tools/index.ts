@@ -5,7 +5,7 @@ import {
   ConsistencyLevelEnum,
 } from '../../milvus';
 
-export const IP = '10.102.9.98:19530';
+export const IP = '10.102.9.42:19530';
 export const VECTOR_FIELD_NAME = 'vector';
 export const INDEX_NAME = 'index_name';
 export const DIMENSION = 4;

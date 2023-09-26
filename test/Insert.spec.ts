@@ -177,7 +177,6 @@ describe(`Insert API`, () => {
     };
 
     const res = await milvusClient.insert(params);
-    console.log('xxx', res);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
