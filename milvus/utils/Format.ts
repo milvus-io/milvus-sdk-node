@@ -402,9 +402,9 @@ export const generateDynamicRow = (
 };
 
 /**
- * Check the data type of each field and parse the data accordingly.
+ * create a data map for each fields, resolve grpc data format
  * If the field is a vector, split the data into chunks of the appropriate size.
- * If the field is a scalar, decode the JSON data if necessary.
+ * If the field is a scalar, decode the JSON/array data if necessary.
  */
 export const getFieldDataMap = (fields_data: any[]) => {
   const fieldsDataMap = new Map<string, any>();
@@ -441,8 +441,12 @@ export const getFieldDataMap = (fields_data: any[]) => {
       const key = item.scalars!.data;
       field_data = item.scalars![key]!.data;
 
+      // we need to handle array element specifically here
       if (key === 'array_data') {
-        console.log('xx', field_data)
+        field_data = field_data.map((f: any) => {
+          const key = f.data;
+          return f[key].data;
+        });
       }
 
       // decode json

@@ -12,6 +12,43 @@ import {
   CollectionNameReq,
 } from '../';
 
+// all types supportted by milvus
+export type JSON = object;
+export type Vectors = number[];
+export type FloatVectors = number[];
+export type BinaryVectors = Float32Array;
+export type Bool = boolean;
+export type Int8 = number;
+export type Int16 = number;
+export type Int32 = number;
+export type Int64 = number;
+export type Float = number;
+export type Double = number;
+export type VarChar = string;
+export type Array =
+  | Int8[]
+  | Int16[]
+  | Int32[]
+  | Int64[]
+  | Float[]
+  | Double[]
+  | VarChar[];
+
+export type MilvusData =
+  | Bool
+  | Int8
+  | Int16
+  | Int32
+  | Int64
+  | Float
+  | Double
+  | VarChar
+  | JSON
+  | Array
+  | Vectors
+  | FloatVectors
+  | BinaryVectors;
+
 export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
 }
@@ -27,7 +64,7 @@ export interface FieldData {
 export interface InsertReq extends GrpcTimeOut {
   collection_name: string;
   partition_name?: string;
-  fields_data?: { [x: string]: any }[];
+  fields_data?: { [x: string]: MilvusData }[];
   data?: { [x: string]: any }[];
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }

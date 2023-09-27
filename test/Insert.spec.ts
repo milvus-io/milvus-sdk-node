@@ -310,17 +310,17 @@ describe(`Insert API`, () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'id > 0',
-      output_fields: ['json', 'id', 'int_array', 'float_array'],
+      output_fields: ['json', 'id', 'varChar_array'],
     });
-    console.log(query);
+    // console.log('query', query);
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: genFloatVector({ dim: 4 }),
-      output_fields: ['json', 'id', 'int_array', 'float_array'],
+      vector: genFloatVector({ dim: 4 }) as number[],
+      output_fields: ['json', 'id', 'varChar_array'],
     });
-    console.log(search);
+    // console.log('search', search.results);
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

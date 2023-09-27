@@ -288,7 +288,7 @@ export enum MsgType {
 
 // data type enum
 export enum DataType {
-  None = 0,
+  // None = 0,
   Bool = 1,
   Int8 = 2,
   Int16 = 3,
@@ -298,7 +298,7 @@ export enum DataType {
   Float = 10,
   Double = 11,
 
-  String = 20,
+  // String = 20,
   VarChar = 21, // variable-length strings with a specified maximum length
   Array = 22,
   JSON = 23,
@@ -309,7 +309,7 @@ export enum DataType {
 
 // data type map
 export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
-  None: 0,
+  // None: 0,
   Bool: 1,
   Int8: 2,
   Int16: 3,
@@ -317,7 +317,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   Int64: 5,
   Float: 10,
   Double: 11,
-  String: 20,
+  // String: 20,
   VarChar: 21,
   Array: 22,
   JSON: 23,

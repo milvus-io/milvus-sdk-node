@@ -53,6 +53,7 @@ import {
   getDataKey,
   FieldData,
   buildFieldData,
+  Vectors,
 } from '../';
 import { Collection } from './Collection';
 
@@ -176,7 +177,7 @@ export class Data extends Collection {
         }
         if (
           DataTypeMap[field.type] === DataType.BinaryVector &&
-          row[name].length !== field.dim! / 8
+          (row[name] as Vectors).length !== field.dim! / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
@@ -191,23 +192,6 @@ export class Data extends Collection {
             field.data[rowIndex] = buildFieldData(row, field);
             break;
         }
-
-        // encode data
-        // switch (DataTypeMap[field.type]) {
-        //   case DataType.BinaryVector:
-        //   case DataType.FloatVector:
-        //     for (let val of row[name]) {
-        //       field.data.push(val);
-        //     }
-        //     break;
-        //   case DataType.JSON:
-        //     // ensure empty string
-        //     field.data[rowIndex] = Buffer.from(JSON.stringify(row[name] || {}));
-        //     break;
-        //   default:
-        //     field.data[rowIndex] = row[name];
-        //     break;
-        // }
       });
     });
 
@@ -221,6 +205,7 @@ export class Data extends Collection {
       const type = DataTypeMap[v.type];
       const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
       const dataKey = getDataKey(type);
+      const elementTypeKey = getDataKey(DataType.VarChar);
 
       return {
         type,
@@ -242,8 +227,15 @@ export class Data extends Collection {
             : type === DataType.Array
             ? {
                 [dataKey]: {
-                  data: v.data,
-                  element_type: DataType.Int16, // TODO: fix this after milvus fix describe collection
+                  data: v.data.map(d => {
+                    return {
+                      [elementTypeKey]: {
+                        type: DataType.VarChar,
+                        data: d,
+                      },
+                    };
+                  }),
+                  element_type: DataType.VarChar,
                 },
               }
             : {
