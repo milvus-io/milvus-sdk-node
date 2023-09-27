@@ -17,7 +17,6 @@ import { timeoutTest } from './tools';
 
 const milvusClient = new MilvusClient({
   address: IP,
-  logLevel: 'debug'
 });
 const COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {

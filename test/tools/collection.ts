@@ -20,26 +20,6 @@ export const dynamicFields = [
   },
 ];
 
-type generateCollectionParameters = {
-  collectionName: string;
-  dim: number | string;
-  vectorType?: DataType;
-  autoID?: boolean;
-  fields?: any[];
-  partitionKeyEnabled?: boolean;
-  numPartitions?: number;
-  enableDynamic?: boolean;
-  maxCapacity?: number;
-};
-
-/**
- * Generates a random collection name with a prefix and a random string appended to it.
- * @param {string} [pre='collection'] - The prefix to use for the collection name.
- * @returns {string} The generated collection name.
- */
-export const GENERATE_NAME = (pre = 'collection') =>
-  `${pre}_${Math.random().toString(36).substr(2, 8)}`;
-
 /**
  * Generates collection parameters with default fields for a given collection name, dimension, vector type, and optional fields array.
  * @param {string} collectionName Name of the collection
@@ -49,7 +29,17 @@ export const GENERATE_NAME = (pre = 'collection') =>
  * @param {any[]} [fields=[]] Optional array of additional fields
  * @returns {{ collection_name: string, fields: any[] }} Object containing the collection name and a fields array
  */
-export const genCollectionParams = (data: generateCollectionParameters) => {
+export const genCollectionParams = (data: {
+  collectionName: string;
+  dim: number | string;
+  vectorType?: DataType;
+  autoID?: boolean;
+  fields?: any[];
+  partitionKeyEnabled?: boolean;
+  numPartitions?: number;
+  enableDynamic?: boolean;
+  maxCapacity?: number;
+}) => {
   const {
     collectionName,
     dim,
