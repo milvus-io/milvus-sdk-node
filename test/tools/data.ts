@@ -1,6 +1,6 @@
 import {
   DataType,
-  MilvusData,
+  FieldData,
   convertToDataType,
   FieldType,
 } from '../../milvus';
@@ -15,7 +15,7 @@ interface DataGenerator {
     max_capacity?: number;
     is_partition_key?: boolean;
     index?: number;
-  }): MilvusData;
+  }): FieldData;
 }
 
 /**
@@ -116,7 +116,7 @@ export const genBinaryVector: DataGenerator = params => {
  * @param {Object} params - The parameters for generating the array.
  * @param {DataType} params.element_type - The data type of the elements in the array.
  * @param {number} [params.max_capacity=0] - The maximum capacity of the array.
- * @returns {MilvusData[]} The generated array of data.
+ * @returns {FieldData[]} The generated array of data.
  */
 export const genArray: DataGenerator = params => {
   const { element_type, max_capacity = 0 } = params!;
@@ -151,7 +151,7 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
 
   // Loop until we've generated the desired number of data points
   while (count > 0) {
-    const value: { [x: string]: MilvusData } = {}; // Initialize an empty object to store the generated values for this data point
+    const value: { [x: string]: FieldData } = {}; // Initialize an empty object to store the generated values for this data point
 
     for (const field of fields) {
       // Skip autoID and fields with default values

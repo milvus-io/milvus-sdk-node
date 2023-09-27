@@ -51,9 +51,10 @@ import {
   getFieldDataMap,
   ConsistencyLevelEnum,
   getDataKey,
-  FieldData,
+  ColumnContainer,
   buildFieldData,
   Vectors,
+  BinaryVectors,
 } from '../';
 import { Collection } from './Collection';
 
@@ -133,7 +134,7 @@ export class Data extends Collection {
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
-    const fieldsDataMap = new Map<string, FieldData>(
+    const fieldsDataMap = new Map<string, ColumnContainer>(
       collectionInfo.schema.fields
         .filter(v => !v.is_primary_key || !v.autoID)
         .map(v => [
@@ -222,7 +223,7 @@ export class Data extends Collection {
             : type === DataType.BinaryVector
             ? {
                 dim: v.dim,
-                [dataKey]: parseBinaryVectorToBytes(v.data),
+                [dataKey]: parseBinaryVectorToBytes(v.data as BinaryVectors),
               }
             : type === DataType.Array
             ? {

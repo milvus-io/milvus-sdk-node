@@ -14,9 +14,9 @@ import {
 
 // all types supportted by milvus
 export type JSON = object;
-export type Vectors = number[];
 export type FloatVectors = number[];
-export type BinaryVectors = Float32Array;
+export type BinaryVectors = number[];
+export type Vectors = FloatVectors | BinaryVectors;
 export type Bool = boolean;
 export type Int8 = number;
 export type Int16 = number;
@@ -34,7 +34,7 @@ export type Array =
   | Double[]
   | VarChar[];
 
-export type MilvusData =
+export type FieldData =
   | Bool
   | Int8
   | Int16
@@ -49,23 +49,27 @@ export type MilvusData =
   | FloatVectors
   | BinaryVectors;
 
+export interface Row {
+  [x: string]: FieldData;
+}
+
 export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
 }
 
-export interface FieldData {
+export interface ColumnContainer {
   name: string;
   type: keyof typeof DataType;
   elementType?: keyof typeof DataType;
   dim?: number;
-  data: any[];
+  data: FieldData[];
 }
 
 export interface InsertReq extends GrpcTimeOut {
   collection_name: string;
   partition_name?: string;
-  fields_data?: { [x: string]: MilvusData }[];
-  data?: { [x: string]: any }[];
+  fields_data?: Row[];
+  data?: Row[];
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }
 

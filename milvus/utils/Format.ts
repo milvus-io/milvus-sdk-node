@@ -9,6 +9,8 @@ import {
   CreateCollectionReq,
   DescribeCollectionResponse,
   getDataKey,
+  Row,
+  ColumnContainer,
   FieldData,
 } from '../';
 
@@ -501,8 +503,8 @@ export const getAuthString = (data: {
  * @returns {any} - The built column data.
  * @throws {Error} - If the data type is unsupported.
  */
-export const buildFieldData = (row: any, field: FieldData): any => {
-  const { type, elementType, name } = field;
+export const buildFieldData = (row: Row, column: ColumnContainer): FieldData => {
+  const { type, elementType, name } = column;
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
     case DataType.FloatVector:
@@ -510,7 +512,7 @@ export const buildFieldData = (row: any, field: FieldData): any => {
     case DataType.JSON:
       return Buffer.from(JSON.stringify(row[name] || {}));
     case DataType.Array:
-      const elementField = { ...field, type: elementType! };
+      const elementField = { ...column, type: elementType! };
       return buildFieldData(row, elementField);
     default:
       return row[name];
