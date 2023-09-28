@@ -371,6 +371,14 @@ export const formatDescribedCol = (
   return newData;
 };
 
+/**
+ * Builds a dynamic row object by separating the input data into non-dynamic fields and a dynamic field.
+ *
+ * @param {RowData} rowData - The input data object.
+ * @param {Map<string, Field>} fieldMap - A map of field names to field objects.
+ * @param {string} dynamicFieldName - The name of the dynamic field.
+ * @returns {RowData} The generated dynamic row object.
+ */
 export const buildDynamicRow = (
   rowData: RowData,
   fieldMap: Map<string, Field>,

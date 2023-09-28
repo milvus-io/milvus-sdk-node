@@ -25,6 +25,8 @@ import {
   getAuthString,
   buildFieldData,
   FieldData,
+  Field,
+  DataTypeMap,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -416,7 +418,16 @@ describe('utils/format', () => {
 
   it('should return an object with dynamicField key when some data contains keys not in fieldsDataMap', () => {
     const data = { key1: 'value1', key2: 'value2' };
-    const fieldsDataMap = new Map([['key1', 'value1']]);
+    const fieldsDataMap = new Map([
+      [
+        'key1',
+        {
+          name: 'key1',
+          type: 'VarChar',
+          data: [{ key1: 'value1' }],
+        } as Field,
+      ],
+    ]);
     const dynamicField = 'dynamic';
     const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
     expect(result).toEqual({
@@ -428,8 +439,22 @@ describe('utils/format', () => {
   it('should return an object with keys from data and fieldsDataMap', () => {
     const data = { key1: 'value1', key2: 'value2' };
     const fieldsDataMap = new Map([
-      ['key1', 'value1'],
-      ['key2', 'value2'],
+      [
+        'key1',
+        {
+          name: 'key1',
+          type: 'VarChar',
+          data: [{ key1: 'value1' }],
+        } as Field,
+      ],
+      [
+        'key2',
+        {
+          name: 'key2',
+          type: 'VarChar',
+          data: [{ key2: 'value2' }],
+        } as Field,
+      ],
     ]);
     const dynamicField = 'dynamic';
     const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
@@ -442,7 +467,16 @@ describe('utils/format', () => {
 
   it('should return an object with dynamicField key when data contains keys not in fieldsDataMap', () => {
     const data = { key1: 'value1', key2: 'value2' };
-    const fieldsDataMap = new Map([['key1', 'value1']]);
+    const fieldsDataMap = new Map([
+      [
+        'key1',
+        {
+          name: 'key1',
+          type: 'VarChar',
+          data: [{ key1: 'value1' }],
+        } as Field,
+      ],
+    ]);
     const dynamicField = 'dynamic';
     const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
     expect(result).toEqual({
@@ -472,29 +506,30 @@ describe('utils/format', () => {
   it('should return the value of the field for BinaryVector and FloatVector types', () => {
     const row = { name: 'John', vector: [1, 2, 3] };
     const field = { type: 'BinaryVector', name: 'vector' };
-    expect(buildFieldData(row, field as FieldData)).toEqual([1, 2, 3]);
+    expect(buildFieldData(row, field as Field)).toEqual([1, 2, 3]);
 
     field.type = 'FloatVector';
-    expect(buildFieldData(row, field as FieldData)).toEqual([1, 2, 3]);
+    expect(buildFieldData(row, field as Field)).toEqual([1, 2, 3]);
   });
 
   it('should return the JSON stringified value of the field for JSON type', () => {
     const row = { name: 'John', data: { age: 25, city: 'New York' } };
     const field = { type: 'JSON', name: 'data' };
-    expect(
-      JSON.parse(buildFieldData(row, field as FieldData).toString())
-    ).toEqual({ age: 25, city: 'New York' });
+    expect(JSON.parse(buildFieldData(row, field as Field).toString())).toEqual({
+      age: 25,
+      city: 'New York',
+    });
   });
 
   it('should recursively call buildFieldData for Array type', () => {
     const row = { name: 'John', array: [1, 2, 3] };
     const field = { type: 'Array', elementType: 'Int', name: 'array' };
-    expect(buildFieldData(row, field as FieldData)).toEqual([1, 2, 3]);
+    expect(buildFieldData(row, field as Field)).toEqual([1, 2, 3]);
   });
 
   it('should return the value of the field for other types', () => {
     const row = { name: 'John', age: 25 };
     const field = { type: 'Int', name: 'age' };
-    expect(buildFieldData(row, field as FieldData)).toEqual(25);
+    expect(buildFieldData(row, field as Field)).toEqual(25);
   });
 });
