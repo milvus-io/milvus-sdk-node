@@ -24,9 +24,7 @@ import {
   buildDynamicRow,
   getAuthString,
   buildFieldData,
-  FieldData,
   Field,
-  DataTypeMap,
 } from '../../milvus';
 
 describe('utils/format', () => {
