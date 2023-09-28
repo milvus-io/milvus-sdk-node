@@ -21,7 +21,7 @@ import {
   cloneObj,
   DescribeCollectionResponse,
   formatDescribedCol,
-  generateDynamicRow,
+  buildDynamicRow,
   getAuthString,
   buildFieldData,
   FieldData,
@@ -402,7 +402,7 @@ describe('utils/format', () => {
     const data = {};
     const fieldsDataMap = new Map();
     const dynamicField = 'dynamic';
-    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
     expect(result).toEqual({});
   });
 
@@ -410,7 +410,7 @@ describe('utils/format', () => {
     const data = { key: 'value' };
     const fieldsDataMap = new Map();
     const dynamicField = 'dynamic';
-    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
     expect(result).toEqual({ [dynamicField]: { key: 'value' } });
   });
 
@@ -418,7 +418,7 @@ describe('utils/format', () => {
     const data = { key1: 'value1', key2: 'value2' };
     const fieldsDataMap = new Map([['key1', 'value1']]);
     const dynamicField = 'dynamic';
-    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
     expect(result).toEqual({
       key1: 'value1',
       [dynamicField]: { key2: 'value2' },
@@ -432,7 +432,7 @@ describe('utils/format', () => {
       ['key2', 'value2'],
     ]);
     const dynamicField = 'dynamic';
-    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
     expect(result).toEqual({
       [dynamicField]: {},
       key1: 'value1',
@@ -444,7 +444,7 @@ describe('utils/format', () => {
     const data = { key1: 'value1', key2: 'value2' };
     const fieldsDataMap = new Map([['key1', 'value1']]);
     const dynamicField = 'dynamic';
-    const result = generateDynamicRow(data, fieldsDataMap, dynamicField);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
     expect(result).toEqual({
       key1: 'value1',
       [dynamicField]: { key2: 'value2' },

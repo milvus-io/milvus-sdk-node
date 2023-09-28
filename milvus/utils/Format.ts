@@ -9,8 +9,9 @@ import {
   CreateCollectionReq,
   DescribeCollectionResponse,
   getDataKey,
-  Row,
-  ColumnContainer,
+  RowData,
+  Field,
+  JSON,
   FieldData,
 } from '../';
 
@@ -370,33 +371,26 @@ export const formatDescribedCol = (
   return newData;
 };
 
-/**
- * Generates a dynamic row object by separating fields into a dynamic field and non-dynamic fields.
- *
- * @param {Record<string, any>} data - The input data object.
- * @param {Map<string, any>} fieldsDataMap - A map of field names to their corresponding data.
- * @param {string} dynamicField - The name of the dynamic field.
- * @returns {Record<string, any>} The generated dynamic row object.
- */
-export const generateDynamicRow = (
-  data: Record<string, any>,
-  fieldsDataMap: Map<string, any>,
-  dynamicField: string
+export const buildDynamicRow = (
+  rowData: RowData,
+  fieldMap: Map<string, Field>,
+  dynamicFieldName: string
 ) => {
-  const originRow = cloneObj(data);
+  const originRow = cloneObj(rowData);
 
-  const row: Record<string, any> = {};
+  const row: RowData = {};
 
   // iterate through each key in the input data object
   for (let key in originRow) {
-    row[dynamicField] = row[dynamicField] || {}; // initialize the dynamic field object
+    row[dynamicFieldName] = row[dynamicFieldName] || ({} as JSON); // initialize the dynamic field object
 
-    if (fieldsDataMap.has(key)) {
-      // if the key is in the fieldsDataMap, add it to the non-dynamic fields
+    if (fieldMap.has(key)) {
+      // if the key is in the fieldMap, add it to the non-dynamic fields
       row[key] = originRow[key];
     } else {
+      const obj: JSON = row[dynamicFieldName] as JSON;
       // otherwise, add it to the dynamic field
-      row[dynamicField][key] = originRow[key];
+      obj[key] = originRow[key];
     }
   }
 
@@ -408,7 +402,7 @@ export const generateDynamicRow = (
  * If the field is a vector, split the data into chunks of the appropriate size.
  * If the field is a scalar, decode the JSON/array data if necessary.
  */
-export const getFieldDataMap = (fields_data: any[]) => {
+export const buildFieldDataMap = (fields_data: any[]) => {
   const fieldsDataMap = new Map<string, any>();
 
   fields_data.forEach((item, i) => {
@@ -497,24 +491,24 @@ export const getAuthString = (data: {
 };
 
 /**
- * Builds field data based on the provided parameters.
- * @param {any} row - The row object containing the data.
- * @param {FieldData} field - The field object containing information about the column.
- * @returns {any} - The built column data.
- * @throws {Error} - If the data type is unsupported.
+ * Builds the field data for a given row and column.
+ *
+ * @param {RowData} rowData - The data for the row.
+ * @param {Field} column - The column information.
+ * @returns {FieldData} The field data for the row and column.
  */
-export const buildFieldData = (row: Row, column: ColumnContainer): FieldData => {
-  const { type, elementType, name } = column;
+export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
+  const { type, elementType, name } = field;
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
     case DataType.FloatVector:
-      return row[name];
+      return rowData[name];
     case DataType.JSON:
-      return Buffer.from(JSON.stringify(row[name] || {}));
+      return Buffer.from(JSON.stringify(rowData[name] || {}));
     case DataType.Array:
-      const elementField = { ...column, type: elementType! };
-      return buildFieldData(row, elementField);
+      const elementField = { ...field, type: elementType! };
+      return buildFieldData(rowData, elementField);
     default:
-      return row[name];
+      return rowData[name];
   }
 };

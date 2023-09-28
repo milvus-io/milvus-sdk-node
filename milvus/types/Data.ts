@@ -13,7 +13,6 @@ import {
 } from '../';
 
 // all types supportted by milvus
-export type JSON = object;
 export type FloatVectors = number[];
 export type BinaryVectors = number[];
 export type Vectors = FloatVectors | BinaryVectors;
@@ -25,6 +24,9 @@ export type Int64 = number;
 export type Float = number;
 export type Double = number;
 export type VarChar = string;
+export type JSON = {
+  [key: string]: any;
+};
 export type Array =
   | Int8[]
   | Int16[]
@@ -34,6 +36,7 @@ export type Array =
   | Double[]
   | VarChar[];
 
+// Represents the possible data types for a field(cell)
 export type FieldData =
   | Bool
   | Int8
@@ -49,7 +52,8 @@ export type FieldData =
   | FloatVectors
   | BinaryVectors;
 
-export interface Row {
+// Represents a row of data in Milvus.
+export interface RowData {
   [x: string]: FieldData;
 }
 
@@ -57,19 +61,19 @@ export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
 }
 
-export interface ColumnContainer {
+export interface Field {
   name: string;
   type: keyof typeof DataType;
   elementType?: keyof typeof DataType;
-  dim?: number;
   data: FieldData[];
+  dim?: number;
 }
 
 export interface InsertReq extends GrpcTimeOut {
   collection_name: string;
   partition_name?: string;
-  fields_data?: Row[];
-  data?: Row[];
+  fields_data?: RowData[];
+  data?: RowData[];
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }
 
