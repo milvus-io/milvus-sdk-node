@@ -403,7 +403,7 @@ export const buildDynamicRow = (
  * If the field is a scalar, decode the JSON/array data if necessary.
  */
 export const buildFieldDataMap = (fields_data: any[]) => {
-  const fieldsDataMap = new Map<string, any>();
+  const fieldsDataMap = new Map<string, RowData[]>();
 
   fields_data.forEach((item, i) => {
     // field data

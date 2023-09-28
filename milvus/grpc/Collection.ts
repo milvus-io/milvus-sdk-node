@@ -1019,7 +1019,7 @@ export class Collection extends Database {
     const collectionInfo = await this.describeCollection(data);
 
     // pk field type
-    let pkFieldType: keyof typeof DataType = 'None';
+    let pkFieldType: keyof typeof DataType = 'Int64';
     // extract key information
     for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
       const f = collectionInfo.schema.fields[i];
