@@ -45,7 +45,7 @@ You can find a basic langchain.js example in the [examples/langchain](./examples
 
 ### next.js example
 
-TBD
+You can find nextjs app example in the [examples/nextjs](./examples/nextjs) directory.
 
 ## Basic usages
 
