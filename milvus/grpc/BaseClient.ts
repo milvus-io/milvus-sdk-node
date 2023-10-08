@@ -75,8 +75,6 @@ export class BaseClient {
   ) {
     let config: ClientConfig;
 
-    console.log(milvusProtoPath);
-
     // If a configuration object is provided, use it. Otherwise, create a new object with the provided parameters.
     if (typeof configOrAddress === 'object') {
       config = configOrAddress;
