@@ -12,14 +12,8 @@ import {
 } from '../';
 
 // path
-const milvusProtoPath = path.resolve(
-  __dirname,
-  '../../proto/proto/milvus.proto'
-);
-const schemaProtoPath = path.resolve(
-  __dirname,
-  '../../proto/proto/schema.proto'
-);
+const milvusProtoPath = path.resolve('../../proto/proto/milvus.proto');
+const schemaProtoPath = path.resolve('../../proto/proto/schema.proto');
 
 /**
  * Base gRPC client, setup all configuration here
@@ -80,6 +74,8 @@ export class BaseClient {
     channelOptions?: ChannelOptions
   ) {
     let config: ClientConfig;
+
+    console.log(milvusProtoPath);
 
     // If a configuration object is provided, use it. Otherwise, create a new object with the provided parameters.
     if (typeof configOrAddress === 'object') {
