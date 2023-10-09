@@ -156,6 +156,7 @@ export class Data extends Collection {
       fieldMap.set(DEFAULT_DYNAMIC_FIELD, {
         name: DEFAULT_DYNAMIC_FIELD,
         type: 'JSON',
+        elementType: 'None',
         data: [], // value container
       });
     }

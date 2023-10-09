@@ -177,9 +177,7 @@ describe(`Upsert API`, () => {
 
     const res = await milvusClient.upsert(params);
 
-    console.log('res',vectorsData, res)
-
-    expect(res.status.error_code).toEqual(ErrorCode.UPSERT_AUTO_ID_TRUE);
+    expect(res.status.error_code).toEqual(ErrorCode.Illegal_Argument);
   });
 
   it(`Upsert Data on different scalar fields`, async () => {

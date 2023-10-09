@@ -4,7 +4,8 @@ export enum ErrorCode {
   UNEXPECTED_ERROR = 'UnexpectedError',
   EMPTY_COLLECTION = 'EmptyCollection',
   UPSERT_AUTO_ID_TRUE = 'UpsertAutoIDTrue',
-  COLLECTION_NOT_EXISTS =  'CollectionNotExists'
+  COLLECTION_NOT_EXISTS = 'CollectionNotExists',
+  Illegal_Argument = 'IllegalArgument',
   // CONNECT_FAILED = "CONNECT_FAILED",
   // PERMISSION_DENIED = "PERMISSION_DENIED",
   // COLLECTION_NOT_EXISTS = "COLLECTION_NOT_EXISTS",

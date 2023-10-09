@@ -125,7 +125,10 @@ export const genArray: DataGenerator = params => {
   });
 };
 
+export const genNone: DataGenerator = () => 'none';
+
 export const dataGenMap: { [key in DataType]: DataGenerator } = {
+  [DataType.None]: genNone,
   [DataType.Bool]: genBool,
   [DataType.Int8]: genInt,
   [DataType.Int16]: genInt,
