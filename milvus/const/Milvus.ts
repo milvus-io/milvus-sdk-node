@@ -288,7 +288,7 @@ export enum MsgType {
 
 // data type enum
 export enum DataType {
-  // None = 0,
+  None = 0,
   Bool = 1,
   Int8 = 2,
   Int16 = 3,
@@ -309,7 +309,7 @@ export enum DataType {
 
 // data type map
 export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
-  // None: 0,
+  None: 0,
   Bool: 1,
   Int8: 2,
   Int16: 3,

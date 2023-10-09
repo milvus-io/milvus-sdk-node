@@ -165,7 +165,7 @@ describe(`Insert API`, () => {
     }
   });
 
-  it(`Insert Data on float field and autoId is true expect success`, async () => {
+  it(`Insert Data expect success`, async () => {
     const vectorsData = generateInsertData(
       COLLECTION_NAME_AUTO_ID_PARAMS.fields,
       10
@@ -177,6 +177,7 @@ describe(`Insert API`, () => {
     };
 
     const res = await milvusClient.insert(params);
+    console.log('xx', res)
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

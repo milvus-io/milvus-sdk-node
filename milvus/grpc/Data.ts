@@ -207,7 +207,8 @@ export class Data extends Collection {
       const type = DataTypeMap[field.type];
       const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
       const dataKey = getDataKey(type);
-      const elementTypeKey = getDataKey(DataType.VarChar);
+      const elementType = DataTypeMap[field.elementType!];
+      const elementTypeKey = getDataKey(elementType);
 
       return {
         type,
@@ -234,12 +235,12 @@ export class Data extends Collection {
                   data: field.data.map(d => {
                     return {
                       [elementTypeKey]: {
-                        type: DataType.VarChar,
+                        type: elementType,
                         data: d,
                       },
                     };
                   }),
-                  element_type: DataType.VarChar,
+                  element_type: elementType,
                 },
               }
             : {
