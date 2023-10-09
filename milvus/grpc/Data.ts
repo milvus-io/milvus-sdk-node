@@ -130,7 +130,7 @@ export class Data extends Collection {
     });
 
     if (collectionInfo.status.error_code !== ErrorCode.SUCCESS) {
-      throw new Error(collectionInfo.status.reason);
+      throw collectionInfo;
     }
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.

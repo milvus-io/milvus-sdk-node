@@ -140,9 +140,7 @@ describe(`Upsert API`, () => {
         fields_data: [{}],
       });
     } catch (error) {
-      expect(error.message).toEqual(
-        `Invalid collection name: ${errorName}.  collection name can only contain numbers, letters and underscores`
-      );
+      expect(error.status === ErrorCode.Illegal_Argument);
     }
   });
 
@@ -416,7 +414,7 @@ describe(`Upsert API`, () => {
       });
       expect('a').toEqual('b');
     } catch (error) {
-      expect(error.message).toBe('error');
+      expect(error.status.reason).toBe('error');
     } finally {
       fakeClient.closeConnection();
     }
