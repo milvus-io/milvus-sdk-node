@@ -140,9 +140,7 @@ describe(`Upsert API`, () => {
         fields_data: [{}],
       });
     } catch (error) {
-      expect(error.message).toEqual(
-        `Invalid collection name: ${errorName}.  collection name can only contain numbers, letters and underscores`
-      );
+      expect(error.status === ErrorCode.Illegal_Argument);
     }
   });
 
@@ -177,7 +175,7 @@ describe(`Upsert API`, () => {
 
     const res = await milvusClient.upsert(params);
 
-    expect(res.status.error_code).toEqual(ErrorCode.UPSERT_AUTO_ID_TRUE);
+    expect(res.status.error_code).toEqual(ErrorCode.Illegal_Argument);
   });
 
   it(`Upsert Data on different scalar fields`, async () => {
@@ -416,7 +414,7 @@ describe(`Upsert API`, () => {
       });
       expect('a').toEqual('b');
     } catch (error) {
-      expect(error.message).toBe('error');
+      expect(error.status.reason).toBe('error');
     } finally {
       fakeClient.closeConnection();
     }

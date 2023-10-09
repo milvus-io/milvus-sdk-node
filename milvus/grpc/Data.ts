@@ -47,10 +47,15 @@ import {
   parseBinaryVectorToBytes,
   parseFloatVectorToBytes,
   DEFAULT_DYNAMIC_FIELD,
-  generateDynamicRow,
-  getFieldDataMap,
+  buildDynamicRow,
+  buildFieldDataMap,
   ConsistencyLevelEnum,
   getDataKey,
+  Field,
+  buildFieldData,
+  Vectors,
+  BinaryVectors,
+  RowData,
 } from '../';
 import { Collection } from './Collection';
 
@@ -125,107 +130,123 @@ export class Data extends Collection {
     });
 
     if (collectionInfo.status.error_code !== ErrorCode.SUCCESS) {
-      throw new Error(collectionInfo.status.reason);
+      throw collectionInfo;
     }
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
-    const fieldsDataMap = new Map(
+    const fieldMap = new Map<string, Field>(
       collectionInfo.schema.fields
         .filter(v => !v.is_primary_key || !v.autoID)
         .map(v => [
           v.name,
           {
             name: v.name,
-            type: v.data_type,
+            type: v.data_type, // milvus return string here
+            elementType: v.element_type,
             dim: Number(findKeyValue(v.type_params, 'dim')),
-            value: [], // value container
-          } as any,
+            data: [], // values container
+          },
         ])
     );
-
-    // The actual data we pass to Milvus gRPC.
-    const params: any = { ...data, num_rows: data.fields_data.length };
 
     // dynamic field is enabled, create $meta field
     const isDynamic = collectionInfo.schema.enable_dynamic_field;
     if (isDynamic) {
-      fieldsDataMap.set(DEFAULT_DYNAMIC_FIELD, {
+      fieldMap.set(DEFAULT_DYNAMIC_FIELD, {
         name: DEFAULT_DYNAMIC_FIELD,
         type: 'JSON',
-        value: [], // value container
+        elementType: 'None',
+        data: [], // value container
       });
     }
 
     // Loop through each row and set the corresponding field values in the Map.
-    data.fields_data.forEach((v, i) => {
+    data.fields_data.forEach((rowData, rowIndex) => {
       // if support dynamic field, all field not in the schema would be grouped to a dynamic field
-      v = isDynamic
-        ? generateDynamicRow(v, fieldsDataMap, DEFAULT_DYNAMIC_FIELD)
-        : v;
+      rowData = isDynamic
+        ? buildDynamicRow(rowData, fieldMap, DEFAULT_DYNAMIC_FIELD)
+        : rowData;
 
-      // get each fieldname in the data object
-      const fieldNames = Object.keys(v);
+      // get each fieldname from the row object
+      const fieldNames = Object.keys(rowData);
       // go through each fieldname and encode or format data
       fieldNames.forEach(name => {
-        const target = fieldsDataMap.get(name);
-        if (!target) {
-          throw new Error(`${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${i}`);
+        const field = fieldMap.get(name);
+        if (!field) {
+          throw new Error(
+            `${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${rowIndex}`
+          );
         }
         if (
-          DataTypeMap[target.type] === DataType.BinaryVector &&
-          v[name].length !== target.dim / 8
+          DataTypeMap[field.type] === DataType.BinaryVector &&
+          (rowData[name] as Vectors).length !== field.dim! / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
-        // encode data
-        switch (DataTypeMap[target.type]) {
+        // build field data
+        switch (DataTypeMap[field.type]) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
-            for (let val of v[name]) {
-              target.value.push(val);
-            }
-            break;
-          case DataType.JSON:
-            // ensure empty string
-            target.value[i] = Buffer.from(JSON.stringify(v[name] || {}));
+            field.data = field.data.concat(buildFieldData(rowData, field));
             break;
           default:
-            target.value[i] = v[name];
+            field.data[rowIndex] = buildFieldData(rowData, field);
             break;
         }
       });
     });
 
+    // The actual data we pass to Milvus gRPC.
+    const params = { ...data, num_rows: data.fields_data.length };
+
     // transform data from map to array, milvus grpc params
-    params.fields_data = Array.from(fieldsDataMap.values()).map(v => {
+    params.fields_data = Array.from(fieldMap.values()).map(field => {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may cause we cant find value.
-      const type = DataTypeMap[v.type];
+      const type = DataTypeMap[field.type];
       const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
-      let dataKey = getDataKey(type);
+      const dataKey = getDataKey(type);
+      const elementType = DataTypeMap[field.elementType!];
+      const elementTypeKey = getDataKey(elementType);
 
       return {
         type,
-        field_name: v.name,
-        is_dynamic: v.name === DEFAULT_DYNAMIC_FIELD,
+        field_name: field.name,
+        is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
         [key]:
           type === DataType.FloatVector
             ? {
-                dim: v.dim,
+                dim: field.dim,
                 [dataKey]: {
-                  data: v.value,
+                  data: field.data,
                 },
               }
             : type === DataType.BinaryVector
             ? {
-                dim: v.dim,
-                [dataKey]: parseBinaryVectorToBytes(v.value),
+                dim: field.dim,
+                [dataKey]: parseBinaryVectorToBytes(
+                  field.data as BinaryVectors
+                ),
+              }
+            : type === DataType.Array
+            ? {
+                [dataKey]: {
+                  data: field.data.map(d => {
+                    return {
+                      [elementTypeKey]: {
+                        type: elementType,
+                        data: d,
+                      },
+                    };
+                  }),
+                  element_type: elementType,
+                },
               }
             : {
                 [dataKey]: {
-                  data: v.value,
+                  data: field.data,
                 },
               },
       };
@@ -364,7 +385,7 @@ export class Data extends Collection {
    * @returns
    * | Property | Description |
    *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
+   *  | status | { error_code: number, reason: string } |∂
    *  | results | {score:number,id:string}[]; |
    *
    * #### Example
@@ -500,7 +521,7 @@ export class Data extends Collection {
       const results: any[] = [];
       const { topks, scores, fields_data, ids } = promise.results;
       // build fields data map
-      const fieldsDataMap = getFieldDataMap(fields_data);
+      const fieldsDataMap = buildFieldDataMap(fields_data);
       // build output name array
       const output_fields = [
         'id',
@@ -510,9 +531,9 @@ export class Data extends Collection {
       ];
 
       // vector id support int / str id.
-      const idData = ids ? ids[ids.id_field]?.data : undefined;
+      const idData = ids ? ids[ids.id_field]!.data : {};
       // add id column
-      fieldsDataMap.set('id', idData);
+      fieldsDataMap.set('id', idData as RowData[]);
       // fieldsDataMap.set('score', scores); TODO: fieldDataMap to support formatter
 
       /**
@@ -546,7 +567,7 @@ export class Data extends Collection {
             // If the field_name is not in the fieldsDataMap, use the DEFAULT_DYNAMIC_FIELD
             const data = fieldsDataMap.get(
               isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
-            );
+            )!;
             // make dynamic data[i] safe
             data[i] = isFixedSchema ? data[i] : data[i] || {};
             // extract dynamic info from dynamic field if necessary
@@ -728,13 +749,10 @@ export class Data extends Collection {
     // always get output_fields from fields_data
     const output_fields = promise.fields_data.map(f => f.field_name);
 
-    // Initialize an array to hold the query results
-    let results: { [x: string]: any }[] = [];
-
-    const fieldsDataMap = getFieldDataMap(promise.fields_data);
+    const fieldsDataMap = buildFieldDataMap(promise.fields_data);
 
     // For each output field, check if it has a fixed schema or not
-    const fieldData = output_fields.map(field_name => {
+    const fieldDataContainer = output_fields.map(field_name => {
       // Check if the field_name exists in the fieldsDataMap
       const isFixedSchema = fieldsDataMap.has(field_name);
 
@@ -748,14 +766,17 @@ export class Data extends Collection {
       // If the schema is fixed, use the data directly
       // If the schema is not fixed, map the data to extract the field_name values
       return {
-        data: isFixedSchema ? data : data.map((d: any) => d[field_name]),
+        data: isFixedSchema ? data : data!.map(d => d[field_name]),
         field_name,
       };
     });
 
+    // Initialize an array to hold the query results
+    let results: RowData[] = [];
+
     // parse column data to [{fieldname:value}]
-    results = fieldData.reduce((acc: any, v) => {
-      v.data.forEach((d: any, i: number) => {
+    results = fieldDataContainer.reduce<RowData[]>((acc, v) => {
+      v.data!.forEach((d, i: number) => {
         acc[i] = {
           ...acc[i],
           [v.field_name]: d,

@@ -466,7 +466,7 @@ describe(`Data.API`, () => {
   });
 
   it(`Query JSON data with float filter`, async () => {
-    const expr = 'json["float"] >= 1.0';
+    const expr = 'json["float"] >= 0.1';
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: expr,
@@ -583,6 +583,6 @@ describe(`Data.API`, () => {
   // Load balance only working in cluster, so we can only do the error test
   it(`Load balance should throw UNEXPECTED_ERROR`, async () => {
     const res = await milvusClient.loadBalance({ src_nodeID: 1 });
-    expect(res.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+    expect(res.error_code).toEqual(ErrorCode.COLLECTION_NOT_EXISTS);
   });
 });

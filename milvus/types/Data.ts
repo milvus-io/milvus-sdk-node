@@ -12,21 +12,68 @@ import {
   CollectionNameReq,
 } from '../';
 
+// all types supportted by milvus
+export type FloatVectors = number[];
+export type BinaryVectors = number[];
+export type Vectors = FloatVectors | BinaryVectors;
+export type Bool = boolean;
+export type Int8 = number;
+export type Int16 = number;
+export type Int32 = number;
+export type Int64 = number;
+export type Float = number;
+export type Double = number;
+export type VarChar = string;
+export type JSON = {
+  [key: string]: any;
+};
+export type Array =
+  | Int8[]
+  | Int16[]
+  | Int32[]
+  | Int64[]
+  | Float[]
+  | Double[]
+  | VarChar[];
+
+// Represents the possible data types for a field(cell)
+export type FieldData =
+  | Bool
+  | Int8
+  | Int16
+  | Int32
+  | Int64
+  | Float
+  | Double
+  | VarChar
+  | JSON
+  | Array
+  | Vectors
+  | FloatVectors
+  | BinaryVectors;
+
+// Represents a row of data in Milvus.
+export interface RowData {
+  [x: string]: FieldData;
+}
+
 export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
 }
-export interface FieldData {
-  type: DataType;
-  field_name: string;
+
+export interface Field {
+  name: string;
+  type: keyof typeof DataType;
+  elementType?: keyof typeof DataType;
+  data: FieldData[];
   dim?: number;
-  data: Number[];
 }
 
 export interface InsertReq extends GrpcTimeOut {
   collection_name: string;
   partition_name?: string;
-  fields_data?: { [x: string]: any }[];
-  data?: { [x: string]: any }[];
+  fields_data?: RowData[];
+  data?: RowData[];
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }
 

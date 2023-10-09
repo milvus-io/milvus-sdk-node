@@ -9,6 +9,10 @@ import {
   CreateCollectionReq,
   DescribeCollectionResponse,
   getDataKey,
+  RowData,
+  Field,
+  JSON,
+  FieldData,
 } from '../';
 
 /**
@@ -198,7 +202,7 @@ export const formatAddress = (address: string) => {
  */
 export const assignTypeParams = (
   field: FieldType,
-  typeParamKeys: string[] = ['dim', 'max_length']
+  typeParamKeys: string[] = ['dim', 'max_length', 'max_capacity']
 ) => {
   let newField = cloneObj<FieldType>(field);
   typeParamKeys.forEach(key => {
@@ -315,6 +319,7 @@ export const formatCollectionSchema = (
     fields: fields.map(field => {
       // Assign the typeParams property to the result of parseToKeyValue(type_params).
       const { type_params, ...rest } = assignTypeParams(field);
+      const dataType = convertToDataType(field.data_type);
       const createObj: any = {
         ...rest,
         typeParams: parseToKeyValue(type_params),
@@ -323,6 +328,14 @@ export const formatCollectionSchema = (
         isPartitionKey:
           !!field.is_partition_key || field.name === partition_key_field,
       };
+
+      // if element type exist and
+      if (
+        dataType === DataType.Array &&
+        typeof field.element_type !== 'undefined'
+      ) {
+        createObj.elementType = field.element_type;
+      }
 
       if (typeof field.default_value !== 'undefined') {
         const dataKey = getDataKey(createObj.dataType, true);
@@ -359,32 +372,33 @@ export const formatDescribedCol = (
 };
 
 /**
- * Generates a dynamic row object by separating fields into a dynamic field and non-dynamic fields.
+ * Builds a dynamic row object by separating the input data into non-dynamic fields and a dynamic field.
  *
- * @param {Record<string, any>} data - The input data object.
- * @param {Map<string, any>} fieldsDataMap - A map of field names to their corresponding data.
- * @param {string} dynamicField - The name of the dynamic field.
- * @returns {Record<string, any>} The generated dynamic row object.
+ * @param {RowData} rowData - The input data object.
+ * @param {Map<string, Field>} fieldMap - A map of field names to field objects.
+ * @param {string} dynamicFieldName - The name of the dynamic field.
+ * @returns {RowData} The generated dynamic row object.
  */
-export const generateDynamicRow = (
-  data: Record<string, any>,
-  fieldsDataMap: Map<string, any>,
-  dynamicField: string
+export const buildDynamicRow = (
+  rowData: RowData,
+  fieldMap: Map<string, Field>,
+  dynamicFieldName: string
 ) => {
-  const originRow = cloneObj(data);
+  const originRow = cloneObj(rowData);
 
-  const row: Record<string, any> = {};
+  const row: RowData = {};
 
   // iterate through each key in the input data object
   for (let key in originRow) {
-    row[dynamicField] = row[dynamicField] || {}; // initialize the dynamic field object
+    row[dynamicFieldName] = row[dynamicFieldName] || ({} as JSON); // initialize the dynamic field object
 
-    if (fieldsDataMap.has(key)) {
-      // if the key is in the fieldsDataMap, add it to the non-dynamic fields
+    if (fieldMap.has(key)) {
+      // if the key is in the fieldMap, add it to the non-dynamic fields
       row[key] = originRow[key];
     } else {
+      const obj: JSON = row[dynamicFieldName] as JSON;
       // otherwise, add it to the dynamic field
-      row[dynamicField][key] = originRow[key];
+      obj[key] = originRow[key];
     }
   }
 
@@ -392,12 +406,12 @@ export const generateDynamicRow = (
 };
 
 /**
- * Check the data type of each field and parse the data accordingly.
+ * create a data map for each fields, resolve grpc data format
  * If the field is a vector, split the data into chunks of the appropriate size.
- * If the field is a scalar, decode the JSON data if necessary.
+ * If the field is a scalar, decode the JSON/array data if necessary.
  */
-export const getFieldDataMap = (fields_data: any[]) => {
-  const fieldsDataMap = new Map<string, any>();
+export const buildFieldDataMap = (fields_data: any[]) => {
+  const fieldsDataMap = new Map<string, RowData[]>();
 
   fields_data.forEach((item, i) => {
     // field data
@@ -430,6 +444,14 @@ export const getFieldDataMap = (fields_data: any[]) => {
       // parse scalar data
       const key = item.scalars!.data;
       field_data = item.scalars![key]!.data;
+
+      // we need to handle array element specifically here
+      if (key === 'array_data') {
+        field_data = field_data.map((f: any) => {
+          const key = f.data;
+          return f[key].data;
+        });
+      }
 
       // decode json
       switch (key) {
@@ -474,4 +496,27 @@ export const getAuthString = (data: {
   // if we need to create auth interceptors
   const needAuth = (!!username && !!password) || !!token;
   return needAuth ? auth : '';
+};
+
+/**
+ * Builds the field data for a given row and column.
+ *
+ * @param {RowData} rowData - The data for the row.
+ * @param {Field} column - The column information.
+ * @returns {FieldData} The field data for the row and column.
+ */
+export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
+  const { type, elementType, name } = field;
+  switch (DataTypeMap[type]) {
+    case DataType.BinaryVector:
+    case DataType.FloatVector:
+      return rowData[name];
+    case DataType.JSON:
+      return Buffer.from(JSON.stringify(rowData[name] || {}));
+    case DataType.Array:
+      const elementField = { ...field, type: elementType! };
+      return buildFieldData(rowData, elementField);
+    default:
+      return rowData[name];
+  }
 };

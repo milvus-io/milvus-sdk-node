@@ -11,6 +11,7 @@ export interface FieldSchema {
   name: string;
   description: string;
   data_type: keyof typeof DataType;
+  element_type?: keyof typeof DataType;
   dataType?: DataType;
   is_primary_key?: boolean;
   is_partition_key?: boolean;
@@ -44,13 +45,14 @@ export interface ReplicaInfo {
 }
 
 export type TypeParam = string | number;
-export type TypeParamKey = 'dim' | 'max_length';
+export type TypeParamKey = 'dim' | 'max_length' | 'max_capacity';
 
 // create collection
 export interface FieldType {
   name: string;
   description?: string;
   data_type: DataType | keyof typeof DataTypeMap;
+  element_type?: DataType | keyof typeof DataTypeMap;
   is_primary_key?: boolean;
   is_partition_key?: boolean;
   type_params?: {
@@ -58,6 +60,7 @@ export interface FieldType {
   };
   autoID?: boolean;
   dim?: TypeParam;
+  max_capacity?: TypeParam;
   max_length?: TypeParam;
   default_value?: number | string;
 }

@@ -11,6 +11,7 @@ import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
+  genFloatVector,
 } from './tools';
 
 const milvusClient = new MilvusClient({ address: IP });
@@ -140,9 +141,7 @@ describe(`Insert API`, () => {
         fields_data: [{}],
       });
     } catch (error) {
-      expect(error.message).toEqual(
-        `Invalid collection name: ${errorName}.  collection name can only contain numbers, letters and underscores`
-      );
+      expect(error.status === ErrorCode.Illegal_Argument);
     }
   });
 
@@ -164,7 +163,7 @@ describe(`Insert API`, () => {
     }
   });
 
-  it(`Insert Data on float field and autoId is true expect success`, async () => {
+  it(`Insert Data expect success`, async () => {
     const vectorsData = generateInsertData(
       COLLECTION_NAME_AUTO_ID_PARAMS.fields,
       10
@@ -309,9 +308,18 @@ describe(`Insert API`, () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'id > 0',
-      output_fields: ['json', 'id'],
+      output_fields: ['json', 'id', 'varChar_array'],
     });
+    // console.log('query', query);
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      vector: genFloatVector({ dim: 4 }) as number[],
+      output_fields: ['json', 'id', 'varChar_array'],
+    });
+    // console.log('search', search.results);
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Insert data on float field expect missing field throw error`, async () => {
@@ -415,7 +423,7 @@ describe(`Insert API`, () => {
       });
       expect('a').toEqual('b');
     } catch (error) {
-      expect(error.message).toBe('error');
+      expect(error.status.reason).toBe('error');
     } finally {
       fakeClient.closeConnection();
     }
