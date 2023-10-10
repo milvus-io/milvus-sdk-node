@@ -168,7 +168,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   virtual_channel_names: string[]; // not useful for now
   physical_channel_names: string[]; // not useful for now
   start_positions: string[];
-  properties: string[];
+  properties: KeyValuePair[];
   created_timestamp: string;
   created_utc_timestamp: string;
   shards_num: number;
@@ -213,4 +213,8 @@ export interface GetLoadingProgressResponse extends resStatusResponse {
 export interface GetLoadStateReq extends GetLoadingProgressReq {}
 export interface GetLoadStateResponse extends resStatusResponse {
   state: LoadState;
+}
+
+export interface AlterCollectionReq extends collectionNameReq {
+  properties: Record<string, string | number>;
 }

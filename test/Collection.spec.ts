@@ -5,6 +5,7 @@ import {
   ShowCollectionsType,
   ERROR_REASONS,
   LoadState,
+  formatKeyValueData,
 } from '../milvus';
 import {
   IP,
@@ -496,6 +497,23 @@ describe(`Collection API`, () => {
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
+  });
+
+  it(`alter collection success`, async () => {
+    const key = 'collection.ttl.seconds';
+    const value = 18000;
+    const alter = await milvusClient.alterCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+      properties: { [key]: value },
+    });
+
+    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+
+    expect(Number(formatKeyValueData(describe.properties, [key])[key])).toEqual(value);
   });
 
   it(`Create alias success`, async () => {
