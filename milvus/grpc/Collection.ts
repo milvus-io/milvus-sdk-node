@@ -44,8 +44,9 @@ import {
   formatDescribedCol,
   validatePartitionNumbers,
   METADATA,
-  DataTypeMap,
+  AlterCollectionReq,
   DataType,
+  parseToKeyValue,
 } from '../';
 
 /**
@@ -259,6 +260,44 @@ export class Collection extends Database {
       });
     });
     promise.data = result;
+
+    return promise;
+  }
+
+  /**
+   * Modify collection properties
+   *
+   * @param data
+   *  | Property | Type | Description |
+   *  | :-- | :-- | :-- |
+   *  | collection_name | String | Collection name |
+   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *
+   * @returns
+   * | Property | Description |
+   *  | :-- | :-- |
+   *  | status | { error_code: number, reason: string } |
+   *
+   * #### Example
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).alterCollection({
+   *    collection_name: 'my-collection',
+   *    properties: {"collection.ttl.seconds": 18000}
+   * });
+   * ```
+   */
+  async alterCollection(data: AlterCollectionReq): Promise<ResStatus> {
+    checkCollectionName(data);
+    const promise = await promisify(
+      this.client,
+      'AlterCollection',
+      {
+        collection_name: data.collection_name,
+        properties: parseToKeyValue(data.properties),
+      },
+      data?.timeout || this.timeout
+    );
 
     return promise;
   }
