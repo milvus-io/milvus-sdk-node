@@ -61,3 +61,13 @@ export const ERROR_REASONS = {
   PARTITION_KEY_FIELD_MAXED_OUT: `Only ${MAX_PARTITION_KEY_FIELD_COUNT} field supports partition key. `,
   IDS_REQUIRED: 'The `ids` is missing or empty.',
 };
+
+export enum ErrorCode {
+  SUCCESS = 'Success',
+  IndexNotExist = 'IndexNotExist',
+  UnexpectedError = 'UnexpectedError',
+  EmptyCollection = 'EmptyCollection',
+  UpsertAutoIDTrue = 'UpsertAutoIDTrue',
+  CollectionNotExists = 'CollectionNotExists',
+  IllegalArgument = 'IllegalArgument',
+}

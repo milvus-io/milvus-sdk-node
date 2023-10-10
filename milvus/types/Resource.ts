@@ -1,16 +1,10 @@
-import { GrpcTimeOut, ResStatus } from './Common';
+import { GrpcTimeOut, resStatusResponse } from './Common';
 
 export interface CreateResourceGroupReq extends GrpcTimeOut {
   resource_group: string;
 }
-
-export interface DropResourceGroupsReq extends GrpcTimeOut {
-  resource_group: string;
-}
-
-export interface DescribeResourceGroupsReq extends GrpcTimeOut {
-  resource_group: string;
-}
+export interface DropResourceGroupsReq extends CreateResourceGroupReq {}
+export interface DescribeResourceGroupsReq extends CreateResourceGroupReq {}
 
 export interface TransferNodeReq extends GrpcTimeOut {
   source_resource_group: string;
@@ -25,9 +19,8 @@ export interface TransferReplicaReq extends GrpcTimeOut {
   num_replica: number;
 }
 
-export interface ListResourceGroupsResponse {
+export interface ListResourceGroupsResponse extends resStatusResponse {
   resource_groups: string[];
-  status: ResStatus;
 }
 
 type ResourceGroup = {
@@ -39,7 +32,6 @@ type ResourceGroup = {
   num_incoming_node: { [key: string]: number };
 };
 
-export interface DescribeResourceGroupResponse {
+export interface DescribeResourceGroupResponse extends resStatusResponse {
   resource_group: ResourceGroup;
-  status: ResStatus;
 }

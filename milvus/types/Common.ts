@@ -16,19 +16,6 @@ export interface KeyValuePair {
   value: string | number;
 }
 
-export enum IndexState {
-  IndexStateNone = 0,
-  Unissued = 1,
-  InProgress = 2,
-  Finished = 3,
-  Failed = 4,
-}
-
-export enum DslType {
-  Dsl = 0,
-  BoolExprV1 = 1,
-}
-
 interface NumberArray {
   data: Number[];
 }
@@ -57,6 +44,10 @@ export interface ResStatus {
   code?: number;
 }
 
+export interface resStatusResponse {
+  status: ResStatus;
+}
+
 export interface TimeStamp {
   created_timestamp: string; // hybrid timestamp it's milvus inside timestamp
   created_utc_timestamp: string;
@@ -69,4 +60,12 @@ export interface TimeStampArray {
 
 export interface keyValueObj {
   [key: string]: string | number;
+}
+
+export interface collectionNameReq extends GrpcTimeOut {
+  collection_name: string;
+}
+
+export interface partitionNameReq extends collectionNameReq {
+  partition_name?: string;
 }

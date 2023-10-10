@@ -208,7 +208,7 @@ describe(`Milvus Index API`, () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    expect(res.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+    expect(res.error_code).toEqual(ErrorCode.UnexpectedError);
   });
 
   it(`Describe Index with index name`, async () => {
@@ -280,14 +280,14 @@ describe(`Milvus Index API`, () => {
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
-    expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
+    expect(res.status.error_code).toEqual(ErrorCode.IndexNotExist);
 
     const res2 = await milvusClient.describeIndex({
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
       index_name: INDEX_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
-    expect(res.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
-    expect(res2.status.error_code).toEqual(ErrorCode.INDEX_NOT_EXIST);
+    expect(res.status.error_code).toEqual(ErrorCode.IndexNotExist);
+    expect(res2.status.error_code).toEqual(ErrorCode.IndexNotExist);
   });
 });

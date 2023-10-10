@@ -129,7 +129,7 @@ export class MilvusClient extends GRPCClient {
       });
     } else {
       const info = await this.describeIndex({ collection_name });
-      indexNotExist = info.status.error_code === ErrorCode.INDEX_NOT_EXIST;
+      indexNotExist = info.status.error_code === ErrorCode.IndexNotExist;
     }
 
     if (indexNotExist) {

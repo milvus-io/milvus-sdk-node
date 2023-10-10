@@ -4,9 +4,18 @@ import {
   GrpcTimeOut,
   TimeStamp,
   TimeStampArray,
+  resStatusResponse,
+  collectionNameReq,
 } from './Common';
-import { CompactionState, DataType, LoadState, DataTypeMap } from '../';
+import {
+  CompactionState,
+  DataType,
+  LoadState,
+  DataTypeMap,
+  ShowCollectionsType,
+} from '../';
 
+// returned from milvus
 export interface FieldSchema {
   name: string;
   description: string;
@@ -65,11 +74,6 @@ export interface FieldType {
   default_value?: number | string;
 }
 
-export enum ShowCollectionsType {
-  All,
-  Loaded,
-}
-
 export interface ShowCollectionsReq extends GrpcTimeOut {
   type?: ShowCollectionsType;
   collection_names?: string[];
@@ -93,43 +97,33 @@ export interface CreateCollectionReq extends GrpcTimeOut {
   enableDynamicField?: boolean;
 }
 
-export interface CollectionNameReq extends GrpcTimeOut {
-  /**
-   * @param collection_name collection name string
-   */
-  collection_name: string;
-}
-export interface HasCollectionReq extends CollectionNameReq {}
+export interface HasCollectionReq extends collectionNameReq {}
 
-export interface DescribeCollectionReq extends CollectionNameReq {
+export interface DescribeCollectionReq extends collectionNameReq {
   cache?: boolean;
 }
 
-export interface GetCollectionStatisticsReq extends CollectionNameReq {}
+export interface GetCollectionStatisticsReq extends collectionNameReq {}
 
-export interface LoadCollectionReq extends CollectionNameReq {
+export interface LoadCollectionReq extends collectionNameReq {
   replica_number?: number;
   resource_groups?: string[];
   refresh?: boolean;
 }
-export interface ReleaseLoadCollectionReq extends CollectionNameReq {}
+export interface ReleaseLoadCollectionReq extends collectionNameReq {}
 
-export interface DropCollectionReq extends CollectionNameReq {}
+export interface DropCollectionReq extends collectionNameReq {}
 
-export interface CreateAliasReq extends CollectionNameReq {
+// alias type
+export interface CreateAliasReq extends collectionNameReq {
   alias: string;
 }
-
 export interface DropAliasReq extends GrpcTimeOut {
   alias: string;
 }
+export interface AlterAliasReq extends CreateAliasReq {}
 
-export interface AlterAliasReq extends CollectionNameReq {
-  alias: string;
-}
-
-export interface CompactReq extends GrpcTimeOut {
-  collection_name: string;
+export interface CompactReq extends collectionNameReq {
   timetravel?: number | string;
 }
 
@@ -142,24 +136,18 @@ export interface GetCompactionPlansReq extends GrpcTimeOut {
 }
 
 export interface GetReplicaReq extends GrpcTimeOut {
-  /**
-   * @param collectionID collection ID
-   */
   collectionID: number | string;
   with_shard_nodes?: boolean;
 }
 
-export interface RenameCollectionReq extends GrpcTimeOut {
-  collection_name: string;
+export interface RenameCollectionReq extends collectionNameReq {
   new_collection_name: string;
 }
 
-export interface BoolResponse {
-  status: ResStatus;
+export interface BoolResponse extends resStatusResponse {
   value: Boolean;
 }
-export interface CompactionResponse {
-  status: ResStatus;
+export interface CompactionResponse extends resStatusResponse {
   compactionID: string;
 }
 
@@ -188,14 +176,12 @@ export interface DescribeCollectionResponse extends TimeStamp {
   db_name: string;
 }
 
-export interface GetCompactionPlansResponse {
-  status: ResStatus;
+export interface GetCompactionPlansResponse extends resStatusResponse {
   state: CompactionState;
   mergeInfos: { sources: string[]; target: string }[];
 }
 
-export interface GetCompactionStateResponse {
-  status: ResStatus;
+export interface GetCompactionStateResponse extends resStatusResponse {
   state: CompactionState;
   executingPlanNo: string;
   timeoutPlanNo: string;
@@ -207,14 +193,12 @@ export interface ShowCollectionsResponse extends TimeStampArray {
   data: CollectionData[];
 }
 
-export interface StatisticsResponse {
-  status: ResStatus;
+export interface StatisticsResponse extends resStatusResponse {
   stats: KeyValuePair[];
   data: { [x: string]: any };
 }
 
-export interface ReplicasResponse {
-  status: ResStatus;
+export interface ReplicasResponse extends resStatusResponse {
   replicas: ReplicaInfo[];
 }
 
@@ -222,13 +206,11 @@ export interface GetLoadingProgressReq extends GrpcTimeOut {
   collection_name: string;
   partition_names?: string[];
 }
-export interface GetLoadingProgressResponse {
-  status: ResStatus;
+export interface GetLoadingProgressResponse extends resStatusResponse {
   progress: string;
 }
 
 export interface GetLoadStateReq extends GetLoadingProgressReq {}
-export interface GetLoadStateResponse {
-  status: ResStatus;
+export interface GetLoadStateResponse extends resStatusResponse {
   state: LoadState;
 }

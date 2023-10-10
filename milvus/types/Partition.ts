@@ -1,30 +1,21 @@
-import { GrpcTimeOut, ResStatus, TimeStampArray } from './Common';
+import { ResStatus, TimeStampArray, collectionNameReq } from './Common';
 
-interface PartitionParent extends GrpcTimeOut {
-  collection_name: string;
+interface PartitionParent extends collectionNameReq {
   partition_name: string;
 }
 export interface CreatePartitionReq extends PartitionParent {}
-
 export interface HasPartitionReq extends PartitionParent {}
-
 export interface DropPartitionReq extends PartitionParent {}
-
 export interface GetPartitionStatisticsReq extends PartitionParent {}
+export interface ShowPartitionsReq extends collectionNameReq {}
 
-export interface ShowPartitionsReq extends GrpcTimeOut {
-  collection_name: string;
-}
-
-export interface LoadPartitionsReq extends GrpcTimeOut {
-  collection_name: string;
+export interface LoadPartitionsReq extends collectionNameReq {
   partition_names: string[];
   replica_number?: number;
   resource_groups?: string[];
 }
 
-export interface ReleasePartitionsReq extends GrpcTimeOut {
-  collection_name: string;
+export interface ReleasePartitionsReq extends collectionNameReq {
   partition_names: string[];
 }
 

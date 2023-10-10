@@ -161,7 +161,7 @@ describe(`Partition key API`, () => {
       partition_name: 'p',
     });
 
-    expect(res.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+    expect(res.error_code).toEqual(ErrorCode.UnexpectedError);
   });
 
   it(`Describe Collection should be successful`, async () => {
@@ -196,7 +196,7 @@ describe(`Partition key API`, () => {
       output_fields: ['varChar'],
     });
 
-    expect(res.status.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+    expect(res.status.error_code).toEqual(ErrorCode.UnexpectedError);
   });
 
   it(`Search Collection should be successful`, async () => {
@@ -219,6 +219,6 @@ describe(`Partition key API`, () => {
       output_fields: ['varChar'],
     });
 
-    expect(search.status.error_code).toEqual(ErrorCode.UNEXPECTED_ERROR);
+    expect(search.status.error_code).toEqual(ErrorCode.UnexpectedError);
   });
 });

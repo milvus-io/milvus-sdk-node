@@ -1,7 +1,6 @@
 import {
   GrpcTimeOut,
   KeyValuePair,
-  ResStatus,
   NumberArrayId,
   StringArrayId,
   keyValueObj,
@@ -9,10 +8,11 @@ import {
   SegmentState,
   ImportState,
   ConsistencyLevelEnum,
-  CollectionNameReq,
+  collectionNameReq,
+  resStatusResponse,
 } from '../';
 
-// all types supportted by milvus
+// all types supported by milvus
 export type FloatVectors = number[];
 export type BinaryVectors = number[];
 export type Vectors = FloatVectors | BinaryVectors;
@@ -57,10 +57,6 @@ export interface RowData {
   [x: string]: FieldData;
 }
 
-export interface FlushReq extends GrpcTimeOut {
-  collection_names: string[];
-}
-
 export interface Field {
   name: string;
   type: keyof typeof DataType;
@@ -69,23 +65,26 @@ export interface Field {
   dim?: number;
 }
 
-export interface InsertReq extends GrpcTimeOut {
-  collection_name: string;
+export interface FlushReq extends GrpcTimeOut {
+  collection_names: string[];
+}
+
+
+
+export interface InsertReq extends collectionNameReq {
   partition_name?: string;
   fields_data?: RowData[];
   data?: RowData[];
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }
 
-export interface DeleteEntitiesReq extends GrpcTimeOut {
-  collection_name: string;
+export interface DeleteEntitiesReq extends collectionNameReq {
   expr?: string;
   filter?: string;
   partition_name?: string;
 }
 
-export interface DeleteReq extends GrpcTimeOut {
-  collection_name: string;
+export interface DeleteReq extends collectionNameReq {
   ids: string[] | number[];
   partition_name?: string;
 }
@@ -117,16 +116,14 @@ export interface GePersistentSegmentInfoReq extends GrpcTimeOut {
   collectionName: string;
 }
 
-export interface ImportReq extends GrpcTimeOut {
-  collection_name: string;
+export interface ImportReq extends collectionNameReq {
   partition_name?: string;
   channel_names?: string[];
   files: string[];
   options?: KeyValuePair[];
 }
 
-export interface ListImportTasksReq extends GrpcTimeOut {
-  collection_name: string; // target collection, list all tasks if the name is empty
+export interface ListImportTasksReq extends collectionNameReq {
   limit?: number; // maximum number of tasks returned, list all tasks if the value is 0
 }
 
@@ -134,13 +131,11 @@ export interface GetImportStateReq extends GrpcTimeOut {
   task: number;
 }
 
-export interface GetFlushStateResponse {
-  status: ResStatus;
+export interface GetFlushStateResponse extends resStatusResponse {
   flushed: boolean;
 }
 
-export interface GetMetricsResponse {
-  status: ResStatus;
+export interface GetMetricsResponse extends resStatusResponse {
   response: any;
   component_name: string; // metrics from which component
 }
@@ -165,20 +160,17 @@ export interface PersistentSegmentInfo {
   state: SegmentState;
 }
 
-export interface GetQuerySegmentInfoResponse {
-  status: ResStatus;
+export interface GetQuerySegmentInfoResponse extends resStatusResponse {
   infos: QuerySegmentInfo[];
 }
 
-export interface GePersistentSegmentInfoResponse {
-  status: ResStatus;
+export interface GePersistentSegmentInfoResponse extends resStatusResponse {
   infos: PersistentSegmentInfo[];
 }
 
-export interface MutationResult {
+export interface MutationResult extends resStatusResponse {
   succ_index: Number[];
   err_index: Number[];
-  status: ResStatus;
   acknowledged: boolean;
   insert_cnt: string;
   delete_cnt: string;
@@ -187,8 +179,7 @@ export interface MutationResult {
   IDs: StringArrayId | NumberArrayId;
 }
 
-export interface QueryResults {
-  status: ResStatus;
+export interface QueryResults extends resStatusResponse {
   data: { [x: string]: any }[];
 }
 
@@ -198,18 +189,15 @@ export interface SearchResultData {
   id: string;
 }
 
-export interface SearchResults {
-  status: ResStatus;
+export interface SearchResults extends resStatusResponse {
   results: SearchResultData[];
 }
 
-export interface ImportResponse {
-  status: ResStatus;
+export interface ImportResponse extends resStatusResponse {
   tasks: number[];
 }
 
-export interface GetImportStateResponse {
-  status: ResStatus;
+export interface GetImportStateResponse extends resStatusResponse {
   state: ImportState;
   row_count: number;
   id_list: number[];
@@ -220,8 +208,7 @@ export interface GetImportStateResponse {
   create_ts: number;
 }
 
-export interface ListImportTasksResponse {
-  status: ResStatus;
+export interface ListImportTasksResponse extends resStatusResponse {
   tasks: GetImportStateResponse[];
 }
 
@@ -240,8 +227,7 @@ export interface SearchParam {
   ignore_growing?: boolean;
 }
 
-export interface SearchSimpleReq extends GrpcTimeOut {
-  collection_name: string;
+export interface SearchSimpleReq extends collectionNameReq {
   vector?: number[];
   vectors?: number[][];
   data?: number[][] | number[];
@@ -258,8 +244,7 @@ export interface SearchSimpleReq extends GrpcTimeOut {
   ignore_growing?: boolean;
 }
 
-export interface SearchReq extends GrpcTimeOut {
-  collection_name: string;
+export interface SearchReq extends collectionNameReq {
   partition_names?: string[];
   expr?: string;
   // dsl_type: DslType;
@@ -272,8 +257,7 @@ export interface SearchReq extends GrpcTimeOut {
   consistency_level?: ConsistencyLevelEnum;
 }
 
-export interface SearchRes {
-  status: ResStatus;
+export interface SearchRes extends resStatusResponse {
   results: {
     top_k: number;
     fields_data: {
@@ -310,8 +294,7 @@ export interface SearchRes {
   };
 }
 
-export interface QueryReq extends GrpcTimeOut {
-  collection_name: string;
+export interface QueryReq extends collectionNameReq {
   output_fields?: string[];
   partition_names?: string[];
   expr?: string;
@@ -321,8 +304,7 @@ export interface QueryReq extends GrpcTimeOut {
   consistency_level?: ConsistencyLevelEnum;
 }
 
-export interface GetReq extends GrpcTimeOut {
-  collection_name: string;
+export interface GetReq extends collectionNameReq {
   ids: string[] | number[];
   output_fields?: string[];
   partition_names?: string[];
@@ -331,8 +313,7 @@ export interface GetReq extends GrpcTimeOut {
   consistency_level?: ConsistencyLevelEnum;
 }
 
-export interface QueryRes {
-  status: ResStatus;
+export interface QueryRes extends resStatusResponse {
   fields_data: {
     type: DataType;
     field_name: string;
@@ -356,27 +337,24 @@ export interface QueryRes {
   collection_name: string;
 }
 
-export interface FlushResult {
-  status: ResStatus;
+export interface FlushResult extends resStatusResponse {
   coll_segIDs: any; // collection segment id array
 }
 
-export interface ListIndexedSegmentReq extends CollectionNameReq {
+export interface ListIndexedSegmentReq extends collectionNameReq {
   index_name: string;
 }
 
-export interface ListIndexedSegmentResponse {
-  status: ResStatus;
+export interface ListIndexedSegmentResponse extends resStatusResponse {
   segmentIDs: number[];
 }
 
-export interface DescribeSegmentIndexDataReq extends CollectionNameReq {
+export interface DescribeSegmentIndexDataReq extends collectionNameReq {
   index_name: string;
   segmentsIDs: number[];
 }
 
-export interface DescribeSegmentIndexDataResponse {
-  status: ResStatus;
+export interface DescribeSegmentIndexDataResponse extends resStatusResponse {
   index_params: any;
   index_data: any;
 }

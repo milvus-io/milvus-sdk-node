@@ -141,7 +141,7 @@ describe(`Insert API`, () => {
         fields_data: [{}],
       });
     } catch (error) {
-      expect(error.status === ErrorCode.Illegal_Argument);
+      expect(error.status === ErrorCode.IllegalArgument);
     }
   });
 

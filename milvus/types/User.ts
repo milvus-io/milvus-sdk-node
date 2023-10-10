@@ -1,87 +1,63 @@
-import { GrpcTimeOut, PrivilegesTypes, ResStatus } from './Common';
+import { GrpcTimeOut, PrivilegesTypes, resStatusResponse } from './Common';
 import { RbacObjects } from '../';
 
-export interface UpdateUserReq extends GrpcTimeOut {
+// base
+export interface usernameReq extends GrpcTimeOut {
   username: string;
+}
+export interface roleNameReq extends GrpcTimeOut {
+  roleName: string;
+}
+
+export interface CreateUserReq extends usernameReq {
+  password: string;
+}
+export interface DeleteUserReq extends usernameReq {}
+export interface UpdateUserReq extends usernameReq {
   oldPassword: string;
   newPassword: string;
 }
-
-export interface CreateUserReq extends GrpcTimeOut {
-  username: string;
-  password: string;
-}
-
-export interface DeleteUserReq extends GrpcTimeOut {
-  username: string;
-}
-
 export interface ListUsersReq extends GrpcTimeOut {}
 
-export interface CreateRoleReq extends GrpcTimeOut {
-  roleName: string;
-}
-
-export interface DropRoleReq extends GrpcTimeOut {
-  roleName: string;
-}
-export interface HasRoleReq extends GrpcTimeOut {
-  roleName: string;
-}
-
-export interface AddUserToRoleReq extends GrpcTimeOut {
+export interface CreateRoleReq extends roleNameReq {}
+export interface DropRoleReq extends roleNameReq {}
+export interface HasRoleReq extends roleNameReq {}
+export interface AddUserToRoleReq extends roleNameReq {
   username: string;
+}
+export interface RemoveUserFromRoleReq extends AddUserToRoleReq {
   roleName: string;
 }
-
-export interface RemoveUserFromRoleReq extends GrpcTimeOut {
-  username: string;
-  roleName: string;
-}
-
-export interface SelectRoleReq extends GrpcTimeOut {
-  roleName: string;
+export interface SelectRoleReq extends roleNameReq {
   includeUserInfo?: boolean;
 }
-
 export interface listRoleReq extends GrpcTimeOut {
   includeUserInfo?: boolean;
 }
-
-export interface SelectUserReq extends GrpcTimeOut {
-  username: string;
+export interface SelectUserReq extends usernameReq {
   includeRoleInfo?: boolean;
 }
-
-export interface OperateRolePrivilegeReq extends GrpcTimeOut {
-  roleName: string; // grant role name
+export interface OperateRolePrivilegeReq extends roleNameReq {
   object: RbacObjects; // Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.
   objectName: string; // Name of the object to which the role is granted the specified prvilege.
   privilegeName: PrivilegesTypes; // Name of the privilege to be granted to the role. This parameter is case-sensitive.
 }
-
 export interface SelectGrantReq extends OperateRolePrivilegeReq {}
+export interface ListGrantsReq extends roleNameReq {}
 
-export interface ListGrantsReq extends GrpcTimeOut {
-  roleName: string; // grant role name
-}
-
-export interface ListCredUsersResponse {
-  status: ResStatus;
+export interface ListCredUsersResponse extends resStatusResponse {
   usernames: string[];
 }
 
 type RoleEntity = { name: string };
 type User = { name: string };
 type RoleResult = { users: User[]; role: RoleEntity };
-export interface SelectRoleResponse {
-  status: ResStatus;
+export interface SelectRoleResponse extends resStatusResponse {
   results: RoleResult[];
 }
 
 type UserResult = { user: User; roles: RoleEntity[] };
-export interface SelectUserResponse {
-  status: ResStatus;
+export interface SelectUserResponse extends resStatusResponse {
   results: UserResult[];
 }
 type ObjectEntity = { name: RbacObjects };
@@ -93,12 +69,10 @@ type GrantEntity = {
   object_name: string;
   grantor: Grantor;
 };
-export interface SelectGrantResponse {
-  status: ResStatus;
+export interface SelectGrantResponse extends resStatusResponse {
   entities: GrantEntity[];
 }
 
-export interface HasRoleResponse {
-  status: ResStatus;
+export interface HasRoleResponse extends resStatusResponse {
   hasRole: boolean;
 }

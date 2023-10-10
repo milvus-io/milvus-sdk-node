@@ -1,6 +1,5 @@
-// consts
-export * from './Milvus';
+export * from './milvus';
 export * from './limits';
 export * from './defaults';
-export * from './ErrorReason';
+export * from './error';
 export * from './client';

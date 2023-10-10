@@ -140,7 +140,7 @@ describe(`Upsert API`, () => {
         fields_data: [{}],
       });
     } catch (error) {
-      expect(error.status === ErrorCode.Illegal_Argument);
+      expect(error.status === ErrorCode.IllegalArgument);
     }
   });
 
@@ -175,7 +175,7 @@ describe(`Upsert API`, () => {
 
     const res = await milvusClient.upsert(params);
 
-    expect(res.status.error_code).toEqual(ErrorCode.Illegal_Argument);
+    expect(res.status.error_code).toEqual(ErrorCode.IllegalArgument);
   });
 
   it(`Upsert Data on different scalar fields`, async () => {

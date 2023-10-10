@@ -583,6 +583,6 @@ describe(`Data.API`, () => {
   // Load balance only working in cluster, so we can only do the error test
   it(`Load balance should throw UNEXPECTED_ERROR`, async () => {
     const res = await milvusClient.loadBalance({ src_nodeID: 1 });
-    expect(res.error_code).toEqual(ErrorCode.COLLECTION_NOT_EXISTS);
+    expect(res.error_code).toEqual(ErrorCode.CollectionNotExists);
   });
 });

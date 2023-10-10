@@ -1,8 +1,7 @@
-import { DataType, MetricType, CreateIndexParam } from '../';
+import { DataType, MetricType, CreateIndexParam, collectionNameReq } from '../';
 
 // highlevel，only collection_name and dimension are required
-export interface CreateColReq {
-  collection_name: string;
+export interface CreateColReq extends collectionNameReq {
   dimension: number;
   primary_field_name?: string;
   id_type?: DataType.Int64 | DataType.VarChar;

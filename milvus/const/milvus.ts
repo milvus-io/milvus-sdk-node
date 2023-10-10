@@ -1,62 +1,14 @@
-// error codes, not enabled yet
-enum ErrorCode {
-  Success = 0,
-  UnexpectedError = 1,
-  ConnectFailed = 2,
-  PermissionDenied = 3,
-  CollectionNotExists = 4,
-  IllegalArgument = 5,
-  IllegalDimension = 7,
-  IllegalIndexType = 8,
-  IllegalCollectionName = 9,
-  IllegalTOPK = 10,
-  IllegalRowRecord = 11,
-  IllegalVectorID = 12,
-  IllegalSearchResult = 13,
-  FileNotFound = 14,
-  MetaFailed = 15,
-  CacheFailed = 16,
-  CannotCreateFolder = 17,
-  CannotCreateFile = 18,
-  CannotDeleteFolder = 19,
-  CannotDeleteFile = 20,
-  BuildIndexError = 21,
-  IllegalNLIST = 22,
-  IllegalMetricType = 23,
-  OutOfMemory = 24,
-  IndexNotExist = 25,
-  EmptyCollection = 26,
-  UpdateImportTaskFailure = 27,
-  CollectionNameNotFound = 28,
-  CreateCredentialFailure = 29,
-  UpdateCredentialFailure = 30,
-  DeleteCredentialFailure = 31,
-  GetCredentialFailure = 32,
-  ListCredUsersFailure = 33,
-  GetUserFailure = 34,
-  CreateRoleFailure = 35,
-  DropRoleFailure = 36,
-  OperateUserRoleFailure = 37,
-  SelectRoleFailure = 38,
-  SelectUserFailure = 39,
-  SelectResourceFailure = 40,
-  OperatePrivilegeFailure = 41,
-  SelectGrantFailure = 42,
-  RefreshPolicyInfoCacheFailure = 43,
-  ListPolicyFailure = 44,
-  NotShardLeader = 45,
-  NoReplicaAvailable = 46,
-  SegmentNotFound = 47,
-  ForceDeny = 48,
-  RateLimit = 49,
-  NodeIDNotMatch = 50,
+export enum IndexState {
+  IndexStateNone = 0,
+  Unissued = 1,
+  InProgress = 2,
+  Finished = 3,
+  Failed = 4,
+}
 
-  // Service availability.
-  // NA: Not Available.
-  DataCoordNA = 100,
-
-  // internal error code.
-  DDRequestRace = 1000,
+export enum DslType {
+  Dsl = 0,
+  BoolExprV1 = 1,
 }
 
 // consistency levels enum
@@ -412,4 +364,9 @@ export enum LoadState {
   LoadStateNotLoad = 'LoadStateNotLoad',
   LoadStateLoading = 'LoadStateLoading',
   LoadStateLoaded = 'LoadStateLoaded',
+}
+
+export enum ShowCollectionsType {
+  All,
+  Loaded,
 }

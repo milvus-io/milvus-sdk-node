@@ -1,20 +1,18 @@
 import { KeyValuePair, IndexState, keyValueObj } from '../';
-import { GrpcTimeOut, ResStatus } from './Common';
+import { resStatusResponse, collectionNameReq } from './Common';
 
 export interface CreateIndexParam {
   index_type?: string;
   metric_type: string;
   params?: string;
 }
-export interface CreateIndexReq extends GrpcTimeOut {
-  collection_name: string;
+export interface CreateIndexReq extends collectionNameReq {
   field_name: string;
   index_name?: string;
   extra_params?: CreateIndexParam;
 }
 
-export interface CreateIndexSimpleReq extends GrpcTimeOut {
-  collection_name: string;
+export interface CreateIndexSimpleReq extends collectionNameReq {
   field_name: string;
   index_type?: string;
   metric_type?: string;
@@ -22,29 +20,13 @@ export interface CreateIndexSimpleReq extends GrpcTimeOut {
   params?: keyValueObj;
 }
 
-export interface DescribeIndexReq extends GrpcTimeOut {
-  collection_name: string;
+export interface DescribeIndexReq extends collectionNameReq {
   field_name?: string;
   index_name?: string;
 }
-
-export interface GetIndexStateReq extends GrpcTimeOut {
-  collection_name: string;
-  field_name?: string;
-  index_name?: string;
-}
-
-export interface GetIndexBuildProgressReq extends GrpcTimeOut {
-  collection_name: string;
-  field_name?: string;
-  index_name?: string;
-}
-
-export interface DropIndexReq extends GrpcTimeOut {
-  collection_name: string;
-  field_name: string;
-  index_name?: string;
-}
+export interface GetIndexStateReq extends DescribeIndexReq {}
+export interface GetIndexBuildProgressReq extends DescribeIndexReq {}
+export interface DropIndexReq extends DescribeIndexReq {}
 
 export interface IndexDescription {
   index_name: string;
@@ -57,18 +39,15 @@ export interface IndexDescription {
   index_state_fail_reason: string;
   pending_index_rows: string;
 }
-export interface DescribeIndexResponse {
-  status: ResStatus;
+export interface DescribeIndexResponse extends resStatusResponse {
   index_descriptions: IndexDescription[];
 }
 
-export interface GetIndexStateResponse {
-  status: ResStatus;
+export interface GetIndexStateResponse extends resStatusResponse {
   state: IndexState;
 }
 
-export interface GetIndexBuildProgressResponse {
-  status: ResStatus;
+export interface GetIndexBuildProgressResponse extends resStatusResponse {
   indexed_rows: number;
   total_rows: number;
 }
