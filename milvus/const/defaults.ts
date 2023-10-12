@@ -11,3 +11,4 @@ export const DEFAULT_PARTITIONS_NUMBER = 64;
 export const DEFAULT_RESOURCE_GROUP = '__default_resource_group';
 export const DEFAULT_DB = 'default';
 export const DEFAULT_DYNAMIC_FIELD = '$meta';
+export const DEFAULT_COUNT_QUERY_STRING = 'count(*)';

@@ -56,6 +56,9 @@ import {
   Vectors,
   BinaryVectors,
   RowData,
+  CountReq,
+  CountResult,
+  DEFAULT_COUNT_QUERY_STRING,
 } from '../';
 import { Collection } from './Collection';
 
@@ -788,6 +791,18 @@ export class Data extends Collection {
     return {
       status: promise.status,
       data: results,
+    };
+  }
+
+  async count(data: CountReq): Promise<CountResult> {
+    const queryResult = await this.query({
+      collection_name: data.collection_name,
+      output_fields: [DEFAULT_COUNT_QUERY_STRING],
+    });
+
+    return {
+      status: queryResult.status,
+      data: Number(queryResult.data[0][DEFAULT_COUNT_QUERY_STRING]),
     };
   }
 

@@ -69,7 +69,7 @@ export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
 }
 
-
+export interface CountReq extends collectionNameReq {}
 
 export interface InsertReq extends collectionNameReq {
   partition_name?: string;
@@ -181,6 +181,10 @@ export interface MutationResult extends resStatusResponse {
 
 export interface QueryResults extends resStatusResponse {
   data: { [x: string]: any }[];
+}
+
+export interface CountResult extends resStatusResponse {
+  data: number;
 }
 
 export interface SearchResultData {
