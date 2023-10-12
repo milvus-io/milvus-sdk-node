@@ -4,6 +4,7 @@ import {
   ErrorCode,
   ERROR_REASONS,
   DEFAULT_TOPK,
+  DEFAULT_COUNT_QUERY_STRING,
 } from '../milvus';
 import {
   IP,
@@ -450,7 +451,11 @@ describe(`Data.API`, () => {
       output_fields: [queryString],
     });
 
-    expect(res.data.length).toEqual(1);
+    const count = await milvusClient.count({
+      collection_name: COLLECTION_NAME,
+    });
+
+    expect(Number(res.data[0][DEFAULT_COUNT_QUERY_STRING])).toEqual(count.data);
   });
 
   it(`Query with data limit only`, async () => {
