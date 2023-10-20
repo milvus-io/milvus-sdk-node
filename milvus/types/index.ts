@@ -11,3 +11,4 @@ export * from './Resource';
 export * from './Client';
 export * from './MilvusIndex';
 export * from './HighLevel';
+export * from './Http';

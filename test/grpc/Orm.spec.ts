@@ -3,15 +3,15 @@ import {
   ErrorCode,
   DataType,
   ConsistencyLevelEnum,
-} from '../milvus';
+} from '../../milvus';
 import {
   IP,
   genCollectionParams,
   GENERATE_NAME,
   generateInsertData,
   dynamicFields,
-} from './tools';
-import { Collection } from '../milvus/orm';
+} from '../tools';
+import { Collection } from '../../milvus/orm';
 
 let milvusClient = new MilvusClient({ address: IP });
 const EXIST_COLLECTION_NAME = GENERATE_NAME();
