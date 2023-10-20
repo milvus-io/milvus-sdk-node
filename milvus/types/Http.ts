@@ -11,43 +11,34 @@ export interface HttpClientConfig {
   password?: string;
 }
 
-export interface HttpBaseResponse {
-  code: number;
-  data: Record<string, any>;
-}
-
-// collection create request
-export interface HttpCollectionCreate {
+// http base request
+export interface HttpBaseReq {
   dbName: string;
   collectionName: string;
+}
+
+// collection operations request
+export interface HttpCollectionCreateReq extends HttpBaseReq {
   dimension: number;
   metricType: string;
   primaryField: string;
   vectorField: string;
 }
+export interface HttpCollectionDescribeReq extends HttpBaseReq {}
+export interface HttpCollectionDropReq extends HttpBaseReq {}
+export interface HttpCollectionListReq extends HttpBaseReq {}
 
-export interface HttpCollectionDescribeReq {
-  collectionName: string;
-}
-
-export interface HttpCollectionDropReq {
-  collectionName: string;
-}
-
-// vectors
-export interface HttpVectorGetReq {
-  collectionName: string;
+// vector operations request
+export interface HttpVectorGetReq extends HttpBaseReq {
   outputFields: string[];
   id: number | number[];
 }
 
-export interface HttpVectorDeleteReq {
-  collectionName: string;
+export interface HttpVectorDeleteReq extends HttpBaseReq {
   id: number | number[];
 }
 
-export interface HttpVectorQueryBaseReq {
-  collectionName: string;
+export interface HttpVectorQueryBaseReq extends HttpBaseReq {
   outputFields: string[];
   limit?: number;
   offset?: number;
@@ -63,7 +54,12 @@ export interface HttpVectorSearchReq extends HttpVectorQueryBaseReq {
   filter?: string;
 }
 
-export interface HttpVectorInsertReq {
+export interface HttpVectorInsertReq extends HttpBaseReq {
   collectionName: string;
   data: Record<string, any>[];
+}
+
+export interface HttpBaseResponse {
+  code: number;
+  data: Record<string, any>;
 }
