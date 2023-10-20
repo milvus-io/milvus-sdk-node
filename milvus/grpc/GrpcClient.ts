@@ -48,6 +48,7 @@ export class GRPCClient extends User {
         typeof this.config.retryDelay === 'undefined'
           ? DEFAULT_RETRY_DELAY
           : this.config.retryDelay,
+      clientId: this.clientId,
     });
     // interceptors
     const interceptors = [metaInterceptor, retryInterceptor];

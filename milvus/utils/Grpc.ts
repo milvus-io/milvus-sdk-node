@@ -93,9 +93,11 @@ export const getMetaInterceptor = (
 export const getRetryInterceptor = ({
   maxRetries = 3,
   retryDelay = 30,
+  clientId = ''
 }: {
   maxRetries: number;
   retryDelay: number;
+  clientId: string;
 }) =>
   function (options: any, nextCall: any) {
     let savedMetadata: any;
@@ -153,7 +155,7 @@ export const getRetryInterceptor = ({
               const _timeout = deadline.getTime() - startTime.getTime();
               // log
               logger.debug(
-                `[DB:${dbname}:${methodName}] executed failed, status: ${JSON.stringify(
+                `[${clientId}>${dbname}>${methodName}] executed failed, status: ${JSON.stringify(
                   status
                 )}, timeout set: ${_timeout}ms, retry after ${_retryDelay} ms.`
               );
@@ -173,7 +175,7 @@ export const getRetryInterceptor = ({
                       }, _retryDelay);
                     } else {
                       logger.debug(
-                        `[DB:${dbname}:${methodName}] retry run out of ${retries} times. ${JSON.stringify(
+                        `[${clientId}>${dbname}>${methodName}] retry run out of ${retries} times. ${JSON.stringify(
                           status
                         )}`
                       );
@@ -185,7 +187,7 @@ export const getRetryInterceptor = ({
                     }
                   } else {
                     logger.debug(
-                      `[DB:${dbname}:${methodName}] retried successfully in ${
+                      `[${clientId}>${dbname}>${methodName}] retried successfully in ${
                         Date.now() - startTime.getTime()
                       }ms.`
                     );
@@ -210,7 +212,7 @@ export const getRetryInterceptor = ({
               case grpcStatus.UNIMPLEMENTED:
                 // const returnMsg = { error_code: 'Success', reason: '' };
                 logger.debug(
-                  `[DB:${dbname}:${methodName}] returns ${JSON.stringify(
+                  `[${clientId}>${dbname}>${methodName}] returns ${JSON.stringify(
                     status
                   )}`
                 );
@@ -223,7 +225,7 @@ export const getRetryInterceptor = ({
               default:
                 // OK
                 logger.debug(
-                  `[DB:${dbname}:${methodName}] executed in ${
+                  `[${clientId}>${dbname}>${methodName}] executed in ${
                     Date.now() - startTime.getTime()
                   }ms, returns ${JSON.stringify(savedReceiveMessage)}`
                 );
@@ -237,7 +239,7 @@ export const getRetryInterceptor = ({
       },
       sendMessage: function (message: any, next: any) {
         logger.debug(
-          `[DB:${dbname}:${methodName}] sending ${JSON.stringify(message)}`
+          `[${clientId}>${dbname}>${methodName}] sending ${JSON.stringify(message)}`
         );
         savedSendMessage = message;
         next(message);
