@@ -2,36 +2,42 @@ import { MilvusClient, ERROR_REASONS, CONNECT_STATUS } from '../milvus';
 import sdkInfo from '../sdk.json';
 import { IP } from './tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({
+  address: IP,
+});
 
 describe(`Milvus client`, () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  // it(`should create a grpc client with cert file successfully`, () => {
+  // it(`should create a grpc client with cert file successfully`, async () => {
   //   const milvusClient = new MilvusClient({
-  //     address: 'localhost:19530',
+  //     address: IP,
   //     tls: {
   //       rootCertPath: `test/cert/ca.pem`,
   //       privateKeyPath: `test/cert/client.key`,
   //       certChainPath: `test/cert/client.pem`,
-  //       serverName: 'localhost',
+  //       serverName: IP,
   //     },
+  //     id: '1',
   //   });
 
   //   expect(milvusClient.client).toBeDefined();
   //   expect(milvusClient.tlsMode).toEqual(2);
+  //   expect(milvusClient.clientId).toEqual('1');
   // });
 
   it(`should create a grpc client without SSL credentials when ssl is false`, () => {
     const milvusClient = new MilvusClient({
-      address: 'localhost:19530',
+      address: IP,
       ssl: false,
       username: 'username',
       password: 'password',
+      id: '1',
     });
 
+    expect(milvusClient.clientId).toEqual('1');
     expect(milvusClient.client).toBeDefined();
   });
 

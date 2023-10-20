@@ -1,4 +1,5 @@
 import path from 'path';
+import crypto from 'crypto';
 import protobuf, { Root, Type } from 'protobufjs';
 import { Client, ChannelOptions } from '@grpc/grpc-js';
 import {
@@ -25,6 +26,8 @@ const schemaProtoPath = path.resolve(
  * Base gRPC client, setup all configuration here
  */
 export class BaseClient {
+  // Client ID
+  clientId: string = `${crypto.randomUUID()}`;
   // flags to indicate that if the connection is established and its state
   connectStatus = CONNECT_STATUS.NOT_CONNECTED;
   connectPromise = Promise.resolve();
@@ -102,6 +105,11 @@ export class BaseClient {
     // make sure these are strings.
     config.username = config.username || '';
     config.password = config.password || '';
+
+    // overwrite ID if necessary
+    if (config.id) {
+      this.clientId = config.id;
+    }
 
     // Assign the configuration object.
     this.config = config;
