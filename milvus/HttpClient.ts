@@ -1,9 +1,7 @@
-import axios from 'axios';
 import { HttpClientConfig } from './types';
+import { Collection, Vector } from './http';
 
-export class HttpClient {
-  id = 1;
-
+export class API {
   // The client configuration.
   public readonly config: HttpClientConfig;
 
@@ -12,3 +10,5 @@ export class HttpClient {
     this.config = config;
   }
 }
+
+export class HttpClient extends Collection(Vector(API)) {}

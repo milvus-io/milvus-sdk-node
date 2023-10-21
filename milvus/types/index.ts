@@ -11,4 +11,7 @@ export * from './Resource';
 export * from './Client';
 export * from './MilvusIndex';
 export * from './HighLevel';
-export * from './Http';
+export * from './Http'
+
+// Base types
+export type Constructor<T = {}> = new (...args: any[]) => T;

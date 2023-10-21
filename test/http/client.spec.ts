@@ -21,6 +21,9 @@ describe(`Collection HTTP API`, () => {
       address: IP,
     });
 
+    milvusClient.insert('df');
+    milvusClient.createCollection('df2');
+
     expect(milvusClient.config.address).toEqual(IP);
   });
 

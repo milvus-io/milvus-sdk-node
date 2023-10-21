@@ -1,6 +1,8 @@
 import { FloatVectors } from '..';
 
 export interface HttpClientConfig {
+  // database name
+  database?: string;
   // The address of the Milvus server.
   address: string;
   // token
@@ -13,7 +15,7 @@ export interface HttpClientConfig {
 
 // http base request
 export interface HttpBaseReq {
-  dbName: string;
+  dbName?: string;
   collectionName: string;
 }
 
