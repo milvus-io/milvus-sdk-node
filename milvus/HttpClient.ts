@@ -1,7 +1,8 @@
 import { HttpClientConfig } from './types';
 import { Collection, Vector } from './http';
 
-export class API {
+// base class
+export class HttpBaseClient {
   // The client configuration.
   public readonly config: HttpClientConfig;
 
@@ -11,4 +12,5 @@ export class API {
   }
 }
 
-export class HttpClient extends Collection(Vector(API)) {}
+// mixin API
+export class HttpClient extends Collection(Vector(HttpBaseClient)) {}
