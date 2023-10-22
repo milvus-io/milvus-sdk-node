@@ -18,7 +18,7 @@ describe(`Collection HTTP API`, () => {
 
   // Mock configuration object
   const config = {
-    address: IP,
+    baseURL: IP,
   };
 
   // Create an instance of HttpBaseClient with the mock configuration
