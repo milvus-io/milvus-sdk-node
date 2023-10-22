@@ -5,7 +5,7 @@ import { Constructor } from '../types/index';
 export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
     insert(p: string) {
-      console.log('insert', p, this.config);
+      console.log('insert', p, this.authorization);
     }
   };
 }

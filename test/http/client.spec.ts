@@ -1,37 +1,57 @@
-import { HttpClient, MilvusClient } from '../../milvus';
-import { IP } from '../tools';
+import { HttpClient, DEFAULT_DB } from '../../milvus';
 
-const milvusClient = new MilvusClient({ address: IP });
-const dbParam = {
-  db_name: 'HttpClient',
-};
+describe(`HTTP Client test`, () => {
+  it('should return the correct endpoint', () => {
+    // Mock configuration object
+    const config = {
+      address: 'http://example.com',
+    };
 
-describe(`Collection HTTP API`, () => {
-  beforeAll(async () => {
-    await milvusClient.createDatabase(dbParam);
-    await milvusClient.use(dbParam);
+    // Create an instance of HttpBaseClient with the mock configuration
+    const client = new HttpClient(config);
+    expect(client.endpoint).toBe(config.address);
   });
 
-  afterAll(async () => {
-    await milvusClient.dropDatabase(dbParam);
+  it('should return the correct authorization header', () => {
+    // Mock configuration object
+    const config = {
+      address: 'http://example.com',
+      username: 'user',
+      password: 'pass',
+    };
+
+    // Create an instance of HttpBaseClient with the mock configuration
+    const client = new HttpClient(config);
+    const expectedAuthorization = `Authorization: Bearer ${config.username}:${config.password}`;
+    expect(client.authorization).toBe(expectedAuthorization);
+
+    const config2 = {
+      address: 'http://example.com',
+      token: 'token',
+    };
+
+    const client2 = new HttpClient(config2);
+    const expectedAuthorization2 = `Authorization: Bearer ${config2.token}`;
+    expect(client2.authorization).toBe(expectedAuthorization2);
   });
 
-  it(`init http client successfully`, async () => {
-    const milvusClient = new HttpClient({
-      address: IP,
-    });
+  it('should return the correct database', () => {
+    // Mock configuration object
+    const config = {
+      address: 'http://example.com',
+    };
 
-    milvusClient.insert('df');
-    milvusClient.createCollection('df2');
+    // Create an instance of HttpBaseClient with the mock configuration
+    const client = new HttpClient(config);
+    expect(client.database).toBe(DEFAULT_DB);
+    // Mock configuration object
+    const config2 = {
+      address: 'http://example.com',
+      database: 'db',
+    };
 
-    expect(milvusClient.config.address).toEqual(IP);
-  });
-
-  it(`client config should be set`, async () => {
-    const milvusClient = new HttpClient({
-      address: IP,
-    });
-
-    expect(milvusClient.config.address).toEqual(IP);
+    // Create an instance of HttpBaseClient with the mock configuration
+    const client2 = new HttpClient(config2);
+    expect(client2.database).toBe(config2.database);
   });
 });

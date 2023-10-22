@@ -5,6 +5,8 @@ export interface HttpClientConfig {
   database?: string;
   // The address of the Milvus server.
   address: string;
+  // alias of address
+  url?: string;
   // token
   token?: string;
   // The username to use for authentication.
