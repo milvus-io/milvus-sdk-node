@@ -23,7 +23,7 @@ describe(`Vector HTTP API tests`, () => {
   const COLLECTION_NAME = GENERATE_NAME();
   const params = {
     collectionName: COLLECTION_NAME,
-    dim: 8,
+    dim: 4,
     enableDynamic: true,
   };
   const count = 10;
@@ -76,5 +76,28 @@ describe(`Vector HTTP API tests`, () => {
 
     expect(insert.code).toEqual(200);
     expect(insert.data.insertCount).toEqual(count);
+  });
+
+  it('should query data successfully', async () => {
+    const query = await client.query({
+      collectionName: createPraram.collectionName,
+      outputFields: ['*'],
+      filter: 'id > 0',
+    });
+
+    expect(query.code).toEqual(200);
+    expect(query.data.length).toEqual(data.length);
+  });
+
+  it('should search data successfully', async () => {
+    const search = await client.search({
+      collectionName: createPraram.collectionName,
+      outputFields: ['*'],
+      vector: [1, 2, 3, 4],
+      limit: 5
+    });
+
+    expect(search.code).toEqual(200);
+    expect(search.data.length).toEqual(5);
   });
 });
