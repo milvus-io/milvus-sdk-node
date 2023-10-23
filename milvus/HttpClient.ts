@@ -26,7 +26,29 @@ export class HttpBaseClient {
       withCredentials: true,
       headers: {
         Authorization: this.authorization,
+        Accept: 'application/json',
+        ContentType: 'application/json',
       },
+    });
+
+    // interceptors
+    this._client.interceptors.request.use(request => {
+      // if dbName is not set, using default database
+      // GET
+      if (request.params) {
+        request.params.dbName = request.params.dbName || this.database;
+      }
+      // POST
+      if (request.data) {
+        request.data.dbName = request.data.dbName || this.database;
+        request.data = JSON.stringify(request.data);
+      }
+
+      // console.log('request: ', request.data);
+      return request;
+    });
+    this._client.interceptors.response.use(response => {
+      return response.data;
     });
   }
 

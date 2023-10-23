@@ -1,4 +1,6 @@
 import { FloatVectors } from '..';
+// Base types
+export type Constructor<T = {}> = new (...args: any[]) => T;
 
 type HttpClientConfigBase = {
   // database name
@@ -43,10 +45,13 @@ export interface HttpCollectionCreateReq extends HttpBaseReq {
   metricType: string;
   primaryField: string;
   vectorField: string;
+  description?: string;
 }
 export interface HttpCollectionDescribeReq extends HttpBaseReq {}
 export interface HttpCollectionDropReq extends HttpBaseReq {}
-export interface HttpCollectionListReq extends HttpBaseReq {}
+export interface HttpCollectionListReq {
+  dbName?: string;
+}
 
 // vector operations request
 export interface HttpVectorGetReq extends HttpBaseReq {
@@ -79,7 +84,37 @@ export interface HttpVectorInsertReq extends HttpBaseReq {
   data: Record<string, any>[];
 }
 
-export interface HttpBaseResponse {
+export interface HttpBaseResponse<T = {}> {
   code: number;
-  data: Record<string, any>;
+  data: T;
 }
+
+type Field = {
+  autoId?: boolean;
+  description: string;
+  primaryKey?: boolean;
+  type: string;
+};
+
+type Index = {
+  fieldName: string;
+  indexName: string;
+  metricType: string;
+};
+type CollectionDetail = {
+  collectionName: string;
+  description: string;
+  fields: Field[];
+  indexes: Index[];
+  load: string;
+  shardsNum: number;
+  enableDynamic: boolean;
+};
+
+type CollectionNames = string[];
+
+export interface HttpCollectionDescribeResponse
+  extends HttpBaseResponse<CollectionDetail> {}
+
+export interface HttpCollectionListResponse
+  extends HttpBaseResponse<CollectionNames> {}

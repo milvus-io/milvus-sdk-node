@@ -4,4 +4,5 @@ export * from './const';
 export * from './utils';
 
 // test IP
-export const IP = '10.102.6.214:19530';
+export const IP = '10.102.7.206:19530';
+export const ADDRESS = `http://${IP}`;

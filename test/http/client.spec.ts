@@ -6,7 +6,7 @@ import {
 } from '../../milvus';
 
 describe(`HTTP Client test`, () => {
-  const baseURL = 'https://192.168.0.1:19530';
+  const baseURL = 'http://192.168.0.1:19530';
   const version = 'v3';
   const username = 'user';
   const password = 'pass';
