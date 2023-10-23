@@ -10,16 +10,17 @@ import {
 // base class
 export class HttpBaseClient {
   // The client configuration.
-  protected _config: HttpClientConfig;
+  public config: HttpClientConfig;
 
-  protected _client: AxiosInstance;
+  // axiso
+  public client: AxiosInstance;
 
   constructor(config: HttpClientConfig) {
     // Assign the configuration object.
-    this._config = config;
+    this.config = config;
 
     // setup axios client
-    this._client = axios.create({
+    this.client = axios.create({
       baseURL: this.baseURL,
       timeout: this.timeout,
       timeoutErrorMessage: '',
@@ -32,7 +33,7 @@ export class HttpBaseClient {
     });
 
     // interceptors
-    this._client.interceptors.request.use(request => {
+    this.client.interceptors.request.use(request => {
       // if dbName is not set, using default database
       // GET
       if (request.params) {
@@ -47,7 +48,7 @@ export class HttpBaseClient {
       // console.log('request: ', request.data);
       return request;
     });
-    this._client.interceptors.response.use(response => {
+    this.client.interceptors.response.use(response => {
       return response.data;
     });
   }
@@ -55,19 +56,19 @@ export class HttpBaseClient {
   // baseURL
   get baseURL() {
     return (
-      this._config.baseURL ||
-      `${this._config.address}/${
-        this._config.version || DEFAULT_HTTP_ENDPOINT_VERSION
+      this.config.baseURL ||
+      `${this.config.address}/${
+        this.config.version || DEFAULT_HTTP_ENDPOINT_VERSION
       }`
     );
   }
 
   // authorization
   get authorization() {
-    let token = this._config.token || '';
+    let token = this.config.token || '';
 
-    if (!token && this._config.username && this._config.password) {
-      token = this._config.username + ':' + this._config.password;
+    if (!token && this.config.username && this.config.password) {
+      token = this.config.username + ':' + this.config.password;
     }
 
     return `Bearer ${token}`;
@@ -75,17 +76,12 @@ export class HttpBaseClient {
 
   // database
   get database() {
-    return this._config.database || DEFAULT_DB;
+    return this.config.database || DEFAULT_DB;
   }
 
   // timeout
   get timeout() {
-    return this._config.timeout || DEFAULT_HTTP_TIMEOUT;
-  }
-
-  // client
-  get client() {
-    return this._client;
+    return this.config.timeout || DEFAULT_HTTP_TIMEOUT;
   }
 
   get post() {

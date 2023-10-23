@@ -3,10 +3,10 @@ import { IP, ADDRESS } from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const dbParam = {
-  db_name: 'HttpClient_collections',
+  db_name: 'HttpClient_vectors',
 };
 
-describe(`Collection HTTP API tests`, () => {
+describe(`Vector HTTP API tests`, () => {
   // Mock configuration object
   const config = {
     address: ADDRESS,
@@ -31,9 +31,9 @@ describe(`Collection HTTP API tests`, () => {
   });
 
   afterAll(async () => {
-    // await milvusClient.dropCollection({
-    //   collection_name: createPraram.collectionName,
-    // });
+    await milvusClient.dropCollection({
+      collection_name: createPraram.collectionName,
+    });
     await milvusClient.dropDatabase(dbParam);
   });
 
@@ -46,31 +46,5 @@ describe(`Collection HTTP API tests`, () => {
 
     expect(create.code).toEqual(200);
     expect(hasCollection.value).toEqual(true);
-  });
-
-  it('should describe createCollection successfully', async () => {
-    const describe = await client.describeCollection({
-      collectionName: createPraram.collectionName,
-    });
-
-    expect(describe.code).toEqual(200);
-    expect(describe.data.description).toEqual(createPraram.description);
-    expect(describe.data.shardsNum).toEqual(1);
-    expect(describe.data.enableDynamic).toEqual(true);
-    expect(describe.data.fields.length).toEqual(2);
-  });
-
-  it('should list collections successfully', async () => {
-    const list = await client.listCollection();
-    expect(list.code).toEqual(200);
-    expect(list.data[0]).toEqual(createPraram.collectionName);
-  });
-
-  it('should drop collection successfully', async () => {
-    const drop = await client.dropCollection({
-      collectionName: createPraram.collectionName,
-    });
-
-    expect(drop.code).toEqual(200);
   });
 });
