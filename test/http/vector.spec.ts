@@ -1,5 +1,12 @@
 import { HttpClient, MilvusClient } from '../../milvus';
-import { IP, ADDRESS } from '../tools';
+import {
+  IP,
+  ADDRESS,
+  generateInsertData,
+  dynamicFields,
+  genCollectionParams,
+  GENERATE_NAME,
+} from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const dbParam = {
@@ -13,9 +20,22 @@ describe(`Vector HTTP API tests`, () => {
     database: dbParam.db_name,
   };
 
+  const COLLECTION_NAME = GENERATE_NAME();
+  const params = {
+    collectionName: COLLECTION_NAME,
+    dim: 8,
+    enableDynamic: true,
+  };
+  const count = 10;
+  const COLLECTION_PARAMS = genCollectionParams(params);
+  const data = generateInsertData(
+    [...COLLECTION_PARAMS.fields, ...dynamicFields],
+    count
+  );
+
   const createPraram = {
-    dimension: 4,
-    collectionName: 'my_collection',
+    dimension: params.dim,
+    collectionName: params.collectionName,
     metricType: 'L2',
     primaryField: 'id',
     vectorField: 'vector',
@@ -46,5 +66,15 @@ describe(`Vector HTTP API tests`, () => {
 
     expect(create.code).toEqual(200);
     expect(hasCollection.value).toEqual(true);
+  });
+
+  it('should insert data successfully', async () => {
+    const insert = await client.insert({
+      collectionName: createPraram.collectionName,
+      data: data,
+    });
+
+    expect(insert.code).toEqual(200);
+    expect(insert.data.insertCount).toEqual(count);
   });
 });

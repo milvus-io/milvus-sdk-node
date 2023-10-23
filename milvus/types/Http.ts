@@ -89,9 +89,20 @@ export interface HttpCollectionListResponse
   extends HttpBaseResponse<CollectionNames> {}
 
 // vector operations
+export interface HttpVectorInsertReq extends HttpBaseReq {
+  collectionName: string;
+  data: Record<string, any>[];
+}
+
+export interface HttpVectorInsertResponse
+  extends HttpBaseResponse<{
+    insertCount: number;
+    insertIds: number | string[];
+  }> {}
+
 export interface HttpVectorGetReq extends HttpBaseReq {
-  outputFields: string[];
   id: number | number[];
+  outputFields: string[];
 }
 
 export interface HttpVectorDeleteReq extends HttpBaseReq {
@@ -112,9 +123,4 @@ export interface HttpVectorQueryReq extends HttpVectorQueryBaseReq {
 export interface HttpVectorSearchReq extends HttpVectorQueryBaseReq {
   vector: FloatVectors;
   filter?: string;
-}
-
-export interface HttpVectorInsertReq extends HttpBaseReq {
-  collectionName: string;
-  data: Record<string, any>[];
 }
