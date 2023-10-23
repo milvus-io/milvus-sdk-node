@@ -1,46 +1,61 @@
-import { HttpClient, DEFAULT_DB, DEFAULT_HTTP_TIMEOUT } from '../../milvus';
+import {
+  HttpClient,
+  DEFAULT_DB,
+  DEFAULT_HTTP_TIMEOUT,
+  DEFAULT_HTTP_ENDPOINT_VERSION,
+} from '../../milvus';
 
 describe(`HTTP Client test`, () => {
+  const baseURL = 'https://192.168.0.1:19530';
+  const version = 'v3';
+  const username = 'user';
+  const password = 'pass';
+  const token = 'token';
+  const database = 'db';
+  const timeout = 5000;
+
   it('should return the correct baseURL', () => {
     // Mock configuration object
     const config = {
-      baseURL: 'http://example.com',
+      baseURL,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
     const client = new HttpClient(config);
-    expect(client.baseURL).toBe(config.baseURL);
+    expect(client.baseURL).toBe(baseURL);
   });
 
   it('should return the correct baseURL if only provide address', () => {
     // Mock configuration object
     const config = {
-      address: 'https://192.168.0.1:19530',
+      address: baseURL,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
     const client = new HttpClient(config);
-    expect(client.baseURL).toBe(`${config.address}/v1`);
+    expect(client.baseURL).toBe(
+      `${config.address}/${DEFAULT_HTTP_ENDPOINT_VERSION}`
+    );
   });
 
   it('should return the correct baseURL if version is defined', () => {
     // Mock configuration object
     const config = {
-      address: 'https://192.168.0.1:19530',
-      version: 'v3',
+      address: baseURL,
+      version,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
     const client = new HttpClient(config);
-    expect(client.baseURL).toBe(`${config.address}/v3`);
+    expect(client.baseURL).toBe(`${config.address}/${version}`);
   });
 
   it('should return the correct authorization header', () => {
     // Mock configuration object
     const config = {
-      baseURL: 'http://example.com',
-      username: 'user',
-      password: 'pass',
+      baseURL,
+      username,
+      password,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
@@ -49,8 +64,8 @@ describe(`HTTP Client test`, () => {
     expect(client.authorization).toBe(expectedAuthorization);
 
     const config2 = {
-      baseURL: 'http://example.com',
-      token: 'token',
+      baseURL,
+      token,
     };
 
     const client2 = new HttpClient(config2);
@@ -61,7 +76,7 @@ describe(`HTTP Client test`, () => {
   it('should return the correct database', () => {
     // Mock configuration object
     const config = {
-      baseURL: 'http://example.com',
+      baseURL,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
@@ -69,19 +84,19 @@ describe(`HTTP Client test`, () => {
     expect(client.database).toBe(DEFAULT_DB);
     // Mock configuration object
     const config2 = {
-      baseURL: 'http://example.com',
-      database: 'db',
+      baseURL,
+      database,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
     const client2 = new HttpClient(config2);
-    expect(client2.database).toBe(config2.database);
+    expect(client2.database).toBe(database);
   });
 
   it('should return the correct timeout', () => {
     // Mock configuration object
     const config = {
-      baseURL: 'http://example.com',
+      baseURL,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
@@ -89,12 +104,12 @@ describe(`HTTP Client test`, () => {
     expect(client.timeout).toBe(DEFAULT_HTTP_TIMEOUT);
     // Mock configuration object
     const config2 = {
-      baseURL: 'http://example.com',
-      timeout: 100,
+      baseURL,
+      timeout,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
     const client2 = new HttpClient(config2);
-    expect(client2.timeout).toBe(config2.timeout);
+    expect(client2.timeout).toBe(timeout);
   });
 });
