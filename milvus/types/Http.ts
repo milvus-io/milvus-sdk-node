@@ -1,5 +1,5 @@
 import { FloatVectors } from '..';
-// Base types
+// Class types
 export type Constructor<T = {}> = new (...args: any[]) => T;
 
 type HttpClientConfigBase = {
@@ -38,6 +38,12 @@ export interface HttpBaseReq {
   dbName?: string;
   collectionName: string;
 }
+// http base response
+export interface HttpBaseResponse<T = {}> {
+  code: number;
+  data: T;
+  message?: string;
+}
 
 // collection operations
 export interface HttpCollectionCreateReq extends HttpBaseReq {
@@ -47,17 +53,9 @@ export interface HttpCollectionCreateReq extends HttpBaseReq {
   vectorField: string;
   description?: string;
 }
-export interface HttpCollectionDescribeReq extends HttpBaseReq {}
-export interface HttpCollectionDropReq extends HttpBaseReq {}
-export interface HttpCollectionListReq {
-  dbName?: string;
-}
-
-export interface HttpBaseResponse<T = {}> {
-  code: number;
-  data: T;
-  message?: string;
-}
+// list collection request
+export interface HttpCollectionListReq
+  extends Omit<HttpBaseReq, 'collectionName'> {}
 
 type Field = {
   autoId?: boolean;
@@ -71,46 +69,48 @@ type Index = {
   indexName: string;
   metricType: string;
 };
-type CollectionDetail = {
-  collectionName: string;
-  description: string;
-  fields: Field[];
-  indexes: Index[];
-  load: string;
-  shardsNum: number;
-  enableDynamic: boolean;
-};
 
-type CollectionNames = string[];
-
+// describe collection response
 export interface HttpCollectionDescribeResponse
-  extends HttpBaseResponse<CollectionDetail> {}
+  extends HttpBaseResponse<{
+    collectionName: string;
+    description: string;
+    fields: Field[];
+    indexes: Index[];
+    load: string;
+    shardsNum: number;
+    enableDynamic: boolean;
+  }> {}
 
+// list collections response
 export interface HttpCollectionListResponse
-  extends HttpBaseResponse<CollectionNames> {}
+  extends HttpBaseResponse<string[]> {}
 
 // vector operations
+// insert data request
 export interface HttpVectorInsertReq extends HttpBaseReq {
-  collectionName: string;
   data: Record<string, any>[];
 }
 
+// insert data response
 export interface HttpVectorInsertResponse
   extends HttpBaseResponse<{
     insertCount: number;
     insertIds: number | string[];
   }> {}
 
+// get vector request
 export interface HttpVectorGetReq extends HttpBaseReq {
   id: number | number[];
   outputFields: string[];
 }
 
-export interface HttpVectorDeleteReq extends HttpBaseReq {
-  id: number | number[];
-}
+// delete vector request
+export interface HttpVectorDeleteReq
+  extends Omit<HttpVectorGetReq, 'outputFields'> {}
 
-export interface HttpVectorQueryBaseReq extends HttpBaseReq {
+// query data request
+export interface HttpVectorQueryReq extends HttpBaseReq {
   outputFields: string[];
   filter: string;
   limit?: number;
@@ -120,15 +120,13 @@ export interface HttpVectorQueryBaseReq extends HttpBaseReq {
 
 type QueryResult = Record<string, string | number>[];
 
-export interface HttpVectorQueryReq extends HttpVectorQueryBaseReq {
-  filter: string;
-}
-
+// query response
 export interface HttpVectorQueryResponse
   extends HttpBaseResponse<QueryResult> {}
 
+// search request
 export interface HttpVectorSearchReq
-  extends Omit<HttpVectorQueryBaseReq, 'filter'> {
+  extends Omit<HttpVectorQueryReq, 'filter'> {
   vector: FloatVectors;
   filter?: string;
 }

@@ -4,7 +4,7 @@ import {
   HttpVectorGetReq,
   HttpVectorInsertReq,
   HttpVectorInsertResponse,
-  HttpVectorQueryBaseReq,
+  HttpVectorQueryReq,
   HttpVectorQueryResponse,
   HttpVectorSearchReq,
   HttpVectorDeleteReq,
@@ -14,7 +14,7 @@ import {
 export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
     // GET describe collection
-    async get(params: HttpVectorGetReq): Promise<any> {
+    async get(params: HttpVectorGetReq): Promise<HttpBaseResponse> {
       const url = `/vector/get`;
       return await this.GET(url, { params });
     }
@@ -27,7 +27,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
 
     // POST query data
     async query(
-      data: HttpVectorQueryBaseReq
+      data: HttpVectorQueryReq
     ): Promise<HttpVectorQueryResponse> {
       const url = `/vector/query`;
       return await this.POST(url, data);

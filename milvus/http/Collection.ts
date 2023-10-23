@@ -4,10 +4,9 @@ import {
   HttpCollectionCreateReq,
   HttpCollectionListReq,
   HttpCollectionListResponse,
-  HttpCollectionDescribeReq,
   HttpCollectionDescribeResponse,
-  HttpCollectionDropReq,
   HttpBaseResponse,
+  HttpBaseReq,
 } from '../types';
 
 export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
@@ -22,16 +21,14 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
 
     // GET describe collection
     async describeCollection(
-      params: HttpCollectionDescribeReq
+      params: HttpBaseReq
     ): Promise<HttpCollectionDescribeResponse> {
       const url = `/vector/collections/describe`;
       return await this.GET(url, { params });
     }
 
     // POST drop collection
-    async dropCollection(
-      data: HttpCollectionDropReq
-    ): Promise<HttpBaseResponse> {
+    async dropCollection(data: HttpBaseReq): Promise<HttpBaseResponse> {
       const url = `/vector/collections/drop`;
 
       return await this.POST(url, data);
