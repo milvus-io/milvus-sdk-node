@@ -17,7 +17,7 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
       data: HttpCollectionCreateReq
     ): Promise<HttpBaseResponse> {
       const url = `/vector/collections/create`;
-      return await this.post(url, data);
+      return await this.POST(url, data);
     }
 
     // GET describe collection
@@ -25,7 +25,7 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
       params: HttpCollectionDescribeReq
     ): Promise<HttpCollectionDescribeResponse> {
       const url = `/vector/collections/describe`;
-      return await this.get(url, { params });
+      return await this.GET(url, { params });
     }
 
     // POST drop collection
@@ -34,7 +34,7 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
     ): Promise<HttpBaseResponse> {
       const url = `/vector/collections/drop`;
 
-      return await this.post(url, data);
+      return await this.POST(url, data);
     }
 
     // GET list collections
@@ -43,7 +43,7 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
     ): Promise<HttpCollectionListResponse> {
       const url = `/vector/collections`;
 
-      return await this.get(url, { params });
+      return await this.GET(url, { params });
     }
   };
 }

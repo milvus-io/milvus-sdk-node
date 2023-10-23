@@ -84,11 +84,11 @@ export class HttpBaseClient {
     return this.config.timeout || DEFAULT_HTTP_TIMEOUT;
   }
 
-  get post() {
+  get POST() {
     return this.client.post;
   }
 
-  get get() {
+  get GET() {
     return this.client.get;
   }
 }

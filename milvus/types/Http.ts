@@ -56,6 +56,7 @@ export interface HttpCollectionListReq {
 export interface HttpBaseResponse<T = {}> {
   code: number;
   data: T;
+  message?: string;
 }
 
 type Field = {
