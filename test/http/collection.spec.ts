@@ -13,7 +13,7 @@ describe(`Collection HTTP API tests`, () => {
     database: dbParam.db_name,
   };
 
-  const createPraram = {
+  const createParams = {
     dimension: 4,
     collectionName: 'my_collection',
     metricType: 'L2',
@@ -32,16 +32,16 @@ describe(`Collection HTTP API tests`, () => {
 
   afterAll(async () => {
     // await milvusClient.dropCollection({
-    //   collection_name: createPraram.collectionName,
+    //   collection_name: createParams.collectionName,
     // });
     await milvusClient.dropDatabase(dbParam);
   });
 
   it('should call createCollection successfully', async () => {
-    const create = await client.createCollection(createPraram);
+    const create = await client.createCollection(createParams);
 
     const hasCollection = await milvusClient.hasCollection({
-      collection_name: createPraram.collectionName,
+      collection_name: createParams.collectionName,
     });
 
     expect(create.code).toEqual(200);
@@ -50,11 +50,11 @@ describe(`Collection HTTP API tests`, () => {
 
   it('should describe createCollection successfully', async () => {
     const describe = await client.describeCollection({
-      collectionName: createPraram.collectionName,
+      collectionName: createParams.collectionName,
     });
 
     expect(describe.code).toEqual(200);
-    expect(describe.data.description).toEqual(createPraram.description);
+    expect(describe.data.description).toEqual(createParams.description);
     expect(describe.data.shardsNum).toEqual(1);
     expect(describe.data.enableDynamic).toEqual(true);
     expect(describe.data.fields.length).toEqual(2);
@@ -63,12 +63,12 @@ describe(`Collection HTTP API tests`, () => {
   it('should list collections successfully', async () => {
     const list = await client.listCollection();
     expect(list.code).toEqual(200);
-    expect(list.data[0]).toEqual(createPraram.collectionName);
+    expect(list.data[0]).toEqual(createParams.collectionName);
   });
 
   it('should drop collection successfully', async () => {
     const drop = await client.dropCollection({
-      collectionName: createPraram.collectionName,
+      collectionName: createParams.collectionName,
     });
 
     expect(drop.code).toEqual(200);

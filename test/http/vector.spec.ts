@@ -33,7 +33,7 @@ describe(`Vector HTTP API tests`, () => {
     count
   );
 
-  const createPraram = {
+  const createParams = {
     dimension: params.dim,
     collectionName: params.collectionName,
     metricType: 'L2',
@@ -52,16 +52,16 @@ describe(`Vector HTTP API tests`, () => {
 
   afterAll(async () => {
     await milvusClient.dropCollection({
-      collection_name: createPraram.collectionName,
+      collection_name: createParams.collectionName,
     });
     await milvusClient.dropDatabase(dbParam);
   });
 
   it('should call createCollection successfully', async () => {
-    const create = await client.createCollection(createPraram);
+    const create = await client.createCollection(createParams);
 
     const hasCollection = await milvusClient.hasCollection({
-      collection_name: createPraram.collectionName,
+      collection_name: createParams.collectionName,
     });
 
     expect(create.code).toEqual(200);
@@ -70,7 +70,7 @@ describe(`Vector HTTP API tests`, () => {
 
   it('should insert data successfully', async () => {
     const insert = await client.insert({
-      collectionName: createPraram.collectionName,
+      collectionName: createParams.collectionName,
       data: data,
     });
 
@@ -80,7 +80,7 @@ describe(`Vector HTTP API tests`, () => {
 
   it('should query data successfully', async () => {
     const query = await client.query({
-      collectionName: createPraram.collectionName,
+      collectionName: createParams.collectionName,
       outputFields: ['*'],
       filter: 'id > 0',
     });
@@ -91,7 +91,7 @@ describe(`Vector HTTP API tests`, () => {
 
   it('should search data successfully', async () => {
     const search = await client.search({
-      collectionName: createPraram.collectionName,
+      collectionName: createParams.collectionName,
       outputFields: ['*'],
       vector: [1, 2, 3, 4],
       limit: 5

@@ -12,7 +12,7 @@ export class HttpBaseClient {
   // The client configuration.
   public config: HttpClientConfig;
 
-  // axiso
+  // axios
   public client: AxiosInstance;
 
   constructor(config: HttpClientConfig) {
