@@ -101,7 +101,7 @@ export interface HttpVectorInsertResponse
 
 // get vector request
 export interface HttpVectorGetReq extends HttpBaseReq {
-  id: number | number[];
+  id: number | number[] | string | string[];
   outputFields: string[];
 }
 

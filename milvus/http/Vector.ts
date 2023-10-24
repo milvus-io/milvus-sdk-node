@@ -9,7 +9,6 @@ import {
   HttpVectorSearchReq,
   HttpVectorDeleteReq,
   HttpVectorSearchResponse,
-  HttpBaseReq,
   HttpBaseResponse,
 } from '../types';
 
