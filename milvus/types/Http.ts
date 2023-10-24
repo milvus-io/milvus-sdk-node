@@ -112,13 +112,13 @@ export interface HttpVectorDeleteReq
 // query data request
 export interface HttpVectorQueryReq extends HttpBaseReq {
   outputFields: string[];
-  filter: string;
+  filter?: string;
   limit?: number;
   offset?: number;
   params?: Record<string, string | number>;
 }
 
-type QueryResult = Record<string, string | number>[];
+type QueryResult = Record<string, any>[];
 
 // query response
 export interface HttpVectorQueryResponse
@@ -129,4 +129,8 @@ export interface HttpVectorSearchReq
   extends Omit<HttpVectorQueryReq, 'filter'> {
   vector: FloatVectors;
   filter?: string;
+}
+
+export interface HttpVectorSearchResponse extends HttpVectorQueryResponse {
+  data: QueryResult & { distance: number | string };
 }

@@ -8,12 +8,14 @@ import {
   HttpVectorQueryResponse,
   HttpVectorSearchReq,
   HttpVectorDeleteReq,
+  HttpVectorSearchResponse,
+  HttpBaseReq,
   HttpBaseResponse,
 } from '../types';
 
 export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
-    // GET describe collection
+    // GET get data
     async get(params: HttpVectorGetReq): Promise<HttpBaseResponse> {
       const url = `/vector/get`;
       return await this.GET(url, { params });
@@ -26,15 +28,13 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
     }
 
     // POST query data
-    async query(
-      data: HttpVectorQueryReq
-    ): Promise<HttpVectorQueryResponse> {
+    async query(data: HttpVectorQueryReq): Promise<HttpVectorQueryResponse> {
       const url = `/vector/query`;
       return await this.POST(url, data);
     }
 
     // POST search data
-    async search(data: HttpVectorSearchReq): Promise<HttpVectorQueryResponse> {
+    async search(data: HttpVectorSearchReq): Promise<HttpVectorSearchResponse> {
       const url = `/vector/search`;
       return await this.POST(url, data);
     }

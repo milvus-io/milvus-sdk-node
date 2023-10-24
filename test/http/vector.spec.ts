@@ -94,10 +94,11 @@ describe(`Vector HTTP API tests`, () => {
       collectionName: createParams.collectionName,
       outputFields: ['*'],
       vector: [1, 2, 3, 4],
-      limit: 5
+      limit: 5,
     });
 
     expect(search.code).toEqual(200);
     expect(search.data.length).toEqual(5);
+    expect(typeof search.data[0].distance).toEqual('number');
   });
 });
