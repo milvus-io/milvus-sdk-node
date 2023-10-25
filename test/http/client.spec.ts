@@ -25,29 +25,29 @@ describe(`HTTP Client test`, () => {
     expect(client.baseURL).toBe(baseURL);
   });
 
-  it('should return the correct baseURL if only provide address', () => {
+  it('should return the correct baseURL if only provide endpoint', () => {
     // Mock configuration object
     const config = {
-      address: baseURL,
+      endpoint: baseURL,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
     const client = new HttpClient(config);
     expect(client.baseURL).toBe(
-      `${config.address}/${DEFAULT_HTTP_ENDPOINT_VERSION}`
+      `${config.endpoint}/${DEFAULT_HTTP_ENDPOINT_VERSION}`
     );
   });
 
   it('should return the correct baseURL if version is defined', () => {
     // Mock configuration object
     const config = {
-      address: baseURL,
+      endpoint: baseURL,
       version,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
     const client = new HttpClient(config);
-    expect(client.baseURL).toBe(`${config.address}/${version}`);
+    expect(client.baseURL).toBe(`${config.endpoint}/${version}`);
   });
 
   it('should return the correct authorization header', () => {

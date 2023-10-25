@@ -1,5 +1,5 @@
 import { HttpClient, MilvusClient } from '../../milvus';
-import { IP, ADDRESS } from '../tools';
+import { IP, ENDPOINT } from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const dbParam = {
@@ -9,7 +9,7 @@ const dbParam = {
 describe(`Collection HTTP API tests`, () => {
   // Mock configuration object
   const config = {
-    address: ADDRESS,
+    endpoint: ENDPOINT,
     database: dbParam.db_name,
   };
 

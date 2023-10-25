@@ -1,7 +1,7 @@
 import { HttpClient, MilvusClient } from '../../milvus';
 import {
   IP,
-  ADDRESS,
+  ENDPOINT,
   generateInsertData,
   dynamicFields,
   genCollectionParams,
@@ -16,7 +16,7 @@ const dbParam = {
 describe(`Vector HTTP API tests`, () => {
   // Mock configuration object
   const config = {
-    address: ADDRESS,
+    endpoint: ENDPOINT,
     database: dbParam.db_name,
   };
 
@@ -81,7 +81,7 @@ describe(`Vector HTTP API tests`, () => {
   it('should query data successfully', async () => {
     const query = await client.query({
       collectionName: createParams.collectionName,
-      outputFields: ['*'],
+      outputFields: ['id'],
       filter: 'id > 0',
     });
 

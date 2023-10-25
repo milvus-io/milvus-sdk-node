@@ -57,7 +57,7 @@ export class HttpBaseClient {
   get baseURL() {
     return (
       this.config.baseURL ||
-      `${this.config.address}/${
+      `${this.config.endpoint}/${
         this.config.version || DEFAULT_HTTP_ENDPOINT_VERSION
       }`
     );

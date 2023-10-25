@@ -29,7 +29,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
     // POST query data
     async query(data: HttpVectorQueryReq): Promise<HttpVectorQueryResponse> {
       const url = `/vector/query`;
-      return await this.POST(url, data);
+      return await this.client.post(url, data);
     }
 
     // POST search data

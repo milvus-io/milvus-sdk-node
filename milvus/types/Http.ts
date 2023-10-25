@@ -19,12 +19,12 @@ type HttpClientConfigBase = {
 
 type HttpClientConfigAddress = HttpClientConfigBase & {
   // The address in the format of ${MILVUS_HOST}:${MILVUS_PORT}, for example: 127.0.0.1:19530. It is used to build the baseURL for the HTTP client.
-  address: string;
+  endpoint: string;
   baseURL?: string;
 };
 
 type HttpClientConfigBaseURL = HttpClientConfigBase & {
-  address?: string;
+  endpoint?: string;
   // The baseURL is the endpoint's base URL. It is in the format https://${MILVUS_HOST}:${MILVUS_PORT}/v1/. If baseURL is set, it will override the address property.
   baseURL: string;
 };
