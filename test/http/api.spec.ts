@@ -1,12 +1,18 @@
 import { HttpClient, MilvusClient } from '../../milvus';
-import { IP, ENDPOINT } from '../tools';
+import {
+  IP,
+  ENDPOINT,
+  genCollectionParams,
+  generateInsertData,
+  dynamicFields,
+} from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const dbParam = {
   db_name: 'HttpClient_collections',
 };
 
-describe(`Collection HTTP API tests`, () => {
+describe(`HTTP API tests`, () => {
   // Mock configuration object
   const config = {
     endpoint: ENDPOINT,
@@ -21,6 +27,19 @@ describe(`Collection HTTP API tests`, () => {
     vectorField: 'vector',
     description: 'des',
   };
+
+  const count = 10;
+  const data = generateInsertData(
+    [
+      ...genCollectionParams({
+        collectionName: createParams.collectionName,
+        dim: createParams.dimension,
+        enableDynamic: true,
+      }).fields,
+      ...dynamicFields,
+    ],
+    count
+  );
 
   // Create an instance of HttpBaseClient with the mock configuration
   const client = new HttpClient(config);
@@ -37,7 +56,7 @@ describe(`Collection HTTP API tests`, () => {
     await milvusClient.dropDatabase(dbParam);
   });
 
-  it('should call createCollection successfully', async () => {
+  it('should create collection successfully', async () => {
     const create = await client.createCollection(createParams);
 
     const hasCollection = await milvusClient.hasCollection({
@@ -48,7 +67,7 @@ describe(`Collection HTTP API tests`, () => {
     expect(hasCollection.value).toEqual(true);
   });
 
-  it('should describe createCollection successfully', async () => {
+  it('should describe collection successfully', async () => {
     const describe = await client.describeCollection({
       collectionName: createParams.collectionName,
     });
@@ -64,6 +83,40 @@ describe(`Collection HTTP API tests`, () => {
     const list = await client.listCollection();
     expect(list.code).toEqual(200);
     expect(list.data[0]).toEqual(createParams.collectionName);
+  });
+
+  it('should insert data successfully', async () => {
+    const insert = await client.insert({
+      collectionName: createParams.collectionName,
+      data: data,
+    });
+
+    expect(insert.code).toEqual(200);
+    expect(insert.data.insertCount).toEqual(count);
+  });
+
+  it('should query data successfully', async () => {
+    const query = await client.query({
+      collectionName: createParams.collectionName,
+      outputFields: ['id'],
+      filter: 'id > 0',
+    });
+
+    expect(query.code).toEqual(200);
+    expect(query.data.length).toEqual(data.length);
+  });
+
+  it('should search data successfully', async () => {
+    const search = await client.search({
+      collectionName: createParams.collectionName,
+      outputFields: ['*'],
+      vector: [1, 2, 3, 4],
+      limit: 5,
+    });
+
+    expect(search.code).toEqual(200);
+    expect(search.data.length).toEqual(5);
+    expect(typeof search.data[0].distance).toEqual('number');
   });
 
   it('should drop collection successfully', async () => {
