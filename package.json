@@ -10,10 +10,10 @@
   "scripts": {
     "pre": "git submodule update --remote && rm -rf proto/proto/google && mkdir -p proto/proto/google/protobuf && wget https://raw.githubusercontent.com/protocolbuffers/protobuf/main/src/google/protobuf/descriptor.proto -O proto/proto/google/protobuf/descriptor.proto",
     "build": "rm -rf dist && tsc --declaration && node build.js",
-    "testAll": "jest --testPathIgnorePatterns=/test/build/,cloud.spec.ts,serverless.spec.ts",
+    "testAll": "jest --testPathIgnorePatterns=/test/build/",
     "test": "NODE_ENV=dev jest",
     "bench": "ts-node test/tools/bench.ts",
-    "coverage": "NODE_ENV=dev jest --coverage=true --config jest.config.js --no-cache --testPathIgnorePatterns=/test/build/,cloud.spec.ts,serverless.spec.ts",
+    "coverage": "NODE_ENV=dev jest --coverage=true --config jest.config.js --no-cache --testPathIgnorePatterns=/test/build/",
     "build-test": " yarn build && jest test/build/Collection.spec.ts",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc",
