@@ -12,8 +12,8 @@
     "build": "rm -rf dist && tsc --declaration && node build.js",
     "test": "NODE_ENV=dev jest",
     "bench": "ts-node test/tools/bench.ts",
-    "coverage": "NODE_ENV=dev jest --coverage=true --config jest.config.js --no-cache --testPathIgnorePatterns=/test/build/",
-    "build-test": " yarn build && NODE_ENV=dev jest test/build/Collection.spec.ts",
+    "coverage": "NODE_ENV=dev jest --coverage=true --config jest.config.js --no-cache",
+    "build-test": " yarn build && NODE_ENV=dev jest test/build/Collection.spec.ts --testPathIgnorePatterns=none",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc",
     "doc-json": "npx typedoc milvus --json"
