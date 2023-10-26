@@ -13,4 +13,4 @@ export const DEFAULT_DB = 'default';
 export const DEFAULT_DYNAMIC_FIELD = '$meta';
 export const DEFAULT_COUNT_QUERY_STRING = 'count(*)';
 export const DEFAULT_HTTP_TIMEOUT = 60000; // 60s
-export const DEFAULT_HTTP_ENDPOINT_VERSION = 'v1'; // 60s
+export const DEFAULT_HTTP_ENDPOINT_VERSION = 'v1'; // api version, default v1
