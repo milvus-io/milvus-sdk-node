@@ -10,3 +10,4 @@ export * from './types/User';
 export * from './types/Resource';
 export * from './types/Client';
 export * from './types/HighLevel';
+export * from './types/Http';

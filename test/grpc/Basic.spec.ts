@@ -1,5 +1,5 @@
-import { MilvusClient, ErrorCode, DataType } from '../milvus';
-import { IP, GENERATE_NAME, generateInsertData } from './tools';
+import { MilvusClient, ErrorCode, DataType } from '../../milvus';
+import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();

@@ -1,5 +1,5 @@
-import { MilvusClient, ErrorCode, DEFAULT_DB } from '../milvus';
-import { IP, genCollectionParams, GENERATE_NAME } from './tools';
+import { MilvusClient, ErrorCode, DEFAULT_DB } from '../../milvus';
+import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
 
 let milvusClient = new MilvusClient({ address: IP });
 const DB_NAME = GENERATE_NAME('database');

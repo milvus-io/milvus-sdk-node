@@ -4,13 +4,13 @@ import {
   ErrorCode,
   ERROR_REASONS,
   DEFAULT_PARTITIONS_NUMBER,
-} from '../milvus';
+} from '../../milvus';
 import {
   IP,
   genCollectionParams,
   GENERATE_NAME,
   generateInsertData,
-} from './tools';
+} from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
