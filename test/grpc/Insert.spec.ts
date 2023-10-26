@@ -4,7 +4,7 @@ import {
   ErrorCode,
   InsertReq,
   ERROR_REASONS,
-} from '../milvus';
+} from '../../milvus';
 import {
   IP,
   generateInsertData,
@@ -12,7 +12,7 @@ import {
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
   genFloatVector,
-} from './tools';
+} from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();

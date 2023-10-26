@@ -5,7 +5,7 @@ import {
   ERROR_REASONS,
   DEFAULT_TOPK,
   DEFAULT_COUNT_QUERY_STRING,
-} from '../milvus';
+} from '../../milvus';
 import {
   IP,
   generateInsertData,
@@ -13,8 +13,8 @@ import {
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
   // DEFAULT_VALUE,
-} from './tools';
-import { timeoutTest } from './tools';
+} from '../tools';
+import { timeoutTest } from '../tools';
 
 const milvusClient = new MilvusClient({
   address: IP,

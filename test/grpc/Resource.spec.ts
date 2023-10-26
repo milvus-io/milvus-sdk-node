@@ -1,10 +1,10 @@
-import { MilvusClient, ErrorCode } from '../milvus';
+import { MilvusClient, ErrorCode } from '../../milvus';
 import {
   IP,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
-} from './tools';
+} from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 

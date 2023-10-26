@@ -1,11 +1,11 @@
 import * as path from 'path';
-import { MilvusClient, DataType, ErrorCode } from '../milvus';
+import { MilvusClient, DataType, ErrorCode } from '../../milvus';
 import {
   IP,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
-} from './tools';
+} from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();

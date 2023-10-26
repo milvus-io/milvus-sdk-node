@@ -1,12 +1,12 @@
-import { MilvusClient, ErrorCode, MetricType, IndexType } from '../milvus';
+import { MilvusClient, ErrorCode, MetricType, IndexType } from '../../milvus';
 import {
   IP,
   genCollectionParams,
   VECTOR_FIELD_NAME,
   INDEX_NAME,
   GENERATE_NAME,
-} from './tools';
-import { timeoutTest } from './tools';
+} from '../tools';
+import { timeoutTest } from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 // names
