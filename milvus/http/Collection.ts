@@ -35,7 +35,7 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
     }
 
     // GET list collections
-    async listCollection(
+    async listCollections(
       params: HttpCollectionListReq = {}
     ): Promise<HttpCollectionListResponse> {
       const url = `/vector/collections`;

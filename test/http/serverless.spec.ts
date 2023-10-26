@@ -55,7 +55,7 @@ describe(`Serverless restful API tests`, () => {
   });
 
   it('should list collections successfully', async () => {
-    const list = await client.listCollection();
+    const list = await client.listCollections();
     expect(list.code).toEqual(200);
     expect(list.data.indexOf(createParams.collectionName) !== -1).toEqual(true);
   });

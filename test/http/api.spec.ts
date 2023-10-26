@@ -80,7 +80,7 @@ describe(`HTTP API tests`, () => {
   });
 
   it('should list collections successfully', async () => {
-    const list = await client.listCollection();
+    const list = await client.listCollections();
     expect(list.code).toEqual(200);
     expect(list.data[0]).toEqual(createParams.collectionName);
   });
