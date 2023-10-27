@@ -24,7 +24,7 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
       params: HttpBaseReq
     ): Promise<HttpCollectionDescribeResponse> {
       const url = `/vector/collections/describe`;
-      return await this.GET<HttpCollectionDescribeResponse>(url, { params });
+      return await this.GET<HttpCollectionDescribeResponse>(url, params);
     }
 
     // POST drop collection
@@ -40,7 +40,7 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
     ): Promise<HttpCollectionListResponse> {
       const url = `/vector/collections`;
 
-      return await this.GET<HttpCollectionListResponse>(url, { params });
+      return await this.GET<HttpCollectionListResponse>(url, params);
     }
   };
 }

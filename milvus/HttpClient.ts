@@ -1,4 +1,4 @@
-import fetch, { AbortError } from 'node-fetch';
+import fetch from 'node-fetch';
 import { HttpClientConfig } from './types';
 import { Collection, Vector } from './http';
 import {
@@ -56,7 +56,7 @@ export class HttpBaseClient {
     };
   }
 
-  async POST<T>(url: string, data: Record<string, any>): Promise<T> {
+  async POST<T>(url: string, data: Record<string, any> = {}): Promise<T> {
     try {
       // timeout controller
       const controller = new AbortController();
@@ -75,32 +75,38 @@ export class HttpBaseClient {
       });
 
       clearTimeout(id);
-
       return response.json() as T;
     } catch (error) {
-      if (error instanceof AbortError) {
+      if (error.name === 'AbortError') {
         console.log('request was timeout');
       }
       return Promise.reject(error);
     }
   }
 
-  async GET<T>(url: string, params: Record<string, any>): Promise<T> {
+  async GET<T>(url: string, params: Record<string, any> = {}): Promise<T> {
     try {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), this.timeout);
 
+      // assign data
+      if (params) {
+        params.dbName = params.dbName || this.database;
+      }
+
       const queryParams = new URLSearchParams(params);
+
       const response = await fetch(`${this.baseURL}${url}?${queryParams}`, {
         method: 'get',
         headers: this.headers,
+        signal: controller.signal,
       });
 
       clearTimeout(id);
 
       return response.json() as T;
     } catch (error) {
-      if (error instanceof AbortError) {
+      if (error.name === 'AbortError') {
         console.log('request was timeout');
       }
       return Promise.reject(error);

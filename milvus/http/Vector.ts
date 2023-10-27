@@ -17,11 +17,17 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
     // GET get data
     async get(params: HttpVectorGetReq): Promise<HttpBaseResponse> {
       const url = `/vector/get`;
-      return await this.GET<HttpBaseResponse>(url, { params });
+      return await this.GET<HttpBaseResponse>(url, params);
     }
 
     // POST insert data
     async insert(data: HttpVectorInsertReq): Promise<HttpVectorInsertResponse> {
+      const url = `/vector/insert`;
+      return await this.POST<HttpVectorInsertResponse>(url, data);
+    }
+
+    // POST insert data
+    async upsert(data: HttpVectorInsertReq): Promise<HttpVectorInsertResponse> {
       const url = `/vector/insert`;
       return await this.POST<HttpVectorInsertResponse>(url, data);
     }
