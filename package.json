@@ -21,9 +21,9 @@
   "dependencies": {
     "@grpc/grpc-js": "1.8.17",
     "@grpc/proto-loader": "0.7.7",
-    "axios": "^1.5.1",
     "dayjs": "^1.11.7",
     "lru-cache": "^9.1.2",
+    "node-fetch": "^3.3.2",
     "protobufjs": "7.2.4",
     "winston": "^3.9.0"
   },

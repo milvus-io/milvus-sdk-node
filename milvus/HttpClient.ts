@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import fetch, { AbortError } from 'node-fetch';
 import { HttpClientConfig } from './types';
 import { Collection, Vector } from './http';
 import {
@@ -12,45 +12,9 @@ export class HttpBaseClient {
   // The client configuration.
   public config: HttpClientConfig;
 
-  // axios
-  public client: AxiosInstance;
-
   constructor(config: HttpClientConfig) {
     // Assign the configuration object.
     this.config = config;
-
-    // setup axios client
-    this.client = axios.create({
-      baseURL: this.baseURL,
-      timeout: this.timeout,
-      timeoutErrorMessage: '',
-      withCredentials: true,
-      headers: {
-        Authorization: this.authorization,
-        Accept: 'application/json',
-        ContentType: 'application/json',
-      },
-    });
-
-    // interceptors
-    this.client.interceptors.request.use(request => {
-      // if dbName is not set, using default database
-      // GET
-      if (request.params) {
-        request.params.dbName = request.params.dbName || this.database;
-      }
-      // POST
-      if (request.data) {
-        request.data.dbName = request.data.dbName || this.database;
-        request.data = JSON.stringify(request.data);
-      }
-
-      // console.log('request: ', request.data);
-      return request;
-    });
-    this.client.interceptors.response.use(response => {
-      return response.data;
-    });
   }
 
   // baseURL
@@ -84,12 +48,63 @@ export class HttpBaseClient {
     return this.config.timeout || DEFAULT_HTTP_TIMEOUT;
   }
 
-  get POST() {
-    return this.client.post;
+  get headers() {
+    return {
+      Authorization: this.authorization,
+      Accept: 'application/json',
+      ContentType: 'application/json',
+    };
   }
 
-  get GET() {
-    return this.client.get;
+  async POST<T>(url: string, data: Record<string, any>): Promise<T> {
+    try {
+      // timeout controller
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), this.timeout);
+
+      // assign data
+      if (data) {
+        data.dbName = data.dbName || this.database;
+      }
+
+      const response = await fetch(`${this.baseURL}${url}`, {
+        method: 'post',
+        headers: this.headers,
+        body: JSON.stringify(data),
+        signal: controller.signal,
+      });
+
+      clearTimeout(id);
+
+      return response.json() as T;
+    } catch (error) {
+      if (error instanceof AbortError) {
+        console.log('request was timeout');
+      }
+      return Promise.reject(error);
+    }
+  }
+
+  async GET<T>(url: string, params: Record<string, any>): Promise<T> {
+    try {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), this.timeout);
+
+      const queryParams = new URLSearchParams(params);
+      const response = await fetch(`${this.baseURL}${url}?${queryParams}`, {
+        method: 'get',
+        headers: this.headers,
+      });
+
+      clearTimeout(id);
+
+      return response.json() as T;
+    } catch (error) {
+      if (error instanceof AbortError) {
+        console.log('request was timeout');
+      }
+      return Promise.reject(error);
+    }
   }
 }
 

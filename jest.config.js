@@ -13,4 +13,11 @@ module.exports = {
   testEnvironmentOptions: {
     NODE_ENV: 'production',
   },
+  transform: {
+    "^.+\\.(ts|tsx)$": "ts-jest",
+    "^.+\\.(js)$": "babel-jest",
+  },
+  transformIgnorePatterns: [
+    "/node_modules/(?!node-fetch)/"
+  ]
 };
