@@ -8,6 +8,11 @@ import {
   HttpBaseResponse,
   HttpBaseReq,
 } from '../types';
+import {
+  DEFAULT_PRIMARY_KEY_FIELD,
+  DEFAULT_METRIC_TYPE,
+  DEFAULT_VECTOR_FIELD,
+} from '../const';
 
 export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
@@ -16,6 +21,12 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
       data: HttpCollectionCreateReq
     ): Promise<HttpBaseResponse> {
       const url = `/vector/collections/create`;
+
+      // if some keys not provided, using default value
+      data.metricType = data.metricType || DEFAULT_METRIC_TYPE;
+      data.primaryField = data.primaryField || DEFAULT_PRIMARY_KEY_FIELD;
+      data.vectorField = data.vectorField || DEFAULT_VECTOR_FIELD;
+
       return await this.POST<HttpBaseResponse>(url, data);
     }
 

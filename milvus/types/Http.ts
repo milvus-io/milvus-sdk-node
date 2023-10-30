@@ -48,9 +48,9 @@ export interface HttpBaseResponse<T = {}> {
 // collection operations
 export interface HttpCollectionCreateReq extends HttpBaseReq {
   dimension: number;
-  metricType: string;
-  primaryField: string;
-  vectorField: string;
+  metricType?: string;
+  primaryField?: string;
+  vectorField?: string;
   description?: string;
 }
 // list collection request

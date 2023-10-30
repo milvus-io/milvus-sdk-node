@@ -12,6 +12,9 @@ import {
   CreateCollectionReq,
   ERROR_REASONS,
   checkCreateCollectionCompatibility,
+  DEFAULT_PRIMARY_KEY_FIELD,
+  DEFAULT_METRIC_TYPE,
+  DEFAULT_VECTOR_FIELD,
 } from '.';
 import sdkInfo from '../sdk.json';
 
@@ -91,10 +94,10 @@ export class MilvusClient extends GRPCClient {
     const {
       collection_name,
       dimension,
-      primary_field_name = 'id',
+      primary_field_name = DEFAULT_PRIMARY_KEY_FIELD,
       id_type = DataType.Int64,
-      metric_type = 'IP',
-      vector_field_name = 'vector',
+      metric_type = DEFAULT_METRIC_TYPE,
+      vector_field_name = DEFAULT_VECTOR_FIELD,
       enableDynamicField = true,
       enable_dynamic_field = true,
       auto_id = false,

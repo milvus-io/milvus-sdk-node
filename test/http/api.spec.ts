@@ -1,4 +1,9 @@
-import { HttpClient, MilvusClient } from '../../milvus';
+import {
+  HttpClient,
+  MilvusClient,
+  DEFAULT_METRIC_TYPE,
+  DEFAULT_VECTOR_FIELD,
+} from '../../milvus';
 import {
   IP,
   ENDPOINT,
@@ -26,6 +31,11 @@ describe(`HTTP API tests`, () => {
     primaryField: 'id',
     vectorField: 'vector',
     description: 'des',
+  };
+
+  const createDefaultParams = {
+    collectionName: 'default_collection_name',
+    dimension: 128,
   };
 
   const count = 10;
@@ -67,22 +77,51 @@ describe(`HTTP API tests`, () => {
     expect(hasCollection.value).toEqual(true);
   });
 
+  it('should create collection with only dimension successfully', async () => {
+    const createDefault = await client.createCollection(createDefaultParams);
+
+    expect(createDefault.code).toEqual(200);
+  });
+
   it('should describe collection successfully', async () => {
     const describe = await client.describeCollection({
       collectionName: createParams.collectionName,
     });
 
     expect(describe.code).toEqual(200);
+    expect(describe.data.collectionName).toEqual(createParams.collectionName);
     expect(describe.data.description).toEqual(createParams.description);
     expect(describe.data.shardsNum).toEqual(1);
     expect(describe.data.enableDynamic).toEqual(true);
     expect(describe.data.fields.length).toEqual(2);
+    expect(describe.data.indexes[0].fieldName).toEqual(
+      createParams.vectorField
+    );
+    expect(describe.data.indexes[0].metricType).toEqual(
+      createParams.metricType
+    );
+  });
+
+  it('should describe default collection successfully', async () => {
+    const describe = await client.describeCollection({
+      collectionName: createDefaultParams.collectionName,
+    });
+
+    expect(describe.code).toEqual(200);
+    expect(describe.data.collectionName).toEqual(
+      createDefaultParams.collectionName
+    );
+    expect(describe.data.shardsNum).toEqual(1);
+    expect(describe.data.enableDynamic).toEqual(true);
+    expect(describe.data.fields.length).toEqual(2);
+    expect(describe.data.indexes[0].fieldName).toEqual(DEFAULT_VECTOR_FIELD);
+    expect(describe.data.indexes[0].metricType).toEqual(DEFAULT_METRIC_TYPE);
   });
 
   it('should list collections successfully', async () => {
     const list = await client.listCollections();
     expect(list.code).toEqual(200);
-    expect(list.data[0]).toEqual(createParams.collectionName);
+    expect(list.data.indexOf(createParams.collectionName) !== -1).toEqual(true);
   });
 
   it('should insert data successfully', async () => {
@@ -125,5 +164,10 @@ describe(`HTTP API tests`, () => {
     });
 
     expect(drop.code).toEqual(200);
+
+    const dropDefault = await client.dropCollection({
+      collectionName: createDefaultParams.collectionName,
+    });
+    expect(dropDefault.code).toEqual(200);
   });
 });
