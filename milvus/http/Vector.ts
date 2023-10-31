@@ -12,6 +12,20 @@ import {
   HttpBaseResponse,
 } from '../types';
 
+/**
+ * Vector is a mixin function that extends the functionality of a base class.
+ * It provides methods to interact with vectors in a Milvus cluster.
+ *
+ * @param {Constructor<HttpBaseClient>} Base - The base class to be extended.
+ * @returns {class} - The extended class with additional methods for vector management.
+ *
+ * @method get - Retrieves a specific vector from Milvus.
+ * @method insert - Inserts a new vector into Milvus.
+ * @method upsert - Inserts a new vector into Milvus, or updates it if it already exists.
+ * @method query - Queries for vectors in Milvus.
+ * @method search - Searches for vectors in Milvus.
+ * @method delete - Deletes a specific vector from Milvus.
+ */
 export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
     // GET get data

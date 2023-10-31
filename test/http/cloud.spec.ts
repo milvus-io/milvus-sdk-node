@@ -6,4 +6,4 @@ const config = {
   password: 'password',
 };
 
-generateTests(config);
+generateTests('cloud decidated api test', config);

@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import { HttpClientConfig } from './types';
 import { Collection, Vector } from './http';
 import {
@@ -7,7 +6,26 @@ import {
   DEFAULT_HTTP_ENDPOINT_VERSION,
 } from '../milvus/const';
 
-// base class
+/**
+ * HttpBaseClient is a base class for making HTTP requests to a Milvus server.
+ * It provides basic functionality for making GET and POST requests, and handles
+ * configuration, headers, and timeouts.
+ *
+ * The HttpClientConfig object should contain the following properties:
+ * - endpoint: The URL of the Milvus server.
+ * - username: (Optional) The username for authentication.
+ * - password: (Optional) The password for authentication.
+ * - token: (Optional) The token for authentication.
+ * - fetch: (Optional) An alternative fetch API implementation, e.g., node-fetch for Node.js environments.
+ * - baseURL: (Optional) The base URL for the API endpoints.
+ * - version: (Optional) The version of the API endpoints.
+ * - database: (Optional) The default database to use for requests.
+ * - timeout: (Optional) The timeout for requests in milliseconds.
+ *
+ * Note: This is a base class and does not provide specific methods for interacting
+ * with Milvus entities like collections or vectors. For that, use the HttpClient class
+ * which extends this class and mixes in the Collection and Vector APIs.
+ */
 export class HttpBaseClient {
   // The client configuration.
   public config: HttpClientConfig;
@@ -15,6 +33,15 @@ export class HttpBaseClient {
   constructor(config: HttpClientConfig) {
     // Assign the configuration object.
     this.config = config;
+
+    // The fetch method used for requests can be customized by providing a fetch property in the configuration.
+    // If no fetch method is provided, the global fetch method will be used if available.
+    // If no global fetch method is available, an error will be thrown.
+    if (!this.config.fetch && typeof fetch === 'undefined') {
+      throw new Error(
+        'The Fetch API is not supported in this environment. Please provide an alternative, for example, node-fetch.'
+      );
+    }
   }
 
   // baseURL
@@ -48,6 +75,7 @@ export class HttpBaseClient {
     return this.config.timeout || DEFAULT_HTTP_TIMEOUT;
   }
 
+  // headers
   get headers() {
     return {
       Authorization: this.authorization,
@@ -56,18 +84,24 @@ export class HttpBaseClient {
     };
   }
 
+  // fetch
+  get fetch() {
+    return this.config.fetch || fetch;
+  }
+
+  // POST API
   async POST<T>(url: string, data: Record<string, any> = {}): Promise<T> {
     try {
       // timeout controller
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), this.timeout);
 
-      // assign data
+      // assign database
       if (data) {
         data.dbName = data.dbName || this.database;
       }
 
-      const response = await fetch(`${this.baseURL}${url}`, {
+      const response = await this.fetch(`${this.baseURL}${url}`, {
         method: 'post',
         headers: this.headers,
         body: JSON.stringify(data),
@@ -78,41 +112,45 @@ export class HttpBaseClient {
       return response.json() as T;
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.log('request was timeout');
+        console.warn('milvus http client: request was timeout');
       }
       return Promise.reject(error);
     }
   }
 
+  // GET API
   async GET<T>(url: string, params: Record<string, any> = {}): Promise<T> {
     try {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), this.timeout);
 
-      // assign data
+      // assign database
       if (params) {
         params.dbName = params.dbName || this.database;
       }
 
       const queryParams = new URLSearchParams(params);
 
-      const response = await fetch(`${this.baseURL}${url}?${queryParams}`, {
-        method: 'get',
-        headers: this.headers,
-        signal: controller.signal,
-      });
+      const response = await this.fetch(
+        `${this.baseURL}${url}?${queryParams}`,
+        {
+          method: 'get',
+          headers: this.headers,
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(id);
 
       return response.json() as T;
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.log('request was timeout');
+        console.warn('milvus http client: request was timeout');
       }
       return Promise.reject(error);
     }
   }
 }
 
-// mixin APIs
+// The HttpClient class extends the functionality of the HttpBaseClient class by mixing in the Collection and Vector APIs.
 export class HttpClient extends Collection(Vector(HttpBaseClient)) {}

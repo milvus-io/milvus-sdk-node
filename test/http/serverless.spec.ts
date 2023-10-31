@@ -5,4 +5,4 @@ const config = {
   token: 'serverless api key',
 };
 
-generateTests(config);
+generateTests('serverless api test', config);

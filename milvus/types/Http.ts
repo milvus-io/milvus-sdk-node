@@ -1,4 +1,6 @@
 import { FloatVectors } from '..';
+type Fetch = (input: any, init?: any) => Promise<any>;
+
 // Class types
 export type Constructor<T = {}> = new (...args: any[]) => T;
 
@@ -15,6 +17,8 @@ type HttpClientConfigBase = {
   password?: string;
   // request timeout, number in milliseconds.
   timeout?: number;
+  // altenative fetch api
+  fetch?: Fetch;
 };
 
 type HttpClientConfigAddress = HttpClientConfigBase & {

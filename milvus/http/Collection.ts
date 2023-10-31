@@ -14,6 +14,18 @@ import {
   DEFAULT_VECTOR_FIELD,
 } from '../const';
 
+/**
+ * Collection is a mixin function that extends the functionality of a base class.
+ * It provides methods to interact with collections in a Milvus cluster.
+ * 
+ * @param {Constructor<HttpBaseClient>} Base - The base class to be extended.
+ * @returns {class} - The extended class with additional methods for collection management.
+ * 
+ * @method createCollection - Creates a new collection in Milvus.
+ * @method describeCollection - Retrieves the description of a specific collection.
+ * @method dropCollection - Deletes a specific collection from Milvus.
+ * @method listCollections - Lists all collections in the Milvus cluster.
+ */
 export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
     // POST create collection

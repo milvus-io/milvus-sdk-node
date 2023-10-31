@@ -10,12 +10,12 @@ import {
   dynamicFields,
 } from '../tools';
 
-export function generateTests(config: HttpClientConfig) {
-  describe(`HTTP API tests`, () => {
+export function generateTests(
+  desc = `HTTP API tests`,
+  config: HttpClientConfig
+) {
+  describe(desc, () => {
     // Mock configuration object
-    const dbParam = {
-      db_name: 'HttpClient_collections',
-    };
     const createParams = {
       dimension: 4,
       collectionName: 'my_collection',

@@ -4,4 +4,4 @@ import { generateTests } from './test';
 const config = {
   endpoint: ENDPOINT,
 };
-generateTests(config);
+generateTests('http api by native fetch test', config);
