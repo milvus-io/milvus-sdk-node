@@ -3,6 +3,10 @@ type Fetch = (input: any, init?: any) => Promise<any>;
 
 // Class types
 export type Constructor<T = {}> = new (...args: any[]) => T;
+export type FetchOptions = {
+  abortController: AbortController;
+  timeout: number;
+}
 
 type HttpClientConfigBase = {
   // database name

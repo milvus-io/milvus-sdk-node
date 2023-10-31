@@ -1,4 +1,4 @@
-import { HttpClientConfig } from './types';
+import { HttpClientConfig, FetchOptions } from './types';
 import { Collection, Vector } from './http';
 import {
   DEFAULT_DB,
@@ -67,12 +67,12 @@ export class HttpBaseClient {
 
   // database
   get database() {
-    return this.config.database || DEFAULT_DB;
+    return this.config.database ?? DEFAULT_DB;
   }
 
   // timeout
   get timeout() {
-    return this.config.timeout || DEFAULT_HTTP_TIMEOUT;
+    return this.config.timeout ?? DEFAULT_HTTP_TIMEOUT;
   }
 
   // headers
@@ -86,47 +86,58 @@ export class HttpBaseClient {
 
   // fetch
   get fetch() {
-    return this.config.fetch || fetch;
+    return this.config.fetch ?? fetch;
   }
 
   // POST API
-  async POST<T>(url: string, data: Record<string, any> = {}): Promise<T> {
+  async POST<T>(
+    url: string,
+    data: Record<string, any> = {},
+    options?: FetchOptions
+  ): Promise<T> {
     try {
       // timeout controller
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), this.timeout);
+      const timeout = options?.timeout ?? this.timeout;
+      const abortController = options?.abortController ?? new AbortController();
+      const id = setTimeout(() => abortController.abort(), timeout);
 
       // assign database
       if (data) {
-        data.dbName = data.dbName || this.database;
+        data.dbName = data.dbName ?? this.database;
       }
 
       const response = await this.fetch(`${this.baseURL}${url}`, {
         method: 'post',
         headers: this.headers,
         body: JSON.stringify(data),
-        signal: controller.signal,
+        signal: abortController.signal,
       });
 
       clearTimeout(id);
       return response.json() as T;
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.warn('milvus http client: request was timeout');
+        console.warn(`post ${url} request was timeout`);
       }
       return Promise.reject(error);
     }
   }
 
   // GET API
-  async GET<T>(url: string, params: Record<string, any> = {}): Promise<T> {
+  async GET<T>(
+    url: string,
+    params: Record<string, any> = {},
+    options?: FetchOptions
+  ): Promise<T> {
     try {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), this.timeout);
+      // timeout controller
+      const timeout = options?.timeout ?? this.timeout;
+      const abortController = options?.abortController ?? new AbortController();
+      const id = setTimeout(() => abortController.abort(), timeout);
 
       // assign database
       if (params) {
-        params.dbName = params.dbName || this.database;
+        params.dbName = params.dbName ?? this.database;
       }
 
       const queryParams = new URLSearchParams(params);
@@ -136,7 +147,7 @@ export class HttpBaseClient {
         {
           method: 'get',
           headers: this.headers,
-          signal: controller.signal,
+          signal: abortController.signal,
         }
       );
 
@@ -145,7 +156,7 @@ export class HttpBaseClient {
       return response.json() as T;
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.warn('milvus http client: request was timeout');
+        console.warn(`milvus http client: request was timeout`);
       }
       return Promise.reject(error);
     }
