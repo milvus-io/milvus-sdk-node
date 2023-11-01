@@ -1,6 +1,12 @@
 import { FloatVectors } from '..';
+type Fetch = (input: any, init?: any) => Promise<any>;
+
 // Class types
 export type Constructor<T = {}> = new (...args: any[]) => T;
+export type FetchOptions = {
+  abortController: AbortController;
+  timeout: number;
+}
 
 type HttpClientConfigBase = {
   // database name
@@ -15,6 +21,8 @@ type HttpClientConfigBase = {
   password?: string;
   // request timeout, number in milliseconds.
   timeout?: number;
+  // altenative fetch api
+  fetch?: Fetch;
 };
 
 type HttpClientConfigAddress = HttpClientConfigBase & {
@@ -48,9 +56,9 @@ export interface HttpBaseResponse<T = {}> {
 // collection operations
 export interface HttpCollectionCreateReq extends HttpBaseReq {
   dimension: number;
-  metricType: string;
-  primaryField: string;
-  vectorField: string;
+  metricType?: string;
+  primaryField?: string;
+  vectorField?: string;
   description?: string;
 }
 // list collection request

@@ -19,7 +19,7 @@ The following table shows the recommended `@zilliz/milvus2-sdk-node` versions fo
 
 - [Milvus](https://milvus.io/)
 - [Zilliz Cloud](https://cloud.zilliz.com/signup)
-- Node: v12+
+- Node: v18+
 
 ## Installation
 

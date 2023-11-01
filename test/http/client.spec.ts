@@ -1,3 +1,4 @@
+import { default as nodeFetch } from 'node-fetch';
 import {
   HttpClient,
   DEFAULT_DB,
@@ -111,5 +112,20 @@ describe(`HTTP Client test`, () => {
     // Create an instance of HttpBaseClient with the mock configuration
     const client2 = new HttpClient(config2);
     expect(client2.timeout).toBe(timeout);
+  });
+
+  it('should using the correct fetch', () => {
+    const config = {
+      baseURL,
+      fetch: nodeFetch,
+    };
+    const client = new HttpClient(config);
+    expect(client.fetch).toEqual(nodeFetch);
+
+    const config2 = {
+      baseURL,
+    };
+    const client2 = new HttpClient(config2);
+    expect(client2.fetch).toEqual(fetch);
   });
 });
