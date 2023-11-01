@@ -1,9 +1,10 @@
 import { generateTests } from './test';
 
 const config = {
-  endpoint: 'dedicated endpoint',
+  endpoint: 'serverless endpoint',
+  desc: 'serverless api test',
   username: 'username',
   password: 'password',
 };
 
-generateTests('cloud decidated api test', config);
+generateTests(config);

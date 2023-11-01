@@ -3,6 +3,7 @@ import {
   DEFAULT_METRIC_TYPE,
   DEFAULT_VECTOR_FIELD,
   HttpClientConfig,
+  MilvusClient,
 } from '../../milvus';
 import {
   genCollectionParams,
@@ -11,10 +12,21 @@ import {
 } from '../tools';
 
 export function generateTests(
-  desc = `HTTP API tests`,
-  config: HttpClientConfig
+  config: HttpClientConfig & { address?: string; cloud?: boolean, desc: string }
 ) {
-  describe(desc, () => {
+  describe(config.desc, () => {
+    if (!config.cloud) {
+      let milvusClient = new MilvusClient({ address: config.address! });
+
+      beforeAll(async () => {
+        await milvusClient.createDatabase({ db_name: config.database! });
+      });
+
+      afterAll(async () => {
+        await milvusClient.dropDatabase({ db_name: config.database! });
+      });
+    }
+
     // Mock configuration object
     const createParams = {
       dimension: 4,
