@@ -120,6 +120,12 @@ export const genBinaryVector: DataGenerator = params => {
  */
 export const genArray: DataGenerator = params => {
   const { element_type, max_capacity = 0 } = params!;
+
+  // half chance to generate empty array
+  if (Math.random() > 0.5) {
+    return [];
+  }
+
   return Array.from({ length: max_capacity! }, () => {
     return dataGenMap[element_type!](params);
   });
