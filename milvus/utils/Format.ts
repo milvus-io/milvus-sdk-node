@@ -447,8 +447,6 @@ export const buildFieldDataMap = (fields_data: any[]) => {
 
       // we need to handle array element specifically here
       if (key === 'array_data') {
-        console.log(field_data);
-
         field_data = field_data.map((f: any) => {
           const key = f.data;
           return key ? f[key].data: [];
