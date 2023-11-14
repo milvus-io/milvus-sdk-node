@@ -292,12 +292,11 @@ describe(`Insert API`, () => {
   });
 
   it(`Insert Data on float field expect success`, async () => {
-    const vectorsData = generateInsertData(COLLECTION_NAME_PARAMS.fields, 10);
-
+    const dataToInsert = generateInsertData(COLLECTION_NAME_PARAMS.fields, 10);
     const params: InsertReq = {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
-      fields_data: vectorsData,
+      fields_data: dataToInsert,
     };
 
     const res = await milvusClient.insert(params);
@@ -310,7 +309,7 @@ describe(`Insert API`, () => {
       expr: 'id > 0',
       output_fields: ['json', 'id', 'varChar_array'],
     });
-    // console.log('query', query);
+     // console.log('query', query.data);
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     const search = await milvusClient.search({

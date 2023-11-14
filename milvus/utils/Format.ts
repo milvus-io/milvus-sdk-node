@@ -449,7 +449,7 @@ export const buildFieldDataMap = (fields_data: any[]) => {
       if (key === 'array_data') {
         field_data = field_data.map((f: any) => {
           const key = f.data;
-          return f[key].data;
+          return key ? f[key].data: [];
         });
       }
 
