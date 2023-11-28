@@ -49,25 +49,30 @@ export interface ListCredUsersResponse extends resStatusResponse {
   usernames: string[];
 }
 
-type RoleEntity = { name: string };
-type User = { name: string };
-type RoleResult = { users: User[]; role: RoleEntity };
+export type RoleEntity = { name: string };
+export type User = { name: string };
+export type RoleResult = {
+  users: User[];
+  role: RoleEntity;
+  entities: GrantEntity[];
+};
 export interface SelectRoleResponse extends resStatusResponse {
   results: RoleResult[];
 }
 
-type UserResult = { user: User; roles: RoleEntity[] };
+export type UserResult = { user: User; roles: RoleEntity[] };
 export interface SelectUserResponse extends resStatusResponse {
   results: UserResult[];
 }
-type ObjectEntity = { name: RbacObjects };
-type PrivilegeEntity = { name: PrivilegesTypes };
-type Grantor = { user: User; privilege: PrivilegeEntity };
-type GrantEntity = {
+export type ObjectEntity = { name: RbacObjects };
+export type PrivilegeEntity = { name: PrivilegesTypes };
+export type Grantor = { user: User; privilege: PrivilegeEntity };
+export type GrantEntity = {
   role: RoleEntity;
   object: ObjectEntity;
   object_name: string;
   grantor: Grantor;
+  db_name: string;
 };
 export interface SelectGrantResponse extends resStatusResponse {
   entities: GrantEntity[];
