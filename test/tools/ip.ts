@@ -1,3 +1,3 @@
 // test IP
-export const IP = '127.0.0.1:19530';
+export const IP = '10.102.6.107:19530';
 export const ENDPOINT = `http://${IP}`;

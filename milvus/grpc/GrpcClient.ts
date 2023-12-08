@@ -1,6 +1,14 @@
 import { readFileSync } from 'fs';
-import { credentials, Metadata, ChannelCredentials } from '@grpc/grpc-js';
+import {
+  credentials,
+  Metadata,
+  ChannelCredentials,
+  ServiceClientConstructor,
+  ChannelOptions,
+  Client,
+} from '@grpc/grpc-js';
 import dayjs from 'dayjs';
+import { createPool, Pool } from 'generic-pool';
 import {
   GetVersionResponse,
   CheckHealthResponse,
@@ -25,6 +33,9 @@ import { User } from './User';
  * A client for interacting with the Milvus server via gRPC.
  */
 export class GRPCClient extends User {
+  // channel pool
+  static channelPool: Pool<Client>;
+
   // create a grpc service client(connect)
   connect(sdkVersion: string) {
     // get Milvus GRPC service
@@ -112,14 +123,46 @@ export class GRPCClient extends User {
     }
 
     // create grpc client
-    this.client = new MilvusService(
-      formatAddress(this.config.address), // format the address
+    GRPCClient.channelPool = this.createChannelPool(
+      MilvusService,
       creds,
-      this.channelOptions
+      sdkVersion
     );
 
     // connect to get identifier
     this.connectPromise = this._getServerInfo(sdkVersion);
+  }
+
+  private createChannelPool(
+    ServiceClientConstructor: ServiceClientConstructor,
+    creds: ChannelCredentials,
+    sdkVersion: string
+  ) {
+    return createPool(
+      {
+        create: async () => {
+          const channelClient = new ServiceClientConstructor(
+            formatAddress(this.config.address), // format the address
+            creds,
+            this.channelOptions
+          );
+
+          if (!this.connectPromise) {
+            this.connectPromise = this._getServerInfo(sdkVersion);
+          }
+          return channelClient;
+        },
+        destroy: (client: Client) => {
+          return new Promise<void>((resolve, reject) => {
+            resolve();
+          });
+        },
+      },
+      {
+        max: 10, // maximum size of the pool
+        min: 2, // minimum size of the pool
+      }
+    );
   }
 
   /**
@@ -231,4 +274,46 @@ export class GRPCClient extends User {
   async checkHealth(): Promise<CheckHealthResponse> {
     return await promisify(this.client, 'CheckHealth', {}, this.timeout);
   }
+}
+
+function useConnectionPool(
+  target: any,
+  propertyKey: string,
+  descriptor: PropertyDescriptor
+) {
+  const originalMethod = descriptor.value;
+
+  descriptor.value = async function (...args: any[]) {
+    if (this.usePool) {
+      let client: GRPCClient;
+      let shouldRelease = false;
+
+      if (this.currentClient) {
+        client = this.currentClient;
+      } else {
+        client = await MilvusClient.pool.acquire();
+        this.currentClient = client;
+        shouldRelease = true;
+      }
+
+      // Create a closure that can access the client
+      const context = {
+        ...this,
+        client,
+      };
+
+      try {
+        return await originalMethod.apply(context, args);
+      } finally {
+        if (shouldRelease) {
+          MilvusClient.pool.release(client);
+          this.currentClient = null;
+        }
+      }
+    } else {
+      return await originalMethod.apply(this, args);
+    }
+  };
+
+  return descriptor;
 }
