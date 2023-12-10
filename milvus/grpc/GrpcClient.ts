@@ -8,7 +8,7 @@ import {
   Client,
 } from '@grpc/grpc-js';
 import dayjs from 'dayjs';
-import { createPool, Pool } from 'generic-pool';
+import { createPool } from 'generic-pool';
 import {
   GetVersionResponse,
   CheckHealthResponse,
@@ -26,6 +26,7 @@ import {
   logger,
   CONNECT_STATUS,
   TLS_MODE,
+  ClientConfig,
 } from '../';
 import { User } from './User';
 
@@ -33,11 +34,24 @@ import { User } from './User';
  * A client for interacting with the Milvus server via gRPC.
  */
 export class GRPCClient extends User {
-  // channel pool
-  static channelPool: Pool<Client>;
+  /**
+   * Creates a new instance of MilvusClient.
+   * @param configOrAddress The Milvus server's address or client configuration object.
+   * @param ssl Whether to use SSL or not.
+   * @param username The username for authentication.
+   * @param password The password for authentication.
+   * @param channelOptions Additional channel options for gRPC.
+   */
+  constructor(
+    configOrAddress: ClientConfig | string,
+    ssl?: boolean,
+    username?: string,
+    password?: string,
+    channelOptions?: ChannelOptions
+  ) {
+    // setup the configuration
+    super(configOrAddress, ssl, username, password, channelOptions);
 
-  // create a grpc service client(connect)
-  connect(sdkVersion: string) {
     // get Milvus GRPC service
     const MilvusService = getGRPCService({
       protoPath: this.protoFilePath.milvus,
@@ -122,21 +136,19 @@ export class GRPCClient extends User {
         break;
     }
 
-    // create grpc client
-    GRPCClient.channelPool = this.createChannelPool(
-      MilvusService,
-      creds,
-      sdkVersion
-    );
+    // create grpc pool
+    this.channelPool = this.createChannelPool(MilvusService, creds);
+  }
 
+  // create a grpc service client(connect)
+  connect(sdkVersion: string) {
     // connect to get identifier
     this.connectPromise = this._getServerInfo(sdkVersion);
   }
 
   private createChannelPool(
     ServiceClientConstructor: ServiceClientConstructor,
-    creds: ChannelCredentials,
-    sdkVersion: string
+    creds: ChannelCredentials
   ) {
     return createPool(
       {
@@ -147,9 +159,6 @@ export class GRPCClient extends User {
             this.channelOptions
           );
 
-          if (!this.connectPromise) {
-            this.connectPromise = this._getServerInfo(sdkVersion);
-          }
           return channelClient;
         },
         destroy: (client: Client) => {
@@ -248,14 +257,12 @@ export class GRPCClient extends User {
    * - 4: FATAL FAILURE
    * - 5: SHUTDOWN
    */
-  closeConnection() {
+  async closeConnection() {
     // Close the gRPC client connection
     if (this.client) {
-      this.client.close();
-    }
-    // grpc client closed -> 4, connected -> 0
-    if (this.client) {
-      return this.client.getChannel().getConnectivityState(true);
+      const client = await this.client;
+      client.close();
+      return client.getChannel().getConnectivityState(true);
     }
   }
 
@@ -274,46 +281,4 @@ export class GRPCClient extends User {
   async checkHealth(): Promise<CheckHealthResponse> {
     return await promisify(this.client, 'CheckHealth', {}, this.timeout);
   }
-}
-
-function useConnectionPool(
-  target: any,
-  propertyKey: string,
-  descriptor: PropertyDescriptor
-) {
-  const originalMethod = descriptor.value;
-
-  descriptor.value = async function (...args: any[]) {
-    if (this.usePool) {
-      let client: GRPCClient;
-      let shouldRelease = false;
-
-      if (this.currentClient) {
-        client = this.currentClient;
-      } else {
-        client = await MilvusClient.pool.acquire();
-        this.currentClient = client;
-        shouldRelease = true;
-      }
-
-      // Create a closure that can access the client
-      const context = {
-        ...this,
-        client,
-      };
-
-      try {
-        return await originalMethod.apply(context, args);
-      } finally {
-        if (shouldRelease) {
-          MilvusClient.pool.release(client);
-          this.currentClient = null;
-        }
-      }
-    } else {
-      return await originalMethod.apply(this, args);
-    }
-  };
-
-  return descriptor;
 }

@@ -2,6 +2,7 @@ import path from 'path';
 import crypto from 'crypto';
 import protobuf, { Root, Type } from 'protobufjs';
 import { Client, ChannelOptions } from '@grpc/grpc-js';
+import { Pool } from 'generic-pool';
 import {
   ERROR_REASONS,
   ClientConfig,
@@ -26,6 +27,8 @@ const schemaProtoPath = path.resolve(
  * Base gRPC client, setup all configuration here
  */
 export class BaseClient {
+  // channel pool
+  protected channelPool!: Pool<Client>;
   // Client ID
   clientId: string = `${crypto.randomUUID()}`;
   // flags to indicate that if the connection is established and its state
@@ -62,8 +65,8 @@ export class BaseClient {
   public readonly channelOptions: ChannelOptions;
   // server info
   public serverInfo: ServerInfo = {};
-  // The gRPC client instance.
-  public client: Client | undefined;
+  // // The gRPC client instance.
+  // public client!: Promise<Client>;
   // The timeout for connecting to the Milvus service.
   public timeout: number = DEFAULT_CONNECT_TIMEOUT;
 
@@ -168,6 +171,10 @@ export class BaseClient {
       typeof config.timeout === 'string'
         ? parseTimeToken(config.timeout)
         : config.timeout || DEFAULT_CONNECT_TIMEOUT;
+  }
+
+  get client() {
+    return this.channelPool.acquire();
   }
 
   /**
