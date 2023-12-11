@@ -226,9 +226,8 @@ export class GRPCClient extends User {
 
       // update status
       this.connectStatus = CONNECT_STATUS.SHUTDOWN;
-
-      return this.connectStatus;
     }
+    return this.connectStatus;
   }
 
   /**
