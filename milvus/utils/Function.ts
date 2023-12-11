@@ -1,4 +1,5 @@
 import { KeyValuePair, DataType, ERROR_REASONS } from '../';
+import { Pool } from 'generic-pool';
 
 /**
  * Promisify a function call with optional timeout
@@ -9,7 +10,7 @@ import { KeyValuePair, DataType, ERROR_REASONS } from '../';
  * @returns A Promise that resolves with the result of the target function call
  */
 export async function promisify(
-  pool: any,
+  pool: Pool<any>,
   target: string,
   params: any,
   timeout: number
