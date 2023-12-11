@@ -88,7 +88,10 @@ describe(`Milvus client`, () => {
   });
 
   it(`Expect close connection success`, async () => {
-    const res = milvusClient.closeConnection();
-    expect(res).toEqual(4);
+    expect(milvusClient.channelPool.size).toBeGreaterThan(0);
+
+    const res = await milvusClient.closeConnection();
+    expect(milvusClient.channelPool.size).toBe(0);
+    expect(res).toBe(CONNECT_STATUS.SHUTDOWN);
   });
 });

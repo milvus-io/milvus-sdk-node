@@ -37,7 +37,7 @@ export class Database extends BaseClient {
     });
 
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'CreateDatabase',
       data,
       data.timeout || this.timeout
@@ -74,7 +74,7 @@ export class Database extends BaseClient {
     });
 
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'ListDatabases',
       {},
       data?.timeout || this.timeout
@@ -110,7 +110,7 @@ export class Database extends BaseClient {
     });
 
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'DropDatabase',
       data,
       data.timeout || this.timeout

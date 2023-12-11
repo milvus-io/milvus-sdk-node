@@ -259,7 +259,7 @@ export class Data extends Collection {
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
     // execute Insert
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       upsert ? 'Upsert' : 'Insert',
       params,
       timeout
@@ -310,7 +310,7 @@ export class Data extends Collection {
     data.expr = data.filter || data.expr;
 
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'Delete',
       data,
       data.timeout || this.timeout
@@ -487,7 +487,7 @@ export class Data extends Collection {
       ).finish();
 
       const promise: SearchRes = await promisify(
-        this.client,
+        this.channelPool,
         'Search',
         {
           collection_name: data.collection_name,
@@ -627,7 +627,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'Flush',
       data,
       data.timeout || this.timeout
@@ -669,7 +669,7 @@ export class Data extends Collection {
     }
     // copy flushed collection names
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'Flush',
       data,
       data.timeout || this.timeout
@@ -740,7 +740,7 @@ export class Data extends Collection {
 
     // Execute the query and get the results
     const promise: QueryRes = await promisify(
-      this.client,
+      this.channelPool,
       'Query',
       {
         ...data,
@@ -871,7 +871,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.GET_METRIC_CHECK_PARAMS);
     }
     const res: GetMetricsResponse = await promisify(
-      this.client,
+      this.channelPool,
       'GetMetrics',
       {
         request: JSON.stringify(data.request),
@@ -914,7 +914,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'GetFlushState',
       data,
       data.timeout || this.timeout
@@ -954,7 +954,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.LOAD_BALANCE_CHECK_PARAMS);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'LoadBalance',
       data,
       data.timeout || this.timeout
@@ -994,7 +994,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'GetQuerySegmentInfo',
       data,
       data.timeout || this.timeout
@@ -1034,7 +1034,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'GetPersistentSegmentInfo',
       data,
       data.timeout || this.timeout
@@ -1078,7 +1078,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.IMPORT_FILE_CHECK);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'Import',
       {
         ...data,
@@ -1126,7 +1126,7 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'ListImportTasks',
       {
         ...data,
@@ -1171,7 +1171,7 @@ export class Data extends Collection {
   //   }
 
   //   const res = await promisify(
-  //     this.client,
+  //     this.channelPool,
   //     'ListIndexedSegment',
   //     data,
   //     data.timeout || this.timeout
@@ -1213,7 +1213,7 @@ export class Data extends Collection {
   //   }
 
   //   const res = await promisify(
-  //     this.client,
+  //     this.channelPool,
   //     'DescribeSegmentIndexData',
   //     data,
   //     data.timeout || this.timeout

@@ -513,7 +513,9 @@ describe(`Collection API`, () => {
       collection_name: LOAD_COLLECTION_NAME,
     });
 
-    expect(Number(formatKeyValueData(describe.properties, [key])[key])).toEqual(value);
+    expect(Number(formatKeyValueData(describe.properties, [key])[key])).toEqual(
+      value
+    );
   });
 
   it(`Create alias success`, async () => {

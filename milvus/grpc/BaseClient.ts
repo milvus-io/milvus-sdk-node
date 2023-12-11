@@ -1,7 +1,13 @@
 import path from 'path';
 import crypto from 'crypto';
 import protobuf, { Root, Type } from 'protobufjs';
-import { Client, ChannelOptions } from '@grpc/grpc-js';
+import { readFileSync } from 'fs';
+import {
+  Client,
+  ChannelOptions,
+  credentials,
+  ChannelCredentials,
+} from '@grpc/grpc-js';
 import { Pool } from 'generic-pool';
 import {
   ERROR_REASONS,
@@ -28,12 +34,14 @@ const schemaProtoPath = path.resolve(
  */
 export class BaseClient {
   // channel pool
-  protected channelPool!: Pool<Client>;
+  public channelPool!: Pool<Client>;
+  // ChannelCredentials object used for authenticating the client on the gRPC channel.
+  protected creds!: ChannelCredentials;
   // Client ID
-  clientId: string = `${crypto.randomUUID()}`;
+  public clientId: string = `${crypto.randomUUID()}`;
   // flags to indicate that if the connection is established and its state
-  connectStatus = CONNECT_STATUS.NOT_CONNECTED;
-  connectPromise = Promise.resolve();
+  public connectStatus = CONNECT_STATUS.NOT_CONNECTED;
+  public connectPromise = Promise.resolve();
   // metadata
   protected metadata: Map<string, string> = new Map<string, string>();
   // The path to the Milvus protobuf file.
@@ -166,15 +174,56 @@ export class BaseClient {
         this.config.tls.serverName;
     }
 
+    // Switch based on the TLS mode
+    switch (this.tlsMode) {
+      case TLS_MODE.ONE_WAY:
+        // Create SSL credentials with empty parameters for one-way authentication
+        this.creds = credentials.createSsl();
+        break;
+      case TLS_MODE.TWO_WAY:
+        // Extract paths for root certificate, private key, certificate chain, and verify options from the client configuration
+        const { rootCertPath, privateKeyPath, certChainPath, verifyOptions } =
+          this.config.tls!;
+
+        // Initialize buffers for root certificate, private key, and certificate chain
+        let rootCertBuff: Buffer | null = null;
+        let privateKeyBuff: Buffer | null = null;
+        let certChainBuff: Buffer | null = null;
+
+        // Read root certificate file if path is provided
+        if (rootCertPath) {
+          rootCertBuff = readFileSync(rootCertPath);
+        }
+
+        // Read private key file if path is provided
+        if (privateKeyPath) {
+          privateKeyBuff = readFileSync(privateKeyPath);
+        }
+
+        // Read certificate chain file if path is provided
+        if (certChainPath) {
+          certChainBuff = readFileSync(certChainPath);
+        }
+
+        // Create SSL credentials with the read files and verify options for two-way authentication
+        this.creds = credentials.createSsl(
+          rootCertBuff,
+          privateKeyBuff,
+          certChainBuff,
+          verifyOptions
+        );
+        break;
+      default:
+        // Create insecure credentials if no TLS mode is specified
+        this.creds = credentials.createInsecure();
+        break;
+    }
+
     // Set up the timeout for connecting to the Milvus service.
     this.timeout =
       typeof config.timeout === 'string'
         ? parseTimeToken(config.timeout)
         : config.timeout || DEFAULT_CONNECT_TIMEOUT;
-  }
-
-  get client() {
-    return this.channelPool.acquire();
   }
 
   /**

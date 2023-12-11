@@ -1,8 +1,5 @@
-import { readFileSync } from 'fs';
 import {
-  credentials,
   Metadata,
-  ChannelCredentials,
   ServiceClientConstructor,
   ChannelOptions,
   Client,
@@ -25,8 +22,9 @@ import {
   METADATA,
   logger,
   CONNECT_STATUS,
-  TLS_MODE,
   ClientConfig,
+  DEFAULT_POOL_MAX,
+  DEFAULT_POOL_MIN,
 } from '../';
 import { User } from './User';
 
@@ -52,11 +50,20 @@ export class GRPCClient extends User {
     // setup the configuration
     super(configOrAddress, ssl, username, password, channelOptions);
 
-    // get Milvus GRPC service
+    // Get the gRPC service for Milvus
     const MilvusService = getGRPCService({
       protoPath: this.protoFilePath.milvus,
       serviceName: this.protoInternalPath.serviceName, // the name of the Milvus service
     });
+
+    // setup auth if necessary
+    const auth = getAuthString(this.config);
+    if (auth.length > 0) {
+      this.metadata.set(METADATA.AUTH, auth);
+    }
+
+    // setup database
+    this.metadata.set(METADATA.DATABASE, this.config.database || DEFAULT_DB);
 
     // meta interceptor, add the injector
     const metaInterceptor = getMetaInterceptor(
@@ -75,69 +82,15 @@ export class GRPCClient extends User {
           : this.config.retryDelay,
       clientId: this.clientId,
     });
+
     // interceptors
     const interceptors = [metaInterceptor, retryInterceptor];
 
     // add interceptors
     this.channelOptions.interceptors = interceptors;
 
-    // setup auth if necessary
-    const auth = getAuthString(this.config);
-    if (auth.length > 0) {
-      this.metadata.set(METADATA.AUTH, auth);
-    }
-
-    // setup database
-    this.metadata.set(METADATA.DATABASE, this.config.database || DEFAULT_DB);
-
-    // create credentials
-    let creds: ChannelCredentials;
-
-    // assign credentials according to the tls mode
-    switch (this.tlsMode) {
-      case TLS_MODE.ONE_WAY:
-        // create ssl with empty parameters
-        creds = credentials.createSsl();
-        break;
-      case TLS_MODE.TWO_WAY:
-        const { rootCertPath, privateKeyPath, certChainPath, verifyOptions } =
-          this.config.tls!;
-
-        // init
-        let rootCertBuff: Buffer | null = null;
-        let privateKeyBuff: Buffer | null = null;
-        let certChainBuff: Buffer | null = null;
-
-        // read root cert file
-        if (rootCertPath) {
-          rootCertBuff = readFileSync(rootCertPath);
-        }
-
-        // read private key file
-        if (privateKeyPath) {
-          privateKeyBuff = readFileSync(privateKeyPath);
-        }
-
-        // read cert chain file
-        if (certChainPath) {
-          certChainBuff = readFileSync(certChainPath);
-        }
-
-        // create credentials
-        creds = credentials.createSsl(
-          rootCertBuff,
-          privateKeyBuff,
-          certChainBuff,
-          verifyOptions
-        );
-        break;
-      default:
-        creds = credentials.createInsecure();
-        break;
-    }
-
     // create grpc pool
-    this.channelPool = this.createChannelPool(MilvusService, creds);
+    this.channelPool = this.createChannelPool(MilvusService);
   }
 
   // create a grpc service client(connect)
@@ -146,30 +99,42 @@ export class GRPCClient extends User {
     this.connectPromise = this._getServerInfo(sdkVersion);
   }
 
+  // return client acquired from pool
+  get client() {
+    return this.channelPool.acquire();
+  }
+
+  /**
+   * Creates a pool of gRPC service clients.
+   *
+   * @param {ServiceClientConstructor} ServiceClientConstructor - The constructor for the gRPC service client.
+   *
+   * @returns {Pool} - A pool of gRPC service clients.
+   */
   private createChannelPool(
-    ServiceClientConstructor: ServiceClientConstructor,
-    creds: ChannelCredentials
+    ServiceClientConstructor: ServiceClientConstructor
   ) {
     return createPool(
       {
         create: async () => {
-          const channelClient = new ServiceClientConstructor(
+          // Create a new gRPC service client
+          return new ServiceClientConstructor(
             formatAddress(this.config.address), // format the address
-            creds,
+            this.creds,
             this.channelOptions
           );
-
-          return channelClient;
         },
-        destroy: (client: Client) => {
-          return new Promise<void>((resolve, reject) => {
-            resolve();
+        destroy: async (client: Client) => {
+          // Close the gRPC service client
+          return new Promise<any>((resolve, reject) => {
+            client.close();
+            resolve(client.getChannel().getConnectivityState(true));
           });
         },
       },
       {
-        max: 10, // maximum size of the pool
-        min: 2, // minimum size of the pool
+        max: this.config.pool?.max ?? DEFAULT_POOL_MAX, // maximum size of the pool
+        min: this.config.pool?.min ?? DEFAULT_POOL_MIN, // minimum size of the pool
       }
     );
   }
@@ -229,40 +194,40 @@ export class GRPCClient extends User {
     // update connect status
     this.connectStatus = CONNECT_STATUS.CONNECTING;
 
-    return promisify(this.client, 'Connect', userInfo, this.timeout).then(f => {
-      // add new identifier interceptor
-      if (f && f.identifier) {
-        // update identifier
-        this.metadata.set(METADATA.CLIENT_ID, f.identifier);
+    return promisify(this.channelPool, 'Connect', userInfo, this.timeout).then(
+      f => {
+        // add new identifier interceptor
+        if (f && f.identifier) {
+          // update identifier
+          this.metadata.set(METADATA.CLIENT_ID, f.identifier);
 
-        // setup identifier
-        this.serverInfo = f.server_info;
+          // setup identifier
+          this.serverInfo = f.server_info;
+        }
+        // update connect status
+        this.connectStatus =
+          f && f.identifier
+            ? CONNECT_STATUS.CONNECTED
+            : CONNECT_STATUS.UNIMPLEMENTED;
       }
-      // update connect status
-      this.connectStatus =
-        f && f.identifier
-          ? CONNECT_STATUS.CONNECTED
-          : CONNECT_STATUS.UNIMPLEMENTED;
-    });
+    );
   }
 
   /**
-   * Closes the gRPC client connection and returns the connectivity state of the channel.
-   * This method should be called before terminating the application or when the client is no longer needed.
-   * This method returns a number that represents the connectivity state of the channel:
-   * - 0: CONNECTING
-   * - 1: READY
-   * - 2: IDLE
-   * - 3: TRANSIENT FAILURE
-   * - 4: FATAL FAILURE
-   * - 5: SHUTDOWN
+   * Closes the connection to the Milvus server.
+   * This method drains and clears the connection pool, and updates the connection status to SHUTDOWN.
+   * @returns {Promise<CONNECT_STATUS>} The updated connection status.
    */
   async closeConnection() {
-    // Close the gRPC client connection
-    if (this.client) {
-      const client = await this.client;
-      client.close();
-      return client.getChannel().getConnectivityState(true);
+    // Close all connections in the pool
+    if (this.channelPool) {
+      await this.channelPool.drain();
+      await this.channelPool.clear();
+
+      // update status
+      this.connectStatus = CONNECT_STATUS.SHUTDOWN;
+
+      return this.connectStatus;
     }
   }
 
@@ -271,7 +236,7 @@ export class GRPCClient extends User {
    * This method returns a Promise that resolves with a `GetVersionResponse` object.
    */
   async getVersion(): Promise<GetVersionResponse> {
-    return await promisify(this.client, 'GetVersion', {}, this.timeout);
+    return await promisify(this.channelPool, 'GetVersion', {}, this.timeout);
   }
 
   /**
@@ -279,6 +244,6 @@ export class GRPCClient extends User {
    * This method returns a Promise that resolves with a `CheckHealthResponse` object.
    */
   async checkHealth(): Promise<CheckHealthResponse> {
-    return await promisify(this.client, 'CheckHealth', {}, this.timeout);
+    return await promisify(this.channelPool, 'CheckHealth', {}, this.timeout);
   }
 }

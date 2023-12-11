@@ -8,8 +8,8 @@ import { KeyValuePair, DataType, ERROR_REASONS } from '../';
  * @param timeout - Optional timeout in milliseconds
  * @returns A Promise that resolves with the result of the target function call
  */
-export function promisify(
-  obj: any,
+export async function promisify(
+  pool: any,
   target: string,
   params: any,
   timeout: number
@@ -17,11 +17,14 @@ export function promisify(
   // Calculate the deadline for the function call
   const t = timeout === 0 ? 1000 * 60 * 60 * 24 : timeout;
 
+  // get client
+  const client = await pool.acquire();
+
   // Create a new Promise that wraps the target function call
-  const res = new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     try {
       // Call the target function with the provided parameters and deadline
-      obj[target](
+      client[target](
         params,
         { deadline: new Date(Date.now() + t) },
         (err: any, result: any) => {
@@ -34,16 +37,13 @@ export function promisify(
         }
       );
     } catch (e: any) {
-      // If there was an exception, throw a new Error
-      throw new Error(e);
+      reject(e);
+    } finally {
+      if (client) {
+        pool.release(client);
+      }
     }
-  }).catch(err => {
-    // Return a rejected Promise with the error
-    return Promise.reject(err);
   });
-
-  // Return the Promise
-  return res;
 }
 
 export const findKeyValue = (obj: KeyValuePair[], key: string) =>

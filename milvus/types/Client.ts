@@ -46,6 +46,12 @@ export interface ClientConfig {
     // server name
     serverName?: string;
   };
+
+  // connection pool
+  pool?: {
+    min: number;
+    max: number;
+  };
 }
 
 export interface ServerInfo {
