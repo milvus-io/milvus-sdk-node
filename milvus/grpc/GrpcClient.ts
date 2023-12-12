@@ -49,7 +49,6 @@ export class GRPCClient extends User {
   ) {
     // setup the configuration
     super(configOrAddress, ssl, username, password, channelOptions);
-    
 
     // Get the gRPC service for Milvus
     const MilvusService = getGRPCService({
@@ -133,9 +132,9 @@ export class GRPCClient extends User {
           });
         },
       },
-      {
-        max: this.config.pool?.max ?? DEFAULT_POOL_MAX, // maximum size of the pool
-        min: this.config.pool?.min ?? DEFAULT_POOL_MIN, // minimum size of the pool
+      this.config.pool ?? {
+        min: DEFAULT_POOL_MIN,
+        max: DEFAULT_POOL_MAX,
       }
     );
   }
