@@ -35,36 +35,12 @@ const schemaProtoPath = path.resolve(
 export class BaseClient {
   // channel pool
   public channelPool!: Pool<Client>;
-  // ChannelCredentials object used for authenticating the client on the gRPC channel.
-  protected creds!: ChannelCredentials;
   // Client ID
   public clientId: string = `${crypto.randomUUID()}`;
   // flags to indicate that if the connection is established and its state
   public connectStatus = CONNECT_STATUS.NOT_CONNECTED;
+  // connection promise
   public connectPromise = Promise.resolve();
-  // metadata
-  protected metadata: Map<string, string> = new Map<string, string>();
-  // The path to the Milvus protobuf file.
-  protected protoFilePath = {
-    milvus: milvusProtoPath,
-    schema: schemaProtoPath,
-  };
-  // The protobuf schema.
-  protected schemaProto: Root;
-  // The Milvus protobuf.
-  protected milvusProto: Root;
-  // The milvus collection schema Type
-  protected collectionSchemaType: Type;
-  // The milvus field schema Type
-  protected fieldSchemaType: Type;
-
-  // milvus proto
-  protected readonly protoInternalPath = {
-    serviceName: 'milvus.proto.milvus.MilvusService',
-    collectionSchema: 'milvus.proto.schema.CollectionSchema',
-    fieldSchema: 'milvus.proto.schema.FieldSchema',
-  };
-
   // TLS mode, by default it is disabled
   public readonly tlsMode: TLS_MODE = TLS_MODE.DISABLED;
   // The client configuration.
@@ -77,6 +53,30 @@ export class BaseClient {
   // public client!: Promise<Client>;
   // The timeout for connecting to the Milvus service.
   public timeout: number = DEFAULT_CONNECT_TIMEOUT;
+  // The path to the Milvus protobuf file, user can define it from clientConfig
+  public protoFilePath = {
+    milvus: milvusProtoPath,
+    schema: schemaProtoPath,
+  };
+
+  // ChannelCredentials object used for authenticating the client on the gRPC channel.
+  protected creds!: ChannelCredentials;
+  // global metadata, send each grpc request with it
+  protected metadata: Map<string, string> = new Map<string, string>();
+  // The protobuf schema.
+  protected schemaProto: Root;
+  // The Milvus protobuf.
+  protected milvusProto: Root;
+  // The milvus collection schema Type
+  protected collectionSchemaType: Type;
+  // The milvus field schema Type
+  protected fieldSchemaType: Type;
+  // milvus proto
+  protected readonly protoInternalPath = {
+    serviceName: 'milvus.proto.milvus.MilvusService',
+    collectionSchema: 'milvus.proto.schema.CollectionSchema',
+    fieldSchema: 'milvus.proto.schema.FieldSchema',
+  };
 
   /**
    * Sets up the configuration object for the gRPC client.

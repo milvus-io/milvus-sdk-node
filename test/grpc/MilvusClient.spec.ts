@@ -1,3 +1,4 @@
+import path from 'path';
 import {
   MilvusClient,
   ERROR_REASONS,
@@ -10,6 +11,16 @@ import { IP } from '../tools';
 const milvusClient = new MilvusClient({
   address: IP,
 });
+
+// path
+const milvusProtoPath = path.resolve(
+  __dirname,
+  '../../proto/proto/milvus.proto'
+);
+const schemaProtoPath = path.resolve(
+  __dirname,
+  '../../proto/proto/schema.proto'
+);
 
 describe(`Milvus client`, () => {
   afterEach(() => {
@@ -65,6 +76,21 @@ describe(`Milvus client`, () => {
   it(`should create a grpc client with authentication when username and password are provided`, async () => {
     const m5 = new MilvusClient(IP, false, `username`, `password`);
     expect(await m5.client).toBeDefined();
+  });
+
+  it(`should setup protofile path successfully`, async () => {
+    const m6 = new MilvusClient({
+      address: IP,
+      protoFilePath: {
+        milvus: milvusProtoPath,
+        schema: schemaProtoPath,
+      },
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(await m6.client).toBeDefined();
+    expect(m6.protoFilePath.milvus).toEqual(milvusProtoPath);
+    expect(m6.protoFilePath.schema).toEqual(schemaProtoPath);
   });
 
   it(`Should throw MILVUS_ADDRESS_IS_REQUIRED`, async () => {

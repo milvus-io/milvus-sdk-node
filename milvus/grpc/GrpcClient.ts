@@ -49,6 +49,7 @@ export class GRPCClient extends User {
   ) {
     // setup the configuration
     super(configOrAddress, ssl, username, password, channelOptions);
+    
 
     // Get the gRPC service for Milvus
     const MilvusService = getGRPCService({
