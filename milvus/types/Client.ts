@@ -52,6 +52,9 @@ export interface ClientConfig {
     min: number;
     max: number;
   };
+
+  // internal property for debug & test
+  __SKIP_CONNECT__?: boolean;
 }
 
 export interface ServerInfo {
