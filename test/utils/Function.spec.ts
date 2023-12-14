@@ -1,56 +1,49 @@
-import { promisify } from '../../milvus';
+import { promisify } from '../../milvus/utils';
 
-describe(`utils/function`, () => {
-  it('should resolve with the result of the target function call', async () => {
-    const obj = {
-      target: (params: any, options: any, callback: any) => {
-        callback(null, 'result');
-      },
+describe('promisify', () => {
+  let pool: any;
+  let client: any;
+
+  beforeEach(() => {
+    client = {
+      testFunction: jest.fn((params, options, callback) =>
+        callback(null, 'success')
+      ),
     };
-    const target = 'target';
-    const params = {};
-    const timeout = 1000;
-    const result = await promisify(obj, target, params, timeout);
-    expect(result).toEqual('result');
+    pool = {
+      acquire: jest.fn().mockResolvedValue(client),
+      release: jest.fn(),
+    };
   });
 
-  it('should reject with the error if there was an error', async () => {
-    const obj = {
-      target: (params: any, options: any, callback: any) => {
-        callback(new Error('error'));
-      },
-    };
-    const target = 'target';
-    const params = {};
-    const timeout = 1000;
-    await expect(promisify(obj, target, params, timeout)).rejects.toThrow(
+  it('should resolve with the result of the function call', async () => {
+    const result = await promisify(pool, 'testFunction', {}, 1000);
+    expect(result).toBe('success');
+    expect(client.testFunction).toHaveBeenCalled();
+    expect(pool.acquire).toHaveBeenCalled();
+    expect(pool.release).toHaveBeenCalled();
+  });
+
+  it('should reject if the function call results in an error', async () => {
+    client.testFunction = jest.fn((params, options, callback) =>
+      callback('error')
+    );
+    await expect(promisify(pool, 'testFunction', {}, 1000)).rejects.toBe(
       'error'
     );
+    expect(client.testFunction).toHaveBeenCalled();
+    expect(pool.acquire).toHaveBeenCalled();
+    expect(pool.release).toHaveBeenCalled();
   });
 
-  it('should reject with the error if there was an exception', async () => {
-    const obj = {
-      target: () => {
-        throw new Error('exception');
-      },
-    };
-    const target = 'target';
-    const params = {};
-    const timeout = 1000;
-    await expect(promisify(obj, target, params, timeout)).rejects.toThrow(
+  it('should reject if the function call throws an exception', async () => {
+    client.testFunction = jest.fn(() => {
+      throw new Error('exception');
+    });
+    await expect(promisify(pool, 'testFunction', {}, 1000)).rejects.toThrow(
       'exception'
     );
-  });
-
-  it('should use the default timeout if no timeout is provided', async () => {
-    const obj = {
-      target: (params: any, options: any, callback: any) => {
-        callback(null, 'result');
-      },
-    };
-    const target = 'target';
-    const params = {};
-    const result = await promisify(obj, target, params, 0);
-    expect(result).toEqual('result');
+    expect(pool.acquire).toHaveBeenCalled();
+    expect(pool.release).toHaveBeenCalled();
   });
 });

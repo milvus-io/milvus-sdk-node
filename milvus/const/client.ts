@@ -6,9 +6,10 @@ export enum METADATA {
 
 export enum CONNECT_STATUS {
   NOT_CONNECTED,
-  CONNECTING,
-  CONNECTED,
+  CONNECTING = 0, // GRPC channel state connecting
+  CONNECTED = 1, // GRPC channel state ready
   UNIMPLEMENTED,
+  SHUTDOWN = 5, // GRPC channel state shutdown
 }
 
 export enum TLS_MODE {

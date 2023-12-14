@@ -23,6 +23,7 @@
     "@grpc/grpc-js": "1.8.17",
     "@grpc/proto-loader": "0.7.7",
     "dayjs": "^1.11.7",
+    "generic-pool": "^3.9.0",
     "lru-cache": "^9.1.2",
     "protobufjs": "7.2.4",
     "winston": "^3.9.0"

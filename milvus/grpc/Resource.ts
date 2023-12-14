@@ -39,7 +39,7 @@ export class Resource extends Partition {
    */
   async createResourceGroup(data: CreateResourceGroupReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'CreateResourceGroup',
       data,
       data.timeout || this.timeout
@@ -68,7 +68,7 @@ export class Resource extends Partition {
     data?: GrpcTimeOut
   ): Promise<ListResourceGroupsResponse> {
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'ListResourceGroups',
       {},
       data?.timeout || this.timeout
@@ -108,7 +108,7 @@ export class Resource extends Partition {
     data: DescribeResourceGroupsReq
   ): Promise<DescribeResourceGroupResponse> {
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'DescribeResourceGroup',
       data,
       data.timeout || this.timeout
@@ -140,7 +140,7 @@ export class Resource extends Partition {
    */
   async dropResourceGroup(data: DropResourceGroupsReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'DropResourceGroup',
       data,
       data.timeout || this.timeout
@@ -180,7 +180,7 @@ export class Resource extends Partition {
   /* istanbul ignore next */
   async transferReplica(data: TransferReplicaReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'TransferReplica',
       data,
       data.timeout || this.timeout
@@ -218,7 +218,7 @@ export class Resource extends Partition {
   /* istanbul ignore next */
   async transferNode(data: TransferNodeReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'TransferNode',
       data,
       data.timeout || this.timeout

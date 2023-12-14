@@ -1,4 +1,5 @@
 import { ChannelOptions } from '@grpc/grpc-js';
+import { Options } from 'generic-pool';
 
 /**
  * Configuration options for the Milvus client.
@@ -46,6 +47,12 @@ export interface ClientConfig {
     // server name
     serverName?: string;
   };
+
+  // generic-pool options: refer to https://github.com/coopernurse/node-pool
+  pool?: Options;
+
+  // internal property for debug & test
+  __SKIP_CONNECT__?: boolean;
 }
 
 export interface ServerInfo {

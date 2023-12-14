@@ -153,7 +153,7 @@ export class Collection extends Database {
 
     // Call the promisify function to create the collection.
     const createPromise = await promisify(
-      this.client,
+      this.channelPool,
       'CreateCollection',
       {
         ...data,
@@ -201,7 +201,7 @@ export class Collection extends Database {
 
     // avoid to call describe collection, because it has cache
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'DescribeCollection',
       data,
       data.timeout || this.timeout
@@ -242,7 +242,7 @@ export class Collection extends Database {
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'ShowCollections',
       {
         type: data ? data.type : ShowCollectionsType.All,
@@ -290,7 +290,7 @@ export class Collection extends Database {
   async alterCollection(data: AlterCollectionReq): Promise<ResStatus> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'AlterCollection',
       {
         collection_name: data.collection_name,
@@ -346,7 +346,7 @@ export class Collection extends Database {
 
     // get new data
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'DescribeCollection',
       data,
       data.timeout || this.timeout
@@ -391,7 +391,7 @@ export class Collection extends Database {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'GetCollectionStatistics',
       data,
       data.timeout || this.timeout
@@ -432,7 +432,7 @@ export class Collection extends Database {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'LoadCollection',
       data,
       data.timeout || this.timeout
@@ -470,7 +470,7 @@ export class Collection extends Database {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'LoadCollection',
       data,
       data.timeout || this.timeout
@@ -529,7 +529,7 @@ export class Collection extends Database {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'ReleaseCollection',
       data,
       data.timeout || this.timeout
@@ -564,7 +564,7 @@ export class Collection extends Database {
    */
   async renameCollection(data: RenameCollectionReq): Promise<ResStatus> {
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'RenameCollection',
       {
         oldName: data.collection_name,
@@ -602,7 +602,7 @@ export class Collection extends Database {
     checkCollectionName(data);
 
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'DropCollection',
       data,
       data.timeout || this.timeout
@@ -649,7 +649,7 @@ export class Collection extends Database {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'CreateAlias',
       data,
       data.timeout || this.timeout
@@ -688,7 +688,7 @@ export class Collection extends Database {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'DropAlias',
       data,
       data.timeout || this.timeout
@@ -728,7 +728,7 @@ export class Collection extends Database {
       throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'AlterAlias',
       data,
       data.timeout || this.timeout
@@ -763,7 +763,7 @@ export class Collection extends Database {
     checkCollectionName(data);
     const collectionInfo = await this.describeCollection(data);
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'ManualCompaction',
       {
         collectionID: collectionInfo.collectionID,
@@ -803,7 +803,7 @@ export class Collection extends Database {
       throw new Error(ERROR_REASONS.COMPACTION_ID_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'GetCompactionState',
       data,
       data.timeout || this.timeout
@@ -841,7 +841,7 @@ export class Collection extends Database {
       throw new Error(ERROR_REASONS.COMPACTION_ID_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'GetCompactionStateWithPlans',
       data,
       data.timeout || this.timeout
@@ -894,7 +894,7 @@ export class Collection extends Database {
       throw new Error(ERROR_REASONS.COLLECTION_ID_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'GetReplicas',
       data,
       data.timeout || this.timeout
@@ -935,7 +935,7 @@ export class Collection extends Database {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'GetLoadingProgress',
       data,
       data.timeout || this.timeout
@@ -973,7 +973,7 @@ export class Collection extends Database {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
     const res = await promisify(
-      this.client,
+      this.channelPool,
       'GetLoadState',
       data,
       data.timeout || this.timeout

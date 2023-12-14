@@ -48,7 +48,7 @@ export class Partition extends Index {
   async createPartition(data: CreatePartitionReq): Promise<ResStatus> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'CreatePartition',
       data,
       data.timeout || this.timeout
@@ -85,7 +85,7 @@ export class Partition extends Index {
   async hasPartition(data: HasPartitionReq): Promise<BoolResponse> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'HasPartition',
       data,
       data.timeout || this.timeout
@@ -124,7 +124,7 @@ export class Partition extends Index {
   ): Promise<ShowPartitionsResponse> {
     checkCollectionName(data);
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'ShowPartitions',
       data,
       data.timeout || this.timeout
@@ -165,7 +165,7 @@ export class Partition extends Index {
   ): Promise<StatisticsResponse> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'GetPartitionStatistics',
       data,
       data.timeout || this.timeout
@@ -207,7 +207,7 @@ export class Partition extends Index {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'LoadPartitions',
       data,
       data.timeout || this.timeout
@@ -247,7 +247,7 @@ export class Partition extends Index {
       throw new Error(ERROR_REASONS.PARTITION_NAMES_IS_REQUIRED);
     }
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'ReleasePartitions',
       data,
       data.timeout || this.timeout
@@ -290,7 +290,7 @@ export class Partition extends Index {
   async dropPartition(data: DropPartitionReq): Promise<ResStatus> {
     checkCollectionAndPartitionName(data);
     const promise = await promisify(
-      this.client,
+      this.channelPool,
       'DropPartition',
       data,
       data.timeout || this.timeout

@@ -60,8 +60,14 @@ export class MilvusClient extends GRPCClient {
     logger.debug(
       `new client initialized, version: ${MilvusClient.sdkInfo.version} `
     );
-    // connect();
-    this.connect(MilvusClient.sdkInfo.version);
+
+    // If the configOrAddress is a string (i.e., the server's address), or if the configOrAddress object does not have the __SKIP_CONNECT__ property set to true, then establish a connection to the Milvus server using the current SDK version.
+    if (
+      typeof configOrAddress === 'string' ||
+      !(configOrAddress as ClientConfig).__SKIP_CONNECT__
+    ) {
+      this.connect(MilvusClient.sdkInfo.version);
+    }
   }
 
   // High level API: align with pymilvus
