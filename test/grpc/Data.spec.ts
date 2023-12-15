@@ -520,6 +520,15 @@ describe(`Data.API`, () => {
     expect(res.data.length).toEqual(0);
   });
 
+  it(`query by ids success`, async () => {
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      ids: ['1', '2', '3'],
+    });
+
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`delete by ids should success`, async () => {
     const res = await milvusClient.delete({
       collection_name: COLLECTION_NAME,

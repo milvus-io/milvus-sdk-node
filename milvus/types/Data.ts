@@ -308,6 +308,7 @@ export interface SearchRes extends resStatusResponse {
 export interface QueryReq extends collectionNameReq {
   output_fields?: string[];
   partition_names?: string[];
+  ids?: string[] | number[];
   expr?: string;
   filter?: string;
   offset?: number;
