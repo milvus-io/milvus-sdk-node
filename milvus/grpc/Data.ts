@@ -108,7 +108,7 @@ export class Data extends Collection {
    * ```
    *  new milvusClient(MILUVS_ADDRESS).insert({
    *    collection_name: COLLECTION_NAME,
-   *    fields_data: [{
+   *    data: [{
    *      vector_field: [1,2,2,4],
    *      scalar_field: 1
    *    }]
