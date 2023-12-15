@@ -291,6 +291,8 @@ export class User extends Resource {
     );
     return promise;
   }
+  // alias
+  grantRole = this.addUserToRole;
 
   /**
    * remove user from role
@@ -327,6 +329,8 @@ export class User extends Resource {
     );
     return promise;
   }
+  // alias
+  revokeRole = this.removeUserFromRole;
 
   /**
    * gets all users that belong to a specified role
@@ -363,6 +367,8 @@ export class User extends Resource {
 
     return promise;
   }
+  // alias
+  describeRole = this.selectRole;
 
   /**
    * list all roles
@@ -431,6 +437,8 @@ export class User extends Resource {
 
     return promise;
   }
+  // alias
+  describeUser = this.selectUser;
 
   /**
    * grant privileges to a role
@@ -481,6 +489,8 @@ export class User extends Resource {
 
     return promise;
   }
+  // alias
+  grantPrivilege = this.grantRolePrivilege;
 
   /**
    * revoke privileges to a role
@@ -531,6 +541,7 @@ export class User extends Resource {
 
     return promise;
   }
+  revokePrivilege = this.revokeRolePrivilege;
 
   /**
    * revoke all roles priviledges

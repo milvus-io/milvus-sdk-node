@@ -160,18 +160,34 @@ describe(`User Api`, () => {
     const res = await authClient.selectRole({
       roleName: ROLE_NAME,
     });
+    const alias = await authClient.describeRole({
+      roleName: ROLE_NAME,
+    });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].users[0].name).toEqual(USERNAME);
     expect(res.results[0].role.name).toEqual(ROLE_NAME);
+    expect(alias.status.error_code).toEqual(res.status.error_code);
+    expect(alias.results[0].users[0].name).toEqual(
+      res.results[0].users[0].name
+    );
+    expect(alias.results[0].role.name).toEqual(res.results[0].role.name);
   });
 
   it(`It should get user successfully`, async () => {
     const res = await authClient.selectUser({
       username: USERNAME,
     });
+    const alias = await authClient.describeUser({
+      username: USERNAME,
+    });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].user.name).toEqual(USERNAME);
     expect(res.results[0].roles[0].name).toEqual(ROLE_NAME);
+    expect(alias.status.error_code).toEqual(res.status.error_code);
+    expect(alias.results[0].user.name).toEqual(res.results[0].user.name);
+    expect(alias.results[0].roles[0].name).toEqual(
+      res.results[0].roles[0].name
+    );
   });
 
   it(`It should grant privilege to role successfully`, async () => {
@@ -181,7 +197,14 @@ describe(`User Api`, () => {
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
+    const alias = await authClient.grantPrivilege({
+      roleName: ROLE_NAME,
+      object: RbacObjects.Collection,
+      objectName: COLLECTION_NAME,
+      privilegeName: Privileges.Search,
+    });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(alias.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should list grants successfully`, async () => {
