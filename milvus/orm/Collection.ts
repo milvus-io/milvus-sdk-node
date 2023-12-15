@@ -9,6 +9,8 @@ import {
   DataTypeMap,
   DataType,
   findKeyValue,
+  DeleteByIdsReq,
+  DeleteByFilterReq,
 } from '..';
 
 interface collectionProps {
@@ -144,11 +146,20 @@ export class Collection {
   }
 
   // Deletes an entity from the collection.
-  async delete(data: Omit<DeleteReq, 'collection_name'>) {
-    // Create a request object to delete the entity.
-    const deleteReq = cloneObj(data) as DeleteReq;
+  async delete(
+    data:
+      | { ids: string[] | number[]; partition_name?: string }
+      | { filter: string; partition_name?: string }
+  ) {
+    let deleteReq: DeleteReq;
 
-    deleteReq.collection_name = this.name;
+    if ('ids' in data) {
+      deleteReq = { ...data, collection_name: this.name } as DeleteByIdsReq;
+    } else if ('filter' in data) {
+      deleteReq = { ...data, collection_name: this.name } as DeleteByFilterReq;
+    } else {
+      throw new Error('Invalid delete request');
+    }
 
     return await this.#client.delete(deleteReq);
   }
