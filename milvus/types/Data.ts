@@ -84,10 +84,17 @@ export interface DeleteEntitiesReq extends collectionNameReq {
   partition_name?: string;
 }
 
-export interface DeleteReq extends collectionNameReq {
+export interface DeleteByIdsReq extends collectionNameReq {
   ids: string[] | number[];
   partition_name?: string;
 }
+
+export interface DeleteByFilterReq extends collectionNameReq {
+  filter: string;
+  partition_name?: string;
+}
+
+export type DeleteReq = DeleteByIdsReq | DeleteByFilterReq;
 
 export interface CalcDistanceReq extends GrpcTimeOut {
   op_left: any;

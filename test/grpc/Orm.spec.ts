@@ -188,6 +188,18 @@ describe(`ORM Client API`, () => {
     });
 
     expect(deleteRes.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // delete
+    const delete2Res = await collection.delete({
+      filter: 'id < 5',
+    });
+    expect(delete2Res.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    try {
+      await collection.delete({} as any);
+    } catch (error) {
+      expect(error.message).toEqual(`Invalid delete request`);
+    }
   });
 
   it(`index successfully`, async () => {
