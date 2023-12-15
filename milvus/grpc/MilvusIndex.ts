@@ -17,7 +17,7 @@ import {
 
 export class Index extends Data {
   /**
-   * Create an index on a vector field. Note that index building is an async progress.
+   * Create an index on a vector field. Note that index building is an async process.
    *
    * @param data
    *  | Property | Type | Description |
@@ -25,7 +25,9 @@ export class Index extends Data {
    *  | collection_name | String | Collection name |
    *  | field_name | String | Field name |
    *  | index_name | String | Index name is unique in one collection |
-   *  | extra_params | Object | Parameters: { index_type: string; metric_type: string; params: string; }; |
+   *  | index_type | String | Index type |
+   *  | metric_type | String | Metric type |
+   *  | params | Object | Parameters: { nlist: number }; |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @returns
@@ -97,25 +99,28 @@ export class Index extends Data {
   }
 
   /**
-   * Show index information. Current release of Milvus only supports showing latest built index.
+   * Displays index information. The current release of Milvus only supports displaying the most recently built index.
    *
    * @param data
    *  | Property | Type | Description |
    *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | collection_name | String | The name of the collection |
+   *  | field_name? | String | The name of the field (optional) |
+   *  | index_name? | String | The name of the index (optional) |
+   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client will continue to wait until the server responds or an error occurs. The default is undefined |
    *
    * @returns
    *  | Property      | Description |
    *  | :-- | :-- |
    *  | status        |  { error_code: number, reason: string } |
-   *  | index_descriptions        | Index information |
+   *  | index_descriptions        | Information about the index |
    *
    * @example
    * ```
    * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
-   * const describeIndexReq = {
+   * const describeIndexReq: DescribeIndexReq = {
    *   collection_name: 'my_collection',
+   *   index_name: 'my_index',
    * };
    * const res = await milvusClient.describeIndex(describeIndexReq);
    * console.log(res);
@@ -135,25 +140,27 @@ export class Index extends Data {
   /**
    * Get the index building state.
    *
-   * @param data
+   * @param data - An object of type DescribeIndexReq (which is identical to GetIndexStateReq) with the following properties:
    *  | Property | Type | Description |
    *  | :-- | :-- | :-- |
-   *  | collection_name | string | Collection name |
-   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   *  | collection_name | string | The name of the collection for which the index state is to be retrieved |
+   *  | field_name? | string | The name of the field for which the index state is to be retrieved |
+   *  | index_name? | string | The name of the index for which the state is to be retrieved |
    *
-   * @returns
+   * @returns A Promise that resolves to an object of type GetIndexStateResponse with the following properties:
    *  | Property | Description |
    *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | state | Index building state |
+   *  | status | An object with properties 'error_code' (number) and 'reason' (string) indicating the status of the request |
+   *  | state | The state of the index building process |
    *
    * @example
    * ```
    * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
-   * const getIndexStateReq = {
+   * const getIndexStateReq: DescribeIndexReq = {
    *   collection_name: 'my_collection',
+   *   index_name: 'my_index',
    * };
-   * const res = await milvusClient.getIndexState(getIndexStateReq);
+   * const res: GetIndexStateResponse = await milvusClient.getIndexState(getIndexStateReq);
    * console.log(res);
    * ```
    */
@@ -169,13 +176,14 @@ export class Index extends Data {
   }
 
   /**
-   * Show index building progress.
+   * Get index building progress.
    *
    * @param data
    *  | Property | Type | Description |
    *  | :-- | :-- | :-- |
    *  | collection_name | String | Collection name |
-   *  | field_name | String | Field name |
+   *  | field_name? | string | The name of the field for which the index state is to be retrieved |
+   *  | index_name? | string | The name of the index for which the state is to be retrieved |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @returns
@@ -190,7 +198,7 @@ export class Index extends Data {
    * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
    * const getIndexBuildProgressReq = {
    *   collection_name: 'my_collection',
-   *   field_name: 'my_field',
+   *   index_name: 'my_index',
    * };
    * const res = await milvusClient.getIndexBuildProgress(getIndexBuildProgressReq);
    * console.log(res);
@@ -216,7 +224,8 @@ export class Index extends Data {
    *  | Property | Type | Description |
    *  | :-- | :-- | :-- |
    *  | collection_name | String | Collection name |
-   *  | field_name | String | Field name |
+   *  | field_name? | string | The name of the field for which the index state is to be retrieved |
+   *  | index_name? | string | The name of the index for which the state is to be retrieved |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @returns
@@ -230,7 +239,7 @@ export class Index extends Data {
    * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
    * const dropIndexReq = {
    *   collection_name: 'my_collection',
-   *   field_name: 'my_field',
+   *   index_name: 'my_index',
    * };
    * const res = await milvusClient.dropIndex(dropIndexReq);
    * console.log(res);

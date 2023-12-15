@@ -24,8 +24,17 @@ export interface DescribeIndexReq extends collectionNameReq {
   field_name?: string;
   index_name?: string;
 }
+
+export interface FieldNameReq extends collectionNameReq {
+  field_name: string;
+}
+
+export interface IndexNameReq extends collectionNameReq {
+  index_name: string;
+}
+
 export interface GetIndexStateReq extends DescribeIndexReq {}
-export interface GetIndexBuildProgressReq extends DescribeIndexReq {}
+export type GetIndexBuildProgressReq = FieldNameReq | IndexNameReq;
 export interface DropIndexReq extends DescribeIndexReq {}
 
 export interface IndexDescription {

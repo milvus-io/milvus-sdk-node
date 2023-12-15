@@ -216,6 +216,17 @@ describe(`Milvus Index API`, () => {
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
+    expect(res.index_descriptions[0].index_name).toEqual(INDEX_NAME);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Describe Index with field name`, async () => {
+    const res = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+    });
+
+    expect(res.index_descriptions[0].field_name).toEqual(VECTOR_FIELD_NAME);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -233,7 +244,7 @@ describe(`Milvus Index API`, () => {
     })
   );
 
-  it(`Get Index with name State`, async () => {
+  it(`Get Index State with index name`, async () => {
     const res = await milvusClient.getIndexState({
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
@@ -241,20 +252,29 @@ describe(`Milvus Index API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Get Index without name progress`, async () => {
-    const res = await milvusClient.getIndexBuildProgress({
+  it(`Get Index State with field name `, async () => {
+    const res = await milvusClient.getIndexState({
       collection_name: COLLECTION_NAME,
-      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Get Index with name progress`, async () => {
+  it(`Get Index progress with index name`, async () => {
     const res = await milvusClient.getIndexBuildProgress({
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
+
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Get Index progress with field name should be failed`, async () => {
+    const res = await milvusClient.getIndexBuildProgress({
+      collection_name: COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+    });
+    expect(res.status.error_code).toEqual(ErrorCode.IndexNotExist);
   });
 
   it(`Drop Index with index name`, async () => {
