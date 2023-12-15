@@ -108,7 +108,7 @@ export class Data extends Collection {
    * ```
    *  new milvusClient(MILUVS_ADDRESS).insert({
    *    collection_name: COLLECTION_NAME,
-   *    fields_data: [{
+   *    data: [{
    *      vector_field: [1,2,2,4],
    *      scalar_field: 1
    *    }]
@@ -711,11 +711,11 @@ export class Data extends Collection {
    *  | Property | Type  | Description |
    *  | :--- | :-- | :-- |
    *  | collection_name | String | Collection name |
-   *  | expr or filter | String | Scalar field filter expression |
+   *  | ids | String[] | ids to get |
+   *  | expr or filter | String | Scalar field filter expression, filter > expr > ids |
    *  | partitions_names(optional) | String[] | Array of partition names |
    *  | output_fields | String[] | Vector or scalar field to be returned |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
    *  | params | {key: value}[] | An optional key pair json array
    *
    * @returns
@@ -730,7 +730,7 @@ export class Data extends Collection {
    * ```
    *  new milvusClient(MILUVS_ADDRESS).query({
    *    collection_name: 'my_collection',
-   *    expr: "age in [1,2,3,4,5,6,7,8]",
+   *    filter: "age in [1,2,3,4,5,6,7,8]",
    *    output_fields: ["age"],
    *  });
    * ```
@@ -749,8 +749,23 @@ export class Data extends Collection {
       offset = { offset: data.offset };
     }
 
-    // filter > expr or empty
-    data.expr = data.filter || data.expr || '';
+    // id in expression
+    let primaryKeyInIdsExpression = '';
+
+    // if we have ids
+    if (data.ids && data.ids.length > 0) {
+      const pkField = await this.getPkFieldName(data);
+      const pkFieldType = await this.getPkFieldType(data);
+
+      // generate expr by different type of pk
+      primaryKeyInIdsExpression =
+        DataTypeMap[pkFieldType] === DataType.VarChar
+          ? `${pkField} in ["${data.ids.join('","')}"]`
+          : `${pkField} in [${data.ids.join(',')}]`;
+    }
+
+    // filter > expr or empty > ids
+    data.expr = data.filter || data.expr || primaryKeyInIdsExpression;
 
     // Execute the query and get the results
     const promise: QueryRes = await promisify(
@@ -852,25 +867,7 @@ export class Data extends Collection {
    * ```
    */
   async get(data: GetReq): Promise<QueryResults> {
-    checkCollectionName(data);
-
-    const pkField = await this.getPkFieldName(data);
-
-    if (!data.ids || data.ids.length === 0) {
-      throw new Error(ERROR_REASONS.IDS_REQUIRED);
-    }
-
-    const pkFieldType = await this.getPkFieldType(data);
-
-    // generate expr by different type of pk
-    const expr =
-      DataTypeMap[pkFieldType] === DataType.VarChar
-        ? `${pkField} in ["${data.ids.join('","')}"]`
-        : `${pkField} in [${data.ids.join(',')}]`;
-
-    // build query req
-    const req = { ...data, expr };
-    return this.query(req);
+    return this.query(data);
   }
 
   /**
