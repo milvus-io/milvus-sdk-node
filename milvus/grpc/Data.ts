@@ -32,6 +32,8 @@ import {
   QueryReq,
   GetReq,
   DeleteReq,
+  DeleteByIdsReq,
+  DeleteByFilterReq,
   QueryRes,
   SearchReq,
   SearchRes,
@@ -326,9 +328,9 @@ export class Data extends Collection {
    *  | :--- | :-- | :-- |
    *  | collection_name | String | Collection name |
    *  | partition_name(optional)| String | Partition name |
-   *  | ids | String[] or Number[] | ids to delete |
+   *  | ids | string[] or Number[] | ids to delete |
+   *  | filter| string | filter expression, filter takes precedence over ids |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
    *
    * @returns
    * | Property | Description |
@@ -340,9 +342,16 @@ export class Data extends Collection {
    * #### Example
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).deleteEntities({
+   *  new milvusClient(MILUVS_ADDRESS).delete({
    *    collection_name: COLLECTION_NAME,
-   *    expr: 'id in [1,2,3,4]'
+   *    filter: 'id in [1,2,3,4]'
+   *  });
+   * ```
+   *
+   * ```
+   *  new milvusClient(MILUVS_ADDRESS).delete({
+   *    collection_name: COLLECTION_NAME,
+   *    ids: [1,2,3,4]
    *  });
    * ```
    */
@@ -351,18 +360,23 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
 
-    if (!data.ids || data.ids.length === 0) {
-      throw new Error(ERROR_REASONS.IDS_REQUIRED);
-    }
-
     const pkField = await this.getPkFieldName(data);
     const pkFieldType = await this.getPkFieldType(data);
 
+    let expr = '';
+
     // generate expr by different type of pk
-    const expr =
-      DataTypeMap[pkFieldType] === DataType.VarChar
-        ? `${pkField} in ["${data.ids.join('","')}"]`
-        : `${pkField} in [${data.ids.join(',')}]`;
+    if ((data as DeleteByIdsReq).ids) {
+      expr =
+        DataTypeMap[pkFieldType] === DataType.VarChar
+          ? `${pkField} in ["${(data as DeleteByIdsReq).ids.join('","')}"]`
+          : `${pkField} in [${(data as DeleteByIdsReq).ids.join(',')}]`;
+    }
+
+    // if filter exist use filter;
+    if ((data as DeleteByFilterReq).filter) {
+      expr = (data as DeleteByFilterReq).filter;
+    }
     const req = { ...data, expr };
     return this.deleteEntities(req);
   }

@@ -520,20 +520,19 @@ describe(`Data.API`, () => {
     expect(res.data.length).toEqual(0);
   });
 
-  it(`delete without ids should throw error`, async () => {
-    try {
-      await milvusClient.delete({
-        collection_name: COLLECTION_NAME,
-      } as any);
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.IDS_REQUIRED);
-    }
-  });
-
   it(`delete by ids should success`, async () => {
     const res = await milvusClient.delete({
       collection_name: COLLECTION_NAME,
       ids: [1, 2, 3],
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`delete by filter should success`, async () => {
+    const res = await milvusClient.delete({
+      collection_name: COLLECTION_NAME,
+      filter: 'id < 5',
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
