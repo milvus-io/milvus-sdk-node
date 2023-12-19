@@ -173,6 +173,7 @@ export class Partition extends Index {
     promise.data = formatKeyValueData(promise.stats, ['row_count']);
     return promise;
   }
+  getPartitionStats = this.getPartitionStatistics;
 
   /**
    * Load multiple partitions into query nodes.

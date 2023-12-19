@@ -401,6 +401,8 @@ export class Collection extends Database {
 
     return promise;
   }
+  // alias
+  getCollectionStats = this.getCollectionStatistics;
 
   /**
    * Load collection data into query nodes, then you can do vector search on this collection.

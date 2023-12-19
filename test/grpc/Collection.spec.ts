@@ -318,6 +318,13 @@ describe(`Collection API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.stats[0].value).toEqual('0');
     expect(res.data.row_count).toEqual('0');
+
+    // alias
+    const alias = await milvusClient.getCollectionStats({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(alias.stats[0].value).toEqual(res.stats[0].value);
+    expect(alias.data.row_count).toEqual(res.data.row_count);
   });
 
   it(`Describe Collection info`, async () => {
