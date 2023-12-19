@@ -33,9 +33,9 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
     async get(
       params: HttpVectorGetReq,
       options?: FetchOptions
-    ): Promise<HttpBaseResponse> {
+    ): Promise<HttpVectorQueryResponse> {
       const url = `/vector/get`;
-      return await this.GET<HttpBaseResponse>(url, params, options);
+      return await this.POST<HttpVectorQueryResponse>(url, params, options);
     }
 
     // POST insert data
@@ -52,7 +52,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       data: HttpVectorInsertReq,
       options?: FetchOptions
     ): Promise<HttpVectorInsertResponse> {
-      const url = `/vector/insert`;
+      const url = `/vector/upsert`;
       return await this.POST<HttpVectorInsertResponse>(url, data, options);
     }
 

@@ -12,7 +12,7 @@ import {
 } from '../tools';
 
 export function generateTests(
-  config: HttpClientConfig & { address?: string; cloud?: boolean, desc: string }
+  config: HttpClientConfig & { address?: string; cloud?: boolean; desc: string }
 ) {
   describe(config.desc, () => {
     if (!config.cloud) {
@@ -42,7 +42,7 @@ export function generateTests(
       dimension: 128,
     };
 
-    const count = 10;
+    const count = 100;
     const data = generateInsertData(
       [
         ...genCollectionParams({
@@ -123,7 +123,18 @@ export function generateTests(
       expect(insert.data.insertCount).toEqual(count);
     });
 
-    it('should query data successfully', async () => {
+    // it('should upsert data successfully', async () => {
+    //   const upsert = await client.upsert({
+    //     collectionName: createParams.collectionName,
+    //     data: data,
+    //   });
+
+    //   console.log(upsert);
+    //   expect(upsert.code).toEqual(200);
+    //   expect(upsert.data.insertCount).toEqual(count);
+    // });
+
+    it('should query data and get data and delete successfully', async () => {
       const query = await client.query({
         collectionName: createParams.collectionName,
         outputFields: ['id'],
@@ -132,6 +143,22 @@ export function generateTests(
 
       expect(query.code).toEqual(200);
       expect(query.data.length).toEqual(data.length);
+
+      const ids = query.data.map(d => d.id);
+
+      const get = await client.get({
+        collectionName: createParams.collectionName,
+        id: ids,
+        outputFields: ['id', 'vector'],
+      });
+      expect(get.code).toEqual(200);
+      expect(get.data.length).toEqual(ids.length);
+
+      const del = await client.delete({
+        collectionName: createParams.collectionName,
+        id: ids,
+      });
+      expect(del.code).toEqual(200);
     });
 
     it('should search data successfully', async () => {
