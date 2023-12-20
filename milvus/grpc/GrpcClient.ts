@@ -174,6 +174,8 @@ export class GRPCClient extends User {
       resolve({ error_code: ErrorCode.SUCCESS, reason: '' });
     });
   }
+  // alias
+  useDatabase = this.use;
 
   /**
    * Retrieves server information from the Milvus server.
