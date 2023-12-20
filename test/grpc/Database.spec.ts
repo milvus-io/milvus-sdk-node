@@ -18,7 +18,7 @@ describe(`Database API`, () => {
 
   it(`using database should be ok`, async () => {
     // use db
-    const useDB = await milvusClient.use({ db_name: DB_NAME });
+    const useDB = await milvusClient.useDatabase({ db_name: DB_NAME });
     expect(useDB!.error_code).toEqual(ErrorCode.SUCCESS);
 
     // create collection on another db
