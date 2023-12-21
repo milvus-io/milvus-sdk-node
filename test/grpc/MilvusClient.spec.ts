@@ -27,6 +27,10 @@ describe(`Milvus client`, () => {
     jest.clearAllMocks();
   });
 
+  afterAll(async () => {
+    await milvusClient.closeConnection();
+  });
+
   it(`should create a grpc client with cert file successfully`, async () => {
     const m1 = new MilvusClient({
       address: IP,
@@ -40,7 +44,7 @@ describe(`Milvus client`, () => {
       __SKIP_CONNECT__: true,
     });
 
-    expect(await m1.client).toBeDefined();
+    expect(await m1.channelPool).toBeDefined();
     expect(m1.tlsMode).toEqual(TLS_MODE.TWO_WAY);
     expect(m1.clientId).toEqual('1');
   });
@@ -56,13 +60,16 @@ describe(`Milvus client`, () => {
     });
 
     expect(m2.clientId).toEqual('1');
-    expect(await m2.client).toBeDefined();
     expect(m2.tlsMode).toEqual(TLS_MODE.ONE_WAY);
   });
 
-  it(`should create a grpc client without authentication when username and password are not provided`, () => {
+  it(`should create a grpc client without authentication when username and password are not provided`, async () => {
     const m3 = new MilvusClient(IP, false);
-    expect(m3.client).toBeDefined();
+    await m3.connectPromise;
+
+    expect(m3.channelPool).toBeDefined();
+    await m3.closeConnection();
+    expect(m3.connectStatus).toEqual(CONNECT_STATUS.SHUTDOWN);
   });
 
   it(`should have connect promise and connectStatus`, async () => {
@@ -71,11 +78,19 @@ describe(`Milvus client`, () => {
 
     await m4.connectPromise;
     expect(m4.connectStatus).not.toEqual(CONNECT_STATUS.NOT_CONNECTED);
+    await m4.closeConnection();
+    expect(m4.connectStatus).toEqual(CONNECT_STATUS.SHUTDOWN);
   });
 
   it(`should create a grpc client with authentication when username and password are provided`, async () => {
-    const m5 = new MilvusClient(IP, false, `username`, `password`);
-    expect(await m5.client).toBeDefined();
+    const m5 = new MilvusClient({
+      address: IP,
+      username: 'username',
+      password: 'password',
+      id: '1',
+      __SKIP_CONNECT__: true,
+    });
+    expect(await m5.channelPool).toBeDefined();
   });
 
   it(`should setup protofile path successfully`, async () => {
@@ -88,7 +103,7 @@ describe(`Milvus client`, () => {
       __SKIP_CONNECT__: true,
     });
 
-    expect(await m6.client).toBeDefined();
+    expect(await m6.channelPool).toBeDefined();
     expect(m6.protoFilePath.milvus).toEqual(milvusProtoPath);
     expect(m6.protoFilePath.schema).toEqual(schemaProtoPath);
   });

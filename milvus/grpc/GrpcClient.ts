@@ -99,11 +99,6 @@ export class GRPCClient extends User {
     this.connectPromise = this._getServerInfo(sdkVersion);
   }
 
-  // return client acquired from pool
-  get client() {
-    return this.channelPool.acquire();
-  }
-
   /**
    * Creates a pool of gRPC service clients.
    *
@@ -114,7 +109,7 @@ export class GRPCClient extends User {
   private createChannelPool(
     ServiceClientConstructor: ServiceClientConstructor
   ) {
-    return createPool(
+    return createPool<Client>(
       {
         create: async () => {
           // Create a new gRPC service client
