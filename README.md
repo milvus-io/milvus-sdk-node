@@ -168,7 +168,7 @@ await client.insert({
 });
 ```
 
-### Ceate index
+### Create index
 
 By creating an index and loading the collection into memory, you can improve the performance of search and retrieval operations in Milvus, making it faster and more efficient to work with large-scale datasets.
 
