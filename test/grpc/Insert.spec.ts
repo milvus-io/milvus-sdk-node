@@ -27,8 +27,8 @@ const COLLECTION_NAME_PARAMS = genCollectionParams({
 });
 const COLLECTION_NAME_AUTO_ID_PARAMS = genCollectionParams({
   collectionName: COLLECTION_NAME_AUTO_ID,
-  dim: 4,
-  vectorType: DataType.FloatVector,
+  dim: 16,
+  vectorType: DataType.BinaryVector,
   autoID: true,
 });
 
