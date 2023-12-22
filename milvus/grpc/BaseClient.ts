@@ -125,17 +125,6 @@ export class BaseClient {
     // Assign the configuration object.
     this.config = config;
 
-    // if ssl is on or starts with https, tlsMode = 1(one way auth).
-    this.tlsMode =
-      this.config.address.startsWith('https://') || this.config.ssl
-        ? TLS_MODE.ONE_WAY
-        : TLS_MODE.DISABLED;
-    // if cert and private keys are available as well, tlsMode = 2(two way auth).
-    this.tlsMode =
-      this.config.tls && this.config.tls.rootCertPath
-        ? TLS_MODE.TWO_WAY
-        : this.tlsMode;
-
     // setup proto file path
     if (this.config.protoFilePath) {
       const { milvus, schema } = this.config.protoFilePath;
@@ -174,38 +163,46 @@ export class BaseClient {
         this.config.tls.serverName;
     }
 
-    // Switch based on the TLS mode
+    // If the address starts with 'https://' or SSL is enabled, set to one-way authentication
+    this.tlsMode =
+      this.config.address.startsWith('https://') || this.config.ssl
+        ? TLS_MODE.ONE_WAY
+        : TLS_MODE.DISABLED;
+
+    // If the root certificate path is provided, also set to one-way authentication
+    this.tlsMode =
+      this.config.tls && this.config.tls.rootCertPath
+        ? TLS_MODE.ONE_WAY
+        : this.tlsMode;
+
+    // If the private key path is provided, set to two-way authentication
+    this.tlsMode =
+      this.config.tls && this.config.tls.privateKeyPath
+        ? TLS_MODE.TWO_WAY
+        : this.tlsMode;
+
+    // Create credentials based on the TLS mode
     switch (this.tlsMode) {
       case TLS_MODE.ONE_WAY:
-        // Create SSL credentials with empty parameters for one-way authentication
-        this.creds = credentials.createSsl();
+        // For one-way authentication, create SSL credentials with the root certificate if provided
+        const sslOption = this.config.tls?.rootCertPath
+          ? readFileSync(this.config.tls?.rootCertPath)
+          : undefined;
+        this.creds = credentials.createSsl(sslOption);
         break;
       case TLS_MODE.TWO_WAY:
-        // Extract paths for root certificate, private key, certificate chain, and verify options from the client configuration
+        // For two-way authentication, create SSL credentials with the root certificate, private key, certificate chain, and verify options
         const { rootCertPath, privateKeyPath, certChainPath, verifyOptions } =
           this.config.tls!;
-
-        // Initialize buffers for root certificate, private key, and certificate chain
-        let rootCertBuff: Buffer | null = null;
-        let privateKeyBuff: Buffer | null = null;
-        let certChainBuff: Buffer | null = null;
-
-        // Read root certificate file if path is provided
-        if (rootCertPath) {
-          rootCertBuff = readFileSync(rootCertPath);
-        }
-
-        // Read private key file if path is provided
-        if (privateKeyPath) {
-          privateKeyBuff = readFileSync(privateKeyPath);
-        }
-
-        // Read certificate chain file if path is provided
-        if (certChainPath) {
-          certChainBuff = readFileSync(certChainPath);
-        }
-
-        // Create SSL credentials with the read files and verify options for two-way authentication
+        const rootCertBuff: Buffer | null = rootCertPath
+          ? readFileSync(rootCertPath)
+          : null;
+        const privateKeyBuff: Buffer | null = privateKeyPath
+          ? readFileSync(privateKeyPath)
+          : null;
+        const certChainBuff: Buffer | null = certChainPath
+          ? readFileSync(certChainPath)
+          : null;
         this.creds = credentials.createSsl(
           rootCertBuff,
           privateKeyBuff,
@@ -214,7 +211,7 @@ export class BaseClient {
         );
         break;
       default:
-        // Create insecure credentials if no TLS mode is specified
+        // If no TLS mode is specified, create insecure credentials
         this.creds = credentials.createInsecure();
         break;
     }
