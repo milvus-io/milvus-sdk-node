@@ -108,6 +108,22 @@ describe(`Milvus client`, () => {
     expect(m6.protoFilePath.schema).toEqual(schemaProtoPath);
   });
 
+  it(`should set tls to 1 if root cert provided`, async () => {
+    const m7 = new MilvusClient({
+      address: IP,
+      ssl: true,
+      username: 'username',
+      password: 'password',
+      id: '1',
+      tls: {
+        rootCertPath: `test/cert/ca.pem`,
+      },
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(m7.tlsMode).toEqual(TLS_MODE.ONE_WAY);
+  });
+
   it(`Should throw MILVUS_ADDRESS_IS_REQUIRED`, async () => {
     try {
       new MilvusClient(undefined as any);
