@@ -93,7 +93,7 @@ export class MilvusClient extends GRPCClient {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
     }
 
-    // if fields are in the data, use old _createCollection
+    // if fields or schema are in the data, use old _createCollection
     if ('fields' in data || 'schema' in data) {
       const createCollectionRes = await this._createCollection(data);
 
@@ -106,7 +106,7 @@ export class MilvusClient extends GRPCClient {
           );
         }
         // load collection sync
-        const load = await this.loadCollectionSync({
+        await this.loadCollectionSync({
           collection_name: data.collection_name,
         });
 
@@ -114,7 +114,7 @@ export class MilvusClient extends GRPCClient {
         return createCollectionRes;
       }
 
-      // just return create collection
+      // just return create collection response
       return createCollectionRes;
     }
 
