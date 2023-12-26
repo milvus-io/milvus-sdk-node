@@ -79,7 +79,7 @@ export interface ShowCollectionsReq extends GrpcTimeOut {
   collection_names?: string[];
 }
 
-export interface CreateCollectionReq extends GrpcTimeOut {
+interface BaseCreateCollectionReq extends GrpcTimeOut {
   // collection name
   collection_name: string;
   shards_num?: number; // int
@@ -90,12 +90,23 @@ export interface CreateCollectionReq extends GrpcTimeOut {
     | 'Bounded'
     | 'Eventually'
     | 'Customized';
-  fields: FieldType[];
   num_partitions?: number;
   partition_key_field?: string;
   enable_dynamic_field?: boolean;
   enableDynamicField?: boolean;
 }
+
+export interface CreateCollectionWithFieldsReq extends BaseCreateCollectionReq {
+  fields: FieldType[];
+}
+
+export interface CreateCollectionWithSchemaReq extends BaseCreateCollectionReq {
+  schema: FieldType[];
+}
+
+export type CreateCollectionReq =
+  | CreateCollectionWithFieldsReq
+  | CreateCollectionWithSchemaReq;
 
 export interface HasCollectionReq extends collectionNameReq {}
 

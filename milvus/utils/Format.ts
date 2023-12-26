@@ -13,6 +13,8 @@ import {
   Field,
   JSON,
   FieldData,
+  CreateCollectionWithFieldsReq,
+  CreateCollectionWithSchemaReq,
 } from '../';
 
 /**
@@ -304,13 +306,18 @@ export const formatCollectionSchema = (
   fieldSchemaType: Type
 ): { [k: string]: any } => {
   const {
-    fields,
     collection_name,
     description,
     enable_dynamic_field,
     enableDynamicField,
     partition_key_field,
   } = data;
+
+  let fields = (data as CreateCollectionWithFieldsReq).fields;
+
+  if ((data as CreateCollectionWithSchemaReq).schema) {
+    fields = (data as CreateCollectionWithSchemaReq).schema;
+  }
 
   const payload = {
     name: collection_name,
@@ -323,7 +330,7 @@ export const formatCollectionSchema = (
       const createObj: any = {
         ...rest,
         typeParams: parseToKeyValue(type_params),
-        dataType: convertToDataType(field.data_type),
+        dataType,
         isPrimaryKey: !!field.is_primary_key,
         isPartitionKey:
           !!field.is_partition_key || field.name === partition_key_field,
@@ -334,7 +341,7 @@ export const formatCollectionSchema = (
         dataType === DataType.Array &&
         typeof field.element_type !== 'undefined'
       ) {
-        createObj.elementType = field.element_type;
+        createObj.elementType = convertToDataType(field.element_type);
       }
 
       if (typeof field.default_value !== 'undefined') {
@@ -449,7 +456,7 @@ export const buildFieldDataMap = (fields_data: any[]) => {
       if (key === 'array_data') {
         field_data = field_data.map((f: any) => {
           const key = f.data;
-          return key ? f[key].data: [];
+          return key ? f[key].data : [];
         });
       }
 

@@ -88,7 +88,7 @@ export const genCollectionParams = (data: {
         name: 'default_value',
         // default_value: DEFAULT_VALUE,
         description: 'int64 field',
-        data_type: 'Int64', // test string type
+        data_type: 'Int64', // test string data type
       },
       {
         name: 'varChar',
@@ -106,7 +106,7 @@ export const genCollectionParams = (data: {
         name: 'int32_array',
         description: 'int array field',
         data_type: DataType.Array,
-        element_type: DataType.Int32,
+        element_type: 'Int32', // test string element type
         max_capacity: maxCapacity || MAX_CAPACITY,
       },
       {

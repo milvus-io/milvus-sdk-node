@@ -113,6 +113,7 @@ export enum MetricType {
 
 // Index types
 export enum IndexType {
+  // vector
   FLAT = 'FLAT',
   IVF_FLAT = 'IVF_FLAT',
   IVF_SQ8 = 'IVF_SQ8',
@@ -131,6 +132,9 @@ export enum IndexType {
   RAFT_IVF_FLAT = 'RAFT_IVF_FLAT',
   RAFT_IVF_PQ = 'RAFT_IVF_PQ',
   ScaNN = 'SCANN',
+  // scalar
+  STL_SORT = 'STL_SORT',
+  TRIE = 'Trie',
 }
 
 // MsgType

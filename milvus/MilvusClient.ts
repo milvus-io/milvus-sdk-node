@@ -15,6 +15,7 @@ import {
   DEFAULT_PRIMARY_KEY_FIELD,
   DEFAULT_METRIC_TYPE,
   DEFAULT_VECTOR_FIELD,
+  CreateColWithSchemaReq,
 } from '.';
 import sdkInfo from '../sdk.json';
 
@@ -70,7 +71,7 @@ export class MilvusClient extends GRPCClient {
     }
   }
 
-  // High level API: align with pymilvus
+  // High level API: align with python MilvusClient
   /**
    * Creates a new collection with the given parameters.
    * @function create_collection
@@ -78,7 +79,7 @@ export class MilvusClient extends GRPCClient {
    * @returns {Promise<ResStatus>} - The result of the operation.
    */
   async createCollection(
-    data: CreateColReq | CreateCollectionReq
+    data: CreateColReq | CreateColWithSchemaReq | CreateCollectionReq
   ): Promise<ResStatus> {
     // check compatibility
     await this.checkCompatibility({
@@ -92,9 +93,32 @@ export class MilvusClient extends GRPCClient {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
     }
 
-    // if fields are in the data, use old _createCollection
-    if ('fields' in data) {
-      return await this._createCollection(data);
+    // if fields or schema are in the data, use old _createCollection
+    if ('fields' in data || 'schema' in data) {
+      const createCollectionRes = await this._createCollection(data);
+
+      // if index params available
+      if ('index_params' in data) {
+        await Promise.all(
+          data.index_params.map(indexParam => {
+            return this.createIndex(
+              Object.assign(indexParam, {
+                collection_name: data.collection_name,
+              })
+            );
+          })
+        );
+        // load collection sync
+        await this.loadCollectionSync({
+          collection_name: data.collection_name,
+        });
+
+        // return
+        return createCollectionRes;
+      }
+
+      // just return create collection response
+      return createCollectionRes;
     }
 
     const {
@@ -109,7 +133,7 @@ export class MilvusClient extends GRPCClient {
       auto_id = false,
       index_params = {},
       timeout,
-    } = data;
+    } = data as CreateColReq;
 
     // prepare result
     let result: ResStatus = { error_code: '', reason: '' };

@@ -144,6 +144,20 @@ describe(`Milvus Index API`, () => {
       },
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res2 = await milvusClient.createIndex({
+      collection_name: COL_HNSW,
+      index_name: INDEX_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      index_type: 'HNSW',
+      metric_type: 'L2',
+      params: {
+        M: 4,
+        efConstruction: 8,
+      },
+    });
+
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Create DISKANN index should success`, async () => {
