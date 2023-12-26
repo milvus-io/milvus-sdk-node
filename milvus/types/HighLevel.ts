@@ -1,4 +1,11 @@
-import { DataType, MetricType, CreateIndexParam, collectionNameReq } from '../';
+import {
+  DataType,
+  MetricType,
+  CreateIndexParam,
+  collectionNameReq,
+  CreateCollectionReq,
+  CreateIndexSimpleReq,
+} from '../';
 
 // highlevel，only collection_name and dimension are required
 export interface CreateColReq extends collectionNameReq {
@@ -15,3 +22,7 @@ export interface CreateColReq extends collectionNameReq {
   timeouts?: number;
   index_params?: CreateIndexParam;
 }
+
+export type CreateColWithSchemaReq = CreateCollectionReq & {
+  index_params: Omit<CreateIndexSimpleReq, 'collection_name'>[];
+};

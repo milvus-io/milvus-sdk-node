@@ -13,6 +13,8 @@ import {
   Field,
   JSON,
   FieldData,
+  CreateCollectionWithFieldsReq,
+  CreateCollectionWithSchemaReq,
 } from '../';
 
 /**
@@ -304,13 +306,18 @@ export const formatCollectionSchema = (
   fieldSchemaType: Type
 ): { [k: string]: any } => {
   const {
-    fields,
     collection_name,
     description,
     enable_dynamic_field,
     enableDynamicField,
     partition_key_field,
   } = data;
+
+  let fields = (data as CreateCollectionWithFieldsReq).fields;
+
+  if ((data as CreateCollectionWithSchemaReq).schema) {
+    fields = (data as CreateCollectionWithSchemaReq).schema;
+  }
 
   const payload = {
     name: collection_name,
@@ -449,7 +456,7 @@ export const buildFieldDataMap = (fields_data: any[]) => {
       if (key === 'array_data') {
         field_data = field_data.map((f: any) => {
           const key = f.data;
-          return key ? f[key].data: [];
+          return key ? f[key].data : [];
         });
       }
 

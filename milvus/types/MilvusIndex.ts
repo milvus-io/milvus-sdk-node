@@ -14,7 +14,7 @@ export interface CreateIndexReq extends collectionNameReq {
 
 export interface CreateIndexSimpleReq extends collectionNameReq {
   field_name: string;
-  index_type?: string;
+  index_type: string;
   metric_type?: string;
   index_name?: string;
   params?: keyValueObj;

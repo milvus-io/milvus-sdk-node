@@ -47,6 +47,8 @@ import {
   AlterCollectionReq,
   DataType,
   parseToKeyValue,
+  CreateCollectionWithFieldsReq,
+  CreateCollectionWithSchemaReq,
 } from '../';
 
 /**
@@ -79,7 +81,7 @@ export class Collection extends Database {
    *  | description | String | Collection description |
    *  | num_partitions | number | number of partitions allowed |
    *  | consistency_level | String | "Strong"(Milvus default) | "Session" | "Bounded"| "Eventually" | "Customized"; |
-   *  | fields | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> | Field data |
+   *  | fields or schema | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> | Field data |
    *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
    *
    * @returns
@@ -116,11 +118,16 @@ export class Collection extends Database {
   async _createCollection(data: CreateCollectionReq): Promise<ResStatus> {
     // Destructure the data object and set default values for consistency_level and description.
     const {
-      fields,
       collection_name,
       consistency_level = 'Bounded',
       num_partitions,
     } = data || {};
+
+    let fields = (data as CreateCollectionWithFieldsReq).fields;
+
+    if ((data as CreateCollectionWithSchemaReq).schema) {
+      fields = (data as CreateCollectionWithSchemaReq).schema;
+    }
 
     // Check if fields and collection_name are present, otherwise throw an error.
     if (!fields?.length || !collection_name) {

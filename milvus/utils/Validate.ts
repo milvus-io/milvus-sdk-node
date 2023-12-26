@@ -7,6 +7,9 @@ import {
   MAX_PARTITION_KEY_FIELD_COUNT,
   CreateColReq,
   CreateCollectionReq,
+  CreateColWithSchemaReq,
+  CreateCollectionWithFieldsReq,
+  CreateCollectionWithSchemaReq,
 } from '../';
 import { status as grpcStatus } from '@grpc/grpc-js';
 
@@ -167,7 +170,7 @@ export const validatePartitionNumbers = (num_partitions: number) => {
  * @throws {Error} Throws an error if the SDK and server are incompatible.
  */
 export const checkCreateCollectionCompatibility = (
-  data: CreateColReq | CreateCollectionReq
+  data: CreateColReq | CreateColWithSchemaReq | CreateCollectionReq
 ) => {
   const hasDynamicSchemaEnabled =
     (data as CreateColReq).enableDynamicField ||
@@ -179,7 +182,9 @@ export const checkCreateCollectionCompatibility = (
     );
   }
 
-  const fields = (data as CreateCollectionReq).fields;
+  const fields =
+    (data as CreateCollectionWithFieldsReq).fields ||
+    (data as CreateCollectionWithSchemaReq).schema;
 
   if (fields.some(f => f.is_partition_key === true)) {
     throw new Error(
@@ -187,7 +192,7 @@ export const checkCreateCollectionCompatibility = (
     );
   }
 
-  const hasJSONField = (data as CreateCollectionReq).fields.some(
+  const hasJSONField = fields.some(
     f => f.data_type === 'JSON' || f.data_type === DataType.JSON
   );
 
