@@ -500,6 +500,9 @@ export class Data extends Collection {
         })
       ).finish();
 
+      // get collection's consistency level
+      const collection_consistency_level = collectionInfo.consistency_level;
+
       const promise: SearchRes = await promisify(
         this.channelPool,
         'Search',
@@ -514,9 +517,7 @@ export class Data extends Collection {
           placeholder_group: placeholderGroupBytes,
           search_params: parseToKeyValue(search_params),
           consistency_level:
-            typeof data.consistency_level === 'undefined'
-              ? ConsistencyLevelEnum.Bounded
-              : data.consistency_level,
+            data.consistency_level || collection_consistency_level,
         },
         data.timeout || this.timeout
       );
