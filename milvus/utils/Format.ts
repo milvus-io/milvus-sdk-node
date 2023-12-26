@@ -330,7 +330,7 @@ export const formatCollectionSchema = (
       const createObj: any = {
         ...rest,
         typeParams: parseToKeyValue(type_params),
-        dataType: convertToDataType(field.data_type),
+        dataType,
         isPrimaryKey: !!field.is_primary_key,
         isPartitionKey:
           !!field.is_partition_key || field.name === partition_key_field,
@@ -341,7 +341,7 @@ export const formatCollectionSchema = (
         dataType === DataType.Array &&
         typeof field.element_type !== 'undefined'
       ) {
-        createObj.elementType = field.element_type;
+        createObj.elementType = convertToDataType(field.element_type);
       }
 
       if (typeof field.default_value !== 'undefined') {
