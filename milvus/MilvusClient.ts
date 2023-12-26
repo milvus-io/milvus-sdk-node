@@ -99,12 +99,15 @@ export class MilvusClient extends GRPCClient {
 
       // if index params available
       if ('index_params' in data) {
-        // creata index
-        for (let indexParam of data.index_params) {
-          const i = await this.createIndex(
-            Object.assign(indexParam, { collection_name: data.collection_name })
-          );
-        }
+        await Promise.all(
+          data.index_params.map(indexParam => {
+            return this.createIndex(
+              Object.assign(indexParam, {
+                collection_name: data.collection_name,
+              })
+            );
+          })
+        );
         // load collection sync
         await this.loadCollectionSync({
           collection_name: data.collection_name,
