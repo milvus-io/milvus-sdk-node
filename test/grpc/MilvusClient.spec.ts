@@ -156,4 +156,20 @@ describe(`Milvus client`, () => {
     expect(milvusClient.channelPool.size).toBe(0);
     expect(res).toBe(CONNECT_STATUS.SHUTDOWN);
   });
+
+  // it(`should create a grpc client with cert file successfully`, async () => {
+  //   const mc = new MilvusClient({
+  //     address: 'localhost:19530',
+  //     tls: {
+  //       rootCertPath: `test/cert/ca.pem`,
+  //       privateKeyPath: `test/cert/client.key`,
+  //       certChainPath: `test/cert/client.pem`,
+  //       serverName: 'localhost',
+  //     },
+  //     logLevel: 'debug',
+  //   });
+
+  //   const healthy = await mc.checkHealth();
+  //   expect(healthy.isHealthy).toEqual(true);
+  // });
 });
