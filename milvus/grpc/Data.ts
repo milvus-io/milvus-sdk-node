@@ -51,7 +51,6 @@ import {
   DEFAULT_DYNAMIC_FIELD,
   buildDynamicRow,
   buildFieldDataMap,
-  ConsistencyLevelEnum,
   getDataKey,
   Field,
   buildFieldData,
