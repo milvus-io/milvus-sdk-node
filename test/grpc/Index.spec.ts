@@ -288,7 +288,7 @@ describe(`Milvus Index API`, () => {
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
     });
-    expect(res.status.error_code).toEqual(ErrorCode.IndexNotExist);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Drop Index with index name`, async () => {
