@@ -87,7 +87,7 @@ export interface HttpCollectionDescribeResponse
     indexes: Index[];
     load: string;
     shardsNum: number;
-    enableDynamic: boolean;
+    enableDynamicField: boolean;
   }> {}
 
 // list collections response

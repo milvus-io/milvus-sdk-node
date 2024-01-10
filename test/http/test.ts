@@ -79,7 +79,7 @@ export function generateTests(
       expect(describe.data.collectionName).toEqual(createParams.collectionName);
       expect(describe.data.description).toEqual(createParams.description);
       expect(describe.data.shardsNum).toEqual(1);
-      expect(describe.data.enableDynamic).toEqual(true);
+      expect(describe.data.enableDynamicField).toEqual(true);
       expect(describe.data.fields.length).toEqual(2);
       expect(describe.data.indexes[0].fieldName).toEqual(
         createParams.vectorField
@@ -99,7 +99,7 @@ export function generateTests(
         createDefaultParams.collectionName
       );
       expect(describe.data.shardsNum).toEqual(1);
-      expect(describe.data.enableDynamic).toEqual(true);
+      expect(describe.data.enableDynamicField).toEqual(true);
       expect(describe.data.fields.length).toEqual(2);
       expect(describe.data.indexes[0].fieldName).toEqual(DEFAULT_VECTOR_FIELD);
       expect(describe.data.indexes[0].metricType).toEqual(DEFAULT_METRIC_TYPE);
