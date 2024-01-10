@@ -135,6 +135,7 @@ export enum IndexType {
   // scalar
   STL_SORT = 'STL_SORT',
   TRIE = 'Trie',
+  INVERTED = 'INVERTED',
 }
 
 // MsgType
