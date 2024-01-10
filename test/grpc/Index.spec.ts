@@ -271,7 +271,9 @@ describe(`Milvus Index API`, () => {
       field_name: VECTOR_FIELD_NAME,
     });
 
-    expect(res.index_descriptions[0].field_name).toEqual(VECTOR_FIELD_NAME);
+    const field_names = res.index_descriptions.map(i => i.field_name);
+    expect(field_names.includes(VECTOR_FIELD_NAME)).toEqual(true);
+
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
