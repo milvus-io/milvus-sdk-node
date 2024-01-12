@@ -236,6 +236,7 @@ export interface SearchParam {
   params: string;
   round_decimal?: number;
   ignore_growing?: boolean;
+  group_by_field?: string;
 }
 
 export interface SearchSimpleReq extends collectionNameReq {
@@ -253,6 +254,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   metric_type?: string;
   consistency_level?: ConsistencyLevelEnum;
   ignore_growing?: boolean;
+  group_by_field?: string;
 }
 
 export interface SearchReq extends collectionNameReq {
@@ -266,6 +268,7 @@ export interface SearchReq extends collectionNameReq {
   vector_type: DataType.BinaryVector | DataType.FloatVector;
   nq?: number;
   consistency_level?: ConsistencyLevelEnum;
+  group_by_field?: string;
 }
 
 export interface SearchRes extends resStatusResponse {
@@ -302,6 +305,7 @@ export interface SearchRes extends resStatusResponse {
     num_queries: number;
     topks: number[];
     output_fields: string[];
+    group_by_field_value: string;
   };
 }
 

@@ -29,6 +29,13 @@ interface DataGenerator {
 export const genVarChar: DataGenerator = params => {
   const { max_length = MAX_LENGTH, is_partition_key = false, index } = params!;
 
+  const chance = Math.random();
+  if (chance < 0.2) {
+    return 'apple';
+  } else if (chance < 0.5) {
+    return 'orange';
+  }
+
   if (!is_partition_key) {
     let result = '';
     const characters =

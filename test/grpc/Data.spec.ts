@@ -5,6 +5,7 @@ import {
   ERROR_REASONS,
   DEFAULT_TOPK,
   DEFAULT_COUNT_QUERY_STRING,
+  IndexType,
 } from '../../milvus';
 import {
   IP,
@@ -44,13 +45,17 @@ describe(`Data.API`, () => {
       data: generateInsertData(createCollectionParams.fields, 1024),
     });
 
+    await milvusClient.flush({
+      collection_names: [COLLECTION_NAME],
+    });
+
     await milvusClient.createIndex({
       index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
-      index_type: 'IVF_FLAT',
+      index_type: IndexType.HNSW,
       metric_type: 'L2',
-      params: { nlist: 1024 },
+      params: { M: 4, efConstruction: 8 },
     });
     await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
@@ -185,10 +190,10 @@ describe(`Data.API`, () => {
       filter: '',
       data: [1, 2, 3, 4],
       limit: limit,
+      group_by_field: 'varChar',
     });
 
     expect(searchWithData.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(searchWithData.results.length).toEqual(limit);
 
     const searchWithData2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
