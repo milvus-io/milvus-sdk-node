@@ -526,8 +526,6 @@ export class Data extends Collection {
         data.timeout || this.timeout
       );
 
-      // console.log(111, promise.results);
-
       // if search failed
       // if nothing returned
       // return empty with status
