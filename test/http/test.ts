@@ -42,7 +42,7 @@ export function generateTests(
       dimension: 128,
     };
 
-    const count = 4;
+    const count = 100;
     const data = generateInsertData(
       [
         ...genCollectionParams({
@@ -118,8 +118,6 @@ export function generateTests(
         collectionName: createParams.collectionName,
         data: data,
       });
-
-      console.log(insert);
 
       expect(insert.code).toEqual(200);
       expect(insert.data.insertCount).toEqual(count);
