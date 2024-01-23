@@ -826,6 +826,7 @@ export class Data extends Collection {
   async count(data: CountReq): Promise<CountResult> {
     const queryResult = await this.query({
       collection_name: data.collection_name,
+      expr: data.expr || '',
       output_fields: [DEFAULT_COUNT_QUERY_STRING],
     });
 

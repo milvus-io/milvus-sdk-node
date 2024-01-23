@@ -458,6 +458,15 @@ describe(`Data.API`, () => {
     expect(Number(res.data[0][DEFAULT_COUNT_QUERY_STRING])).toEqual(count.data);
   });
 
+  it(`Query with count(*) and expr`, async () => {
+    const count = await milvusClient.count({
+      collection_name: COLLECTION_NAME,
+      expr: 'id < 0',
+    });
+
+    expect(count.data).toEqual(0);
+  });
+
   it(`Query with data limit only`, async () => {
     const expr = 'id > 0';
     const res = await milvusClient.query({
