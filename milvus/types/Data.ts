@@ -69,7 +69,9 @@ export interface FlushReq extends GrpcTimeOut {
   collection_names: string[];
 }
 
-export interface CountReq extends collectionNameReq {}
+export interface CountReq extends collectionNameReq {
+  expr?: string;
+}
 
 export interface InsertReq extends collectionNameReq {
   partition_name?: string;
