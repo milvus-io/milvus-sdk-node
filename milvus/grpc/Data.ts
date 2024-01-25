@@ -325,17 +325,17 @@ export class Data extends Collection {
    * @param data
    *  | Property | Type | Description |
    *  | :--- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | partition_name(optional)| String | Partition name |
-   *  | ids | string[] or Number[] | ids to delete |
-   *  | filter| string | filter expression, filter takes precedence over ids |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   *  | collection_name | String | Name of the collection |
+   *  | partition_name(optional)| String | Name of the partition |
+   *  | ids | string[] or Number[] | IDs of the entities to delete |
+   *  | filter| string | Filter expression, takes precedence over ids |
+   *  | timeout? | number | Optional duration of time in milliseconds to allow for the RPC. If undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
    *
    * @returns
    * | Property | Description |
    *  | :-- | :-- |
    *  | status |  { error_code: number, reason: string } |
-   *  | IDs | ID array of the successfully deleted data |
+   *  | IDs | Array of IDs of the successfully deleted entities |
    *
    *
    * #### Example
