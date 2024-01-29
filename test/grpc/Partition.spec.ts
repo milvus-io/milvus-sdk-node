@@ -75,6 +75,14 @@ describe(`Partition API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.partition_names).toEqual(['_default', PARTITION_NAME]);
     expect(res.partitionIDs.length).toEqual(2);
+
+    const list = await milvusClient.listPartitions({
+      collection_name: COLLECTION_NAME,
+    });
+
+    expect(list.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(list.partition_names).toEqual(res.partition_names);
+    expect(list.partitionIDs.length).toEqual(res.partitionIDs.length);
   });
 
   it(
