@@ -5,6 +5,7 @@ import {
   collectionNameReq,
   CreateCollectionReq,
   CreateIndexSimpleReq,
+  BaseCreateCollectionReq,
 } from '../';
 
 // highlevel，only collection_name and dimension are required
@@ -20,6 +21,12 @@ export interface CreateColReq extends collectionNameReq {
   description?: string;
   auto_id?: boolean;
   timeouts?: number;
+  consistency_level?:
+    | 'Strong'
+    | 'Session'
+    | 'Bounded'
+    | 'Eventually'
+    | 'Customized';
   index_params?: CreateIndexParam;
 }
 

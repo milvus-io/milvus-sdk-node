@@ -79,7 +79,7 @@ export interface ShowCollectionsReq extends GrpcTimeOut {
   collection_names?: string[];
 }
 
-interface BaseCreateCollectionReq extends GrpcTimeOut {
+export interface BaseCreateCollectionReq extends GrpcTimeOut {
   // collection name
   collection_name: string;
   shards_num?: number; // int

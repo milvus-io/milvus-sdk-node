@@ -6,6 +6,7 @@ import {
   IndexType,
   MetricType,
   LoadState,
+  ConsistencyLevelEnum,
 } from '../../milvus';
 import { IP, GENERATE_NAME } from '../tools';
 
@@ -78,11 +79,13 @@ describe(`High level API testing`, () => {
     const create = await milvusClient.createCollection({
       collection_name: FAST_CREATE_COL_NAME,
       dimension: dim,
+      consistency_level: 'Strong',
     });
 
     const des = await milvusClient.describeCollection({
       collection_name: FAST_CREATE_COL_NAME,
     });
+    expect(des.consistency_level).toEqual('Strong');
     expect(create.error_code).toEqual(ErrorCode.SUCCESS);
 
     const vectorField = des.schema.fields.find(

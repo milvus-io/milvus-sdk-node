@@ -119,7 +119,7 @@ export class Collection extends Database {
     // Destructure the data object and set default values for consistency_level and description.
     const {
       collection_name,
-      consistency_level = 'Bounded',
+      consistency_level = data.consistency_level || 'Bounded',
       num_partitions,
     } = data || {};
 
