@@ -20,9 +20,16 @@ import {
 
 export class Index extends Data {
   /**
-   * Asynchronously creates an index on a field.
+   * Asynchronously creates an index on a field. Note that index building is an asynchronous process.
    *
-   * @param {CreateIndexsReq} data - The data for creating the index. Can be an object or an array of objects.
+   * @param {CreateIndexsReq | CreateIndexsReq[]} data - The data for creating the index. Can be an object or an array of objects.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} data.field_name - The name of the field.
+   * @param {string} data.index_name - The name of the index. It must be unique within a collection.
+   * @param {string} data.index_type - The type of the index.
+   * @param {string} data.metric_type - The type of the metric.
+   * @param {Object} data.params - The parameters for the index. For example, `{ nlist: number }`.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    * @returns {Promise<ResStatus>} - A promise that resolves to a response status object.
    *
    * @example
@@ -82,41 +89,7 @@ export class Index extends Data {
     return await this._createIndex(data as CreateIndexRequest);
   }
 
-  /**
-   * Create an index on a field. Note that index building is an async process.
-   *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | field_name | String | Field name |
-   *  | index_name | String | Index name is unique in one collection |
-   *  | index_type | String | Index type |
-   *  | metric_type | String | Metric type |
-   *  | params | Object | Parameters: { nlist: number }; |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-   *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
-   *
-   * @example
-   * ```
-   * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
-   * const createIndexReq = {
-   *   collection_name: 'my_collection',
-   *   field_name: 'vector_01',
-   *   index_name: 'my_index',
-   *   index_type: 'IVF_FLAT',
-   *   metric_type: 'IP',
-   *   params: { nlist: 10 },
-   * };
-   * const res = await milvusClient.createIndex(createIndexReq);
-   * console.log(res);
-   * ```
-   */
+  // private create index
   async _createIndex(data: CreateIndexRequest): Promise<ResStatus> {
     checkCollectionName(data);
 
@@ -165,24 +138,20 @@ export class Index extends Data {
   /**
    * Displays index information. The current release of Milvus only supports displaying the most recently built index.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | The name of the collection |
-   *  | field_name? | String | The name of the field (optional) |
-   *  | index_name? | String | The name of the index (optional) |
-   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client will continue to wait until the server responds or an error occurs. The default is undefined |
+   * @param {Object} data - An object with the following properties:
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} [data.field_name] - The name of the field (optional).
+   * @param {string} [data.index_name] - The name of the index (optional).
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client will continue to wait until the server responds or an error occurs. The default is undefined.
    *
-   * @returns
-   *  | Property      | Description |
-   *  | :-- | :-- |
-   *  | status        |  { error_code: number, reason: string } |
-   *  | index_descriptions        | Information about the index |
+   * @returns {Promise<DescribeIndexResponse>} A Promise that resolves to an object with the following properties:
+   * @returns {Object} return.status - An object with properties 'error_code' (number) and 'reason' (string).
+   * @returns {Array<Object>} return.index_descriptions - Information about the index.
    *
    * @example
    * ```
    * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
-   * const describeIndexReq: DescribeIndexReq = {
+   * const describeIndexReq = {
    *   collection_name: 'my_collection',
    *   index_name: 'my_index',
    * };
@@ -204,27 +173,23 @@ export class Index extends Data {
   /**
    * Get the index building state.
    *
-   * @param data - An object of type DescribeIndexReq (which is identical to GetIndexStateReq) with the following properties:
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | string | The name of the collection for which the index state is to be retrieved |
-   *  | field_name? | string | The name of the field for which the index state is to be retrieved |
-   *  | index_name? | string | The name of the index for which the state is to be retrieved |
+   * @param {Object} data - An object with the following properties:
+   * @param {string} data.collection_name - The name of the collection for which the index state is to be retrieved.
+   * @param {string} [data.field_name] - The name of the field for which the index state is to be retrieved.
+   * @param {string} [data.index_name] - The name of the index for which the state is to be retrieved.
    *
-   * @returns A Promise that resolves to an object of type GetIndexStateResponse with the following properties:
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | An object with properties 'error_code' (number) and 'reason' (string) indicating the status of the request |
-   *  | state | The state of the index building process |
+   * @returns {Promise<GetIndexStateResponse>} A Promise that resolves to an object with the following properties:
+   * @returns {Object} return.status - An object with properties 'error_code' (number) and 'reason' (string) indicating the status of the request.
+   * @returns {string} return.state - The state of the index building process.
    *
    * @example
    * ```
    * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
-   * const getIndexStateReq: DescribeIndexReq = {
+   * const getIndexStateReq = {
    *   collection_name: 'my_collection',
    *   index_name: 'my_index',
    * };
-   * const res: GetIndexStateResponse = await milvusClient.getIndexState(getIndexStateReq);
+   * const res = await milvusClient.getIndexState(getIndexStateReq);
    * console.log(res);
    * ```
    */
@@ -242,20 +207,16 @@ export class Index extends Data {
   /**
    * Get index building progress.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | field_name? | string | The name of the field for which the index state is to be retrieved |
-   *  | index_name? | string | The name of the index for which the state is to be retrieved |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {Object} data - The data for retrieving the index building progress.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} [data.field_name] - The name of the field for which the index building progress is to be retrieved.
+   * @param {string} [data.index_name] - The name of the index for which the building progress is to be retrieved.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | indexed_rows | Row count that successfully built with index |
-   *  | total_rows | Total row count |
+   * @returns {Promise<Object>} A promise that resolves to an object with properties 'status', 'indexed_rows', and 'total_rows'.
+   * @returns {Object} return.status - An object with properties 'error_code' (number) and 'reason' (string) indicating the status of the request.
+   * @returns {number} return.indexed_rows - The number of rows that have been successfully indexed.
+   * @returns {number} return.total_rows - The total number of rows.
    *
    * @example
    * ```
@@ -284,19 +245,15 @@ export class Index extends Data {
   /**
    * Drop an index.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | field_name? | string | The name of the field for which the index state is to be retrieved |
-   *  | index_name? | string | The name of the index for which the state is to be retrieved |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {Object} data - The data for dropping the index.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} [data.field_name] - The name of the field for which the index is to be dropped.
+   * @param {string} [data.index_name] - The name of the index to be dropped.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<Object>} A promise that resolves to an object with properties 'error_code' and 'reason'.
+   * @returns {number} return.error_code - The error code number.
+   * @returns {string} return.reason - The cause of the error.
    *
    * @example
    * ```
