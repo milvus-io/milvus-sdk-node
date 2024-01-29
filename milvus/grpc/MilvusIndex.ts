@@ -3,6 +3,8 @@ import {
   CreateIndexReq,
   DescribeIndexReq,
   DropIndexReq,
+  CreateIndexsReq,
+  CreateIndexRequest,
   GetIndexBuildProgressReq,
   GetIndexStateReq,
   ResStatus,
@@ -13,11 +15,75 @@ import {
   checkCollectionName,
   parseToKeyValue,
   promisify,
+  ErrorCode,
 } from '../';
 
 export class Index extends Data {
   /**
-   * Create an index on a vector field. Note that index building is an async process.
+   * Asynchronously creates an index on a field.
+   *
+   * @param {CreateIndexsReq} data - The data for creating the index. Can be an object or an array of objects.
+   * @returns {Promise<ResStatus>} - A promise that resolves to a response status object.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
+   * const createIndexReq = {
+   *   collection_name: 'my_collection',
+   *   field_name: 'vector_01',
+   *   index_name: 'my_index',
+   *   index_type: 'IVF_FLAT',
+   *   metric_type: 'IP',
+   *   params: { nlist: 10 },
+   * };
+   * const res = await milvusClient.createIndex(createIndexReq);
+   * console.log(res);
+   *
+   * // or
+   * const createIndexesReq = [
+   * {
+   *   collection_name: 'my_collection',
+   *   field_name: 'vector_01',
+   *   index_name: 'my_index',
+   *   index_type: 'IVF_FLAT',
+   *   metric_type: 'IP',
+   *   params: { nlist: 10 },
+   * },
+   * {
+   *   collection_name: 'my_collection',
+   *   field_name: 'int16',
+   *   index_name: 'number_index',
+   *   index_type: 'STL_SORT',
+   * },
+   * {
+   *   collection_name: 'my_collection',
+   *   field_name: 'varChar',
+   *   index_name: 'varchar_index',
+   *   index_type: 'TRIE',
+   * },
+   * ];
+   * const res = await milvusClient.createIndex(createIndexReq);
+   * console.log(res);
+   * ```
+   */
+  async createIndex(data: CreateIndexsReq) {
+    if (Array.isArray(data)) {
+      return await Promise.all(
+        data.map(item => this._createIndex(item as CreateIndexRequest))
+      ).then((responses: ResStatus[]) => {
+        if (responses.every(r => r.error_code === ErrorCode.SUCCESS)) {
+          return responses[0];
+        } else {
+          return responses.find(r => r.error_code !== ErrorCode.SUCCESS)!;
+        }
+      });
+    }
+
+    return await this._createIndex(data as CreateIndexRequest);
+  }
+
+  /**
+   * Create an index on a field. Note that index building is an async process.
    *
    * @param data
    *  | Property | Type | Description |
@@ -51,9 +117,7 @@ export class Index extends Data {
    * console.log(res);
    * ```
    */
-  async createIndex(
-    data: CreateIndexReq | CreateIndexSimpleReq
-  ): Promise<ResStatus> {
+  async _createIndex(data: CreateIndexRequest): Promise<ResStatus> {
     checkCollectionName(data);
 
     // build extra_params object

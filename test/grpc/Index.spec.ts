@@ -88,6 +88,42 @@ describe(`Milvus Index API`, () => {
       params: { nlist: 1024 },
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const creates = await milvusClient.createIndex([
+      {
+        collection_name: COL_FLAT,
+        field_name: VECTOR_FIELD_NAME,
+        index_type: 'FLAT',
+        metric_type: MetricType.COSINE,
+        params: { nlist: 1024 },
+      },
+      {
+        collection_name: COL_FLAT,
+        field_name: 'int64',
+        index_type: IndexType.STL_SORT,
+        params: { nlist: 1024 },
+      },
+    ]);
+
+    expect(creates.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const createsError = await milvusClient.createIndex([
+      {
+        collection_name: COL_FLAT,
+        field_name: VECTOR_FIELD_NAME,
+        index_type: 'FLAT',
+        metric_type: MetricType.COSINE,
+        params: { nlist: 1024 },
+      },
+      {
+        collection_name: COL_FLAT,
+        field_name: 'int642',
+        index_type: IndexType.STL_SORT,
+        params: { nlist: 1024 },
+      },
+    ]);
+
+    expect(createsError.error_code).toEqual(ErrorCode.UnexpectedError);
   });
 
   it(`Create IVF_FLAT index should success`, async () => {

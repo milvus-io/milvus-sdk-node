@@ -12,6 +12,9 @@ export interface CreateIndexReq extends collectionNameReq {
   extra_params?: CreateIndexParam;
 }
 
+export type CreateIndexRequest = CreateIndexReq | CreateIndexSimpleReq;
+export type CreateIndexsReq = CreateIndexRequest[] | CreateIndexRequest;
+
 export interface CreateIndexSimpleReq extends collectionNameReq {
   field_name: string;
   index_type: string;
