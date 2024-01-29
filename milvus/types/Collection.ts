@@ -17,18 +17,21 @@ import {
 
 // returned from milvus
 export interface FieldSchema {
-  name: string;
-  description: string;
-  data_type: keyof typeof DataType;
-  element_type?: keyof typeof DataType;
-  dataType?: DataType;
-  is_primary_key?: boolean;
-  is_partition_key?: boolean;
-  is_dynamic?: boolean;
   type_params: KeyValuePair[];
   index_params: KeyValuePair[];
+  fieldID: string | number;
+  name: string;
+  is_primary_key?: boolean;
+  description: string;
+  data_type: keyof typeof DataType;
   autoID: boolean;
+  state: string;
+  element_type?: keyof typeof DataType;
   default_value?: number | string;
+  dataType?: DataType;
+  is_partition_key?: boolean;
+  is_dynamic?: boolean;
+  is_clustering_key?: boolean;
 }
 
 export interface CollectionData {
@@ -167,6 +170,7 @@ export interface CollectionSchema {
   name: string;
   description: string;
   enable_dynamic_field: boolean;
+  autoID: boolean;
   fields: FieldSchema[];
 }
 

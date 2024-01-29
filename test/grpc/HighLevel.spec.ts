@@ -6,7 +6,6 @@ import {
   IndexType,
   MetricType,
   LoadState,
-  ConsistencyLevelEnum,
 } from '../../milvus';
 import { IP, GENERATE_NAME } from '../tools';
 

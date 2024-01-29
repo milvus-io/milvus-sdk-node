@@ -5,7 +5,6 @@ import {
   collectionNameReq,
   CreateCollectionReq,
   CreateIndexSimpleReq,
-  BaseCreateCollectionReq,
 } from '../';
 
 // highlevel，only collection_name and dimension are required
