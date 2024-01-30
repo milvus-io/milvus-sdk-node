@@ -132,10 +132,14 @@ export interface DropCollectionReq extends collectionNameReq {}
 export interface CreateAliasReq extends collectionNameReq {
   alias: string;
 }
+export interface DescribeAliasReq extends CreateAliasReq {
+  alias: string;
+}
 export interface DropAliasReq extends GrpcTimeOut {
   alias: string;
 }
 export interface AlterAliasReq extends CreateAliasReq {}
+export interface ListAliasesReq extends collectionNameReq {}
 
 export interface CompactReq extends collectionNameReq {
   timetravel?: number | string;
@@ -232,4 +236,16 @@ export interface GetLoadStateResponse extends resStatusResponse {
 
 export interface AlterCollectionReq extends collectionNameReq {
   properties: Record<string, string | number>;
+}
+
+export interface DescribeAliasResponse extends resStatusResponse {
+  db_name: string;
+  alias: string;
+  collection: string;
+}
+
+export interface ListAliasesResponse extends resStatusResponse {
+  db_name: string;
+  aliases: string[];
+  collection_name: string;
 }

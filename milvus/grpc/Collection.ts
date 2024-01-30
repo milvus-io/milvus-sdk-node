@@ -15,6 +15,8 @@ import {
   ShowCollectionsType,
   HasCollectionReq,
   CreateAliasReq,
+  DescribeAliasReq,
+  ListAliasesReq,
   DropAliasReq,
   AlterAliasReq,
   CompactReq,
@@ -35,6 +37,8 @@ import {
   ReplicasResponse,
   GetLoadingProgressResponse,
   GetLoadStateResponse,
+  DescribeAliasResponse,
+  ListAliasesResponse,
   promisify,
   formatKeyValueData,
   checkCollectionFields,
@@ -605,6 +609,77 @@ export class Collection extends Database {
     );
     return promise;
   }
+
+  /**
+   * Describe a collection alias.
+   *
+   * @param {DescribeAliasReq} data - The request parameters.
+   * @param {string} data.alias - The alias name.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<DescribeAliasResponse>} The response from the server.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string} collection - The name of the collection that the alias points to.
+   * @returns {string} alias - The alias of the collection.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.describeAlias({
+   *    alias: 'my_collection_alias',
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
+  // async describeAlias(data: DescribeAliasReq): Promise<DescribeAliasResponse> {
+  //   checkCollectionName(data);
+  //   if (!data.alias) {
+  //     throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
+  //   }
+  //   const promise = await promisify(
+  //     this.channelPool,
+  //     'DescribeAlias',
+  //     data,
+  //     data.timeout || this.timeout
+  //   );
+  //   return promise;
+  // }
+
+  /**
+   * List all aliases of a collection.
+   *
+   * @param {ListAliasesReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ListAliasesResponse>} The response from the server.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string[]} aliases - The list of aliases of the collection.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.listAliases({
+   *    collection_name: 'my_collection',
+   *  });
+   * ```
+   */
+  // async listAliases(data: ListAliasesReq): Promise<ListAliasesResponse> {
+  //   checkCollectionName(data);
+  //   if (!data.collection_name) {
+  //     throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+  //   }
+  //   const promise = await promisify(
+  //     this.channelPool,
+  //     'ListAliases',
+  //     data,
+  //     data.timeout || this.timeout
+  //   );
+  //   return promise;
+  // }
 
   /**
    * Drop a collection alias.
