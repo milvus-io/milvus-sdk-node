@@ -457,6 +457,11 @@ export class Data extends Collection {
         ignore_growing: (data as SearchSimpleReq).ignore_growing || false,
       };
 
+      // if group_by_field is set, add it to the search params
+      if (data.group_by_field) {
+        search_params.group_by_field = data.group_by_field;
+      }
+
       // create search vectors
       let searchVectors: number[] | number[][] =
         (data as SearchReq).vectors ||
