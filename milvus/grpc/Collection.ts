@@ -71,29 +71,26 @@ export class Collection extends Database {
     updateAgeOnGet: false,
     updateAgeOnHas: false,
   });
+
   /**
-   * Create a collection in Milvus.
+   * Creates a new collection in Milvus.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | description | String | Collection description |
-   *  | num_partitions | number | number of partitions allowed |
-   *  | consistency_level | String | "Strong"(Milvus default) | "Session" | "Bounded"| "Eventually" | "Customized"; |
-   *  | fields or schema | <a href="https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8" target="_blank">FieldType</a> | Field data |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {CreateCollectionReq} data - The data for the new collection.
+   * @param {string} data.collection_name - The name of the new collection.
+   * @param {string} [data.description] - The description of the new collection.
+   * @param {number} [data.num_partitions] - The number of partitions allowed in the new collection.
+   * @param {string} [data.consistency_level] - The consistency level of the new collection. Can be "Strong" (Milvus default), "Session", "Bounded", "Eventually", or "Customized".
+   * @param {FieldType[]} data.fields - The fields of the new collection. See [FieldType](https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8) for more details.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property      | Description |
-   *  | :-- | :-- |
-   *  | error_code    | Error code number      |
-   *  | reason        | Error cause          |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).createCollection({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.createCollection({
    *    collection_name: 'my_collection',
    *    fields: [
    *      {
@@ -111,7 +108,7 @@ export class Collection extends Database {
    *        is_primary_key: true,
    *        description: "",
    *      },
-   *  ],
+   *    ],
    *  });
    * ```
    */
@@ -175,29 +172,23 @@ export class Collection extends Database {
   }
 
   /**
- * Check if a collection exists.
- *
- * @param data
- *  | Property | Type | Description |
- *  | :-- | :-- | :-- |
- *  | collection_name | String | Collection name |
- *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
- *
- * @returns
- *  | Property | Description |
- *  | :-- | :-- |
- *  | status | { error_code: number, reason: string } |
- *  | value | `true` or `false` |
-
- *
- * #### Example
- *
- * ```
- *  new milvusClient(MILUVS_ADDRESS).hasCollection({
- *     collection_name: 'my_collection',
- *  });
- * ```
- */
+   * Checks if a collection exists.
+   *
+   * @param {HasCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to check.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<BoolResponse>} The response from the server.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {boolean} value - `true` if the collection exists, `false` otherwise.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.hasCollection({ collection_name: 'my_collection' });
+   * ```
+   */
   async hasCollection(data: HasCollectionReq): Promise<BoolResponse> {
     checkCollectionName(data);
 
@@ -222,29 +213,24 @@ export class Collection extends Database {
   }
 
   /**
- * List all collections or get collection loading status.
- *
- * @param data
- *  | Property | Type | Description |
- *  | :-- | :-- | :-- |
- *  | type(optional) | enum | All -> 0, Loaded -> 1 |
- *  | collection_names(optional) | String[] | If `type = Loaded`, Milvus will return `collection_names inMemory_percentages` |
- *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
- *
- * @returns
- * | Property | Description |
- *  | :-- | :-- |
- *  | status | { error_code: number, reason: string } |
- *  | data |  Contains collection name, ID , timestamp (UTC created time), and loadedPercentage (100 means loaded) |
- *
- *
- * #### Example
- *
- * ```
- *  new milvusClient(MILUVS_ADDRESS).showCollections();
- * ```
- */
+   * Lists all collections or gets the loading status of a collection.
+   *
+   * @param {ShowCollectionsReq} data - The request parameters.
+   * @param {ShowCollectionsType} [data.type] - The type of collections to show. Can be "All" (default) or "Loaded".
+   * @param {string[]} [data.collection_names] - If `type` is "Loaded", Milvus will return `collection_names` along with their in-memory percentages.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ShowCollectionsResponse>} The response from the server.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {CollectionData[]} data - An array containing information about each collection, including its name, ID, creation timestamp (UTC), and loaded percentage (100 means fully loaded).
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.showCollections();
+   * ```
+   */
   async showCollections(
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
@@ -272,26 +258,24 @@ export class Collection extends Database {
   }
 
   /**
-   * Modify collection properties
+   * Modifies collection properties.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {AlterCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to modify.
+   * @param {Object} data.properties - The properties to modify. For example, to change the TTL, use {"collection.ttl.seconds": 18000}.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).alterCollection({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.alterCollection({
    *    collection_name: 'my-collection',
    *    properties: {"collection.ttl.seconds": 18000}
-   * });
+   *  });
    * ```
    */
   async alterCollection(data: AlterCollectionReq): Promise<ResStatus> {
@@ -311,30 +295,26 @@ export class Collection extends Database {
 
   // alias
   list_collections = this.showCollections;
+  // alias
+  listCollections = this.showCollections;
 
   /**
-   * Show the details of a collection, e.g. name, schema.
+   * Shows the details of a collection, such as its name and schema.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   * @param {DescribeCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to describe.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | schema | Information of all fields in this collection |
-   *  | collectionID  | Collection ID |
+   * @returns {Promise<DescribeCollectionResponse>} The response from the server.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {FieldSchema[]} schema - Information of all fields in this collection.
+   * @returns {string} collectionID - The ID of the collection.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).describeCollection({
-   *    collection_name: 'my_collection',
-   *  });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.describeCollection({ collection_name: 'my_collection' });
    * ```
    */
   async describeCollection(
@@ -370,26 +350,20 @@ export class Collection extends Database {
   /**
    * Show the statistics information of a collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   * @param {GetCollectionStatisticsReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to get statistics for.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | stats | [{key: string, value: string}] |
-   *  | data | Transform **stats** to { row_count: 0 } |
+   * @returns {Promise<StatisticsResponse>} The response from the server.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {Object[]} stats - An array of objects, each containing a key-value pair representing a statistic.
+   * @returns {Object} data - Transforms **stats** to an object with properties representing statistics (e.g., { row_count: 0 }).
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).getCollectionStatistics({
-   *    collection_name: 'my_collection',
-   *  });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.getCollectionStatistics({ collection_name: 'my_collection' });
    * ```
    */
   async getCollectionStatistics(
@@ -413,28 +387,22 @@ export class Collection extends Database {
 
   /**
    * Load collection data into query nodes, then you can do vector search on this collection.
-   * It's async function, but we can use showCollections to check loading status.
+   * It's an async function, but you can use showCollections to check loading status.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name    | String | Collection name |
-   *  | replica_number? | number | replica number |
-   *  | resource_groups? | String[] | resource group names |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {LoadCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to load.
+   * @param {number} [data.replica_number] - The number of replicas.
+   * @param {string[]} [data.resource_groups] - The names of the resource groups.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).loadCollection({
-   *    collection_name: 'my_collection',
-   *  });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.loadCollection({ collection_name: 'my_collection' });
    * ```
    */
   async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
@@ -450,29 +418,23 @@ export class Collection extends Database {
   }
 
   /**
-   * Same function with loadCollection, but it's sync function.
-   * Help to ensure this collection is loaded.
+   * Same function as loadCollection, but it's a synchronous function.
+   * Helps to ensure this collection is loaded.
    *
-   * @param data
-   *  | Property | Type  | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | replica_number？ | number | replica number |
-   *  | resource_groups？ | String[] | resource group |
-   *  | timeout？ | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {LoadCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to load.
+   * @param {number} [data.replica_number] - The number of replicas.
+   * @param {string[]} [data.resource_groups] - The names of the resource groups.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).loadCollectionSync({
-   *    collection_name: 'my_collection',
-   *  });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.loadCollectionSync({ collection_name: 'my_collection' });
    * ```
    */
   async loadCollectionSync(data: LoadCollectionReq): Promise<ResStatus> {
@@ -514,24 +476,18 @@ export class Collection extends Database {
    * Release a collection from cache to reduce cache usage.
    * Note that you cannot search while the corresponding collection is unloaded.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   * @param {ReleaseLoadCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to release.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).releaseCollection({
-   *    collection_name: 'my_collection',
-   *  });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.releaseCollection({ collection_name: 'my_collection' });
    * ```
    */
   async releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus> {
@@ -547,25 +503,21 @@ export class Collection extends Database {
   }
 
   /**
-   * Rename a collection
+   * Rename a collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | old collection name |
-   *  | new_collection_name | String | new collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   * @param {RenameCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The current name of the collection.
+   * @param {string} data.new_collection_name - The new name for the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).renameCollection({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.renameCollection({
    *    collection_name: 'my_collection',
    *    new_collection_name: 'my_new_collection'
    *  });
@@ -587,24 +539,18 @@ export class Collection extends Database {
   /**
    * Drop a collection. Note that this drops all data in the collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
+   * @param {DropCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to drop.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).dropCollection({
-   *    collection_name: 'my_collection',
-   *  });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.dropCollection({ collection_name: 'my_collection' });
    * ```
    */
   async dropCollection(data: DropCollectionReq): Promise<ResStatus> {
@@ -622,32 +568,26 @@ export class Collection extends Database {
     );
     return promise;
   }
-
   // alias
   drop_collection = this.dropCollection;
 
   /**
-   * Create collection alias, then you can use alias instead of collection_name when you do vector search
+   * Create a collection alias, then you can use the alias instead of the collection_name when you perform a vector search.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | alias | String | alias name |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
+   * @param {CreateAliasReq} data - The request parameters.
+   * @param {string} data.alias - The alias name.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).createAlias({
-   *    alias: 'my_collection_alis',
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.createAlias({
+   *    alias: 'my_collection_alias',
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -667,27 +607,22 @@ export class Collection extends Database {
   }
 
   /**
-   * Drop a collection alias
+   * Drop a collection alias.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | alias | String | alias name |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
+   * @param {DropAliasReq} data - The request parameters.
+   * @param {string} data.alias - The alias name.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).dropAlias({
-   *    alias: 'my_collection_alis',
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.dropAlias({
+   *    alias: 'my_collection_alias',
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -706,27 +641,22 @@ export class Collection extends Database {
   }
 
   /**
-   * alter a collection alias
+   * Alter a collection alias.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | alias | String | alias name |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined. |
+   * @param {AlterAliasReq} data - The request parameters.
+   * @param {string} data.alias - The alias name.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).alterAlais({
-   *    alias: 'my_collection_alis',
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.alterAlias({
+   *    alias: 'my_collection_alias',
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -746,24 +676,21 @@ export class Collection extends Database {
   }
 
   /**
-   * Do compaction for the collection.
+   * Perform compaction on a collection. This operation reduces the storage space used by the collection by removing deleted data and optimizing the data layout.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | The collection name to compact |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {CompactReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to compact.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | compactionID | compaction ID |
+   * @returns {Promise<CompactionResponse>} The response of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string} compactionID - The ID of the compaction operation.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).compact({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.compact({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -783,25 +710,22 @@ export class Collection extends Database {
   }
 
   /**
-   * Get compaction states of a targeted compaction id
+   * Get the compaction state of a targeted compaction id.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | compactionID | number or string | the id returned by compact |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined       |
+   * @param {GetCompactionStateReq} data - The request parameters.
+   * @param {number|string} data.compactionID - The ID of the compaction operation, returned by the compact method.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | state | the state of the compaction |
+   * @returns {Promise<GetCompactionStateResponse>} The response of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string} state - The state of the compaction operation.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).getCompactionState({
-   *    compactionID: compactionID,
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.getCompactionState({
+   *    compactionID: 'your_compaction_id',
    *  });
    * ```
    */
@@ -821,25 +745,22 @@ export class Collection extends Database {
   }
 
   /**
-   * Get compaction states of a targeted compaction id
+   * Get the compaction states of a targeted compaction id.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | compactionID | number or string | the id returned by compact |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {GetCompactionPlansReq} data - The request parameters.
+   * @param {number|string} data.compactionID - The ID of the compaction operation, returned by the compact method.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | state | the state of the compaction |
+   * @returns {Promise<GetCompactionPlansResponse>} The response of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string} state - The state of the compaction operation.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).getCompactionStateWithPlans({
-   *    compactionID: compactionID,
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.getCompactionStateWithPlans({
+   *    compactionID: 'your_compaction_id',
    *  });
    * ```
    */
@@ -859,30 +780,26 @@ export class Collection extends Database {
   }
 
   /**
-   * Get replicas
+   * Get replicas of a collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collectionID | number or string | the id returned by compact |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {GetReplicaReq} data - The request parameters.
+   * @param {number|string} data.collectionID - The ID of the collection, returned by the compact method.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ReplicasResponse>} The response of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {ReplicaInfo[]} replicas - An array of replica information.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.getReplicas({
+   *    collectionID: 'your_collection_id',
+   *  });
+   * ```
    *
    * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | ReplicaInfo[] | replica info array |
-   *
-   * #### Example
-   *
-   * ```
-   *  new milvusClient(MILUVS_ADDRESS).getReplicas({
-   *    collectionID: collectionID,
-   *  });
-   *
-   * ```
-   *
-   * Return
    * ```
    * {
    *  replicas: [
@@ -912,27 +829,24 @@ export class Collection extends Database {
   }
 
   /**
-   * Get loading progress of a collection
+   * Get the loading progress of a collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | string | the name of the collection |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {GetLoadingProgressReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | total_row_num | the total number of rows in the collection |
-   *  | total_loaded_row_num | the total number of loaded rows in the collection |
+   * @returns {Promise<GetLoadingProgressResponse>} The response of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {number} total_row_num - The total number of rows in the collection.
+   * @returns {number} total_loaded_row_num - The total number of loaded rows in the collection.
    *
-   * @throws {Error} if `collection_name` property is not present in `data`
+   * @throws {Error} if `collection_name` property is not present in `data`.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).getLoadingProgress({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.getLoadingProgress({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -953,26 +867,23 @@ export class Collection extends Database {
   }
 
   /**
-   * Get the loading state of a collection
+   * Get the loading state of a collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | string | the name of the collection |
-   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   * @param {GetLoadStateReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | state | the loading state of the collection |
+   * @returns {Promise<GetLoadStateResponse>} The response of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string} state - The loading state of the collection.
    *
-   * @throws {Error} if `collection_name` property is not present in `data`
+   * @throws {Error} if `collection_name` property is not present in `data`.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).getLoadState({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.getLoadState({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -990,28 +901,21 @@ export class Collection extends Database {
     return res;
   }
 
-  // alias
-  listCollections = this.showCollections;
   /**
-   * Get the primary key field name
+   * Get the primary key field name of a collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | string | the name of the collection |
-   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   * @param {DescribeCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | pkfield | the primary key field name |
+   * @returns {Promise<string>} The primary key field name of the collection.
    *
-   * @throws {Error} if `collection_name` property is not present in `data`
+   * @throws {Error} if `collection_name` property is not present in `data`.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).getPkFieldName({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const pkFieldName = await milvusClient.getPkFieldName({
    *    collection_name: 'my_collection',
    *  });
    * ```
@@ -1037,25 +941,20 @@ export class Collection extends Database {
   }
 
   /**
-   * Get the primary key field type
+   * Get the primary key field type.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | string | the name of the collection |
-   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   * @param {DescribeCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | pkFieldType | the primary key field type |
+   * @returns {Promise<keyof typeof DataType>} The primary key field type.
    *
-   * @throws {Error} if `collection_name` property is not present in `data`
+   * @throws {Error} if `collection_name` property is not present in `data`.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).getPkFieldType({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const pkFieldType = await milvusClient.getPkFieldType({
    *    collection_name: 'my_collection',
    *  });
    * ```
