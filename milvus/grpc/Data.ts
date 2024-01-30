@@ -82,32 +82,27 @@ export class Data extends Collection {
   }
 
   /**
-   * Insert/upsert data into Milvus.
+   * Insert or upsert data into a Milvus collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | partition_name(optional)| String | Partition name |
-   *  | fields_data or data | { [x: string]: any }[] | If the field type is binary, the vector data length needs to be dimension / 8 |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * @param {InsertReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} [data.partition_name] - The name of the partition (optional).
+   * @param {{ [x: string]: any }[]} data.fields_data - The data to be inserted. If the field type is binary, the vector data length needs to be dimension / 8.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | succ_index |  Index array of the successfully inserted data |
-   *  | err_index | Index array of the unsuccessfully inserted data |
-   *  | IDs | ID array of the successfully inserted data |
+   * @returns {Promise<MutationResult>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {number[]} succ_index - Index array of the successfully inserted data.
+   * @returns {number[]} err_index - Index array of the unsuccessfully inserted data.
+   * @returns {number[]} IDs - ID array of the successfully inserted data.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).insert({
-   *    collection_name: COLLECTION_NAME,
-   *    data: [{
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.insert({
+   *    collection_name: 'my_collection',
+   *    fields_data: [{
    *      vector_field: [1,2,2,4],
    *      scalar_field: 1
    *    }]
@@ -270,29 +265,24 @@ export class Data extends Collection {
   }
 
   /**
-   * Delete entities in Milvus
+   * Delete entities in a Milvus collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | partition_name(optional)| String | Partition name |
-   *  | expr or filter | String | Boolean expression used to filter attribute. |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * @param {DeleteEntitiesReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} [data.partition_name] - The name of the partition (optional).
+   * @param {string} data.expr - Boolean expression used to filter entities for deletion.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status |  { error_code: number, reason: string } |
-   *  | IDs | ID array of the successfully deleted data |
+   * @returns {Promise<MutationResult>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {number[]} IDs - ID array of the successfully deleted data.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).deleteEntities({
-   *    collection_name: COLLECTION_NAME,
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.deleteEntities({
+   *    collection_name: 'my_collection',
    *    expr: 'id in [1,2,3,4]'
    *  });
    * ```
@@ -320,36 +310,34 @@ export class Data extends Collection {
   }
 
   /**
-   * Delete entities in Milvus
+   * Delete entities in a Milvus collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | Name of the collection |
-   *  | partition_name(optional)| String | Name of the partition |
-   *  | ids | string[] or Number[] | IDs of the entities to delete |
-   *  | filter| string | Filter expression, takes precedence over ids |
-   *  | timeout? | number | Optional duration of time in milliseconds to allow for the RPC. If undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   * @param {DeleteReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} [data.partition_name] - The name of the partition (optional).
+   * @param {(string[] | number[])} [data.ids] - IDs of the entities to delete.
+   * @param {string} [data.filter] - Filter expression, takes precedence over ids.
+   * @param {string} [data.expr] - equals to data.filter.
+   * @param {number} [data.timeout] - Optional duration of time in milliseconds to allow for the RPC. If undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status |  { error_code: number, reason: string } |
-   *  | IDs | Array of IDs of the successfully deleted entities |
+   * @returns {Promise<MutationResult>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {number[]} IDs - Array of IDs of the successfully deleted entities.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).delete({
-   *    collection_name: COLLECTION_NAME,
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.delete({
+   *    collection_name: 'my_collection',
    *    filter: 'id in [1,2,3,4]'
    *  });
    * ```
    *
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).delete({
-   *    collection_name: COLLECTION_NAME,
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.delete({
+   *    collection_name: 'my_collection',
    *    ids: [1,2,3,4]
    *  });
    * ```
@@ -381,35 +369,29 @@ export class Data extends Collection {
   }
 
   /**
-   * Perform vector similarity search.
+   * Perform vector similarity search in a Milvus collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | vectors or data or (vector) | Number[][] or Number[] | Original vector to search with |
-   *  | partition_names(optional)| String[] | Array of partition names |
-   *  | limit(optional) | number | topk alias |
-   *  | topk(optional) | number | topk |
-   *  | offset(optional) | number | offset |
-   *  | filter(optional) | String | Scalar field filter expression |
-   *  | expr(optional) | String | filter alias |
-   *  | output_fields(optional) | String[] | Support scalar field |
-   *  | metric_type(optional) | String | similarity metric |
-   *  | params(optional) | key value object | search params |
+   * @param {SearchReq | SearchSimpleReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {Number[]} data.vector - Original vector to search with.
+   * @param {string[]} [data.partition_names] - Array of partition names (optional).
+   * @param {number} [data.topk] - Topk (optional).
+   * @param {number} [data.limit] - Alias for topk (optional).
+   * @param {number} [data.offset] - Offset (optional).
+   * @param {string} [data.filter] - Scalar field filter expression (optional).
+   * @param {string[]} [data.output_fields] - Support scalar field (optional).
+   * @param {object} [data.params] - Search params (optional).
+   * @returns {Promise<SearchResults>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {{score:number,id:string, [outputfield]: value}[]} results - Array of search results.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |∂
-   *  | results | {score:number,id:string}[]; |
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).search({
-   *   collection_name: COLLECTION_NAME,
-   *   vector: [1, 2, 3, 4],
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const searchResults = await milvusClient.search({
+   *    collection_name: 'my_collection',
+   *    vector: [1, 2, 3, 4],
    *  });
    * ```
    */
@@ -610,25 +592,22 @@ export class Data extends Collection {
   }
 
   /**
-   * Milvus temporarily buffers the newly inserted vectors in the cache. Call `flush()` to persist them to the object storage.
-   * It's async function, so it's will take some times to execute.
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_names | String[] | Array of collection names |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * Flushes the newly inserted vectors that are temporarily buffered in the cache to the object storage.
+   * This is an asynchronous function and may take some time to execute deponds on your data size.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
+   * @param {FlushReq} data - The request parameters.
+   * @param {string[]} data.collection_names - Array of collection names.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * #### Example
+   * @returns {Promise<FlushResult>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).flush({
-   *     collection_names: ['my_collection'],
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const flushStatus = await milvusClient.flush({
+   *    collection_names: ['my_collection'],
    *  });
    * ```
    */
@@ -650,26 +629,22 @@ export class Data extends Collection {
   }
 
   /**
-   * It's same function as flush. But flushSync is sync function.
-   * So you can ensure it's flushed after function return the result.
+   * This function is similar to the `flush` function, but it is synchronous.
+   * This ensures that the flush operation is completed before the function returns.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_names | String[] | Array of collection names |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * @param {FlushReq} data - The request parameters.
+   * @param {string[]} data.collection_names - Array of collection names.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status |  { error_code: number, reason: string } |
+   * @returns {Promise<GetFlushStateResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).flushSync({
-   *     collection_names: ['my_collection'],
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const flushSyncStatus = await milvusClient.flushSync({
+   *    collection_names: ['my_collection'],
    *  });
    * ```
    */
@@ -705,30 +680,27 @@ export class Data extends Collection {
   }
 
   /**
-   * Query vector data in Milvus. Current release of Milvus only supports expression as fieldname in [id1,id2,id3]
+   * Query vector data in Milvus. Current release of Milvus only supports expression as fieldname in [id1,id2,id3].
    *
-   * @param data
-   *  | Property | Type  | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | ids | String[] | ids to get |
-   *  | expr or filter | String | Scalar field filter expression, filter > expr > ids |
-   *  | partitions_names(optional) | String[] | Array of partition names |
-   *  | output_fields | String[] | Vector or scalar field to be returned |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-   *  | params | {key: value}[] | An optional key pair json array
+   * @param {QueryReq} data - The request parameters.
+   * @param {string} data.collection_name - Collection name.
+   * @param {string[]} [data.ids] - IDs to get.
+   * @param {string} [data.expr] - Scalar field filter expression.
+   * @param {string} [data.filter] - Equals to data.expr.
+   * @param {string[]} [data.partitions_names] - Array of partition names (optional).
+   * @param {string[]} data.output_fields - Vector or scalar field to be returned.
+   * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   * @param {{key: value}[]} [data.params] - An optional key pair json array.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number,reason:string } |
-   *  | data | Data of all fields that you defined in `output_fields`, {field_name: value}[] |
+   * @returns {Promise<QueryResults>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {{field_name: value}[]} data - Data of all fields that you defined in `output_fields`.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).query({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const queryResults = await milvusClient.query({
    *    collection_name: 'my_collection',
    *    filter: "age in [1,2,3,4,5,6,7,8]",
    *    output_fields: ["age"],
@@ -837,32 +809,27 @@ export class Data extends Collection {
   }
 
   /**
-   * get vector data by providing ids in Milvus
+   * Retrieve vector data by providing IDs in Milvus.
    *
-   * @param data
-   *  | Property | Type  | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | ids | String[] | ids to get |
-   *  | partitions_names(optional) | String[] | Array of partition names |
-   *  | output_fields | String[] | Vector or scalar field to be returned |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
-   *  | params | {key: value}[] | An optional key pair json array
+   * @param {GetReq} data - The request parameters.
+   * @param {string} data.collection_name - Collection name.
+   * @param {string[]} data.ids - IDs to get.
+   * @param {string[]} [data.partitions_names] - Array of partition names (optional).
+   * @param {string[]} data.output_fields - Vector or scalar field to be returned.
+   * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   * @param {{key: value}[]} [data.params] - An optional key pair json array.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number,reason:string } |
-   *  | data | Data of all fields that you defined in `output_fields`, {field_name: value}[] |
+   * @returns {Promise<QueryResults>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {{field_name: value}[]} data - Data of all fields that you defined in `output_fields`.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).get({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const getResults = await milvusClient.get({
    *    collection_name: 'my_collection',
-   *    ids: [1,2,3,4,5,6,7,8],
+   *    ids: ['1','2','3','4','5','6','7','8'],
    *    output_fields: ["age"],
    *  });
    * ```
@@ -898,27 +865,23 @@ export class Data extends Collection {
   }
 
   /**
-   * Get flush state by segment ids
+   * Get the flush state of specified segment IDs in Milvus.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | segmentIDs | Array | The segment ids |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {GetFlushStateReq} data - The request parameters.
+   * @param {number[]} data.segmentIDs - The segment IDs.
+   * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :--- | :-- |
-   *  | status | { error_code: number,reason:string } |
-   *  | flushed | segments flushed or not |
+   * @returns {Promise<GetFlushStateResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {boolean[]} flushed - Array indicating whether each segment is flushed or not.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *   const res = await milvusClient.getFlushState({
-   *    segmentIDs: segIds,
-   *   });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const flushState = await milvusClient.getFlushState({
+   *    segmentIDs: [1,2,3,4],
+   *  });
    * ```
    */
   async getFlushState(data: GetFlushStateReq): Promise<GetFlushStateResponse> {
@@ -935,30 +898,26 @@ export class Data extends Collection {
   }
 
   /**
-   * Do load balancing operation from source query node to destination query node.
-   * Only work in cluster milvus.
+   * Perform a load balancing operation from a source query node to destination query nodes.
+   * This function only works in a Milvus cluster.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | src_nodeID | number | The source query node id to balance. |
-   *  | dst_nodeIDs | number[] | The destination query node ids to balance.(optional) |
-   *  | sealed_segmentIDs | number[] | Sealed segment ids to balance.(optional) |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {LoadBalanceReq} data - The request parameters.
+   * @param {number} data.src_nodeID - The source query node id to balance.
+   * @param {number[]} [data.dst_nodeIDs] - The destination query node ids to balance (optional).
+   * @param {number[]} [data.sealed_segmentIDs] - Sealed segment ids to balance (optional).
+   * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :--- | :-- |
-   *  | status | { error_code: number,reason:string } |
-   *  | infos | segments information |
+   * @returns {Promise<ResStatus>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {SegmentInfo[]} infos - Information about the segments.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *   const res = await loadBalance({
-   *      src_nodeID: 31,
-   *   });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const loadBalanceStatus = await milvusClient.loadBalance({
+   *    src_nodeID: 31,
+   *  });
    * ```
    */
   async loadBalance(data: LoadBalanceReq): Promise<ResStatus> {
@@ -977,26 +936,21 @@ export class Data extends Collection {
   /**
    * Notifies Proxy to return segments information from query nodes.
    *
-   * @param data
-   *  | Property | Type  | Description |
-   *  | :--- | :-- | :-- |
-   *  | collectionName | String | The name of the collection to get segments info. |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {GetQuerySegmentInfoReq} data - The request parameters.
+   * @param {string} data.collectionName - The name of the collection to get segments info.
+   * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
+   * @returns {Promise<GetQuerySegmentInfoResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {QuerySegmentInfo[]} infos - The growing segments' information in query cluster.
    *
-   * @returns
-   * | Property | Description |
-   *  | :--- | :-- |
-   *  | status | { error_code: number,reason:string } |
-   *  | infos | QuerySegmentInfo is the growing segments's information in query cluster. |
-   *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *   const res = await getQuerySegmentInfo({
-   *      collectionName: COLLECTION,
-   *    });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const querySegmentInfo = await milvusClient.getQuerySegmentInfo({
+   *    collectionName: 'my_collection',
+   *  });
    * ```
    */
   async getQuerySegmentInfo(
@@ -1014,29 +968,24 @@ export class Data extends Collection {
     return res;
   }
 
-  /**data
+  /**
    * Notifies Proxy to return segments information from data nodes.
    *
-   * @param data
-   *  | Property | Type  | Description |
-   *  | :--- | :-- | :-- |
-   *  | collectionName | String | The name of the collection to get segments info. |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {GetPersistentSegmentInfoReq} data - The request parameters.
+   * @param {string} data.collectionName - The name of the collection to get segments info.
+   * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
+   * @returns {Promise<GetPersistentSegmentInfoResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {PersistentSegmentInfo[]} infos - The growing segments' information in data cluster.
    *
-   * @returns
-   * | Property | Description |
-   *  | :--- | :-- |
-   *  | status | { error_code: number,reason:string } |
-   *  | infos | getPersistentSegmentInfo is the growing segments's information in query cluster. |
-   *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *   const res = await getPersistentSegmentInfo({
-   *      collectionName: COLLECTION,
-   *    });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const persistentSegmentInfo = await milvusClient.getPersistentSegmentInfo({
+   *    collectionName: 'my_collection',
+   *  });
    * ```
    */
   async getPersistentSegmentInfo(
@@ -1055,29 +1004,25 @@ export class Data extends Collection {
   }
 
   /**
-   * Import data from files
+   * Import data from files.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | The name of the collection |
-   *  | files | string[] | File path array |
+   * @param {ImportReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string[]} data.files - Array of file paths.
+   * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
+   * @returns {Promise<ImportResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string[]} tasks - Array of task IDs.
    *
-   * @returns
-   * | Property | Description |
-   *  | :--- | :-- |
-   *  | status | { error_code: number,reason:string } |
-   *  | tasks | taskId array |
-   *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *   const res = await bulkInsert({
-   *      collection_name: COLLECTION,
-   *      files: [`path-to-data-file.json`]
-   *    });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const importResponse = await milvusClient.bulkInsert({
+   *    collection_name: 'my_collection',
+   *    files: ['path-to-data-file.json'],
+   *  });
    * ```
    */
   /* istanbul ignore next */
@@ -1102,32 +1047,28 @@ export class Data extends Collection {
   }
 
   /**
-   * List import tasks
+   * List import tasks.
    *
-   * @param data
-   *  | Property | Type  | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | The name of the collection |
-   *  | limit | number | optional, maximum number of tasks returned, list all tasks if the value is 0 |
+   * @param {ListImportTasksReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.limit] - Optional, maximum number of tasks returned, list all tasks if the value is 0.
+   * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
+   * @returns {Promise<ListImportTasksResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string} state - Import state.
+   * @returns {number} row_count - How many rows to import.
+   * @returns {string[]} id_list - ID lists.
+   * @returns {string} collection_id - Collection to be imported to.
+   * @returns {string[]} tasks - TaskId array.
    *
-   * @returns
-   * | Property | Description |
-   *  | :--- | :-- |
-   *  | status | { error_code: number,reason:string } |
-   *  | state | import state |
-   *  | row_count | how many rows to import|
-   *  | id_list| id lists |
-   *  | collection_id | collection to be imported to |
-   *  | tasks | taskId array  |
-   *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *   const res = await listImportTasks({
-   *      collection_name: COLLECTION
-   *    });
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const listImportTasksResponse = await milvusClient.listImportTasks({
+   *    collection_name: 'my_collection',
+   *  });
    * ```
    */
   /* istanbul ignore next */
@@ -1150,28 +1091,26 @@ export class Data extends Collection {
   }
 
   /**
-   * list indexed segments
+   * List indexed segments.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | string | the name of the collection |
-   *  | index_name | string | the name of the collection's index |
-   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   * @param {ListIndexedSegmentReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} data.index_name - The name of the collection's index.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | status |
-   *  | segmentIDs | segment IDs |
+   * @returns {Promise<ListIndexedSegmentResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {number[]} segmentIDs - Segment IDs.
    *
    * @throws {Error} if `collection_name` property is not present in `data`
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).getPkFieldName({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const indexedSegments = await milvusClient.listIndexedSegment({
    *    collection_name: 'my_collection',
+   *    index_name: 'my_index',
    *  });
    * ```
    */
@@ -1192,28 +1131,26 @@ export class Data extends Collection {
   // }
 
   /**
-   * describe segment index data
+   * Describe segment index data.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | string | the name of the collection |
-   *  | segmentsIDs | number[] | the name of the collection's index |
-   *  | timeout? | number | An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined |
+   * @param {DescribeSegmentIndexDataReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number[]} data.segmentsIDs - The segment IDs.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | status | status |
-   *  | segmentIDs | segment IDs |
+   * @returns {Promise<DescribeSegmentIndexDataResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {number[]} segmentIDs - Segment IDs.
    *
    * @throws {Error} if `collection_name` property is not present in `data`
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).getPkFieldName({
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const segmentIndexData = await milvusClient.describeSegmentIndexData({
    *    collection_name: 'my_collection',
+   *    segmentsIDs: [1,2,3,4],
    *  });
    * ```
    */
