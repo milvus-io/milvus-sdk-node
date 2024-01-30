@@ -129,12 +129,15 @@ export enum IndexType {
   GPU_IVF_FLAT = 'GPU_IVF_FLAT',
   GPU_IVF_PQ = 'GPU_IVF_PQ',
   GPU_IVF_SQ8 = 'GPU_IVF_SQ8',
+  GPU_BRUTE_FORCE = 'GPU_BRUTE_FORCE',
+  GPU_CAGRA = 'GPU_CAGRA',
   RAFT_IVF_FLAT = 'RAFT_IVF_FLAT',
   RAFT_IVF_PQ = 'RAFT_IVF_PQ',
   ScaNN = 'SCANN',
   // scalar
   STL_SORT = 'STL_SORT',
   TRIE = 'Trie',
+  INVERTED = 'INVERTED',
 }
 
 // MsgType
