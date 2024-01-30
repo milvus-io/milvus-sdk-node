@@ -47,6 +47,25 @@ describe(`Alias API`, () => {
     expect(alias.value).toEqual(true);
   });
 
+  // it(`Describe alias should success`, async () => {
+  //   const describeAlias = await milvusClient.describeAlias({
+  //     collection_name: COLLECTION_NAME,
+  //     alias: COLLECTION_ALIAS,
+  //   });
+
+  //   expect(describeAlias.collection).toEqual(COLLECTION_NAME);
+  //   expect(describeAlias.alias).toEqual(COLLECTION_ALIAS);
+  // });
+
+  // it(`List alias should success`, async () => {
+  //   const listAlias = await milvusClient.listAliases({
+  //     collection_name: COLLECTION_NAME,
+  //   });
+
+  //   expect(listAlias.collection_name).toEqual(COLLECTION_NAME);
+  //   expect(listAlias.aliases.indexOf(COLLECTION_ALIAS) !== -1).toEqual(true);
+  // });
+
   it(`Alter alias should success`, async () => {
     const res = await milvusClient.alterAlias({
       collection_name: COLLECTION_NAME,
