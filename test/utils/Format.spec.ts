@@ -360,6 +360,7 @@ describe('utils/format', () => {
       schema: {
         fields: [
           {
+            fieldID: '1',
             type_params: [{ key: 'dim', value: '128' }],
             index_params: [],
             name: 'vector',
@@ -367,8 +368,10 @@ describe('utils/format', () => {
             description: 'vector field',
             data_type: 'FloatVector',
             autoID: false,
+            state: 'created',
           },
           {
+            fieldID: '2',
             type_params: [],
             index_params: [],
             name: 'id',
@@ -376,11 +379,13 @@ describe('utils/format', () => {
             description: '',
             data_type: 'Int64',
             autoID: true,
+            state: 'created',
           },
         ],
         name: 'collection_v8mt0v7x',
         description: '',
         enable_dynamic_field: false,
+        autoID: false,
       },
       shards_num: 1,
       start_positions: [],

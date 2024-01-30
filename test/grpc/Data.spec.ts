@@ -31,15 +31,22 @@ const createCollectionParams = genCollectionParams({
   autoID: false,
 });
 const INDEX_NAME = 'collection_index';
+const PARTITION_NAME = GENERATE_NAME('partition');
 
 describe(`Data.API`, () => {
   beforeAll(async () => {
     // create db and use db
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
-
+    // create collection
     await milvusClient.createCollection(createCollectionParams);
+    // create partition
+    await milvusClient.createPartition({
+      collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
+    });
 
+    // insert data
     await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data: generateInsertData(createCollectionParams.fields, 1024),
@@ -49,6 +56,7 @@ describe(`Data.API`, () => {
       collection_names: [COLLECTION_NAME],
     });
 
+    // create index
     await milvusClient.createIndex({
       index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
@@ -57,6 +65,7 @@ describe(`Data.API`, () => {
       metric_type: 'L2',
       params: { M: 4, efConstruction: 8 },
     });
+    // load
     await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
     });
@@ -70,18 +79,27 @@ describe(`Data.API`, () => {
   });
 
   it(`it should insert successfully`, async () => {
+    // insert data 1 time
     const insert1 = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       fields_data: generateInsertData(createCollectionParams.fields, 50),
     });
-
     expect(insert1.status.error_code).toEqual(ErrorCode.SUCCESS);
 
+    // insert data 2 times
     const insert2 = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data: generateInsertData(createCollectionParams.fields, 50),
     });
     expect(insert2.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // insert data in the partition
+    const insert3 = await milvusClient.insert({
+      collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
+      data: generateInsertData(createCollectionParams.fields, 50),
+    });
+    expect(insert3.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Flush sync should throw COLLECTION_NAME_IS_REQUIRED`, async () => {
@@ -185,6 +203,8 @@ describe(`Data.API`, () => {
 
   it(`Exec simple search without params and output fields should success`, async () => {
     const limit = 4;
+
+    // collection search
     const searchWithData = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
@@ -205,14 +225,17 @@ describe(`Data.API`, () => {
     expect(searchWithData2.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(searchWithData2.results.length).toEqual(limit);
 
-    const res2 = await milvusClient.search({
+    // parititon search
+    const partitionSearch = await milvusClient.search({
       collection_name: COLLECTION_NAME,
+      partition_names: [PARTITION_NAME],
       filter: '',
       vector: [1, 2, 3, 4],
       topk: limit,
     });
-    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res2.results.length).toEqual(limit);
+
+    expect(partitionSearch.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(partitionSearch.results.length).toEqual(limit);
   });
 
   it(`Exec simple search without params and output fields and limit should success`, async () => {
@@ -240,6 +263,7 @@ describe(`Data.API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results.length).toEqual(limit);
 
+    // mutitple vector search search
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
@@ -461,6 +485,15 @@ describe(`Data.API`, () => {
     });
 
     expect(Number(res.data[0][DEFAULT_COUNT_QUERY_STRING])).toEqual(count.data);
+  });
+
+  it(`Query with count(*) and expr`, async () => {
+    const count = await milvusClient.count({
+      collection_name: COLLECTION_NAME,
+      expr: 'id < 0',
+    });
+
+    expect(count.data).toEqual(0);
   });
 
   it(`Query with data limit only`, async () => {

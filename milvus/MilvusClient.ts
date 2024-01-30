@@ -133,6 +133,7 @@ export class MilvusClient extends GRPCClient {
       auto_id = false,
       index_params = {},
       timeout,
+      consistency_level,
     } = data as CreateColReq;
 
     // prepare result
@@ -159,6 +160,7 @@ export class MilvusClient extends GRPCClient {
         enable_dynamic_field: enableDynamicField || enable_dynamic_field,
         fields: schema,
         timeout,
+        consistency_level,
       });
     } else {
       const info = await this.describeIndex({ collection_name });

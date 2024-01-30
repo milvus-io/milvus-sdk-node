@@ -22,22 +22,16 @@ export class Partition extends Index {
   /**
    * Create a partition in a collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | partition_name | String | Partition name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * @param {Object} data - The data for the partition.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} data.partition_name - The name of the partition.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} A promise that resolves to the response status.
+   * @returns {number} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
    *
-   * #### Example
-   *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).createPartition({
    *     collection_name: 'my_collection',
@@ -59,22 +53,17 @@ export class Partition extends Index {
   /**
    * Check if a partition exists in a collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | string | Collection name |
-   *  | partition_name | string | Parititon name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * @param {Object} data - The data for the partition.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} data.partition_name - The name of the partition.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number,reason:string } |
-   *  | value | `true` or `false` |
+   * @returns {Promise<BoolResponse>} A promise that resolves to the response status.
+   * @returns {number} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
+   * @returns {boolean} value - `true` if the partition exists, `false` otherwise.
    *
-   * #### Example
-   *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).hasPartition({
    *     collection_name: 'my_collection',
@@ -96,30 +85,24 @@ export class Partition extends Index {
   /**
    * Show all partitions in a collection.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * @param {Object} data - The data for the partition.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | partition_names | Array of partition names |
-   *  | partitionIDs | Array of partition IDs |
+   * @returns {Promise<ShowPartitionsResponse>} A promise that resolves to the response status.
+   * @returns {number} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
+   * @returns {string[]} partition_names - An array of partition names.
+   * @returns {number[]} partitionIDs - An array of partition IDs.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).showPartitions({
+   *  new milvusClient(MILUVS_ADDRESS).listPartitions({
    *     collection_name: 'my_collection',
    *  });
    * ```
    */
-  async showPartitions(
+  async listPartitions(
     data: ShowPartitionsReq
   ): Promise<ShowPartitionsResponse> {
     checkCollectionName(data);
@@ -131,28 +114,23 @@ export class Partition extends Index {
     );
     return promise;
   }
+  showPartitions = this.listPartitions;
 
   /**
    * Show the statistics information of a partition.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | partition_name | String | Partition name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * @param {Object} data - The data for the partition.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} data.partition_name - The name of the partition.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   * | Property | Description |
-   *  | :-- | :-- |
-   *  | status | { error_code: number, reason: string } |
-   *  | stats | [{key: string, value: string}] |
-   *  | data  | { row_count: 0 } transformed from **stats** |
+   * @returns {Promise<StatisticsResponse>} A promise that resolves to the response status.
+   * @returns {number} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
+   * @returns {{key: string, value: string}[]} stats - An array of key-value pairs.
+   * @returns {Object} data - An object with a `row_count` property, transformed from **stats**.
    *
-   *
-   * #### Example
-   *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).getPartitionStatistics({
    *     collection_name: 'my_collection',
@@ -176,25 +154,20 @@ export class Partition extends Index {
   getPartitionStats = this.getPartitionStatistics;
 
   /**
-   * Load multiple partitions into query nodes.
+   * This method is used to load multiple partitions into query nodes.
    *
-   * @param data
-   *  | Property | Type  | Description |
-   *  | :--- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | partition_names | String[] | Array of partition names |
-   *  | replica_number? | number | replica number |
-   *  | resource_groups | String[] | resource group names |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {Object} data - The data for the operation.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string[]} data.partition_names - An array of partition names to be loaded.
+   * @param {number} [data.replica_number] - The number of replicas. Optional.
+   * @param {string[]} data.resource_groups - An array of resource group names.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} A promise that resolves to the response status.
+   * @returns {number} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
    *
-   * #### Example
-   *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).loadPartitions({
    *     collection_name: 'my_collection',
@@ -217,24 +190,18 @@ export class Partition extends Index {
   }
 
   /**
-   * Release a partition from cache.
+   * This method is used to release a partition from cache. This operation is useful when you want to free up memory resources.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | partition_names | String[] | Array of partition names |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * @param {Object} data - The data for the operation.
+   * @param {string} data.collection_name - The name of the collection from which the partition will be released.
+   * @param {string[]} data.partition_names - An array of partition names to be released.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
-   * 
-   * #### Example
+   * @returns {Promise<ResStatus>} A promise that resolves to the response status.
+   * @returns {number} status.error_code - The error code. If the operation is successful, the error code will be 0.
+   * @returns {string} status.reason - The error reason. If the operation is successful, the reason will be an empty string.
    *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).releasePartitions({
    *     collection_name: 'my_collection',
@@ -257,30 +224,19 @@ export class Partition extends Index {
   }
 
   /**
-   * Drop a partition. Note that it will drop all data in the partition.
-   * Default partition cannot be droped.
-   * @param data
-   * @returns
-   */
-  /**
-   * To drop a partition will drop all data in this partition and the `_default` partition cannot be dropped.
+   * This method is used to drop a partition from a collection. Note that this operation will delete all data in the partition.
+   * The default partition cannot be dropped.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | collection_name | String | Collection name |
-   *  | partition_name | String | Partition name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
-
+   * @param {Object} data - The data for the operation.
+   * @param {string} data.collection_name - The name of the collection from which the partition will be dropped.
+   * @param {string} data.partition_name - The name of the partition to be dropped.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Description |
-   *  | :-- | :-- |
-   *  | error_code | Error code number |
-   *  | reason | Error cause |
+   * @returns {Promise<ResStatus>} A promise that resolves to the response status.
+   * @returns {number} status.error_code - The error code. If the operation is successful, the error code will be 0.
+   * @returns {string} status.reason - The error reason. If the operation is successful, the reason will be an empty string.
    *
-   * #### Example
-   *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).dropPartition({
    *     collection_name: 'my_collection',

@@ -40,6 +40,11 @@ describe(`Alias API`, () => {
       alias: COLLECTION_ALIAS,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    const alias = await milvusClient.hasCollection({
+      collection_name: COLLECTION_ALIAS,
+    });
+    expect(alias.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(alias.value).toEqual(true);
   });
 
   it(`Alter alias should success`, async () => {

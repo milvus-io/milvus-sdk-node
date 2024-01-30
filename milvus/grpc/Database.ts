@@ -10,24 +10,20 @@ import {
 
 export class Database extends BaseClient {
   /**
-   * create a database.
+   * Creates a new database.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | db_name | String | Database name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {CreateDatabaseRequest} data - The data for the new database.
+   * @param {string} data.db_name - The name of the new database.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string | error reason |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).listDatabases();
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.createDatabase({ db_name: 'new_db' });
    * ```
    */
   async createDatabase(data: CreateDatabaseRequest): Promise<ResStatus> {
@@ -46,23 +42,19 @@ export class Database extends BaseClient {
   }
 
   /**
-   * List all databases.
+   * Lists all databases.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {ListDatabasesRequest} data - The request parameters.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string | error reason |
+   * @returns {Promise<ListDatabasesResponse>} The response from the server.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).listDatabases();
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.listDatabases();
    * ```
    */
   async listDatabases(
@@ -83,24 +75,20 @@ export class Database extends BaseClient {
   }
 
   /**
-   * drop a database.
+   * Drops a database.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | db_name | String | Database name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {DropDatabasesRequest} data - The request parameters.
+   * @param {string} data.db_name - The name of the database to drop.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string | error reason |
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).listDatabases();
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.dropDatabase({ db_name: 'db_to_drop' });
    * ```
    */
   async dropDatabase(data: DropDatabasesRequest): Promise<ResStatus> {

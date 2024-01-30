@@ -15,22 +15,17 @@ import {
 
 export class Resource extends Partition {
   /**
-   * Create a resource group.
+   * Creates a resource group.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | resource_group | String | Resource group name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {Object} data - The data for the resource group.
+   * @param {string} data.resource_group - The name of the resource group.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string | error reason |
+   * @returns {Promise<ResStatus>} A promise that resolves to the response status.
+   * @returns {string} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
    *
-   * #### Example
-   *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).createResourceGroup({
    *     resource_group: "vector_01",
@@ -48,18 +43,16 @@ export class Resource extends Partition {
   }
 
   /**
-   * list resource groups.
+   * Lists all resource groups.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string | error reason |
-   *  | resource_groups | string[] | Resource group string array |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {GrpcTimeOut} data - An optional object containing a timeout duration in milliseconds for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * #### Example
+   * @returns {Promise<ListResourceGroupsResponse>} A promise that resolves to the response status.
+   * @returns {string} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
+   * @returns {string[]} resource_groups - An array of resource group names.
    *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).listResourceGroups();
    * ```
@@ -79,27 +72,22 @@ export class Resource extends Partition {
   /**
    * Describe a resource group.
    *
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | resource_group | String | Resource group name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * @param {Object} data - The data for the resource group.
+   * @param {string} data.resource_group - The name of the resource group.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string | error reason |
-   *  | resource_group.capacity | number | num_node which has been transfer to this rg |
-   *  | resource_group.num_available_node | number | available node_num, some node may shutdown |
-   *  | resource_group.num_loaded_replica | { [key: string]: number } | from collection_name to loaded replica of each collecion in this rg |
-   *  | resource_group.num_outgoing_node | { [key: string]: number } | from collection_name to outgoging accessed node num by replica loaded in this rg |
-   *  | resource_group.num_incoming_node | { [key: string]: number } | from collection_name to incoming accessed node num by replica loaded in other rg |
+   * @returns {Promise<DescribeResourceGroupResponse>} A promise that resolves to the response status.
+   * @returns {string} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
+   * @returns {number} resource_group.capacity - The number of nodes which have been transferred to this resource group.
+   * @returns {number} resource_group.num_available_node - The number of available nodes, some nodes may be shutdown.
+   * @returns {{ [key: string]: number }} resource_group.num_loaded_replica - A map from collection name to the number of loaded replicas of each collection in this resource group.
+   * @returns {{ [key: string]: number }} resource_group.num_outgoing_node - A map from collection name to the number of outgoing accessed nodes by replicas loaded in this resource group.
+   * @returns {{ [key: string]: number }} resource_group.num_incoming_node - A map from collection name to the number of incoming accessed nodes by replicas loaded in other resource groups.
    *
-   * #### Example
-   *
+   * @example
    * ```
-   *  new milvusClient(MILUVS_ADDRESS).describeResrouceGroup({
+   *  new milvusClient(MILUVS_ADDRESS).describeResourceGroup({
    *    resource_group: 'my-resource-group'
    * });
    * ```
@@ -117,21 +105,17 @@ export class Resource extends Partition {
   }
 
   /**
-   * drop a resource group.
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | resource_group | String | Resource group name |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * Drops a resource group.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string | error reason |
+   * @param {Object} data - The data for the resource group.
+   * @param {string} data.resource_group - The name of the resource group.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
-   * #### Example
+   * @returns {Promise<ResStatus>} A promise that resolves to the response status.
+   * @returns {string} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
    *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).dropResourceGroup({
    *    resource_group: 'my-resource-group'
@@ -149,25 +133,20 @@ export class Resource extends Partition {
   }
 
   /**
-   * transfer nodes from one resource group to another
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | source_resource_group | String | source resource group name |
-   *  | target_resource_group | String | target resource group name |
-   *  | collection_name | String | collection name |
-   *  | num_replica | Number | number of replicas to transfer |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * Transfers nodes from one resource group to another.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string | error reason |
+   * @param {Object} data - The data for the resource group.
+   * @param {string} data.source_resource_group - The name of the source resource group.
+   * @param {string} data.target_resource_group - The name of the target resource group.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {number} data.num_replica - The number of replicas to transfer.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
+   * @returns {Promise<ResStatus>} A promise that resolves to the response status.
+   * @returns {string} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
    *
-   * #### Example
-   *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).transferNode({
    *    source_resource_group: 'source-resource-group',
@@ -189,24 +168,19 @@ export class Resource extends Partition {
   }
 
   /**
-   * transfer nodes from one resource group to another
-   * @param data
-   *  | Property | Type | Description |
-   *  | :--- | :-- | :-- |
-   *  | source_resource_group | String | source resource group name |
-   *  | target_resource_group | String | target resource group name |
-   *  | num_node | Number | number of nodes to transfer |
-   *  | timeout? | number | An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined |
+   * Transfers nodes from one resource group to another.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string | error reason |
+   * @param {Object} data - The data for the resource group.
+   * @param {string} data.source_resource_group - The name of the source resource group.
+   * @param {string} data.target_resource_group - The name of the target resource group.
+   * @param {number} data.num_node - The number of nodes to transfer.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
+   * @returns {Promise<ResStatus>} A promise that resolves to the response status.
+   * @returns {string} status.error_code - The error code.
+   * @returns {string} status.reason - The error reason.
    *
-   * #### Example
-   *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).transferNode({
    *    source_resource_group: 'source-resource-group',
@@ -227,16 +201,13 @@ export class Resource extends Partition {
   }
 
   /**
-   * drop all resource groups, transfer all nodes to the default group
+   * Drops all resource groups, transfers all nodes to the default group.
    *
-   * @returns
-   *  | Property | Type | Description |
-   *  | :-- | :-- | :-- |
-   *  | status.error_code | string | error code |
-   *  | status.reason | string[] | error reason |
+   * @returns {Promise<ResStatus[]>} A promise that resolves to an array of response statuses, each containing:
+   * @returns {string} status.error_code - The error code.
+   * @returns {string[]} status.reason - The error reason.
    *
-   * #### Example
-   *
+   * @example
    * ```
    *  new milvusClient(MILUVS_ADDRESS).dropResourceGroups();
    * ```
