@@ -2,7 +2,7 @@
   "name": "@zilliz/milvus2-sdk-node",
   "author": "ued@zilliz.com",
   "version": "2.3.6",
-  "milvusVersion": "master-20240109-2f702ad3",
+  "milvusVersion": "master-20240129-74cfba02",
   "main": "dist/milvus",
   "files": [
     "dist"
