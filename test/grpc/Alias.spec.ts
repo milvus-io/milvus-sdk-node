@@ -13,7 +13,7 @@ describe(`Alias API`, () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
     await milvusClient.createCollection(
-      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: [8] })
     );
   });
 

@@ -22,8 +22,8 @@ describe(`Import API`, () => {
     await milvusClient.createCollection(
       genCollectionParams({
         collectionName: COLLECTION_NAME,
-        dim: '4',
-        vectorType: DataType.FloatVector,
+        dim: [4],
+        vectorType: [DataType.FloatVector],
         autoID: false,
       })
     );

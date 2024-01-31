@@ -20,19 +20,19 @@ const NEW_COLLECTION_NAME2 = GENERATE_NAME();
 const NEW_COLLECTION_WITH_INDEX_PARAMS = GENERATE_NAME();
 const EXIST_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_COLLECTION_NAME,
-  dim: 8,
+  dim: [8],
   enableDynamic: true,
 });
 const EXIST_LOADED_COLLECTION_NAME = GENERATE_NAME();
 const EXIST_LOADED_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_LOADED_COLLECTION_NAME,
-  dim: 8,
+  dim: [8],
   enableDynamic: true,
 });
 const EXIST_INDEXED_COLLECTION_NAME = GENERATE_NAME();
 const EXIST_INDEXED_COLLECTION_PARAMS = genCollectionParams({
   collectionName: EXIST_INDEXED_COLLECTION_NAME,
-  dim: 8,
+  dim: [8],
   enableDynamic: true,
 });
 

@@ -18,7 +18,7 @@ const COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_PARAMS = genCollectionParams({
   collectionName: COLLECTION_NAME,
-  dim: 128,
+  dim: [128],
 });
 
 describe('Collection Api', () => {
@@ -91,7 +91,7 @@ describe('Collection Api', () => {
 
     try {
       await milvusClient.createCollection(
-        genCollectionParams({ collectionName: 'any', dim: 8 })
+        genCollectionParams({ collectionName: 'any', dim: [8] })
       );
     } catch (error) {
       expect(error.message).toEqual(
@@ -102,7 +102,7 @@ describe('Collection Api', () => {
 
   it(`Create load Collection Successful`, async () => {
     const res = await milvusClient.createCollection(
-      genCollectionParams({ collectionName: LOAD_COLLECTION_NAME, dim: 128 })
+      genCollectionParams({ collectionName: LOAD_COLLECTION_NAME, dim: [128] })
     );
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });

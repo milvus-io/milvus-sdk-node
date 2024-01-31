@@ -22,8 +22,8 @@ const numPartitions = 3;
 // create
 const createCollectionParams = genCollectionParams({
   collectionName: COLLECTION,
-  dim: 4,
-  vectorType: DataType.FloatVector,
+  dim: [4],
+  vectorType: [DataType.FloatVector],
   autoID: false,
   partitionKeyEnabled: true,
   numPartitions,

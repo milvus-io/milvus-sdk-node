@@ -38,18 +38,18 @@ describe(`Milvus Index API`, () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
     await milvusClient.createCollection(
-      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: [8] })
     );
     await milvusClient.createCollection(
       genCollectionParams({
         collectionName: COLLECTION_NAME_WITHOUT_INDEX_NAME,
-        dim: 8,
+        dim: [8],
       })
     );
 
     for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
       await milvusClient.createCollection(
-        genCollectionParams({ collectionName: INDEX_COLLECTIONS[i], dim: 32 })
+        genCollectionParams({ collectionName: INDEX_COLLECTIONS[i], dim: [32] })
       );
     }
   });

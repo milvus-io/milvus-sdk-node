@@ -47,7 +47,7 @@ export function generateTests(
       [
         ...genCollectionParams({
           collectionName: createParams.collectionName,
-          dim: createParams.dimension,
+          dim: [createParams.dimension],
           enableDynamic: true,
         }).fields,
         ...dynamicFields,
@@ -124,14 +124,25 @@ export function generateTests(
     });
 
     // it('should upsert data successfully', async () => {
-    //   const upsert = await client.upsert({
+    //   const { data } = await client.query({
     //     collectionName: createParams.collectionName,
-    //     data: data,
+    //     filter: 'id > 0',
+    //     limit: 1,
+    //     outputFields: ['*'],
     //   });
 
-    //   console.log(upsert);
+    //   console.log('origin data', data);
+
+    //   const id = data[0].id;
+
+    //   const upsert = await client.upsert({
+    //     collectionName: createParams.collectionName,
+    //     data: [{ ...data, int64: 0 }],
+    //   });
+
+    //   console.log('upsert', upsert);
+
     //   expect(upsert.code).toEqual(200);
-    //   expect(upsert.data.insertCount).toEqual(count);
     // });
 
     it('should query data and get data and delete successfully', async () => {

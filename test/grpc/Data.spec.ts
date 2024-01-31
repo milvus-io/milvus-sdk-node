@@ -26,8 +26,8 @@ const dbParam = {
 };
 const createCollectionParams = genCollectionParams({
   collectionName: COLLECTION_NAME,
-  dim: 4,
-  vectorType: DataType.FloatVector,
+  dim: [4],
+  vectorType: [DataType.FloatVector],
   autoID: false,
 });
 const INDEX_NAME = 'collection_index';

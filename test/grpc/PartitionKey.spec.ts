@@ -29,8 +29,8 @@ describe(`Partition key API`, () => {
     // create
     const createCollectionParams = genCollectionParams({
       collectionName: COLLECTION_DATA_NAME,
-      dim: 4,
-      vectorType: DataType.FloatVector,
+      dim: [4],
+      vectorType: [DataType.FloatVector],
       autoID: false,
       partitionKeyEnabled: true,
       numPartitions,
@@ -77,8 +77,8 @@ describe(`Partition key API`, () => {
   it(`Create Collection with 2 partition key fields should throw error`, async () => {
     const createCollectionParams = genCollectionParams({
       collectionName: COLLECTION_NAME,
-      dim: 4,
-      vectorType: DataType.FloatVector,
+      dim: [4],
+      vectorType: [DataType.FloatVector],
       autoID: false,
       partitionKeyEnabled: true,
       numPartitions,
@@ -105,8 +105,8 @@ describe(`Partition key API`, () => {
   it(`Create Collection should be successful with numPartitions`, async () => {
     const createCollectionParams = genCollectionParams({
       collectionName: COLLECTION_NAME,
-      dim: 4,
-      vectorType: DataType.FloatVector,
+      dim: [4],
+      vectorType: [DataType.FloatVector],
       autoID: false,
       partitionKeyEnabled: true,
       numPartitions,
@@ -119,8 +119,8 @@ describe(`Partition key API`, () => {
   it(`Create Collection should be successful without numPartitions`, async () => {
     const createCollectionParams = genCollectionParams({
       collectionName: COLLECTION_NAME2,
-      dim: 4,
-      vectorType: DataType.FloatVector,
+      dim: [4],
+      vectorType: [DataType.FloatVector],
       autoID: false,
       partitionKeyEnabled: true,
     });
@@ -133,8 +133,8 @@ describe(`Partition key API`, () => {
   it(`it should create collection successfully with partition_key_field set`, async () => {
     const createCollectionParams = genCollectionParams({
       collectionName: COLLECTION_NAME2,
-      dim: 4,
-      vectorType: DataType.FloatVector,
+      dim: [4],
+      vectorType: [DataType.FloatVector],
       autoID: false,
       partitionKeyEnabled: false,
     });

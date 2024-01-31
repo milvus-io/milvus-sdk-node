@@ -5,11 +5,26 @@ describe(`utils/test`, () => {
   it('should generate data for schema created by genCollectionParams', () => {
     const param = genCollectionParams({
       collectionName: 't',
-      dim: 10,
+      dim: [10],
     });
     const data = generateInsertData(param.fields, 10);
     expect(data.length).toBe(10);
     expect(data[0].vector.length).toBe(10);
+  });
+
+  it('should generate multiple vector types for schema created by genCollectionParams', () => {
+    const param = genCollectionParams({
+      collectionName: 't',
+      vectorType: [DataType.FloatVector, DataType.FloatVector],
+      dim: [10, 16],
+    });
+    expect(param.fields);
+    const floatVectorFields = param.fields.filter(
+      (field: any) => field.data_type === DataType.FloatVector
+    );
+    expect(floatVectorFields.length).toBe(2);
+    expect(floatVectorFields.some((field: any) => field.dim === 10)).toBe(true);
+    expect(floatVectorFields.some((field: any) => field.dim === 16)).toBe(true);
   });
 
   it('should generate data for a collection with a vector field of type DataType.FloatVector', () => {
