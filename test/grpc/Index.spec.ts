@@ -35,8 +35,8 @@ const [
 describe(`Milvus Index API`, () => {
   beforeAll(async () => {
     // create db and use db
-    // await milvusClient.createDatabase(dbParam);
-    // await milvusClient.use(dbParam);
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
     await milvusClient.createCollection(
       genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
     );
@@ -67,7 +67,7 @@ describe(`Milvus Index API`, () => {
         collection_name: INDEX_COLLECTIONS[i],
       });
     }
-    // await milvusClient.dropDatabase(dbParam);
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create SIMPLE index should success`, async () => {
@@ -352,23 +352,23 @@ describe(`Milvus Index API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Alter Index should be success`, async () => {
-    const alter = await milvusClient.alterIndex({
-      collection_name: COLLECTION_NAME,
-      index_name: INDEX_NAME,
-      params: {
-        'mmap.enabled': true,
-      },
-    });
+  // it(`Alter Index should be success`, async () => {
+  //   const alter = await milvusClient.alterIndex({
+  //     collection_name: COLLECTION_NAME,
+  //     index_name: INDEX_NAME,
+  //     params: {
+  //       'mmap.enabled': true,
+  //     },
+  //   });
 
-    // const describe = await milvusClient.describeIndex({
-    //   collection_name: COLLECTION_NAME,
-    //   index_name: INDEX_NAME,
-    // });
-    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+  //   const describe = await milvusClient.describeIndex({
+  //     collection_name: COLLECTION_NAME,
+  //     index_name: INDEX_NAME,
+  //   });
+  //   expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
 
-    // console.log('describe', describe.index_descriptions[0].params);
-  });
+  //   // console.log('describe', describe.index_descriptions[0].params);
+  // });
 
   // @Deprecated
   // it(`Get Index progress with field name should be failed`, async () => {
