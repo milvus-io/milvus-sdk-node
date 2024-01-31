@@ -28,24 +28,20 @@ describe(`utils/test`, () => {
   });
 
   it('should generate data for a collection with a vector field of type DataType.FloatVector', () => {
-    const fields = [
-      {
-        name: 'vector',
-        description: 'vector field',
-        data_type: DataType.FloatVector,
-        dim: 10,
-      },
-      {
-        name: 'id',
-        description: '',
-        data_type: DataType.Int64,
-        is_primary_key: true,
-        autoID: true,
-      },
-    ];
-    const data = generateInsertData(fields, 10);
+    const param = genCollectionParams({
+      collectionName: 't',
+      vectorType: [
+        DataType.FloatVector,
+        DataType.FloatVector,
+        DataType.BinaryVector,
+      ],
+      dim: [10, 10, 16],
+    });
+    const data = generateInsertData(param.fields, 10);
     expect(data.length).toBe(10);
     expect(data[0].vector.length).toBe(10);
+    expect(data[0].vector1.length).toBe(10);
+    expect(data[0].vector2.length).toBe(2);
   });
 
   it('should generate data for a collection with a vector field of type DataType.BinaryVector', () => {
