@@ -407,9 +407,9 @@ export class Data extends Collection {
       });
 
       // get information from collection info
-      let vectorType: DataType;
+      let vectorType: DataType[] = [];
       let defaultOutputFields = [];
-      let anns_field: string;
+      let anns_field: string[] = data.anns_field ? [data.anns_field] : [];
       for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
         const f = collectionInfo.schema.fields[i];
         const type = DataTypeMap[f.data_type];
@@ -417,9 +417,11 @@ export class Data extends Collection {
         // filter vector field
         if (type === DataType.FloatVector || type === DataType.BinaryVector) {
           // anns field
-          anns_field = f.name;
+          if (anns_field.length === 0) {
+            anns_field.push(f.name);
+          }
           // vector type
-          vectorType = type;
+          vectorType.push(type);
         } else {
           // save field name
           defaultOutputFields.push(f.name);
@@ -428,7 +430,7 @@ export class Data extends Collection {
 
       // create search params
       const search_params = (data as SearchReq).search_params || {
-        anns_field: anns_field!,
+        anns_field: anns_field[0]!,
         topk:
           (data as SearchSimpleReq).limit ||
           (data as SearchSimpleReq).topk ||
@@ -475,9 +477,9 @@ export class Data extends Collection {
           placeholders: [
             {
               tag: '$0',
-              type: vectorType!,
+              type: vectorType[0]!,
               values: searchVectors.map(v =>
-                vectorType === DataType.BinaryVector
+                vectorType[0] === DataType.BinaryVector
                   ? parseBinaryVectorToBytes(v)
                   : parseFloatVectorToBytes(v)
               ),

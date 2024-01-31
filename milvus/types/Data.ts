@@ -257,6 +257,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   consistency_level?: ConsistencyLevelEnum;
   ignore_growing?: boolean;
   group_by_field?: string;
+  anns_field?: string;
 }
 
 export interface SearchReq extends collectionNameReq {
@@ -271,6 +272,7 @@ export interface SearchReq extends collectionNameReq {
   nq?: number;
   consistency_level?: ConsistencyLevelEnum;
   group_by_field?: string;
+  anns_field?: string;
 }
 
 export interface SearchRes extends resStatusResponse {
