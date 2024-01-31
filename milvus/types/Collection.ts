@@ -235,7 +235,7 @@ export interface GetLoadStateResponse extends resStatusResponse {
 }
 
 export interface AlterCollectionReq extends collectionNameReq {
-  properties: Record<string, string | number>;
+  properties: Record<string, string | number | boolean>;
 }
 
 export interface DescribeAliasResponse extends resStatusResponse {
