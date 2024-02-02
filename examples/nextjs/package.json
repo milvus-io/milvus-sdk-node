@@ -9,9 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@zilliz/milvus2-sdk-node": "^2.3.2",
-    "copy-webpack-plugin": "^11.0.0",
-    "next": "13.5.4",
+    "@zilliz/milvus2-sdk-node": "^2.3.5",
+    "copy-webpack-plugin": "^12.0.2",
+    "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18"
   },
