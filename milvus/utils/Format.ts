@@ -580,28 +580,25 @@ export const buildSearchParams = (
     searchVectors = [searchVectors as unknown] as number[][];
   }
 
-  // build request map
-  const requests: Map<
-    string, // anns_field
-    {
-      collection_name: string;
-      partition_names: string[];
-      output_fields: string[];
-      nq: number;
-      dsl: string;
-      dsl_type: DslType;
-      placeholder_group: Uint8Array;
-      search_params: KeyValuePair[];
-      consistency_level: ConsistencyLevelEnum;
-    }
-  > = new Map();
+  // Initialize requests array
+  const requests: {
+    collection_name: string;
+    partition_names: string[];
+    output_fields: string[];
+    nq: number;
+    dsl: string;
+    dsl_type: DslType;
+    placeholder_group: Uint8Array;
+    search_params: KeyValuePair[];
+    consistency_level: ConsistencyLevelEnum;
+  }[] = [];
 
-  // get default output fields
+  // Get default output fields
   const defaultOutputFields: string[] = collectionInfo.schema.fields.map(
     f => f.name
   );
 
-  // get information from collection info
+  // Iterate through collection fields
   collectionInfo.schema.fields.forEach(field => {
     const { name, dataType } = field;
 
@@ -631,7 +628,7 @@ export const buildSearchParams = (
       }
 
       // create search request
-      requests.set(name, {
+      requests.push({
         collection_name: data.collection_name,
         partition_names: data.partition_names || [],
         output_fields: data.output_fields || defaultOutputFields,
@@ -660,11 +657,8 @@ export const buildSearchParams = (
     searchReqData.search_params?.round_decimal ??
     (searchSimpleReqData.params?.round_decimal as number);
 
-  // convert map to array
-  const requestArray = Array.from(requests.values());
-
   return {
-    params: requests.size == 1 ? requestArray[0] : requestArray,
+    params: requests.length == 1 ? requests[0] : requests,
     searchVectors,
     round_decimal,
   };
