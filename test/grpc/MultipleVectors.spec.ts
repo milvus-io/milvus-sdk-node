@@ -151,21 +151,21 @@ describe(`Multiple vectors API testing`, () => {
   it(`search multiple vector collection with new search api should be successful`, async () => {
     const search = await milvusClient.hybridSearch({
       collection_name: COLLECTION_NAME,
-      requests: [
+      data: [
         {
           data: [1, 2, 3, 4, 5, 6, 7, 8],
           anns_field: 'vector',
-          limit: 5,
+          params: { nprobe: 2 },
         },
         {
           data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
           anns_field: 'vector1',
-          limit: 5,
         },
       ],
       rank_params: {
-        nprobe: 10,
+        test: 10,
       },
+      limit: 5,
     });
 
     console.log('search', search);

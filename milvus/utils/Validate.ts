@@ -202,3 +202,12 @@ export const checkCreateCollectionCompatibility = (
     );
   }
 };
+
+/**
+ * Checks if the given data type is a vector type.
+ * @param {DataType} type - The data type to check.
+ * @returns {Boolean} True if the data type is a vector type, false otherwise.
+ */
+export const isVectorType = (type: DataType) => {
+  return type === DataType.BinaryVector || type === DataType.FloatVector;
+};

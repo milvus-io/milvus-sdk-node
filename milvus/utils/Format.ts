@@ -26,6 +26,7 @@ import {
   SearchRes,
   DEFAULT_DYNAMIC_FIELD,
   ConsistencyLevelEnum,
+  isVectorType,
 } from '../';
 
 /**
@@ -559,15 +560,20 @@ export const buildPlaceholderGroupBytes = (
  * @returns {number} return.round_decimal - The score precision.
  */
 export const buildSearchParams = (
-  data: SearchReq | SearchSimpleReq,
+  data: SearchReq | SearchSimpleReq | HybridSearchReq,
   collectionInfo: DescribeCollectionResponse,
   milvusProto: Root
 ) => {
+  // parse data
+  const searchReqData = data as SearchReq;
+  const searchSimpleReqData = data as SearchSimpleReq;
+  const searchHybridReqData = data as HybridSearchReq;
+
   // create search vectors
   let searchVectors: VectorTypes[] =
-    (data as SearchReq).vectors ||
-    (data as SearchSimpleReq).data ||
-    (data as SearchSimpleReq).vector;
+    searchReqData.vectors ||
+    searchSimpleReqData.data ||
+    searchSimpleReqData.vector;
 
   // make sure the searchVectors format is correct
   if (!Array.isArray(searchVectors[0])) {
@@ -597,26 +603,31 @@ export const buildSearchParams = (
 
   // get information from collection info
   collectionInfo.schema.fields.forEach(field => {
-    const { name, data_type } = field;
-    const type = DataTypeMap[data_type];
+    const { name, dataType } = field;
 
-    if (type === DataType.FloatVector || type === DataType.BinaryVector) {
+    // if field  type is vector, lets build the request
+    if (isVectorType(dataType)) {
+      // ensure data exist
+      searchHybridReqData.data = searchHybridReqData.data || [];
+      // build req object
+      const req =
+        searchHybridReqData.data.find((d: any) => d.anns_field === name) ||
+        searchSimpleReqData;
+
       // create search params
-      const search_params = (data as SearchReq).search_params || {
-        anns_field: data.anns_field || name,
+      const search_params = searchReqData.search_params || {
+        anns_field: req.anns_field || name,
         topk:
-          (data as SearchSimpleReq).limit ??
-          (data as SearchSimpleReq).topk ??
-          DEFAULT_TOPK,
-        offset: (data as SearchSimpleReq).offset ?? 0,
-        metric_type: (data as SearchSimpleReq).metric_type ?? '', // leave it empty
-        params: JSON.stringify((data as SearchSimpleReq).params ?? {}),
-        ignore_growing: (data as SearchSimpleReq).ignore_growing ?? false,
+          searchSimpleReqData.limit ?? searchSimpleReqData.topk ?? DEFAULT_TOPK,
+        offset: searchSimpleReqData.offset ?? 0,
+        metric_type: req.metric_type ?? '', // leave it empty
+        params: JSON.stringify(req.params ?? {}),
+        ignore_growing: req.ignore_growing ?? false,
       };
 
       // if group_by_field is set, add it to the search params
-      if (data.group_by_field) {
-        search_params.group_by_field = data.group_by_field;
+      if (req.group_by_field) {
+        search_params.group_by_field = req.group_by_field;
       }
 
       // create search request
@@ -624,8 +635,8 @@ export const buildSearchParams = (
         collection_name: data.collection_name,
         partition_names: data.partition_names || [],
         output_fields: data.output_fields || defaultOutputFields,
-        nq: (data as SearchReq).nq || searchVectors.length,
-        dsl: (data as SearchReq).expr || (data as SearchSimpleReq).filter || '',
+        nq: searchReqData.nq || searchVectors.length,
+        dsl: searchReqData.expr || searchSimpleReqData.filter || '',
         dsl_type: DslType.BoolExprV1,
         placeholder_group: buildPlaceholderGroupBytes(
           milvusProto,
@@ -646,11 +657,14 @@ export const buildSearchParams = (
    *  So the score need to slice by round_decimal
    */
   const round_decimal =
-    (data as SearchReq).search_params?.round_decimal ??
-    ((data as SearchSimpleReq).params?.round_decimal as number);
+    searchReqData.search_params?.round_decimal ??
+    (searchSimpleReqData.params?.round_decimal as number);
+
+  // convert map to array
+  const requestArray = Array.from(requests.values());
 
   return {
-    params: Array.from(requests.values())[0],
+    params: requests.size == 1 ? requestArray[0] : requestArray,
     searchVectors,
     round_decimal,
   };

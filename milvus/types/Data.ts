@@ -241,7 +241,25 @@ export interface SearchParam {
   group_by_field?: string;
 }
 
+// old search api parameter type
+export interface SearchReq extends collectionNameReq {
+  anns_field?: string;
+  partition_names?: string[];
+  expr?: string;
+  // dsl_type: DslType;
+  search_params: SearchParam;
+  vectors: number[][];
+  output_fields?: string[];
+  travel_timestamp?: string;
+  vector_type: DataType.BinaryVector | DataType.FloatVector;
+  nq?: number;
+  consistency_level?: ConsistencyLevelEnum;
+  group_by_field?: string;
+}
+
+// simplified search api parameter type
 export interface SearchSimpleReq extends collectionNameReq {
+  anns_field?: string;
   vector?: number[];
   vectors?: number[][];
   data?: number[][] | number[];
@@ -257,43 +275,32 @@ export interface SearchSimpleReq extends collectionNameReq {
   consistency_level?: ConsistencyLevelEnum;
   ignore_growing?: boolean;
   group_by_field?: string;
-  anns_field?: string;
 }
 
-export interface SearchReq extends collectionNameReq {
-  partition_names?: string[];
-  expr?: string;
-  // dsl_type: DslType;
-  search_params: SearchParam;
-  vectors: number[][];
-  output_fields?: string[];
-  travel_timestamp?: string;
-  vector_type: DataType.BinaryVector | DataType.FloatVector;
-  nq?: number;
-  consistency_level?: ConsistencyLevelEnum;
-  group_by_field?: string;
-  anns_field?: string;
-}
-
-export interface HybridSearchSingleReq {
-  search_params?: SearchParam;
-  data: number[];
-  anns_field: string;
-  limit?: number;
-  expr?: string;
-}
-
+// hybrid search api parameter type
 export interface HybridSearchReq extends collectionNameReq {
-  // search parameters
+  // search global parameters
   partition_names?: string[];
   output_fields?: string[];
   consistency_level?: ConsistencyLevelEnum;
+  limit?: number;
+  topk?: number; // alias
+  offset?: number;
+  round_decimal?: number;
 
   // search requests
-  requests: HybridSearchSingleReq[];
+  data: {
+    data: number[];
+    anns_field: string;
+    expr?: string;
+    params?: keyValueObj;
+    metric_type?: string;
+    ignore_growing?: boolean;
+    group_by_field?: string;
+  }[];
 
+  // reranker
   rank_params: keyValueObj;
-  round_decimal?: number;
 }
 
 export interface SearchRes extends resStatusResponse {
