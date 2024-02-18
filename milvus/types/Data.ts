@@ -275,6 +275,27 @@ export interface SearchReq extends collectionNameReq {
   anns_field?: string;
 }
 
+export interface HybridSearchSingleReq {
+  search_params?: SearchParam;
+  data: number[];
+  anns_field: string;
+  limit?: number;
+  expr?: string;
+}
+
+export interface HybridSearchReq extends collectionNameReq {
+  // search parameters
+  partition_names?: string[];
+  output_fields?: string[];
+  consistency_level?: ConsistencyLevelEnum;
+
+  // search requests
+  requests: HybridSearchSingleReq[];
+
+  rank_params: keyValueObj;
+  round_decimal?: number;
+}
+
 export interface SearchRes extends resStatusResponse {
   results: {
     top_k: number;

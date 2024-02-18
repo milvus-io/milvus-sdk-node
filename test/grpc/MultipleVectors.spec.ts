@@ -4,6 +4,7 @@ import {
   DataType,
   IndexType,
   MetricType,
+  DEFAULT_TOPK,
 } from '../../milvus';
 import {
   IP,
@@ -26,7 +27,7 @@ const p = {
 };
 const collectionParams = genCollectionParams(p);
 
-describe(`Mutiple vectors API testing`, () => {
+describe(`Multiple vectors API testing`, () => {
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
@@ -110,7 +111,7 @@ describe(`Mutiple vectors API testing`, () => {
     expect(item.vector1.length).toEqual(p.dim[1]);
   });
 
-  it(`search multipe vector collection should be successful`, async () => {
+  it(`search multiple vector collection with old search api should be successful`, async () => {
     // search default first vector field
     const search0 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
@@ -131,8 +132,33 @@ describe(`Mutiple vectors API testing`, () => {
       collection_name: COLLECTION_NAME,
       vector: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
       anns_field: 'vector1',
+      limit: 5,
     });
 
     expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search2.results.length).toEqual(5);
+  });
+
+  it(`search multiple vector collection with new search api should be successful`, async () => {
+    const search = await milvusClient.hybridSearch({
+      collection_name: COLLECTION_NAME,
+      requests: [
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8],
+          anns_field: 'vector',
+          limit: 5,
+        },
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+          anns_field: 'vector1',
+          limit: 5,
+        },
+      ],
+      rank_params: {
+        nprobe: 10,
+      },
+    });
+
+    console.log('search', search);
   });
 });

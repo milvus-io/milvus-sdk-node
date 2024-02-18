@@ -38,6 +38,7 @@ import {
   SearchReq,
   SearchRes,
   SearchSimpleReq,
+  HybridSearchReq,
   DEFAULT_TOPK,
   promisify,
   findKeyValue,
@@ -622,6 +623,26 @@ export class Data extends Collection {
       /* istanbul ignore next */
       throw new Error(err);
     }
+  }
+
+  async hybridSearch(data: HybridSearchReq): Promise<any> {
+    // params check
+    // checkSearchParams(data);
+
+    const promise: SearchRes = await promisify(
+      this.channelPool,
+      'HybridSearch',
+      {
+        collection_name: data.collection_name,
+        requests: data.requests,
+        rank_params: data.rank_params,
+        output_fields: data.output_fields,
+        consistency_level: data.consistency_level,
+      },
+      data.timeout || this.timeout
+    );
+
+    console.log('hybrid search', promise);
   }
 
   /**

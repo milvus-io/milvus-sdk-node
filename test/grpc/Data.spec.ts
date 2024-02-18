@@ -225,7 +225,7 @@ describe(`Data.API`, () => {
     expect(searchWithData2.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(searchWithData2.results.length).toEqual(limit);
 
-    // parititon search
+    // partition search
     const partitionSearch = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       partition_names: [PARTITION_NAME],
@@ -263,7 +263,7 @@ describe(`Data.API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results.length).toEqual(limit);
 
-    // mutitple vector search search
+    // multiple vector search
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
