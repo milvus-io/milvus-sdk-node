@@ -603,7 +603,7 @@ export const buildSearchParams = (
     if (type === DataType.FloatVector || type === DataType.BinaryVector) {
       // create search params
       const search_params = (data as SearchReq).search_params || {
-        anns_field: name,
+        anns_field: data.anns_field || name,
         topk:
           (data as SearchSimpleReq).limit ??
           (data as SearchSimpleReq).topk ??

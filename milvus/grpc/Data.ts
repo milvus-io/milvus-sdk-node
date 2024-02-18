@@ -417,6 +417,19 @@ export class Data extends Collection {
       data.timeout || this.timeout
     );
 
+    // if search failed
+    // if nothing returned
+    // return empty with status
+    if (
+      originSearchResult.status.error_code !== ErrorCode.SUCCESS ||
+      originSearchResult.results.scores.length === 0
+    ) {
+      return {
+        status: originSearchResult.status,
+        results: [],
+      };
+    }
+
     // build final results array
     const results = formatSearchResult(originSearchResult, { round_decimal });
 

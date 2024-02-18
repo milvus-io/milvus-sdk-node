@@ -4,7 +4,6 @@ import {
   DataType,
   IndexType,
   MetricType,
-  DEFAULT_TOPK,
 } from '../../milvus';
 import {
   IP,
@@ -17,7 +16,7 @@ const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
-  db_name: 'multiple',
+  db_name: 'multiple_vectors',
 };
 
 const p = {
@@ -137,6 +136,16 @@ describe(`Multiple vectors API testing`, () => {
 
     expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search2.results.length).toEqual(5);
+
+    // search first vector field
+    const search3 = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      vector: [1, 2, 3, 4, 5, 6, 7, 8],
+    });
+
+    expect(search3.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search3.results.length).toEqual(search.results.length);
+    expect(search3.results).toEqual(search.results);
   });
 
   it(`search multiple vector collection with new search api should be successful`, async () => {

@@ -93,7 +93,7 @@ export const getMetaInterceptor = (
 export const getRetryInterceptor = ({
   maxRetries = 3,
   retryDelay = 30,
-  clientId = ''
+  clientId = '',
 }: {
   maxRetries: number;
   retryDelay: number;
@@ -239,7 +239,9 @@ export const getRetryInterceptor = ({
       },
       sendMessage: function (message: any, next: any) {
         logger.debug(
-          `[${clientId}>${dbname}>${methodName}] sending ${JSON.stringify(message)}`
+          `[${clientId}>${dbname}>${methodName}] sending ${JSON.stringify(
+            message
+          )}, with meta ${JSON.stringify(savedMetadata)}`
         );
         savedSendMessage = message;
         next(message);
