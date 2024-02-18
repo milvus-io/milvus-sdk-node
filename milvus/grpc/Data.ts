@@ -43,7 +43,6 @@ import {
   promisify,
   findKeyValue,
   sleep,
-  formatNumberPrecision,
   parseToKeyValue,
   checkCollectionName,
   checkSearchParams,
@@ -54,7 +53,7 @@ import {
   getDataKey,
   Field,
   buildFieldData,
-  Vectors,
+  VectorTypes,
   BinaryVectors,
   RowData,
   CountReq,
@@ -179,7 +178,7 @@ export class Data extends Collection {
         }
         if (
           DataTypeMap[field.type] === DataType.BinaryVector &&
-          (rowData[name] as Vectors).length !== field.dim! / 8
+          (rowData[name] as VectorTypes).length !== field.dim! / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
@@ -429,23 +428,33 @@ export class Data extends Collection {
   }
 
   async hybridSearch(data: HybridSearchReq): Promise<any> {
-    // params check
-    // checkSearchParams(data);
+    // get collection info
+    const collectionInfo = await this.describeCollection({
+      collection_name: data.collection_name,
+      cache: true,
+    });
 
-    const promise: SearchRes = await promisify(
-      this.channelPool,
-      'HybridSearch',
-      {
-        collection_name: data.collection_name,
-        requests: data.requests,
-        rank_params: data.rank_params,
-        output_fields: data.output_fields,
-        consistency_level: data.consistency_level,
-      },
-      data.timeout || this.timeout
+    // build search params
+    const { params, searchVectors, round_decimal } = buildSearchParams(
+      data,
+      collectionInfo,
+      this.milvusProto
     );
 
-    console.log('hybrid search', promise);
+    // const promise: SearchRes = await promisify(
+    //   this.channelPool,
+    //   'HybridSearch',
+    //   {
+    //     collection_name: data.collection_name,
+    //     requests: data.requests,
+    //     rank_params: data.rank_params,
+    //     output_fields: data.output_fields,
+    //     consistency_level: data.consistency_level,
+    //   },
+    //   data.timeout || this.timeout
+    // );
+
+    console.log('hybrid search', params);
   }
 
   /**

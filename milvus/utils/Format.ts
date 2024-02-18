@@ -17,19 +17,22 @@ import {
   CreateCollectionWithSchemaReq,
   SearchReq,
   SearchSimpleReq,
+  VectorTypes,
+  HybridSearchReq,
   DEFAULT_TOPK,
   DslType,
   parseFloatVectorToBytes,
   parseBinaryVectorToBytes,
   SearchRes,
   DEFAULT_DYNAMIC_FIELD,
+  ConsistencyLevelEnum,
 } from '../';
 
 /**
- *  parse [{key:"row_count",value:4}] to {row_count:4}
- * @param data key value pair array
- * @param keys all keys in data
- * @returns {key:value}
+ * Formats key-value data based on the provided keys.
+ * @param {KeyValuePair[]} data - The array of key-value pairs.
+ * @param {string[]} keys - The keys to include in the formatted result.
+ * @returns {Object} - The formatted key-value data as an object.
  */
 export const formatKeyValueData = (data: KeyValuePair[], keys: string[]) => {
   const result: { [x: string]: any } = {};
@@ -81,6 +84,12 @@ export const formatNumberPrecision = (number: number, precision: number) => {
 const LOGICAL_BITS = BigInt(18);
 // const LOGICAL_BITS_MASK = (1 << LOGICAL_BITS) - 1;
 
+/**
+ * Checks if the given time parameter is valid.
+ *
+ * @param ts - The time parameter to be checked.
+ * @returns A boolean value indicating whether the time parameter is valid or not.
+ */
 export const checkTimeParam = (ts: any) => {
   switch (typeof ts) {
     case 'bigint':
@@ -93,26 +102,10 @@ export const checkTimeParam = (ts: any) => {
 };
 
 /**
- * Convert a hybrid timestamp to UNIX Epoch time ignoring the logic part.
- *
- * @param data
- *  | Property          | Type  |           Description              |
- *  | :---------------- | :----  | :-------------------------------  |
- *  | hybridts          | String or BigInt |    The known hybrid timestamp to convert to UNIX Epoch time. Non-negative interger range from 0 to 18446744073709551615.       |
- *
- *
- *
- * @returns
- * | Property | Description |
- *  | :-----------| :-------------------------------  |
- *  | unixtime as string      |  The Unix Epoch time is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT). |
- *
- *
- * #### Example
- *
- * ```
- *   const res = hybridtsToUnixtime("429642767925248000");
- * ```
+ * Converts a hybrid timestamp to Unix time.
+ * @param hybridts - The hybrid timestamp to convert.
+ * @returns The Unix time representation of the hybrid timestamp.
+ * @throws An error if the hybridts parameter fails the time parameter check.
  */
 export const hybridtsToUnixtime = (hybridts: bigint | string) => {
   if (!checkTimeParam(hybridts)) {
@@ -124,26 +117,10 @@ export const hybridtsToUnixtime = (hybridts: bigint | string) => {
 };
 
 /**
- * Generate a hybrid timestamp based on Unix Epoch time, timedelta and incremental time internval.
- *
- * @param data
- *  | Property          | Type  |           Description              |
- *  | :---------------- | :----  | :-------------------------------  |
- *  | unixtime          | string or bigint |    The known Unix Epoch time used to generate a hybrid timestamp.  The Unix Epoch time is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT).       |
- *
- *
- *
- * @returns
- *  | Property    | Type  |           Description              |
- *  | :-----------| :---   | :-------------------------------  |
- *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |
- *
- *
- * #### Example
- *
- * ```
- *   const res = unixtimeToHybridts("429642767925248000");
- * ```
+ * Converts a Unix timestamp to a hybrid timestamp.
+ * @param unixtime - The Unix timestamp to convert.
+ * @returns The hybrid timestamp as a string.
+ * @throws An error if the unixtime parameter fails the check.
  */
 export const unixtimeToHybridts = (unixtime: bigint | string) => {
   if (!checkTimeParam(unixtime)) {
@@ -156,26 +133,10 @@ export const unixtimeToHybridts = (unixtime: bigint | string) => {
 };
 
 /**
- * Generate a hybrid timestamp based on datetime。
- *
- * @param data
- *  | Property          | Type  |           Description              |
- *  | :---------------- | :----  | :-------------------------------  |
- *  | datetime          | Date |    The known datetime used to generate a hybrid timestamp.       |
- *
- *
- *
- * @returns
- *  | Property    | Type  |           Description              |
- *  | :-----------| :---   | :-------------------------------  |
- *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |
- *
- *
- * #### Example
- *
- * ```
- *   const res = datetimeToHybrids("429642767925248000");
- * ```
+ * Converts a JavaScript Date object to a hybridts timestamp.
+ * @param datetime - The JavaScript Date object to be converted.
+ * @returns The hybridts timestamp.
+ * @throws An error if the input is not a valid Date object.
  */
 export const datetimeToHybrids = (datetime: Date) => {
   if (!(datetime instanceof Date)) {
@@ -537,6 +498,45 @@ export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
 };
 
 /**
+ * This function builds a placeholder group in bytes format for Milvus.
+ *
+ * @param {Root} milvusProto - The root object of the Milvus protocol.
+ * @param {VectorTypes[]} searchVectors - An array of search vectors.
+ * @param {DataType} vectorDataType - The data type of the vectors.
+ *
+ * @returns {Uint8Array} The placeholder group in bytes format.
+ */
+export const buildPlaceholderGroupBytes = (
+  milvusProto: Root,
+  searchVectors: VectorTypes[],
+  vectorDataType: DataType
+) => {
+  // bytes builder
+  const bytesBuilder = new Map<DataType, (input: VectorTypes) => Uint8Array>([
+    [DataType.FloatVector, parseFloatVectorToBytes],
+    [DataType.BinaryVector, parseBinaryVectorToBytes],
+  ]);
+  // create placeholder_group
+  const PlaceholderGroup = milvusProto.lookupType(
+    'milvus.proto.common.PlaceholderGroup'
+  );
+  // tag $0 is hard code in milvus, when dsltype is expr
+  const placeholderGroupBytes = PlaceholderGroup.encode(
+    PlaceholderGroup.create({
+      placeholders: [
+        {
+          tag: '$0',
+          type: vectorDataType,
+          values: searchVectors.map(v => bytesBuilder.get(vectorDataType)!(v)),
+        },
+      ],
+    })
+  ).finish();
+
+  return placeholderGroupBytes;
+};
+
+/**
  * This method is used to build search parameters for a given data.
  * It first fetches the collection info and then constructs the search parameters based on the data type.
  * It also creates search vectors and a placeholder group for the search.
@@ -563,48 +563,8 @@ export const buildSearchParams = (
   collectionInfo: DescribeCollectionResponse,
   milvusProto: Root
 ) => {
-  // get information from collection info
-  const vectorType: DataType[] = [];
-  const defaultOutputFields: string[] = [];
-  const anns_field: string[] = data.anns_field ? [data.anns_field] : [];
-
-  collectionInfo.schema.fields.forEach(field => {
-    const { name, data_type } = field;
-    const type = DataTypeMap[data_type];
-
-    if (type === DataType.FloatVector || type === DataType.BinaryVector) {
-      // anns field
-      if (anns_field.length === 0) {
-        anns_field.push(name);
-      }
-      // vector type
-      vectorType.push(type);
-    } else {
-      // save field name
-      defaultOutputFields.push(name);
-    }
-  });
-
-  // create search params
-  const search_params = (data as SearchReq).search_params || {
-    anns_field: anns_field[0]!,
-    topk:
-      (data as SearchSimpleReq).limit ??
-      (data as SearchSimpleReq).topk ??
-      DEFAULT_TOPK,
-    offset: (data as SearchSimpleReq).offset ?? 0,
-    metric_type: (data as SearchSimpleReq).metric_type ?? '', // leave it empty
-    params: JSON.stringify((data as SearchSimpleReq).params ?? {}),
-    ignore_growing: (data as SearchSimpleReq).ignore_growing ?? false,
-  };
-
-  // if group_by_field is set, add it to the search params
-  if (data.group_by_field) {
-    search_params.group_by_field = data.group_by_field;
-  }
-
   // create search vectors
-  let searchVectors: number[] | number[][] =
+  let searchVectors: VectorTypes[] =
     (data as SearchReq).vectors ||
     (data as SearchSimpleReq).data ||
     (data as SearchSimpleReq).vector;
@@ -614,26 +574,70 @@ export const buildSearchParams = (
     searchVectors = [searchVectors as unknown] as number[][];
   }
 
-  // create placeholder_group
-  const PlaceholderGroup = milvusProto.lookupType(
-    'milvus.proto.common.PlaceholderGroup'
+  // build request map
+  const requests: Map<
+    string, // anns_field
+    {
+      collection_name: string;
+      partition_names: string[];
+      output_fields: string[];
+      nq: number;
+      dsl: string;
+      dsl_type: DslType;
+      placeholder_group: Uint8Array;
+      search_params: KeyValuePair[];
+      consistency_level: ConsistencyLevelEnum;
+    }
+  > = new Map();
+
+  // get default output fields
+  const defaultOutputFields: string[] = collectionInfo.schema.fields.map(
+    f => f.name
   );
-  // tag $0 is hard code in milvus, when dsltype is expr
-  const placeholderGroupBytes = PlaceholderGroup.encode(
-    PlaceholderGroup.create({
-      placeholders: [
-        {
-          tag: '$0',
-          type: vectorType[0]!,
-          values: searchVectors.map(v =>
-            vectorType[0] === DataType.BinaryVector
-              ? parseBinaryVectorToBytes(v)
-              : parseFloatVectorToBytes(v)
-          ),
-        },
-      ],
-    })
-  ).finish();
+
+  // get information from collection info
+  collectionInfo.schema.fields.forEach(field => {
+    const { name, data_type } = field;
+    const type = DataTypeMap[data_type];
+
+    if (type === DataType.FloatVector || type === DataType.BinaryVector) {
+      // create search params
+      const search_params = (data as SearchReq).search_params || {
+        anns_field: name,
+        topk:
+          (data as SearchSimpleReq).limit ??
+          (data as SearchSimpleReq).topk ??
+          DEFAULT_TOPK,
+        offset: (data as SearchSimpleReq).offset ?? 0,
+        metric_type: (data as SearchSimpleReq).metric_type ?? '', // leave it empty
+        params: JSON.stringify((data as SearchSimpleReq).params ?? {}),
+        ignore_growing: (data as SearchSimpleReq).ignore_growing ?? false,
+      };
+
+      // if group_by_field is set, add it to the search params
+      if (data.group_by_field) {
+        search_params.group_by_field = data.group_by_field;
+      }
+
+      // create search request
+      requests.set(name, {
+        collection_name: data.collection_name,
+        partition_names: data.partition_names || [],
+        output_fields: data.output_fields || defaultOutputFields,
+        nq: (data as SearchReq).nq || searchVectors.length,
+        dsl: (data as SearchReq).expr || (data as SearchSimpleReq).filter || '',
+        dsl_type: DslType.BoolExprV1,
+        placeholder_group: buildPlaceholderGroupBytes(
+          milvusProto,
+          searchVectors,
+          field.dataType!
+        ),
+        search_params: parseToKeyValue(search_params),
+        consistency_level:
+          data.consistency_level || (collectionInfo.consistency_level as any),
+      });
+    }
+  });
 
   /**
    *  It will decide the score precision.
@@ -646,18 +650,7 @@ export const buildSearchParams = (
     ((data as SearchSimpleReq).params?.round_decimal as number);
 
   return {
-    params: {
-      collection_name: data.collection_name,
-      partition_names: data.partition_names,
-      output_fields: data.output_fields || defaultOutputFields,
-      nq: (data as SearchReq).nq || searchVectors.length,
-      dsl: (data as SearchReq).expr || (data as SearchSimpleReq).filter || '',
-      dsl_type: DslType.BoolExprV1,
-      placeholder_group: placeholderGroupBytes,
-      search_params: parseToKeyValue(search_params),
-      consistency_level:
-        data.consistency_level || collectionInfo.consistency_level,
-    },
+    params: Array.from(requests.values())[0],
     searchVectors,
     round_decimal,
   };

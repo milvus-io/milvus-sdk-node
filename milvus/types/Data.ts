@@ -12,10 +12,10 @@ import {
   resStatusResponse,
 } from '../';
 
-// all types supported by milvus
+// all value types supported by milvus
 export type FloatVectors = number[];
 export type BinaryVectors = number[];
-export type Vectors = FloatVectors | BinaryVectors;
+export type VectorTypes = FloatVectors | BinaryVectors;
 export type Bool = boolean;
 export type Int8 = number;
 export type Int16 = number;
@@ -48,7 +48,7 @@ export type FieldData =
   | VarChar
   | JSON
   | Array
-  | Vectors
+  | VectorTypes
   | FloatVectors
   | BinaryVectors;
 
