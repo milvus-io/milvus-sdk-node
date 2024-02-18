@@ -1,4 +1,4 @@
-import { Type } from 'protobufjs';
+import { Type, Root } from 'protobufjs';
 import {
   findKeyValue,
   ERROR_REASONS,
@@ -15,6 +15,14 @@ import {
   FieldData,
   CreateCollectionWithFieldsReq,
   CreateCollectionWithSchemaReq,
+  SearchReq,
+  SearchSimpleReq,
+  DEFAULT_TOPK,
+  DslType,
+  parseFloatVectorToBytes,
+  parseBinaryVectorToBytes,
+  SearchRes,
+  DEFAULT_DYNAMIC_FIELD,
 } from '../';
 
 /**
@@ -526,4 +534,215 @@ export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
     default:
       return rowData[name];
   }
+};
+
+/**
+ * This method is used to build search parameters for a given data.
+ * It first fetches the collection info and then constructs the search parameters based on the data type.
+ * It also creates search vectors and a placeholder group for the search.
+ *
+ * @param {SearchReq | SearchSimpleReq} data - The data for which to build the search parameters.
+ * @param {DescribeCollectionResponse} collectionInfo - The collection information.
+ * @param {Root} milvusProto - The milvus protocol object.
+ * @returns {Object} An object containing the search parameters and search vectors.
+ * @returns {Object} return.params - The search parameters used in the operation.
+ * @returns {string} return.params.collection_name - The name of the collection.
+ * @returns {string[]} return.params.partition_names - The partition names.
+ * @returns {string[]} return.params.output_fields - The output fields.
+ * @returns {number} return.params.nq - The number of query vectors.
+ * @returns {string} return.params.dsl - The domain specific language.
+ * @returns {string} return.params.dsl_type - The type of the domain specific language.
+ * @returns {Uint8Array} return.params.placeholder_group - The placeholder group.
+ * @returns {Object} return.params.search_params - The search parameters.
+ * @returns {string} return.params.consistency_level - The consistency level.
+ * @returns {Number[][]} return.searchVectors - The search vectors used in the operation.
+ * @returns {number} return.round_decimal - The score precision.
+ */
+export const buildSearchParams = (
+  data: SearchReq | SearchSimpleReq,
+  collectionInfo: DescribeCollectionResponse,
+  milvusProto: Root
+) => {
+  // get information from collection info
+  const vectorType: DataType[] = [];
+  const defaultOutputFields: string[] = [];
+  const anns_field: string[] = data.anns_field ? [data.anns_field] : [];
+
+  collectionInfo.schema.fields.forEach(field => {
+    const { name, data_type } = field;
+    const type = DataTypeMap[data_type];
+
+    if (type === DataType.FloatVector || type === DataType.BinaryVector) {
+      // anns field
+      if (anns_field.length === 0) {
+        anns_field.push(name);
+      }
+      // vector type
+      vectorType.push(type);
+    } else {
+      // save field name
+      defaultOutputFields.push(name);
+    }
+  });
+
+  // create search params
+  const search_params = (data as SearchReq).search_params || {
+    anns_field: anns_field[0]!,
+    topk:
+      (data as SearchSimpleReq).limit ??
+      (data as SearchSimpleReq).topk ??
+      DEFAULT_TOPK,
+    offset: (data as SearchSimpleReq).offset ?? 0,
+    metric_type: (data as SearchSimpleReq).metric_type ?? '', // leave it empty
+    params: JSON.stringify((data as SearchSimpleReq).params ?? {}),
+    ignore_growing: (data as SearchSimpleReq).ignore_growing ?? false,
+  };
+
+  // if group_by_field is set, add it to the search params
+  if (data.group_by_field) {
+    search_params.group_by_field = data.group_by_field;
+  }
+
+  // create search vectors
+  let searchVectors: number[] | number[][] =
+    (data as SearchReq).vectors ||
+    (data as SearchSimpleReq).data ||
+    (data as SearchSimpleReq).vector;
+
+  // make sure the searchVectors format is correct
+  if (!Array.isArray(searchVectors[0])) {
+    searchVectors = [searchVectors as unknown] as number[][];
+  }
+
+  // create placeholder_group
+  const PlaceholderGroup = milvusProto.lookupType(
+    'milvus.proto.common.PlaceholderGroup'
+  );
+  // tag $0 is hard code in milvus, when dsltype is expr
+  const placeholderGroupBytes = PlaceholderGroup.encode(
+    PlaceholderGroup.create({
+      placeholders: [
+        {
+          tag: '$0',
+          type: vectorType[0]!,
+          values: searchVectors.map(v =>
+            vectorType[0] === DataType.BinaryVector
+              ? parseBinaryVectorToBytes(v)
+              : parseFloatVectorToBytes(v)
+          ),
+        },
+      ],
+    })
+  ).finish();
+
+  /**
+   *  It will decide the score precision.
+   *  If round_decimal is 3, need return like 3.142
+   *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
+   *  So the score need to slice by round_decimal
+   */
+  const round_decimal =
+    (data as SearchReq).search_params?.round_decimal ??
+    ((data as SearchSimpleReq).params?.round_decimal as number);
+
+  return {
+    params: {
+      collection_name: data.collection_name,
+      partition_names: data.partition_names,
+      output_fields: data.output_fields || defaultOutputFields,
+      nq: (data as SearchReq).nq || searchVectors.length,
+      dsl: (data as SearchReq).expr || (data as SearchSimpleReq).filter || '',
+      dsl_type: DslType.BoolExprV1,
+      placeholder_group: placeholderGroupBytes,
+      search_params: parseToKeyValue(search_params),
+      consistency_level:
+        data.consistency_level || collectionInfo.consistency_level,
+    },
+    searchVectors,
+    round_decimal,
+  };
+};
+
+/**
+ * Formats the search results returned by Milvus into row data for easier use.
+ *
+ * @param {SearchRes} searchRes - The search results returned by Milvus.
+ * @param {Object} options - The options for formatting the search results.
+ * @param {number} options.round_decimal - The number of decimal places to which to round the scores.
+ *
+ * @returns {any[]} The formatted search results.
+ *
+ */
+export const formatSearchResult = (
+  searchRes: SearchRes,
+  options: {
+    round_decimal: number;
+  }
+) => {
+  const { round_decimal } = options;
+  // build final results array
+  const results: any[] = [];
+  const { topks, scores, fields_data, ids } = searchRes.results;
+  // build fields data map
+  const fieldsDataMap = buildFieldDataMap(fields_data);
+  // build output name array
+  const output_fields = [
+    'id',
+    ...(!!searchRes.results.output_fields?.length
+      ? searchRes.results.output_fields
+      : fields_data.map(f => f.field_name)),
+  ];
+
+  // vector id support int / str id.
+  const idData = ids ? ids[ids.id_field]!.data : {};
+  // add id column
+  fieldsDataMap.set('id', idData as RowData[]);
+  // fieldsDataMap.set('score', scores); TODO: fieldDataMap to support formatter
+
+  /**
+   * This code block formats the search results returned by Milvus into row data for easier use.
+   * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
+   * The `topk` variable is the key we use to splice data for every search result.
+   * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
+   */
+  topks.forEach((v, index) => {
+    const topk = Number(v);
+
+    scores.splice(0, topk).forEach((score, scoreIndex) => {
+      // get correct index
+      const i = index === 0 ? scoreIndex : scoreIndex + topk * index;
+
+      // fix round_decimal
+      const fixedScore =
+        typeof round_decimal === 'undefined' || round_decimal === -1
+          ? score
+          : formatNumberPrecision(score, round_decimal);
+
+      // init result object
+      const result: any = { score: fixedScore };
+
+      // build result,
+      output_fields.forEach(field_name => {
+        // Check if the field_name exists in the fieldsDataMap
+        const isFixedSchema = fieldsDataMap.has(field_name);
+
+        // Get the data for the field_name from the fieldsDataMap
+        // If the field_name is not in the fieldsDataMap, use the DEFAULT_DYNAMIC_FIELD
+        const data = fieldsDataMap.get(
+          isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
+        )!;
+        // make dynamic data[i] safe
+        data[i] = isFixedSchema ? data[i] : data[i] || {};
+        // extract dynamic info from dynamic field if necessary
+        result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
+      });
+
+      // init result slot
+      results[index] = results[index] || [];
+      // push result data
+      results[index].push(result);
+    });
+  });
+
+  return results;
 };
