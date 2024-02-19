@@ -29,6 +29,7 @@ import {
   DEFAULT_DYNAMIC_FIELD,
   ConsistencyLevelEnum,
   isVectorType,
+  RANKER_TYPE,
 } from '../';
 
 /**
@@ -566,6 +567,24 @@ export const buildSearchParams = (
   return search_params;
 };
 
+export const RRFRanker = (k: number = 60) => {
+  return {
+    strategy: RANKER_TYPE.RRF,
+    params: {
+      k,
+    },
+  };
+};
+
+export const WeightedRanker = (weights: number[]) => {
+  return {
+    strategy: RANKER_TYPE.WEIGHTED,
+    params: {
+      weights,
+    },
+  };
+};
+
 /**
  * This method is used to build search request for a given data.
  * It first fetches the collection info and then constructs the search request based on the data type.
@@ -703,6 +722,9 @@ export const buildSearchRequest = (
   return {
     requests: requests.length == 1 ? requests[0] : requests,
     searchVectors: requests.length == 1 ? searchVectors[0] : searchVectors,
+    output_fields: requests[0].output_fields,
+    rank_params: searchHybridReq.rank_params || RRFRanker(),
+    consistency_level: requests[0].consistency_level,
     round_decimal,
   };
 };

@@ -448,26 +448,31 @@ export class Data extends Collection {
     });
 
     // build search params
-    const { requests, searchVectors, round_decimal } = buildSearchRequest(
-      data,
-      collectionInfo,
-      this.milvusProto
+    const {
+      requests,
+      rank_params,
+      output_fields,
+      consistency_level,
+      searchVectors,
+      round_decimal,
+    } = buildSearchRequest(data, collectionInfo, this.milvusProto);
+
+    const promise: SearchRes = await promisify(
+      this.channelPool,
+      'HybridSearch',
+      {
+        collection_name: data.collection_name,
+        partition_names: data.partition_names,
+        requests: requests as any[], // Explicitly specify the type as an array
+        rank_params: parseToKeyValue(rank_params),
+        output_fields: output_fields, // Access the first element using index 0
+        consistency_level: consistency_level,
+      },
+      data.timeout || this.timeout
     );
 
-    // const promise: SearchRes = await promisify(
-    //   this.channelPool,
-    //   'HybridSearch',
-    //   {
-    //     collection_name: data.collection_name,
-    //     requests: data.requests,
-    //     rank_params: data.rank_params,
-    //     output_fields: data.output_fields,
-    //     consistency_level: data.consistency_level,
-    //   },
-    //   data.timeout || this.timeout
-    // );
-
-    console.dir(requests, { depth: null });
+    console.dir(requests);
+    console.dir(promise, { depth: null });
   }
 
   /**

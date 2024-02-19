@@ -58,9 +58,7 @@ export interface TimeStampArray {
   created_utc_timestamps: string[];
 }
 
-export interface keyValueObj {
-  [key: string]: string | number;
-}
+export type keyValueObj = Record<string, string | number | string[] | number[]>;
 
 export interface collectionNameReq extends GrpcTimeOut {
   collection_name: string;
