@@ -167,7 +167,5 @@ describe(`Multiple vectors API testing`, () => {
       },
       limit: 5,
     });
-
-    console.log('search', search);
   });
 });

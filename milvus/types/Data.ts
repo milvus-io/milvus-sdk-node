@@ -233,9 +233,10 @@ export interface GetMetricsRequest extends GrpcTimeOut {
 
 export interface SearchParam {
   anns_field: string; // your vector field name
-  topk: string;
+  topk: string | number;
   metric_type: string;
   params: string;
+  offset?: number;
   round_decimal?: number;
   ignore_growing?: boolean;
   group_by_field?: string;
@@ -254,11 +255,11 @@ export interface SearchReq extends collectionNameReq {
   vector_type: DataType.BinaryVector | DataType.FloatVector;
   nq?: number;
   consistency_level?: ConsistencyLevelEnum;
-  group_by_field?: string;
 }
 
 // simplified search api parameter type
 export interface SearchSimpleReq extends collectionNameReq {
+  partition_names?: string[];
   anns_field?: string;
   vector?: number[];
   vectors?: number[][];
@@ -269,39 +270,34 @@ export interface SearchSimpleReq extends collectionNameReq {
   offset?: number;
   filter?: string;
   expr?: string; // alias
-  partition_names?: string[];
   params?: keyValueObj;
   metric_type?: string;
   consistency_level?: ConsistencyLevelEnum;
   ignore_growing?: boolean;
   group_by_field?: string;
+  round_decimal?: number;
 }
 
-// hybrid search api parameter type
-export interface HybridSearchReq extends collectionNameReq {
-  // search global parameters
-  partition_names?: string[];
-  output_fields?: string[];
-  consistency_level?: ConsistencyLevelEnum;
-  limit?: number;
-  topk?: number; // alias
-  offset?: number;
-  round_decimal?: number;
+export type hybridSearchSingleReq = Pick<
+  SearchParam,
+  'anns_field' | 'ignore_growing' | 'group_by_field'
+> & {
+  data: number[];
+  expr?: string;
+  params?: keyValueObj;
+};
 
+// hybrid search api parameter type
+export type HybridSearchReq = Omit<
+  SearchSimpleReq,
+  'data' | 'vector' | 'vectors' | 'params' | 'anns_field'
+> & {
   // search requests
-  data: {
-    data: number[];
-    anns_field: string;
-    expr?: string;
-    params?: keyValueObj;
-    metric_type?: string;
-    ignore_growing?: boolean;
-    group_by_field?: string;
-  }[];
+  data: hybridSearchSingleReq[];
 
   // reranker
   rank_params: keyValueObj;
-}
+};
 
 export interface SearchRes extends resStatusResponse {
   results: {

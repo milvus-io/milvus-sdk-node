@@ -18,6 +18,8 @@ import {
   SearchReq,
   SearchSimpleReq,
   VectorTypes,
+  SearchParam,
+  hybridSearchSingleReq,
   HybridSearchReq,
   DEFAULT_TOPK,
   DslType,
@@ -509,7 +511,7 @@ export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
  */
 export const buildPlaceholderGroupBytes = (
   milvusProto: Root,
-  searchVectors: VectorTypes[],
+  vectors: VectorTypes[],
   vectorDataType: DataType
 ) => {
   // bytes builder
@@ -528,7 +530,7 @@ export const buildPlaceholderGroupBytes = (
         {
           tag: '$0',
           type: vectorDataType,
-          values: searchVectors.map(v => bytesBuilder.get(vectorDataType)!(v)),
+          values: vectors.map(v => bytesBuilder.get(vectorDataType)!(v)),
         },
       ],
     })
@@ -538,15 +540,42 @@ export const buildPlaceholderGroupBytes = (
 };
 
 /**
- * This method is used to build search parameters for a given data.
- * It first fetches the collection info and then constructs the search parameters based on the data type.
+ * Builds search parameters based on the provided data.
+ * @param data - The data object containing search parameters.
+ * @returns The search parameters in key-value format.
+ */
+export const buildSearchParams = (
+  data: SearchSimpleReq | (hybridSearchSingleReq & HybridSearchReq),
+  anns_field: string
+) => {
+  // create search params
+  const search_params: SearchParam = {
+    anns_field: data.anns_field || anns_field,
+    params: JSON.stringify(data.params ?? {}),
+    topk: data.limit ?? data.topk ?? DEFAULT_TOPK,
+    offset: data.offset ?? 0,
+    metric_type: data.metric_type ?? '', // leave it empty
+    ignore_growing: data.ignore_growing ?? false,
+  };
+
+  // if group_by_field is set, add it to the search params
+  if (data.group_by_field) {
+    search_params.group_by_field = data.group_by_field;
+  }
+
+  return search_params;
+};
+
+/**
+ * This method is used to build search request for a given data.
+ * It first fetches the collection info and then constructs the search request based on the data type.
  * It also creates search vectors and a placeholder group for the search.
  *
- * @param {SearchReq | SearchSimpleReq} data - The data for which to build the search parameters.
+ * @param {SearchReq | SearchSimpleReq | HybridSearchReq} data - The data for which to build the search request.
  * @param {DescribeCollectionResponse} collectionInfo - The collection information.
  * @param {Root} milvusProto - The milvus protocol object.
- * @returns {Object} An object containing the search parameters and search vectors.
- * @returns {Object} return.params - The search parameters used in the operation.
+ * @returns {Object} An object containing the search requests and search vectors.
+ * @returns {Object} return.params - The search requests used in the operation.
  * @returns {string} return.params.collection_name - The name of the collection.
  * @returns {string[]} return.params.partition_names - The partition names.
  * @returns {string[]} return.params.output_fields - The output fields.
@@ -559,26 +588,15 @@ export const buildPlaceholderGroupBytes = (
  * @returns {Number[][]} return.searchVectors - The search vectors used in the operation.
  * @returns {number} return.round_decimal - The score precision.
  */
-export const buildSearchParams = (
+export const buildSearchRequest = (
   data: SearchReq | SearchSimpleReq | HybridSearchReq,
   collectionInfo: DescribeCollectionResponse,
   milvusProto: Root
 ) => {
-  // parse data
-  const searchReqData = data as SearchReq;
-  const searchSimpleReqData = data as SearchSimpleReq;
-  const searchHybridReqData = data as HybridSearchReq;
-
-  // create search vectors
-  let searchVectors: VectorTypes[] =
-    searchReqData.vectors ||
-    searchSimpleReqData.data ||
-    searchSimpleReqData.vector;
-
-  // make sure the searchVectors format is correct
-  if (!Array.isArray(searchVectors[0])) {
-    searchVectors = [searchVectors as unknown] as number[][];
-  }
+  // type cast
+  const searchReq = data as SearchReq;
+  const searchHybridReq = data as HybridSearchReq;
+  const searchSimpleReq = data as SearchSimpleReq;
 
   // Initialize requests array
   const requests: {
@@ -593,59 +611,84 @@ export const buildSearchParams = (
     consistency_level: ConsistencyLevelEnum;
   }[] = [];
 
-  // Get default output fields
-  const defaultOutputFields: string[] = collectionInfo.schema.fields.map(
-    f => f.name
+  // detect if the request is hybrid search request
+  const isHybridSearch = !!(
+    searchHybridReq.data &&
+    searchHybridReq.data.length &&
+    searchHybridReq.data[0].anns_field
   );
 
+  // search vectors storage
+  const searchVectors: VectorTypes[][] = [];
+
+  // output fields(reference fields)
+  const default_output_fields: string[] = [];
+
   // Iterate through collection fields
-  collectionInfo.schema.fields.forEach(field => {
+  for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
+    const field = collectionInfo.schema.fields[i];
     const { name, dataType } = field;
 
-    // if field  type is vector, lets build the request
+    // if field  type is vector, build the request
     if (isVectorType(dataType)) {
-      // ensure data exist
-      searchHybridReqData.data = searchHybridReqData.data || [];
-      // build req object
-      const req =
-        searchHybridReqData.data.find((d: any) => d.anns_field === name) ||
-        searchSimpleReqData;
+      // build request object
+      // if it is hybrid search, we need to find the correct req for this field
+      // otherwise use the data as the req directly
+      const req = isHybridSearch
+        ? Object.assign(
+            cloneObj(data), // never polute the original data
+            searchHybridReq.data.find(d => d.anns_field === name)
+          )
+        : (data as SearchSimpleReq);
 
-      // create search params
-      const search_params = searchReqData.search_params || {
-        anns_field: req.anns_field || name,
-        topk:
-          searchSimpleReqData.limit ?? searchSimpleReqData.topk ?? DEFAULT_TOPK,
-        offset: searchSimpleReqData.offset ?? 0,
-        metric_type: req.metric_type ?? '', // leave it empty
-        params: JSON.stringify(req.params ?? {}),
-        ignore_growing: req.ignore_growing ?? false,
-      };
-
-      // if group_by_field is set, add it to the search params
-      if (req.group_by_field) {
-        search_params.group_by_field = req.group_by_field;
+      if (
+        // if it is hybrid search and no request target is not found, skip
+        (isHybridSearch && !req) ||
+        // if it is not hybrid search, and we have built one request, skip
+        (!isHybridSearch && requests.length === 1)
+      ) {
+        continue;
       }
+
+      // get search vectors
+      let currentSearchVector = isHybridSearch
+        ? req.data!
+        : searchReq.vectors ||
+          searchSimpleReq.vectors ||
+          searchSimpleReq.vector ||
+          searchSimpleReq.data;
+
+      // make sure the vector format
+      if (!Array.isArray(currentSearchVector[0])) {
+        currentSearchVector = [currentSearchVector as unknown] as VectorTypes[];
+      }
+      // store search vectors
+      searchVectors.push(currentSearchVector as VectorTypes[]);
 
       // create search request
       requests.push({
         collection_name: data.collection_name,
         partition_names: data.partition_names || [],
-        output_fields: data.output_fields || defaultOutputFields,
-        nq: searchReqData.nq || searchVectors.length,
-        dsl: searchReqData.expr || searchSimpleReqData.filter || '',
+        output_fields: data.output_fields || default_output_fields,
+        nq: searchReq.nq || currentSearchVector.length,
+        dsl: searchReq.expr || searchSimpleReq.filter || '',
         dsl_type: DslType.BoolExprV1,
         placeholder_group: buildPlaceholderGroupBytes(
           milvusProto,
-          searchVectors,
+          currentSearchVector as VectorTypes[],
           field.dataType!
         ),
-        search_params: parseToKeyValue(search_params),
+        search_params: parseToKeyValue(
+          searchReq.search_params || buildSearchParams(req, name)
+        ),
         consistency_level:
           data.consistency_level || (collectionInfo.consistency_level as any),
       });
+    } else {
+      // if field is not vector, add it to output fields
+      default_output_fields.push(name);
     }
-  });
+  }
 
   /**
    *  It will decide the score precision.
@@ -654,12 +697,12 @@ export const buildSearchParams = (
    *  So the score need to slice by round_decimal
    */
   const round_decimal =
-    searchReqData.search_params?.round_decimal ??
-    (searchSimpleReqData.params?.round_decimal as number);
+    searchReq.search_params?.round_decimal ??
+    (searchSimpleReq.params?.round_decimal as number);
 
   return {
-    params: requests.length == 1 ? requests[0] : requests,
-    searchVectors,
+    requests: requests.length == 1 ? requests[0] : requests,
+    searchVectors: requests.length == 1 ? searchVectors[0] : searchVectors,
     round_decimal,
   };
 };

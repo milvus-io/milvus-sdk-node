@@ -19,7 +19,7 @@ import {
   GetMetricsResponse,
   GetQuerySegmentInfoResponse,
   GePersistentSegmentInfoResponse,
-  buildSearchParams,
+  buildSearchRequest,
   formatSearchResult,
   MutationResult,
   QueryResults,
@@ -403,7 +403,7 @@ export class Data extends Collection {
       cache: true,
     });
     // build search params
-    const { params, searchVectors, round_decimal } = buildSearchParams(
+    const { requests, searchVectors, round_decimal } = buildSearchRequest(
       data,
       collectionInfo,
       this.milvusProto
@@ -413,7 +413,7 @@ export class Data extends Collection {
     const originSearchResult: SearchRes = await promisify(
       this.channelPool,
       'Search',
-      params,
+      requests,
       data.timeout || this.timeout
     );
 
@@ -448,7 +448,7 @@ export class Data extends Collection {
     });
 
     // build search params
-    const { params, searchVectors, round_decimal } = buildSearchParams(
+    const { requests, searchVectors, round_decimal } = buildSearchRequest(
       data,
       collectionInfo,
       this.milvusProto
@@ -467,7 +467,7 @@ export class Data extends Collection {
     //   data.timeout || this.timeout
     // );
 
-    console.log('hybrid search', params);
+    console.dir(requests, { depth: null });
   }
 
   /**
