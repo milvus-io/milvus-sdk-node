@@ -63,9 +63,9 @@ export interface keyValueObj {
 }
 
 export interface collectionNameReq extends GrpcTimeOut {
-  collection_name: string;
+  collection_name: string; // required, collection name
 }
 
 export interface partitionNameReq extends collectionNameReq {
-  partition_name?: string;
+  partition_name?: string; // optional, partition name
 }
