@@ -633,19 +633,19 @@ export class Collection extends Database {
    *  });
    * ```
    */
-  // async describeAlias(data: DescribeAliasReq): Promise<DescribeAliasResponse> {
-  //   checkCollectionName(data);
-  //   if (!data.alias) {
-  //     throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
-  //   }
-  //   const promise = await promisify(
-  //     this.channelPool,
-  //     'DescribeAlias',
-  //     data,
-  //     data.timeout || this.timeout
-  //   );
-  //   return promise;
-  // }
+  async describeAlias(data: DescribeAliasReq): Promise<DescribeAliasResponse> {
+    checkCollectionName(data);
+    if (!data.alias) {
+      throw new Error(ERROR_REASONS.ALIAS_NAME_IS_REQUIRED);
+    }
+    const promise = await promisify(
+      this.channelPool,
+      'DescribeAlias',
+      data,
+      data.timeout || this.timeout
+    );
+    return promise;
+  }
 
   /**
    * List all aliases of a collection.
@@ -667,19 +667,19 @@ export class Collection extends Database {
    *  });
    * ```
    */
-  // async listAliases(data: ListAliasesReq): Promise<ListAliasesResponse> {
-  //   checkCollectionName(data);
-  //   if (!data.collection_name) {
-  //     throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
-  //   }
-  //   const promise = await promisify(
-  //     this.channelPool,
-  //     'ListAliases',
-  //     data,
-  //     data.timeout || this.timeout
-  //   );
-  //   return promise;
-  // }
+  async listAliases(data: ListAliasesReq): Promise<ListAliasesResponse> {
+    checkCollectionName(data);
+    if (!data.collection_name) {
+      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
+    const promise = await promisify(
+      this.channelPool,
+      'ListAliases',
+      data,
+      data.timeout || this.timeout
+    );
+    return promise;
+  }
 
   /**
    * Drop a collection alias.
