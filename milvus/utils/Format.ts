@@ -30,6 +30,7 @@ import {
   ConsistencyLevelEnum,
   isVectorType,
   RANKER_TYPE,
+  rerankerObj,
 } from '../';
 
 /**
@@ -567,6 +568,11 @@ export const buildSearchParams = (
   return search_params;
 };
 
+/**
+ * Creates a RRFRanker object with the specified value of k.
+ * @param k - The value of k used in the RRFRanker strategy.
+ * @returns An object representing the RRFRanker strategy with the specified value of k.
+ */
 export const RRFRanker = (k: number = 60) => {
   return {
     strategy: RANKER_TYPE.RRF,
@@ -576,6 +582,11 @@ export const RRFRanker = (k: number = 60) => {
   };
 };
 
+/**
+ * Creates a weighted ranker object.
+ * @param weights - An array of numbers representing the weights.
+ * @returns The weighted ranker object.
+ */
 export const WeightedRanker = (weights: number[]) => {
   return {
     strategy: RANKER_TYPE.WEIGHTED,
@@ -583,6 +594,17 @@ export const WeightedRanker = (weights: number[]) => {
       weights,
     },
   };
+};
+
+/**
+ * Converts the rerank parameters object to a format suitable for API requests.
+ * @param rerank - The rerank parameters object.
+ * @returns The converted rerank parameters object.
+ */
+export const convertRerankParams = (rerank: rerankerObj) => {
+  const r = cloneObj(rerank) as any;
+  r.params = JSON.stringify(r.params);
+  return r;
 };
 
 /**
@@ -643,30 +665,29 @@ export const buildSearchRequest = (
   // output fields(reference fields)
   const default_output_fields: string[] = [];
 
-  // Iterate through collection fields
+  // Iterate through collection fields, create search request
   for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
     const field = collectionInfo.schema.fields[i];
     const { name, dataType } = field;
 
     // if field  type is vector, build the request
     if (isVectorType(dataType)) {
-      // build request object
-      // if it is hybrid search, we need to find the correct req for this field
-      // otherwise use the data as the req directly
-      const req = isHybridSearch
-        ? Object.assign(
-            cloneObj(data), // never polute the original data
-            searchHybridReq.data.find(d => d.anns_field === name)
-          )
-        : (data as SearchSimpleReq);
+      let req: SearchSimpleReq | (HybridSearchReq & hybridSearchSingleReq) =
+        data as SearchSimpleReq;
 
-      if (
+      if (isHybridSearch) {
+        const singleReq = searchHybridReq.data.find(d => d.anns_field === name);
         // if it is hybrid search and no request target is not found, skip
-        (isHybridSearch && !req) ||
+        if (!singleReq) {
+          continue;
+        }
+        // merge single request with hybrid request
+        req = Object.assign(cloneObj(data), singleReq);
+      } else {
         // if it is not hybrid search, and we have built one request, skip
-        (!isHybridSearch && requests.length === 1)
-      ) {
-        continue;
+        if (requests.length === 1) {
+          continue;
+        }
       }
 
       // get search vectors
@@ -717,14 +738,32 @@ export const buildSearchRequest = (
    */
   const round_decimal =
     searchReq.search_params?.round_decimal ??
-    (searchSimpleReq.params?.round_decimal as number);
+    (searchSimpleReq.params?.round_decimal as number) ??
+    -1;
 
   return {
-    requests: requests.length == 1 ? requests[0] : requests,
-    searchVectors: requests.length == 1 ? searchVectors[0] : searchVectors,
-    output_fields: requests[0].output_fields,
-    rank_params: searchHybridReq.rank_params || RRFRanker(),
-    consistency_level: requests[0].consistency_level,
+    isHybridSearch,
+    request: isHybridSearch
+      ? {
+          collection_name: data.collection_name,
+          partition_names: data.partition_names,
+          requests: requests,
+          rank_params: [
+            ...parseToKeyValue(
+              convertRerankParams(searchHybridReq.rerank || RRFRanker())
+            ),
+            { key: 'round_decimal', value: round_decimal },
+            {
+              key: 'limit',
+              value:
+                searchSimpleReq.limit ?? searchSimpleReq.topk ?? DEFAULT_TOPK,
+            },
+          ],
+          output_fields: requests[0]?.output_fields,
+          consistency_level: requests[0]?.consistency_level,
+        }
+      : requests[0],
+    nq: requests[0].nq,
     round_decimal,
   };
 };

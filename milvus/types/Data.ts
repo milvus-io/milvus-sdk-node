@@ -287,7 +287,7 @@ export type hybridSearchSingleReq = Pick<
   params?: keyValueObj;
 };
 
-export type reranker = {
+export type rerankerObj = {
   strategy: string;
   params: keyValueObj;
 };
@@ -301,7 +301,7 @@ export type HybridSearchReq = Omit<
   data: hybridSearchSingleReq[];
 
   // reranker
-  rank_params?: reranker;
+  rerank?: rerankerObj;
 };
 
 export interface SearchRes extends resStatusResponse {

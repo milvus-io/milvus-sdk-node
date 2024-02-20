@@ -394,16 +394,17 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  async search(data: SearchReq | SearchSimpleReq): Promise<SearchResults> {
-    // params check
-    checkSearchParams(data);
+  async search(
+    data: SearchReq | SearchSimpleReq | HybridSearchReq
+  ): Promise<SearchResults> {
     // get collection info
     const collectionInfo = await this.describeCollection({
       collection_name: data.collection_name,
       cache: true,
     });
+
     // build search params
-    const { requests, searchVectors, round_decimal } = buildSearchRequest(
+    const { request, nq, round_decimal, isHybridSearch } = buildSearchRequest(
       data,
       collectionInfo,
       this.milvusProto
@@ -412,8 +413,8 @@ export class Data extends Collection {
     // execute search
     const originSearchResult: SearchRes = await promisify(
       this.channelPool,
-      'Search',
-      requests,
+      isHybridSearch ? 'HybridSearch' : 'Search',
+      request,
       data.timeout || this.timeout
     );
 
@@ -435,45 +436,13 @@ export class Data extends Collection {
 
     return {
       status: originSearchResult.status,
-      // if only searching 1 vector, return the first object of results array
-      results: searchVectors.length === 1 ? results[0] || [] : results,
+      // nq === 1, return the first object of results array
+      results: nq === 1 ? results[0] || [] : results,
     };
   }
 
-  async hybridSearch(data: HybridSearchReq): Promise<any> {
-    // get collection info
-    const collectionInfo = await this.describeCollection({
-      collection_name: data.collection_name,
-      cache: true,
-    });
-
-    // build search params
-    const {
-      requests,
-      rank_params,
-      output_fields,
-      consistency_level,
-      searchVectors,
-      round_decimal,
-    } = buildSearchRequest(data, collectionInfo, this.milvusProto);
-
-    const promise: SearchRes = await promisify(
-      this.channelPool,
-      'HybridSearch',
-      {
-        collection_name: data.collection_name,
-        partition_names: data.partition_names,
-        requests: requests as any[], // Explicitly specify the type as an array
-        rank_params: parseToKeyValue(rank_params),
-        output_fields: output_fields, // Access the first element using index 0
-        consistency_level: consistency_level,
-      },
-      data.timeout || this.timeout
-    );
-
-    console.dir(requests);
-    console.dir(promise, { depth: null });
-  }
+  // alias
+  hybridSearch = this.search;
 
   /**
    * Flushes the newly inserted vectors that are temporarily buffered in the cache to the object storage.

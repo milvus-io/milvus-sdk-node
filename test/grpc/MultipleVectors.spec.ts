@@ -164,52 +164,93 @@ describe(`Multiple vectors API testing`, () => {
           anns_field: 'vector1',
         },
       ],
-      rank_params: RRFRanker(),
+      rerank: RRFRanker(),
       limit: 5,
       output_fields: ['id'],
     });
 
-    console.log(search);
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(5);
   });
 
-  // it(`hybrid with rrf ranker set should be successful`, async () => {
-  //   const search = await milvusClient.hybridSearch({
-  //     collection_name: COLLECTION_NAME,
-  //     data: [
-  //       {
-  //         data: [1, 2, 3, 4, 5, 6, 7, 8],
-  //         anns_field: 'vector',
-  //         params: { nprobe: 2 },
-  //       },
-  //       {
-  //         data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-  //         anns_field: 'vector1',
-  //       },
-  //     ],
-  //     rank_params: WeightedRanker([0.9, 0.1]),
-  //     limit: 5,
-  //   });
+  it(`hybrid with rrf ranker set should be successful`, async () => {
+    const search = await milvusClient.hybridSearch({
+      collection_name: COLLECTION_NAME,
+      data: [
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8],
+          anns_field: 'vector',
+          params: { nprobe: 2 },
+        },
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+          anns_field: 'vector1',
+        },
+      ],
+      rerank: WeightedRanker([0.9, 0.1]),
+      limit: 5,
+    });
 
-  //   console.log(search);
-  // });
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(5);
+  });
 
-  // it(`hybrid without ranker set should be successful`, async () => {
-  //   const search = await milvusClient.hybridSearch({
-  //     collection_name: COLLECTION_NAME,
-  //     data: [
-  //       {
-  //         data: [1, 2, 3, 4, 5, 6, 7, 8],
-  //         anns_field: 'vector',
-  //         params: { nprobe: 2 },
-  //       },
-  //       {
-  //         data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-  //         anns_field: 'vector1',
-  //       },
-  //     ],
-  //     limit: 5,
-  //   });
+  it(`hybrid without ranker set should be successful`, async () => {
+    const search = await milvusClient.hybridSearch({
+      collection_name: COLLECTION_NAME,
+      data: [
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8],
+          anns_field: 'vector',
+          params: { nprobe: 2 },
+        },
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+          anns_field: 'vector1',
+        },
+      ],
+      limit: 5,
+    });
 
-  //   console.log(search);
-  // });
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(5);
+  });
+
+  it(`hybrid one vector should be successful`, async () => {
+    const search = await milvusClient.hybridSearch({
+      collection_name: COLLECTION_NAME,
+      data: [
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8],
+          anns_field: 'vector',
+          params: { nprobe: 2 },
+        },
+      ],
+      limit: 5,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(5);
+  });
+
+  it(`user can use search api for hybrid search`, async () => {
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      data: [
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8],
+          anns_field: 'vector',
+          params: { nprobe: 2 },
+        },
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+          anns_field: 'vector1',
+        },
+      ],
+      limit: 5,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(5);
+  });
 });

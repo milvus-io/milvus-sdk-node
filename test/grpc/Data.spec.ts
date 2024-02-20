@@ -169,14 +169,6 @@ describe(`Data.API`, () => {
     }
   });
 
-  it(`Exec search should throw SEARCH_PARAMS_IS_REQUIRED`, async () => {
-    try {
-      await milvusClient.search({ collection_name: 'asd' } as any);
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.VECTORS_OR_VECTOR_IS_MISSING);
-    }
-  });
-
   it(`Exec search should throw error`, async () => {
     try {
       await milvusClient.search({
