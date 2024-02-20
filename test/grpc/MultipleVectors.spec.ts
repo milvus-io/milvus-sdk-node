@@ -14,7 +14,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
@@ -252,5 +252,34 @@ describe(`Multiple vectors API testing`, () => {
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toEqual(5);
+  });
+
+  it(`hybrid search result should be equal to origin search result`, async () => {
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      data: [
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8],
+          anns_field: 'vector',
+          params: { nprobe: 2 },
+        },
+      ],
+      limit: 5,
+    });
+
+    const originSearch = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      vector: [1, 2, 3, 4, 5, 6, 7, 8],
+      anns_field: 'vector',
+      limit: 5,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(originSearch.status.error_code).toEqual(search.status.error_code);
+    expect(originSearch.results.length).toEqual(search.results.length);
+
+    expect(search.results.map(r => r.id)).toEqual(
+      originSearch.results.map(r => r.id)
+    );
   });
 });

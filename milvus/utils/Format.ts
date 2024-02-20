@@ -19,7 +19,7 @@ import {
   SearchSimpleReq,
   VectorTypes,
   SearchParam,
-  hybridSearchSingleReq,
+  HybridSearchSingleReq,
   HybridSearchReq,
   DEFAULT_TOPK,
   DslType,
@@ -30,7 +30,7 @@ import {
   ConsistencyLevelEnum,
   isVectorType,
   RANKER_TYPE,
-  rerankerObj,
+  RerankerObj,
 } from '../';
 
 /**
@@ -547,7 +547,7 @@ export const buildPlaceholderGroupBytes = (
  * @returns The search parameters in key-value format.
  */
 export const buildSearchParams = (
-  data: SearchSimpleReq | (hybridSearchSingleReq & HybridSearchReq),
+  data: SearchSimpleReq | (HybridSearchSingleReq & HybridSearchReq),
   anns_field: string
 ) => {
   // create search params
@@ -573,7 +573,7 @@ export const buildSearchParams = (
  * @param k - The value of k used in the RRFRanker strategy.
  * @returns An object representing the RRFRanker strategy with the specified value of k.
  */
-export const RRFRanker = (k: number = 60) => {
+export const RRFRanker = (k: number = 60): RerankerObj => {
   return {
     strategy: RANKER_TYPE.RRF,
     params: {
@@ -587,7 +587,7 @@ export const RRFRanker = (k: number = 60) => {
  * @param weights - An array of numbers representing the weights.
  * @returns The weighted ranker object.
  */
-export const WeightedRanker = (weights: number[]) => {
+export const WeightedRanker = (weights: number[]): RerankerObj => {
   return {
     strategy: RANKER_TYPE.WEIGHTED,
     params: {
@@ -601,7 +601,7 @@ export const WeightedRanker = (weights: number[]) => {
  * @param rerank - The rerank parameters object.
  * @returns The converted rerank parameters object.
  */
-export const convertRerankParams = (rerank: rerankerObj) => {
+export const convertRerankParams = (rerank: RerankerObj) => {
   const r = cloneObj(rerank) as any;
   r.params = JSON.stringify(r.params);
   return r;
@@ -672,7 +672,7 @@ export const buildSearchRequest = (
 
     // if field  type is vector, build the request
     if (isVectorType(dataType)) {
-      let req: SearchSimpleReq | (HybridSearchReq & hybridSearchSingleReq) =
+      let req: SearchSimpleReq | (HybridSearchReq & HybridSearchSingleReq) =
         data as SearchSimpleReq;
 
       if (isHybridSearch) {
