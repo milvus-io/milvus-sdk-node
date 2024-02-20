@@ -15,7 +15,7 @@ import {
   DEFAULT_PRIMARY_KEY_FIELD,
   DEFAULT_METRIC_TYPE,
   DEFAULT_VECTOR_FIELD,
-  CreateColWithSchemaReq,
+  CreateColWithSchemaAndIndexParamsReq,
 } from '.';
 import sdkInfo from '../sdk.json';
 
@@ -75,11 +75,14 @@ export class MilvusClient extends GRPCClient {
   /**
    * Creates a new collection with the given parameters.
    * @function create_collection
-   * @param {CreateColReq} data - The data required to create the collection.
+   * @param {CreateColReq | CreateColWithSchemaAndIndexParamsReq | CreateCollectionReq} data - The data required to create the collection.
    * @returns {Promise<ResStatus>} - The result of the operation.
    */
   async createCollection(
-    data: CreateColReq | CreateColWithSchemaReq | CreateCollectionReq
+    data:
+      | CreateColReq
+      | CreateColWithSchemaAndIndexParamsReq
+      | CreateCollectionReq
   ): Promise<ResStatus> {
     // check compatibility
     await this.checkCompatibility({

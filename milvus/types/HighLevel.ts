@@ -7,28 +7,28 @@ import {
   CreateIndexSimpleReq,
 } from '../';
 
-// highlevel，only collection_name and dimension are required
+// Create collection method1: only collection_name and dimension are required
 export interface CreateColReq extends collectionNameReq {
-  dimension: number;
-  primary_field_name?: string;
-  id_type?: DataType.Int64 | DataType.VarChar;
-  vector_field_name?: string;
-  metric_type?: string | MetricType;
-  timeout?: number;
-  enable_dynamic_field?: boolean;
-  enableDynamicField?: boolean;
-  description?: string;
-  auto_id?: boolean;
-  timeouts?: number;
+  dimension: number; // required, dimension of the vector field
+  primary_field_name?: string; // optional, primary field name, default is 'id'
+  id_type?: DataType.Int64 | DataType.VarChar; // optional, primary field data type, default is 'Int64'
+  vector_field_name?: string; // optional, vector field name,  default is 'embedding'
+  metric_type?: string | MetricType; // optional, metric type to build index,  default is 'L2'
+  enable_dynamic_field?: boolean; // optional, enable dynamic field, default is true
+  enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
+  description?: string; // optional, description of the collection
+  auto_id?: boolean; // optional, auto id, default is false
   consistency_level?:
     | 'Strong'
     | 'Session'
     | 'Bounded'
     | 'Eventually'
-    | 'Customized';
-  index_params?: CreateIndexParam;
+    | 'Customized'; // optional,consistency level, default is 'Bounded'
+  index_params?: CreateIndexParam; // optional, index params
+  timeout?: number; // optional, timeout for the request
 }
 
-export type CreateColWithSchemaReq = CreateCollectionReq & {
-  index_params: Omit<CreateIndexSimpleReq, 'collection_name'>[];
+//  Create collection method2: create collection with fields and index params, fields or schema and index_params are required
+export type CreateColWithSchemaAndIndexParamsReq = CreateCollectionReq & {
+  index_params: Omit<CreateIndexSimpleReq, 'collection_name'>[]; // required, index params
 };

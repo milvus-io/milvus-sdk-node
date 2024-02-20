@@ -15,6 +15,7 @@ export interface ClientConfig {
   // The address of the Milvus server.
   address: string;
   // token
+  // Accepts either `username:password` or `apikey` from Zilliz Cloud if you don't want to use `username` and `password` fields or you are using Zilliz Cloud serverless option
   token?: string;
   // Whether to use SSL encryption.
   ssl?: boolean;
@@ -30,7 +31,7 @@ export interface ClientConfig {
   maxRetries?: number;
   // retry delay
   retryDelay?: number;
-  // database
+  // database name
   database?: string;
   // log level
   logLevel?: string;
