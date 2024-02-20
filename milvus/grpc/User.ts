@@ -146,6 +146,7 @@ export class User extends Resource {
     );
     return promise;
   }
+  dropUser = this.deleteUser;
 
   /**
    * Lists all users in Milvus.
