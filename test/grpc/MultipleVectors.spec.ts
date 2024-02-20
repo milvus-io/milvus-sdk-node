@@ -269,8 +269,7 @@ describe(`Multiple vectors API testing`, () => {
 
     const originSearch = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: [1, 2, 3, 4, 5, 6, 7, 8],
-      anns_field: 'vector',
+      data: [1, 2, 3, 4, 5, 6, 7, 8],
       limit: 5,
     });
 
