@@ -10,13 +10,13 @@ export interface GetPartitionStatisticsReq extends PartitionParent {}
 export interface ShowPartitionsReq extends collectionNameReq {}
 
 export interface LoadPartitionsReq extends collectionNameReq {
-  partition_names: string[];
-  replica_number?: number;
-  resource_groups?: string[];
+  partition_names: string[]; // required, partition names
+  replica_number?: number; // optional, replica number, default is 1
+  resource_groups?: string[]; // optional, resource groups
 }
 
 export interface ReleasePartitionsReq extends collectionNameReq {
-  partition_names: string[];
+  partition_names: string[]; // required, partition names
 }
 
 export interface ShowPartitionsResponse extends TimeStampArray {

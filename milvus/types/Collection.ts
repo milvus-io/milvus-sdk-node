@@ -84,29 +84,30 @@ export interface ShowCollectionsReq extends GrpcTimeOut {
 
 export interface BaseCreateCollectionReq extends GrpcTimeOut {
   // collection name
-  collection_name: string;
-  shards_num?: number; // int
-  description?: string;
+  collection_name: string; // required, collection name
+  shards_num?: number; // optional, shards number, default is 1
+  description?: string; // optional, description of the collection
   consistency_level?:
     | 'Strong'
     | 'Session'
     | 'Bounded'
     | 'Eventually'
-    | 'Customized';
-  num_partitions?: number;
-  partition_key_field?: string;
-  enable_dynamic_field?: boolean;
-  enableDynamicField?: boolean;
+    | 'Customized'; // optional,consistency level, default is 'Bounded'
+  num_partitions?: number; // optional, partitions number, default is 1
+  partition_key_field?: string; // optional, partition key field
+  enable_dynamic_field?: boolean; // optional, enable dynamic field, default is false
+  enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
 }
 
 export interface CreateCollectionWithFieldsReq extends BaseCreateCollectionReq {
-  fields: FieldType[];
+  fields: FieldType[]; // required, fields of the collection
 }
 
 export interface CreateCollectionWithSchemaReq extends BaseCreateCollectionReq {
-  schema: FieldType[];
+  schema: FieldType[]; // required, fields of the collection
 }
 
+// create collection with schema requests
 export type CreateCollectionReq =
   | CreateCollectionWithFieldsReq
   | CreateCollectionWithSchemaReq;
@@ -120,9 +121,9 @@ export interface DescribeCollectionReq extends collectionNameReq {
 export interface GetCollectionStatisticsReq extends collectionNameReq {}
 
 export interface LoadCollectionReq extends collectionNameReq {
-  replica_number?: number;
-  resource_groups?: string[];
-  refresh?: boolean;
+  replica_number?: number; // optional, replica number, default is 1
+  resource_groups?: string[]; // optional, resource groups
+  refresh?: boolean; // optional, refresh, default is false
 }
 export interface ReleaseLoadCollectionReq extends collectionNameReq {}
 
@@ -130,13 +131,13 @@ export interface DropCollectionReq extends collectionNameReq {}
 
 // alias type
 export interface CreateAliasReq extends collectionNameReq {
-  alias: string;
+  alias: string; // required, alias name
 }
 export interface DescribeAliasReq extends CreateAliasReq {
-  alias: string;
+  alias: string; // required, alias name
 }
 export interface DropAliasReq extends GrpcTimeOut {
-  alias: string;
+  alias: string; // required, alias name
 }
 export interface AlterAliasReq extends CreateAliasReq {}
 export interface ListAliasesReq extends collectionNameReq {}

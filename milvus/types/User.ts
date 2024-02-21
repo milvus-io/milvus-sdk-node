@@ -3,19 +3,19 @@ import { RbacObjects } from '../';
 
 // base
 export interface usernameReq extends GrpcTimeOut {
-  username: string;
+  username: string; // required, username
 }
 export interface roleNameReq extends GrpcTimeOut {
-  roleName: string;
+  roleName: string; // required, role name
 }
 
 export interface CreateUserReq extends usernameReq {
-  password: string;
+  password: string; // required, password
 }
 export interface DeleteUserReq extends usernameReq {}
 export interface UpdateUserReq extends usernameReq {
-  oldPassword: string;
-  newPassword: string;
+  oldPassword: string; // required, old password
+  newPassword: string; // required, new password
 }
 export interface ListUsersReq extends GrpcTimeOut {}
 
@@ -23,19 +23,19 @@ export interface CreateRoleReq extends roleNameReq {}
 export interface DropRoleReq extends roleNameReq {}
 export interface HasRoleReq extends roleNameReq {}
 export interface AddUserToRoleReq extends roleNameReq {
-  username: string;
+  username: string; // required, username
 }
 export interface RemoveUserFromRoleReq extends AddUserToRoleReq {
-  roleName: string;
+  roleName: string; // required, role name
 }
 export interface SelectRoleReq extends roleNameReq {
-  includeUserInfo?: boolean;
+  includeUserInfo?: boolean; // optional, include user info, default is false
 }
 export interface listRoleReq extends GrpcTimeOut {
-  includeUserInfo?: boolean;
+  includeUserInfo?: boolean; // optional, include user info, default is false
 }
 export interface SelectUserReq extends usernameReq {
-  includeRoleInfo?: boolean;
+  includeRoleInfo?: boolean; // optional, include role info, default is false
 }
 export interface OperateRolePrivilegeReq extends roleNameReq {
   object: RbacObjects; // Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.
@@ -46,7 +46,7 @@ export interface SelectGrantReq extends OperateRolePrivilegeReq {}
 export interface ListGrantsReq extends roleNameReq {}
 
 export interface ListCredUsersResponse extends resStatusResponse {
-  usernames: string[];
+  usernames: string[]; // usernames
 }
 
 export type RoleEntity = { name: string };

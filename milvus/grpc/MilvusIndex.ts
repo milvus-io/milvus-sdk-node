@@ -3,7 +3,7 @@ import {
   CreateIndexReq,
   DescribeIndexReq,
   DropIndexReq,
-  CreateIndexsReq,
+  CreateIndexesReq,
   CreateIndexRequest,
   GetIndexBuildProgressReq,
   GetIndexStateReq,
@@ -23,7 +23,7 @@ export class Index extends Data {
   /**
    * Asynchronously creates an index on a field. Note that index building is an asynchronous process.
    *
-   * @param {CreateIndexsReq | CreateIndexsReq[]} data - The data for creating the index. Can be an object or an array of objects.
+   * @param {CreateIndexesReq | CreateIndexesReq[]} data - The data for creating the index. Can be an object or an array of objects.
    * @param {string} data.collection_name - The name of the collection.
    * @param {string} data.field_name - The name of the field.
    * @param {string} data.index_name - The name of the index. It must be unique within a collection.
@@ -74,7 +74,7 @@ export class Index extends Data {
    * console.log(res);
    * ```
    */
-  async createIndex(data: CreateIndexsReq) {
+  async createIndex(data: CreateIndexesReq) {
     if (Array.isArray(data)) {
       return await Promise.all(
         data.map(item => this._createIndex(item as CreateIndexRequest))
@@ -154,7 +154,6 @@ export class Index extends Data {
    * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
    * const describeIndexReq = {
    *   collection_name: 'my_collection',
-   *   index_name: 'my_index',
    * };
    * const res = await milvusClient.describeIndex(describeIndexReq);
    * console.log(res);

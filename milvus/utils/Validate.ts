@@ -7,7 +7,7 @@ import {
   MAX_PARTITION_KEY_FIELD_COUNT,
   CreateColReq,
   CreateCollectionReq,
-  CreateColWithSchemaReq,
+  CreateColWithSchemaAndIndexParamsReq,
   CreateCollectionWithFieldsReq,
   CreateCollectionWithSchemaReq,
 } from '../';
@@ -170,7 +170,10 @@ export const validatePartitionNumbers = (num_partitions: number) => {
  * @throws {Error} Throws an error if the SDK and server are incompatible.
  */
 export const checkCreateCollectionCompatibility = (
-  data: CreateColReq | CreateColWithSchemaReq | CreateCollectionReq
+  data:
+    | CreateColReq
+    | CreateColWithSchemaAndIndexParamsReq
+    | CreateCollectionReq
 ) => {
   const hasDynamicSchemaEnabled =
     (data as CreateColReq).enableDynamicField ||

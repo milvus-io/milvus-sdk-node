@@ -2,18 +2,18 @@ import { KeyValuePair, IndexState, keyValueObj } from '../';
 import { resStatusResponse, collectionNameReq } from './Common';
 
 export interface CreateIndexParam {
-  index_type?: string;
-  metric_type: string;
-  params?: string;
+  index_type?: string; // required, index type, for example: IndexType.HNSSW
+  metric_type: string; // required, metric type, for example: MetricType.L2
+  params?: string; // optional, index params, for example: { M: 5, efConstruction: 8 }
 }
 export interface CreateIndexReq extends collectionNameReq {
-  field_name: string;
-  index_name?: string;
-  extra_params?: CreateIndexParam;
+  field_name: string; // required, field name
+  index_name?: string; // optional, index name
+  extra_params?: CreateIndexParam; // optional, index params
 }
 
 export type CreateIndexRequest = CreateIndexReq | CreateIndexSimpleReq;
-export type CreateIndexsReq = CreateIndexRequest[] | CreateIndexRequest;
+export type CreateIndexesReq = CreateIndexRequest[] | CreateIndexRequest;
 
 export interface CreateIndexSimpleReq extends collectionNameReq {
   field_name: string;

@@ -7,20 +7,20 @@ export interface DropResourceGroupsReq extends CreateResourceGroupReq {}
 export interface DescribeResourceGroupsReq extends CreateResourceGroupReq {}
 
 export interface TransferNodeReq extends GrpcTimeOut {
-  source_resource_group: string;
-  target_resource_group: string;
-  num_node: number;
+  source_resource_group: string; // required, source resource group
+  target_resource_group: string; // required, target resource group
+  num_node: number; // required, number of nodes
 }
 
 export interface TransferReplicaReq extends GrpcTimeOut {
-  source_resource_group: string;
-  target_resource_group: string;
-  collection_name: string;
-  num_replica: number;
+  source_resource_group: string; // required, source resource group
+  target_resource_group: string; // required, target resource group
+  collection_name: string; // required, collection name
+  num_replica: number; // required, number of replica
 }
 
 export interface ListResourceGroupsResponse extends resStatusResponse {
-  resource_groups: string[];
+  resource_groups: string[]; // resource groups
 }
 
 type ResourceGroup = {
