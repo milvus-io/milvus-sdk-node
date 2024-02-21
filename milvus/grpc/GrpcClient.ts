@@ -29,7 +29,7 @@ import {
 import { User } from './User';
 
 // default loader options
-const LOADER_OPTIONS = {
+export const LOADER_OPTIONS = {
   keepCase: true, // preserve field names
   longs: String, // convert int64 fields to strings
   enums: String, // convert enum fields to strings
