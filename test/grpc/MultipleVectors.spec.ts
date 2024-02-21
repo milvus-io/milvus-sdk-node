@@ -150,7 +150,7 @@ describe(`Multiple vectors API testing`, () => {
     expect(search3.results).toEqual(search.results);
   });
 
-  it(`hybrid with rrf ranker set should be successful`, async () => {
+  it(`hybrid search with rrf ranker set should be successful`, async () => {
     const search = await milvusClient.hybridSearch({
       collection_name: COLLECTION_NAME,
       data: [
@@ -173,7 +173,7 @@ describe(`Multiple vectors API testing`, () => {
     expect(search.results.length).toEqual(5);
   });
 
-  it(`hybrid with rrf ranker set should be successful`, async () => {
+  it(`hybrid search with weighted ranker set should be successful`, async () => {
     const search = await milvusClient.hybridSearch({
       collection_name: COLLECTION_NAME,
       data: [
@@ -195,7 +195,7 @@ describe(`Multiple vectors API testing`, () => {
     expect(search.results.length).toEqual(5);
   });
 
-  it(`hybrid without ranker set should be successful`, async () => {
+  it(`hybrid search without ranker set should be successful`, async () => {
     const search = await milvusClient.hybridSearch({
       collection_name: COLLECTION_NAME,
       data: [
@@ -216,7 +216,7 @@ describe(`Multiple vectors API testing`, () => {
     expect(search.results.length).toEqual(5);
   });
 
-  it(`hybrid one vector should be successful`, async () => {
+  it(`hybrid search with one vector should be successful`, async () => {
     const search = await milvusClient.hybridSearch({
       collection_name: COLLECTION_NAME,
       data: [
@@ -254,7 +254,7 @@ describe(`Multiple vectors API testing`, () => {
     expect(search.results.length).toEqual(5);
   });
 
-  it(`hybrid search result should be equal to origin search result`, async () => {
+  it(`hybrid search result should be equal to the original search result`, async () => {
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       data: [
