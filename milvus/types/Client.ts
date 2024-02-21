@@ -56,7 +56,10 @@ export interface ClientConfig {
   // internal property for debug & test
   __SKIP_CONNECT__?: boolean;
 
-  // loader options
+  // loaderOptions : { longs: Function | Number | String },
+  // Function converts int64 to Long.js format
+  // Number converts int64 to number, it will lose precision
+  // String converts int64 to string, it's the default behavior
   loaderOptions?: LoaderOption;
 }
 
