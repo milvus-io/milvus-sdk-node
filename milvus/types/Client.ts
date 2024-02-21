@@ -1,4 +1,5 @@
 import { ChannelOptions } from '@grpc/grpc-js';
+import { Options as LoaderOption } from '@grpc/proto-loader';
 import { Options } from 'generic-pool';
 
 /**
@@ -54,6 +55,9 @@ export interface ClientConfig {
 
   // internal property for debug & test
   __SKIP_CONNECT__?: boolean;
+
+  // loader options
+  loaderOptions?: LoaderOption;
 }
 
 export interface ServerInfo {

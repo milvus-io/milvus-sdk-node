@@ -1,5 +1,5 @@
 import path from 'path';
-import { loadSync } from '@grpc/proto-loader';
+import { loadSync, Options } from '@grpc/proto-loader';
 import {
   loadPackageDefinition,
   ServiceClientConstructor,
@@ -9,14 +9,6 @@ import {
 } from '@grpc/grpc-js';
 import { extractMethodName, isStatusCodeMatched, logger } from '.';
 import { DEFAULT_DB } from '../const';
-
-const PROTO_OPTIONS = {
-  keepCase: true,
-  longs: String,
-  enums: String,
-  defaults: true,
-  oneofs: true,
-};
 
 interface IServiceDetails {
   protoPath: string; // file to your proto file
@@ -29,12 +21,13 @@ interface IServiceDetails {
  * @returns A gRPC service client constructor.
  */
 export const getGRPCService = (
-  proto: IServiceDetails
+  proto: IServiceDetails,
+  options: Options
 ): ServiceClientConstructor => {
   // Resolve the proto file path.
   const PROTO_PATH = path.resolve(__dirname, proto.protoPath);
   // Load the proto file.
-  const packageDefinition = loadSync(PROTO_PATH, PROTO_OPTIONS);
+  const packageDefinition = loadSync(PROTO_PATH, options);
   // Load the gRPC object.
   const grpcObj: GrpcObject = loadPackageDefinition(packageDefinition);
   // Get the service object from the gRPC object.
@@ -93,7 +86,7 @@ export const getMetaInterceptor = (
 export const getRetryInterceptor = ({
   maxRetries = 3,
   retryDelay = 30,
-  clientId = ''
+  clientId = '',
 }: {
   maxRetries: number;
   retryDelay: number;
@@ -239,7 +232,9 @@ export const getRetryInterceptor = ({
       },
       sendMessage: function (message: any, next: any) {
         logger.debug(
-          `[${clientId}>${dbname}>${methodName}] sending ${JSON.stringify(message)}`
+          `[${clientId}>${dbname}>${methodName}] sending ${JSON.stringify(
+            message
+          )}`
         );
         savedSendMessage = message;
         next(message);

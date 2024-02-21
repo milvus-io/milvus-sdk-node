@@ -28,6 +28,15 @@ import {
 } from '../';
 import { User } from './User';
 
+// default loader options
+const LOADER_OPTIONS = {
+  keepCase: true, // preserve field names
+  longs: String, // convert int64 fields to strings
+  enums: String, // convert enum fields to strings
+  defaults: true, // populate default values
+  oneofs: true, // populate oneof fields
+};
+
 /**
  * A client for interacting with the Milvus server via gRPC.
  */
@@ -51,10 +60,13 @@ export class GRPCClient extends User {
     super(configOrAddress, ssl, username, password, channelOptions);
 
     // Get the gRPC service for Milvus
-    const MilvusService = getGRPCService({
-      protoPath: this.protoFilePath.milvus,
-      serviceName: this.protoInternalPath.serviceName, // the name of the Milvus service
-    });
+    const MilvusService = getGRPCService(
+      {
+        protoPath: this.protoFilePath.milvus,
+        serviceName: this.protoInternalPath.serviceName, // the name of the Milvus service
+      },
+      { ...LOADER_OPTIONS, ...this.config.loaderOptions }
+    );
 
     // setup auth if necessary
     const auth = getAuthString(this.config);
