@@ -5,6 +5,7 @@ import {
   FieldType,
 } from '../../milvus';
 import { MAX_LENGTH, P_KEY_VALUES } from './const';
+import Long from 'long';
 
 interface DataGenerator {
   (param?: {
@@ -133,13 +134,20 @@ export const genArray: DataGenerator = params => {
 
 export const genNone: DataGenerator = () => 'none';
 
+export const genInt64: DataGenerator = () => {
+  // Generate two random 32-bit integers and combine them into a 64-bit integer
+  const low = Math.floor(Math.random() * 0x7fffffff); // 0x7FFFFFFF is the maximum positive 32-bit integer value
+  const high = Math.floor(Math.random() * 0x7fffffff);
+  return Long.fromBits(low, high, true); // true for unsigned
+};
+
 export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.None]: genNone,
   [DataType.Bool]: genBool,
   [DataType.Int8]: genInt,
   [DataType.Int16]: genInt,
   [DataType.Int32]: genInt,
-  [DataType.Int64]: genInt,
+  [DataType.Int64]: genInt64,
   [DataType.Float]: genFloat,
   [DataType.Double]: genFloat,
   [DataType.VarChar]: genVarChar,
