@@ -1,6 +1,10 @@
 import path from 'path';
 import { InterceptingCall } from '@grpc/grpc-js';
-import { getGRPCService, getMetaInterceptor } from '../../milvus';
+import {
+  getGRPCService,
+  getMetaInterceptor,
+  LOADER_OPTIONS,
+} from '../../milvus';
 // mock
 jest.mock('@grpc/grpc-js', () => {
   const actual = jest.requireActual(`@grpc/grpc-js`);
@@ -24,7 +28,7 @@ describe(`utils/grpc`, () => {
       protoPath,
       serviceName: `milvus.proto.milvus.MilvusService`,
     };
-    const service = getGRPCService(proto);
+    const service = getGRPCService(proto, LOADER_OPTIONS);
     expect(service).toBeDefined();
   });
 
@@ -34,7 +38,7 @@ describe(`utils/grpc`, () => {
       protoPath,
       serviceName: `milvus.proto.milvus.MilvusService2`,
     };
-    expect(() => getGRPCService(proto)).toThrowError();
+    expect(() => getGRPCService(proto, LOADER_OPTIONS)).toThrowError();
   });
 
   it('should add an authorization header to the metadata of a gRPC call', () => {

@@ -1,4 +1,5 @@
 import { ChannelOptions } from '@grpc/grpc-js';
+import { Options as LoaderOption } from '@grpc/proto-loader';
 import { Options } from 'generic-pool';
 
 /**
@@ -54,6 +55,12 @@ export interface ClientConfig {
 
   // internal property for debug & test
   __SKIP_CONNECT__?: boolean;
+
+  // loaderOptions : { longs: Function | Number | String },
+  // Function converts int64 to Long.js format
+  // Number converts int64 to number, it will lose precision
+  // String converts int64 to string, it's the default behavior
+  loaderOptions?: LoaderOption;
 }
 
 export interface ServerInfo {
