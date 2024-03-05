@@ -16,6 +16,8 @@ import {
   checkCollectionName,
   checkCollectionAndPartitionName,
   formatKeyValueData,
+  ErrorCode,
+  sleep,
 } from '../';
 
 export class Partition extends Index {
@@ -186,6 +188,49 @@ export class Partition extends Index {
       data,
       data.timeout || this.timeout
     );
+    return promise;
+  }
+
+  /**
+   * Loads partitions synchronously.
+   *
+   * @param data - The LoadPartitionsReq object containing the necessary data for loading partitions.
+   * @returns A Promise that resolves to a ResStatus object representing the status of the operation.
+   * @throws An error if the operation fails.
+   */
+  async loadPartitionsSync(data: LoadPartitionsReq): Promise<ResStatus> {
+    checkCollectionName(data);
+
+    const promise = await promisify(
+      this.channelPool,
+      'LoadPartitions',
+      data,
+      data.timeout || this.timeout
+    );
+
+    if (promise.error_code !== ErrorCode.SUCCESS) {
+      throw new Error(
+        `ErrorCode: ${promise.error_code}. Reason: ${promise.reason}`
+      );
+    }
+
+    let loadedPercentage = 0;
+    while (Number(loadedPercentage) < 100) {
+      let res = await this.getLoadingProgress({
+        collection_name: data.collection_name,
+        partition_names: data.partition_names,
+      });
+
+      if (res.status.error_code !== ErrorCode.SUCCESS) {
+        throw new Error(
+          `ErrorCode: ${res.status.error_code}. Reason: ${res.status.reason}`
+        );
+      }
+      loadedPercentage = Number(res.progress);
+      // sleep 400ms
+      await sleep(400);
+    }
+
     return promise;
   }
 
