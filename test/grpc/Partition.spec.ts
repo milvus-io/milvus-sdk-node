@@ -12,7 +12,7 @@ import {
 } from '../tools';
 import { timeoutTest } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 const PARTITION_NAME = GENERATE_NAME('partition');
 const dbParam = {
