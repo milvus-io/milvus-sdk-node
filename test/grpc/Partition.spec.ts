@@ -176,7 +176,6 @@ describe(`Partition API`, () => {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
     });
-    console.log('drop partition', drop);
     expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
