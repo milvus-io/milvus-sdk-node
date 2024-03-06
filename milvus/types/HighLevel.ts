@@ -30,5 +30,5 @@ export interface CreateColReq extends collectionNameReq {
 
 //  Create collection method2: create collection with fields and index params, fields or schema and index_params are required
 export type CreateColWithSchemaAndIndexParamsReq = CreateCollectionReq & {
-  index_params: Omit<CreateIndexSimpleReq, 'collection_name'>[]; // required, index params
+  index_params: Omit<CreateIndexSimpleReq, 'collection_name'>[] | Omit<CreateIndexSimpleReq, 'collection_name'>; // required, index params
 };
