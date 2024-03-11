@@ -10,6 +10,7 @@ import {
   ResStatus,
   DescribeIndexResponse,
   GetIndexStateResponse,
+  ListIndexResponse,
   GetIndexBuildProgressResponse,
   CreateIndexSimpleReq,
   checkCollectionName,
@@ -167,6 +168,39 @@ export class Index extends Data {
       data.timeout || this.timeout
     );
     return promise;
+  }
+
+  /**
+   * Retrieves a list of index names for a given collection. The current release of Milvus only supports listing indexes for the most recently built index.
+   *
+   * @param {Object} data - An object with the following properties:
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} [data.field_name] - The name of the field (optional).
+   * @param {string} [data.index_name] - The name of the index (optional).
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client will continue to wait until the server responds or an error occurs. The default is undefined.
+   *
+   * @returns {Promise<string[]>} A Promise that resolves to an array of strings representing the names of indexes associated with the specified collection.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
+   * const listIndexReq = {
+   *   collection_name: 'my_collection',
+   * };
+   * const indexNames = await milvusClient.listIndex(listIndexReq);
+   * console.log(indexNames);
+   * ```
+   */
+  async listIndexes(data: DescribeIndexReq): Promise<ListIndexResponse> {
+    const describeIndexRes = this.describeIndex(data);
+    const indexes = (await describeIndexRes).index_descriptions.map(index => {
+      return index.index_name;
+    });
+
+    return {
+      status: (await describeIndexRes).status,
+      indexes: indexes,
+    };
   }
 
   /**
