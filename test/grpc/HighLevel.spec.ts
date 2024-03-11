@@ -6,10 +6,14 @@ import {
   IndexType,
   MetricType,
   LoadState,
+  findKeyValue,
+  DEFAULT_METRIC_TYPE,
 } from '../../milvus';
 import { IP, GENERATE_NAME } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({
+  address: IP,
+});
 const FAST_CREATE_COL_NAME = GENERATE_NAME();
 const CREATE_COL_SCHEMA_INDEX_NAME = GENERATE_NAME();
 const CREATE_COL_SCHEMA_NAME = GENERATE_NAME();
@@ -70,7 +74,7 @@ describe(`High level API testing`, () => {
       FAST_CREATE_COL_NAME,
       CREATE_COL_SCHEMA_INDEX_NAME,
       CREATE_COL_SCHEMA_NAME,
-      CREATE_COL_SCHEMA_INDEX_NAME_SINGLE
+      CREATE_COL_SCHEMA_INDEX_NAME_SINGLE,
     ]) {
       await milvusClient.dropCollection({ collection_name: collection_name });
     }
@@ -97,6 +101,14 @@ describe(`High level API testing`, () => {
     expect(
       Number(vectorField?.type_params.find(item => item.key === 'dim')?.value)
     ).toEqual(dim);
+
+    const index = await milvusClient.describeIndex({
+      collection_name: FAST_CREATE_COL_NAME,
+    });
+
+    expect(
+      findKeyValue(index.index_descriptions[0].params, 'metric_type')
+    ).toEqual(DEFAULT_METRIC_TYPE);
   });
 
   it(`Create collection with schema should be successful`, async () => {
