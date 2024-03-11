@@ -2,7 +2,7 @@
 export const DEFAULT_MILVUS_PORT = 19530; // default milvus port
 export const DEFAULT_CONNECT_TIMEOUT = 15 * 1000; // 15s
 export const DEFAULT_TOPK = 100; // default topk
-export const DEFAULT_METRIC_TYPE = 'L2'; // default metric type
+export const DEFAULT_METRIC_TYPE = 'COSINE'; // default metric type
 export const DEFAULT_VECTOR_FIELD = 'vector'; // default vector field
 export const DEFAULT_PRIMARY_KEY_FIELD = 'id'; // default primary key field
 export const DEFAULT_MAX_RETRIES = 3; // max retry time
