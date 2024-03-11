@@ -287,6 +287,19 @@ describe(`Milvus Index API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`list Index should be success`, async () => {
+    const res = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME,
+    });
+    const list = await milvusClient.listIndexes({
+      collection_name: COLLECTION_NAME,
+    });
+    const allIndexNames = res.index_descriptions.map(i => i.index_name);
+    expect(list.indexes.length).toEqual(allIndexNames.length);
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(
     'Test Describe Index should timeout',
     timeoutTest(milvusClient.describeIndex.bind(milvusClient), {
