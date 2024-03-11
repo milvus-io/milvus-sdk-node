@@ -179,8 +179,10 @@ export class Index extends Data {
    * @param {string} [data.index_name] - The name of the index (optional).
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client will continue to wait until the server responds or an error occurs. The default is undefined.
    *
-   * @returns {Promise<string[]>} A Promise that resolves to an array of strings representing the names of indexes associated with the specified collection.
-   *
+   * @returns {Promise<ListIndexResponse>} A Promise that resolves to an array of strings representing the names of indexes associated with the specified collection.
+   * @returns {Object} return.status - An object with properties 'error_code' (number) and 'reason' (string).
+   * @returns {Array<string>} return.string - index names
+   * 
    * @example
    * ```
    * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
