@@ -16,7 +16,6 @@ interface DataGenerator {
     max_capacity?: number;
     is_partition_key?: boolean;
     index?: number;
-    nonZeroCount?: number;
   }): FieldData;
 }
 
@@ -149,27 +148,16 @@ export const genInt64: DataGenerator = () => {
   return Long.fromBits(low, high, true); // true for unsigned
 };
 
-// generate randone sparse vector
+// generate random sparse vector
+// for example {2: 0.5, 3: 0.3, 4: 0.2}
 export const genSparseVector: DataGenerator = params => {
-  // create dim between 4 and 64
-  const dim = params!.dim || Math.floor(Math.random() * 60) + 4;
-  const { nonZeroCount = Math.floor(dim * 0.3) } = params!;
-  const vector: any = [];
+  const { dim } = params!;
+  const nonZeroCount = Math.floor(Math.random() * dim!) || 4;
 
-  const nonZeroIndices = new Set();
-  while (nonZeroIndices.size < nonZeroCount!) {
-    nonZeroIndices.add(Math.floor(Math.random() * dim!));
+  const vector: { [key: number]: number } = {};
+  for (let i = 0; i < nonZeroCount; i++) {
+    vector[Math.floor(Math.random() * dim!)] = Math.random();
   }
-
-  nonZeroIndices.forEach((index: any) => {
-    vector[index] = Math.random();
-  });
-
-  // Fill the rest of the vector with 0s until its length is `dim`
-  while (vector.length < dim) {
-    vector.push(0);
-  }
-
   return vector;
 };
 
