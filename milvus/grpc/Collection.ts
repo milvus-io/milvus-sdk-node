@@ -167,6 +167,8 @@ export class Collection extends Database {
         ...data,
         schema: schemaBytes,
         consistency_level: level,
+        enable_dynamic_field:
+          data.enableDynamicField || data.enable_dynamic_field,
       },
       data.timeout || this.timeout
     );

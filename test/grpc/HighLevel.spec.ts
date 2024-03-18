@@ -13,6 +13,7 @@ const milvusClient = new MilvusClient({ address: IP });
 const FAST_CREATE_COL_NAME = GENERATE_NAME();
 const CREATE_COL_SCHEMA_INDEX_NAME = GENERATE_NAME();
 const CREATE_COL_SCHEMA_NAME = GENERATE_NAME();
+const CREATE_COL_SCHEMA_INDEX_NAME_SINGLE = GENERATE_NAME();
 
 const schema = [
   {
@@ -69,6 +70,7 @@ describe(`High level API testing`, () => {
       FAST_CREATE_COL_NAME,
       CREATE_COL_SCHEMA_INDEX_NAME,
       CREATE_COL_SCHEMA_NAME,
+      CREATE_COL_SCHEMA_INDEX_NAME_SINGLE
     ]) {
       await milvusClient.dropCollection({ collection_name: collection_name });
     }
@@ -150,6 +152,41 @@ describe(`High level API testing`, () => {
     // test collection load state
     const load = await milvusClient.getLoadState({
       collection_name: CREATE_COL_SCHEMA_INDEX_NAME,
+    });
+    expect(load.state).toEqual(LoadState.LoadStateLoaded);
+  });
+
+  it(`Create collection with schema and single index_params should be successful`, async () => {
+    const create = await milvusClient.createCollection({
+      collection_name: CREATE_COL_SCHEMA_INDEX_NAME_SINGLE,
+      schema: schema,
+      index_params: index_params[0],
+    });
+
+    const des = await milvusClient.describeCollection({
+      collection_name: CREATE_COL_SCHEMA_INDEX_NAME_SINGLE,
+    });
+    expect(create.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // test dim is correct
+    const vectorField = des.schema.fields.find(
+      v =>
+        v.dataType === DataType.BinaryVector ||
+        v.dataType === DataType.FloatVector
+    );
+    expect(
+      Number(vectorField?.type_params.find(item => item.key === 'dim')?.value)
+    ).toEqual(schema[0].dim);
+
+    // test index
+    const indexes = await milvusClient.describeIndex({
+      collection_name: CREATE_COL_SCHEMA_INDEX_NAME_SINGLE,
+    });
+    expect(indexes.index_descriptions.length).toEqual(1);
+
+    // test collection load state
+    const load = await milvusClient.getLoadState({
+      collection_name: CREATE_COL_SCHEMA_INDEX_NAME_SINGLE,
     });
     expect(load.state).toEqual(LoadState.LoadStateLoaded);
   });

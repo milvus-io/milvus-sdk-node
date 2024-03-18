@@ -15,6 +15,11 @@ import {
 } from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
+const longClient = new MilvusClient({
+  address: IP,
+  loaderOptions: { longs: Function },
+});
+
 const COLLECTION_NAME = GENERATE_NAME();
 const BINARY_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
@@ -42,6 +47,7 @@ describe(`Insert API`, () => {
     // create db and use db
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
+    await longClient.use(dbParam);
     // create collection autoid = false and float_vector
     await milvusClient.createCollection(COLLECTION_NAME_PARAMS);
     // create index before load
@@ -307,10 +313,25 @@ describe(`Insert API`, () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       expr: 'id > 0',
-      output_fields: ['json', 'id', 'varChar_array'],
+      output_fields: ['json', 'id', 'varChar_array', 'int64'],
     });
     // console.log('query', query.data);
+    const int64Data = query.data.map(d => d.int64);
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const queryInt64 = await longClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'id > 0',
+      output_fields: ['json', 'id', 'varChar_array', 'int64'],
+    });
+
+    const int64Data2 = queryInt64.data.map(d => d.int64);
+    // console.log('int64Data', int64Data);
+    // console.log('int64Data2', int64Data2);
+    int64Data.forEach((item, i) => {
+      expect(BigInt(item)).toEqual(BigInt(int64Data2[i]));
+      expect(item).toEqual(int64Data2[i].toString());
+    });
 
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,

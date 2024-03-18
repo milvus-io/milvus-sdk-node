@@ -1,4 +1,9 @@
-import { MilvusClient, ErrorCode, ERROR_REASONS } from '../../milvus';
+import {
+  MilvusClient,
+  ErrorCode,
+  ERROR_REASONS,
+  LoadState,
+} from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -7,7 +12,7 @@ import {
 } from '../tools';
 import { timeoutTest } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 const PARTITION_NAME = GENERATE_NAME('partition');
 const dbParam = {
@@ -45,7 +50,12 @@ describe(`Partition API`, () => {
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
     });
+    const createNewPartition = await milvusClient.createPartition({
+      collection_name: COLLECTION_NAME,
+      partition_name: 'new',
+    });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(createNewPartition.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Has Partition`, async () => {
@@ -73,8 +83,8 @@ describe(`Partition API`, () => {
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(res.partition_names).toEqual(['_default', PARTITION_NAME]);
-    expect(res.partitionIDs.length).toEqual(2);
+    expect(res.partition_names).toEqual(['_default', PARTITION_NAME, 'new']);
+    expect(res.partitionIDs.length).toEqual(3);
 
     const list = await milvusClient.listPartitions({
       collection_name: COLLECTION_NAME,
@@ -110,6 +120,44 @@ describe(`Partition API`, () => {
     expect(alias.data.row_count).toEqual(res.data.row_count);
   });
 
+  it(`load partition should success`, async () => {
+    const load = await milvusClient.loadPartitionsSync({
+      collection_name: COLLECTION_NAME,
+      partition_names: [PARTITION_NAME],
+    });
+
+    const loadstate = await milvusClient.getLoadState({
+      collection_name: COLLECTION_NAME,
+      partition_names: [PARTITION_NAME],
+    });
+
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(loadstate.state).toEqual(LoadState.LoadStateLoaded);
+  });
+
+  it(`create new partition should success`, async () => {
+    const newLoadState = await milvusClient.getLoadState({
+      collection_name: COLLECTION_NAME,
+      partition_names: ['new'],
+    });
+
+    expect(newLoadState.state).toEqual(LoadState.LoadStateNotLoad);
+  });
+
+  it(`release partition should success`, async () => {
+    const res = await milvusClient.releasePartitions({
+      collection_name: COLLECTION_NAME,
+      partition_names: [PARTITION_NAME],
+    });
+
+    const loadstate = await milvusClient.getLoadState({
+      collection_name: COLLECTION_NAME,
+    });
+
+    expect(loadstate.state).toEqual(LoadState.LoadStateNotLoad);
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`Drop partition should throw COLLECTION_PARTITION_NAME_ARE_REQUIRED`, async () => {
     try {
       await milvusClient.dropPartition({
@@ -123,11 +171,11 @@ describe(`Partition API`, () => {
   });
 
   it(`Drop partition should success`, async () => {
-    const res = await milvusClient.dropPartition({
+    const drop = await milvusClient.dropPartition({
       collection_name: COLLECTION_NAME,
       partition_name: PARTITION_NAME,
     });
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Check droped partition`, async () => {
