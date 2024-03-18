@@ -181,7 +181,7 @@ export const checkCreateCollectionCompatibility = (
 
   if (hasDynamicSchemaEnabled) {
     throw new Error(
-      `Your milvus server doesn't support dynmaic schmea, please upgrade your server.`
+      `Your milvus server doesn't support dynamic schema, please upgrade your server.`
     );
   }
 
@@ -212,5 +212,9 @@ export const checkCreateCollectionCompatibility = (
  * @returns {Boolean} True if the data type is a vector type, false otherwise.
  */
 export const isVectorType = (type: DataType) => {
-  return type === DataType.BinaryVector || type === DataType.FloatVector;
+  return (
+    type === DataType.BinaryVector ||
+    type === DataType.FloatVector ||
+    type === DataType.SparseFloatVector
+  );
 };

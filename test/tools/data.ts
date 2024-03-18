@@ -16,6 +16,7 @@ interface DataGenerator {
     max_capacity?: number;
     is_partition_key?: boolean;
     index?: number;
+    nonZeroCount?: number;
   }): FieldData;
 }
 
@@ -148,6 +149,30 @@ export const genInt64: DataGenerator = () => {
   return Long.fromBits(low, high, true); // true for unsigned
 };
 
+// generate randone sparse vector
+export const genSparseVector: DataGenerator = params => {
+  // create dim between 4 and 64
+  const dim = params!.dim || Math.floor(Math.random() * 60) + 4;
+  const { nonZeroCount = Math.floor(dim * 0.3) } = params!;
+  const vector: any = [];
+
+  const nonZeroIndices = new Set();
+  while (nonZeroIndices.size < nonZeroCount!) {
+    nonZeroIndices.add(Math.floor(Math.random() * dim!));
+  }
+
+  nonZeroIndices.forEach((index: any) => {
+    vector[index] = Math.random();
+  });
+
+  // Fill the rest of the vector with 0s until its length is `dim`
+  while (vector.length < dim) {
+    vector.push(0);
+  }
+
+  return vector;
+};
+
 export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.None]: genNone,
   [DataType.Bool]: genBool,
@@ -162,6 +187,9 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.JSON]: genJSON,
   [DataType.BinaryVector]: genBinaryVector,
   [DataType.FloatVector]: genFloatVector,
+  [DataType.Float16Vector]: genFloatVector, // TODO
+  [DataType.BFloat16Vector]: genFloatVector, // TODO
+  [DataType.SparseFloatVector]: genSparseVector,
 };
 
 /**
