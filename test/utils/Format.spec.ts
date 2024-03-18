@@ -24,6 +24,7 @@ import {
   buildDynamicRow,
   getAuthString,
   buildFieldData,
+  formatSearchResult,
   Field,
 } from '../../milvus';
 
@@ -367,6 +368,7 @@ describe('utils/format', () => {
             is_primary_key: false,
             description: 'vector field',
             data_type: 'FloatVector',
+            dataType: 101,
             autoID: false,
             state: 'created',
           },
@@ -378,6 +380,7 @@ describe('utils/format', () => {
             is_primary_key: true,
             description: '',
             data_type: 'Int64',
+            dataType: 5,
             autoID: true,
             state: 'created',
           },
@@ -534,5 +537,53 @@ describe('utils/format', () => {
     const row = { name: 'John', age: 25 };
     const field = { type: 'Int', name: 'age' };
     expect(buildFieldData(row, field as Field)).toEqual(25);
+  });
+
+  it('should format search results correctly', () => {
+    const searchPromise: any = {
+      results: {
+        fields_data: [
+          {
+            type: 'Int64',
+            field_name: 'id',
+            field_id: '101',
+            is_dynamic: false,
+            scalars: {
+              long_data: { data: ['98286', '40057', '5878', '96232'] },
+              data: 'long_data',
+            },
+            field: 'scalars',
+          },
+        ],
+        scores: [
+          14.632697105407715, 15.0767822265625, 15.287022590637207,
+          15.357033729553223,
+        ],
+        topks: ['4'],
+        output_fields: ['id'],
+        num_queries: '1',
+        top_k: '4',
+        ids: {
+          int_id: { data: ['98286', '40057', '5878', '96232'] },
+          id_field: 'int_id',
+        },
+        group_by_field_value: null,
+      },
+    };
+
+    const options = { round_decimal: 2 };
+
+    const expectedResults = [
+      [
+        { score: 14.63, id: '98286' },
+        { score: 15.07, id: '40057' },
+        { score: 15.28, id: '5878' },
+        { score: 15.35, id: '96232' },
+      ],
+    ];
+
+    const results = formatSearchResult(searchPromise, options);
+
+    expect(results).toEqual(expectedResults);
   });
 });

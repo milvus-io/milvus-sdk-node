@@ -24,8 +24,8 @@ describe(`User Api`, () => {
     await authClient.createCollection(
       genCollectionParams({
         collectionName: COLLECTION_NAME,
-        dim: 4,
-        vectorType: DataType.FloatVector,
+        dim: [4],
+        vectorType: [DataType.FloatVector],
         autoID: false,
       })
     );

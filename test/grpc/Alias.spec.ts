@@ -8,7 +8,7 @@ const COLLECTION_ALIAS = GENERATE_NAME('alias');
 describe(`Alias API`, () => {
   beforeAll(async () => {
     await milvusClient.createCollection(
-      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: [8] })
     );
   });
 

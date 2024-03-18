@@ -388,3 +388,8 @@ export enum ShowCollectionsType {
   All,
   Loaded,
 }
+
+export enum RANKER_TYPE {
+  RRF = 'rrf',
+  WEIGHTED = 'weighted',
+}

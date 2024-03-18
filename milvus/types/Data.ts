@@ -10,12 +10,13 @@ import {
   ConsistencyLevelEnum,
   collectionNameReq,
   resStatusResponse,
+  RANKER_TYPE,
 } from '../';
 
-// all types supported by milvus
+// all value types supported by milvus
 export type FloatVectors = number[];
 export type BinaryVectors = number[];
-export type Vectors = FloatVectors | BinaryVectors;
+export type VectorTypes = FloatVectors | BinaryVectors;
 export type Bool = boolean;
 export type Int8 = number;
 export type Int16 = number;
@@ -48,7 +49,7 @@ export type FieldData =
   | VarChar
   | JSON
   | Array
-  | Vectors
+  | VectorTypes
   | FloatVectors
   | BinaryVectors;
 
@@ -66,34 +67,34 @@ export interface Field {
 }
 
 export interface FlushReq extends GrpcTimeOut {
-  collection_names: string[];
+  collection_names: string[]; // collection names
 }
 
 export interface CountReq extends collectionNameReq {
-  expr?: string;
+  expr?: string; // filter expression
 }
 
 export interface InsertReq extends collectionNameReq {
-  partition_name?: string;
-  fields_data?: RowData[];
-  data?: RowData[];
+  partition_name?: string; // partition name
+  data?: RowData[]; // data to insert
+  fields_data?: RowData[]; // alias for data
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
 }
 
 export interface DeleteEntitiesReq extends collectionNameReq {
-  expr?: string;
-  filter?: string;
-  partition_name?: string;
+  filter?: string; // filter expression
+  expr?: string; // alias for filter
+  partition_name?: string; // partition name
 }
 
 export interface DeleteByIdsReq extends collectionNameReq {
-  ids: string[] | number[];
-  partition_name?: string;
+  ids: string[] | number[]; // primary key values
+  partition_name?: string; // partition name
 }
 
 export interface DeleteByFilterReq extends collectionNameReq {
-  filter: string;
-  partition_name?: string;
+  filter: string; // filter expression
+  partition_name?: string; // partition name
 }
 
 export type DeleteReq = DeleteByIdsReq | DeleteByFilterReq;
@@ -105,24 +106,21 @@ export interface CalcDistanceReq extends GrpcTimeOut {
 }
 
 export interface GetFlushStateReq extends GrpcTimeOut {
-  segmentIDs: number[];
+  segmentIDs: number[]; // segment id array
 }
 
 export interface LoadBalanceReq extends GrpcTimeOut {
-  // The source query node id to balance.
-  src_nodeID: number;
-  // The destination query node ids to balance.
-  dst_nodeIDs?: number[];
-  // Sealed segment ids to balance.
-  sealed_segmentIDs?: number[];
+  src_nodeID: number; // The source query node id to balance.
+  dst_nodeIDs?: number[]; // The destination query node ids to balance.
+  sealed_segmentIDs?: number[]; // Sealed segment ids to balance.
 }
 
 export interface GetQuerySegmentInfoReq extends GrpcTimeOut {
-  collectionName: string;
+  collectionName: string; // its collectioName, this is not colleciton_name :<
 }
 
 export interface GePersistentSegmentInfoReq extends GrpcTimeOut {
-  collectionName: string;
+  collectionName: string; // its collectioName, this is not colleciton_name:<
 }
 
 export interface ImportReq extends collectionNameReq {
@@ -233,46 +231,78 @@ export interface GetMetricsRequest extends GrpcTimeOut {
 
 export interface SearchParam {
   anns_field: string; // your vector field name
-  topk: string;
-  metric_type: string;
-  params: string;
-  round_decimal?: number;
-  ignore_growing?: boolean;
-  group_by_field?: string;
+  topk: string | number; // how many results you want
+  metric_type: string; // distance metric type
+  params: string; // extra search parameters
+  offset?: number; // skip how many results
+  round_decimal?: number; // round decimal
+  ignore_growing?: boolean; // ignore growing
+  group_by_field?: string; // group by field
 }
 
-export interface SearchSimpleReq extends collectionNameReq {
-  vector?: number[];
-  vectors?: number[][];
-  data?: number[][] | number[];
-  output_fields?: string[];
-  limit?: number;
-  topk?: number; // alias
-  offset?: number;
-  filter?: string;
-  expr?: string; // alias
-  partition_names?: string[];
-  params?: keyValueObj;
-  metric_type?: string;
-  consistency_level?: ConsistencyLevelEnum;
-  ignore_growing?: boolean;
-  group_by_field?: string;
-}
-
+// old search api parameter type
 export interface SearchReq extends collectionNameReq {
-  partition_names?: string[];
-  expr?: string;
-  // dsl_type: DslType;
-  search_params: SearchParam;
-  vectors: number[][];
-  output_fields?: string[];
-  travel_timestamp?: string;
-  vector_type: DataType.BinaryVector | DataType.FloatVector;
-  nq?: number;
-  consistency_level?: ConsistencyLevelEnum;
-  group_by_field?: string;
+  anns_field?: string; // your vector field name
+  partition_names?: string[]; // partition names
+  expr?: string; // filter expression
+  search_params: SearchParam; // search parameters
+  vectors: number[][]; // vectors to search
+  output_fields?: string[]; // fields to return
+  travel_timestamp?: string; // time travel
+  vector_type: DataType.BinaryVector | DataType.FloatVector; // vector field type
+  nq?: number; // number of query vectors
+  consistency_level?: ConsistencyLevelEnum; // consistency level
 }
 
+// simplified search api parameter type
+export interface SearchSimpleReq extends collectionNameReq {
+  partition_names?: string[]; // partition names
+  anns_field?: string; // your vector field name
+  data?: number[][] | number[]; // vector to search
+  vector?: number[]; // alias for data
+  vectors?: number[][]; // alias for data
+  output_fields?: string[];
+  limit?: number; // how many results you want
+  topk?: number; // limit alias
+  offset?: number; // skip how many results
+  filter?: string; // filter expression
+  expr?: string; // alias for filter
+  params?: keyValueObj; // extra search parameters
+  metric_type?: string; // distance metric type
+  consistency_level?: ConsistencyLevelEnum; // consistency level
+  ignore_growing?: boolean; // ignore growing
+  group_by_field?: string; // group by field
+  round_decimal?: number; // round decimal
+}
+
+export type HybridSearchSingleReq = Pick<
+  SearchParam,
+  'anns_field' | 'ignore_growing' | 'group_by_field'
+> & {
+  data: number[]; // vector to search
+  expr?: string; // filter expression
+  params?: keyValueObj; // extra search parameters
+};
+
+// rerank strategy and parameters
+export type RerankerObj = {
+  strategy: RANKER_TYPE | string; // rerank strategy
+  params: keyValueObj; // rerank parameters
+};
+
+// hybrid search api parameter type
+export type HybridSearchReq = Omit<
+  SearchSimpleReq,
+  'data' | 'vector' | 'vectors' | 'params' | 'anns_field'
+> & {
+  // search requests
+  data: HybridSearchSingleReq[];
+
+  // reranker
+  rerank?: RerankerObj;
+};
+
+// search api response type
 export interface SearchRes extends resStatusResponse {
   results: {
     top_k: number;
@@ -312,23 +342,23 @@ export interface SearchRes extends resStatusResponse {
 }
 
 export interface QueryReq extends collectionNameReq {
-  output_fields?: string[];
-  partition_names?: string[];
-  ids?: string[] | number[];
-  expr?: string;
-  filter?: string;
-  offset?: number;
-  limit?: number;
-  consistency_level?: ConsistencyLevelEnum;
+  output_fields?: string[]; // fields to return
+  partition_names?: string[]; // partition names
+  ids?: string[] | number[]; // primary key values
+  expr?: string; // filter expression
+  filter?: string; // alias for expr
+  offset?: number; // skip how many results
+  limit?: number; // how many results you want
+  consistency_level?: ConsistencyLevelEnum; // consistency level
 }
 
 export interface GetReq extends collectionNameReq {
-  ids: string[] | number[];
-  output_fields?: string[];
-  partition_names?: string[];
-  offset?: number;
-  limit?: number;
-  consistency_level?: ConsistencyLevelEnum;
+  ids: string[] | number[]; // primary key values
+  output_fields?: string[]; // fields to return
+  partition_names?: string[]; // partition names
+  offset?: number; // skip how many results
+  limit?: number; // how many results you want
+  consistency_level?: ConsistencyLevelEnum; // consistency level
 }
 
 export interface QueryRes extends resStatusResponse {
@@ -360,19 +390,19 @@ export interface FlushResult extends resStatusResponse {
 }
 
 export interface ListIndexedSegmentReq extends collectionNameReq {
-  index_name: string;
+  index_name: string; // index name
 }
 
 export interface ListIndexedSegmentResponse extends resStatusResponse {
-  segmentIDs: number[];
+  segmentIDs: number[]; // indexed segment id array
 }
 
 export interface DescribeSegmentIndexDataReq extends collectionNameReq {
-  index_name: string;
-  segmentsIDs: number[];
+  index_name: string; // index name
+  segmentsIDs: number[]; // segment id array
 }
 
 export interface DescribeSegmentIndexDataResponse extends resStatusResponse {
-  index_params: any;
-  index_data: any;
+  index_params: any; // index parameters
+  index_data: any; // index data
 }

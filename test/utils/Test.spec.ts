@@ -5,32 +5,43 @@ describe(`utils/test`, () => {
   it('should generate data for schema created by genCollectionParams', () => {
     const param = genCollectionParams({
       collectionName: 't',
-      dim: 10,
+      dim: [10],
     });
     const data = generateInsertData(param.fields, 10);
     expect(data.length).toBe(10);
     expect(data[0].vector.length).toBe(10);
   });
 
+  it('should generate multiple vector types for schema created by genCollectionParams', () => {
+    const param = genCollectionParams({
+      collectionName: 't',
+      vectorType: [DataType.FloatVector, DataType.FloatVector],
+      dim: [10, 16],
+    });
+    expect(param.fields);
+    const floatVectorFields = param.fields.filter(
+      (field: any) => field.data_type === DataType.FloatVector
+    );
+    expect(floatVectorFields.length).toBe(2);
+    expect(floatVectorFields.some((field: any) => field.dim === 10)).toBe(true);
+    expect(floatVectorFields.some((field: any) => field.dim === 16)).toBe(true);
+  });
+
   it('should generate data for a collection with a vector field of type DataType.FloatVector', () => {
-    const fields = [
-      {
-        name: 'vector',
-        description: 'vector field',
-        data_type: DataType.FloatVector,
-        dim: 10,
-      },
-      {
-        name: 'id',
-        description: '',
-        data_type: DataType.Int64,
-        is_primary_key: true,
-        autoID: true,
-      },
-    ];
-    const data = generateInsertData(fields, 10);
+    const param = genCollectionParams({
+      collectionName: 't',
+      vectorType: [
+        DataType.FloatVector,
+        DataType.FloatVector,
+        DataType.BinaryVector,
+      ],
+      dim: [10, 10, 16],
+    });
+    const data = generateInsertData(param.fields, 10);
     expect(data.length).toBe(10);
     expect(data[0].vector.length).toBe(10);
+    expect(data[0].vector1.length).toBe(10);
+    expect(data[0].vector2.length).toBe(2);
   });
 
   it('should generate data for a collection with a vector field of type DataType.BinaryVector', () => {
