@@ -64,7 +64,11 @@ import { Collection } from './Collection';
 
 export class Data extends Collection {
   // vectorTypes
-  vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
+  vectorTypes = [
+    DataType.BinaryVector,
+    DataType.FloatVector,
+    DataType.SparseFloatVector,
+  ];
 
   /**
    * Upsert data into Milvus, view _insert for detail

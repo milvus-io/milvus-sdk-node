@@ -151,7 +151,7 @@ export const genInt64: DataGenerator = () => {
 // generate random sparse vector
 // for example {2: 0.5, 3: 0.3, 4: 0.2}
 export const genSparseVector: DataGenerator = params => {
-  const { dim } = params!;
+  const { dim = 24 } = params!;
   const nonZeroCount = Math.floor(Math.random() * dim!) || 4;
 
   const vector: { [key: number]: number } = {};
