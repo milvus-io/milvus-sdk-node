@@ -52,13 +52,13 @@ describe('promisify', () => {
       { '0': 1, '1': 2, '2': 3 },
       { '0': 1, '1': 2, '2': 3, '3': 4 },
       { '0': 1, '1': 2 },
-    ] as SparseFloatVectors;
+    ] as SparseFloatVectors[];
     const result = getSparseDim(data);
     expect(result).toBe(4);
   });
 
   it('should return 0 for an empty array', () => {
-    const data = [] as SparseFloatVectors;
+    const data = [] as SparseFloatVectors[];
     const result = getSparseDim(data);
     expect(result).toBe(0);
   });
@@ -68,7 +68,7 @@ describe('promisify', () => {
       { '0': 1, '1': 2, '2': 3, '3': 4, '4': 5 },
       { '0': 1, '1': 2 },
       { '0': 1, '1': 2, '2': 3, '3': 4 },
-    ] as SparseFloatVectors;
+    ] as SparseFloatVectors[];
     const result = getSparseDim(data);
     expect(result).toBe(5);
   });

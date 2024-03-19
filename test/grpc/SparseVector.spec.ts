@@ -12,7 +12,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
@@ -60,7 +60,7 @@ describe(`Sparse vectors API testing`, () => {
       data,
     });
 
-    console.log('data to insert', data);
+    // console.log('data to insert', data);
 
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(insert.succ_index.length).toEqual(data.length);
@@ -107,5 +107,17 @@ describe(`Sparse vectors API testing`, () => {
     originValues.forEach((value, index) => {
       expect(value).toBeCloseTo(outputValues[index]);
     });
+  });
+
+  it(`search with sparse vector should be successful`, async () => {
+    const search = await milvusClient.search({
+      vector: data[0].vector,
+      collection_name: COLLECTION_NAME,
+      output_fields: ['id', 'vector'],
+      limit: 5,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toBeGreaterThan(0);
   });
 });

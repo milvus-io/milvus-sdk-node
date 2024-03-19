@@ -23,8 +23,6 @@ import {
   HybridSearchReq,
   DEFAULT_TOPK,
   DslType,
-  parseFloatVectorToBytes,
-  parseBinaryVectorToBytes,
   SearchRes,
   DEFAULT_DYNAMIC_FIELD,
   ConsistencyLevelEnum,
@@ -32,6 +30,7 @@ import {
   RANKER_TYPE,
   RerankerObj,
   parseBufferToSparseRow,
+  buildPlaceholderGroupBytes,
 } from '../';
 
 /**
@@ -521,45 +520,6 @@ export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
 };
 
 /**
- * This function builds a placeholder group in bytes format for Milvus.
- *
- * @param {Root} milvusProto - The root object of the Milvus protocol.
- * @param {VectorTypes[]} searchVectors - An array of search vectors.
- * @param {DataType} vectorDataType - The data type of the vectors.
- *
- * @returns {Uint8Array} The placeholder group in bytes format.
- */
-export const buildPlaceholderGroupBytes = (
-  milvusProto: Root,
-  vectors: VectorTypes[],
-  vectorDataType: DataType
-) => {
-  // bytes builder
-  const bytesBuilder = new Map<DataType, (input: VectorTypes) => Uint8Array>([
-    [DataType.FloatVector, parseFloatVectorToBytes],
-    [DataType.BinaryVector, parseBinaryVectorToBytes],
-  ]);
-  // create placeholder_group
-  const PlaceholderGroup = milvusProto.lookupType(
-    'milvus.proto.common.PlaceholderGroup'
-  );
-  // tag $0 is hard code in milvus, when dsltype is expr
-  const placeholderGroupBytes = PlaceholderGroup.encode(
-    PlaceholderGroup.create({
-      placeholders: [
-        {
-          tag: '$0',
-          type: vectorDataType,
-          values: vectors.map(v => bytesBuilder.get(vectorDataType)!(v)),
-        },
-      ],
-    })
-  ).finish();
-
-  return placeholderGroupBytes;
-};
-
-/**
  * Builds search parameters based on the provided data.
  * @param data - The data object containing search parameters.
  * @returns The search parameters in key-value format.
@@ -677,9 +637,6 @@ export const buildSearchRequest = (
     searchHybridReq.data[0].anns_field
   );
 
-  // search vectors storage
-  const searchVectors: VectorTypes[][] = [];
-
   // output fields(reference fields)
   const default_output_fields: string[] = [];
 
@@ -709,7 +666,7 @@ export const buildSearchRequest = (
       }
 
       // get search vectors
-      let currentSearchVector = isHybridSearch
+      let searchingVector: VectorTypes | VectorTypes[] = isHybridSearch
         ? req.data!
         : searchReq.vectors ||
           searchSimpleReq.vectors ||
@@ -717,23 +674,21 @@ export const buildSearchRequest = (
           searchSimpleReq.data;
 
       // make sure the vector format
-      if (!Array.isArray(currentSearchVector[0])) {
-        currentSearchVector = [currentSearchVector as unknown] as VectorTypes[];
+      if (!Array.isArray(searchingVector[0])) {
+        searchingVector = [searchingVector as unknown] as VectorTypes[];
       }
-      // store search vectors
-      searchVectors.push(currentSearchVector as VectorTypes[]);
 
       // create search request
       requests.push({
         collection_name: data.collection_name,
         partition_names: data.partition_names || [],
         output_fields: data.output_fields || default_output_fields,
-        nq: searchReq.nq || currentSearchVector.length,
+        nq: searchReq.nq || searchingVector.length,
         dsl: searchReq.expr || searchSimpleReq.filter || '',
         dsl_type: DslType.BoolExprV1,
         placeholder_group: buildPlaceholderGroupBytes(
           milvusProto,
-          currentSearchVector as VectorTypes[],
+          searchingVector as VectorTypes[],
           field.dataType!
         ),
         search_params: parseToKeyValue(

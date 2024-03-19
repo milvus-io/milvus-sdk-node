@@ -1,14 +1,14 @@
 import {
   parseBufferToSparseRow,
   parseSparseRowsToBytes,
-  SparseFloatVector,
+  SparseFloatVectors,
 } from '../../milvus';
 
 describe('Sparse rows <-> Bytes conversion', () => {
   test('Conversion is reversible', () => {
     const inputSparseRows = [
       { '12': 0.875, '17': 0.789, '19': 0.934 },
-    ] as SparseFloatVector[];
+    ] as SparseFloatVectors[];
 
     const bytesArray = parseSparseRowsToBytes(inputSparseRows);
 
