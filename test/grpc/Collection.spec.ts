@@ -345,6 +345,38 @@ describe(`Collection API`, () => {
     expect(res.schema.fields[1].name).toEqual('id');
   });
 
+  it(`alter collection success`, async () => {
+    const key = 'collection.ttl.seconds';
+    const value = 18000;
+
+    const alter = await milvusClient.alterCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+      properties: { [key]: value },
+    });
+    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const key2 = 'mmap.enabled';
+    const value2 = true;
+
+    const alter2 = await milvusClient.alterCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+      properties: { [key2]: value2 },
+    });
+
+    expect(alter2.error_code).toEqual(ErrorCode.SUCCESS);
+    const describe = await milvusClient.describeCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+
+    expect(Number(formatKeyValueData(describe.properties, [key])[key])).toEqual(
+      value
+    );
+
+    expect(
+      Boolean(formatKeyValueData(describe.properties, [key2])[key2])
+    ).toEqual(value2);
+  });
+
   it(`Load Collection Sync throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
       await milvusClient.loadCollectionSync({} as any);
@@ -504,37 +536,6 @@ describe(`Collection API`, () => {
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
-  });
-
-  it(`alter collection success`, async () => {
-    const key = 'collection.ttl.seconds';
-    const value = 18000;
-
-    const alter = await milvusClient.alterCollection({
-      collection_name: LOAD_COLLECTION_NAME,
-      properties: { [key]: value },
-    });
-    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
-
-    const key2 = 'mmap.enabled';
-    const value2 = true;
-
-    const alter2 = await milvusClient.alterCollection({
-      collection_name: LOAD_COLLECTION_NAME,
-      properties: { [key2]: value2 },
-    });
-    expect(alter2.error_code).toEqual(ErrorCode.SUCCESS);
-    const describe = await milvusClient.describeCollection({
-      collection_name: LOAD_COLLECTION_NAME,
-    });
-
-    expect(Number(formatKeyValueData(describe.properties, [key])[key])).toEqual(
-      value
-    );
-
-    expect(
-      Boolean(formatKeyValueData(describe.properties, [key2])[key2])
-    ).toEqual(value2);
   });
 
   it(`Create alias success`, async () => {
