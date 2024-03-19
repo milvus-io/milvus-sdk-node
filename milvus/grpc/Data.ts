@@ -256,6 +256,10 @@ export class Data extends Collection {
 
     // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
+    // delete data
+    try {
+      delete params.data;
+    } catch (e) {}
     // execute Insert
     const promise = await promisify(
       this.channelPool,
