@@ -12,7 +12,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
@@ -22,7 +22,7 @@ const dbParam = {
 const p = {
   collectionName: COLLECTION_NAME,
   vectorType: [DataType.SparseFloatVector],
-  dim: [8],
+  dim: [24],
 };
 const collectionParams = genCollectionParams(p);
 
@@ -59,6 +59,8 @@ describe(`Sparse vectors API testing`, () => {
       collection_name: COLLECTION_NAME,
       data,
     });
+
+    console.log(data, insert, collectionParams.fields);
 
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(insert.succ_index.length).toEqual(data.length);

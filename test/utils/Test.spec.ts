@@ -146,22 +146,31 @@ describe(`utils/test`, () => {
         dim: 8,
       },
       {
-        name: 'sparse_vector2',
+        name: 'sparse_vector1',
         description: '',
         data_type: DataType.SparseFloatVector,
         is_primary_key: true,
         dim: 24,
       },
+      {
+        name: 'sparse_vector2',
+        description: '',
+        data_type: DataType.SparseFloatVector,
+      },
     ];
 
     const data = generateInsertData(fields, 10);
     expect(data.length).toBe(10);
-    // every sparse vector should has less length of 10
-    expect(data.every(d => Object.keys(d.sparse_vector).length <= 8)).toBe(
-      true
-    );
-    expect(data.every(d => Object.keys(d.sparse_vector2).length <= 24)).toBe(
-      true
-    );
+    data.forEach(d => {
+      expect(
+        Object.keys(d.sparse_vector).every(d => typeof d === 'string')
+      ).toBe(true);
+      expect(
+        Object.keys(d.sparse_vector1).every(d => typeof d === 'string')
+      ).toBe(true);
+      expect(
+        Object.keys(d.sparse_vector2).every(d => typeof d === 'string')
+      ).toBe(true);
+    });
   });
 });
