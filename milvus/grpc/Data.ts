@@ -213,44 +213,57 @@ export class Data extends Collection {
       const elementType = DataTypeMap[field.elementType!];
       const elementTypeKey = getDataKey(elementType);
 
+      // build key value
+      let keyValue;
+      switch (type) {
+        case DataType.FloatVector:
+        case DataType.BinaryVector:
+          keyValue = {
+            dim: field.dim,
+            [dataKey]: {
+              data: field.data,
+            },
+          };
+          break;
+        case DataType.SparseFloatVector:
+          keyValue = {
+            dim: field.dim,
+            [dataKey]: {
+              dim: field.dim,
+              contents: Buffer.concat(field.data as any),
+            },
+          };
+          break;
+
+        case DataType.Array:
+          keyValue = {
+            [dataKey]: {
+              data: field.data.map(d => {
+                return {
+                  [elementTypeKey]: {
+                    type: elementType,
+                    data: d,
+                  },
+                };
+              }),
+              element_type: elementType,
+            },
+          };
+          break;
+        default:
+          keyValue = {
+            [dataKey]: {
+              data: field.data,
+            },
+          };
+          break;
+      }
+
       return {
         type,
         field_name: field.name,
         is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
-        [key]:
-          type === DataType.FloatVector
-            ? {
-                dim: field.dim,
-                [dataKey]: {
-                  data: field.data,
-                },
-              }
-            : type === DataType.BinaryVector
-            ? {
-                dim: field.dim,
-                [dataKey]: parseBinaryVectorToBytes(
-                  field.data as BinaryVectors
-                ),
-              }
-            : type === DataType.Array
-            ? {
-                [dataKey]: {
-                  data: field.data.map(d => {
-                    return {
-                      [elementTypeKey]: {
-                        type: elementType,
-                        data: d,
-                      },
-                    };
-                  }),
-                  element_type: elementType,
-                },
-              }
-            : {
-                [dataKey]: {
-                  data: field.data,
-                },
-              },
+        [key]: keyValue,
       };
     });
 
