@@ -31,6 +31,7 @@ import {
   isVectorType,
   RANKER_TYPE,
   RerankerObj,
+  parseBufferToSparseRow,
 } from '../';
 
 /**
@@ -400,42 +401,59 @@ export const buildFieldDataMap = (fields_data: any[]) => {
 
     // parse vector data
     if (item.field === 'vectors') {
-      const key = item.vectors!.data;
-      const vectorValue =
-        key === 'float_vector'
-          ? item.vectors![key]!.data
-          : item.vectors![key]!.toJSON().data;
+      const dataKey = item.vectors!.data;
 
-      // if binary vector , need use dim / 8 to split vector data
-      const dim =
-        item.vectors?.data === 'float_vector'
-          ? Number(item.vectors!.dim)
-          : Number(item.vectors!.dim) / 8;
-      field_data = [];
+      switch (dataKey) {
+        case 'float_vector':
+        case 'binary_vector':
+          const vectorValue =
+            dataKey === 'float_vector'
+              ? item.vectors![dataKey]!.data
+              : item.vectors![dataKey]!.toJSON().data;
 
-      // parse number[] to number[][] by dim
-      vectorValue.forEach((v: any, i: number) => {
-        const index = Math.floor(i / dim);
-        if (!field_data[index]) {
-          field_data[index] = [];
-        }
-        field_data[index].push(v);
-      });
+          // if binary vector , need use dim / 8 to split vector data
+          const dim =
+            item.vectors?.data === 'float_vector'
+              ? Number(item.vectors!.dim)
+              : Number(item.vectors!.dim) / 8;
+          field_data = [];
+
+          // parse number[] to number[][] by dim
+          vectorValue.forEach((v: any, i: number) => {
+            const index = Math.floor(i / dim);
+            if (!field_data[index]) {
+              field_data[index] = [];
+            }
+            field_data[index].push(v);
+          });
+          break;
+
+        case 'sparse_float_vector':
+          const sparseVectorValue = item.vectors![dataKey]!.contents;
+          field_data = [];
+
+          sparseVectorValue.forEach((buffer: any, i: number) => {
+            field_data[i] = parseBufferToSparseRow(buffer);
+          });
+          break;
+        default:
+          break;
+      }
     } else {
       // parse scalar data
-      const key = item.scalars!.data;
-      field_data = item.scalars![key]!.data;
+      const dataKey = item.scalars!.data;
+      field_data = item.scalars![dataKey]!.data;
 
       // we need to handle array element specifically here
-      if (key === 'array_data') {
+      if (dataKey === 'array_data') {
         field_data = field_data.map((f: any) => {
-          const key = f.data;
-          return key ? f[key].data : [];
+          const dataKey = f.data;
+          return dataKey ? f[dataKey].data : [];
         });
       }
 
       // decode json
-      switch (key) {
+      switch (dataKey) {
         case 'json_data':
           field_data.forEach((buffer: any, i: number) => {
             // console.log(JSON.parse(buffer.toString()));

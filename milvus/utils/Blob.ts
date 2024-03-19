@@ -1,4 +1,4 @@
-import { FloatVectors, BinaryVectors, SparseFloatVectors } from '../';
+import { FloatVectors, BinaryVectors, SparseFloatVector } from '../';
 
 export const parseFloatVectorToBytes = (array: FloatVectors) => {
   // create array buffer
@@ -14,8 +14,8 @@ export const parseBinaryVectorToBytes = (array: BinaryVectors) => {
   return Buffer.from(a.buffer);
 };
 
-export const parsesparseRowsToBytes = (
-  data: SparseFloatVectors
+export const parseSparseRowsToBytes = (
+  data: SparseFloatVector[]
 ): Uint8Array[] => {
   function sparseFloatRowToBytes(
     indices: number[],
@@ -51,6 +51,18 @@ export const parsesparseRowsToBytes = (
     const indices = Object.keys(row).map(Number);
     const values = Object.values(row);
     result.push(sparseFloatRowToBytes(indices, values));
+  }
+  return result;
+};
+
+export const parseBufferToSparseRow = (
+  bufferData: Buffer
+): SparseFloatVector => {
+  const result: SparseFloatVector = {};
+  for (let i = 0; i < bufferData.length; i += 8) {
+    const key: string = bufferData.readUInt32LE(i).toString();
+    const value: number = bufferData.readFloatLE(i + 4);
+    result[key] = value;
   }
   return result;
 };

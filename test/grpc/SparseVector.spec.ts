@@ -22,9 +22,10 @@ const dbParam = {
 const p = {
   collectionName: COLLECTION_NAME,
   vectorType: [DataType.SparseFloatVector],
-  dim: [24],
+  dim: [24], // useless
 };
 const collectionParams = genCollectionParams(p);
+const data = generateInsertData(collectionParams.fields, 10);
 
 describe(`Sparse vectors API testing`, () => {
   beforeAll(async () => {
@@ -54,17 +55,18 @@ describe(`Sparse vectors API testing`, () => {
   });
 
   it(`insert multiple vector data should be successful`, async () => {
-    const data = generateInsertData(collectionParams.fields, 10);
     const insert = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data,
     });
 
+    console.log('data to insert', data);
+
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(insert.succ_index.length).toEqual(data.length);
   });
 
-  it(`create multiple index should be successful`, async () => {
+  it(`create index should be successful`, async () => {
     const indexes = await milvusClient.createIndex([
       {
         collection_name: COLLECTION_NAME,
@@ -78,5 +80,32 @@ describe(`Sparse vectors API testing`, () => {
     ]);
 
     expect(indexes.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`load collection should be successful`, async () => {
+    const load = await milvusClient.loadCollection({
+      collection_name: COLLECTION_NAME,
+    });
+
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`query sparse vector should be successful`, async () => {
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      filter: 'id > 0',
+      output_fields: ['vector', 'id'],
+    });
+
+    const originKeys = Object.keys(data[0].vector);
+    const originValues = Object.values(data[0].vector);
+
+    const outputKeys: string[] = Object.keys(query.data[0].vector);
+    const outputValues: number[] = Object.values(query.data[0].vector);
+
+    expect(originKeys).toEqual(outputKeys);
+    originValues.forEach((value, index) => {
+      expect(value).toBeCloseTo(outputValues[index]);
+    });
   });
 });

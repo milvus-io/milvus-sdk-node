@@ -59,8 +59,8 @@ import {
   CountReq,
   CountResult,
   DEFAULT_COUNT_QUERY_STRING,
-  SparseFloatVectors,
-  parsesparseRowsToBytes,
+  SparseFloatVector,
+  parseSparseRowsToBytes,
   getSparseDim,
 } from '../';
 import { Collection } from './Collection';
@@ -234,13 +234,13 @@ export class Data extends Collection {
           };
           break;
         case DataType.SparseFloatVector:
-          const dim = getSparseDim(field.data as SparseFloatVectors);
+          const dim = getSparseDim(field.data as SparseFloatVector[]);
           keyValue = {
             dim,
             [dataKey]: {
               dim,
-              contents: parsesparseRowsToBytes(
-                field.data as SparseFloatVectors
+              contents: parseSparseRowsToBytes(
+                field.data as SparseFloatVector[]
               ),
             },
           };
