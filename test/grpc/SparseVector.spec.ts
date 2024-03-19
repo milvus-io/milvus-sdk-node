@@ -60,8 +60,6 @@ describe(`Sparse vectors API testing`, () => {
       data,
     });
 
-    console.log(data, insert, collectionParams.fields);
-
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(insert.succ_index.length).toEqual(data.length);
   });
@@ -72,7 +70,7 @@ describe(`Sparse vectors API testing`, () => {
         collection_name: COLLECTION_NAME,
         field_name: 'vector',
         metric_type: MetricType.IP,
-        index_type: IndexType.HNSW,
+        index_type: IndexType.SPARSE_WAND,
         params: {
           drop_ratio_build: 0.2,
         },

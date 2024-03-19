@@ -293,7 +293,7 @@ describe('utils/validate', () => {
     };
 
     expect(() => checkCreateCollectionCompatibility(data3)).toThrow(
-      `Your milvus server doesn't support dynmaic schmea, please upgrade your server.`
+      `Your milvus server doesn't support dynamic schema, please upgrade your server.`
     );
   });
 

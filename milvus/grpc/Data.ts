@@ -59,6 +59,9 @@ import {
   CountReq,
   CountResult,
   DEFAULT_COUNT_QUERY_STRING,
+  SparseFloatVectors,
+  parsesparseRowsToBytes,
+  getSparseDim,
 } from '../';
 import { Collection } from './Collection';
 
@@ -217,7 +220,6 @@ export class Data extends Collection {
       let keyValue;
       switch (type) {
         case DataType.FloatVector:
-        case DataType.BinaryVector:
           keyValue = {
             dim: field.dim,
             [dataKey]: {
@@ -225,12 +227,21 @@ export class Data extends Collection {
             },
           };
           break;
-        case DataType.SparseFloatVector:
+        case DataType.BinaryVector:
           keyValue = {
             dim: field.dim,
+            [dataKey]: parseBinaryVectorToBytes(field.data as BinaryVectors),
+          };
+          break;
+        case DataType.SparseFloatVector:
+          const dim = getSparseDim(field.data as SparseFloatVectors);
+          keyValue = {
+            dim,
             [dataKey]: {
-              dim: field.dim,
-              contents: Buffer.concat(field.data as any),
+              dim,
+              contents: parsesparseRowsToBytes(
+                field.data as SparseFloatVectors
+              ),
             },
           };
           break;
