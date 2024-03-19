@@ -49,11 +49,6 @@ export const parseSparseVectorToBytes = (
   const indices = Object.keys(data).map(Number);
   const values = Object.values(data);
 
-  if (indices.length !== values.length) {
-    throw new Error(
-      `Length of indices and values must be the same, got ${indices.length} and ${values.length}`
-    );
-  }
   const bytes = new Uint8Array(8 * indices.length);
   for (let i = 0; i < indices.length; i++) {
     const index = indices[i];
