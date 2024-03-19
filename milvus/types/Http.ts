@@ -6,7 +6,7 @@ export type Constructor<T = {}> = new (...args: any[]) => T;
 export type FetchOptions = {
   abortController: AbortController;
   timeout: number;
-}
+};
 
 type HttpClientConfigBase = {
   // database name
@@ -23,6 +23,8 @@ type HttpClientConfigBase = {
   timeout?: number;
   // altenative fetch api
   fetch?: Fetch;
+  // accept int64
+  acceptInt64?: boolean;
 };
 
 type HttpClientConfigAddress = HttpClientConfigBase & {

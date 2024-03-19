@@ -81,6 +81,10 @@ export class HttpBaseClient {
       Authorization: this.authorization,
       Accept: 'application/json',
       ContentType: 'application/json',
+      'Accept-Type-Allow-Int64':
+        typeof this.config.acceptInt64 !== 'undefined'
+          ? this.config.acceptInt64.toString()
+          : 'false',
     };
   }
 
