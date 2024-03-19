@@ -124,6 +124,8 @@ export enum IndexType {
   DISKANN = 'DISKANN',
   AUTOINDEX = 'AUTOINDEX',
   ANNOY = 'ANNOY',
+  SPARSE_INVERTED_INDEX = 'SPARSE_INVERTED_INDEX',
+  SPARSE_WAND = 'SPARSE_WAND',
   // 2.3
   GPU_FLAT = 'GPU_FLAT',
   GPU_IVF_FLAT = 'GPU_IVF_FLAT',
@@ -264,6 +266,9 @@ export enum DataType {
 
   BinaryVector = 100,
   FloatVector = 101,
+  Float16Vector = 102,
+  BFloat16Vector = 103,
+  SparseFloatVector = 104,
 }
 
 // data type map
@@ -282,6 +287,9 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   JSON: 23,
   BinaryVector: 100,
   FloatVector: 101,
+  Float16Vector: 102,
+  BFloat16Vector: 103,
+  SparseFloatVector: 104,
 };
 
 // RBAC: operate user role type

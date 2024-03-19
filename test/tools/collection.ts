@@ -54,12 +54,17 @@ export const genCollectionParams = (data: {
   } = data;
 
   const vectorFields = vectorType.map((type, i) => {
-    return {
+    const res: any = {
       name: GENERATE_VECTOR_NAME(i),
       description: `vector type: ${type}`,
       data_type: type,
-      dim: Number(dim[i]),
     };
+
+    if (type !== DataType.SparseFloatVector) {
+      res.dim = Number(dim[i]);
+    }
+
+    return res;
   });
 
   const params: any = {

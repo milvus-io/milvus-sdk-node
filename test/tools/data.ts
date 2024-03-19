@@ -148,6 +148,19 @@ export const genInt64: DataGenerator = () => {
   return Long.fromBits(low, high, true); // true for unsigned
 };
 
+// generate random sparse vector
+// for example {2: 0.5, 3: 0.3, 4: 0.2}
+export const genSparseVector: DataGenerator = params => {
+  const dim = params!.dim || 24;
+  const nonZeroCount = Math.floor(Math.random() * dim!) || 4;
+
+  const vector: { [key: number]: number } = {};
+  for (let i = 0; i < nonZeroCount; i++) {
+    vector[Math.floor(Math.random() * dim!)] = Math.random();
+  }
+  return vector;
+};
+
 export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.None]: genNone,
   [DataType.Bool]: genBool,
@@ -162,6 +175,9 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.JSON]: genJSON,
   [DataType.BinaryVector]: genBinaryVector,
   [DataType.FloatVector]: genFloatVector,
+  [DataType.Float16Vector]: genFloatVector, // TODO
+  [DataType.BFloat16Vector]: genFloatVector, // TODO
+  [DataType.SparseFloatVector]: genSparseVector,
 };
 
 /**

@@ -22,7 +22,11 @@ import { status as grpcStatus } from '@grpc/grpc-js';
  */
 export const checkCollectionFields = (fields: FieldType[]) => {
   // Define arrays of data types that are allowed for vector fields and primary keys, respectively
-  const vectorDataTypes = [DataType.BinaryVector, DataType.FloatVector];
+  const vectorDataTypes = [
+    DataType.BinaryVector,
+    DataType.FloatVector,
+    DataType.SparseFloatVector,
+  ];
   const int64VarCharTypes = [DataType.Int64, DataType.VarChar];
 
   let hasPrimaryKey = false;
@@ -60,7 +64,7 @@ export const checkCollectionFields = (fields: FieldType[]) => {
     const typeParams = field.type_params;
     if (isVectorField) {
       const dim = Number(typeParams?.dim ?? field.dim);
-      if (!dim) {
+      if (!dim && dataType !== DataType.SparseFloatVector) {
         throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM);
       }
 
@@ -181,7 +185,7 @@ export const checkCreateCollectionCompatibility = (
 
   if (hasDynamicSchemaEnabled) {
     throw new Error(
-      `Your milvus server doesn't support dynmaic schmea, please upgrade your server.`
+      `Your milvus server doesn't support dynamic schema, please upgrade your server.`
     );
   }
 
@@ -212,5 +216,9 @@ export const checkCreateCollectionCompatibility = (
  * @returns {Boolean} True if the data type is a vector type, false otherwise.
  */
 export const isVectorType = (type: DataType) => {
-  return type === DataType.BinaryVector || type === DataType.FloatVector;
+  return (
+    type === DataType.BinaryVector ||
+    type === DataType.FloatVector ||
+    type === DataType.SparseFloatVector
+  );
 };

@@ -135,4 +135,42 @@ describe(`utils/test`, () => {
     expect(data.length).toBe(10);
     expect(typeof data[0].int_field).toBe('number');
   });
+
+  it('should generate a sparse vector with default parameters', () => {
+    const fields = [
+      {
+        name: 'sparse_vector',
+        description: '',
+        data_type: DataType.SparseFloatVector,
+        is_primary_key: true,
+        dim: 8,
+      },
+      {
+        name: 'sparse_vector1',
+        description: '',
+        data_type: DataType.SparseFloatVector,
+        is_primary_key: true,
+        dim: 24,
+      },
+      {
+        name: 'sparse_vector2',
+        description: '',
+        data_type: DataType.SparseFloatVector,
+      },
+    ];
+
+    const data = generateInsertData(fields, 10);
+    expect(data.length).toBe(10);
+    data.forEach(d => {
+      expect(
+        Object.keys(d.sparse_vector).every(d => typeof d === 'string')
+      ).toBe(true);
+      expect(
+        Object.keys(d.sparse_vector1).every(d => typeof d === 'string')
+      ).toBe(true);
+      expect(
+        Object.keys(d.sparse_vector2).every(d => typeof d === 'string')
+      ).toBe(true);
+    });
+  });
 });

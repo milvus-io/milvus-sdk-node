@@ -57,12 +57,19 @@ describe(`HTTP Client test`, () => {
       baseURL,
       username,
       password,
+      acceptInt64: true,
     };
 
     // Create an instance of HttpBaseClient with the mock configuration
     const client = new HttpClient(config);
     const expectedAuthorization = `Bearer ${config.username}:${config.password}`;
     expect(client.authorization).toBe(expectedAuthorization);
+    expect(client.headers).toEqual({
+      Authorization: expectedAuthorization,
+      Accept: 'application/json',
+      ContentType: 'application/json',
+      'Accept-Type-Allow-Int64': 'true',
+    });
 
     const config2 = {
       baseURL,

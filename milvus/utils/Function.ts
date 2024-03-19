@@ -1,4 +1,4 @@
-import { KeyValuePair, DataType, ERROR_REASONS } from '../';
+import { KeyValuePair, DataType, ERROR_REASONS, SparseFloatVectors } from '../';
 import { Pool } from 'generic-pool';
 
 /**
@@ -92,6 +92,9 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.BinaryVector:
       dataKey = 'binary_vector';
       break;
+    case DataType.SparseFloatVector:
+      dataKey = 'sparse_float_vector';
+      break;
     case DataType.Double:
       dataKey = 'double_data';
       break;
@@ -128,4 +131,16 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
       );
   }
   return camelCase ? convertToCamelCase(dataKey) : dataKey;
+};
+
+// get biggest size of sparse vector array
+export const getSparseDim = (data: SparseFloatVectors[]) => {
+  let dim = 0;
+  for (const row of data) {
+    const indices = Object.keys(row).map(Number);
+    if (indices.length > dim) {
+      dim = indices.length;
+    }
+  }
+  return dim;
 };

@@ -1,5 +1,5 @@
 export * from './Grpc';
-export * from './Blob';
+export * from './Bytes';
 export * from './Format';
 export * from './Validate';
 export * from './Function';

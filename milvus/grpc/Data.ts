@@ -59,12 +59,19 @@ import {
   CountReq,
   CountResult,
   DEFAULT_COUNT_QUERY_STRING,
+  SparseFloatVectors,
+  parseSparseRowsToBytes,
+  getSparseDim,
 } from '../';
 import { Collection } from './Collection';
 
 export class Data extends Collection {
   // vectorTypes
-  vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
+  vectorTypes = [
+    DataType.BinaryVector,
+    DataType.FloatVector,
+    DataType.SparseFloatVector,
+  ];
 
   /**
    * Upsert data into Milvus, view _insert for detail
@@ -209,49 +216,74 @@ export class Data extends Collection {
       const elementType = DataTypeMap[field.elementType!];
       const elementTypeKey = getDataKey(elementType);
 
+      // build key value
+      let keyValue;
+      switch (type) {
+        case DataType.FloatVector:
+          keyValue = {
+            dim: field.dim,
+            [dataKey]: {
+              data: field.data,
+            },
+          };
+          break;
+        case DataType.BinaryVector:
+          keyValue = {
+            dim: field.dim,
+            [dataKey]: parseBinaryVectorToBytes(field.data as BinaryVectors),
+          };
+          break;
+        case DataType.SparseFloatVector:
+          const dim = getSparseDim(field.data as SparseFloatVectors[]);
+          keyValue = {
+            dim,
+            [dataKey]: {
+              dim,
+              contents: parseSparseRowsToBytes(
+                field.data as SparseFloatVectors[]
+              ),
+            },
+          };
+          break;
+
+        case DataType.Array:
+          keyValue = {
+            [dataKey]: {
+              data: field.data.map(d => {
+                return {
+                  [elementTypeKey]: {
+                    type: elementType,
+                    data: d,
+                  },
+                };
+              }),
+              element_type: elementType,
+            },
+          };
+          break;
+        default:
+          keyValue = {
+            [dataKey]: {
+              data: field.data,
+            },
+          };
+          break;
+      }
+
       return {
         type,
         field_name: field.name,
         is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
-        [key]:
-          type === DataType.FloatVector
-            ? {
-                dim: field.dim,
-                [dataKey]: {
-                  data: field.data,
-                },
-              }
-            : type === DataType.BinaryVector
-            ? {
-                dim: field.dim,
-                [dataKey]: parseBinaryVectorToBytes(
-                  field.data as BinaryVectors
-                ),
-              }
-            : type === DataType.Array
-            ? {
-                [dataKey]: {
-                  data: field.data.map(d => {
-                    return {
-                      [elementTypeKey]: {
-                        type: elementType,
-                        data: d,
-                      },
-                    };
-                  }),
-                  element_type: elementType,
-                },
-              }
-            : {
-                [dataKey]: {
-                  data: field.data,
-                },
-              },
+        [key]: keyValue,
       };
     });
 
     // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
+    // delete data
+    try {
+      delete params.data;
+    } catch (e) {}
     // execute Insert
     const promise = await promisify(
       this.channelPool,
