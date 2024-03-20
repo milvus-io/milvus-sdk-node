@@ -15,9 +15,14 @@ import {
 
 // all value types supported by milvus
 export type FloatVectors = number[];
+export type Float16Vectors = number[];
 export type BinaryVectors = number[];
 export type SparseFloatVectors = { [key: string]: number };
-export type VectorTypes = FloatVectors | BinaryVectors | SparseFloatVectors;
+export type VectorTypes =
+  | FloatVectors
+  | Float16Vectors
+  | BinaryVectors
+  | SparseFloatVectors;
 export type Bool = boolean;
 export type Int8 = number;
 export type Int16 = number;

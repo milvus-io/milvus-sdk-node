@@ -11,8 +11,6 @@ import {
   LoadBalanceReq,
   ImportReq,
   ListImportTasksReq,
-  // ListIndexedSegmentReq,
-  // DescribeSegmentIndexDataReq,
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,
@@ -27,8 +25,6 @@ import {
   SearchResults,
   ImportResponse,
   ListImportTasksResponse,
-  // ListIndexedSegmentResponse,
-  // DescribeSegmentIndexDataResponse,
   GetMetricsRequest,
   QueryReq,
   GetReq,
@@ -45,8 +41,6 @@ import {
   sleep,
   parseToKeyValue,
   checkCollectionName,
-  checkSearchParams,
-  parseBinaryVectorToBytes,
   DEFAULT_DYNAMIC_FIELD,
   buildDynamicRow,
   buildFieldDataMap,
@@ -62,6 +56,9 @@ import {
   SparseFloatVectors,
   parseSparseRowsToBytes,
   getSparseDim,
+  Float16Vectors,
+  parseBinaryVectorToBytes,
+  parseFloat16VectorToBytes,
 } from '../';
 import { Collection } from './Collection';
 
@@ -70,6 +67,7 @@ export class Data extends Collection {
   vectorTypes = [
     DataType.BinaryVector,
     DataType.FloatVector,
+    DataType.Float16Vector,
     DataType.SparseFloatVector,
   ];
 
@@ -194,6 +192,7 @@ export class Data extends Collection {
         switch (DataTypeMap[field.type]) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
+          case DataType.Float16Vector:
             field.data = field.data.concat(buildFieldData(rowData, field));
             break;
           default:
@@ -225,6 +224,13 @@ export class Data extends Collection {
             [dataKey]: {
               data: field.data,
             },
+          };
+          break;
+        case DataType.Float16Vector:
+          console.log('origin', field.data);
+          keyValue = {
+            dim: field.dim!,
+            [dataKey]: parseFloat16VectorToBytes(field.data as Float16Vectors),
           };
           break;
         case DataType.BinaryVector:

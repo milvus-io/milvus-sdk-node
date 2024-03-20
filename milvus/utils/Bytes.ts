@@ -1,6 +1,7 @@
 import { Root } from 'protobufjs';
 import {
   FloatVectors,
+  Float16Vectors,
   BinaryVectors,
   SparseFloatVectors,
   DataType,
@@ -29,9 +30,19 @@ export const parseFloatVectorToBytes = (array: FloatVectors) => {
  * @returns {Buffer} Bytes representing the binary vector.
  */
 export const parseBinaryVectorToBytes = (array: BinaryVectors) => {
-  // create array buffer
   const a = new Uint8Array(array);
-  // need return bytes to milvus proto
+  return Buffer.from(a.buffer);
+};
+
+/**
+ * Converts a f16 vector into bytes format.
+ *
+ * @param {Float16Vectors} array - The f16 vector to convert.
+ *
+ * @returns {Buffer} Bytes representing the f16 vector.
+ */
+export const parseFloat16VectorToBytes = (array: Float16Vectors) => {
+  const a = new Uint16Array(array);
   return Buffer.from(a.buffer);
 };
 

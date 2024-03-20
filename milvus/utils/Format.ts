@@ -508,6 +508,7 @@ export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
     case DataType.FloatVector:
+    case DataType.Float16Vector:
       return rowData[name];
     case DataType.JSON:
       return Buffer.from(JSON.stringify(rowData[name] || {}));

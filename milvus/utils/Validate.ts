@@ -25,6 +25,7 @@ export const checkCollectionFields = (fields: FieldType[]) => {
   const vectorDataTypes = [
     DataType.BinaryVector,
     DataType.FloatVector,
+    DataType.Float16Vector,
     DataType.SparseFloatVector,
   ];
   const int64VarCharTypes = [DataType.Int64, DataType.VarChar];
