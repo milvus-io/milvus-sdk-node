@@ -22,10 +22,10 @@ const dbParam = {
 const p = {
   collectionName: COLLECTION_NAME,
   vectorType: [DataType.Float16Vector],
-  dim: [32],
+  dim: [8],
 };
 const collectionParams = genCollectionParams(p);
-const data = generateInsertData(collectionParams.fields, 4);
+const data = generateInsertData(collectionParams.fields, 2);
 
 console.log('data to insert', data);
 
@@ -68,36 +68,43 @@ describe(`Float16 vector API testing`, () => {
     expect(insert.succ_index.length).toEqual(data.length);
   });
 
-  // it(`create index should be successful`, async () => {
-  //   const indexes = await milvusClient.createIndex([
-  //     {
-  //       collection_name: COLLECTION_NAME,
-  //       field_name: 'vector',
-  //       metric_type: MetricType.L2,
-  //       index_type: IndexType.AUTOINDEX,
-  //     },
-  //   ]);
+  it(`create index should be successful`, async () => {
+    const indexes = await milvusClient.createIndex([
+      {
+        collection_name: COLLECTION_NAME,
+        field_name: 'vector',
+        metric_type: MetricType.L2,
+        index_type: IndexType.AUTOINDEX,
+      },
+    ]);
 
-  //   expect(indexes.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
+    expect(indexes.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
-  // it(`load collection should be successful`, async () => {
-  //   const load = await milvusClient.loadCollection({
-  //     collection_name: COLLECTION_NAME,
-  //   });
+  it(`load collection should be successful`, async () => {
+    const load = await milvusClient.loadCollection({
+      collection_name: COLLECTION_NAME,
+    });
 
-  //   expect(load.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
-  // it(`query float16 vector should be successful`, async () => {
-  //   const query = await milvusClient.query({
-  //     collection_name: COLLECTION_NAME,
-  //     filter: 'id > 0',
-  //     output_fields: ['vector', 'id'],
-  //   });
+  it(`query float16 vector should be successful`, async () => {
+    const count = await milvusClient.count({
+      collection_name: COLLECTION_NAME,
+    });
 
-  //   expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
+    expect(count.data).toEqual(data.length);
+
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      filter: 'id > 0',
+      output_fields: ['vector', 'id'],
+    });
+
+    // console.dir(query, { depth: null });
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
   // it(`search with float16 vector should be successful`, async () => {
   //   const search = await milvusClient.search({

@@ -59,6 +59,7 @@ import {
   Float16Vectors,
   parseBinaryVectorToBytes,
   parseFloat16VectorToBytes,
+  parseBytesToFloat16Vector,
 } from '../';
 import { Collection } from './Collection';
 
@@ -227,10 +228,14 @@ export class Data extends Collection {
           };
           break;
         case DataType.Float16Vector:
+          const bytes = parseFloat16VectorToBytes(field.data as Float16Vectors);
           console.log('origin', field.data);
+          console.log('bytes data', bytes, bytes.byteLength, bytes.buffer);
+          console.log('convert', parseBytesToFloat16Vector(bytes));
+
           keyValue = {
             dim: field.dim!,
-            [dataKey]: parseFloat16VectorToBytes(field.data as Float16Vectors),
+            [dataKey]: bytes,
           };
           break;
         case DataType.BinaryVector:
@@ -251,7 +256,6 @@ export class Data extends Collection {
             },
           };
           break;
-
         case DataType.Array:
           keyValue = {
             [dataKey]: {

@@ -1,4 +1,5 @@
 import { Root } from 'protobufjs';
+import { Float16Array } from '@petamoriken/float16';
 import {
   FloatVectors,
   Float16Vectors,
@@ -31,6 +32,7 @@ export const parseFloatVectorToBytes = (array: FloatVectors) => {
  */
 export const parseBinaryVectorToBytes = (array: BinaryVectors) => {
   const a = new Uint8Array(array);
+  // need return bytes to milvus proto
   return Buffer.from(a.buffer);
 };
 
@@ -42,8 +44,16 @@ export const parseBinaryVectorToBytes = (array: BinaryVectors) => {
  * @returns {Buffer} Bytes representing the f16 vector.
  */
 export const parseFloat16VectorToBytes = (array: Float16Vectors) => {
-  const a = new Uint16Array(array);
+  // create array buffer
+  const a = new Float16Array(array);
+
+  // need return bytes to milvus protoreturn
   return Buffer.from(a.buffer);
+};
+
+export const parseBytesToFloat16Vector = (bytes: Buffer) => {
+  const array = new Float16Array(bytes.buffer);
+  return Array.from(array);
 };
 
 /**

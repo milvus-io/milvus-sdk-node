@@ -31,6 +31,7 @@ import {
   RerankerObj,
   parseBufferToSparseRow,
   buildPlaceholderGroupBytes,
+  parseBytesToFloat16Vector,
 } from '../';
 
 /**
@@ -425,6 +426,25 @@ export const buildFieldDataMap = (fields_data: any[]) => {
             }
             field_data[index].push(v);
           });
+          break;
+
+        case 'float16_vector':
+          const f16Dim = Number(item.vectors!.dim) * 2;
+          const float16Value = item.vectors![dataKey]!.toJSON().data;
+          field_data = [];
+
+          const bytes = item.vectors![dataKey]!;
+          const array = parseBytesToFloat16Vector(bytes);
+
+          console.log('returned bytes', bytes,  bytes.byteLength, bytes.buffer, array);
+
+          // split data with f16Dim
+          for (let i = 0; i < float16Value.length; i += f16Dim) {
+            field_data.push(
+              parseBytesToFloat16Vector(float16Value.slice(i, i + f16Dim))
+            );
+          }
+
           break;
 
         case 'sparse_float_vector':
