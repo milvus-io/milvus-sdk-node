@@ -25,19 +25,19 @@ const p = {
   dim: [8],
 };
 const collectionParams = genCollectionParams(p);
-const data = generateInsertData(collectionParams.fields, 1);
+const data = generateInsertData(collectionParams.fields, 2);
 
 console.log('data to insert', data);
 
 describe(`Float16 vector API testing`, () => {
   beforeAll(async () => {
-    // await milvusClient.createDatabase(dbParam);
-    // await milvusClient.use(dbParam);
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
   });
 
   afterAll(async () => {
-    // await milvusClient.dropCollection({ collection_name: COLLECTION_NAME });
-    // await milvusClient.dropDatabase(dbParam);
+    await milvusClient.dropCollection({ collection_name: COLLECTION_NAME });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`Create collection with float16 vectors should be successful`, async () => {
@@ -102,7 +102,7 @@ describe(`Float16 vector API testing`, () => {
       output_fields: ['vector', 'id'],
     });
 
-    // console.dir(query, { depth: null });
+    console.dir(query, { depth: null });
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

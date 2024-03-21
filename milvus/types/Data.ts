@@ -12,17 +12,18 @@ import {
   resStatusResponse,
   RANKER_TYPE,
 } from '../';
+import { Float16Array } from '@petamoriken/float16';
 
 // all value types supported by milvus
-export type FloatVectors = number[];
-export type Float16Vectors = number[];
-export type BinaryVectors = number[];
-export type SparseFloatVectors = { [key: string]: number };
+export type FloatVector = number[];
+export type Float16Vector = Float16Array;
+export type BinaryVector = number[];
+export type SparseFloatVector = { [key: string]: number };
 export type VectorTypes =
-  | FloatVectors
-  | Float16Vectors
-  | BinaryVectors
-  | SparseFloatVectors;
+  | FloatVector
+  | Float16Vector
+  | BinaryVector
+  | SparseFloatVector;
 export type Bool = boolean;
 export type Int8 = number;
 export type Int16 = number;
@@ -56,8 +57,9 @@ export type FieldData =
   | JSON
   | Array
   | VectorTypes
-  | FloatVectors
-  | BinaryVectors;
+  | FloatVector
+  | BinaryVector
+  | SparseFloatVector;
 
 // Represents a row of data in Milvus.
 export interface RowData {

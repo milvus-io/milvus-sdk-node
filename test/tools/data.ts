@@ -163,8 +163,10 @@ export const genSparseVector: DataGenerator = params => {
 };
 
 export const genFloat16: DataGenerator = params => {
-  const float32Array = genFloatVector(params);
-  return float32Array;
+  const dim = params!.dim!;
+  const float32Array = genFloatVector({ dim });
+  console.log('origin float32Array', float32Array);
+  return new Float16Array(float32Array as number[]);
 };
 
 export const dataGenMap: { [key in DataType]: DataGenerator } = {

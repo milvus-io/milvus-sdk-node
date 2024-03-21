@@ -429,22 +429,19 @@ export const buildFieldDataMap = (fields_data: any[]) => {
           break;
 
         case 'float16_vector':
-          const f16Dim = Number(item.vectors!.dim) * 2;
-          const float16Value = item.vectors![dataKey]!.toJSON().data;
           field_data = [];
 
-          const bytes = item.vectors![dataKey]!;
-          const array = parseBytesToFloat16Vector(bytes);
+          const f16Dim = Number(item.vectors!.dim) * 2; // float16 is 2 bytes, so we need to multiply dim with 2 = one element length
+          const f16Bytes = item.vectors![dataKey]!;
+          const arrayData = parseBytesToFloat16Vector(f16Bytes);
 
-          console.log('returned bytes', bytes,  bytes.byteLength, bytes.buffer, array);
-
-          // split data with f16Dim
-          for (let i = 0; i < float16Value.length; i += f16Dim) {
-            field_data.push(
-              parseBytesToFloat16Vector(float16Value.slice(i, i + f16Dim))
-            );
-          }
-
+          arrayData.forEach((v: any, i: number) => {
+            const index = Math.floor(i / f16Dim);
+            if (!field_data[index]) {
+              field_data[index] = [];
+            }
+            field_data[index].push(v);
+          });
           break;
 
         case 'sparse_float_vector':

@@ -48,18 +48,17 @@ import {
   Field,
   buildFieldData,
   VectorTypes,
-  BinaryVectors,
+  BinaryVector,
   RowData,
   CountReq,
   CountResult,
   DEFAULT_COUNT_QUERY_STRING,
-  SparseFloatVectors,
+  SparseFloatVector,
   parseSparseRowsToBytes,
   getSparseDim,
-  Float16Vectors,
+  concateFloat16Array,
   parseBinaryVectorToBytes,
-  parseFloat16VectorToBytes,
-  parseBytesToFloat16Vector,
+  Float16Vector,
 } from '../';
 import { Collection } from './Collection';
 
@@ -193,8 +192,9 @@ export class Data extends Collection {
         switch (DataTypeMap[field.type]) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
-          case DataType.Float16Vector:
-            field.data = field.data.concat(buildFieldData(rowData, field));
+            field.data = (field.data as number[]).concat(
+              buildFieldData(rowData, field) as number[]
+            );
             break;
           default:
             field.data[rowIndex] = buildFieldData(rowData, field);
@@ -228,30 +228,27 @@ export class Data extends Collection {
           };
           break;
         case DataType.Float16Vector:
-          const bytes = parseFloat16VectorToBytes(field.data as Float16Vectors);
-          console.log('origin', field.data);
-          console.log('bytes data', bytes, bytes.byteLength, bytes.buffer);
-          console.log('convert', parseBytesToFloat16Vector(bytes));
-
+          const fieldData = concateFloat16Array(field.data as Float16Vector[]);
+          console.log('fieldData to insert', fieldData)
           keyValue = {
-            dim: field.dim!,
-            [dataKey]: bytes,
+            dim: field.dim,
+            [dataKey]: fieldData,
           };
           break;
         case DataType.BinaryVector:
           keyValue = {
             dim: field.dim,
-            [dataKey]: parseBinaryVectorToBytes(field.data as BinaryVectors),
+            [dataKey]: parseBinaryVectorToBytes(field.data as BinaryVector),
           };
           break;
         case DataType.SparseFloatVector:
-          const dim = getSparseDim(field.data as SparseFloatVectors[]);
+          const dim = getSparseDim(field.data as SparseFloatVector[]);
           keyValue = {
             dim,
             [dataKey]: {
               dim,
               contents: parseSparseRowsToBytes(
-                field.data as SparseFloatVectors[]
+                field.data as SparseFloatVector[]
               ),
             },
           };
