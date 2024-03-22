@@ -12,11 +12,10 @@ import {
   resStatusResponse,
   RANKER_TYPE,
 } from '../';
-import { Float16Array } from '@petamoriken/float16';
 
 // all value types supported by milvus
 export type FloatVector = number[];
-export type Float16Vector = Float16Array;
+export type Float16Vector = number[];
 export type BinaryVector = number[];
 export type SparseFloatVector = { [key: string]: number };
 export type VectorTypes =

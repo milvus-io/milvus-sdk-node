@@ -4,6 +4,7 @@ import {
   DataType,
   IndexType,
   MetricType,
+  parseBytesToFloat16Vector,
 } from '../../milvus';
 import {
   IP,
@@ -12,7 +13,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
@@ -27,7 +28,7 @@ const p = {
 const collectionParams = genCollectionParams(p);
 const data = generateInsertData(collectionParams.fields, 2);
 
-console.log('data to insert', data);
+// console.log('data to insert', data);
 
 describe(`Float16 vector API testing`, () => {
   beforeAll(async () => {
@@ -62,7 +63,7 @@ describe(`Float16 vector API testing`, () => {
       data,
     });
 
-    console.log(' insert', insert);
+    // console.log(' insert', insert);
 
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(insert.succ_index.length).toEqual(data.length);
@@ -102,7 +103,12 @@ describe(`Float16 vector API testing`, () => {
       output_fields: ['vector', 'id'],
     });
 
-    console.dir(query, { depth: null });
+    data.forEach((obj, index) => {
+      obj.vector.forEach((v: number, i: number) => {
+        expect(v).toBeCloseTo(query.data[index].vector[i], 3);
+      });
+    });
+
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

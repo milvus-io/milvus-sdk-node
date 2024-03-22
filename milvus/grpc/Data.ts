@@ -56,8 +56,8 @@ import {
   SparseFloatVector,
   parseSparseRowsToBytes,
   getSparseDim,
-  concateFloat16Array,
   parseBinaryVectorToBytes,
+  parseFloat16VectorToBytes,
   Float16Vector,
 } from '../';
 import { Collection } from './Collection';
@@ -228,11 +228,9 @@ export class Data extends Collection {
           };
           break;
         case DataType.Float16Vector:
-          const fieldData = concateFloat16Array(field.data as Float16Vector[]);
-          console.log('fieldData to insert', fieldData)
           keyValue = {
             dim: field.dim,
-            [dataKey]: fieldData,
+            [dataKey]: Buffer.concat(field.data as Buffer[]),
           };
           break;
         case DataType.BinaryVector:

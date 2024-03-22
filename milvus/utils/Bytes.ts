@@ -2,11 +2,11 @@ import { Root } from 'protobufjs';
 import { Float16Array } from '@petamoriken/float16';
 import {
   FloatVector,
-  Float16Vector,
   BinaryVector,
   SparseFloatVector,
   DataType,
   VectorTypes,
+  Float16Vector,
 } from '..';
 
 /**
@@ -36,36 +36,19 @@ export const parseBinaryVectorToBytes = (array: BinaryVector) => {
   return Buffer.from(a.buffer);
 };
 
-/**
- * Converts a f16 vector into bytes format.
- *
- * @param {Float16Vector} array - The f16 vector to convert.
- *
- * @returns {Buffer} Bytes representing the f16 vector.
- */
-export const parseFloat16VectorToBytes = (array: Float16Vector) => {
-  // create array buffer
-  const a = new Float16Array(array);
-
-  // need return bytes to milvus protoreturn
-  return Buffer.from(a.buffer);
+export const parseFloat16VectorToBytes = (f16Array: Float16Vector) => {
+  const float16Array = new Float16Array(f16Array);
+  const float16Bytes = new Uint8Array(float16Array.buffer);
+  return float16Bytes;
 };
 
-export const parseBytesToFloat16Vector = (bytes: Buffer) => {
-  const array = new Float16Array(bytes.buffer);
-  return Array.from(array);
-};
+export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
+  const buffer = new ArrayBuffer(float16Bytes.length);
+  const view = new Uint8Array(buffer);
+  view.set(float16Bytes);
 
-export const concateFloat16Array = (array: Float16Array[]) => {
-  const result = new Float16Array(
-    array.reduce((acc, cur) => acc + cur.length, 0)
-  );
-  let offset = 0;
-  for (const a of array) {
-    result.set(a, offset);
-    offset += a.length;
-  }
-  return parseFloat16VectorToBytes(result);
+  const float16Array = new Float16Array(buffer);
+  return Array.from(float16Array);
 };
 
 /**

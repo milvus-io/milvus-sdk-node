@@ -32,6 +32,8 @@ import {
   parseBufferToSparseRow,
   buildPlaceholderGroupBytes,
   parseBytesToFloat16Vector,
+  parseFloat16VectorToBytes,
+  Float16Vector,
 } from '../';
 
 /**
@@ -430,20 +432,15 @@ export const buildFieldDataMap = (fields_data: any[]) => {
 
         case 'float16_vector':
           field_data = [];
-
           const f16Dim = Number(item.vectors!.dim) * 2; // float16 is 2 bytes, so we need to multiply dim with 2 = one element length
           const f16Bytes = item.vectors![dataKey]!;
-          const arrayData = parseBytesToFloat16Vector(f16Bytes);
 
-          arrayData.forEach((v: any, i: number) => {
-            const index = Math.floor(i / f16Dim);
-            if (!field_data[index]) {
-              field_data[index] = [];
-            }
-            field_data[index].push(v);
-          });
+          // split buffer data to float16 vector(bytes)
+          for (let i = 0; i < f16Bytes.byteLength; i += f16Dim) {
+            const slice = f16Bytes.slice(i, i + f16Dim);
+            field_data.push(parseBytesToFloat16Vector(slice));
+          }
           break;
-
         case 'sparse_float_vector':
           const sparseVectorValue = item.vectors![dataKey]!.contents;
           field_data = [];
@@ -525,8 +522,9 @@ export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
     case DataType.FloatVector:
-    case DataType.Float16Vector:
       return rowData[name];
+    case DataType.Float16Vector:
+      return parseFloat16VectorToBytes(rowData[name] as Float16Vector);
     case DataType.JSON:
       return Buffer.from(JSON.stringify(rowData[name] || {}));
     case DataType.Array:
