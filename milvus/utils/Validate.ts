@@ -220,6 +220,7 @@ export const isVectorType = (type: DataType) => {
   return (
     type === DataType.BinaryVector ||
     type === DataType.FloatVector ||
+    type === DataType.Float16Vector ||
     type === DataType.SparseFloatVector
   );
 };

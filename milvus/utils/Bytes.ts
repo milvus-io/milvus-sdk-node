@@ -145,6 +145,9 @@ export const buildPlaceholderGroupBytes = (
     case DataType.BinaryVector:
       bytes = vectors.map(v => parseBinaryVectorToBytes(v as BinaryVector));
       break;
+    case DataType.Float16Vector:
+      bytes = vectors.map(v => parseFloat16VectorToBytes(v as Float16Vector));
+      break;
     case DataType.SparseFloatVector:
       bytes = vectors.map(v =>
         parseSparseVectorToBytes(v as SparseFloatVector)

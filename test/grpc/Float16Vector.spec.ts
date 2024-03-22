@@ -103,6 +103,7 @@ describe(`Float16 vector API testing`, () => {
       output_fields: ['vector', 'id'],
     });
 
+    // verify the query result
     data.forEach((obj, index) => {
       obj.vector.forEach((v: number, i: number) => {
         expect(v).toBeCloseTo(query.data[index].vector[i], 3);
@@ -112,15 +113,17 @@ describe(`Float16 vector API testing`, () => {
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  // it(`search with float16 vector should be successful`, async () => {
-  //   const search = await milvusClient.search({
-  //     vector: data[0].vector,
-  //     collection_name: COLLECTION_NAME,
-  //     output_fields: ['id', 'vector'],
-  //     limit: 5,
-  //   });
+  it(`search with float16 vector should be successful`, async () => {
+    const search = await milvusClient.search({
+      vector: data[0].vector,
+      collection_name: COLLECTION_NAME,
+      output_fields: ['id', 'vector'],
+      limit: 5,
+    });
 
-  //   expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
-  //   expect(search.results.length).toBeGreaterThan(0);
-  // });
+    // console.log('search', search);
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toBeGreaterThan(0);
+  });
 });
