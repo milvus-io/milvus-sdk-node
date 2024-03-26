@@ -1,4 +1,4 @@
-import { FloatVectors } from '..';
+import { FloatVector } from '..';
 type Fetch = (input: any, init?: any) => Promise<any>;
 
 // Class types
@@ -137,7 +137,7 @@ export interface HttpVectorQueryResponse
 // search request
 export interface HttpVectorSearchReq
   extends Omit<HttpVectorQueryReq, 'filter'> {
-  vector: FloatVectors;
+  vector: FloatVector;
   filter?: string;
 }
 
