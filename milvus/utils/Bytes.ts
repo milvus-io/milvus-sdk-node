@@ -37,9 +37,8 @@ export const parseBinaryVectorToBytes = (array: BinaryVector) => {
 };
 
 export const parseFloat16VectorToBytes = (f16Array: Float16Vector) => {
-  const float16Array = new Float16Array(f16Array);
-  const float16Bytes = new Uint8Array(float16Array.buffer);
-  return float16Bytes;
+  const float16Bytes = new Float16Array(f16Array);
+  return Buffer.from(float16Bytes.buffer);
 };
 
 export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
