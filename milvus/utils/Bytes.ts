@@ -8,7 +8,6 @@ import {
   VectorTypes,
   Float16Vector,
 } from '..';
-import { Data } from '../grpc/Data';
 
 /**
  * Converts a float vector into bytes format.
