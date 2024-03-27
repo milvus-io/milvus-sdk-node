@@ -14,10 +14,17 @@ import {
 } from '../';
 
 // all value types supported by milvus
-export type FloatVectors = number[];
-export type BinaryVectors = number[];
-export type SparseFloatVectors = { [key: string]: number };
-export type VectorTypes = FloatVectors | BinaryVectors | SparseFloatVectors;
+export type FloatVector = number[];
+export type Float16Vector = number[];
+export type BFloat16Vector = number[];
+export type BinaryVector = number[];
+export type SparseFloatVector = { [key: string]: number };
+export type VectorTypes =
+  | FloatVector
+  | Float16Vector
+  | BinaryVector
+  | BFloat16Vector
+  | SparseFloatVector;
 export type Bool = boolean;
 export type Int8 = number;
 export type Int16 = number;
@@ -50,9 +57,7 @@ export type FieldData =
   | VarChar
   | JSON
   | Array
-  | VectorTypes
-  | FloatVectors
-  | BinaryVectors;
+  | VectorTypes;
 
 // Represents a row of data in Milvus.
 export interface RowData {

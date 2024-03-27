@@ -11,8 +11,6 @@ import {
   LoadBalanceReq,
   ImportReq,
   ListImportTasksReq,
-  // ListIndexedSegmentReq,
-  // DescribeSegmentIndexDataReq,
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,
@@ -27,8 +25,6 @@ import {
   SearchResults,
   ImportResponse,
   ListImportTasksResponse,
-  // ListIndexedSegmentResponse,
-  // DescribeSegmentIndexDataResponse,
   GetMetricsRequest,
   QueryReq,
   GetReq,
@@ -45,8 +41,6 @@ import {
   sleep,
   parseToKeyValue,
   checkCollectionName,
-  checkSearchParams,
-  parseBinaryVectorToBytes,
   DEFAULT_DYNAMIC_FIELD,
   buildDynamicRow,
   buildFieldDataMap,
@@ -54,14 +48,17 @@ import {
   Field,
   buildFieldData,
   VectorTypes,
-  BinaryVectors,
+  BinaryVector,
   RowData,
   CountReq,
   CountResult,
   DEFAULT_COUNT_QUERY_STRING,
-  SparseFloatVectors,
+  SparseFloatVector,
   parseSparseRowsToBytes,
   getSparseDim,
+  parseBinaryVectorToBytes,
+  parseFloat16VectorToBytes,
+  Float16Vector,
 } from '../';
 import { Collection } from './Collection';
 
@@ -70,6 +67,7 @@ export class Data extends Collection {
   vectorTypes = [
     DataType.BinaryVector,
     DataType.FloatVector,
+    DataType.Float16Vector,
     DataType.SparseFloatVector,
   ];
 
@@ -194,7 +192,9 @@ export class Data extends Collection {
         switch (DataTypeMap[field.type]) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
-            field.data = field.data.concat(buildFieldData(rowData, field));
+            field.data = (field.data as number[]).concat(
+              buildFieldData(rowData, field) as number[]
+            );
             break;
           default:
             field.data[rowIndex] = buildFieldData(rowData, field);
@@ -227,25 +227,30 @@ export class Data extends Collection {
             },
           };
           break;
+        case DataType.Float16Vector:
+          keyValue = {
+            dim: field.dim,
+            [dataKey]: Buffer.concat(field.data as Buffer[]),
+          };
+          break;
         case DataType.BinaryVector:
           keyValue = {
             dim: field.dim,
-            [dataKey]: parseBinaryVectorToBytes(field.data as BinaryVectors),
+            [dataKey]: parseBinaryVectorToBytes(field.data as BinaryVector),
           };
           break;
         case DataType.SparseFloatVector:
-          const dim = getSparseDim(field.data as SparseFloatVectors[]);
+          const dim = getSparseDim(field.data as SparseFloatVector[]);
           keyValue = {
             dim,
             [dataKey]: {
               dim,
               contents: parseSparseRowsToBytes(
-                field.data as SparseFloatVectors[]
+                field.data as SparseFloatVector[]
               ),
             },
           };
           break;
-
         case DataType.Array:
           keyValue = {
             [dataKey]: {

@@ -5,6 +5,7 @@ import {
   FieldType,
 } from '../../milvus';
 import { MAX_LENGTH, P_KEY_VALUES } from './const';
+import { Float16Array } from '@petamoriken/float16';
 import Long from 'long';
 
 interface DataGenerator {
@@ -161,6 +162,14 @@ export const genSparseVector: DataGenerator = params => {
   return vector;
 };
 
+export const genFloat16: DataGenerator = params => {
+  const float32Array = genFloatVector(params);
+  // console.log('origin float32array', float32Array);
+  // const float16Array = new Float16Array(float32Array as number[]);
+  // const float16Bytes = new Uint8Array(float16Array.buffer);
+  return float32Array;
+};
+
 export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.None]: genNone,
   [DataType.Bool]: genBool,
@@ -175,8 +184,8 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.JSON]: genJSON,
   [DataType.BinaryVector]: genBinaryVector,
   [DataType.FloatVector]: genFloatVector,
-  [DataType.Float16Vector]: genFloatVector, // TODO
-  [DataType.BFloat16Vector]: genFloatVector, // TODO
+  [DataType.Float16Vector]: genFloat16,
+  [DataType.BFloat16Vector]: genFloat16,
   [DataType.SparseFloatVector]: genSparseVector,
 };
 
