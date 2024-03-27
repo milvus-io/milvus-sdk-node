@@ -1,4 +1,10 @@
-import { MilvusClient, ErrorCode, MetricType, IndexType } from '../../milvus';
+import {
+  MilvusClient,
+  ErrorCode,
+  MetricType,
+  IndexType,
+  findKeyValue,
+} from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -352,23 +358,25 @@ describe(`Milvus Index API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  // it(`Alter Index should be success`, async () => {
-  //   const alter = await milvusClient.alterIndex({
-  //     collection_name: COLLECTION_NAME,
-  //     index_name: INDEX_NAME,
-  //     params: {
-  //       'mmap.enabled': true,
-  //     },
-  //   });
+  it(`Alter Index should be success`, async () => {
+    const alter = await milvusClient.alterIndex({
+      collection_name: COLLECTION_NAME,
+      index_name: INDEX_NAME,
+      params: {
+        'mmap.enabled': true,
+      },
+    });
 
-  //   const describe = await milvusClient.describeIndex({
-  //     collection_name: COLLECTION_NAME,
-  //     index_name: INDEX_NAME,
-  //   });
-  //   expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+    const describe = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME,
+      index_name: INDEX_NAME,
+    });
+    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+    const params = describe.index_descriptions[0].params;
+    expect(findKeyValue(params, 'mmap.enabled')).toEqual("true");
 
-  //   // console.log('describe', describe.index_descriptions[0].params);
-  // });
+    // console.log('describe', describe.index_descriptions[0].params);
+  });
 
   // @Deprecated
   // it(`Get Index progress with field name should be failed`, async () => {
