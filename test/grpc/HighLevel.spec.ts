@@ -202,4 +202,61 @@ describe(`High level API testing`, () => {
     });
     expect(load.state).toEqual(LoadState.LoadStateLoaded);
   });
+
+  it('create collection failed should throw error', async () => {
+    try {
+      await milvusClient.createCollection({
+        collection_name: 'fail_collection1',
+        schema: [
+          {
+            name: 'vector',
+            description: 'Vector field',
+            data_type: DataType.FloatVector,
+            dim: 400000000,
+          },
+          {
+            name: 'id',
+            description: 'ID field',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+            autoID: true,
+          },
+          {
+            name: 'int16',
+            description: 'int16 field',
+            data_type: DataType.Int16,
+            is_partition_key: false,
+          },
+          {
+            name: 'varChar',
+            description: 'VarChar field',
+            data_type: DataType.VarChar,
+            max_length: 128,
+            is_partition_key: false,
+          },
+        ],
+        index_params: index_params[0],
+      });
+    } catch (error) {
+      expect(error.message.includes('invalid dimension')).toEqual(true);
+    }
+
+    try {
+      await milvusClient.createCollection({
+        collection_name: 'fail_collection2',
+        schema: schema,
+        index_params: {
+          field_name: 'vector2322',
+          index_type: IndexType.HNSW,
+          metric_type: MetricType.COSINE,
+          params: {
+            M: 5,
+            efConstruction: 8,
+          },
+        },
+      });
+    } catch (error) {
+      expect(error.message.includes('non-exist')).toEqual(true);
+    }
+  });
 });
