@@ -21,13 +21,6 @@ import { status as grpcStatus } from '@grpc/grpc-js';
  * @param fields
  */
 export const checkCollectionFields = (fields: FieldType[]) => {
-  // Define arrays of data types that are allowed for vector fields and primary keys, respectively
-  const vectorDataTypes = [
-    DataType.BinaryVector,
-    DataType.FloatVector,
-    DataType.Float16Vector,
-    DataType.SparseFloatVector,
-  ];
   const int64VarCharTypes = [DataType.Int64, DataType.VarChar];
 
   let hasPrimaryKey = false;
@@ -61,7 +54,7 @@ export const checkCollectionFields = (fields: FieldType[]) => {
     }
 
     // if this is the vector field, check dimension
-    const isVectorField = vectorDataTypes.includes(dataType!);
+    const isVectorField = isVectorType(dataType!);
     const typeParams = field.type_params;
     if (isVectorField) {
       const dim = Number(typeParams?.dim ?? field.dim);
@@ -221,6 +214,7 @@ export const isVectorType = (type: DataType) => {
     type === DataType.BinaryVector ||
     type === DataType.FloatVector ||
     type === DataType.Float16Vector ||
+    type === DataType.BFloat16Vector ||
     type === DataType.SparseFloatVector
   );
 };

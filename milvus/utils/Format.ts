@@ -431,6 +431,7 @@ export const buildFieldDataMap = (fields_data: any[]) => {
           break;
 
         case 'float16_vector':
+        case 'bfloat16_vector':
           field_data = [];
           const f16Dim = Number(item.vectors!.dim) * 2; // float16 is 2 bytes, so we need to multiply dim with 2 = one element length
           const f16Bytes = item.vectors![dataKey]!;
@@ -524,6 +525,7 @@ export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
     case DataType.FloatVector:
       return rowData[name];
     case DataType.Float16Vector:
+    case DataType.BFloat16Vector:
       return parseFloat16VectorToBytes(rowData[name] as Float16Vector);
     case DataType.JSON:
       return Buffer.from(JSON.stringify(rowData[name] || {}));

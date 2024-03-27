@@ -8,6 +8,7 @@ import {
   VectorTypes,
   Float16Vector,
 } from '..';
+import { Data } from '../grpc/Data';
 
 /**
  * Converts a float vector into bytes format.
@@ -145,6 +146,7 @@ export const buildPlaceholderGroupBytes = (
       bytes = vectors.map(v => parseBinaryVectorToBytes(v as BinaryVector));
       break;
     case DataType.Float16Vector:
+    case DataType.BFloat16Vector:
       bytes = vectors.map(v => parseFloat16VectorToBytes(v as Float16Vector));
       break;
     case DataType.SparseFloatVector:

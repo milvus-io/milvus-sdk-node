@@ -92,6 +92,9 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.Float16Vector:
       dataKey = 'float16_vector';
       break;
+    case DataType.BFloat16Vector:
+      dataKey = 'bfloat16_vector';
+      break;
     case DataType.BinaryVector:
       dataKey = 'binary_vector';
       break;
