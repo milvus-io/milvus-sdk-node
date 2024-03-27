@@ -57,11 +57,7 @@ export type FieldData =
   | VarChar
   | JSON
   | Array
-  | FloatVector
-  | Float16Vector
-  | BFloat16Vector
-  | BinaryVector
-  | SparseFloatVector;
+  | VectorTypes;
 
 // Represents a row of data in Milvus.
 export interface RowData {
