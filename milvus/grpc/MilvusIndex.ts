@@ -308,7 +308,7 @@ export class Index extends Data {
       {
         collection_name: data.collection_name,
         index_name: data.index_name,
-        properties: parseToKeyValue(data.params),
+        extra_params: parseToKeyValue(data.params),
       },
       data.timeout || this.timeout
     );
