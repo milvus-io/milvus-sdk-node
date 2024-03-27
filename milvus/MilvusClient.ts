@@ -100,12 +100,16 @@ export class MilvusClient extends GRPCClient {
     if ('fields' in data || 'schema' in data) {
       const createCollectionRes = await this._createCollection(data);
 
+      if (createCollectionRes.error_code !== ErrorCode.SUCCESS) {
+        throw new Error(createCollectionRes.reason);
+      }
+
       // if index params available
       if ('index_params' in data) {
         const indexParams = Array.isArray(data.index_params)
           ? data.index_params
           : [data.index_params];
-        await Promise.all(
+        const indexCreates = await Promise.all(
           indexParams.map(indexParam => {
             return this.createIndex(
               Object.assign(indexParam, {
@@ -114,6 +118,15 @@ export class MilvusClient extends GRPCClient {
             );
           })
         );
+        // check if all index creation is successful
+        const failedIndex = indexCreates.find(
+          indexCreate => indexCreate.error_code !== ErrorCode.SUCCESS
+        );
+
+        if (failedIndex) {
+          throw new Error(failedIndex.reason);
+        }
+
         // load collection sync
         await this.loadCollectionSync({
           collection_name: data.collection_name,
@@ -168,6 +181,10 @@ export class MilvusClient extends GRPCClient {
         timeout,
         consistency_level,
       });
+
+      if (result.error_code !== ErrorCode.SUCCESS) {
+        throw new Error(result.reason);
+      }
     } else {
       const info = await this.describeIndex({ collection_name });
       indexNotExist = info.status.error_code === ErrorCode.IndexNotExist;
@@ -185,7 +202,7 @@ export class MilvusClient extends GRPCClient {
 
       // if failed, throw the error
       if (createIndexPromise.error_code !== ErrorCode.SUCCESS) {
-        throw new Error(createIndexPromise.reason as string);
+        throw new Error(createIndexPromise.reason);
       }
     } else {
       logger.info(
