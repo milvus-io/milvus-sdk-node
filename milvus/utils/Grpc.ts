@@ -4,10 +4,17 @@ import {
   loadPackageDefinition,
   ServiceClientConstructor,
   GrpcObject,
+  Listener,
   InterceptingCall,
+  StatusObject,
   status as grpcStatus,
 } from '@grpc/grpc-js';
-import { extractMethodName, isStatusCodeMatched, logger } from '.';
+import {
+  extractMethodName,
+  isInIgnoreRetryCodes,
+  isInvalidMessage,
+  logger,
+} from '.';
 import { DEFAULT_DB } from '../const';
 
 interface IServiceDetails {
@@ -93,146 +100,109 @@ export const getRetryInterceptor = ({
   clientId: string;
 }) =>
   function (options: any, nextCall: any) {
+    // intermediate variables
     let savedMetadata: any;
     let savedSendMessage: any;
     let savedReceiveMessage: any;
-    let savedMessageNext: any;
+    let savedNext: Function;
+    let savedMessageNext: Function;
+    let savedStatusNext: Function;
 
     // deadline
     const deadline = options.deadline;
 
     // get method name
-    // option example
-    // {
-    //   deadline: 2023-05-04T09:04:16.231Z,
-    //   method_definition: {
-    //     path: '/milvus.proto.milvus.MilvusService/ListCredUsers',
-    //     requestStream: false,
-    //     responseStream: false,
-    //     requestSerialize: [Function: serialize],
-    //     responseDeserialize: [Function: deserialize]
-    //   }
-    // }
     const methodName = extractMethodName(options.method_definition.path);
 
-    // start time
+    // for logger
     const startTime = new Date();
     let dbname = '';
+    let retryCount = 0;
 
-    // requester, used to re-execute method
+    // requester, used to execute method
     let requester = {
-      start: function (metadata: any, listener: any, next: any) {
+      start: function (metadata: any, listener: Listener, next: any) {
         savedMetadata = metadata;
+        savedNext = next;
 
-        // get db name
+        // get db name from meta
         dbname = metadata.get('dbname') || DEFAULT_DB;
 
-        // logger.debug(`[DB:${dbname}:${methodName}] started.`);
-
-        const newListener = {
-          onReceiveMessage: function (message: any, next: any) {
+        const retryListener = {
+          // this will be called before onReceiveStatus
+          onReceiveMessage: (message: any, next: Function) => {
+            // store message for retry call
             savedReceiveMessage = message;
-            savedMessageNext = next;
+            // store next for retry call
+            if (!savedMessageNext) {
+              savedMessageNext = next;
+            }
           },
-          onReceiveStatus: function (status: any, next: any) {
-            // retry count
-            let retries = 0;
-            // retry function
-            let retry = function (message: any, metadata: any) {
-              // retry count
-              retries++;
-              // retry delay
-              const _retryDelay = Math.pow(2, retries) * retryDelay;
+          // then this will be called
+          onReceiveStatus: (status: StatusObject, next: Function) => {
+            // store status for retry call
+            if (!savedStatusNext) {
+              savedStatusNext = next;
+            }
+            // check message if need retry
+            let needRetry =
+              isInvalidMessage(savedReceiveMessage) ||
+              isInIgnoreRetryCodes(status.code);
 
-              // timeout
+            // transform code and message if needed(for compatibility with old version of milvus)
+            switch (status.code) {
+              // if not implemented, do not retry,need to modify status, just return
+              case grpcStatus.UNIMPLEMENTED:
+                savedReceiveMessage = {};
+                savedStatusNext({ code: grpcStatus.OK });
+                break;
+            }
+
+            // check
+            if (needRetry && retryCount < maxRetries) {
+              // increase retry count
+              retryCount++;
+              // retry delay
+              const _retryDelay = Math.pow(2, retryCount) * retryDelay;
+              // retry timeout
               const _timeout = deadline.getTime() - startTime.getTime();
-              // log
+              // logger
               logger.debug(
-                `[${clientId}>${dbname}>${methodName}] executed failed, status: ${JSON.stringify(
-                  status
-                )}, timeout set: ${_timeout}ms, retry after ${_retryDelay} ms.`
+                `\x1b[31m[Response(${
+                  Date.now() - startTime.getTime()
+                }ms)]\x1b[0m${clientId}>${dbname}>${methodName}]: ${JSON.stringify(
+                  savedReceiveMessage
+                )}, status: ${JSON.stringify(status)}`
+              );
+              logger.debug(
+                `\x1b[31m[Retry(${_retryDelay}ms, timeout:${_timeout}ms)]\x1b[0m${clientId}>${dbname}>${methodName}`
               );
 
-              // retry listener
-              const retryListener = {
-                onReceiveMessage: function (message: any) {
-                  savedReceiveMessage = message;
-                },
-                onReceiveStatus: function (status: any) {
-                  if (isStatusCodeMatched(status.code)) {
-                    if (retries < maxRetries) {
-                      setTimeout(() => {
-                        // need to update the deadline
-                        retry(message, metadata);
-                        // double increase delay every retry
-                      }, _retryDelay);
-                    } else {
-                      logger.debug(
-                        `[${clientId}>${dbname}>${methodName}] retry run out of ${retries} times. ${JSON.stringify(
-                          status
-                        )}`
-                      );
-
-                      // we still pop up server information to client
-                      savedMessageNext(savedReceiveMessage);
-                      // and do the next call if there is
-                      next(status);
-                    }
-                  } else {
-                    logger.debug(
-                      `[${clientId}>${dbname}>${methodName}] retried successfully in ${
-                        Date.now() - startTime.getTime()
-                      }ms.`
-                    );
-                    savedMessageNext(savedReceiveMessage);
-                    next({ code: grpcStatus.OK });
-                  }
-                },
-              };
-              // retry, update deadline
+              // set new deadline
               options.deadline = new Date(Date.now() + _timeout);
-              let newCall = nextCall(options);
-              newCall.start(metadata, retryListener);
-            };
-
-            // check grpc status
-            switch (status.code) {
-              case grpcStatus.DEADLINE_EXCEEDED:
-              case grpcStatus.UNAVAILABLE:
-              case grpcStatus.INTERNAL:
-                retry(savedSendMessage, savedMetadata);
-                break;
-              case grpcStatus.UNIMPLEMENTED:
-                // const returnMsg = { error_code: 'Success', reason: '' };
-                logger.debug(
-                  `[${clientId}>${dbname}>${methodName}] returns ${JSON.stringify(
-                    status
-                  )}`
-                );
-                // throw new Error(
-                //   'This version of sdk is incompatible with the server, please downgrade your sdk or upgrade your server.'
-                // );
-                // return empty message
-                savedReceiveMessage = {};
-                next({ code: grpcStatus.OK });
-              default:
-                // OK
-                logger.debug(
-                  `[${clientId}>${dbname}>${methodName}] executed in ${
-                    Date.now() - startTime.getTime()
-                  }ms, returns ${JSON.stringify(savedReceiveMessage)}`
-                );
-                savedMessageNext(savedReceiveMessage);
-                next(status);
+              // create new call
+              const newCall = nextCall(options);
+              newCall.start(savedMetadata, retryListener);
+              newCall.sendMessage(savedSendMessage);
+            } else {
+              logger.debug(
+                `\x1b[32m[Response(${
+                  Date.now() - startTime.getTime()
+                }ms)]\x1b[0m${clientId}>${dbname}>${methodName}]: ${JSON.stringify(
+                  savedReceiveMessage
+                )}`
+              );
+              savedMessageNext(savedReceiveMessage);
+              savedStatusNext(status);
             }
           },
         };
 
-        next(metadata, newListener);
+        savedNext(metadata, retryListener);
       },
-      sendMessage: function (message: any, next: any) {
+      sendMessage: (message: any, next: Function) => {
         logger.debug(
-          `[${clientId}>${dbname}>${methodName}] sending ${JSON.stringify(
+          `\x1b[34m[Request]\x1b[0m${clientId}>${dbname}>${methodName}: ${JSON.stringify(
             message
           )}`
         );
