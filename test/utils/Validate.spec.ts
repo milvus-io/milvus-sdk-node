@@ -1,7 +1,8 @@
 import { status as grpcStatus } from '@grpc/grpc-js';
 import {
   checkSearchParams,
-  isStatusCodeMatched,
+  isInIgnoreRetryCodes,
+  isInvalidMessage,
   ERROR_REASONS,
   checkCollectionFields,
   checkTimeParam,
@@ -37,30 +38,66 @@ describe('utils/validate', () => {
     expect(() => checkSearchParams(data2)).not.toThrow();
   });
 
-  it('should return true if the code matches any of the given codes', () => {
-    const code = grpcStatus.DEADLINE_EXCEEDED;
-    const codesToCheck = [grpcStatus.DEADLINE_EXCEEDED, grpcStatus.UNAVAILABLE];
-    const result = isStatusCodeMatched(code, codesToCheck);
-    expect(result).toBe(true);
+  it('code exists in codesToCheck array', () => {
+    expect(isInIgnoreRetryCodes(grpcStatus.DEADLINE_EXCEEDED)).toBe(true);
   });
 
-  it('should return false if the code does not match any of the given codes', () => {
-    const code = grpcStatus.OK;
-    const codesToCheck = [grpcStatus.DEADLINE_EXCEEDED, grpcStatus.UNAVAILABLE];
-    const result = isStatusCodeMatched(code, codesToCheck);
-    expect(result).toBe(false);
+  it('code does not exist in codesToCheck array', () => {
+    expect(isInIgnoreRetryCodes(1234)).toBe(false);
   });
 
-  it('should return true if the code matches the default codes to check', () => {
-    const code = grpcStatus.DEADLINE_EXCEEDED;
-    const result = isStatusCodeMatched(code);
-    expect(result).toBe(true);
+  it('omit codesToCheck array', () => {
+    // The default codesToCheck array should include all gRPC status codes
+    expect(isInIgnoreRetryCodes(grpcStatus.OK)).toBe(true);
+    expect(isInIgnoreRetryCodes(1234)).toBe(false);
   });
 
-  it('should return false if the code does not match the default codes to check', () => {
-    const code = grpcStatus.OK;
-    const result = isStatusCodeMatched(code);
-    expect(result).toBe(false);
+  it('custom codesToCheck array', () => {
+    // Custom codesToCheck array
+    const customCodesToCheck = [
+      grpcStatus.DEADLINE_EXCEEDED,
+      grpcStatus.UNAUTHENTICATED,
+      grpcStatus.OK,
+    ];
+
+    expect(
+      isInIgnoreRetryCodes(grpcStatus.DEADLINE_EXCEEDED, customCodesToCheck)
+    ).toBe(true);
+    expect(
+      isInIgnoreRetryCodes(grpcStatus.PERMISSION_DENIED, customCodesToCheck)
+    ).toBe(false);
+  });
+
+  it('message is invalid', () => {
+    const invalidMessage = {
+      code: 1234,
+      status: { code: 5678 },
+    };
+    expect(isInvalidMessage(invalidMessage)).toBe(false);
+  });
+
+  it('message code matches codesToCheck', () => {
+    const validMessage = {
+      code: 2200,
+      status: undefined,
+    };
+    expect(isInvalidMessage(validMessage)).toBe(true);
+  });
+
+  it('message status code matches codesToCheck', () => {
+    const validMessage = {
+      code: 222,
+      status: { code: 2200 },
+    };
+    expect(isInvalidMessage(validMessage)).toBe(true);
+  });
+
+  it('message code and status code match codesToCheck', () => {
+    const validMessage = {
+      code: 2200,
+      status: { code: 2200 },
+    };
+    expect(isInvalidMessage(validMessage)).toBe(true);
   });
 
   it('should throw an error if a field is missing the data_type property', () => {
