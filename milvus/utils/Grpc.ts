@@ -108,9 +108,6 @@ export const getRetryInterceptor = ({
     let savedMessageNext: Function;
     let savedStatusNext: Function;
 
-    // deadline
-    const deadline = options.deadline;
-
     // get method name
     const methodName = extractMethodName(options.method_definition.path);
 
@@ -118,6 +115,15 @@ export const getRetryInterceptor = ({
     const startTime = new Date();
     let dbname = '';
     let retryCount = 0;
+
+    // deadline and timeout
+    const deadline = options.deadline;
+    // retry timeout
+    const timeout = deadline.getTime() - startTime.getTime();
+    const timeoutInSeconds = timeout / 1000 + 's';
+
+    // make clientId shorter
+    clientId = clientId.slice(0, 8) + '...';
 
     // requester, used to execute method
     let requester = {
@@ -144,19 +150,19 @@ export const getRetryInterceptor = ({
             if (!savedStatusNext) {
               savedStatusNext = next;
             }
-            // check message if need retry
-            let needRetry =
-              isInvalidMessage(savedReceiveMessage) ||
-              isInIgnoreRetryCodes(status.code);
 
             // transform code and message if needed(for compatibility with old version of milvus)
             switch (status.code) {
-              // if not implemented, do not retry,need to modify status, just return
               case grpcStatus.UNIMPLEMENTED:
                 savedReceiveMessage = {};
-                savedStatusNext({ code: grpcStatus.OK });
+                status.code = grpcStatus.OK;
                 break;
             }
+
+            // check message if need retry
+            const needRetry =
+              isInvalidMessage(savedReceiveMessage) ||
+              !isInIgnoreRetryCodes(status.code);
 
             // check
             if (needRetry && retryCount < maxRetries) {
@@ -164,22 +170,24 @@ export const getRetryInterceptor = ({
               retryCount++;
               // retry delay
               const _retryDelay = Math.pow(2, retryCount) * retryDelay;
-              // retry timeout
-              const _timeout = deadline.getTime() - startTime.getTime();
+
               // logger
               logger.debug(
                 `\x1b[31m[Response(${
                   Date.now() - startTime.getTime()
-                }ms)]\x1b[0m${clientId}>${dbname}>${methodName}]: ${JSON.stringify(
+                }ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${JSON.stringify(
                   savedReceiveMessage
-                )}, status: ${JSON.stringify(status)}`
+                )}`
               );
+
               logger.debug(
-                `\x1b[31m[Retry(${_retryDelay}ms, timeout:${_timeout}ms)]\x1b[0m${clientId}>${dbname}>${methodName}`
+                `\x1b[31m[Retry(${_retryDelay}ms]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m:, status: ${JSON.stringify(
+                  status
+                )}`
               );
 
               // set new deadline
-              options.deadline = new Date(Date.now() + _timeout);
+              options.deadline = new Date(Date.now() + timeout);
               // create new call
               const newCall = nextCall(options);
               newCall.start(savedMetadata, retryListener);
@@ -188,7 +196,7 @@ export const getRetryInterceptor = ({
               logger.debug(
                 `\x1b[32m[Response(${
                   Date.now() - startTime.getTime()
-                }ms)]\x1b[0m${clientId}>${dbname}>${methodName}]: ${JSON.stringify(
+                }ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${JSON.stringify(
                   savedReceiveMessage
                 )}`
               );
@@ -201,10 +209,12 @@ export const getRetryInterceptor = ({
         savedNext(metadata, retryListener);
       },
       sendMessage: (message: any, next: Function) => {
+        const string = JSON.stringify(message);
+        // if string is too big, just show 1000 characters
+        const msg =
+          string.length > 2048 ? string.slice(0, 2048) + '...' : string;
         logger.debug(
-          `\x1b[34m[Request]\x1b[0m${clientId}>${dbname}>${methodName}: ${JSON.stringify(
-            message
-          )}`
+          `\x1b[34m[Request]\x1b[0m${clientId}>${dbname}>\x1b[1m${methodName}(${timeoutInSeconds})\x1b[0m: ${msg}`
         );
         savedSendMessage = message;
         next(message);

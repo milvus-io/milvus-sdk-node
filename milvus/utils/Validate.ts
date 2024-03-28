@@ -152,6 +152,7 @@ export const isInIgnoreRetryCodes = (
     grpcStatus.ALREADY_EXISTS,
     grpcStatus.RESOURCE_EXHAUSTED,
     grpcStatus.UNIMPLEMENTED,
+    grpcStatus.OK,
   ]
 ): boolean => {
   return codesToCheck.includes(code);
