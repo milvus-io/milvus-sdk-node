@@ -7,7 +7,6 @@ import {
   DataType,
   SparseVectorArray,
   SparseVectorDic,
-  SparseVectorCOO,
   SparseVectorCSR,
 } from '../../milvus';
 

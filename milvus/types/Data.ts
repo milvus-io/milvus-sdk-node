@@ -18,7 +18,7 @@ export type FloatVector = number[];
 export type Float16Vector = number[];
 export type BFloat16Vector = number[];
 export type BinaryVector = number[];
-export type SparseVectorArray = number[];
+export type SparseVectorArray = (number | undefined)[];
 export type SparseVectorDic = { [key: string]: number };
 export type SparseVectorCSR = {
   values: number[];

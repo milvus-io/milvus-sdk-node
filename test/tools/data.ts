@@ -16,7 +16,7 @@ interface DataGenerator {
     max_capacity?: number;
     is_partition_key?: boolean;
     index?: number;
-    sparseType?: 'array' | 'object' | 'csr' | 'coo';
+    sparseType?: string;
   }): FieldData;
 }
 
@@ -238,7 +238,11 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
  * @param count The number of data points to generate
  * @returns An array of objects representing the generated data
  */
-export const generateInsertData = (fields: FieldType[], count: number = 10) => {
+export const generateInsertData = (
+  fields: FieldType[],
+  count: number = 10,
+  options?: { sparseType: string }
+) => {
   const rows: { [x: string]: any }[] = []; // Initialize an empty array to store the generated data
 
   // Loop until we've generated the desired number of data points
@@ -274,6 +278,7 @@ export const generateInsertData = (fields: FieldType[], count: number = 10) => {
         ),
         index: count,
         is_partition_key: field.is_partition_key,
+        sparseType: options && options.sparseType,
       };
 
       // Generate data

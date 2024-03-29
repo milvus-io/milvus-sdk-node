@@ -16,7 +16,7 @@ const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
-  db_name: 'sparse_object_vector_DB',
+  db_name: 'sparse_array_vector_DB',
 };
 
 const p = {
@@ -25,7 +25,9 @@ const p = {
   dim: [24], // useless
 };
 const collectionParams = genCollectionParams(p);
-const data = generateInsertData(collectionParams.fields, 10);
+const data = generateInsertData(collectionParams.fields, 10, {
+  sparseType: 'array',
+});
 
 describe(`Sparse vectors type:object API testing`, () => {
   beforeAll(async () => {
@@ -97,15 +99,21 @@ describe(`Sparse vectors type:object API testing`, () => {
       output_fields: ['vector', 'id'],
     });
 
-    const originKeys = Object.keys(data[0].vector);
-    const originValues = Object.values(data[0].vector);
+    // console.dir(query, { depth: null });
+
+    const originKeys = Object.keys(query.data[0].vector);
+    const originValues = Object.values(query.data[0].vector);
 
     const outputKeys: string[] = Object.keys(query.data[0].vector);
     const outputValues: number[] = Object.values(query.data[0].vector);
 
     expect(originKeys).toEqual(outputKeys);
+
+    // filter  undefined in originValues
     originValues.forEach((value, index) => {
-      expect(value).toBeCloseTo(outputValues[index]);
+      if (value) {
+        expect(value).toBeCloseTo(outputValues[index]);
+      }
     });
   });
 

@@ -12,21 +12,24 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
-  db_name: 'sparse_object_vector_DB',
+  db_name: 'sparse_csr_vector_DB',
 };
 
 const p = {
   collectionName: COLLECTION_NAME,
   vectorType: [DataType.SparseFloatVector],
   dim: [24], // useless
+  sparseType: 'csr',
 };
 const collectionParams = genCollectionParams(p);
-const data = generateInsertData(collectionParams.fields, 10);
-
+const data = generateInsertData(collectionParams.fields, 10, {
+  sparseType: 'csr',
+});
+console.log(data);
 describe(`Sparse vectors type:object API testing`, () => {
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);

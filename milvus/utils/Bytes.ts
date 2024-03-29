@@ -63,6 +63,8 @@ export const parseSparseVectorToBytes = (
 ): Uint8Array => {
   const indices = Object.keys(data).map(Number);
   const values = Object.values(data);
+  // console.log('indices', indices);
+  // console.log('values', values);
 
   const bytes = new Uint8Array(8 * indices.length);
   for (let i = 0; i < indices.length; i++) {
@@ -73,9 +75,11 @@ export const parseSparseVectorToBytes = (
         `Sparse vector index must be positive and less than 2^32-1: ${index}`
       );
     }
-    if (isNaN(value)) {
-      throw new Error('Sparse vector value must not be NaN');
-    }
+    // // check if value is NaN, we should ignore undefine
+    // if (isNaN(value)) {
+    //   throw new Error(`Sparse vector value must be a number: ${value}`);
+    // }
+
     const indexBytes = new Uint32Array([index]);
     const valueBytes = new Float32Array([value]);
     bytes.set(new Uint8Array(indexBytes.buffer), i * 8);
@@ -115,7 +119,9 @@ export const parseBufferToSparseRow = (
   for (let i = 0; i < bufferData.length; i += 8) {
     const key: string = bufferData.readUInt32LE(i).toString();
     const value: number = bufferData.readFloatLE(i + 4);
-    result[key] = value;
+    if (value) {
+      result[key] = value;
+    }
   }
   return result;
 };
