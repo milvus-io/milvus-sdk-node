@@ -205,10 +205,14 @@ describe(`utils/test`, () => {
     expect(Array.isArray(csr.indices)).toBe(true);
     // test csr indices should be sorted
     const sortedIndices = csr.indices.slice().sort((a, b) => a - b);
+    // test csr indices should be unique
+    const uniqueIndices = new Set(csr.indices);
+    expect(uniqueIndices.size).toBe(csr.indices.length);
     expect(csr.indices).toEqual(sortedIndices);
     expect(Array.isArray(csr.values)).toBe(true);
     expect(csr.indices.length).toBeLessThanOrEqual(24);
     expect(csr.values.length).toBeLessThanOrEqual(24);
+    expect(csr.indices.length).toEqual(csr.values.length);
   });
 
   // it('Generate COO sparse vector', () => {

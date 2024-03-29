@@ -21,8 +21,8 @@ export type BinaryVector = number[];
 export type SparseVectorArray = (number | undefined)[];
 export type SparseVectorDic = { [key: string]: number };
 export type SparseVectorCSR = {
-  values: number[];
   indices: number[];
+  values: number[];
 };
 export type SparseVectorCOO = { row: number; column: number; value: number }[];
 

@@ -7,6 +7,7 @@ import {
   DataType,
   VectorTypes,
   Float16Vector,
+  SparseVectorCSR,
 } from '..';
 
 /**
@@ -61,12 +62,18 @@ export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
 export const parseSparseVectorToBytes = (
   data: SparseFloatVector
 ): Uint8Array => {
-  const indices = Object.keys(data).map(Number);
-  const values = Object.values(data);
-  // console.log('indices', indices);
-  // console.log('values', values);
+  // if csr format, just get the indices and values from the object
+  // if array or object, get the keys and values
+  const indices =
+    (data as SparseVectorCSR).indices || Object.keys(data).map(Number);
+  const values = (data as SparseVectorCSR).values || Object.values(data);
 
+  // console.log('index', indices,)
+
+  // create a buffer to store the bytes
   const bytes = new Uint8Array(8 * indices.length);
+
+  // loop through the indices and values and add them to the buffer
   for (let i = 0; i < indices.length; i++) {
     const index = indices[i];
     const value = values[i];
@@ -75,10 +82,6 @@ export const parseSparseVectorToBytes = (
         `Sparse vector index must be positive and less than 2^32-1: ${index}`
       );
     }
-    // // check if value is NaN, we should ignore undefine
-    // if (isNaN(value)) {
-    //   throw new Error(`Sparse vector value must be a number: ${value}`);
-    // }
 
     const indexBytes = new Uint32Array([index]);
     const valueBytes = new Float32Array([value]);
