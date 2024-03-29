@@ -5,7 +5,6 @@ import {
   FieldType,
 } from '../../milvus';
 import { MAX_LENGTH, P_KEY_VALUES } from './const';
-import { Float16Array } from '@petamoriken/float16';
 import Long from 'long';
 
 interface DataGenerator {
@@ -17,6 +16,7 @@ interface DataGenerator {
     max_capacity?: number;
     is_partition_key?: boolean;
     index?: number;
+    sparseType?: 'array' | 'object' | 'csr' | 'coo';
   }): FieldData;
 }
 
@@ -153,13 +153,58 @@ export const genInt64: DataGenerator = () => {
 // for example {2: 0.5, 3: 0.3, 4: 0.2}
 export const genSparseVector: DataGenerator = params => {
   const dim = params!.dim || 24;
+  const sparseType = params!.sparseType || 'object';
   const nonZeroCount = Math.floor(Math.random() * dim!) || 4;
 
-  const vector: { [key: number]: number } = {};
-  for (let i = 0; i < nonZeroCount; i++) {
-    vector[Math.floor(Math.random() * dim!)] = Math.random();
+  switch (sparseType) {
+    // like this: [0, 0, 0, 1.5, 0, 0, 2.0, 0, 0, -3.5];
+    case 'array':
+      const sparseArray = Array.from({ length: dim! }, () => 0);
+      for (let i = 0; i < nonZeroCount; i++) {
+        sparseArray[Math.floor(Math.random() * dim!)] = Math.random();
+      }
+      return sparseArray;
+
+    /*
+      const sparseDictionary = {
+          3: 1.5,
+          6: 2.0,
+          9: -3.5
+      };
+    */
+    case 'csr':
+      const csr = {
+        indices: Array.from({ length: nonZeroCount }, () =>
+          Math.floor(Math.random() * dim!)
+        ).sort((a, b) => a - b),
+        values: Array.from({ length: nonZeroCount }, () => Math.random()),
+      };
+      return csr;
+    case 'coo':
+      const coo = {
+        row: [0],
+        col: Array.from({ length: nonZeroCount }, () =>
+          Math.floor(Math.random() * dim!)
+        ),
+        data: Array.from({ length: nonZeroCount }, () => Math.random()),
+      };
+      return coo;
+
+    /* 
+      const sparseValues = [1.5, 2.0, -3.5]; 
+      const sparseRowIndices = [3, 6, 9]; 
+      const sparseVector = {
+          values: sparseValues,
+          rowIndices: sparseRowIndices
+      };
+    */
+    default: // object
+      const sparseObject: { [key: number]: number } = {};
+      for (let i = 0; i < nonZeroCount; i++) {
+        sparseObject[Math.floor(Math.random() * dim!)] = Math.random();
+      }
+      return sparseObject;
   }
-  return vector;
 };
 
 export const genFloat16: DataGenerator = params => {
