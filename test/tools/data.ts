@@ -166,7 +166,7 @@ export const genSparseVector: DataGenerator = params => {
           0.5,
           0.3,
           undefined,
-          0.2
+          0.2]
       */
       const sparseArray = Array.from({ length: dim! }, () => Math.random());
       for (let i = 0; i < nonZeroCount; i++) {
@@ -176,12 +176,11 @@ export const genSparseVector: DataGenerator = params => {
 
     case 'csr':
       /*
-      const sparseDictionary = {
-          3: 1.5,
-          6: 2.0,
-          9: -3.5
+      const sparseCSR = {
+          indices: [2, 5, 8],
+          values: [5, 3, 7]
       };
-    */
+     */
       const indicesSet = new Set<number>();
       const csr = {
         indices: Array.from({ length: nonZeroCount }, () => {
