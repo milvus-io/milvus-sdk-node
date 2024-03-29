@@ -8,6 +8,7 @@ import {
   SparseVectorArray,
   SparseVectorDic,
   SparseVectorCSR,
+  SparseVectorCOO,
 } from '../../milvus';
 
 describe(`utils/test`, () => {
@@ -215,22 +216,23 @@ describe(`utils/test`, () => {
     expect(csr.indices.length).toEqual(csr.values.length);
   });
 
-  // it('Generate COO sparse vector', () => {
-  //   const params = { sparseType: 'coo', dim: 24 } as any;
-  //   const coo = genSparseVector(params) as SparseVectorCOO;
-  //   expect(coo.hasOwnProperty('row')).toBe(true);
-  //   expect(coo.hasOwnProperty('col')).toBe(true);
-  //   expect(coo.hasOwnProperty('data')).toBe(true);
-  //   expect(coo.hasOwnProperty('shape')).toBe(true);
-  //   expect(Array.isArray(coo.row)).toBe(true);
-  //   expect(Array.isArray(coo.col)).toBe(true);
-  //   expect(Array.isArray(coo.data)).toBe(true);
-  //   expect(Array.isArray(coo.shape)).toBe(true);
-  //   expect(coo.row.length).toBe(1);
-  //   expect(coo.col.length).toBeLessThanOrEqual(24);
-  //   expect(coo.data.length).toBeLessThanOrEqual(24);
-  //   expect(coo.shape.length).toBe(2);
-  // });
+  it('Generate COO sparse vector', () => {
+    const params = { sparseType: 'coo', dim: 24 } as any;
+    const coo = genSparseVector(params) as SparseVectorCOO;
+    expect(Array.isArray(coo)).toBe(true);
+    expect(coo.length).toBeLessThanOrEqual(24);
+    // test every item should has index and value property, and value should be number
+    coo.forEach(item => {
+      expect(item.hasOwnProperty('index')).toBe(true);
+      expect(item.hasOwnProperty('value')).toBe(true);
+      expect(typeof item.index).toBe('number');
+      expect(typeof item.value).toBe('number');
+    });
+    // test index should be unique
+    const indices = coo.map(item => item.index);
+    const uniqueIndices = new Set(indices);
+    expect(uniqueIndices.size).toBe(indices.length);
+  });
 
   it('Generate dic sparse vector', () => {
     const params = { sparseType: 'object', dim: 24 } as any;

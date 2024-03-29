@@ -24,7 +24,7 @@ export type SparseVectorCSR = {
   indices: number[];
   values: number[];
 };
-export type SparseVectorCOO = { row: number; column: number; value: number }[];
+export type SparseVectorCOO = { index: number; value: number }[];
 
 export type SparseFloatVector =
   | SparseVectorArray

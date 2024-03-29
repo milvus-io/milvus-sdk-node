@@ -8,6 +8,8 @@ import {
   VectorTypes,
   Float16Vector,
   SparseVectorCSR,
+  SparseVectorCOO,
+  SparseVectorDic,
 } from '..';
 
 /**
@@ -53,6 +55,26 @@ export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
 
 /**
  * Converts a sparse float vector into bytes format.
+ * @param {SparseFloatVector} vector - The sparse float vector to convert.
+ *
+ * @returns string, 'array' | 'coo' | 'csr' | 'dict'
+ */
+export const getSparseFloatVectorType = (vector: SparseFloatVector) => {
+  if (Array.isArray(vector)) {
+    if (typeof vector[0] === 'number' || typeof vector[0] === 'undefined') {
+      return 'array';
+    } else {
+      return 'coo';
+    }
+  } else if ('indices' in vector && 'values' in vector) {
+    return 'csr';
+  } else {
+    return 'dict';
+  }
+};
+
+/**
+ * Converts a sparse float vector into bytes format.
  *
  * @param {SparseFloatVector} data - The sparse float vector to convert.
  *
@@ -62,13 +84,34 @@ export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
 export const parseSparseVectorToBytes = (
   data: SparseFloatVector
 ): Uint8Array => {
-  // if csr format, just get the indices and values from the object
-  // if array or object, get the keys and values
-  const indices =
-    (data as SparseVectorCSR).indices || Object.keys(data).map(Number);
-  const values = (data as SparseVectorCSR).values || Object.values(data);
+  // detect the format of the sparse vector
+  const type = getSparseFloatVectorType(data);
 
-  // console.log('index', indices,)
+  let indices: number[];
+  let values: number[];
+
+  switch (type) {
+    case 'array':
+      indices = Object.keys(data).map(Number);
+      values = Object.values(data);
+      break;
+    case 'coo':
+      indices = Object.values(
+        (data as SparseVectorCOO).map((item: any) => item.index)
+      );
+      values = Object.values(
+        (data as SparseVectorCOO).map((item: any) => item.value)
+      );
+      break;
+    case 'csr':
+      indices = (data as SparseVectorCSR).indices;
+      values = (data as SparseVectorCSR).values;
+      break;
+    case 'dict':
+      indices = Object.keys(data).map(Number);
+      values = Object.values(data);
+      break;
+  }
 
   // create a buffer to store the bytes
   const bytes = new Uint8Array(8 * indices.length);

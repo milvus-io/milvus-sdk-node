@@ -16,18 +16,22 @@ const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
-  db_name: 'sparse_object_vector_DB',
+  db_name: 'sparse_coo_vector_DB',
 };
 
 const p = {
   collectionName: COLLECTION_NAME,
   vectorType: [DataType.SparseFloatVector],
   dim: [24], // useless
+  sparseType: 'coo',
 };
 const collectionParams = genCollectionParams(p);
-const data = generateInsertData(collectionParams.fields, 10);
+const data = generateInsertData(collectionParams.fields, 5, {
+  sparseType: 'coo',
+});
 
-describe(`Sparse vectors type:object API testing`, () => {
+// console.dir(data, { depth: null });
+describe(`Sparse vectors type:coo API testing`, () => {
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
@@ -97,14 +101,18 @@ describe(`Sparse vectors type:object API testing`, () => {
       output_fields: ['vector', 'id'],
     });
 
-    const originKeys = Object.keys(data[0].vector);
-    const originValues = Object.values(data[0].vector);
+    const originKeys = Object.values(
+      data[0].vector.map((item: any) => item.index)
+    ) as number[];
+    const originValues = Object.values(
+      data[0].vector.map((item: any) => item.value)
+    ) as number[];
 
-    const outputKeys: string[] = Object.keys(query.data[0].vector);
+    const outputKeys: number[] = Object.keys(query.data[0].vector).map(Number);
     const outputValues: number[] = Object.values(query.data[0].vector);
 
     expect(originKeys).toEqual(outputKeys);
-    originValues.forEach((value, index) => {
+    originValues.forEach((value: number, index: number) => {
       expect(value).toBeCloseTo(outputValues[index]);
     });
   });

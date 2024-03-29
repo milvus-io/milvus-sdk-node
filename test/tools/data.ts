@@ -3,6 +3,7 @@ import {
   FieldData,
   convertToDataType,
   FieldType,
+  SparseVectorCOO,
 } from '../../milvus';
 import { MAX_LENGTH, P_KEY_VALUES } from './const';
 import Long from 'long';
@@ -157,46 +158,78 @@ export const genSparseVector: DataGenerator = params => {
   const nonZeroCount = Math.floor(Math.random() * dim!) || 4;
 
   switch (sparseType) {
-    // like this: [undefined, undefined, undefined, 1.5, undefined, undefined, 2.0, undefined, undefined, -3.5];
     case 'array':
-      const sparseArray = Array.from({ length: dim! }, (_, i) =>
-        i < nonZeroCount ? Math.random() : undefined
-      );
+      /*
+      const sparseArray = [
+          undefined,
+          0.0,
+          0.5,
+          0.3,
+          undefined,
+          0.2
+      */
+      const sparseArray = Array.from({ length: dim! }, () => Math.random());
+      for (let i = 0; i < nonZeroCount; i++) {
+        sparseArray[Math.floor(Math.random() * dim!)] = undefined as any;
+      }
       return sparseArray;
-    /*
+
+    case 'csr':
+      /*
       const sparseDictionary = {
           3: 1.5,
           6: 2.0,
           9: -3.5
       };
     */
-    case 'csr':
+      const indicesSet = new Set<number>();
       const csr = {
-        indices: Array.from({ length: nonZeroCount }, () =>
-          Math.floor(Math.random() * dim!)
-        ).sort((a, b) => a - b),
-        values: Array.from({ length: nonZeroCount }, () => Math.random()),
+        indices: Array.from({ length: nonZeroCount }, () => {
+          let index: number;
+          do {
+            index = Math.floor(Math.random() * dim!);
+          } while (indicesSet.has(index));
+          indicesSet.add(index);
+          return index;
+        }).sort((a, b) => a - b),
+        values: Array.from({ length: nonZeroCount }, (_, i) => Math.random()),
       };
       return csr;
+
     case 'coo':
-      const coo = {
-        row: [0],
-        col: Array.from({ length: nonZeroCount }, () =>
-          Math.floor(Math.random() * dim!)
-        ),
-        data: Array.from({ length: nonZeroCount }, () => Math.random()),
-      };
+      /*
+        const sparseCOO = [
+          { index: 2, value: 5 },
+          { index: 5, value: 3 },
+          { index: 8, value: 7 }
+        ];
+      */
+      const coo: SparseVectorCOO = [];
+      const indexSet = new Set<number>();
+
+      while (coo.length < nonZeroCount) {
+        const index = Math.floor(Math.random() * dim!);
+        if (!indexSet.has(index)) {
+          coo.push({
+            index: index,
+            value: Math.random(),
+          });
+          indexSet.add(index);
+        }
+      }
+
+      // sort by index
+      coo.sort((a, b) => a.index - b.index);
       return coo;
 
-    /* 
-      const sparseValues = [1.5, 2.0, -3.5]; 
-      const sparseRowIndices = [3, 6, 9]; 
-      const sparseVector = {
-          values: sparseValues,
-          rowIndices: sparseRowIndices
+    default: // object
+      /* 
+      const sparseObject = {
+          3: 1.5,
+          6: 2.0,
+          9: -3.5
       };
     */
-    default: // object
       const sparseObject: { [key: number]: number } = {};
       for (let i = 0; i < nonZeroCount; i++) {
         sparseObject[Math.floor(Math.random() * dim!)] = Math.random();
