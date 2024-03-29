@@ -142,15 +142,39 @@ export const checkSearchParams = (data: any) => {
  * @param {number[]} [codesToCheck=[grpcStatus.DEADLINE_EXCEEDED, grpcStatus.UNAVAILABLE]] - An array of gRPC status codes to check against.
  * @returns {boolean} Whether the gRPC status code matches any of the given codes.
  */
-export const isStatusCodeMatched = (
+export const isInIgnoreRetryCodes = (
   code: number,
   codesToCheck: number[] = [
     grpcStatus.DEADLINE_EXCEEDED,
-    grpcStatus.UNAVAILABLE,
-    grpcStatus.INTERNAL,
+    grpcStatus.PERMISSION_DENIED,
+    grpcStatus.UNAUTHENTICATED,
+    grpcStatus.INVALID_ARGUMENT,
+    grpcStatus.ALREADY_EXISTS,
+    grpcStatus.RESOURCE_EXHAUSTED,
+    grpcStatus.UNIMPLEMENTED,
+    grpcStatus.OK,
   ]
 ): boolean => {
   return codesToCheck.includes(code);
+};
+
+/**
+ * Checks if a milvus status message is valid.
+ */
+export const isInvalidMessage = (message: {
+  code: number;
+  status?: { code: number };
+}) => {
+  const codesToCheck = [2200];
+
+  return (
+    message &&
+    codesToCheck.some(
+      code =>
+        code === message.code ||
+        (message.status && code === message.status.code)
+    )
+  );
 };
 
 /**
