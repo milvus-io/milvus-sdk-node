@@ -53,7 +53,7 @@ export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
 };
 
 /**
- * Converts a sparse float vector into bytes format.
+ * Get SparseVector type.
  * @param {SparseFloatVector} vector - The sparse float vector to convert.
  *
  * @returns string, 'array' | 'coo' | 'csr' | 'dict'
