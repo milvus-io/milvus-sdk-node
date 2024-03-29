@@ -9,7 +9,6 @@ import {
   Float16Vector,
   SparseVectorCSR,
   SparseVectorCOO,
-  SparseVectorDic,
 } from '..';
 
 /**
