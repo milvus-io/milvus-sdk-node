@@ -54,6 +54,9 @@ export interface IndexDescription {
 export interface DescribeIndexResponse extends resStatusResponse {
   index_descriptions: IndexDescription[];
 }
+export interface ListIndexResponse extends resStatusResponse {
+  indexes: string[];
+}
 
 export interface GetIndexStateResponse extends resStatusResponse {
   state: IndexState;
