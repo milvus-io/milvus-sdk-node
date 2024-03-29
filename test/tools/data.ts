@@ -157,14 +157,12 @@ export const genSparseVector: DataGenerator = params => {
   const nonZeroCount = Math.floor(Math.random() * dim!) || 4;
 
   switch (sparseType) {
-    // like this: [0, 0, 0, 1.5, 0, 0, 2.0, 0, 0, -3.5];
+    // like this: [undefined, undefined, undefined, 1.5, undefined, undefined, 2.0, undefined, undefined, -3.5];
     case 'array':
-      const sparseArray = Array.from({ length: dim! }, () => 0);
-      for (let i = 0; i < nonZeroCount; i++) {
-        sparseArray[Math.floor(Math.random() * dim!)] = Math.random();
-      }
+      const sparseArray = Array.from({ length: dim! }, (_, i) =>
+        i < nonZeroCount ? Math.random() : undefined
+      );
       return sparseArray;
-
     /*
       const sparseDictionary = {
           3: 1.5,

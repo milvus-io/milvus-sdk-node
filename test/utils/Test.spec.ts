@@ -189,13 +189,13 @@ describe(`utils/test`, () => {
     const sparseArray = genSparseVector(params) as SparseVectorArray;
     expect(Array.isArray(sparseArray)).toBe(true);
     expect(sparseArray.length).toBeLessThanOrEqual(24);
-    sparseArray.forEach(item => {
-      expect(typeof item).toBe('number');
-    });
 
     // test some of items are zero
-    const nonZeroItems = sparseArray.filter(item => item !== 0);
+    const nonZeroItems = sparseArray.filter(item => item !== undefined);
     expect(nonZeroItems.length).toBeLessThanOrEqual(24);
+    // test some of items are undefined
+    const undefinedItems = sparseArray.filter(item => item === undefined);
+    expect(undefinedItems.length).toBeLessThanOrEqual(24);
   });
 
   it('Generate CSR sparse vector', () => {
