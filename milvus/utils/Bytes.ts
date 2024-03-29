@@ -7,6 +7,8 @@ import {
   DataType,
   VectorTypes,
   Float16Vector,
+  SparseVectorCSR,
+  SparseVectorCOO,
 } from '..';
 
 /**
@@ -51,6 +53,26 @@ export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
 };
 
 /**
+ * Get SparseVector type.
+ * @param {SparseFloatVector} vector - The sparse float vector to convert.
+ *
+ * @returns string, 'array' | 'coo' | 'csr' | 'dict'
+ */
+export const getSparseFloatVectorType = (vector: SparseFloatVector) => {
+  if (Array.isArray(vector)) {
+    if (typeof vector[0] === 'number' || typeof vector[0] === 'undefined') {
+      return 'array';
+    } else {
+      return 'coo';
+    }
+  } else if ('indices' in vector && 'values' in vector) {
+    return 'csr';
+  } else {
+    return 'dict';
+  }
+};
+
+/**
  * Converts a sparse float vector into bytes format.
  *
  * @param {SparseFloatVector} data - The sparse float vector to convert.
@@ -61,10 +83,39 @@ export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
 export const parseSparseVectorToBytes = (
   data: SparseFloatVector
 ): Uint8Array => {
-  const indices = Object.keys(data).map(Number);
-  const values = Object.values(data);
+  // detect the format of the sparse vector
+  const type = getSparseFloatVectorType(data);
 
+  let indices: number[];
+  let values: number[];
+
+  switch (type) {
+    case 'array':
+      indices = Object.keys(data).map(Number);
+      values = Object.values(data);
+      break;
+    case 'coo':
+      indices = Object.values(
+        (data as SparseVectorCOO).map((item: any) => item.index)
+      );
+      values = Object.values(
+        (data as SparseVectorCOO).map((item: any) => item.value)
+      );
+      break;
+    case 'csr':
+      indices = (data as SparseVectorCSR).indices;
+      values = (data as SparseVectorCSR).values;
+      break;
+    case 'dict':
+      indices = Object.keys(data).map(Number);
+      values = Object.values(data);
+      break;
+  }
+
+  // create a buffer to store the bytes
   const bytes = new Uint8Array(8 * indices.length);
+
+  // loop through the indices and values and add them to the buffer
   for (let i = 0; i < indices.length; i++) {
     const index = indices[i];
     const value = values[i];
@@ -73,9 +124,7 @@ export const parseSparseVectorToBytes = (
         `Sparse vector index must be positive and less than 2^32-1: ${index}`
       );
     }
-    if (isNaN(value)) {
-      throw new Error('Sparse vector value must not be NaN');
-    }
+
     const indexBytes = new Uint32Array([index]);
     const valueBytes = new Float32Array([value]);
     bytes.set(new Uint8Array(indexBytes.buffer), i * 8);
@@ -115,7 +164,9 @@ export const parseBufferToSparseRow = (
   for (let i = 0; i < bufferData.length; i += 8) {
     const key: string = bufferData.readUInt32LE(i).toString();
     const value: number = bufferData.readFloatLE(i + 4);
-    result[key] = value;
+    if (value) {
+      result[key] = value;
+    }
   }
   return result;
 };

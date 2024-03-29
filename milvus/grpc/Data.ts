@@ -57,8 +57,6 @@ import {
   parseSparseRowsToBytes,
   getSparseDim,
   parseBinaryVectorToBytes,
-  parseFloat16VectorToBytes,
-  Float16Vector,
 } from '../';
 import { Collection } from './Collection';
 
@@ -183,7 +181,7 @@ export class Data extends Collection {
         }
         if (
           DataTypeMap[field.type] === DataType.BinaryVector &&
-          (rowData[name] as VectorTypes).length !== field.dim! / 8
+          (rowData[name] as BinaryVector).length !== field.dim! / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }

@@ -18,7 +18,21 @@ export type FloatVector = number[];
 export type Float16Vector = number[];
 export type BFloat16Vector = number[];
 export type BinaryVector = number[];
-export type SparseFloatVector = { [key: string]: number };
+export type SparseVectorArray = (number | undefined)[];
+export type SparseVectorDic = { [key: string]: number };
+export type SparseVectorCSR = {
+  indices: number[];
+  values: number[];
+};
+export type SparseVectorCOO = { index: number; value: number }[];
+
+export type SparseFloatVector =
+  | SparseVectorArray
+  | SparseVectorDic
+  | SparseVectorCSR
+  | SparseVectorCOO;
+
+// export type SparseFloatVector = { [key: string]: number };
 export type VectorTypes =
   | FloatVector
   | Float16Vector

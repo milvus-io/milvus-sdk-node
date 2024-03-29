@@ -1,5 +1,15 @@
-import { generateInsertData, genCollectionParams } from '../tools';
-import { DataType } from '../../milvus';
+import {
+  generateInsertData,
+  genCollectionParams,
+  genSparseVector,
+} from '../tools';
+import {
+  DataType,
+  SparseVectorArray,
+  SparseVectorDic,
+  SparseVectorCSR,
+  SparseVectorCOO,
+} from '../../milvus';
 
 describe(`utils/test`, () => {
   it('should generate data for schema created by genCollectionParams', () => {
@@ -172,5 +182,67 @@ describe(`utils/test`, () => {
         Object.keys(d.sparse_vector2).every(d => typeof d === 'string')
       ).toBe(true);
     });
+  });
+
+  it('Generate sparse array vector', () => {
+    const params = { sparseType: 'array', dim: 24 } as any;
+    const sparseArray = genSparseVector(params) as SparseVectorArray;
+    expect(Array.isArray(sparseArray)).toBe(true);
+    expect(sparseArray.length).toBeLessThanOrEqual(24);
+
+    // test some of items are zero
+    const nonZeroItems = sparseArray.filter(item => item !== undefined);
+    expect(nonZeroItems.length).toBeLessThanOrEqual(24);
+    // test some of items are undefined
+    const undefinedItems = sparseArray.filter(item => item === undefined);
+    expect(undefinedItems.length).toBeLessThanOrEqual(24);
+  });
+
+  it('Generate CSR sparse vector', () => {
+    const params = { sparseType: 'csr', dim: 24 } as any;
+    const csr = genSparseVector(params) as SparseVectorCSR;
+    expect(csr.hasOwnProperty('indices')).toBe(true);
+    expect(csr.hasOwnProperty('values')).toBe(true);
+    expect(Array.isArray(csr.indices)).toBe(true);
+    // test csr indices should be sorted
+    const sortedIndices = csr.indices.slice().sort((a, b) => a - b);
+    // test csr indices should be unique
+    const uniqueIndices = new Set(csr.indices);
+    expect(uniqueIndices.size).toBe(csr.indices.length);
+    expect(csr.indices).toEqual(sortedIndices);
+    expect(Array.isArray(csr.values)).toBe(true);
+    expect(csr.indices.length).toBeLessThanOrEqual(24);
+    expect(csr.values.length).toBeLessThanOrEqual(24);
+    expect(csr.indices.length).toEqual(csr.values.length);
+  });
+
+  it('Generate COO sparse vector', () => {
+    const params = { sparseType: 'coo', dim: 24 } as any;
+    const coo = genSparseVector(params) as SparseVectorCOO;
+    expect(Array.isArray(coo)).toBe(true);
+    expect(coo.length).toBeLessThanOrEqual(24);
+    // test every item should has index and value property, and value should be number
+    coo.forEach(item => {
+      expect(item.hasOwnProperty('index')).toBe(true);
+      expect(item.hasOwnProperty('value')).toBe(true);
+      expect(typeof item.index).toBe('number');
+      expect(typeof item.value).toBe('number');
+    });
+    // test index should be unique
+    const indices = coo.map(item => item.index);
+    const uniqueIndices = new Set(indices);
+    expect(uniqueIndices.size).toBe(indices.length);
+  });
+
+  it('Generate dic sparse vector', () => {
+    const params = { sparseType: 'object', dim: 24 } as any;
+    const sparseObject = genSparseVector(params) as SparseVectorDic;
+    expect(typeof sparseObject).toBe('object');
+    expect(Object.keys(sparseObject).length).toBeLessThanOrEqual(24);
+    for (const key in sparseObject) {
+      expect(parseInt(key, 10)).toBeGreaterThanOrEqual(0);
+      expect(parseInt(key, 10)).toBeLessThan(24);
+      expect(typeof sparseObject[key]).toBe('number');
+    }
   });
 });
