@@ -270,6 +270,11 @@ export interface SearchReq extends collectionNameReq {
   consistency_level?: ConsistencyLevelEnum;
 }
 
+export interface SearchIteratorReq
+  extends Omit<SearchSimpleReq, 'vectors' | 'offset' | 'limit' | 'topk'> {
+  pageSize: number;
+}
+
 export interface SearchRes extends resStatusResponse {
   results: {
     top_k: number;
@@ -316,6 +321,11 @@ export interface QueryReq extends collectionNameReq {
   offset?: number;
   limit?: number;
   consistency_level?: ConsistencyLevelEnum;
+}
+
+export interface QueryIteratorReq
+  extends Omit<QueryReq, 'ids' | 'offset' | 'limit'> {
+  pageSize: number;
 }
 
 export interface GetReq extends collectionNameReq {

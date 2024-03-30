@@ -38,6 +38,7 @@ import {
   SearchReq,
   SearchRes,
   SearchSimpleReq,
+  SearchIteratorReq,
   DEFAULT_TOPK,
   promisify,
   findKeyValue,
@@ -60,6 +61,10 @@ import {
   CountReq,
   CountResult,
   DEFAULT_COUNT_QUERY_STRING,
+  MIN_INT64,
+  DataTypeStringEnum,
+  FieldSchema,
+  QueryIteratorReq,
 } from '../';
 import { Collection } from './Collection';
 
@@ -589,6 +594,121 @@ export class Data extends Collection {
       /* istanbul ignore next */
       throw new Error(err);
     }
+  }
+
+  getQueryIteratorExpr(params: {
+    expr: string;
+    pkField: FieldSchema;
+    page: number;
+    pageCache: Map<
+      number,
+      { firstPKId: number | string; lastPKId: number | string }
+    >;
+  }) {
+    // get params
+    const { expr, page, pageCache, pkField } = params;
+
+    // get cache
+    const cache = pageCache.get(page - 1);
+
+    // format pk value
+    const formatPKValue = (pkId: string | number) =>
+      pkField?.data_type === DataTypeStringEnum.VarChar ? `'${pkId}'` : pkId;
+
+    // If cache does not exist, return expression based on primaryKey type
+    let iteratorExpr = '';
+    if (!cache) {
+      // get default value
+      const defaultValue =
+        pkField?.data_type === DataTypeStringEnum.VarChar
+          ? "''"
+          : `${MIN_INT64}`;
+      iteratorExpr = `${pkField?.name} > ${defaultValue}`;
+    } else {
+      // get last and first pk id
+      const { lastPKId } = cache;
+      const lastPKValue = formatPKValue(lastPKId);
+
+      // build expr, get next page if (page > currentPage)
+      iteratorExpr = `(${pkField?.name} > ${lastPKValue})`;
+    }
+
+    // return expr combined with iteratorExpr
+    return expr ? `${expr} && ${iteratorExpr}` : iteratorExpr;
+  }
+
+  async queryIterator(data: QueryIteratorReq): Promise<any> {
+    // get collection info
+    const pkField = await this.getPkField(data);
+
+    // store client;
+    const client = this;
+
+    return {
+      pageSize: data.pageSize,
+      page: 0,
+      expr: data.expr || data.filter || '',
+      localCache: new Map(),
+      total: 0,
+      [Symbol.asyncIterator]() {
+        return {
+          pageSize: this.pageSize,
+          page: this.page,
+          expr: this.expr,
+          localCache: this.localCache,
+          total: this.total,
+          async next() {
+            // set limit for current batch
+            (data as SearchSimpleReq).limit = this.pageSize;
+
+            // get current page expr
+            data.expr = client.getQueryIteratorExpr({
+              page: this.page,
+              expr: this.expr,
+              pkField,
+              pageCache: this.localCache,
+            });
+
+            // search data
+            const res = await client.query(data);
+            // get total count
+            if (!this.total) {
+              const count = await client.count({
+                collection_name: data.collection_name,
+                expr: this.expr,
+              });
+              this.total = count.data;
+            }
+
+            // get first item of the data
+            const firstItem = res.data[0];
+            // get first pk id
+            const firstPKId: string | number =
+              firstItem && firstItem[pkField.name];
+            // get last item of the data
+            const lastItem = res.data[res.data.length - 1];
+            // get last pk id
+            const lastPKId: string | number =
+              lastItem && lastItem[pkField.name];
+
+            // store pk id in the cache with the page number
+            if (lastItem) {
+              this.localCache.set(this.page, {
+                lastPKId,
+                firstPKId,
+              });
+            }
+
+            if (this.page * this.pageSize >= this.total) {
+              return { done: true, value: res.data };
+            } else {
+              this.page++;
+              return { done: false, value: res.data };
+            }
+          },
+        };
+      },
+    };
   }
 
   /**
