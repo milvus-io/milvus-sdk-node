@@ -91,21 +91,65 @@ describe(`Iterator API`, () => {
     expect(query.data.length).toEqual(10);
   });
 
-  it(`query iterator with dynamic field should success`, async () => {
+  it(`query iterator count with less than total should success`, async () => {
     // search
     // page size
-    const pageSize = 6;
+    const pageSize = 2;
+    const total = 10;
     const iterator = await milvusClient.queryIterator({
       collection_name: COLLECTION,
       pageSize: pageSize,
       expr: 'id > 0',
       output_fields: ['*'],
+      limit: total,
       consistency_level: ConsistencyLevelEnum.Session,
     });
 
     const results: any = [];
     let page = 0;
-    for await (let value of iterator) {
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
+
+    // page size should equal to page
+    expect(page).toEqual(Math.ceil(total / pageSize));
+    // results length should equal to data length
+    expect(results.length).toEqual(total);
+
+    // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
+
+    // every id in query result should be founded in the original data
+    results.forEach((result: any) => {
+      const item = data.find(
+        (item: any) => item.id.toString() === result.id.toString()
+      );
+      expect(typeof item !== 'undefined').toBeTruthy();
+    });
+  });
+
+  it(`query iterator count with larger than total should success`, async () => {
+    // search
+    // page size
+    const pageSize = 2;
+    const total = 100;
+    const iterator = await milvusClient.queryIterator({
+      collection_name: COLLECTION,
+      pageSize: pageSize,
+      expr: 'id > 0',
+      output_fields: ['*'],
+      limit: total,
+      consistency_level: ConsistencyLevelEnum.Session,
+    });
+
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
       results.push(...value);
       page += 1;
     }

@@ -637,19 +637,49 @@ export class Data extends Collection {
     return expr ? `${expr} && ${iteratorExpr}` : iteratorExpr;
   }
 
+  /**
+   * Executes a query and returns an async iterator that allows iterating over the results in batches.
+   *
+   * @param {QueryIteratorReq} data - The query iterator request data.
+   * @returns {Promise<any>} - An async iterator that yields batches of query results.
+   * @throws {Error} - If an error occurs during the query execution.
+   *
+   * @example
+   * const queryData = {
+   *   collection_name: 'my_collection',
+   *   expr: 'age > 30',
+   *   limit: 100,
+   *   pageSize: 10
+   * };
+   *
+   * const iterator = await queryIterator(queryData);
+   *
+   * for await (const batch of iterator) {
+   *   console.log(batch); // Process each batch of query results
+   * }
+   */
   async queryIterator(data: QueryIteratorReq): Promise<any> {
     // get collection info
     const pkField = await this.getPkField(data);
-
     // store client;
     const client = this;
+    // expr
+    const expr = data.expr || data.filter || '';
+    // get count
+    const count = await client.count({
+      collection_name: data.collection_name,
+      expr: expr,
+    });
+    // total should be the minimum of total and count
+    let total = data.limit > count.data ? count.data : data.limit;
 
+    // return iterator
     return {
       pageSize: data.pageSize,
       page: 0,
-      expr: data.expr || data.filter || '',
+      expr: expr,
       localCache: new Map(),
-      total: 0,
+      total: total,
       [Symbol.asyncIterator]() {
         return {
           pageSize: this.pageSize,
@@ -671,14 +701,6 @@ export class Data extends Collection {
 
             // search data
             const res = await client.query(data);
-            // get total count
-            if (!this.total) {
-              const count = await client.count({
-                collection_name: data.collection_name,
-                expr: this.expr,
-              });
-              this.total = count.data;
-            }
 
             // get first item of the data
             const firstItem = res.data[0];
