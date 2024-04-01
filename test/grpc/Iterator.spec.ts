@@ -12,7 +12,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'Iterator_test_db',
@@ -84,7 +84,6 @@ describe(`Iterator API`, () => {
         'dynamic_int64',
         'dynamic_varChar',
       ],
-      consistency_level: ConsistencyLevelEnum.Session,
     });
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -92,7 +91,6 @@ describe(`Iterator API`, () => {
   });
 
   it(`query iterator count with less than total should success`, async () => {
-    // search
     // page size
     const batchSize = 2;
     const total = 10;
@@ -102,7 +100,6 @@ describe(`Iterator API`, () => {
       expr: 'id > 0',
       output_fields: ['*'],
       limit: total,
-      consistency_level: ConsistencyLevelEnum.Session,
     });
 
     const results: any = [];
@@ -134,7 +131,6 @@ describe(`Iterator API`, () => {
   });
 
   it(`query iterator count with larger than total should success`, async () => {
-    // search
     // page size
     const batchSize = 500;
     const total = 1000;
@@ -144,7 +140,6 @@ describe(`Iterator API`, () => {
       expr: 'id > 0',
       output_fields: ['*'],
       limit: total,
-      consistency_level: ConsistencyLevelEnum.Session,
     });
 
     const results: any = [];
@@ -173,5 +168,31 @@ describe(`Iterator API`, () => {
       );
       expect(typeof item !== 'undefined').toBeTruthy();
     });
+  });
+
+  it('search iterator should success', async () => {
+    const batchSize = 2;
+    const total = 10;
+    const iterator = await milvusClient.searchIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      data: data[0].vector,
+      expr: 'id > 0',
+      output_fields: ['*'],
+      limit: total,
+      params: {
+        radius: 10,
+      },
+    });
+
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      console.log('batch', value);
+      results.push(...value);
+      page += 1;
+    }
+
+    console.log('all finish', results);
   });
 });

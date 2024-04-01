@@ -594,6 +594,52 @@ export class Data extends Collection {
     }
   }
 
+  async searchIterator(data: SearchIteratorReq): Promise<any> {
+    const client = this;
+
+    // get count
+    const count = await client.count({
+      collection_name: data.collection_name,
+      expr: data.expr || data.filter || '',
+    });
+    // total should be the minimum of total and count
+    let total = data.limit > count.data ? count.data : data.limit;
+
+    const initRangeParams = {
+      radius: data.params.radius || 10,
+      range_filter: data.params.range_filter || 0,
+    };
+
+    return {
+      batchSize: data.batchSize,
+      page: 0,
+      total: total,
+      [Symbol.asyncIterator]() {
+        return {
+          batchSize: this.batchSize,
+          page: this.page,
+          total: this.total,
+          async next() {
+            data.params = { ...data.params, ...initRangeParams };
+            const res = await client.search(data);
+
+            // get last item of the data
+            const lastItem = res.results[res.results.length - 1];
+            // get last item score
+            const lastScore = lastItem && lastItem.score;
+
+            if (this.page === 0) {
+              this.page++;
+              return { done: false, value: res.results };
+            } else {
+              return { done: true, value: res.results };
+            }
+          },
+        };
+      },
+    };
+  }
+
   /**
    * Executes a query and returns an async iterator that allows iterating over the results in batches.
    *

@@ -271,9 +271,11 @@ export interface SearchReq extends collectionNameReq {
 }
 
 export interface SearchIteratorReq
-  extends Omit<SearchSimpleReq, 'vectors' | 'offset' | 'limit' | 'topk'> {
+  extends Omit<SearchSimpleReq, 'data' | 'vectors' | 'offset' | 'limit' | 'topk'> {
+  data: number[]; // data to search
   batchSize: number;
   limit: number;
+  params: keyValueObj;
 }
 
 export interface SearchRes extends resStatusResponse {
