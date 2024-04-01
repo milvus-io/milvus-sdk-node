@@ -1,6 +1,11 @@
-import { promisify } from '../../milvus/utils';
+import {
+  promisify,
+  getQueryIteratorExpr,
+  DataTypeStringEnum,
+  MIN_INT64,
+} from '../../milvus';
 
-describe('promisify', () => {
+describe('Function API testing', () => {
   let pool: any;
   let client: any;
 
@@ -45,5 +50,122 @@ describe('promisify', () => {
     );
     expect(pool.acquire).toHaveBeenCalled();
     expect(pool.release).toHaveBeenCalled();
+  });
+
+  it('should return varchar expression when cache does not exist', () => {
+    const params = {
+      expr: '',
+      pkField: {
+        name: 'id',
+        data_type: DataTypeStringEnum.VarChar,
+      },
+      page: 1,
+      pageCache: new Map(),
+    } as any;
+
+    const result = getQueryIteratorExpr(params);
+
+    expect(result).toBe("id > ''");
+  });
+
+  it('should return varchar expression when cache exists', () => {
+    const params = {
+      expr: '',
+      pkField: {
+        name: 'id',
+        data_type: DataTypeStringEnum.VarChar,
+      },
+      page: 2,
+      pageCache: new Map([
+        [
+          1,
+          {
+            lastPKId: 'abc',
+          },
+        ],
+      ]),
+    } as any;
+
+    const result = getQueryIteratorExpr(params);
+
+    expect(result).toBe("id > 'abc'");
+  });
+
+  it('should return varchar expression combined with iteratorExpr when expr is provided', () => {
+    const params = {
+      expr: 'field > 10',
+      pkField: {
+        name: 'id',
+        data_type: DataTypeStringEnum.VarChar,
+      },
+      page: 1,
+      pageCache: new Map(),
+    } as any;
+
+    const result = getQueryIteratorExpr(params);
+
+    expect(result).toBe("(id > '') && field > 10");
+  });
+
+  it('should return int64 expression when cache does not exist', () => {
+    const params = {
+      expr: '',
+      pkField: {
+        name: 'id',
+        data_type: DataTypeStringEnum.Int64,
+      },
+      page: 1,
+      pageCache: new Map(),
+    } as any;
+
+    const result = getQueryIteratorExpr(params);
+
+    expect(result).toBe(`id > ${MIN_INT64}`);
+  });
+
+  it('should return int64 expression when cache exists', () => {
+    const params = {
+      expr: '',
+      pkField: {
+        name: 'id',
+        data_type: DataTypeStringEnum.Int64,
+      },
+      page: 2,
+      pageCache: new Map([
+        [
+          1,
+          {
+            lastPKId: 10,
+          },
+        ],
+      ]),
+    } as any;
+
+    const result = getQueryIteratorExpr(params);
+
+    expect(result).toBe('id > 10');
+  });
+
+  it('should return int64 expression combined with iteratorExpr when expr is provided and cache exists', () => {
+    const params = {
+      expr: 'field > 10',
+      pkField: {
+        name: 'id',
+        data_type: DataTypeStringEnum.Int64,
+      },
+      page: 2,
+      pageCache: new Map([
+        [
+          1,
+          {
+            lastPKId: 10,
+          },
+        ],
+      ]),
+    } as any;
+
+    const result = getQueryIteratorExpr(params);
+
+    expect(result).toBe('(id > 10) && field > 10');
   });
 });

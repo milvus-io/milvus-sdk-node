@@ -1,4 +1,11 @@
-import { KeyValuePair, DataType, ERROR_REASONS } from '../';
+import {
+  KeyValuePair,
+  DataType,
+  ERROR_REASONS,
+  FieldSchema,
+  DataTypeStringEnum,
+  MIN_INT64,
+} from '../';
 import { Pool } from 'generic-pool';
 
 /**
@@ -128,4 +135,50 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
       );
   }
   return camelCase ? convertToCamelCase(dataKey) : dataKey;
+};
+
+/**
+ * Returns the query iterator expression based on the provided parameters.
+ *
+ * @param params - The parameters for generating the query iterator expression.
+ * @param params.expr - The expression to be combined with the iterator expression.
+ * @param params.pkField - The primary key field schema.
+ * @param params.page - The current page number.
+ * @param params.pageCache - The cache of previous pages.
+ * @returns The query iterator expression.
+ */
+export const getQueryIteratorExpr = (params: {
+  expr: string;
+  pkField: FieldSchema;
+  page: number;
+  pageCache: Map<number, { lastPKId: number | string }>;
+}) => {
+  // get params
+  const { expr, page, pageCache, pkField } = params;
+
+  // get cache
+  const cache = pageCache.get(page - 1);
+
+  // format pk value
+  const formatPKValue = (pkId: string | number) =>
+    pkField?.data_type === DataTypeStringEnum.VarChar ? `'${pkId}'` : pkId;
+
+  // If cache does not exist, return expression based on primaryKey type
+  let iteratorExpr = '';
+  if (!cache) {
+    // get default value
+    const defaultValue =
+      pkField?.data_type === DataTypeStringEnum.VarChar ? "''" : `${MIN_INT64}`;
+    iteratorExpr = `${pkField?.name} > ${defaultValue}`;
+  } else {
+    // get last pk id
+    const { lastPKId } = cache;
+    const lastPKValue = formatPKValue(lastPKId);
+
+    // build expr, get next page if (page > currentPage)
+    iteratorExpr = `${pkField?.name} > ${lastPKValue}`;
+  }
+
+  // return expr combined with iteratorExpr
+  return expr ? `(${iteratorExpr}) && ${expr}` : iteratorExpr;
 };

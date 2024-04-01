@@ -61,9 +61,7 @@ import {
   CountReq,
   CountResult,
   DEFAULT_COUNT_QUERY_STRING,
-  MIN_INT64,
-  DataTypeStringEnum,
-  FieldSchema,
+  getQueryIteratorExpr,
   QueryIteratorReq,
 } from '../';
 import { Collection } from './Collection';
@@ -596,44 +594,6 @@ export class Data extends Collection {
     }
   }
 
-  getQueryIteratorExpr(params: {
-    expr: string;
-    pkField: FieldSchema;
-    page: number;
-    pageCache: Map<number, { lastPKId: number | string }>;
-  }) {
-    // get params
-    const { expr, page, pageCache, pkField } = params;
-
-    // get cache
-    const cache = pageCache.get(page - 1);
-
-    // format pk value
-    const formatPKValue = (pkId: string | number) =>
-      pkField?.data_type === DataTypeStringEnum.VarChar ? `'${pkId}'` : pkId;
-
-    // If cache does not exist, return expression based on primaryKey type
-    let iteratorExpr = '';
-    if (!cache) {
-      // get default value
-      const defaultValue =
-        pkField?.data_type === DataTypeStringEnum.VarChar
-          ? "''"
-          : `${MIN_INT64}`;
-      iteratorExpr = `${pkField?.name} > ${defaultValue}`;
-    } else {
-      // get last pk id
-      const { lastPKId } = cache;
-      const lastPKValue = formatPKValue(lastPKId);
-
-      // build expr, get next page if (page > currentPage)
-      iteratorExpr = `(${pkField?.name} > ${lastPKValue})`;
-    }
-
-    // return expr combined with iteratorExpr
-    return expr ? `${expr} && ${iteratorExpr}` : iteratorExpr;
-  }
-
   /**
    * Executes a query and returns an async iterator that allows iterating over the results in batches.
    *
@@ -689,7 +649,7 @@ export class Data extends Collection {
             (data as SearchSimpleReq).limit = this.pageSize;
 
             // get current page expr
-            data.expr = client.getQueryIteratorExpr({
+            data.expr = getQueryIteratorExpr({
               page: this.page,
               expr: this.expr,
               pkField,
