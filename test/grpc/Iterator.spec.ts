@@ -94,11 +94,11 @@ describe(`Iterator API`, () => {
   it(`query iterator count with less than total should success`, async () => {
     // search
     // page size
-    const pageSize = 2;
+    const batchSize = 2;
     const total = 10;
     const iterator = await milvusClient.queryIterator({
       collection_name: COLLECTION,
-      pageSize: pageSize,
+      batchSize: batchSize,
       expr: 'id > 0',
       output_fields: ['*'],
       limit: total,
@@ -113,7 +113,7 @@ describe(`Iterator API`, () => {
     }
 
     // page size should equal to page
-    expect(page).toEqual(Math.ceil(total / pageSize));
+    expect(page).toEqual(Math.ceil(total / batchSize));
     // results length should equal to data length
     expect(results.length).toEqual(total);
 
@@ -136,11 +136,11 @@ describe(`Iterator API`, () => {
   it(`query iterator count with larger than total should success`, async () => {
     // search
     // page size
-    const pageSize = 500;
+    const batchSize = 500;
     const total = 1000;
     const iterator = await milvusClient.queryIterator({
       collection_name: COLLECTION,
-      pageSize: pageSize,
+      batchSize: batchSize,
       expr: 'id > 0',
       output_fields: ['*'],
       limit: total,
@@ -155,7 +155,7 @@ describe(`Iterator API`, () => {
     }
 
     // page size should equal to page
-    expect(page).toEqual(Math.ceil(data.length / pageSize));
+    expect(page).toEqual(Math.ceil(data.length / batchSize));
     // results length should equal to data length
     expect(results.length).toEqual(data.length);
 

@@ -632,21 +632,21 @@ export class Data extends Collection {
 
     // return iterator
     return {
-      pageSize: data.pageSize,
+      batchSize: data.batchSize,
       page: 0,
       expr: expr,
       localCache: new Map(),
       total: total,
       [Symbol.asyncIterator]() {
         return {
-          pageSize: this.pageSize,
+          batchSize: this.batchSize,
           page: this.page,
           expr: this.expr,
           localCache: this.localCache,
           total: this.total,
           async next() {
             // set limit for current batch
-            (data as SearchSimpleReq).limit = this.pageSize;
+            (data as SearchSimpleReq).limit = this.batchSize;
 
             // get current page expr
             data.expr = getQueryIteratorExpr({
@@ -672,7 +672,7 @@ export class Data extends Collection {
               });
             }
 
-            if (this.page * this.pageSize >= this.total) {
+            if (this.page * this.batchSize >= this.total) {
               return { done: true, value: res.data };
             } else {
               this.page++;

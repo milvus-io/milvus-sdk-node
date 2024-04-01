@@ -272,7 +272,8 @@ export interface SearchReq extends collectionNameReq {
 
 export interface SearchIteratorReq
   extends Omit<SearchSimpleReq, 'vectors' | 'offset' | 'limit' | 'topk'> {
-  pageSize: number;
+  batchSize: number;
+  limit: number;
 }
 
 export interface SearchRes extends resStatusResponse {
@@ -326,7 +327,7 @@ export interface QueryReq extends collectionNameReq {
 export interface QueryIteratorReq
   extends Omit<QueryReq, 'ids' | 'offset' | 'limit'> {
   limit: number;
-  pageSize: number;
+  batchSize: number;
 }
 
 export interface GetReq extends collectionNameReq {
