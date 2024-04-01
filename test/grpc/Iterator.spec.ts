@@ -32,7 +32,7 @@ const createCollectionParams = genCollectionParams({
 // data to insert
 const data = generateInsertData(
   [...createCollectionParams.fields, ...dynamicFields],
-  20
+  1000
 );
 
 describe(`Iterator API`, () => {
@@ -136,8 +136,8 @@ describe(`Iterator API`, () => {
   it(`query iterator count with larger than total should success`, async () => {
     // search
     // page size
-    const pageSize = 2;
-    const total = 100;
+    const pageSize = 500;
+    const total = 1000;
     const iterator = await milvusClient.queryIterator({
       collection_name: COLLECTION,
       pageSize: pageSize,

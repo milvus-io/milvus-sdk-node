@@ -600,10 +600,7 @@ export class Data extends Collection {
     expr: string;
     pkField: FieldSchema;
     page: number;
-    pageCache: Map<
-      number,
-      { firstPKId: number | string; lastPKId: number | string }
-    >;
+    pageCache: Map<number, { lastPKId: number | string }>;
   }) {
     // get params
     const { expr, page, pageCache, pkField } = params;
@@ -625,7 +622,7 @@ export class Data extends Collection {
           : `${MIN_INT64}`;
       iteratorExpr = `${pkField?.name} > ${defaultValue}`;
     } else {
-      // get last and first pk id
+      // get last pk id
       const { lastPKId } = cache;
       const lastPKValue = formatPKValue(lastPKId);
 
@@ -702,11 +699,6 @@ export class Data extends Collection {
             // search data
             const res = await client.query(data);
 
-            // get first item of the data
-            const firstItem = res.data[0];
-            // get first pk id
-            const firstPKId: string | number =
-              firstItem && firstItem[pkField.name];
             // get last item of the data
             const lastItem = res.data[res.data.length - 1];
             // get last pk id
@@ -717,7 +709,6 @@ export class Data extends Collection {
             if (lastItem) {
               this.localCache.set(this.page, {
                 lastPKId,
-                firstPKId,
               });
             }
 
