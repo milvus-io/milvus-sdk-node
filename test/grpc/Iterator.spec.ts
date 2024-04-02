@@ -185,7 +185,7 @@ describe(`Iterator API`, () => {
     const results: any = [];
     let batch = 0;
     for await (const value of iterator) {
-      console.log('batch', batch++, value.length);
+      console.log(`batch${batch++}`, value.length);
       results.push(...value);
     }
 

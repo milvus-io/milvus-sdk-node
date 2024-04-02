@@ -611,10 +611,10 @@ export class Data extends Collection {
     data.limit = data.batchSize;
     data.params = data.params || {};
 
-    const initRange = Number(data.params.range) || 0;
+    const initRadius = Number(data.params.radius) || 0;
     const initRangeFilter = Number(data.params.range_filter) || 0;
     const rangeParams = {
-      radius: initRange,
+      radius: initRadius,
       rangeFilter: initRangeFilter,
     };
 
@@ -633,23 +633,28 @@ export class Data extends Collection {
               data.params = {
                 ...data.params,
                 radius:
-                  rangeParams.radius > initRange && initRange !== 0
-                    ? initRange
+                  rangeParams.radius > initRadius && initRadius !== 0
+                    ? initRadius
                     : rangeParams.radius,
                 range_filter: rangeParams.rangeFilter,
               };
             }
-
-            console.log('search param', data.params);
 
             const res = await client.search(data);
 
             // get data range about last batch result
             const resultRange = getRangeFromSearchResult(res.results);
 
+            console.log(
+              'search param',
+              data.params,
+              'resultRange',
+              resultRange
+            );
+
             // update next range
-            rangeParams.rangeFilter = resultRange;
-            rangeParams.radius = rangeParams.rangeFilter * 2;
+            rangeParams.rangeFilter = resultRange.lastDistance;
+            rangeParams.radius = rangeParams.radius + resultRange.radius;
 
             // filter result, id in the result should not be the same in the last batch
             const filterResult = res.results.filter(
@@ -665,7 +670,7 @@ export class Data extends Collection {
             // if range is 0, means no range limit
             // if current total >= total, means reach the limit
             const reachLimit =
-              resultRange === 0 || this.currentTotal > this.total;
+              resultRange.radius === 0 || this.currentTotal > this.total;
 
             if (!reachLimit) {
               return { done: false, value: this.last };
