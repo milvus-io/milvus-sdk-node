@@ -63,6 +63,8 @@ import {
   DEFAULT_COUNT_QUERY_STRING,
   getQueryIteratorExpr,
   QueryIteratorReq,
+  getRangeFromSearchResult,
+  cloneObj,
 } from '../';
 import { Collection } from './Collection';
 
@@ -605,34 +607,68 @@ export class Data extends Collection {
     // total should be the minimum of total and count
     let total = data.limit > count.data ? count.data : data.limit;
 
-    const initRangeParams = {
-      radius: data.params.radius || 10,
-      range_filter: data.params.range_filter || 0,
+    // using batch size as limit
+    data.limit = data.batchSize;
+    data.params = data.params || {};
+
+    const initRange = Number(data.params.range) || 0;
+    const initRangeFilter = Number(data.params.range_filter) || 0;
+    const rangeParams = {
+      radius: initRange,
+      rangeFilter: initRangeFilter,
     };
 
     return {
-      batchSize: data.batchSize,
-      page: 0,
       total: total,
+      currentTotal: 0,
       [Symbol.asyncIterator]() {
         return {
-          batchSize: this.batchSize,
-          page: this.page,
           total: this.total,
+          currentTotal: this.currentTotal,
           async next() {
-            data.params = { ...data.params, ...initRangeParams };
+            // build search params, overwrite range filter
+            if (rangeParams.radius && rangeParams.rangeFilter) {
+              data.params = {
+                ...data.params,
+                radius:
+                  rangeParams.radius > initRange && initRange !== 0
+                    ? initRange
+                    : rangeParams.radius,
+                range_filter: rangeParams.rangeFilter,
+              };
+            }
+
+            console.log('search param', data.params);
+
             const res = await client.search(data);
 
-            // get last item of the data
-            const lastItem = res.results[res.results.length - 1];
-            // get last item score
-            const lastScore = lastItem && lastItem.score;
+            // get data range about last batch result
+            const resultRange = getRangeFromSearchResult(res.results);
 
-            if (this.page === 0) {
-              this.page++;
+            // update next range
+            rangeParams.rangeFilter = resultRange;
+            rangeParams.radius = rangeParams.rangeFilter * 2;
+
+            // update current total
+            this.currentTotal += res.results.length;
+
+            // reach limit
+            // if range is 0, means no range limit
+            // if current total >= total, means reach the limit
+            const reachLimit =
+              resultRange === 0 || this.currentTotal > this.total;
+
+            // console.log('resultRange === 0', resultRange === 0);
+            // console.log(
+            //   this.currentTotal >= this.total,
+            //   this.currentTotal,
+            //   this.total
+            // );
+
+            if (!reachLimit) {
               return { done: false, value: res.results };
             } else {
-              return { done: true, value: res.results };
+              return { done: true, value: [] };
             }
           },
         };

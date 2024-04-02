@@ -5,6 +5,7 @@ import {
   FieldSchema,
   DataTypeStringEnum,
   MIN_INT64,
+  SearchResultData,
 } from '../';
 import { Pool } from 'generic-pool';
 
@@ -181,4 +182,18 @@ export const getQueryIteratorExpr = (params: {
 
   // return expr combined with iteratorExpr
   return expr ? `(${iteratorExpr}) && ${expr}` : iteratorExpr;
+};
+
+// return distance range between the fisrt and last item for the given search results
+export const getRangeFromSearchResult = (results: SearchResultData[]) => {
+  // get first item
+  const firstItem = results[0];
+  const lastItem = results[results.length - 1];
+
+  if (firstItem && lastItem) {
+    console.log('first', firstItem.score, 'last', lastItem.score);
+    return lastItem.score;
+  } else {
+    return 0;
+  }
 };

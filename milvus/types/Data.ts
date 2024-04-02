@@ -275,7 +275,6 @@ export interface SearchIteratorReq
   data: number[]; // data to search
   batchSize: number;
   limit: number;
-  params: keyValueObj;
 }
 
 export interface SearchRes extends resStatusResponse {
