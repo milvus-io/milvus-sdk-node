@@ -171,7 +171,7 @@ describe(`Iterator API`, () => {
   // });
 
   it('search iterator should success', async () => {
-    const batchSize = 20;
+    const batchSize = 50;
     const total = 100;
     const iterator = await milvusClient.searchIterator({
       collection_name: COLLECTION,
@@ -194,6 +194,7 @@ describe(`Iterator API`, () => {
     results.forEach((result: any) => {
       idSet.add(result.id);
     });
+    expect(idSet.size).toEqual(total);
 
     console.log('batch fetched', results.length);
     console.log('idSet', idSet.size);

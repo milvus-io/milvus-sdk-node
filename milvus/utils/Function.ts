@@ -191,7 +191,6 @@ export const getRangeFromSearchResult = (results: SearchResultData[]) => {
   const lastItem = results[results.length - 1];
 
   if (firstItem && lastItem) {
-    console.log('first', firstItem.score, 'last', lastItem.score);
     return lastItem.score;
   } else {
     return 0;

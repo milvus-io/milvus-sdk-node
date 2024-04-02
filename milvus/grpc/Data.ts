@@ -64,7 +64,7 @@ import {
   getQueryIteratorExpr,
   QueryIteratorReq,
   getRangeFromSearchResult,
-  cloneObj,
+  SearchResultData,
 } from '../';
 import { Collection } from './Collection';
 
@@ -621,10 +621,12 @@ export class Data extends Collection {
     return {
       total: total,
       currentTotal: 0,
+      last: [] as SearchResultData[],
       [Symbol.asyncIterator]() {
         return {
           total: this.total,
           currentTotal: this.currentTotal,
+          last: this.last as SearchResultData[],
           async next() {
             // build search params, overwrite range filter
             if (rangeParams.radius && rangeParams.rangeFilter) {
@@ -649,8 +651,15 @@ export class Data extends Collection {
             rangeParams.rangeFilter = resultRange;
             rangeParams.radius = rangeParams.rangeFilter * 2;
 
+            // filter result, id in the result should not be the same in the last batch
+            const filterResult = res.results.filter(
+              r => !this.last.find(l => l.id === r.id)
+            );
+
+            this.last = filterResult;
+
             // update current total
-            this.currentTotal += res.results.length;
+            this.currentTotal += this.last.length;
 
             // reach limit
             // if range is 0, means no range limit
@@ -658,15 +667,8 @@ export class Data extends Collection {
             const reachLimit =
               resultRange === 0 || this.currentTotal > this.total;
 
-            // console.log('resultRange === 0', resultRange === 0);
-            // console.log(
-            //   this.currentTotal >= this.total,
-            //   this.currentTotal,
-            //   this.total
-            // );
-
             if (!reachLimit) {
-              return { done: false, value: res.results };
+              return { done: false, value: this.last };
             } else {
               return { done: true, value: [] };
             }
