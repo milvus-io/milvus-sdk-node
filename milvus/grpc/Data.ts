@@ -597,86 +597,117 @@ export class Data extends Collection {
   }
 
   async searchIterator(data: SearchIteratorReq): Promise<any> {
+    // store client
     const client = this;
-
-    // get count
+    // get avaliable count
     const count = await client.count({
       collection_name: data.collection_name,
       expr: data.expr || data.filter || '',
     });
-    // total should be the minimum of total and count
-    let total = data.limit > count.data ? count.data : data.limit;
-
-    // using batch size as limit
-    data.limit = data.batchSize;
+    // make sure limit is not exceed the total count
+    const total = data.limit > count.data ? count.data : data.limit;
+    // make sure batch size is  exceed the total count
+    const batchSize = data.batchSize > total ? total : data.batchSize;
+    // init search params object
     data.params = data.params || {};
+    data.limit = batchSize;
 
+    // user range filter set
     const initRadius = Number(data.params.radius) || 0;
     const initRangeFilter = Number(data.params.range_filter) || 0;
-    const rangeParams = {
+    // range params object
+    const rangeFilterParams = {
       radius: initRadius,
       rangeFilter: initRangeFilter,
     };
 
+    // force quite if true, at first, if total is 0, return done
+    let done = total === 0;
+    // batch result store
+    let lastBatchRes: SearchResultData[] = [];
+
     return {
-      total: total,
       currentTotal: 0,
-      last: [] as SearchResultData[],
       [Symbol.asyncIterator]() {
         return {
-          total: this.total,
           currentTotal: this.currentTotal,
-          last: this.last as SearchResultData[],
           async next() {
-            // build search params, overwrite range filter
-            if (rangeParams.radius && rangeParams.rangeFilter) {
-              data.params = {
-                ...data.params,
-                radius:
-                  rangeParams.radius > initRadius && initRadius !== 0
-                    ? initRadius
-                    : rangeParams.radius,
-                range_filter: rangeParams.rangeFilter,
-              };
+            // check if reach the limit
+            if (
+              (this.currentTotal >= total && this.currentTotal !== 0) ||
+              done
+            ) {
+              console.log('done', this.currentTotal, total, done);
+              return { done: true, value: lastBatchRes };
             }
 
-            const res = await client.search(data);
+            // batch result container
+            const batchRes: SearchResultData[] = [];
+            const bs =
+              this.currentTotal + batchSize > total
+                ? total - this.currentTotal
+                : batchSize;
 
-            // get data range about last batch result
-            const resultRange = getRangeFromSearchResult(res.results);
+            // get search data if not reach the batch size
+            while (batchRes.length < bs) {
+              // build search params, overwrite range filter
+              if (rangeFilterParams.radius && rangeFilterParams.rangeFilter) {
+                data.params = {
+                  ...data.params,
+                  radius:
+                    rangeFilterParams.radius > initRadius && initRadius !== 0
+                      ? initRadius
+                      : rangeFilterParams.radius,
+                  range_filter: rangeFilterParams.rangeFilter,
+                };
+              }
 
-            console.log(
-              'search param',
-              data.params,
-              'resultRange',
-              resultRange
-            );
+              console.log('search param', data.params);
 
-            // update next range
-            rangeParams.rangeFilter = resultRange.lastDistance;
-            rangeParams.radius = rangeParams.radius + resultRange.radius;
+              // execute search
+              const res = await client.search(data);
 
-            // filter result, id in the result should not be the same in the last batch
-            const filterResult = res.results.filter(
-              r => !this.last.find(l => l.id === r.id)
-            );
+              // filter result, batschRes should be unique
+              const filterResult = res.results.filter(
+                r =>
+                  !lastBatchRes.find(l => l.id === r.id) &&
+                  !batchRes.find(c => c.id === r.id)
+              );
 
-            this.last = filterResult;
+              // fill filter result to batch result, it should not exceed the batch size
+              for (let i = 0; i < filterResult.length; i++) {
+                if (batchRes.length < bs) {
+                  batchRes.push(filterResult[i]);
+                }
+              }
+
+              // get data range about last batch result
+              const resultRange = getRangeFromSearchResult(filterResult);
+
+              console.log('result range', resultRange);
+
+              // if no more result
+              if (resultRange.radius === 0) {
+                done = true;
+                return { done: false, value: batchRes };
+              }
+
+              // update next range
+              rangeFilterParams.rangeFilter = resultRange.lastDistance;
+              rangeFilterParams.radius =
+                rangeFilterParams.radius + resultRange.radius;
+            }
+
+            // store last result
+            lastBatchRes = batchRes;
 
             // update current total
-            this.currentTotal += this.last.length;
+            this.currentTotal += batchRes.length;
 
-            // reach limit
-            // if range is 0, means no range limit
-            // if current total >= total, means reach the limit
-            const reachLimit =
-              resultRange.radius === 0 || this.currentTotal > this.total;
+            console.log('current total', this.currentTotal);
 
-            if (!reachLimit) {
-              return { done: false, value: this.last };
-            } else {
-              return { done: true, value: [] };
-            }
+            // return batch result
+            return { done: false, value: batchRes };
           },
         };
       },
