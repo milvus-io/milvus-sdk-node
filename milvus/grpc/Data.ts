@@ -608,6 +608,8 @@ export class Data extends Collection {
     const total = data.limit > count.data ? count.data : data.limit;
     // make sure batch size is  exceed the total count
     const batchSize = data.batchSize > total ? total : data.batchSize;
+    // init expr
+    const initExpr = data.expr || data.filter || '';
     // init search params object
     data.params = data.params || {};
     data.limit = batchSize;
@@ -619,6 +621,7 @@ export class Data extends Collection {
     const rangeFilterParams = {
       radius: initRadius,
       rangeFilter: initRangeFilter,
+      expr: initExpr,
     };
 
     // force quite if true, at first, if total is 0, return done
@@ -661,6 +664,8 @@ export class Data extends Collection {
                   range_filter: rangeFilterParams.rangeFilter,
                 };
               }
+              // set search expr
+              data.expr = rangeFilterParams.expr;
 
               console.log('search param', data.params);
 
@@ -696,6 +701,7 @@ export class Data extends Collection {
               rangeFilterParams.rangeFilter = resultRange.lastDistance;
               rangeFilterParams.radius =
                 rangeFilterParams.radius + resultRange.radius;
+              rangeFilterParams.expr = initExpr && `id != ${resultRange.id}`;
             }
 
             // store last result

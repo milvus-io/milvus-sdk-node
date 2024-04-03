@@ -198,9 +198,9 @@ export const getRangeFromSearchResult = (results: SearchResultData[]) => {
     return {
       radius: radius,
       lastDistance: lastItem.score,
+      id: lastItem.id,
     };
   } else {
-    console.log(' no item', results);
     return {
       radius: 0,
       lastDistance: 0,
