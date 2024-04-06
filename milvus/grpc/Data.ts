@@ -65,6 +65,7 @@ import {
   QueryIteratorReq,
   getRangeFromSearchResult,
   SearchResultData,
+  getPKFieldExpr,
 } from '../';
 import { Collection } from './Collection';
 
@@ -599,7 +600,9 @@ export class Data extends Collection {
   async searchIterator(data: SearchIteratorReq): Promise<any> {
     // store client
     const client = this;
-    // get avaliable count
+    // get collection info
+    const pkField = await this.getPkField(data);
+    // get available count
     const count = await client.count({
       collection_name: data.collection_name,
       expr: data.expr || data.filter || '',
@@ -640,7 +643,6 @@ export class Data extends Collection {
               (this.currentTotal >= total && this.currentTotal !== 0) ||
               done
             ) {
-              console.log('done', this.currentTotal, total, done);
               return { done: true, value: lastBatchRes };
             }
 
@@ -667,12 +669,14 @@ export class Data extends Collection {
               // set search expr
               data.expr = rangeFilterParams.expr;
 
-              console.log('search param', data.params);
+              console.log('search param', data.params, data.expr);
 
               // execute search
               const res = await client.search(data);
 
-              // filter result, batschRes should be unique
+              console.log('return', res.results);
+
+              // filter result, batchRes should be unique
               const filterResult = res.results.filter(
                 r =>
                   !lastBatchRes.find(l => l.id === r.id) &&
@@ -697,11 +701,15 @@ export class Data extends Collection {
                 return { done: false, value: batchRes };
               }
 
-              // update next range
+              // update next range and expr
               rangeFilterParams.rangeFilter = resultRange.lastDistance;
               rangeFilterParams.radius =
                 rangeFilterParams.radius + resultRange.radius;
-              rangeFilterParams.expr = initExpr && `id != ${resultRange.id}`;
+              rangeFilterParams.expr = getPKFieldExpr({
+                pkField,
+                value: resultRange.id as string,
+                expr: initExpr,
+              });
             }
 
             // store last result
@@ -709,8 +717,6 @@ export class Data extends Collection {
 
             // update current total
             this.currentTotal += batchRes.length;
-
-            console.log('current total', this.currentTotal);
 
             // return batch result
             return { done: false, value: batchRes };

@@ -160,41 +160,35 @@ export const getQueryIteratorExpr = (params: {
   // get cache
   const cache = pageCache.get(page - 1);
 
-  // format pk value
-  const formatPKValue = (pkId: string | number) =>
-    pkField?.data_type === DataTypeStringEnum.VarChar ? `'${pkId}'` : pkId;
-
   // If cache does not exist, return expression based on primaryKey type
-  let iteratorExpr = '';
+  let compareValue = '';
   if (!cache) {
     // get default value
-    const defaultValue =
-      pkField?.data_type === DataTypeStringEnum.VarChar ? "''" : `${MIN_INT64}`;
-    iteratorExpr = `${pkField?.name} > ${defaultValue}`;
+    compareValue =
+      pkField?.data_type === DataTypeStringEnum.VarChar ? '' : `${MIN_INT64}`;
   } else {
     // get last pk id
     const { lastPKId } = cache;
-    const lastPKValue = formatPKValue(lastPKId);
-
-    // build expr, get next page if (page > currentPage)
-    iteratorExpr = `${pkField?.name} > ${lastPKValue}`;
+    compareValue = lastPKId as string;
   }
 
   // return expr combined with iteratorExpr
-  return expr ? `(${iteratorExpr}) && ${expr}` : iteratorExpr;
+  return getPKFieldExpr({
+    pkField,
+    value: compareValue,
+    expr,
+    condition: '>',
+  });
 };
 
-// return distance range between the fisrt and last item for the given search results
+// return distance range between the first and last item for the given search results
 export const getRangeFromSearchResult = (results: SearchResultData[]) => {
   // get first item
   const firstItem = results[0];
   const lastItem = results[results.length - 1];
 
   if (firstItem && lastItem) {
-    console.log('firstItem', firstItem);
-    console.log('lastItem', lastItem);
-
-    const radius = lastItem.score * 2 - firstItem.score;
+    const radius = lastItem.score * 3 - firstItem.score;
     return {
       radius: radius,
       lastDistance: lastItem.score,
@@ -206,4 +200,19 @@ export const getRangeFromSearchResult = (results: SearchResultData[]) => {
       lastDistance: 0,
     };
   }
+};
+
+// return pk filed != expression based on pk field type, if pk field is string, return pk field != ''
+export const getPKFieldExpr = (data: {
+  pkField: FieldSchema;
+  value: string | number;
+  condition?: string;
+  expr?: string;
+}) => {
+  const { pkField, value, condition = '!=', expr = '' } = data;
+  const pkValue =
+    pkField?.data_type === DataTypeStringEnum.VarChar
+      ? `'${value}'`
+      : `${value}`;
+  return `${pkField?.name} ${condition} ${pkValue}${expr ? ` && ${expr}` : ''}`;
 };

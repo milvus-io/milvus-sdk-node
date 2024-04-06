@@ -3,6 +3,9 @@ import {
   getQueryIteratorExpr,
   DataTypeStringEnum,
   MIN_INT64,
+  getPKFieldExpr,
+  getRangeFromSearchResult,
+  SearchResultData,
 } from '../../milvus';
 
 describe('Function API testing', () => {
@@ -104,7 +107,7 @@ describe('Function API testing', () => {
 
     const result = getQueryIteratorExpr(params);
 
-    expect(result).toBe("(id > '') && field > 10");
+    expect(result).toBe("id > '' && field > 10");
   });
 
   it('should return int64 expression when cache does not exist', () => {
@@ -166,6 +169,139 @@ describe('Function API testing', () => {
 
     const result = getQueryIteratorExpr(params);
 
-    expect(result).toBe('(id > 10) && field > 10');
+    expect(result).toBe('id > 10 && field > 10');
+  });
+
+  it('should return 0 radius when results are empty', () => {
+    const results = [] as any;
+
+    const result = getRangeFromSearchResult(results);
+
+    expect(result).toEqual({
+      radius: 0,
+      lastDistance: 0,
+    });
+  });
+
+  it('should return radius and lastDistance when results are not empty', () => {
+    const results: SearchResultData[] = [
+      {
+        id: '1',
+        score: 0.1,
+      },
+      {
+        id: '2',
+        score: 0.2,
+      },
+      {
+        id: '3',
+        score: 0.3,
+      },
+    ];
+
+    const result = getRangeFromSearchResult(results);
+
+    expect(result).toEqual({
+      radius: 0.3 * 3 - 0.1,
+      lastDistance: 0.3,
+      id: '3',
+    });
+  });
+
+  it('should return 0 radius when results contain only one item', () => {
+    const results: SearchResultData[] = [
+      {
+        id: '1',
+        score: 0.1,
+      },
+    ];
+
+    const result = getRangeFromSearchResult(results);
+
+    expect(result).toEqual({
+      radius: 0.1 * 3 - 0.1,
+      lastDistance: 0.1,
+      id: '1',
+    });
+  });
+
+  it('should return 0 radius when results contain only two items', () => {
+    const results: SearchResultData[] = [
+      {
+        id: '1',
+        score: 0.1,
+      },
+      {
+        id: '2',
+        score: 0.2,
+      },
+    ];
+
+    const result = getRangeFromSearchResult(results);
+
+    expect(result).toEqual({
+      radius: 0.2 * 3 - 0.1,
+      lastDistance: 0.2,
+      id: '2',
+    });
+  });
+
+  it('should return varchar expression when pk field is varchar', () => {
+    const pkField: any = {
+      name: 'id',
+      data_type: DataTypeStringEnum.VarChar,
+    };
+
+    const result = getPKFieldExpr({
+      pkField,
+      value: 'abc',
+    });
+
+    expect(result).toBe("id != 'abc'");
+  });
+
+  it('should return int64 expression when pk field is int64', () => {
+    const pkField: any = {
+      name: 'id',
+      data_type: DataTypeStringEnum.Int64,
+    };
+
+    const result = getPKFieldExpr({
+      pkField,
+      value: 10,
+    });
+
+    expect(result).toBe('id != 10');
+  });
+
+  it('should return int64 expression with condition when condition is provided', () => {
+    const pkField: any = {
+      name: 'id',
+      data_type: DataTypeStringEnum.Int64,
+    };
+
+    const result = getPKFieldExpr({
+      pkField,
+      value: 10,
+      condition: '>',
+    });
+
+    expect(result).toBe('id > 10');
+  });
+
+  it('should return int64 expression with condition and expr when expr is provided', () => {
+    const pkField: any = {
+      name: 'id',
+      data_type: DataTypeStringEnum.Int64,
+    };
+
+    const result = getPKFieldExpr({
+      pkField,
+      value: 10,
+      condition: '>',
+      expr: 'field > 10',
+    });
+
+    expect(result).toBe('id > 10 && field > 10');
   });
 });
