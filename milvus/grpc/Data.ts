@@ -66,6 +66,7 @@ import {
   getRangeFromSearchResult,
   SearchResultData,
   getPKFieldExpr,
+  MAX_SEARCH_SIZE,
 } from '../';
 import { Collection } from './Collection';
 
@@ -610,7 +611,10 @@ export class Data extends Collection {
     // make sure limit is not exceed the total count
     const total = data.limit > count.data ? count.data : data.limit;
     // make sure batch size is  exceed the total count
-    const batchSize = data.batchSize > total ? total : data.batchSize;
+    let batchSize = data.batchSize > total ? total : data.batchSize;
+    // make sure batch size is not exceed max search size
+    batchSize = batchSize > MAX_SEARCH_SIZE ? MAX_SEARCH_SIZE : batchSize;
+
     // init expr
     const initExpr = data.expr || data.filter || '';
     // init search params object
@@ -631,6 +635,15 @@ export class Data extends Collection {
     let done = total === 0;
     // batch result store
     let lastBatchRes: SearchResultData[] = [];
+
+    // build cache
+    const useCache = total <= MAX_SEARCH_SIZE;
+    const cache = useCache
+      ? await client.search({
+          ...data,
+          limit: total,
+        })
+      : { results: [] };
 
     return {
       currentTotal: 0,
@@ -655,29 +668,63 @@ export class Data extends Collection {
 
             // get search data if not reach the batch size
             while (batchRes.length < bs) {
-              // build search params, overwrite range filter
-              if (rangeFilterParams.radius && rangeFilterParams.rangeFilter) {
-                data.params = {
-                  ...data.params,
-                  radius:
-                    rangeFilterParams.radius > initRadius && initRadius !== 0
-                      ? initRadius
-                      : rangeFilterParams.radius,
-                  range_filter: rangeFilterParams.rangeFilter,
-                };
+              let searchResults: SearchResults = {
+                status: { error_code: 'SUCCESS', reason: '' },
+                results: [],
+              };
+
+              // iterate cache data, add it to the batch result until reach the batch size
+              if (cache.results.length > 0) {
+                while (
+                  cache.results.length > 0 &&
+                  searchResults.results.length < bs
+                ) {
+                  searchResults.results.push(cache.results.shift()!);
+                }
+              } else if (searchResults.results.length < bs) {
+                // build search params, overwrite range filter
+                if (rangeFilterParams.radius && rangeFilterParams.rangeFilter) {
+                  data.params = {
+                    ...data.params,
+                    radius:
+                      rangeFilterParams.radius > initRadius && initRadius !== 0
+                        ? initRadius
+                        : rangeFilterParams.radius,
+                    range_filter: rangeFilterParams.rangeFilter,
+                  };
+                }
+                // set search expr
+                data.expr = rangeFilterParams.expr;
+
+                // console.log('search param', data.params, data.expr);
+
+                // iterate search, if no result, double the radius, until we doubled for 5 times
+                let newSearchRes = await client.search(data);
+                let retry = 0;
+                while (newSearchRes.results.length === 0 && retry < 5) {
+                  newSearchRes = await client.search(data);
+                  if (searchResults.results.length === 0) {
+                    const newRadius = rangeFilterParams.radius * 2;
+
+                    data.params = {
+                      ...data.params,
+                      radius: newRadius,
+                    };
+                  }
+
+                  retry++;
+                }
+
+                searchResults.results = [
+                  ...searchResults.results,
+                  ...newSearchRes.results,
+                ];
               }
-              // set search expr
-              data.expr = rangeFilterParams.expr;
 
-              console.log('search param', data.params, data.expr);
-
-              // execute search
-              const res = await client.search(data);
-
-              console.log('return', res.results);
+              // console.log('return', searchResults.results);
 
               // filter result, batchRes should be unique
-              const filterResult = res.results.filter(
+              const filterResult = searchResults.results.filter(
                 r =>
                   !lastBatchRes.find(l => l.id === r.id) &&
                   !batchRes.find(c => c.id === r.id)
@@ -693,7 +740,7 @@ export class Data extends Collection {
               // get data range about last batch result
               const resultRange = getRangeFromSearchResult(filterResult);
 
-              console.log('result range', resultRange);
+              // console.log('result range', resultRange);
 
               // if no more result
               if (resultRange.radius === 0) {

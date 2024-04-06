@@ -188,7 +188,7 @@ export const getRangeFromSearchResult = (results: SearchResultData[]) => {
   const lastItem = results[results.length - 1];
 
   if (firstItem && lastItem) {
-    const radius = lastItem.score * 3 - firstItem.score;
+    const radius = lastItem.score * 2 - firstItem.score;
     return {
       radius: radius,
       lastDistance: lastItem.score,

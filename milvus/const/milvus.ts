@@ -402,5 +402,3 @@ export enum ShowCollectionsType {
   All,
   Loaded,
 }
-
-export const MIN_INT64 = `-9223372036854775807`;

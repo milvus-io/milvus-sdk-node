@@ -202,7 +202,7 @@ describe('Function API testing', () => {
     const result = getRangeFromSearchResult(results);
 
     expect(result).toEqual({
-      radius: 0.3 * 3 - 0.1,
+      radius: 0.3 * 2 - 0.1,
       lastDistance: 0.3,
       id: '3',
     });
@@ -219,7 +219,7 @@ describe('Function API testing', () => {
     const result = getRangeFromSearchResult(results);
 
     expect(result).toEqual({
-      radius: 0.1 * 3 - 0.1,
+      radius: 0.1 * 2 - 0.1,
       lastDistance: 0.1,
       id: '1',
     });
@@ -240,7 +240,7 @@ describe('Function API testing', () => {
     const result = getRangeFromSearchResult(results);
 
     expect(result).toEqual({
-      radius: 0.2 * 3 - 0.1,
+      radius: 0.2 * 2 - 0.1,
       lastDistance: 0.2,
       id: '2',
     });
