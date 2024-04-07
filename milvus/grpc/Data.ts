@@ -685,17 +685,15 @@ export class Data extends Collection {
                 if (rangeFilterParams.radius && rangeFilterParams.rangeFilter) {
                   data.params = {
                     ...data.params,
-                    radius: Math.max(rangeFilterParams.radius, initRadius),
-                    range_filter: Math.max(
+                    radius: rangeFilterParams.radius,
+                    range_filter: 
                       rangeFilterParams.rangeFilter,
-                      initRangeFilter
-                    ),
                   };
                 }
                 // set search expr
                 data.expr = rangeFilterParams.expr;
 
-                // console.log('search param', data.params, data.expr);
+                console.log('search param', data.params, data.expr);
 
                 // iterate search, if no result, double the radius, until we doubled for 5 times
                 let newSearchRes = await client.search(data);
@@ -721,7 +719,7 @@ export class Data extends Collection {
                 ];
               }
 
-              // console.log('return', searchResults.results);
+              console.log('return', searchResults.results);
 
               // filter result, batchRes should be unique
               const filterResult = searchResults.results.filter(
@@ -740,10 +738,10 @@ export class Data extends Collection {
               // get data range about last batch result
               const resultRange = getRangeFromSearchResult(filterResult);
 
-              // console.log('result range', resultRange);
+              console.log('result range', resultRange);
 
               // if no more result, force quite
-              if (resultRange.radius === 0) {
+              if (resultRange.lastDistance === 0) {
                 done = true;
                 return { done: false, value: batchRes };
               }
@@ -757,6 +755,8 @@ export class Data extends Collection {
                 value: resultRange.id as string,
                 expr: initExpr,
               });
+
+              console.log('last', rangeFilterParams);
             }
 
             // store last result
