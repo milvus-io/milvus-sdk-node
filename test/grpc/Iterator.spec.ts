@@ -1,9 +1,4 @@
-import {
-  MilvusClient,
-  DataType,
-  ErrorCode,
-  ConsistencyLevelEnum,
-} from '../../milvus';
+import { MilvusClient, DataType } from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -74,26 +69,125 @@ describe(`Iterator API`, () => {
     await milvusClient.dropDatabase(dbParam);
   });
 
-  it(`query with dynamic field should success`, async () => {
-    // query
-    const query = await milvusClient.query({
+  it(`query iterator with batch size = 1 should success`, async () => {
+    // page size
+    const batchSize = 1;
+    const total = 10;
+    const iterator = await milvusClient.queryIterator({
       collection_name: COLLECTION,
-      limit: 10,
+      batchSize: batchSize,
       expr: 'id > 0',
-      output_fields: [
-        'json',
-        'vector',
-        'id',
-        'dynamic_int64',
-        'dynamic_varChar',
-      ],
+      output_fields: ['id'],
+      limit: total,
     });
 
-    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(query.data.length).toEqual(10);
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
+
+    // page size should equal to page
+    expect(page).toEqual(Math.ceil(total / batchSize));
+    // results length should equal to data length
+    expect(results.length).toEqual(total);
+
+    // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
+
+    // every id in query result should be founded in the original data
+    results.forEach((result: any) => {
+      const item = dataMap.get(result.id.toString());
+      expect(typeof item !== 'undefined').toEqual(true);
+    });
   });
 
-  it(`query iterator count with less than total should success`, async () => {
+  it(`query iterator with batch size > 16384 should success`, async () => {
+    // page size
+    const batchSize = 16384;
+    const total = data.length;
+    const iterator = await milvusClient.queryIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
+
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
+
+    // page size should equal to page
+    expect(page).toEqual(Math.ceil(total / batchSize));
+    // results length should equal to data length
+    expect(results.length).toEqual(total);
+
+    // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
+
+    // every id in query result should be founded in the original data
+    results.forEach((result: any) => {
+      const item = dataMap.get(result.id.toString());
+      expect(typeof item !== 'undefined').toEqual(true);
+    });
+  });
+
+  it(`query iterator with batch size > total should success`, async () => {
+    // page size
+    const batchSize = data.length + 1;
+    const total = data.length;
+    const iterator = await milvusClient.queryIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
+
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
+
+    // page size should equal to page
+    expect(page).toEqual(
+      batchSize > 16384
+        ? Math.ceil(total / 16384)
+        : Math.ceil(total / batchSize)
+    );
+    // results length should equal to data length
+    expect(results.length).toEqual(total);
+
+    // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
+
+    // every id in query result should be founded in the original data
+    results.forEach((result: any) => {
+      const item = dataMap.get(result.id.toString());
+      expect(typeof item !== 'undefined').toEqual(true);
+    });
+  });
+
+  it(`query iterator with limit < total should success`, async () => {
     // page size
     const batchSize = 2;
     const total = 10;
@@ -131,7 +225,7 @@ describe(`Iterator API`, () => {
     });
   });
 
-  it(`query iterator count with larger than total should success`, async () => {
+  it(`query iterator with limit > total should success`, async () => {
     // page size
     const batchSize = 5000;
     const total = 30000;
@@ -329,7 +423,7 @@ describe(`Iterator API`, () => {
     expect(scores).toEqual(search.results.map(s => s.score));
   });
 
-  it('search iterator with total > all data count should success, and ignore total', async () => {
+  it('search iterator with limit > all data count should success, and ignore total', async () => {
     const batchSize = 5000;
     const total = 30000;
     const iterator = await milvusClient.searchIterator({

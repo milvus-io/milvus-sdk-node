@@ -664,7 +664,7 @@ export class Data extends Collection {
                 ? total - this.currentTotal
                 : batchSize;
 
-            // get search data if not reach the batch size
+            // keep getting search data if not reach the batch size
             while (batchRes.length < bs) {
               // search results container
               let searchResults: SearchResults = {
@@ -672,7 +672,7 @@ export class Data extends Collection {
                 results: [],
               };
 
-              // iterate cache data, add it to the search results container until reach the batch size
+              // Iterate through the cached data, adding it to the search results container until the batch size is reached.
               if (cache.results.length > 0) {
                 while (
                   cache.results.length > 0 &&
@@ -685,11 +685,11 @@ export class Data extends Collection {
                 if (rangeFilterParams.radius && rangeFilterParams.rangeFilter) {
                   data.params = {
                     ...data.params,
-                    radius:
-                      rangeFilterParams.radius > initRadius && initRadius !== 0
-                        ? initRadius
-                        : rangeFilterParams.radius,
-                    range_filter: rangeFilterParams.rangeFilter,
+                    radius: Math.max(rangeFilterParams.radius, initRadius),
+                    range_filter: Math.max(
+                      rangeFilterParams.rangeFilter,
+                      initRangeFilter
+                    ),
                   };
                 }
                 // set search expr
@@ -726,8 +726,8 @@ export class Data extends Collection {
               // filter result, batchRes should be unique
               const filterResult = searchResults.results.filter(
                 r =>
-                  !lastBatchRes.find(l => l.id === r.id) &&
-                  !batchRes.find(c => c.id === r.id)
+                  !lastBatchRes.some(l => l.id === r.id) &&
+                  !batchRes.some(c => c.id === r.id)
               );
 
               // fill filter result to batch result, it should not exceed the batch size
