@@ -637,13 +637,10 @@ export class Data extends Collection {
     let lastBatchRes: SearchResultData[] = [];
 
     // build cache
-    const useCache = total <= MAX_SEARCH_SIZE;
-    const cache = useCache
-      ? await client.search({
-          ...data,
-          limit: total,
-        })
-      : { results: [] };
+    const cache = await client.search({
+      ...data,
+      limit: total > MAX_SEARCH_SIZE ? MAX_SEARCH_SIZE : total,
+    });
 
     return {
       currentTotal: 0,
@@ -668,12 +665,13 @@ export class Data extends Collection {
 
             // get search data if not reach the batch size
             while (batchRes.length < bs) {
+              // search results container
               let searchResults: SearchResults = {
                 status: { error_code: 'SUCCESS', reason: '' },
                 results: [],
               };
 
-              // iterate cache data, add it to the batch result until reach the batch size
+              // iterate cache data, add it to the search results container until reach the batch size
               if (cache.results.length > 0) {
                 while (
                   cache.results.length > 0 &&
@@ -715,6 +713,7 @@ export class Data extends Collection {
                   retry++;
                 }
 
+                // combine search results
                 searchResults.results = [
                   ...searchResults.results,
                   ...newSearchRes.results,
@@ -742,7 +741,7 @@ export class Data extends Collection {
 
               // console.log('result range', resultRange);
 
-              // if no more result
+              // if no more result, force quite
               if (resultRange.radius === 0) {
                 done = true;
                 return { done: false, value: batchRes };
