@@ -189,7 +189,7 @@ export interface MutationResult extends resStatusResponse {
 }
 
 export interface QueryResults extends resStatusResponse {
-  data: { [x: string]: any }[];
+  data: Record<string, any>[];
 }
 
 export interface CountResult extends resStatusResponse {
@@ -271,7 +271,10 @@ export interface SearchReq extends collectionNameReq {
 }
 
 export interface SearchIteratorReq
-  extends Omit<SearchSimpleReq, 'data' | 'vectors' | 'offset' | 'limit' | 'topk'> {
+  extends Omit<
+    SearchSimpleReq,
+    'data' | 'vectors' | 'offset' | 'limit' | 'topk'
+  > {
   data: number[]; // data to search
   batchSize: number;
   limit: number;

@@ -18,5 +18,7 @@ export const DEFAULT_HTTP_ENDPOINT_VERSION = 'v1'; // api version, default v1
 export const DEFAULT_POOL_MAX = 10; // default max pool client number
 export const DEFAULT_POOL_MIN = 2; // default min pool client number
 
-export const MIN_INT64 = `-9223372036854775807`; // min int64
-export const MAX_SEARCH_SIZE = 16384; //  max query/search size
+export const DEFAULT_MIN_INT64 = `-9223372036854775807`; // min int64
+export const DEFAULT_MAX_SEARCH_SIZE = 16384; //  max query/search size
+export const DEFAULT_MAX_L2_DISTANCE = 99999999; // max l2 distance
+export const DEFAULT_MIN_COSINE_DISTANCE = -2.0; // min cosine distance

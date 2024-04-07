@@ -66,7 +66,7 @@ import {
   getRangeFromSearchResult,
   SearchResultData,
   getPKFieldExpr,
-  MAX_SEARCH_SIZE,
+  DEFAULT_MAX_SEARCH_SIZE,
 } from '../';
 import { Collection } from './Collection';
 
@@ -613,7 +613,8 @@ export class Data extends Collection {
     // make sure batch size is  exceed the total count
     let batchSize = data.batchSize > total ? total : data.batchSize;
     // make sure batch size is not exceed max search size
-    batchSize = batchSize > MAX_SEARCH_SIZE ? MAX_SEARCH_SIZE : batchSize;
+    batchSize =
+      batchSize > DEFAULT_MAX_SEARCH_SIZE ? DEFAULT_MAX_SEARCH_SIZE : batchSize;
 
     // init expr
     const initExpr = data.expr || data.filter || '';
@@ -639,7 +640,7 @@ export class Data extends Collection {
     // build cache
     const cache = await client.search({
       ...data,
-      limit: total > MAX_SEARCH_SIZE ? MAX_SEARCH_SIZE : total,
+      limit: total > DEFAULT_MAX_SEARCH_SIZE ? DEFAULT_MAX_SEARCH_SIZE : total,
     });
 
     return {
@@ -799,39 +800,44 @@ export class Data extends Collection {
     // store client;
     const client = this;
     // expr
-    const expr = data.expr || data.filter || '';
+    const userExpr = data.expr || data.filter || '';
     // get count
     const count = await client.count({
       collection_name: data.collection_name,
-      expr: expr,
+      expr: userExpr,
     });
     // total should be the minimum of total and count
-    let total = data.limit > count.data ? count.data : data.limit;
+    const total = data.limit > count.data ? count.data : data.limit;
+    const batchSize =
+      data.batchSize > DEFAULT_MAX_SEARCH_SIZE
+        ? DEFAULT_MAX_SEARCH_SIZE
+        : data.batchSize;
+
+    // local variables
+    let expr = userExpr;
+    let lastBatchRes: Record<string, any> = [];
+    let lastPKId: string | number = '';
+    let currentBatchSize = batchSize; // Store the current batch size
 
     // return iterator
     return {
-      batchSize: data.batchSize,
-      page: 0,
-      expr: expr,
-      localCache: new Map(),
-      total: total,
+      currentTotal: 0,
       [Symbol.asyncIterator]() {
         return {
-          batchSize: this.batchSize,
-          page: this.page,
-          expr: this.expr,
-          localCache: this.localCache,
-          total: this.total,
+          currentTotal: this.currentTotal,
           async next() {
+            // if reach the limit, return done
+            if (this.currentTotal >= total) {
+              return { done: true, value: lastBatchRes };
+            }
             // set limit for current batch
-            (data as SearchSimpleReq).limit = this.batchSize;
+            data.limit = currentBatchSize; // Use the current batch size
 
             // get current page expr
             data.expr = getQueryIteratorExpr({
-              page: this.page,
-              expr: this.expr,
+              expr: expr,
               pkField,
-              pageCache: this.localCache,
+              lastPKId,
             });
 
             // search data
@@ -839,23 +845,16 @@ export class Data extends Collection {
 
             // get last item of the data
             const lastItem = res.data[res.data.length - 1];
-            // get last pk id
-            const lastPKId: string | number =
-              lastItem && lastItem[pkField.name];
+            // update last pk id
+            lastPKId = lastItem && lastItem[pkField.name];
 
-            // store pk id in the cache with the page number
-            if (lastItem) {
-              this.localCache.set(this.page, {
-                lastPKId,
-              });
-            }
-
-            if (this.page * this.batchSize >= this.total) {
-              return { done: true, value: res.data };
-            } else {
-              this.page++;
-              return { done: false, value: res.data };
-            }
+            // store last batch result
+            lastBatchRes = res.data;
+            // update current total
+            this.currentTotal += lastBatchRes.length;
+            // Update the current batch size based on remaining data
+            currentBatchSize = Math.min(batchSize, total - this.currentTotal);
+            return { done: false, value: lastBatchRes };
           },
         };
       },

@@ -2,7 +2,7 @@ import {
   promisify,
   getQueryIteratorExpr,
   DataTypeStringEnum,
-  MIN_INT64,
+  DEFAULT_MIN_INT64,
   getPKFieldExpr,
   getRangeFromSearchResult,
   SearchResultData,
@@ -62,8 +62,7 @@ describe('Function API testing', () => {
         name: 'id',
         data_type: DataTypeStringEnum.VarChar,
       },
-      page: 1,
-      pageCache: new Map(),
+      lastPkId: '',
     } as any;
 
     const result = getQueryIteratorExpr(params);
@@ -78,15 +77,7 @@ describe('Function API testing', () => {
         name: 'id',
         data_type: DataTypeStringEnum.VarChar,
       },
-      page: 2,
-      pageCache: new Map([
-        [
-          1,
-          {
-            lastPKId: 'abc',
-          },
-        ],
-      ]),
+      lastPKId: 'abc',
     } as any;
 
     const result = getQueryIteratorExpr(params);
@@ -102,7 +93,7 @@ describe('Function API testing', () => {
         data_type: DataTypeStringEnum.VarChar,
       },
       page: 1,
-      pageCache: new Map(),
+      lastPkId: '',
     } as any;
 
     const result = getQueryIteratorExpr(params);
@@ -117,13 +108,12 @@ describe('Function API testing', () => {
         name: 'id',
         data_type: DataTypeStringEnum.Int64,
       },
-      page: 1,
-      pageCache: new Map(),
+      lastPkId: '',
     } as any;
 
     const result = getQueryIteratorExpr(params);
 
-    expect(result).toBe(`id > ${MIN_INT64}`);
+    expect(result).toBe(`id > ${DEFAULT_MIN_INT64}`);
   });
 
   it('should return int64 expression when cache exists', () => {
@@ -133,15 +123,7 @@ describe('Function API testing', () => {
         name: 'id',
         data_type: DataTypeStringEnum.Int64,
       },
-      page: 2,
-      pageCache: new Map([
-        [
-          1,
-          {
-            lastPKId: 10,
-          },
-        ],
-      ]),
+      lastPKId: 10,
     } as any;
 
     const result = getQueryIteratorExpr(params);
@@ -156,15 +138,7 @@ describe('Function API testing', () => {
         name: 'id',
         data_type: DataTypeStringEnum.Int64,
       },
-      page: 2,
-      pageCache: new Map([
-        [
-          1,
-          {
-            lastPKId: 10,
-          },
-        ],
-      ]),
+      lastPKId: 10,
     } as any;
 
     const result = getQueryIteratorExpr(params);

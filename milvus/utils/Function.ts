@@ -4,7 +4,7 @@ import {
   ERROR_REASONS,
   FieldSchema,
   DataTypeStringEnum,
-  MIN_INT64,
+  DEFAULT_MIN_INT64,
   SearchResultData,
 } from '../';
 import { Pool } from 'generic-pool';
@@ -151,24 +151,20 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
 export const getQueryIteratorExpr = (params: {
   expr: string;
   pkField: FieldSchema;
-  page: number;
-  pageCache: Map<number, { lastPKId: number | string }>;
+  lastPKId: string | number;
 }) => {
   // get params
-  const { expr, page, pageCache, pkField } = params;
-
-  // get cache
-  const cache = pageCache.get(page - 1);
+  const { expr, lastPKId, pkField } = params;
 
   // If cache does not exist, return expression based on primaryKey type
   let compareValue = '';
-  if (!cache) {
+  if (!lastPKId) {
     // get default value
     compareValue =
-      pkField?.data_type === DataTypeStringEnum.VarChar ? '' : `${MIN_INT64}`;
+      pkField?.data_type === DataTypeStringEnum.VarChar
+        ? ''
+        : `${DEFAULT_MIN_INT64}`;
   } else {
-    // get last pk id
-    const { lastPKId } = cache;
     compareValue = lastPKId as string;
   }
 
