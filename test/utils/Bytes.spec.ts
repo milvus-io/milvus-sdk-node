@@ -63,4 +63,15 @@ describe('Sparse rows <-> Bytes conversion', () => {
     ];
     expect(getSparseFloatVectorType(data)).toEqual('coo');
   });
+
+  it('should return "unknown" if the input is not recognized', () => {
+    const data: any = 'invalid';
+    expect(getSparseFloatVectorType(data)).toEqual('unknown');
+
+    const data2: any = [
+      [1, 2, 3],
+      [4, 5, 6],
+    ];
+    expect(getSparseFloatVectorType(data2)).toEqual('unknown');
+  });
 });

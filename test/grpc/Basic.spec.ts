@@ -80,6 +80,20 @@ describe(`Basic API without database`, () => {
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`search nq > 1 should be successful`, async () => {
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      data: [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+      ],
+    });
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(2);
+    expect(search.results[0].length).toEqual(10);
+    expect(search.results[1].length).toEqual(10);
+  });
+
   it(`release and drop should be successful`, async () => {
     // releases
     const release = await milvusClient.releaseCollection({
