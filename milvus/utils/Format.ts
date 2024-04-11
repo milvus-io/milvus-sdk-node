@@ -34,6 +34,7 @@ import {
   parseBytesToFloat16Vector,
   parseFloat16VectorToBytes,
   Float16Vector,
+  getSparseFloatVectorType,
 } from '../';
 
 /**
@@ -691,10 +692,8 @@ export const buildSearchRequest = (
           searchSimpleReq.vector ||
           searchSimpleReq.data;
 
-      // make sure the vector format
-      if (!Array.isArray(searchingVector[0])) {
-        searchingVector = [searchingVector as unknown] as VectorTypes[];
-      }
+      // format saerching vector
+      searchingVector = formatSearchVector(searchingVector, field.dataType!);
 
       // create search request
       requests.push({
@@ -841,4 +840,32 @@ export const formatSearchResult = (
   });
 
   return results;
+};
+
+/**
+ * Formats the search vector to match a specific data type.
+ * @param {VectorTypes | VectorTypes[]} searchVector - The search vector or array of vectors to be formatted.
+ * @param {DataType} dataType - The specified data type.
+ * @returns {VectorTypes[]} The formatted search vector or array of vectors.
+ */
+export const formatSearchVector = (
+  searchVector: VectorTypes | VectorTypes[],
+  dataType: DataType
+): VectorTypes[] => {
+  switch (dataType) {
+    case DataType.FloatVector:
+    case DataType.BinaryVector:
+    case DataType.Float16Vector:
+    case DataType.BFloat16Vector:
+      if (!Array.isArray(searchVector)) {
+        return [searchVector] as VectorTypes[];
+      }
+    case DataType.SparseFloatVector:
+      const type = getSparseFloatVectorType(searchVector as VectorTypes);
+      if (type !== 'unknown') {
+        return [searchVector] as VectorTypes[];
+      }
+    default:
+      return searchVector as VectorTypes[];
+  }
 };

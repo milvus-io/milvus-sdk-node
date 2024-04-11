@@ -4,7 +4,6 @@ import {
   DataType,
   IndexType,
   MetricType,
-  parseBytesToFloat16Vector,
 } from '../../milvus';
 import {
   IP,
@@ -116,6 +115,20 @@ describe(`Float16 vector API testing`, () => {
   it(`search with float16 vector should be successful`, async () => {
     const search = await milvusClient.search({
       vector: data[0].vector,
+      collection_name: COLLECTION_NAME,
+      output_fields: ['id', 'vector'],
+      limit: 5,
+    });
+
+    // console.log('search', search);
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toBeGreaterThan(0);
+  });
+
+  it(`search with float16 vector and nq > 0 should be successful`, async () => {
+    const search = await milvusClient.search({
+      vector: [data[0].vector, data[1].vector],
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,

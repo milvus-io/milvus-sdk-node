@@ -26,6 +26,7 @@ import {
   buildFieldData,
   formatSearchResult,
   Field,
+  formatSearchVector,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -586,4 +587,96 @@ describe('utils/format', () => {
 
     expect(results).toEqual(expectedResults);
   });
+
+  it('should format search vector correctly', () => {
+    // float vector
+    const floatVector = [1, 2, 3];
+    const formattedVector = formatSearchVector(
+      floatVector,
+      DataType.FloatVector
+    );
+    expect(formattedVector).toEqual([floatVector]);
+
+    const floatVectors = [
+      [1, 2, 3],
+      [4, 5, 6],
+    ];
+    expect(formatSearchVector(floatVectors, DataType.FloatVector)).toEqual(
+      floatVectors
+    );
+  });
+
+  // sparse coo vector
+  const sparseCooVector = [
+    { index: 1, value: 2 },
+    { index: 3, value: 4 },
+  ];
+  const formattedSparseCooVector = formatSearchVector(
+    sparseCooVector,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseCooVector).toEqual([sparseCooVector]);
+
+  // sparse csr vector
+  const sparseCsrVector = {
+    indices: [1, 3],
+    values: [2, 4],
+  };
+  const formattedSparseCsrVector = formatSearchVector(
+    sparseCsrVector,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseCsrVector).toEqual([sparseCsrVector]);
+
+  const sparseCsrVectors = [
+    {
+      indices: [1, 3],
+      values: [2, 4],
+    },
+    {
+      indices: [2, 4],
+      values: [3, 5],
+    },
+  ];
+  const formattedSparseCsrVectors = formatSearchVector(
+    sparseCsrVectors,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseCsrVectors).toEqual(sparseCsrVectors);
+
+  // sparse array vector
+  const sparseArrayVector = [0.1, 0.2, 0.3];
+  const formattedSparseArrayVector = formatSearchVector(
+    sparseArrayVector,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseArrayVector).toEqual([sparseArrayVector]);
+
+  const sparseArrayVectors = [
+    [0.1, 0.2, 0.3],
+    [0.4, 0.5, 0.6],
+  ];
+  const formattedSparseArrayVectors = formatSearchVector(
+    sparseArrayVectors,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseArrayVectors).toEqual(sparseArrayVectors);
+
+  // sparse dict vector
+  const sparseDictVector = { 1: 2, 3: 4 };
+  const formattedSparseDictVector = formatSearchVector(
+    sparseDictVector,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseDictVector).toEqual([sparseDictVector]);
+
+  const sparseDictVectors = [
+    { 1: 2, 3: 4 },
+    { 1: 2, 3: 4 },
+  ];
+  const formattedSparseDictVectors = formatSearchVector(
+    sparseDictVectors,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseDictVectors).toEqual(sparseDictVectors);
 });

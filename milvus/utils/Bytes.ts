@@ -58,17 +58,37 @@ export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
  *
  * @returns string, 'array' | 'coo' | 'csr' | 'dict'
  */
-export const getSparseFloatVectorType = (vector: SparseFloatVector) => {
+export const getSparseFloatVectorType = (
+  vector: SparseFloatVector
+): 'array' | 'coo' | 'csr' | 'dict' | 'unknown' => {
   if (Array.isArray(vector)) {
+    if (vector.length === 0) {
+      return 'array';
+    }
     if (typeof vector[0] === 'number' || typeof vector[0] === 'undefined') {
       return 'array';
-    } else {
+    } else if (
+      (vector as SparseVectorCOO).every(
+        item => typeof item === 'object' && 'index' in item && 'value' in item
+      )
+    ) {
       return 'coo';
+    } else {
+      return 'unknown';
     }
-  } else if ('indices' in vector && 'values' in vector) {
+  } else if (
+    typeof vector === 'object' &&
+    'indices' in vector &&
+    'values' in vector
+  ) {
     return 'csr';
-  } else {
+  } else if (
+    typeof vector === 'object' &&
+    Object.keys(vector).every(key => typeof vector[key] === 'number')
+  ) {
     return 'dict';
+  } else {
+    return 'unknown';
   }
 };
 
@@ -86,8 +106,8 @@ export const parseSparseVectorToBytes = (
   // detect the format of the sparse vector
   const type = getSparseFloatVectorType(data);
 
-  let indices: number[];
-  let values: number[];
+  let indices: number[] = [];
+  let values: number[] = [];
 
   switch (type) {
     case 'array':
