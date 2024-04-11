@@ -228,6 +228,36 @@ describe(`Multiple vectors API testing`, () => {
     expect(search.results.length).toEqual(5);
   });
 
+  it(`hybrid search with nq > 1 should be successful`, async () => {
+    const search = await milvusClient.hybridSearch({
+      collection_name: COLLECTION_NAME,
+      data: [
+        {
+          data: [
+            [1, 2, 3, 4, 5, 6, 7, 8],
+            [1, 2, 3, 4, 5, 6, 7, 8],
+          ],
+          anns_field: 'vector',
+          params: { nprobe: 2 },
+        },
+        {
+          data: [
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+          ],
+          anns_field: 'vector1',
+        },
+      ],
+      limit: 2,
+      output_fields: ['vector', 'vector1'],
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(2);
+    expect(search.results[0].length).toEqual(2);
+    expect(search.results[1].length).toEqual(2);
+  });
+
   it(`hybrid search with one vector should be successful`, async () => {
     const search = await milvusClient.hybridSearch({
       collection_name: COLLECTION_NAME,

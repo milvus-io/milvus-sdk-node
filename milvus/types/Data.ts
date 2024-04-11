@@ -266,7 +266,7 @@ export interface SearchReq extends collectionNameReq {
   partition_names?: string[]; // partition names
   expr?: string; // filter expression
   search_params: SearchParam; // search parameters
-  vectors: number[][]; // vectors to search
+  vectors: VectorTypes[]; // vectors to search
   output_fields?: string[]; // fields to return
   travel_timestamp?: string; // time travel
   vector_type: DataType.BinaryVector | DataType.FloatVector; // vector field type
@@ -278,9 +278,9 @@ export interface SearchReq extends collectionNameReq {
 export interface SearchSimpleReq extends collectionNameReq {
   partition_names?: string[]; // partition names
   anns_field?: string; // your vector field name
-  data?: number[][] | number[]; // vector to search
-  vector?: number[]; // alias for data
-  vectors?: number[][]; // alias for data
+  data?: VectorTypes[] | VectorTypes; // vector to search
+  vector?: VectorTypes; // alias for data
+  vectors?: VectorTypes[]; // alias for data
   output_fields?: string[];
   limit?: number; // how many results you want
   topk?: number; // limit alias
@@ -299,7 +299,7 @@ export type HybridSearchSingleReq = Pick<
   SearchParam,
   'anns_field' | 'ignore_growing' | 'group_by_field'
 > & {
-  data: number[]; // vector to search
+  data: VectorTypes[] | VectorTypes; // vector to search
   expr?: string; // filter expression
   params?: keyValueObj; // extra search parameters
 };
