@@ -14,7 +14,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
@@ -23,8 +23,12 @@ const dbParam = {
 
 const p = {
   collectionName: COLLECTION_NAME,
-  vectorType: [DataType.FloatVector, DataType.FloatVector],
-  dim: [8, 16],
+  vectorType: [
+    DataType.FloatVector,
+    DataType.FloatVector,
+    DataType.Float16Vector,
+  ],
+  dim: [8, 16, 8],
 };
 const collectionParams = genCollectionParams(p);
 
@@ -85,6 +89,12 @@ describe(`Multiple vectors API testing`, () => {
         metric_type: MetricType.COSINE,
         index_type: IndexType.AUTOINDEX,
       },
+      {
+        collection_name: COLLECTION_NAME,
+        field_name: 'vector2',
+        metric_type: MetricType.COSINE,
+        index_type: IndexType.AUTOINDEX,
+      },
     ]);
 
     expect(indexes.error_code).toEqual(ErrorCode.SUCCESS);
@@ -102,7 +112,7 @@ describe(`Multiple vectors API testing`, () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       filter: 'id > 0',
-      output_fields: ['vector', 'vector1'],
+      output_fields: ['vector', 'vector1', 'vector2'],
     });
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -110,20 +120,21 @@ describe(`Multiple vectors API testing`, () => {
     const item = query.data[0];
     expect(item.vector.length).toEqual(p.dim[0]);
     expect(item.vector1.length).toEqual(p.dim[1]);
+    expect(item.vector2.length).toEqual(p.dim[2]);
   });
 
   it(`search multiple vector collection with old search api should be successful`, async () => {
     // search default first vector field
     const search0 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: [1, 2, 3, 4, 5, 6, 7, 8],
+      data: [1, 2, 3, 4, 5, 6, 7, 8],
     });
     expect(search0.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     // search specific vector field
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: [1, 2, 3, 4, 5, 6, 7, 8],
+      data: [1, 2, 3, 4, 5, 6, 7, 8],
       anns_field: 'vector',
     });
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -131,7 +142,7 @@ describe(`Multiple vectors API testing`, () => {
     // search second vector field
     const search2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+      data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
       anns_field: 'vector1',
       limit: 5,
     });
@@ -139,10 +150,11 @@ describe(`Multiple vectors API testing`, () => {
     expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search2.results.length).toEqual(5);
 
-    // search first vector field
+    // search third vector field
     const search3 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: [1, 2, 3, 4, 5, 6, 7, 8],
+      data: [1, 2, 3, 4, 5, 6, 7, 8],
+      anns_field: 'vector2',
     });
 
     expect(search3.status.error_code).toEqual(ErrorCode.SUCCESS);
