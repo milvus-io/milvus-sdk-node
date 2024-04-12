@@ -26,9 +26,10 @@ const p = {
   vectorType: [
     DataType.FloatVector,
     DataType.FloatVector,
-    // DataType.Float16Vector,
+    DataType.Float16Vector,
+    DataType.SparseFloatVector,
   ],
-  dim: [8, 16],
+  dim: [8, 16, 4, 8],
 };
 const collectionParams = genCollectionParams(p);
 
@@ -89,12 +90,21 @@ describe(`Multiple vectors API testing`, () => {
         metric_type: MetricType.COSINE,
         index_type: IndexType.AUTOINDEX,
       },
-      // {
-      //   collection_name: COLLECTION_NAME,
-      //   field_name: 'vector2',
-      //   metric_type: MetricType.COSINE,
-      //   index_type: IndexType.AUTOINDEX,
-      // },
+      {
+        collection_name: COLLECTION_NAME,
+        field_name: 'vector2',
+        metric_type: MetricType.COSINE,
+        index_type: IndexType.AUTOINDEX,
+      },
+      {
+        collection_name: COLLECTION_NAME,
+        field_name: 'vector3',
+        metric_type: MetricType.IP,
+        index_type: IndexType.SPARSE_WAND,
+        params: {
+          drop_ratio_build: 0.2,
+        },
+      },
     ]);
 
     expect(indexes.error_code).toEqual(ErrorCode.SUCCESS);
@@ -112,7 +122,7 @@ describe(`Multiple vectors API testing`, () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       filter: 'id > 0',
-      output_fields: ['vector', 'vector1'],
+      output_fields: ['vector', 'vector1', 'vector2', 'vector3'],
     });
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -120,10 +130,10 @@ describe(`Multiple vectors API testing`, () => {
     const item = query.data[0];
     expect(item.vector.length).toEqual(p.dim[0]);
     expect(item.vector1.length).toEqual(p.dim[1]);
-    // expect(item.vector2.length).toEqual(p.dim[2]);
+    expect(item.vector2.length).toEqual(p.dim[2]);
   });
 
-  it(`search multiple vector collection with old search api should be successful`, async () => {
+  it(`search multiple vector collection with single vector search should be successful`, async () => {
     // search default first vector field
     const search0 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
@@ -150,16 +160,26 @@ describe(`Multiple vectors API testing`, () => {
     expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search2.results.length).toEqual(5);
 
-    // // search third vector field
-    // const search3 = await milvusClient.search({
-    //   collection_name: COLLECTION_NAME,
-    //   data: [1, 2, 3, 4, 5, 6, 7, 8],
-    //   anns_field: 'vector2',
-    // });
+    // search third vector field
+    const searchF16 = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      data: [1, 2, 3, 4],
+      anns_field: 'vector2',
+    });
 
-    // expect(search3.status.error_code).toEqual(ErrorCode.SUCCESS);
-    // expect(search3.results.length).toEqual(search.results.length);
-    // expect(search3.results).toEqual(search.results);
+    expect(searchF16.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(searchF16.results.length).toEqual(search.results.length);
+
+    // search the fourth vector field
+    const searchSparse = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      data: { 1: 2, 3: 4 },
+      anns_field: 'vector3',
+      limit: 10,
+    });
+
+    expect(searchSparse.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(searchSparse.results.length).toBeGreaterThan(0);
   });
 
   it(`hybrid search with rrf ranker set should be successful`, async () => {
@@ -175,14 +195,23 @@ describe(`Multiple vectors API testing`, () => {
           data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
           anns_field: 'vector1',
         },
+        {
+          data: [1, 2, 3, 4],
+          anns_field: 'vector2',
+        },
+        {
+          data: { 1: 2, 3: 4 },
+          anns_field: 'vector3',
+        },
       ],
       rerank: RRFRanker(),
       limit: 5,
-      output_fields: ['id'],
+      output_fields: ['id', 'vector2', 'vector3'],
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toEqual(5);
+    expect(Object.keys(search.results[0]).length).toEqual(4);
   });
 
   it(`hybrid search with weighted ranker set should be successful`, async () => {
@@ -217,8 +246,8 @@ describe(`Multiple vectors API testing`, () => {
           params: { nprobe: 2 },
         },
         {
-          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-          anns_field: 'vector1',
+          data: [1, 2, 3, 4],
+          anns_field: 'vector2',
         },
       ],
       limit: 5,
