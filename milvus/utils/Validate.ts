@@ -161,12 +161,13 @@ export const isInIgnoreRetryCodes = (
 /**
  * Checks if a milvus status message is valid.
  */
-export const isInvalidMessage = (message: {
-  code: number;
-  status?: { code: number };
-}) => {
-  const codesToCheck: number[] = [];
-
+export const isInvalidMessage = (
+  message: {
+    code: number;
+    status?: { code: number };
+  },
+  codesToCheck: number[] = []
+) => {
   return (
     message &&
     codesToCheck.some(
