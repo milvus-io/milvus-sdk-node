@@ -679,7 +679,10 @@ export const buildSearchRequest = (
         req = Object.assign(cloneObj(data), singleReq);
       } else {
         // if it is not hybrid search, and we have built one request, skip
-        if (requests.length === 1) {
+        const skip =
+          requests.length === 1 ||
+          (typeof req.anns_field !== 'undefined' && req.anns_field !== name);
+        if (skip) {
           continue;
         }
       }
@@ -697,9 +700,9 @@ export const buildSearchRequest = (
 
       // create search request
       requests.push({
-        collection_name: data.collection_name,
-        partition_names: data.partition_names || [],
-        output_fields: data.output_fields || default_output_fields,
+        collection_name: req.collection_name,
+        partition_names: req.partition_names || [],
+        output_fields: req.output_fields || default_output_fields,
         nq: searchReq.nq || searchingVector.length,
         dsl: searchReq.expr || searchSimpleReq.filter || '',
         dsl_type: DslType.BoolExprV1,
@@ -712,7 +715,7 @@ export const buildSearchRequest = (
           searchReq.search_params || buildSearchParams(req, name)
         ),
         consistency_level:
-          data.consistency_level || (collectionInfo.consistency_level as any),
+          req.consistency_level || (collectionInfo.consistency_level as any),
       });
     } else {
       // if field is not vector, add it to output fields
