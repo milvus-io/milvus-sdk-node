@@ -161,7 +161,7 @@ export const getRetryInterceptor = ({
 
             // check message if need retry
             const needRetry =
-              isInvalidMessage(savedReceiveMessage) ||
+              isInvalidMessage(savedReceiveMessage, []) ||
               !isInIgnoreRetryCodes(status.code);
 
             // check

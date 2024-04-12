@@ -81,7 +81,7 @@ describe('utils/validate', () => {
       code: 2200,
       status: undefined,
     };
-    expect(isInvalidMessage(validMessage)).toBe(true);
+    expect(isInvalidMessage(validMessage, [2200])).toBe(true);
   });
 
   it('message status code matches codesToCheck', () => {
@@ -89,7 +89,7 @@ describe('utils/validate', () => {
       code: 222,
       status: { code: 2200 },
     };
-    expect(isInvalidMessage(validMessage)).toBe(true);
+    expect(isInvalidMessage(validMessage, [2200])).toBe(true);
   });
 
   it('message code and status code match codesToCheck', () => {
@@ -97,7 +97,7 @@ describe('utils/validate', () => {
       code: 2200,
       status: { code: 2200 },
     };
-    expect(isInvalidMessage(validMessage)).toBe(true);
+    expect(isInvalidMessage(validMessage, [2200])).toBe(true);
   });
 
   it('should throw an error if a field is missing the data_type property', () => {
