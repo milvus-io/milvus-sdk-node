@@ -165,7 +165,7 @@ export const isInvalidMessage = (message: {
   code: number;
   status?: { code: number };
 }) => {
-  const codesToCheck = [2200];
+  const codesToCheck: number[] = [];
 
   return (
     message &&
