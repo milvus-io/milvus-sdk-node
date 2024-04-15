@@ -124,6 +124,50 @@ describe(`Milvus client`, () => {
     expect(m7.tlsMode).toEqual(TLS_MODE.ONE_WAY);
   });
 
+  it(`should set tls to 2 if root cert and others provided`, async () => {
+    const m7s = new MilvusClient({
+      address: IP,
+      ssl: true,
+      username: 'username',
+      password: 'password',
+      id: '1',
+      tls: {
+        rootCertPath: `test/cert/ca.pem`,
+        privateKeyPath: `test/cert/client.key`,
+        certChainPath: `test/cert/client.pem`,
+      },
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(m7s.tlsMode).toEqual(TLS_MODE.TWO_WAY);
+  });
+
+  it(`it should setup maxRetries and retryDelay successfully`, async () => {
+    const m8 = new MilvusClient({
+      address: IP,
+      ssl: true,
+      username: 'username',
+      password: 'password',
+      id: '1',
+      retryDelay: 300,
+      maxRetries: 3,
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(m8.config.maxRetries).toEqual(3);
+    expect(m8.config.retryDelay).toEqual(300);
+  });
+
+  it(`it should setup string timeout successfully`, async () => {
+    const m9 = new MilvusClient({
+      address: IP,
+      timeout: '1h',
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(m9.timeout).toEqual(3600000);
+  });
+
   it(`Should throw MILVUS_ADDRESS_IS_REQUIRED`, async () => {
     try {
       new MilvusClient(undefined as any);
