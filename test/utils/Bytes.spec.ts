@@ -2,21 +2,23 @@ import {
   parseBufferToSparseRow,
   parseSparseRowsToBytes,
   SparseFloatVector,
-  parseSparseVectorToBytes,
+  sparseToBytes,
   getSparseFloatVectorType,
+  f32ArrayToBf16Bytes,
+  bf16BytesToF32Array,
 } from '../../milvus';
 
-describe('Sparse rows <-> Bytes conversion', () => {
+describe('Data <-> Bytes Test', () => {
   it('should throw error if index is negative or exceeds 2^32-1', () => {
     const invalidIndexData = {
       0: 1.5,
       4294967296: 2.7, // 2^32
     };
-    expect(() => parseSparseVectorToBytes(invalidIndexData)).toThrow();
+    expect(() => sparseToBytes(invalidIndexData)).toThrow();
   });
 
   it('should return empty Uint8Array if data is empty', () => {
-    expect(parseSparseVectorToBytes({})).toEqual(new Uint8Array(0));
+    expect(sparseToBytes({})).toEqual(new Uint8Array(0));
   });
 
   it('Conversion is reversible', () => {
@@ -73,5 +75,16 @@ describe('Sparse rows <-> Bytes conversion', () => {
       [4, 5, 6],
     ];
     expect(getSparseFloatVectorType(data2)).toEqual('unknown');
+  });
+
+  it('should convert bf16 -> f32 and f32 -> bf16 successfully', () => {
+    const data = [0.123456789, -0.987654321, 3.14159265];
+    const bf16Bytes = f32ArrayToBf16Bytes(data);
+    const f32Array = bf16BytesToF32Array(bf16Bytes);
+
+    expect(f32Array.length).toEqual(data.length);
+    for (let i = 0; i < data.length; i++) {
+      expect(data[i]).toBeCloseTo(f32Array[i], 2);
+    }
   });
 });

@@ -78,6 +78,10 @@ describe('utils/format', () => {
     const testValue = 3.1231241241234124124;
     const res = formatNumberPrecision(testValue, 3);
     expect(res).toBe(3.123);
+
+    const testValue2 = -3.1231241241234124124;
+    const res2 = formatNumberPrecision(testValue2, 3);
+    expect(res2).toBe(-3.123);
   });
 
   it(`hybridtsToUnixtime should success`, async () => {

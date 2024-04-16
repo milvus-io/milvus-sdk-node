@@ -24,7 +24,7 @@ export const ERROR_REASONS = {
   COLLECTION_PARTITION_NAME_ARE_REQUIRED:
     'The `collection_name` or the `partition_name` property is missing.',
   INSERT_CHECK_FIELD_DATA_IS_REQUIRED:
-    'The type of the `fields_data` should be an array and length > 0.',
+    'The type of the `data or field_data` should be an array and length > 0.',
   INSERT_CHECK_WRONG_FIELD:
     'Insert fail: some field does not exist for this collection in line.',
   INSERT_CHECK_WRONG_DIM:
