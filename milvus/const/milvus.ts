@@ -271,6 +271,14 @@ export enum DataType {
   SparseFloatVector = 104,
 }
 
+export const VectorDataTypes = [
+  DataType.BinaryVector,
+  DataType.FloatVector,
+  DataType.Float16Vector,
+  DataType.BFloat16Vector,
+  DataType.SparseFloatVector,
+];
+
 // data type map
 export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   None: 0,

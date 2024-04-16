@@ -9,16 +9,16 @@ import {
   Float16Vector,
   SparseVectorCSR,
   SparseVectorCOO,
+  BFloat16Vector,
 } from '..';
 
 /**
  * Converts a float vector into bytes format.
  *
  * @param {FloatVector} array - The float vector to convert.
- *
  * @returns {Buffer} Bytes representing the float vector.
  */
-export const parseFloatVectorToBytes = (array: FloatVector) => {
+export const f32ArrayToF32Bytes = (array: FloatVector) => {
   // create array buffer
   const a = new Float32Array(array);
   // need return bytes to milvus proto
@@ -29,27 +29,73 @@ export const parseFloatVectorToBytes = (array: FloatVector) => {
  * Converts a binary vector into bytes format.
  *
  * @param {BinaryVector} array - The binary vector to convert.
- *
  * @returns {Buffer} Bytes representing the binary vector.
  */
-export const parseBinaryVectorToBytes = (array: BinaryVector) => {
+export const f32ArrayToBinaryBytes = (array: BinaryVector) => {
   const a = new Uint8Array(array);
   // need return bytes to milvus proto
   return Buffer.from(a.buffer);
 };
 
-export const parseFloat16VectorToBytes = (f16Array: Float16Vector) => {
+/**
+ * Converts a float16 vector into bytes format.
+ *
+ * @param {Float16Vector} f16Array - The float16 vector to convert.
+ * @returns {Buffer} Bytes representing the float16 vector.
+ */
+export const f32ArrayToF16Bytes = (f16Array: Float16Vector) => {
   const float16Bytes = new Float16Array(f16Array);
   return Buffer.from(float16Bytes.buffer);
 };
 
-export const parseBytesToFloat16Vector = (float16Bytes: Uint8Array) => {
-  const buffer = new ArrayBuffer(float16Bytes.length);
+/**
+ * Convert float16 bytes to float32 array.
+ * @param {Uint8Array} f16Bytes - The float16 bytes to convert.
+ * @returns {Float32Array} The float32 array.
+ */
+export const f16BytesToF32Array = (f16Bytes: Uint8Array) => {
+  const buffer = new ArrayBuffer(f16Bytes.length);
   const view = new Uint8Array(buffer);
-  view.set(float16Bytes);
+  view.set(f16Bytes);
 
-  const float16Array = new Float16Array(buffer);
-  return Array.from(float16Array);
+  const f16Array = new Float16Array(buffer);
+  return Array.from(f16Array);
+};
+
+/**
+ *  Convert float32 array to BFloat16 bytes.
+ * @param {BFloat16Vector} float32Array - The float32 array to convert.
+ * @returns {Buffer} The BFloat16 bytes.
+ */
+export const f32ArrayToBf16Bytes = (float32Array: BFloat16Vector) => {
+  const bf16Bytes = new Uint8Array(float32Array.length * 2);
+  const bf16Array = new Uint16Array(float32Array.length * 2);
+
+  for (let i = 0; i < float32Array.length; i++) {
+    const dataView = new DataView(bf16Array.buffer);
+    dataView.setFloat32(i * 4, float32Array[i], true);
+    const bf16Byte1 = bf16Array[i * 2] & 0xff;
+    const bf16Byte2 = (bf16Array[i * 2] >> 8) & 0xff;
+    const index = i * 2;
+    bf16Bytes[index] = bf16Byte1;
+    bf16Bytes[index + 1] = bf16Byte2;
+  }
+
+  return Buffer.from(bf16Bytes.buffer);
+};
+
+/**
+ * Convert BFloat16 bytes to Float32 array.
+ * @param {Uint8Array} bf16Bytes - The BFloat16 bytes to convert.
+ * @returns {BFloat16Vector} The Float32 array.
+ */
+export const bf16BytesToF32Array = (bf16Bytes: Uint8Array) => {
+  const buffer = new ArrayBuffer(bf16Bytes.length);
+  const view = new Uint8Array(buffer);
+  view.set(bf16Bytes);
+
+  const f16Array = new Float16Array(buffer);
+  return Array.from(f16Array);
 };
 
 /**
@@ -100,9 +146,7 @@ export const getSparseFloatVectorType = (
  * @returns {Uint8Array} Bytes representing the sparse float vector.
  * @throws {Error} If the length of indices and values is not the same, or if the index is not within the valid range, or if the value is NaN.
  */
-export const parseSparseVectorToBytes = (
-  data: SparseFloatVector
-): Uint8Array => {
+export const sparseToBytes = (data: SparseFloatVector): Uint8Array => {
   // detect the format of the sparse vector
   const type = getSparseFloatVectorType(data);
 
@@ -165,7 +209,7 @@ export const parseSparseRowsToBytes = (
 ): Uint8Array[] => {
   const result: Uint8Array[] = [];
   for (const row of data) {
-    result.push(parseSparseVectorToBytes(row));
+    result.push(sparseToBytes(row));
   }
   return result;
 };
@@ -210,19 +254,19 @@ export const buildPlaceholderGroupBytes = (
   // parse vectors to bytes
   switch (vectorDataType) {
     case DataType.FloatVector:
-      bytes = vectors.map(v => parseFloatVectorToBytes(v as FloatVector));
+      bytes = vectors.map(v => f32ArrayToF32Bytes(v as FloatVector));
       break;
     case DataType.BinaryVector:
-      bytes = vectors.map(v => parseBinaryVectorToBytes(v as BinaryVector));
+      bytes = vectors.map(v => f32ArrayToBinaryBytes(v as BinaryVector));
+      break;
+    case DataType.BFloat16Vector:
+      bytes = vectors.map(v => f32ArrayToBf16Bytes(v as BFloat16Vector));
       break;
     case DataType.Float16Vector:
-    case DataType.BFloat16Vector:
-      bytes = vectors.map(v => parseFloat16VectorToBytes(v as Float16Vector));
+      bytes = vectors.map(v => f32ArrayToF16Bytes(v as Float16Vector));
       break;
     case DataType.SparseFloatVector:
-      bytes = vectors.map(v =>
-        parseSparseVectorToBytes(v as SparseFloatVector)
-      );
+      bytes = vectors.map(v => sparseToBytes(v as SparseFloatVector));
 
       break;
   }

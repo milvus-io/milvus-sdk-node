@@ -1,5 +1,6 @@
 import {
   DataType,
+  VectorDataTypes,
   DataTypeMap,
   ERROR_REASONS,
   DeleteEntitiesReq,
@@ -47,7 +48,6 @@ import {
   getDataKey,
   Field,
   buildFieldData,
-  VectorTypes,
   BinaryVector,
   RowData,
   CountReq,
@@ -56,19 +56,11 @@ import {
   SparseFloatVector,
   parseSparseRowsToBytes,
   getSparseDim,
-  parseBinaryVectorToBytes,
+  f32ArrayToBinaryBytes,
 } from '../';
 import { Collection } from './Collection';
 
 export class Data extends Collection {
-  // vectorTypes
-  vectorTypes = [
-    DataType.BinaryVector,
-    DataType.FloatVector,
-    DataType.Float16Vector,
-    DataType.SparseFloatVector,
-  ];
-
   /**
    * Upsert data into Milvus, view _insert for detail
    */
@@ -209,7 +201,7 @@ export class Data extends Collection {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may cause we cant find value.
       const type = DataTypeMap[field.type];
-      const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
+      const key = VectorDataTypes.includes(type) ? 'vectors' : 'scalars';
       const dataKey = getDataKey(type);
       const elementType = DataTypeMap[field.elementType!];
       const elementTypeKey = getDataKey(elementType);
@@ -225,6 +217,7 @@ export class Data extends Collection {
             },
           };
           break;
+        case DataType.BFloat16Vector:
         case DataType.Float16Vector:
           keyValue = {
             dim: field.dim,
@@ -234,7 +227,7 @@ export class Data extends Collection {
         case DataType.BinaryVector:
           keyValue = {
             dim: field.dim,
-            [dataKey]: parseBinaryVectorToBytes(field.data as BinaryVector),
+            [dataKey]: f32ArrayToBinaryBytes(field.data as BinaryVector),
           };
           break;
         case DataType.SparseFloatVector:

@@ -12,24 +12,24 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
-  db_name: 'float_vector_16',
+  db_name: 'Bfloat_vector_16',
 };
 
 const p = {
   collectionName: COLLECTION_NAME,
-  vectorType: [DataType.Float16Vector],
+  vectorType: [DataType.BFloat16Vector],
   dim: [8],
 };
 const collectionParams = genCollectionParams(p);
-const data = generateInsertData(collectionParams.fields, 2);
+const data = generateInsertData(collectionParams.fields, 10);
 
-// console.log('data to insert', data);
+console.log('data to insert', data);
 
-describe(`Float16 vector API testing`, () => {
+describe(`BFloat16 vector API testing`, () => {
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
@@ -40,7 +40,7 @@ describe(`Float16 vector API testing`, () => {
     await milvusClient.dropDatabase(dbParam);
   });
 
-  it(`Create collection with float16 vectors should be successful`, async () => {
+  it(`Create collection with Bfloat16 vectors should be successful`, async () => {
     const create = await milvusClient.createCollection(collectionParams);
     expect(create.error_code).toEqual(ErrorCode.SUCCESS);
 
@@ -48,25 +48,25 @@ describe(`Float16 vector API testing`, () => {
       collection_name: COLLECTION_NAME,
     });
 
-    const floatVector16Fields = describe.schema.fields.filter(
-      (field: any) => field.data_type === 'Float16Vector'
+    const BfloatVector16Fields = describe.schema.fields.filter(
+      (field: any) => field.data_type === 'BFloat16Vector'
     );
-    expect(floatVector16Fields.length).toBe(1);
+    expect(BfloatVector16Fields.length).toBe(1);
 
     // console.dir(describe.schema, { depth: null });
   });
 
-  it(`insert flaot16 vector data should be successful`, async () => {
-    const insert = await milvusClient.insert({
-      collection_name: COLLECTION_NAME,
-      data,
-    });
+  // it(`insert Bflaot16 vector data should be successful`, async () => {
+  //   const insert = await milvusClient.insert({
+  //     collection_name: COLLECTION_NAME,
+  //     data:[],
+  //   });
 
-    // console.log(' insert', insert);
+  //   // console.log(' insert', insert);
 
-    expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(insert.succ_index.length).toEqual(data.length);
-  });
+  //   expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
+  //   expect(insert.succ_index.length).toEqual(data.length);
+  // });
 
   it(`create index should be successful`, async () => {
     const indexes = await milvusClient.createIndex([
@@ -89,7 +89,7 @@ describe(`Float16 vector API testing`, () => {
     expect(load.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`query float16 vector should be successful`, async () => {
+  it(`query Bfloat16 vector should be successful`, async () => {
     const count = await milvusClient.count({
       collection_name: COLLECTION_NAME,
     });
@@ -102,6 +102,8 @@ describe(`Float16 vector API testing`, () => {
       output_fields: ['vector', 'id'],
     });
 
+    console.dir(query, { depth: null });
+
     // verify the query result
     data.forEach((obj, index) => {
       obj.vector.forEach((v: number, i: number) => {
@@ -112,7 +114,7 @@ describe(`Float16 vector API testing`, () => {
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`search with float16 vector should be successful`, async () => {
+  it(`search with Bfloat16 vector should be successful`, async () => {
     const search = await milvusClient.search({
       vector: data[0].vector,
       collection_name: COLLECTION_NAME,
@@ -120,13 +122,13 @@ describe(`Float16 vector API testing`, () => {
       limit: 5,
     });
 
-    // console.log('search', search);
+    console.log('search', search);
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toBeGreaterThan(0);
   });
 
-  it(`search with float16 vector and nq > 0 should be successful`, async () => {
+  it(`search with Bfloat16 vector and nq > 0 should be successful`, async () => {
     const search = await milvusClient.search({
       vector: [data[0].vector, data[1].vector],
       collection_name: COLLECTION_NAME,

@@ -2,21 +2,23 @@ import {
   parseBufferToSparseRow,
   parseSparseRowsToBytes,
   SparseFloatVector,
-  parseSparseVectorToBytes,
+  sparseToBytes,
   getSparseFloatVectorType,
+  f32ArrayToBf16Bytes,
+  bf16BytesToF32Array,
 } from '../../milvus';
 
-describe('Sparse rows <-> Bytes conversion', () => {
+describe('Data <-> Bytes Test', () => {
   it('should throw error if index is negative or exceeds 2^32-1', () => {
     const invalidIndexData = {
       0: 1.5,
       4294967296: 2.7, // 2^32
     };
-    expect(() => parseSparseVectorToBytes(invalidIndexData)).toThrow();
+    expect(() => sparseToBytes(invalidIndexData)).toThrow();
   });
 
   it('should return empty Uint8Array if data is empty', () => {
-    expect(parseSparseVectorToBytes({})).toEqual(new Uint8Array(0));
+    expect(sparseToBytes({})).toEqual(new Uint8Array(0));
   });
 
   it('Conversion is reversible', () => {
@@ -73,5 +75,52 @@ describe('Sparse rows <-> Bytes conversion', () => {
       [4, 5, 6],
     ];
     expect(getSparseFloatVectorType(data2)).toEqual('unknown');
+  });
+
+  it('should convert bf16 -> f32 and f32 -> bf16 successfully', () => {
+    const data = [
+      0.900453524757719, 0.4863875005640115, 0.8949536677029677,
+      0.12138599462037658, 0.21458182339507492, 0.5720008293051468,
+      0.08036605516514461, 0.6526291762036329,
+    ];
+
+    console.log('origin', data);
+
+    const bf16Bytes = f32ArrayToBf16Bytes(data);
+
+    const f32Array = bf16BytesToF32Array(bf16Bytes);
+
+    console.log('f32Array', f32Array);
+
+    const float32Array = [1.0, -2.5, 3.7, 0.0, 123.456];
+
+    // 调用函数
+    const result = f32ArrayToBf16Bytes(float32Array);
+
+    // 验证输出
+    const expectedBytes = Buffer.from([
+      0x00,
+      0x00,
+      0x00,
+      0x3f, // 1.0
+      0x00,
+      0x00,
+      0x00,
+      0xc0, // -2.5
+      0xcd,
+      0xcc,
+      0x3c,
+      0x40, // 3.7
+      0x00,
+      0x00,
+      0x00,
+      0x00, // 0.0
+      0x00,
+      0x00,
+      0xf6,
+      0x47, // 123.456
+    ]);
+
+    expect(result).toEqual(expectedBytes);
   });
 });

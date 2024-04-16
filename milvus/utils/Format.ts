@@ -31,9 +31,12 @@ import {
   RerankerObj,
   parseBufferToSparseRow,
   buildPlaceholderGroupBytes,
-  parseBytesToFloat16Vector,
-  parseFloat16VectorToBytes,
+  f16BytesToF32Array,
+  f32ArrayToF16Bytes,
+  f32ArrayToBf16Bytes,
   Float16Vector,
+  BFloat16Vector,
+  bf16BytesToF32Array,
   getSparseFloatVectorType,
 } from '../';
 
@@ -440,7 +443,11 @@ export const buildFieldDataMap = (fields_data: any[]) => {
           // split buffer data to float16 vector(bytes)
           for (let i = 0; i < f16Bytes.byteLength; i += f16Dim) {
             const slice = f16Bytes.slice(i, i + f16Dim);
-            field_data.push(parseBytesToFloat16Vector(slice));
+            field_data.push(
+              dataKey == 'float16_vector'
+                ? f16BytesToF32Array(slice)
+                : bf16BytesToF32Array(slice)
+            );
           }
           break;
         case 'sparse_float_vector':
@@ -525,9 +532,10 @@ export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
     case DataType.BinaryVector:
     case DataType.FloatVector:
       return rowData[name];
-    case DataType.Float16Vector:
     case DataType.BFloat16Vector:
-      return parseFloat16VectorToBytes(rowData[name] as Float16Vector);
+      return f32ArrayToBf16Bytes(rowData[name] as BFloat16Vector);
+    case DataType.Float16Vector:
+      return f32ArrayToF16Bytes(rowData[name] as Float16Vector);
     case DataType.JSON:
       return Buffer.from(JSON.stringify(rowData[name] || {}));
     case DataType.Array:
