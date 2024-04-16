@@ -59,7 +59,7 @@ export const f16BytesToF32Array = (f16Bytes: Uint8Array) => {
   view.set(f16Bytes);
 
   const f16Array = new Float16Array(buffer);
-  return Array.from(f16Array);
+  return f16Array;
 };
 
 /**
@@ -68,34 +68,43 @@ export const f16BytesToF32Array = (f16Bytes: Uint8Array) => {
  * @returns {Buffer} The BFloat16 bytes.
  */
 export const f32ArrayToBf16Bytes = (float32Array: BFloat16Vector) => {
-  const bf16Bytes = new Uint8Array(float32Array.length * 2);
-  const bf16Array = new Uint16Array(float32Array.length * 2);
+  const totalBytesNeeded = float32Array.length * 2; // 2 bytes per float32
+  const buffer = new ArrayBuffer(totalBytesNeeded);
+  const bfloatView = new Uint8Array(buffer);
 
-  for (let i = 0; i < float32Array.length; i++) {
-    const dataView = new DataView(bf16Array.buffer);
-    dataView.setFloat32(i * 4, float32Array[i], true);
-    const bf16Byte1 = bf16Array[i * 2] & 0xff;
-    const bf16Byte2 = (bf16Array[i * 2] >> 8) & 0xff;
-    const index = i * 2;
-    bf16Bytes[index] = bf16Byte1;
-    bf16Bytes[index + 1] = bf16Byte2;
-  }
+  let byteIndex = 0;
+  float32Array.forEach(float32 => {
+    const floatBuffer = new ArrayBuffer(4);
+    const floatView = new Float32Array(floatBuffer);
+    const bfloatViewSingle = new Uint8Array(floatBuffer);
 
-  return Buffer.from(bf16Bytes.buffer);
+    floatView[0] = float32;
+    bfloatView.set(bfloatViewSingle.subarray(2, 4), byteIndex);
+    byteIndex += 2;
+  });
+
+  return bfloatView;
 };
 
 /**
  * Convert BFloat16 bytes to Float32 array.
  * @param {Uint8Array} bf16Bytes - The BFloat16 bytes to convert.
- * @returns {BFloat16Vector} The Float32 array.
+ * @returns {float32Array} The Float32 array.
  */
 export const bf16BytesToF32Array = (bf16Bytes: Uint8Array) => {
-  const buffer = new ArrayBuffer(bf16Bytes.length);
-  const view = new Uint8Array(buffer);
-  view.set(bf16Bytes);
+  const float32Array: number[] = [];
+  const totalFloats = bf16Bytes.length / 2;
 
-  const f16Array = new Float16Array(buffer);
-  return Array.from(f16Array);
+  for (let i = 0; i < totalFloats; i++) {
+    const floatBuffer = new ArrayBuffer(4);
+    const floatView = new Float32Array(floatBuffer);
+    const bfloatView = new Uint8Array(floatBuffer);
+
+    bfloatView.set(bf16Bytes.subarray(i * 2, i * 2 + 2), 2);
+    float32Array.push(floatView[0]);
+  }
+
+  return float32Array;
 };
 
 /**

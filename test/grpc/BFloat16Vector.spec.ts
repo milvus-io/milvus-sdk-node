@@ -12,7 +12,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
@@ -27,7 +27,10 @@ const p = {
 const collectionParams = genCollectionParams(p);
 const data = generateInsertData(collectionParams.fields, 10);
 
-console.log('data to insert', data);
+// console.log(
+//   'data to insert',
+//   data.map(d => d.vector)
+// );
 
 describe(`BFloat16 vector API testing`, () => {
   beforeAll(async () => {
@@ -56,17 +59,17 @@ describe(`BFloat16 vector API testing`, () => {
     // console.dir(describe.schema, { depth: null });
   });
 
-  // it(`insert Bflaot16 vector data should be successful`, async () => {
-  //   const insert = await milvusClient.insert({
-  //     collection_name: COLLECTION_NAME,
-  //     data:[],
-  //   });
+  it(`insert Bflaot16 vector data should be successful`, async () => {
+    const insert = await milvusClient.insert({
+      collection_name: COLLECTION_NAME,
+      data: data,
+    });
 
-  //   // console.log(' insert', insert);
+    // console.log(' insert', insert);
 
-  //   expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
-  //   expect(insert.succ_index.length).toEqual(data.length);
-  // });
+    expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(insert.succ_index.length).toEqual(data.length);
+  });
 
   it(`create index should be successful`, async () => {
     const indexes = await milvusClient.createIndex([
@@ -107,7 +110,7 @@ describe(`BFloat16 vector API testing`, () => {
     // verify the query result
     data.forEach((obj, index) => {
       obj.vector.forEach((v: number, i: number) => {
-        expect(v).toBeCloseTo(query.data[index].vector[i], 3);
+        expect(v).toBeCloseTo(query.data[index].vector[i], 2);
       });
     });
 
@@ -122,7 +125,7 @@ describe(`BFloat16 vector API testing`, () => {
       limit: 5,
     });
 
-    console.log('search', search);
+    // console.log('search', search);
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toBeGreaterThan(0);

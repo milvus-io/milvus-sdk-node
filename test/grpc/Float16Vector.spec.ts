@@ -22,7 +22,7 @@ const dbParam = {
 const p = {
   collectionName: COLLECTION_NAME,
   vectorType: [DataType.Float16Vector],
-  dim: [8],
+  dim: [128],
 };
 const collectionParams = genCollectionParams(p);
 const data = generateInsertData(collectionParams.fields, 2);
@@ -135,7 +135,6 @@ describe(`Float16 vector API testing`, () => {
     });
 
     // console.log('search', search);
-
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toBeGreaterThan(0);
   });
