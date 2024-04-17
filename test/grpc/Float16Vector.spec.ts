@@ -4,6 +4,8 @@ import {
   DataType,
   IndexType,
   MetricType,
+  f32ArrayToF16Bytes,
+  f16BytesToF32Array,
 } from '../../milvus';
 import {
   IP,
@@ -60,6 +62,9 @@ describe(`Float16 vector API testing`, () => {
     const insert = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data,
+      transformers: {
+        [DataType.Float16Vector]: f32ArrayToF16Bytes,
+      },
     });
 
     // console.log(' insert', insert);
@@ -100,6 +105,9 @@ describe(`Float16 vector API testing`, () => {
       collection_name: COLLECTION_NAME,
       filter: 'id > 0',
       output_fields: ['vector', 'id'],
+      transformers: {
+        [DataType.Float16Vector]: f16BytesToF32Array,
+      },
     });
 
     // verify the query result

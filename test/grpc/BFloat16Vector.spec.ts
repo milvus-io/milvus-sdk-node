@@ -4,6 +4,8 @@ import {
   DataType,
   IndexType,
   MetricType,
+  f32ArrayToBf16Bytes,
+  bf16BytesToF32Array,
 } from '../../milvus';
 import {
   IP,
@@ -63,6 +65,9 @@ describe(`BFloat16 vector API testing`, () => {
     const insert = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data: data,
+      transformers: {
+        [DataType.BFloat16Vector]: f32ArrayToBf16Bytes,
+      },
     });
 
     // console.log(' insert', insert);
@@ -103,9 +108,12 @@ describe(`BFloat16 vector API testing`, () => {
       collection_name: COLLECTION_NAME,
       filter: 'id > 0',
       output_fields: ['vector', 'id'],
+      transformers: {
+        [DataType.BFloat16Vector]: bf16BytesToF32Array,
+      },
     });
 
-    console.dir(query, { depth: null });
+    // console.dir(query, { depth: null });
 
     // verify the query result
     data.forEach((obj, index) => {
@@ -123,6 +131,9 @@ describe(`BFloat16 vector API testing`, () => {
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
+      transformers: {
+        [DataType.BFloat16Vector]: bf16BytesToF32Array,
+      },
     });
 
     // console.log('search', search);

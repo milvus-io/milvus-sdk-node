@@ -29,15 +29,13 @@ import {
   isVectorType,
   RANKER_TYPE,
   RerankerObj,
-  parseBufferToSparseRow,
+  bytesToSparseRow,
   buildPlaceholderGroupBytes,
-  f16BytesToF32Array,
-  f32ArrayToF16Bytes,
-  f32ArrayToBf16Bytes,
   Float16Vector,
   BFloat16Vector,
-  bf16BytesToF32Array,
   getSparseFloatVectorType,
+  ToBytesTransformers,
+  FromBytesTransformers,
 } from '../';
 
 /**
@@ -398,7 +396,10 @@ export const buildDynamicRow = (
  * If the field is a vector, split the data into chunks of the appropriate size.
  * If the field is a scalar, decode the JSON/array data if necessary.
  */
-export const buildFieldDataMap = (fields_data: any[]) => {
+export const buildFieldDataMap = (
+  fields_data: any[],
+  transformers?: FromBytesTransformers
+) => {
   const fieldsDataMap = new Map<string, RowData[]>();
 
   fields_data.forEach((item, i) => {
@@ -443,11 +444,23 @@ export const buildFieldDataMap = (fields_data: any[]) => {
           // split buffer data to float16 vector(bytes)
           for (let i = 0; i < f16Bytes.byteLength; i += f16Dim) {
             const slice = f16Bytes.slice(i, i + f16Dim);
-            field_data.push(
-              dataKey == 'float16_vector'
-                ? f16BytesToF32Array(slice)
-                : bf16BytesToF32Array(slice)
-            );
+            const isFloat16 = dataKey === 'float16_vector';
+            const isBFloat16 = dataKey === 'bfloat16_vector';
+            let dataType: DataType.BFloat16Vector | DataType.Float16Vector;
+
+            dataType = isFloat16
+              ? DataType.Float16Vector
+              : DataType.BFloat16Vector;
+
+            if (
+              (isFloat16 || isBFloat16) &&
+              transformers &&
+              transformers[dataType]
+            ) {
+              field_data.push(transformers[dataType]!(slice));
+            } else {
+              field_data.push(slice);
+            }
           }
           break;
         case 'sparse_float_vector':
@@ -455,7 +468,7 @@ export const buildFieldDataMap = (fields_data: any[]) => {
           field_data = [];
 
           sparseVectorValue.forEach((buffer: any, i: number) => {
-            field_data[i] = parseBufferToSparseRow(buffer);
+            field_data[i] = bytesToSparseRow(buffer);
           });
           break;
         default:
@@ -526,21 +539,33 @@ export const getAuthString = (data: {
  * @param {Field} column - The column information.
  * @returns {FieldData} The field data for the row and column.
  */
-export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
+export const buildFieldData = (
+  rowData: RowData,
+  field: Field,
+  transformers?: ToBytesTransformers
+): FieldData => {
   const { type, elementType, name } = field;
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
     case DataType.FloatVector:
       return rowData[name];
     case DataType.BFloat16Vector:
-      return f32ArrayToBf16Bytes(rowData[name] as BFloat16Vector);
+      if (transformers && transformers[DataType.BFloat16Vector]) {
+        return transformers[DataType.BFloat16Vector](
+          rowData[name] as BFloat16Vector
+        );
+      }
     case DataType.Float16Vector:
-      return f32ArrayToF16Bytes(rowData[name] as Float16Vector);
+      if (transformers && transformers[DataType.Float16Vector]) {
+        return transformers[DataType.Float16Vector](
+          rowData[name] as Float16Vector
+        );
+      }
     case DataType.JSON:
       return Buffer.from(JSON.stringify(rowData[name] || {}));
     case DataType.Array:
       const elementField = { ...field, type: elementType! };
-      return buildFieldData(rowData, elementField);
+      return buildFieldData(rowData, elementField, transformers);
     default:
       return rowData[name];
   }
@@ -783,6 +808,7 @@ export const formatSearchResult = (
   searchRes: SearchRes,
   options: {
     round_decimal: number;
+    transformers?: FromBytesTransformers;
   }
 ) => {
   const { round_decimal } = options;
@@ -790,7 +816,7 @@ export const formatSearchResult = (
   const results: any[] = [];
   const { topks, scores, fields_data, ids } = searchRes.results;
   // build fields data map
-  const fieldsDataMap = buildFieldDataMap(fields_data);
+  const fieldsDataMap = buildFieldDataMap(fields_data, options.transformers);
   // build output name array
   const output_fields = [
     'id',
