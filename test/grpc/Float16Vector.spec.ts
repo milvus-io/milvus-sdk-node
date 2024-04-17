@@ -126,6 +126,12 @@ describe(`Float16 vector API testing`, () => {
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
+      inputTransformers: {
+        [DataType.Float16Vector]: f32ArrayToF16Bytes,
+      },
+      outputTransformers: {
+        [DataType.Float16Vector]: f16BytesToF32Array,
+      },
     });
 
     // console.log('search', search);
@@ -139,6 +145,9 @@ describe(`Float16 vector API testing`, () => {
       vector: [data[0].vector, data[1].vector],
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
+      inputTransformers: {
+        [DataType.Float16Vector]: f32ArrayToF16Bytes,
+      },
       limit: 5,
     });
 

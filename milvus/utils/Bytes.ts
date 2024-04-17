@@ -10,6 +10,7 @@ import {
   SparseVectorCSR,
   SparseVectorCOO,
   BFloat16Vector,
+  InputTransformers,
 } from '..';
 
 /**
@@ -252,7 +253,8 @@ export const bytesToSparseRow = (bufferData: Buffer): SparseFloatVector => {
 export const buildPlaceholderGroupBytes = (
   milvusProto: Root,
   vectors: VectorTypes[],
-  vectorDataType: DataType
+  vectorDataType: DataType,
+  transformers?: InputTransformers
 ) => {
   // create placeholder_group value
   let bytes;
@@ -265,10 +267,22 @@ export const buildPlaceholderGroupBytes = (
       bytes = vectors.map(v => f32ArrayToBinaryBytes(v as BinaryVector));
       break;
     case DataType.BFloat16Vector:
-      bytes = vectors.map(v => f32ArrayToBf16Bytes(v as BFloat16Vector));
+      const bf16Transformer =
+        transformers && transformers[DataType.BFloat16Vector];
+      if (bf16Transformer) {
+        bytes = vectors.map(v => bf16Transformer(v as BFloat16Vector));
+        break;
+      }
+      bytes = vectors.map(v => v);
       break;
     case DataType.Float16Vector:
-      bytes = vectors.map(v => f32ArrayToF16Bytes(v as Float16Vector));
+      const f16Transformer =
+        transformers && transformers[DataType.Float16Vector];
+      if (f16Transformer) {
+        bytes = vectors.map(v => f16Transformer(v as Float16Vector));
+        break;
+      }
+      bytes = vectors.map(v => v);
       break;
     case DataType.SparseFloatVector:
       bytes = vectors.map(v => sparseToBytes(v as SparseFloatVector));

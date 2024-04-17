@@ -131,7 +131,10 @@ describe(`BFloat16 vector API testing`, () => {
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
-      transformers: {
+      inputTransformers: {
+        [DataType.BFloat16Vector]: f32ArrayToBf16Bytes,
+      },
+      outputTransformers: {
         [DataType.BFloat16Vector]: bf16BytesToF32Array,
       },
     });
@@ -148,6 +151,9 @@ describe(`BFloat16 vector API testing`, () => {
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
+      inputTransformers: {
+        [DataType.BFloat16Vector]: f32ArrayToBf16Bytes,
+      },
     });
 
     // console.log('search', search);

@@ -34,7 +34,7 @@ import {
   Float16Vector,
   BFloat16Vector,
   getSparseFloatVectorType,
-  InsertTransformers,
+  InputTransformers,
   OutputTransformers,
 } from '../';
 
@@ -542,7 +542,7 @@ export const getAuthString = (data: {
 export const buildFieldData = (
   rowData: RowData,
   field: Field,
-  transformers?: InsertTransformers
+  transformers?: InputTransformers
 ): FieldData => {
   const { type, elementType, name } = field;
   switch (DataTypeMap[type]) {
@@ -662,7 +662,8 @@ export const convertRerankParams = (rerank: RerankerObj) => {
 export const buildSearchRequest = (
   data: SearchReq | SearchSimpleReq | HybridSearchReq,
   collectionInfo: DescribeCollectionResponse,
-  milvusProto: Root
+  milvusProto: Root,
+  transformers?: InputTransformers
 ) => {
   // type cast
   const searchReq = data as SearchReq;
@@ -742,7 +743,8 @@ export const buildSearchRequest = (
         placeholder_group: buildPlaceholderGroupBytes(
           milvusProto,
           searchingVector as VectorTypes[],
-          field.dataType!
+          field.dataType!,
+          transformers
         ),
         search_params: parseToKeyValue(
           searchReq.search_params || buildSearchParams(req, name)

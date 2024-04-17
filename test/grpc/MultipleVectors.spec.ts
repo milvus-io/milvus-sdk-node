@@ -173,6 +173,9 @@ describe(`Multiple vectors API testing`, () => {
       collection_name: COLLECTION_NAME,
       data: [1, 2, 3, 4],
       anns_field: 'vector2',
+      inputTransformers: {
+        [DataType.Float16Vector]: f32ArrayToF16Bytes,
+      },
     });
 
     expect(searchF16.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -215,6 +218,9 @@ describe(`Multiple vectors API testing`, () => {
       rerank: RRFRanker(),
       limit: 5,
       output_fields: ['id', 'vector2', 'vector3'],
+      inputTransformers: {
+        [DataType.Float16Vector]: f32ArrayToF16Bytes,
+      },
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -259,6 +265,12 @@ describe(`Multiple vectors API testing`, () => {
         },
       ],
       limit: 5,
+      inputTransformers: {
+        [DataType.Float16Vector]: f32ArrayToF16Bytes,
+      },
+      outputTransformers: {
+        [DataType.Float16Vector]: f16BytesToF32Array,
+      },
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
