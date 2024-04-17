@@ -41,9 +41,7 @@ Machine learning and neural networks often use half-precision data types, such a
 
 > However, these data types are not natively available in the Node.js environment, To enable users to utilize these formats, the Node SDK provides support for transformers during insert, query, and search operations.
 >
-> There are four default transformers for performing a float32 to bytes transformation for bf16 and float16 types:
-> `f32ArrayToF16Bytes`, `f16BytesToF32Array`, `f32ArrayToBf16Bytes`, `bf16BytesToF32Array`
-> if you want to use your own transformers for float16 and bfloat16, you can use transformers
+> There are four default transformers for performing a float32 to bytes transformation for BF16 and Float16 types: f32ArrayToF16Bytes, f16BytesToF32Array, f32ArrayToBf16Bytes, and bf16BytesToF32Array. If you wish to use your own transformers for Float16 and BFloat16, you can specify them.
 >
 > ```javascript
 > import {
@@ -53,7 +51,7 @@ Machine learning and neural networks often use half-precision data types, such a
 >   bf16BytesToF32Array,
 > } from '@zilliz/milvus2-sdk-node';
 >
-> // insert float32 array for the float16 field, node SDK will transform it to bytes use `f32ArrayToF16Bytes`, you can use your own transformer
+> //Insert float32 array for the float16 field. Node SDK will transform it to bytes using `f32ArrayToF16Bytes`. You can use your own transformer.
 > const insert = await milvusClient.insert({
 >   collection_name: COLLECTION_NAME,
 >   data: data,
