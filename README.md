@@ -33,21 +33,110 @@ npm install @zilliz/milvus2-sdk-node
 yarn add @zilliz/milvus2-sdk-node
 ```
 
-This will download the Milvus Node.js client and add a dependency entry in your package.json file.
+## What's new in v2.4.0
+
+### New vector data types: float16 and bfloat16
+
+Machine learning and neural networks often use half-precision data types, such as Float16 and BFloat16, [Milvus 2.4](https://milvus.io/docs/release_notes.md#Float16-and-BFloat16-Vector-DataType) supports inserting vectors in the BF16 and FP16 formats as bytes.
+
+> However, these data types are not natively available in the Node.js environment, To enable users to utilize these formats, the Node SDK provides support for transformers during insert, query, and search operations.
+>
+> There are four built-in transformers available for performing a float32 to bytes transformation.
+> `f32ArrayToF16Bytes`, `f16BytesToF32Array`, `f32ArrayToBf16Bytes`, `bf16BytesToF32Array`
+> The transform parameter is optional. If not specified, it defaults to inserting/outputting bytes.
+>
+> ```javascript
+> import {
+>   f32ArrayToF16Bytes,
+>   f16BytesToF32Array,
+>   f32ArrayToBf16Bytes,
+>   bf16BytesToF32Array,
+> } from '@zilliz/milvus2-sdk-node';
+> // insert
+> const insert = await milvusClient.insert({
+>   collection_name: COLLECTION_NAME,
+>   data: data,
+>   transformers: {
+>     [DataType.BFloat16Vector]: f32ArrayToBf16Bytes,
+>   },
+> });
+> // query
+> const query = await milvusClient.query({
+>   collection_name: COLLECTION_NAME,
+>   filter: 'id > 0',
+>   output_fields: ['vector', 'id'],
+>   transformers: {
+>     [DataType.BFloat16Vector]: bf16BytesToF32Array,
+>   },
+> });
+> // search
+> const search = await milvusClient.search({
+>   vector: data[0].vector,
+>   collection_name: COLLECTION_NAME,
+>   output_fields: ['id', 'vector'],
+>   limit: 5,
+>   transformers: {
+>     [DataType.BFloat16Vector]: bf16BytesToF32Array,
+>   },
+> });
+> ```
+
+### New vector data types: sparse vector(beta)
+
+Sparse vectors in the Node SDK support four formats: `dict`, `coo`, `csr`, and `array`, However, query and search operations currently only output in the dict format.
+
+```javascript
+// dict
+const sparseObject = {
+  3: 1.5,
+  6: 2.0,
+  9: -3.5,
+};
+// coo
+const sparseCOO = [
+  { index: 2, value: 5 },
+  { index: 5, value: 3 },
+  { index: 8, value: 7 },
+];
+// csr
+const sparseCSR = {
+  indices: [2, 5, 8],
+  values: [5, 3, 7],
+};
+// array
+const sparseArray = [undefined, 0.0, 0.5, 0.3, undefined, 0.2];
+```
+
+### Multi-vector and Hybrid Search
+
+Starting from Milvus 2.4, it supports [Multi-Vector Search](https://milvus.io/docs/multi-vector-search.md#API-overview), you can continue to utilize the search API with similar parameters to perform multi-vector searches, and the format of the results remains unchanged.
+
+```javascript
+const search = await milvusClient.search({
+  collection_name: collection_name,
+  data: [
+    {
+      data: [1, 2, 3, 4, 5, 6, 7, 8],
+      anns_field: 'vector',
+      params: { nprobe: 2 },
+    },
+    {
+      data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+      anns_field: 'vector1',
+    },
+  ],
+  limit: 5,
+});
+```
 
 ## Code Examples
 
-### Next.js example
-
-You can find nextjs app example in the [examples/nextjs](./examples/nextjs) directory.
-
-### Basic nodejs examples
-
-You can find code examples in the [examples/milvus](./examples/milvus) directory. These examples cover various aspects of working with Milvus, such as connecting to Milvus, vector search, data query, dynamic schema, partition key, and database operations.
-
-### Langchain.js example
-
-You can find a basic langchain.js example in the [examples/langchain](./examples/LangChain) directory.
+This table organizes the examples by technology, providing a brief description and the directory where each example can be found.
+| Technology | Example | Directory |
+|------------------|--------------------------------------------|-----------------------------------|
+| Next.js | Next.js app example | [examples/nextjs](./examples/nextjs) |
+| Node.js | Basic Node.js examples for Milvus | [examples/milvus](./examples/milvus) |
+| Langchain.js | Basic Langchain.js example | [examples/langchain](./examples/LangChain) |
 
 ## Basic usages
 
@@ -82,7 +171,7 @@ In Milvus, the concept of the collection is like the table in traditional RDBMS,
 
 #### Define schema for collection
 
-A schema defines the fields of a collection, such as the names and data types of the fields that make up the vectors. More details of how to define schema and advanced usage can be found in [API reference](https://milvus.io/api-reference/node/v2.2.x/Collection/createCollection.md).
+A schema defines the fields of a collection, such as the names and data types of the fields that make up the vectors. More details of how to define schema and advanced usage can be found in [API reference](https://milvus.io/api-reference/node/v2.3.x/Collection/createCollection.md).
 
 ```javascript
 // define schema
@@ -215,28 +304,6 @@ const res = await client.search({
   params: { nprobe: 64 }, // optional, specify the search parameters
   limit: 10, // optional, specify the number of nearest neighbors to return
   output_fields: ['height', 'name'], // optional, specify the fields to return in the search results,
-});
-```
-
-### multi-vector search
-
-Starting from Milvus 2.4, it supports [Multi-Vector Search](https://milvus.io/docs/multi-vector-search.md#API-overview), you can still use the search API with similar params to do multi-vector search, the results format is unchanged.
-
-```javascript
-const search = await milvusClient.search({
-  collection_name: collection_name,
-  data: [
-    {
-      data: [1, 2, 3, 4, 5, 6, 7, 8],
-      anns_field: 'vector',
-      params: { nprobe: 2 },
-    },
-    {
-      data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-      anns_field: 'vector1',
-    },
-  ],
-  limit: 5,
 });
 ```
 
