@@ -1,9 +1,11 @@
 import {
-  parseBufferToSparseRow,
-  parseSparseRowsToBytes,
+  bytesToSparseRow,
+  sparseRowsToBytes,
   SparseFloatVector,
   sparseToBytes,
   getSparseFloatVectorType,
+  f32ArrayToF16Bytes,
+  f16BytesToF32Array,
   f32ArrayToBf16Bytes,
   bf16BytesToF32Array,
 } from '../../milvus';
@@ -26,9 +28,9 @@ describe('Data <-> Bytes Test', () => {
       { '12': 0.875, '17': 0.789, '19': 0.934 },
     ] as SparseFloatVector[];
 
-    const bytesArray = parseSparseRowsToBytes(inputSparseRows);
+    const bytesArray = sparseRowsToBytes(inputSparseRows);
 
-    const outputSparseRow = parseBufferToSparseRow(Buffer.concat(bytesArray));
+    const outputSparseRow = bytesToSparseRow(Buffer.concat(bytesArray));
 
     const originKeys = Object.keys(inputSparseRows[0]);
     const originValues = Object.values(inputSparseRows[0]);
@@ -40,6 +42,11 @@ describe('Data <-> Bytes Test', () => {
     originValues.forEach((value, index) => {
       expect(value).toBeCloseTo(outputValues[index]);
     });
+  });
+
+  it('should return "array" if the input is an empty array', () => {
+    const data: any[] = [];
+    expect(getSparseFloatVectorType(data)).toEqual('array');
   });
 
   it('should return "dict" if the input is an object', () => {
@@ -77,7 +84,18 @@ describe('Data <-> Bytes Test', () => {
     expect(getSparseFloatVectorType(data2)).toEqual('unknown');
   });
 
-  it('should convert bf16 -> f32 and f32 -> bf16 successfully', () => {
+  it('should convet f16b -> f32 and f32 -> f16b successfully', () => {
+    const data = [0.123456789, -0.987654321, 3.14159265];
+    const f16Bytes = f32ArrayToF16Bytes(data);
+    const f32Array = f16BytesToF32Array(f16Bytes);
+
+    expect(f32Array.length).toEqual(data.length);
+    for (let i = 0; i < data.length; i++) {
+      expect(data[i]).toBeCloseTo(f32Array[i], 2);
+    }
+  });
+
+  it('should convert bf16b -> f32 and f32 -> bf16b successfully', () => {
     const data = [0.123456789, -0.987654321, 3.14159265];
     const bf16Bytes = f32ArrayToBf16Bytes(data);
     const f32Array = bf16BytesToF32Array(bf16Bytes);

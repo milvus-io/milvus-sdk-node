@@ -40,18 +40,18 @@ export const f32ArrayToBinaryBytes = (array: BinaryVector) => {
 /**
  * Converts a float16 vector into bytes format.
  *
- * @param {Float16Vector} f16Array - The float16 vector to convert.
+ * @param {Float16Vector} array - The float16 vector(f32 format) to convert.
  * @returns {Buffer} Bytes representing the float16 vector.
  */
-export const f32ArrayToF16Bytes = (f16Array: Float16Vector) => {
-  const float16Bytes = new Float16Array(f16Array);
+export const f32ArrayToF16Bytes = (array: Float16Vector) => {
+  const float16Bytes = new Float16Array(array);
   return Buffer.from(float16Bytes.buffer);
 };
 
 /**
  * Convert float16 bytes to float32 array.
  * @param {Uint8Array} f16Bytes - The float16 bytes to convert.
- * @returns {Float32Array} The float32 array.
+ * @returns {Array} The float32 array.
  */
 export const f16BytesToF32Array = (f16Bytes: Uint8Array) => {
   const buffer = new ArrayBuffer(f16Bytes.length);
@@ -59,21 +59,21 @@ export const f16BytesToF32Array = (f16Bytes: Uint8Array) => {
   view.set(f16Bytes);
 
   const f16Array = new Float16Array(buffer);
-  return f16Array;
+  return Array.from(f16Array);
 };
 
 /**
- *  Convert float32 array to BFloat16 bytes.
- * @param {BFloat16Vector} float32Array - The float32 array to convert.
+ *  Convert float32 array to BFloat16 bytes, not a real conversion, just take the last 2 bytes of float32.
+ * @param {BFloat16Vector} array - The float32 array to convert.
  * @returns {Buffer} The BFloat16 bytes.
  */
-export const f32ArrayToBf16Bytes = (float32Array: BFloat16Vector) => {
-  const totalBytesNeeded = float32Array.length * 2; // 2 bytes per float32
+export const f32ArrayToBf16Bytes = (array: BFloat16Vector) => {
+  const totalBytesNeeded = array.length * 2; // 2 bytes per float32
   const buffer = new ArrayBuffer(totalBytesNeeded);
   const bfloatView = new Uint8Array(buffer);
 
   let byteIndex = 0;
-  float32Array.forEach(float32 => {
+  array.forEach(float32 => {
     const floatBuffer = new ArrayBuffer(4);
     const floatView = new Float32Array(floatBuffer);
     const bfloatViewSingle = new Uint8Array(floatBuffer);
@@ -83,13 +83,13 @@ export const f32ArrayToBf16Bytes = (float32Array: BFloat16Vector) => {
     byteIndex += 2;
   });
 
-  return bfloatView;
+  return Buffer.from(bfloatView);
 };
 
 /**
  * Convert BFloat16 bytes to Float32 array.
  * @param {Uint8Array} bf16Bytes - The BFloat16 bytes to convert.
- * @returns {float32Array} The Float32 array.
+ * @returns {Array} The Float32 array.
  */
 export const bf16BytesToF32Array = (bf16Bytes: Uint8Array) => {
   const float32Array: number[] = [];
@@ -150,7 +150,7 @@ export const getSparseFloatVectorType = (
 /**
  * Converts a sparse float vector into bytes format.
  *
- * @param {SparseFloatVector} data - The sparse float vector to convert.
+ * @param {SparseFloatVector} data - The sparse float vector to convert, support 'array' | 'coo' | 'csr' | 'dict'.
  *
  * @returns {Uint8Array} Bytes representing the sparse float vector.
  * @throws {Error} If the length of indices and values is not the same, or if the index is not within the valid range, or if the value is NaN.
@@ -213,9 +213,7 @@ export const sparseToBytes = (data: SparseFloatVector): Uint8Array => {
  *
  * @returns {Uint8Array[]} An array of bytes representing the sparse float vectors.
  */
-export const parseSparseRowsToBytes = (
-  data: SparseFloatVector[]
-): Uint8Array[] => {
+export const sparseRowsToBytes = (data: SparseFloatVector[]): Uint8Array[] => {
   const result: Uint8Array[] = [];
   for (const row of data) {
     result.push(sparseToBytes(row));
@@ -230,9 +228,7 @@ export const parseSparseRowsToBytes = (
  *
  * @returns {SparseFloatVector} The parsed sparse float vectors.
  */
-export const parseBufferToSparseRow = (
-  bufferData: Buffer
-): SparseFloatVector => {
+export const bytesToSparseRow = (bufferData: Buffer): SparseFloatVector => {
   const result: SparseFloatVector = {};
   for (let i = 0; i < bufferData.length; i += 8) {
     const key: string = bufferData.readUInt32LE(i).toString();

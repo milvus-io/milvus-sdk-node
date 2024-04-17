@@ -6,6 +6,8 @@ import {
   MetricType,
   RRFRanker,
   WeightedRanker,
+  f32ArrayToF16Bytes,
+  f16BytesToF32Array,
 } from '../../milvus';
 import {
   IP,
@@ -66,6 +68,9 @@ describe(`Multiple vectors API testing`, () => {
     const insert = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data,
+      transformers: {
+        [DataType.Float16Vector]: f32ArrayToF16Bytes,
+      },
     });
 
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -123,6 +128,9 @@ describe(`Multiple vectors API testing`, () => {
       collection_name: COLLECTION_NAME,
       filter: 'id > 0',
       output_fields: ['vector', 'vector1', 'vector2', 'vector3'],
+      transformers: {
+        [DataType.Float16Vector]: f16BytesToF32Array,
+      },
     });
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
