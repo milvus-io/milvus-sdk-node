@@ -82,7 +82,7 @@ export class Data extends Collection {
    * @param {string} data.collection_name - The name of the collection.
    * @param {string} [data.partition_name] - The name of the partition (optional).
    * @param {{ [x: string]: any }[]} data.data - The data to be inserted. If the field type is binary, the vector data length needs to be dimension / 8.
-   * @param {ToBytesTransformers} data.transformers - The transformers for bf16 or f16 data, it accept an f32 array, it should output f16 or bf16 bytes (optional)
+   * @param {InsertTransformers} data.transformers - The transformers for bf16 or f16 data, it accept an f32 array, it should output f16 or bf16 bytes (optional)
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<MutationResult>} The result of the operation.
@@ -411,7 +411,7 @@ export class Data extends Collection {
    * @param {string} [data.filter] - Scalar field filter expression (optional).
    * @param {string[]} [data.output_fields] - Support scalar field (optional).
    * @param {object} [data.params] - Search params (optional).
-   * @param {FromBytesTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
+   * @param {OutputTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<SearchResults>} The result of the operation.
@@ -581,7 +581,7 @@ export class Data extends Collection {
    * @param {string[]} data.output_fields - Vector or scalar field to be returned.
    * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    * @param {{key: value}[]} [data.params] - An optional key pair json array of search parameters.
-   * @param {FromBytesTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
+   * @param {OutputTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
    *
    * @returns {Promise<QueryResults>} The result of the operation.
    * @returns {string} status.error_code - The error code of the operation.

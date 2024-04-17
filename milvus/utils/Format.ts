@@ -34,8 +34,8 @@ import {
   Float16Vector,
   BFloat16Vector,
   getSparseFloatVectorType,
-  ToBytesTransformers,
-  FromBytesTransformers,
+  InsertTransformers,
+  OutputTransformers,
 } from '../';
 
 /**
@@ -398,7 +398,7 @@ export const buildDynamicRow = (
  */
 export const buildFieldDataMap = (
   fields_data: any[],
-  transformers?: FromBytesTransformers
+  transformers?: OutputTransformers
 ) => {
   const fieldsDataMap = new Map<string, RowData[]>();
 
@@ -542,7 +542,7 @@ export const getAuthString = (data: {
 export const buildFieldData = (
   rowData: RowData,
   field: Field,
-  transformers?: ToBytesTransformers
+  transformers?: InsertTransformers
 ): FieldData => {
   const { type, elementType, name } = field;
   switch (DataTypeMap[type]) {
@@ -808,7 +808,7 @@ export const formatSearchResult = (
   searchRes: SearchRes,
   options: {
     round_decimal: number;
-    transformers?: FromBytesTransformers;
+    transformers?: OutputTransformers;
   }
 ) => {
   const { round_decimal } = options;

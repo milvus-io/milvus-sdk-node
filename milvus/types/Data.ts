@@ -97,7 +97,7 @@ export interface CountReq extends collectionNameReq {
 // because in javascript, there is no float16 and bfloat16 type
 // we need to provide custom data transformer for these types
 // milvus only accept bytes(buffer) for these types
-export type ToBytesTransformers = {
+export type InsertTransformers = {
   [DataType.BFloat16Vector]?: (bf16: BFloat16Vector) => Buffer;
   [DataType.Float16Vector]?: (f16: Float16Vector) => Buffer;
 };
@@ -107,7 +107,7 @@ export interface InsertReq extends collectionNameReq {
   data?: RowData[]; // data to insert
   fields_data?: RowData[]; // alias for data
   hash_keys?: Number[]; // user can generate hash value depend on primarykey value
-  transformers?: ToBytesTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  transformers?: InsertTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
 
 export interface DeleteEntitiesReq extends collectionNameReq {
@@ -281,7 +281,7 @@ export interface SearchReq extends collectionNameReq {
   vector_type: DataType.BinaryVector | DataType.FloatVector; // vector field type
   nq?: number; // number of query vectors
   consistency_level?: ConsistencyLevelEnum; // consistency level
-  transformers?: FromBytesTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
 
 // simplified search api parameter type
@@ -303,7 +303,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   ignore_growing?: boolean; // ignore growing
   group_by_field?: string; // group by field
   round_decimal?: number; // round decimal
-  transformers?: FromBytesTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
 
 export type HybridSearchSingleReq = Pick<
@@ -313,7 +313,7 @@ export type HybridSearchSingleReq = Pick<
   data: VectorTypes[] | VectorTypes; // vector to search
   expr?: string; // filter expression
   params?: keyValueObj; // extra search parameters
-  transformers?: FromBytesTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 };
 
 // rerank strategy and parameters
@@ -375,7 +375,7 @@ export interface SearchRes extends resStatusResponse {
 
 // because in javascript, there is no float16 and bfloat16 type
 // we need to provide custom data transformer for these types
-export type FromBytesTransformers = {
+export type OutputTransformers = {
   [DataType.BFloat16Vector]?: (bf16bytes: Uint8Array) => BFloat16Vector;
   [DataType.Float16Vector]?: (f16: Uint8Array) => Float16Vector;
   [DataType.SparseFloatVector]?: (sparse: SparseVectorDic) => SparseFloatVector;
@@ -390,7 +390,7 @@ export interface QueryReq extends collectionNameReq {
   offset?: number; // skip how many results
   limit?: number; // how many results you want
   consistency_level?: ConsistencyLevelEnum; // consistency level
-  transformers?: FromBytesTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
 
 export interface GetReq extends collectionNameReq {
