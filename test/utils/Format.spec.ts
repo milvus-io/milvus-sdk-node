@@ -515,7 +515,7 @@ describe('utils/format', () => {
   });
 
   it('should return the value of the field for BinaryVector and FloatVector types', () => {
-    const row = { name: 'John', data: [1, 2, 3] };
+    const row = { name: 'John', vector: [1, 2, 3] };
     const field = { type: 'BinaryVector', name: 'vector' };
     expect(buildFieldData(row, field as Field)).toEqual([1, 2, 3]);
 
