@@ -115,7 +115,7 @@ describe(`Dynamic schema API`, () => {
     const search = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,
-      vectors: [
+      data: [
         [1, 2, 3, 4],
         [1, 2, 3, 4],
       ],
@@ -132,7 +132,7 @@ describe(`Dynamic schema API`, () => {
     const search2 = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       expr: 'id > 0',
       output_fields: ['json', 'id', 'dynamic_int64', 'dynamic_varChar'],
     });

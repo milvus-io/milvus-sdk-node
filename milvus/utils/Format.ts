@@ -36,6 +36,11 @@ import {
   getSparseFloatVectorType,
   InsertTransformers,
   OutputTransformers,
+  SparseVectorArray,
+  f32ArrayToBf16Bytes,
+  f32ArrayToF16Bytes,
+  bf16BytesToF32Array,
+  f16BytesToF32Array,
 } from '../';
 
 /**
@@ -445,22 +450,18 @@ export const buildFieldDataMap = (
           for (let i = 0; i < f16Bytes.byteLength; i += f16Dim) {
             const slice = f16Bytes.slice(i, i + f16Dim);
             const isFloat16 = dataKey === 'float16_vector';
-            const isBFloat16 = dataKey === 'bfloat16_vector';
             let dataType: DataType.BFloat16Vector | DataType.Float16Vector;
 
             dataType = isFloat16
               ? DataType.Float16Vector
               : DataType.BFloat16Vector;
 
-            if (
-              (isFloat16 || isBFloat16) &&
-              transformers &&
-              transformers[dataType]
-            ) {
-              field_data.push(transformers[dataType]!(slice));
-            } else {
-              field_data.push(slice);
-            }
+            const localTransformers = transformers || {
+              [DataType.BFloat16Vector]: bf16BytesToF32Array,
+              [DataType.Float16Vector]: f16BytesToF32Array,
+            };
+
+            field_data.push(localTransformers[dataType]!(slice));
           }
           break;
         case 'sparse_float_vector':
@@ -545,22 +546,24 @@ export const buildFieldData = (
   transformers?: InsertTransformers
 ): FieldData => {
   const { type, elementType, name } = field;
+  const isFloat32 = Array.isArray(rowData[name]);
+
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
     case DataType.FloatVector:
       return rowData[name];
     case DataType.BFloat16Vector:
-      if (transformers && transformers[DataType.BFloat16Vector]) {
-        return transformers[DataType.BFloat16Vector](
-          rowData[name] as BFloat16Vector
-        );
-      }
+      const bf16Transformer =
+        transformers?.[DataType.BFloat16Vector] || f32ArrayToBf16Bytes;
+      return isFloat32
+        ? bf16Transformer(rowData[name] as BFloat16Vector)
+        : rowData[name];
     case DataType.Float16Vector:
-      if (transformers && transformers[DataType.Float16Vector]) {
-        return transformers[DataType.Float16Vector](
-          rowData[name] as Float16Vector
-        );
-      }
+      const f16Transformer =
+        transformers?.[DataType.Float16Vector] || f32ArrayToF16Bytes;
+      return isFloat32
+        ? f16Transformer(rowData[name] as Float16Vector)
+        : rowData[name];
     case DataType.JSON:
       return Buffer.from(JSON.stringify(rowData[name] || {}));
     case DataType.Array:
@@ -728,7 +731,7 @@ export const buildSearchRequest = (
           searchSimpleReq.vector ||
           searchSimpleReq.data;
 
-      // format saerching vector
+      // format searching vector
       searchingVector = formatSearchVector(searchingVector, field.dataType!);
 
       // create search request
@@ -898,7 +901,7 @@ export const formatSearchVector = (
         return [searchVector] as VectorTypes[];
       }
     case DataType.SparseFloatVector:
-      const type = getSparseFloatVectorType(searchVector as VectorTypes);
+      const type = getSparseFloatVectorType(searchVector as SparseVectorArray);
       if (type !== 'unknown') {
         return [searchVector] as VectorTypes[];
       }

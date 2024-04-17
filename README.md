@@ -41,9 +41,9 @@ Machine learning and neural networks often use half-precision data types, such a
 
 > However, these data types are not natively available in the Node.js environment, To enable users to utilize these formats, the Node SDK provides support for transformers during insert, query, and search operations.
 >
-> There are four built-in transformers available for performing a float32 to bytes transformation.
+> There are four default transformers for performing a float32 to bytes transformation for bf16 and float16 types:
 > `f32ArrayToF16Bytes`, `f16BytesToF32Array`, `f32ArrayToBf16Bytes`, `bf16BytesToF32Array`
-> The transform parameter is optional. If not specified, it defaults to inserting/outputting bytes.
+> if you want to use your own transformers for float16 and bfloat16, you can use transformers
 >
 > ```javascript
 > import {
@@ -52,32 +52,33 @@ Machine learning and neural networks often use half-precision data types, such a
 >   f32ArrayToBf16Bytes,
 >   bf16BytesToF32Array,
 > } from '@zilliz/milvus2-sdk-node';
-> // insert
+>
+> // insert float32 array for the float16 field, node SDK will transform it to bytes use `f32ArrayToF16Bytes`, you can use your own transformer
 > const insert = await milvusClient.insert({
 >   collection_name: COLLECTION_NAME,
 >   data: data,
->   transformers: {
->     [DataType.BFloat16Vector]: f32ArrayToBf16Bytes,
->   },
+>   // transformers: {
+>   //  [DataType.BFloat16Vector]: f32ArrayToF16Bytes, // use your own transformer
+>   // },
 > });
-> // query
+> // query: output float32 array other than bytes,
 > const query = await milvusClient.query({
 >   collection_name: COLLECTION_NAME,
 >   filter: 'id > 0',
 >   output_fields: ['vector', 'id'],
->   transformers: {
->     [DataType.BFloat16Vector]: bf16BytesToF32Array,
->   },
+>   // transformers: {
+>   // [DataType.BFloat16Vector]: bf16BytesToF32Array, // use your own transformer
+>   // },
 > });
-> // search
+> // search: use bytes to search, output float32 array
 > const search = await milvusClient.search({
->   vector: data[0].vector,
+>   vector: data[0].vector, // if you pass bytes, no transform will performed
 >   collection_name: COLLECTION_NAME,
 >   output_fields: ['id', 'vector'],
 >   limit: 5,
->   transformers: {
->     [DataType.BFloat16Vector]: bf16BytesToF32Array,
->   },
+>   // transformers: {
+>   //   [DataType.BFloat16Vector]: bf16BytesToF32Array, // use your own transformer
+>   // },
 > });
 > ```
 
@@ -112,6 +113,17 @@ const sparseArray = [undefined, 0.0, 0.5, 0.3, undefined, 0.2];
 Starting from Milvus 2.4, it supports [Multi-Vector Search](https://milvus.io/docs/multi-vector-search.md#API-overview), you can continue to utilize the search API with similar parameters to perform multi-vector searches, and the format of the results remains unchanged.
 
 ```javascript
+// single-vector search on a collection with multiple vector fields
+const search = await milvusClient.search({
+  collection_name: collection_name,
+  data: [1, 2, 3, 4, 5, 6, 7, 8],
+  anns_field: 'vector', // required if you have multiple vector fields in the collection
+  params: { nprobe: 2 },
+  filter: 'id > 100',
+  limit: 5,
+});
+
+// multi-vector search on a collection with multiple vector fields
 const search = await milvusClient.search({
   collection_name: collection_name,
   data: [
@@ -126,6 +138,7 @@ const search = await milvusClient.search({
     },
   ],
   limit: 5,
+  filter: 'id > 100',
 });
 ```
 
@@ -317,7 +330,7 @@ const res = await client.search({
 
 - [What is Milvus](https://milvus.io/)
 - [Milvus Node SDK API reference](https://milvus.io/api-reference/node/v2.3.x/About.md)
-- [Feder, anns index visuliazation tool](https://github.com/zilliztech/feder)
+- [Feder, anns index visualization tool](https://github.com/zilliztech/feder)
 
 ## How to contribute
 

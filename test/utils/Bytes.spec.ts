@@ -84,7 +84,7 @@ describe('Data <-> Bytes Test', () => {
     expect(getSparseFloatVectorType(data2)).toEqual('unknown');
   });
 
-  it('should convet f16b -> f32 and f32 -> f16b successfully', () => {
+  it('should transform f16b -> f32 and f32 -> f16b successfully', () => {
     const data = [0.123456789, -0.987654321, 3.14159265];
     const f16Bytes = f32ArrayToF16Bytes(data);
     const f32Array = f16BytesToF32Array(f16Bytes);
@@ -95,7 +95,7 @@ describe('Data <-> Bytes Test', () => {
     }
   });
 
-  it('should convert bf16b -> f32 and f32 -> bf16b successfully', () => {
+  it('should transform bf16b -> f32 and f32 -> bf16b successfully', () => {
     const data = [0.123456789, -0.987654321, 3.14159265];
     const bf16Bytes = f32ArrayToBf16Bytes(data);
     const f32Array = bf16BytesToF32Array(bf16Bytes);

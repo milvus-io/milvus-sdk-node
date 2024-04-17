@@ -184,7 +184,7 @@ describe(`Data.API`, () => {
   //   const res = await milvusClient.search({
   //     collection_name: COLLECTION_NAME,
   //     filter: '',
-  //     vector: [1, 2, 3, 4],
+  //     data: [1, 2, 3, 4],
   //     limit: limit,
   //     metric_type: 'IP',
   //   });
@@ -222,7 +222,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       partition_names: [PARTITION_NAME],
       filter: '',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       topk: limit,
     });
 
@@ -234,7 +234,7 @@ describe(`Data.API`, () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -247,7 +247,7 @@ describe(`Data.API`, () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024 },
     });
@@ -259,7 +259,7 @@ describe(`Data.API`, () => {
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
-      vectors: [[1, 2, 3, 4]],
+      data: [[1, 2, 3, 4]],
       limit: limit,
       offset: 2,
       params: { nprobe: 1024 },
@@ -274,7 +274,7 @@ describe(`Data.API`, () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: 'int64 < 10000',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024 },
     });
@@ -287,7 +287,7 @@ describe(`Data.API`, () => {
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       expr: 'int64 < 10000',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024 },
     });
@@ -302,7 +302,7 @@ describe(`Data.API`, () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: 'int64 < 10000',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024, radius: 20, range_filter: 15 },
     });
@@ -318,7 +318,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       filter: '',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: 4,
       output_fields: ['id', 'json', VECTOR_FIELD_NAME],
     };
@@ -340,7 +340,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       filter: 'json["number"] >= 0',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: 4,
       output_fields: ['id', 'json'],
     };
@@ -361,7 +361,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       expr: '',
-      vectors: [[1, 2, 3, 4]],
+      data: [[1, 2, 3, 4]],
       search_params: {
         anns_field: VECTOR_FIELD_NAME,
         topk: '4',
@@ -381,7 +381,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       expr: '',
-      vectors: [[1, 2, 3, 4]],
+      data: [[1, 2, 3, 4]],
       search_params: {
         anns_field: VECTOR_FIELD_NAME,
         topk: '4',
@@ -402,7 +402,7 @@ describe(`Data.API`, () => {
         collection_name: COLLECTION_NAME,
         // partition_names: [],
         expr: '',
-        vectors: [[1, 2, 3]],
+        data: [[1, 2, 3]],
         search_params: {
           anns_field: VECTOR_FIELD_NAME,
           topk: '4',

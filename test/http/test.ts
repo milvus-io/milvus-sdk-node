@@ -176,7 +176,7 @@ export function generateTests(
       const search = await client.search({
         collectionName: createParams.collectionName,
         outputFields: ['*'],
-        vector: [1, 2, 3, 4],
+        data: [1, 2, 3, 4],
         limit: 5,
       });
 

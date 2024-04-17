@@ -70,7 +70,7 @@ const COLLECTION_NAME = 'bench_milvus';
     console.time('Search time');
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: vectorsData[i]['vector'],
+      data: vectorsData[i]['vector'],
       output_fields: ['id', 'int64', 'varChar'],
       limit: 5,
     });

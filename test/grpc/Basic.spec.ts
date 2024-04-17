@@ -75,7 +75,7 @@ describe(`Basic API without database`, () => {
   it(`search should be successful`, async () => {
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
     });
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
   });

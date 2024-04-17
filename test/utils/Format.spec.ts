@@ -147,12 +147,12 @@ describe('utils/format', () => {
   it('does not throw an error if vectors or vector is defined', () => {
     const data1 = {
       collection_name: 'my_collection',
-      vectors: [[]],
+      data: [[]],
     };
 
     const data2 = {
       collection_name: 'my_collection',
-      vector: [],
+      data: [],
     };
 
     expect(() => checkSearchParams(data1)).not.toThrow();
@@ -515,7 +515,7 @@ describe('utils/format', () => {
   });
 
   it('should return the value of the field for BinaryVector and FloatVector types', () => {
-    const row = { name: 'John', vector: [1, 2, 3] };
+    const row = { name: 'John', data: [1, 2, 3] };
     const field = { type: 'BinaryVector', name: 'vector' };
     expect(buildFieldData(row, field as Field)).toEqual([1, 2, 3]);
 

@@ -204,7 +204,7 @@ describe(`Multiple vectors API testing`, () => {
           anns_field: 'vector1',
         },
         {
-          data: [1, 2, 3, 4],
+          data: f32ArrayToF16Bytes([1, 2, 3, 4]),
           anns_field: 'vector2',
         },
         {
@@ -254,7 +254,7 @@ describe(`Multiple vectors API testing`, () => {
           params: { nprobe: 2 },
         },
         {
-          data: [1, 2, 3, 4],
+          data: f32ArrayToF16Bytes([1, 2, 3, 4]),
           anns_field: 'vector2',
         },
       ],

@@ -102,7 +102,7 @@ describe(`Binary vectors API testing`, () => {
 
   it(`search with binary vector should be successful`, async () => {
     const search = await milvusClient.search({
-      vector: data[0].vector,
+      data: data[0].vector,
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,

@@ -202,7 +202,7 @@ describe(`Partition key API`, () => {
   it(`Search Collection should be successful`, async () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_DATA_NAME,
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       expr: 'varChar in ["apple"]',
       output_fields: ['varChar'],
     });
@@ -214,7 +214,7 @@ describe(`Partition key API`, () => {
     const search = await milvusClient.search({
       collection_name: COLLECTION_DATA_NAME,
       partition_names: ['p'],
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       expr: 'varChar in ["apple"]',
       output_fields: ['varChar'],
     });

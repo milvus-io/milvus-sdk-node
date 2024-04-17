@@ -65,9 +65,6 @@ describe(`BFloat16 vector API testing`, () => {
     const insert = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data: data,
-      transformers: {
-        [DataType.BFloat16Vector]: f32ArrayToBf16Bytes,
-      },
     });
 
     // console.log(' insert', insert);
@@ -108,9 +105,6 @@ describe(`BFloat16 vector API testing`, () => {
       collection_name: COLLECTION_NAME,
       filter: 'id > 0',
       output_fields: ['vector', 'id'],
-      transformers: {
-        [DataType.BFloat16Vector]: bf16BytesToF32Array,
-      },
     });
 
     // console.dir(query, { depth: null });
@@ -127,13 +121,10 @@ describe(`BFloat16 vector API testing`, () => {
 
   it(`search with Bfloat16 vector should be successful`, async () => {
     const search = await milvusClient.search({
-      vector: data[0].vector,
+      data: f32ArrayToBf16Bytes(data[0].vector),
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
-      transformers: {
-        [DataType.BFloat16Vector]: bf16BytesToF32Array,
-      },
     });
 
     // console.log('search', search);
@@ -144,7 +135,10 @@ describe(`BFloat16 vector API testing`, () => {
 
   it(`search with Bfloat16 vector and nq > 0 should be successful`, async () => {
     const search = await milvusClient.search({
-      vector: [data[0].vector, data[1].vector],
+      data: [
+        f32ArrayToBf16Bytes(data[0].vector),
+        f32ArrayToBf16Bytes(data[1].vector),
+      ],
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
