@@ -49,7 +49,7 @@ Machine learning and neural networks often use half-precision data types, such a
 >   f16BytesToF32Array,
 >   f32ArrayToBf16Bytes,
 >   bf16BytesToF32Array,
-> } from '@zilliz/milvus2-sdk-node';
+> } from "@zilliz/milvus2-sdk-node";
 >
 > //Insert float32 array for the float16 field. Node SDK will transform it to bytes using `f32ArrayToF16Bytes`. You can use your own transformer.
 > const insert = await milvusClient.insert({
@@ -62,8 +62,8 @@ Machine learning and neural networks often use half-precision data types, such a
 > // query: output float32 array other than bytes,
 > const query = await milvusClient.query({
 >   collection_name: COLLECTION_NAME,
->   filter: 'id > 0',
->   output_fields: ['vector', 'id'],
+>   filter: "id > 0",
+>   output_fields: ["vector", "id"],
 >   // transformers: {
 >   // [DataType.BFloat16Vector]: bf16BytesToF32Array, // use your own transformer
 >   // },
@@ -72,7 +72,7 @@ Machine learning and neural networks often use half-precision data types, such a
 > const search = await milvusClient.search({
 >   vector: data[0].vector,
 >   collection_name: COLLECTION_NAME,
->   output_fields: ['id', 'vector'],
+>   output_fields: ["id", "vector"],
 >   limit: 5,
 >   // transformers: {
 >   //   [DataType.BFloat16Vector]: bf16BytesToF32Array, // use your own transformer
@@ -111,13 +111,14 @@ const sparseArray = [undefined, 0.0, 0.5, 0.3, undefined, 0.2];
 Starting from Milvus 2.4, it supports [Multi-Vector Search](https://milvus.io/docs/multi-vector-search.md#API-overview), you can continue to utilize the search API with similar parameters to perform multi-vector searches, and the format of the results remains unchanged.
 
 ```javascript
+import { RRFRanker, WeightedRanker } from "@zilliz/milvus2-sdk-node";
 // single-vector search on a collection with multiple vector fields
 const search = await milvusClient.search({
   collection_name: collection_name,
   data: [1, 2, 3, 4, 5, 6, 7, 8],
-  anns_field: 'vector', // required if you have multiple vector fields in the collection
+  anns_field: "vector", // required if you have multiple vector fields in the collection
   params: { nprobe: 2 },
-  filter: 'id > 100',
+  filter: "id > 100",
   limit: 5,
 });
 
@@ -127,16 +128,17 @@ const search = await milvusClient.search({
   data: [
     {
       data: [1, 2, 3, 4, 5, 6, 7, 8],
-      anns_field: 'vector',
+      anns_field: "vector",
       params: { nprobe: 2 },
     },
     {
       data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-      anns_field: 'vector1',
+      anns_field: "vector1",
     },
   ],
   limit: 5,
-  filter: 'id > 100',
+  rerank: RRFRanker(),
+  filter: "id > 100",
 });
 ```
 
@@ -145,7 +147,7 @@ const search = await milvusClient.search({
 Starting from v2.4.0, we introduced a TypeScript client to provide better support for the [Milvus RESTful API V2](https://milvus.io/api-reference/restful/v2.3.x/About.md), take a look at our [test file](https://github.com/milvus-io/milvus-sdk-node/blob/main/test/http/test.ts).
 
 ```javascript
-import { HttpClient } from '@zilliz/milvus2-sdk-node';
+import { HttpClient } from "@zilliz/milvus2-sdk-node";
 const client = new HttpClient(config);
 await client.createCollection(params);
 await client.describeCollection(params);
@@ -182,11 +184,11 @@ bash standalone_embed.sh start
 Create a new app.js file and add the following code to try out some basic vector operations using the Milvus node.js client. More details on the [API reference](https://milvus.io/api-reference/node/v2.3.x/Client/MilvusClient.md).
 
 ```javascript
-import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+import { MilvusClient, DataType } from "@zilliz/milvus2-sdk-node";
 
-const address = 'your-milvus-ip-with-port';
-const username = 'your-milvus-username'; // optional username
-const password = 'your-milvus-password'; // optional password
+const address = "your-milvus-ip-with-port";
+const username = "your-milvus-username"; // optional username
+const password = "your-milvus-password"; // optional password
 
 // connect to milvus
 const client = new MilvusClient({ address, username, password });
@@ -244,7 +246,7 @@ The data format utilized by the Milvus Node SDK comprises an array of objects. I
 ```javascript
 const fields_data = [
   {
-    name: 'zlnmh',
+    name: "zlnmh",
     vector: [
       0.11878310581111173, 0.9694947902934701, 0.16443679307243175,
       0.5484226189097237, 0.9839246709011924, 0.5178387104937776,
@@ -253,7 +255,7 @@ const fields_data = [
     height: 20405,
   },
   {
-    name: '5lr9y',
+    name: "5lr9y",
     vector: [
       0.9992090731236536, 0.8248790611809487, 0.8660083940881405,
       0.09946359318481224, 0.6790698063908669, 0.5013786801063624,
@@ -262,7 +264,7 @@ const fields_data = [
     height: 93773,
   },
   {
-    name: 'nes0j',
+    name: "nes0j",
     vector: [
       0.8761291569818763, 0.07127366044153227, 0.775648976160332,
       0.5619757601304878, 0.6076543120476996, 0.8373907516027586,
@@ -292,11 +294,11 @@ By creating an index and loading the collection into memory, you can improve the
 // create index
 await client.createIndex({
   collection_name, // required
-  field_name: 'vector', // optional if you are using milvus v2.2.9+
-  index_name: 'myindex', // optional
-  index_type: 'HNSW', // optional if you are using milvus v2.2.9+
+  field_name: "vector", // optional if you are using milvus v2.2.9+
+  index_name: "myindex", // optional
+  index_type: "HNSW", // optional if you are using milvus v2.2.9+
   params: { efConstruction: 10, M: 4 }, // optional if you are using milvus v2.2.9+
-  metric_type: 'L2', // optional if you are using milvus v2.2.9+
+  metric_type: "L2", // optional if you are using milvus v2.2.9+
 });
 ```
 
@@ -327,10 +329,10 @@ const res = await client.search({
   collection_name, // required, the collection name
   data: searchVector, // required, vector used to compare other vectors in milvus
   // optionals
-  filter: 'height > 0', // optional, filter expression
+  filter: "height > 0", // optional, filter expression
   params: { nprobe: 64 }, // optional, specify the search parameters
   limit: 10, // optional, specify the number of nearest neighbors to return
-  output_fields: ['height', 'name'], // optional, specify the fields to return in the search results,
+  output_fields: ["height", "name"], // optional, specify the fields to return in the search results,
 });
 ```
 
