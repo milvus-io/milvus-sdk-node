@@ -335,7 +335,7 @@ describe(`Insert API`, () => {
 
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: genFloatVector({ dim: 4 }) as number[],
+      data: genFloatVector({ dim: 4 }) as number[],
       output_fields: ['json', 'id', 'varChar_array'],
     });
     // console.log('search', search.results);

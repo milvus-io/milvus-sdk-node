@@ -15,8 +15,8 @@ import {
 
 // all value types supported by milvus
 export type FloatVector = number[];
-export type Float16Vector = number[];
-export type BFloat16Vector = number[];
+export type Float16Vector = number[] | Uint8Array;
+export type BFloat16Vector = number[] | Uint8Array;
 export type BinaryVector = number[];
 export type SparseVectorArray = (number | undefined)[];
 export type SparseVectorDic = { [key: string]: number };

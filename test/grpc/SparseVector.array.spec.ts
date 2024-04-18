@@ -62,7 +62,7 @@ describe(`Sparse vectors type:object API testing`, () => {
       data,
     });
 
-    // console.log('data to insert', data);
+    // console.log('insert', insert);
 
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(insert.succ_index.length).toEqual(data.length);
@@ -119,7 +119,7 @@ describe(`Sparse vectors type:object API testing`, () => {
 
   it(`search with sparse vector should be successful`, async () => {
     const search = await milvusClient.search({
-      vector: data[0].vector,
+      data: data[0].vector,
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
@@ -131,7 +131,7 @@ describe(`Sparse vectors type:object API testing`, () => {
 
   it(`search with sparse vector with nq > 1 should be successful`, async () => {
     const search = await milvusClient.search({
-      vectors: [data[0].vector, data[1].vector],
+      data: [data[0].vector, data[1].vector],
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,

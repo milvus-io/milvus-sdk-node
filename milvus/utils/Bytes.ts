@@ -10,6 +10,7 @@ import {
   SparseVectorCSR,
   SparseVectorCOO,
   BFloat16Vector,
+  SparseVectorArray,
 } from '..';
 
 /**
@@ -164,8 +165,13 @@ export const sparseToBytes = (data: SparseFloatVector): Uint8Array => {
 
   switch (type) {
     case 'array':
-      indices = Object.keys(data).map(Number);
-      values = Object.values(data);
+      for (let i = 0; i < (data as SparseVectorArray).length; i++) {
+        const element = (data as SparseVectorArray)[i];
+        if (element !== undefined && !isNaN(element)) {
+          indices.push(i);
+          values.push(element);
+        }
+      }
       break;
     case 'coo':
       indices = Object.values(
@@ -244,7 +250,7 @@ export const bytesToSparseRow = (bufferData: Buffer): SparseFloatVector => {
  * This function builds a placeholder group in bytes format for Milvus.
  *
  * @param {Root} milvusProto - The root object of the Milvus protocol.
- * @param {VectorTypes[]} searchVectors - An array of search vectors.
+ * @param {VectorTypes[]} vectors - An array of search vectors.
  * @param {DataType} vectorDataType - The data type of the vectors.
  *
  * @returns {Uint8Array} The placeholder group in bytes format.
@@ -265,10 +271,14 @@ export const buildPlaceholderGroupBytes = (
       bytes = vectors.map(v => f32ArrayToBinaryBytes(v as BinaryVector));
       break;
     case DataType.BFloat16Vector:
-      bytes = vectors.map(v => f32ArrayToBf16Bytes(v as BFloat16Vector));
+      bytes = vectors.map(v =>
+        Array.isArray(v) ? f32ArrayToBf16Bytes(v as BFloat16Vector) : v
+      );
       break;
     case DataType.Float16Vector:
-      bytes = vectors.map(v => f32ArrayToF16Bytes(v as Float16Vector));
+      bytes = vectors.map(v =>
+        Array.isArray(v) ? f32ArrayToF16Bytes(v as Float16Vector) : v
+      );
       break;
     case DataType.SparseFloatVector:
       bytes = vectors.map(v => sparseToBytes(v as SparseFloatVector));

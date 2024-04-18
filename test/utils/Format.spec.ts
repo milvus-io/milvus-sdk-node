@@ -147,12 +147,12 @@ describe('utils/format', () => {
   it('does not throw an error if vectors or vector is defined', () => {
     const data1 = {
       collection_name: 'my_collection',
-      vectors: [[]],
+      data: [[]],
     };
 
     const data2 = {
       collection_name: 'my_collection',
-      vector: [],
+      data: [],
     };
 
     expect(() => checkSearchParams(data1)).not.toThrow();
