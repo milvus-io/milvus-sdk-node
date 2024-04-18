@@ -70,7 +70,7 @@ Machine learning and neural networks often use half-precision data types, such a
 > });
 > // search: use bytes to search, output float32 array
 > const search = await milvusClient.search({
->   vector: data[0].vector, // if you pass bytes, no transform will performed
+>   vector: data[0].vector,
 >   collection_name: COLLECTION_NAME,
 >   output_fields: ['id', 'vector'],
 >   limit: 5,
