@@ -689,6 +689,7 @@ export const buildSearchRequest = (
   const isHybridSearch = !!(
     searchHybridReq.data &&
     searchHybridReq.data.length &&
+    typeof searchHybridReq.data[0] === 'object' &&
     searchHybridReq.data[0].anns_field
   );
 
