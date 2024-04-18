@@ -10,6 +10,7 @@ import {
   SparseVectorCSR,
   SparseVectorCOO,
   BFloat16Vector,
+  SparseVectorArray,
 } from '..';
 
 /**
@@ -164,8 +165,13 @@ export const sparseToBytes = (data: SparseFloatVector): Uint8Array => {
 
   switch (type) {
     case 'array':
-      indices = Object.keys(data).map(Number);
-      values = Object.values(data);
+      for (let i = 0; i < (data as SparseVectorArray).length; i++) {
+        const element = (data as SparseVectorArray)[i];
+        if (element !== undefined && !isNaN(element)) {
+          indices.push(i);
+          values.push(element);
+        }
+      }
       break;
     case 'coo':
       indices = Object.values(

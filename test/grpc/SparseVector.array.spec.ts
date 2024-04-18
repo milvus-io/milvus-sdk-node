@@ -62,7 +62,7 @@ describe(`Sparse vectors type:object API testing`, () => {
       data,
     });
 
-    // console.log('data to insert', data);
+    // console.log('insert', insert);
 
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(insert.succ_index.length).toEqual(data.length);
