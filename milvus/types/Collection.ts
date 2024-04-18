@@ -28,7 +28,7 @@ export interface FieldSchema {
   state: string;
   element_type?: keyof typeof DataType;
   default_value?: number | string;
-  dataType?: DataType;
+  dataType: DataType;
   is_partition_key?: boolean;
   is_dynamic?: boolean;
   is_clustering_key?: boolean;
@@ -236,7 +236,7 @@ export interface GetLoadStateResponse extends resStatusResponse {
 }
 
 export interface AlterCollectionReq extends collectionNameReq {
-  properties: Record<string, string | number>;
+  properties: Record<string, string | number | boolean>;
 }
 
 export interface DescribeAliasResponse extends resStatusResponse {

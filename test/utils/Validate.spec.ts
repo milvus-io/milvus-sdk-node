@@ -26,12 +26,12 @@ describe('utils/validate', () => {
   it('does not throw an error if vectors or vector is defined', () => {
     const data1 = {
       collection_name: 'my_collection',
-      vectors: [[]],
+      data: [[]],
     };
 
     const data2 = {
       collection_name: 'my_collection',
-      vector: [],
+      data: [],
     };
 
     expect(() => checkSearchParams(data1)).not.toThrow();
@@ -330,7 +330,7 @@ describe('utils/validate', () => {
     };
 
     expect(() => checkCreateCollectionCompatibility(data3)).toThrow(
-      `Your milvus server doesn't support dynmaic schmea, please upgrade your server.`
+      `Your milvus server doesn't support dynamic schema, please upgrade your server.`
     );
   });
 

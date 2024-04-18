@@ -1,4 +1,4 @@
-import { Type } from 'protobufjs';
+import { Type, Root } from 'protobufjs';
 import {
   findKeyValue,
   ERROR_REASONS,
@@ -15,13 +15,39 @@ import {
   FieldData,
   CreateCollectionWithFieldsReq,
   CreateCollectionWithSchemaReq,
+  SearchReq,
+  SearchSimpleReq,
+  VectorTypes,
+  SearchParam,
+  HybridSearchSingleReq,
+  HybridSearchReq,
+  DEFAULT_TOPK,
+  DslType,
+  SearchRes,
+  DEFAULT_DYNAMIC_FIELD,
+  ConsistencyLevelEnum,
+  isVectorType,
+  RANKER_TYPE,
+  RerankerObj,
+  bytesToSparseRow,
+  buildPlaceholderGroupBytes,
+  Float16Vector,
+  BFloat16Vector,
+  getSparseFloatVectorType,
+  InsertTransformers,
+  OutputTransformers,
+  SparseVectorArray,
+  f32ArrayToBf16Bytes,
+  f32ArrayToF16Bytes,
+  bf16BytesToF32Array,
+  f16BytesToF32Array,
 } from '../';
 
 /**
- *  parse [{key:"row_count",value:4}] to {row_count:4}
- * @param data key value pair array
- * @param keys all keys in data
- * @returns {key:value}
+ * Formats key-value data based on the provided keys.
+ * @param {KeyValuePair[]} data - The array of key-value pairs.
+ * @param {string[]} keys - The keys to include in the formatted result.
+ * @returns {Object} - The formatted key-value data as an object.
  */
 export const formatKeyValueData = (data: KeyValuePair[], keys: string[]) => {
   const result: { [x: string]: any } = {};
@@ -73,6 +99,12 @@ export const formatNumberPrecision = (number: number, precision: number) => {
 const LOGICAL_BITS = BigInt(18);
 // const LOGICAL_BITS_MASK = (1 << LOGICAL_BITS) - 1;
 
+/**
+ * Checks if the given time parameter is valid.
+ *
+ * @param ts - The time parameter to be checked.
+ * @returns A boolean value indicating whether the time parameter is valid or not.
+ */
 export const checkTimeParam = (ts: any) => {
   switch (typeof ts) {
     case 'bigint':
@@ -85,26 +117,10 @@ export const checkTimeParam = (ts: any) => {
 };
 
 /**
- * Convert a hybrid timestamp to UNIX Epoch time ignoring the logic part.
- *
- * @param data
- *  | Property          | Type  |           Description              |
- *  | :---------------- | :----  | :-------------------------------  |
- *  | hybridts          | String or BigInt |    The known hybrid timestamp to convert to UNIX Epoch time. Non-negative interger range from 0 to 18446744073709551615.       |
- *
- *
- *
- * @returns
- * | Property | Description |
- *  | :-----------| :-------------------------------  |
- *  | unixtime as string      |  The Unix Epoch time is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT). |
- *
- *
- * #### Example
- *
- * ```
- *   const res = hybridtsToUnixtime("429642767925248000");
- * ```
+ * Converts a hybrid timestamp to Unix time.
+ * @param hybridts - The hybrid timestamp to convert.
+ * @returns The Unix time representation of the hybrid timestamp.
+ * @throws An error if the hybridts parameter fails the time parameter check.
  */
 export const hybridtsToUnixtime = (hybridts: bigint | string) => {
   if (!checkTimeParam(hybridts)) {
@@ -116,26 +132,10 @@ export const hybridtsToUnixtime = (hybridts: bigint | string) => {
 };
 
 /**
- * Generate a hybrid timestamp based on Unix Epoch time, timedelta and incremental time internval.
- *
- * @param data
- *  | Property          | Type  |           Description              |
- *  | :---------------- | :----  | :-------------------------------  |
- *  | unixtime          | string or bigint |    The known Unix Epoch time used to generate a hybrid timestamp.  The Unix Epoch time is the number of seconds that have elapsed since January 1, 1970 (midnight UTC/GMT).       |
- *
- *
- *
- * @returns
- *  | Property    | Type  |           Description              |
- *  | :-----------| :---   | :-------------------------------  |
- *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |
- *
- *
- * #### Example
- *
- * ```
- *   const res = unixtimeToHybridts("429642767925248000");
- * ```
+ * Converts a Unix timestamp to a hybrid timestamp.
+ * @param unixtime - The Unix timestamp to convert.
+ * @returns The hybrid timestamp as a string.
+ * @throws An error if the unixtime parameter fails the check.
  */
 export const unixtimeToHybridts = (unixtime: bigint | string) => {
   if (!checkTimeParam(unixtime)) {
@@ -148,26 +148,10 @@ export const unixtimeToHybridts = (unixtime: bigint | string) => {
 };
 
 /**
- * Generate a hybrid timestamp based on datetime。
- *
- * @param data
- *  | Property          | Type  |           Description              |
- *  | :---------------- | :----  | :-------------------------------  |
- *  | datetime          | Date |    The known datetime used to generate a hybrid timestamp.       |
- *
- *
- *
- * @returns
- *  | Property    | Type  |           Description              |
- *  | :-----------| :---   | :-------------------------------  |
- *  | Hybrid timetamp       | String   | Hybrid timetamp is a non-negative interger range from 0 to 18446744073709551615. |
- *
- *
- * #### Example
- *
- * ```
- *   const res = datetimeToHybrids("429642767925248000");
- * ```
+ * Converts a JavaScript Date object to a hybridts timestamp.
+ * @param datetime - The JavaScript Date object to be converted.
+ * @returns The hybridts timestamp.
+ * @throws An error if the input is not a valid Date object.
  */
 export const datetimeToHybrids = (datetime: Date) => {
   if (!(datetime instanceof Date)) {
@@ -417,7 +401,10 @@ export const buildDynamicRow = (
  * If the field is a vector, split the data into chunks of the appropriate size.
  * If the field is a scalar, decode the JSON/array data if necessary.
  */
-export const buildFieldDataMap = (fields_data: any[]) => {
+export const buildFieldDataMap = (
+  fields_data: any[],
+  transformers?: OutputTransformers
+) => {
   const fieldsDataMap = new Map<string, RowData[]>();
 
   fields_data.forEach((item, i) => {
@@ -426,42 +413,83 @@ export const buildFieldDataMap = (fields_data: any[]) => {
 
     // parse vector data
     if (item.field === 'vectors') {
-      const key = item.vectors!.data;
-      const vectorValue =
-        key === 'float_vector'
-          ? item.vectors![key]!.data
-          : item.vectors![key]!.toJSON().data;
+      const dataKey = item.vectors!.data;
 
-      // if binary vector , need use dim / 8 to split vector data
-      const dim =
-        item.vectors?.data === 'float_vector'
-          ? Number(item.vectors!.dim)
-          : Number(item.vectors!.dim) / 8;
-      field_data = [];
+      switch (dataKey) {
+        case 'float_vector':
+        case 'binary_vector':
+          const vectorValue =
+            dataKey === 'float_vector'
+              ? item.vectors![dataKey]!.data
+              : item.vectors![dataKey]!.toJSON().data;
 
-      // parse number[] to number[][] by dim
-      vectorValue.forEach((v: any, i: number) => {
-        const index = Math.floor(i / dim);
-        if (!field_data[index]) {
-          field_data[index] = [];
-        }
-        field_data[index].push(v);
-      });
+          // if binary vector , need use dim / 8 to split vector data
+          const dim =
+            item.vectors?.data === 'float_vector'
+              ? Number(item.vectors!.dim)
+              : Number(item.vectors!.dim) / 8;
+          field_data = [];
+
+          // parse number[] to number[][] by dim
+          vectorValue.forEach((v: any, i: number) => {
+            const index = Math.floor(i / dim);
+            if (!field_data[index]) {
+              field_data[index] = [];
+            }
+            field_data[index].push(v);
+          });
+          break;
+
+        case 'float16_vector':
+        case 'bfloat16_vector':
+          field_data = [];
+          const f16Dim = Number(item.vectors!.dim) * 2; // float16 is 2 bytes, so we need to multiply dim with 2 = one element length
+          const f16Bytes = item.vectors![dataKey]!;
+
+          // split buffer data to float16 vector(bytes)
+          for (let i = 0; i < f16Bytes.byteLength; i += f16Dim) {
+            const slice = f16Bytes.slice(i, i + f16Dim);
+            const isFloat16 = dataKey === 'float16_vector';
+            let dataType: DataType.BFloat16Vector | DataType.Float16Vector;
+
+            dataType = isFloat16
+              ? DataType.Float16Vector
+              : DataType.BFloat16Vector;
+
+            const localTransformers = transformers || {
+              [DataType.BFloat16Vector]: bf16BytesToF32Array,
+              [DataType.Float16Vector]: f16BytesToF32Array,
+            };
+
+            field_data.push(localTransformers[dataType]!(slice));
+          }
+          break;
+        case 'sparse_float_vector':
+          const sparseVectorValue = item.vectors![dataKey]!.contents;
+          field_data = [];
+
+          sparseVectorValue.forEach((buffer: any, i: number) => {
+            field_data[i] = bytesToSparseRow(buffer);
+          });
+          break;
+        default:
+          break;
+      }
     } else {
       // parse scalar data
-      const key = item.scalars!.data;
-      field_data = item.scalars![key]!.data;
+      const dataKey = item.scalars!.data;
+      field_data = item.scalars![dataKey]!.data;
 
       // we need to handle array element specifically here
-      if (key === 'array_data') {
+      if (dataKey === 'array_data') {
         field_data = field_data.map((f: any) => {
-          const key = f.data;
-          return key ? f[key].data : [];
+          const dataKey = f.data;
+          return dataKey ? f[dataKey].data : [];
         });
       }
 
       // decode json
-      switch (key) {
+      switch (dataKey) {
         case 'json_data':
           field_data.forEach((buffer: any, i: number) => {
             // console.log(JSON.parse(buffer.toString()));
@@ -512,18 +540,373 @@ export const getAuthString = (data: {
  * @param {Field} column - The column information.
  * @returns {FieldData} The field data for the row and column.
  */
-export const buildFieldData = (rowData: RowData, field: Field): FieldData => {
+export const buildFieldData = (
+  rowData: RowData,
+  field: Field,
+  transformers?: InsertTransformers
+): FieldData => {
   const { type, elementType, name } = field;
+  const isFloat32 = Array.isArray(rowData[name]);
+
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
     case DataType.FloatVector:
       return rowData[name];
+    case DataType.BFloat16Vector:
+      const bf16Transformer =
+        transformers?.[DataType.BFloat16Vector] || f32ArrayToBf16Bytes;
+      return isFloat32
+        ? bf16Transformer(rowData[name] as BFloat16Vector)
+        : rowData[name];
+    case DataType.Float16Vector:
+      const f16Transformer =
+        transformers?.[DataType.Float16Vector] || f32ArrayToF16Bytes;
+      return isFloat32
+        ? f16Transformer(rowData[name] as Float16Vector)
+        : rowData[name];
     case DataType.JSON:
       return Buffer.from(JSON.stringify(rowData[name] || {}));
     case DataType.Array:
       const elementField = { ...field, type: elementType! };
-      return buildFieldData(rowData, elementField);
+      return buildFieldData(rowData, elementField, transformers);
     default:
       return rowData[name];
+  }
+};
+
+/**
+ * Builds search parameters based on the provided data.
+ * @param data - The data object containing search parameters.
+ * @returns The search parameters in key-value format.
+ */
+export const buildSearchParams = (
+  data: SearchSimpleReq | (HybridSearchSingleReq & HybridSearchReq),
+  anns_field: string
+) => {
+  // create search params
+  const search_params: SearchParam = {
+    anns_field: data.anns_field || anns_field,
+    params: JSON.stringify(data.params ?? {}),
+    topk: data.limit ?? data.topk ?? DEFAULT_TOPK,
+    offset: data.offset ?? 0,
+    metric_type: data.metric_type ?? '', // leave it empty
+    ignore_growing: data.ignore_growing ?? false,
+  };
+
+  // if group_by_field is set, add it to the search params
+  if (data.group_by_field) {
+    search_params.group_by_field = data.group_by_field;
+  }
+
+  return search_params;
+};
+
+/**
+ * Creates a RRFRanker object with the specified value of k.
+ * @param k - The value of k used in the RRFRanker strategy.
+ * @returns An object representing the RRFRanker strategy with the specified value of k.
+ */
+export const RRFRanker = (k: number = 60): RerankerObj => {
+  return {
+    strategy: RANKER_TYPE.RRF,
+    params: {
+      k,
+    },
+  };
+};
+
+/**
+ * Creates a weighted ranker object.
+ * @param weights - An array of numbers representing the weights.
+ * @returns The weighted ranker object.
+ */
+export const WeightedRanker = (weights: number[]): RerankerObj => {
+  return {
+    strategy: RANKER_TYPE.WEIGHTED,
+    params: {
+      weights,
+    },
+  };
+};
+
+/**
+ * Converts the rerank parameters object to a format suitable for API requests.
+ * @param rerank - The rerank parameters object.
+ * @returns The converted rerank parameters object.
+ */
+export const convertRerankParams = (rerank: RerankerObj) => {
+  const r = cloneObj(rerank) as any;
+  r.params = JSON.stringify(r.params);
+  return r;
+};
+
+/**
+ * This method is used to build search request for a given data.
+ * It first fetches the collection info and then constructs the search request based on the data type.
+ * It also creates search vectors and a placeholder group for the search.
+ *
+ * @param {SearchReq | SearchSimpleReq | HybridSearchReq} data - The data for which to build the search request.
+ * @param {DescribeCollectionResponse} collectionInfo - The collection information.
+ * @param {Root} milvusProto - The milvus protocol object.
+ * @returns {Object} An object containing the search requests and search vectors.
+ * @returns {Object} return.params - The search requests used in the operation.
+ * @returns {string} return.params.collection_name - The name of the collection.
+ * @returns {string[]} return.params.partition_names - The partition names.
+ * @returns {string[]} return.params.output_fields - The output fields.
+ * @returns {number} return.params.nq - The number of query vectors.
+ * @returns {string} return.params.dsl - The domain specific language.
+ * @returns {string} return.params.dsl_type - The type of the domain specific language.
+ * @returns {Uint8Array} return.params.placeholder_group - The placeholder group.
+ * @returns {Object} return.params.search_params - The search parameters.
+ * @returns {string} return.params.consistency_level - The consistency level.
+ * @returns {Number[][]} return.searchVectors - The search vectors used in the operation.
+ * @returns {number} return.round_decimal - The score precision.
+ */
+export const buildSearchRequest = (
+  data: SearchReq | SearchSimpleReq | HybridSearchReq,
+  collectionInfo: DescribeCollectionResponse,
+  milvusProto: Root
+) => {
+  // type cast
+  const searchReq = data as SearchReq;
+  const searchHybridReq = data as HybridSearchReq;
+  const searchSimpleReq = data as SearchSimpleReq;
+
+  // Initialize requests array
+  const requests: {
+    collection_name: string;
+    partition_names: string[];
+    output_fields: string[];
+    nq: number;
+    dsl: string;
+    dsl_type: DslType;
+    placeholder_group: Uint8Array;
+    search_params: KeyValuePair[];
+    consistency_level: ConsistencyLevelEnum;
+  }[] = [];
+
+  // detect if the request is hybrid search request
+  const isHybridSearch = !!(
+    searchHybridReq.data &&
+    searchHybridReq.data.length &&
+    typeof searchHybridReq.data[0] === 'object' &&
+    searchHybridReq.data[0].anns_field
+  );
+
+  // output fields(reference fields)
+  const default_output_fields: string[] = [];
+
+  // Iterate through collection fields, create search request
+  for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
+    const field = collectionInfo.schema.fields[i];
+    const { name, dataType } = field;
+
+    // if field  type is vector, build the request
+    if (isVectorType(dataType)) {
+      let req: SearchSimpleReq | (HybridSearchReq & HybridSearchSingleReq) =
+        data as SearchSimpleReq;
+
+      if (isHybridSearch) {
+        const singleReq = searchHybridReq.data.find(d => d.anns_field === name);
+        // if it is hybrid search and no request target is not found, skip
+        if (!singleReq) {
+          continue;
+        }
+        // merge single request with hybrid request
+        req = Object.assign(cloneObj(data), singleReq);
+      } else {
+        // if it is not hybrid search, and we have built one request, skip
+        const skip =
+          requests.length === 1 ||
+          (typeof req.anns_field !== 'undefined' && req.anns_field !== name);
+        if (skip) {
+          continue;
+        }
+      }
+
+      // get search vectors
+      let searchingVector: VectorTypes | VectorTypes[] = isHybridSearch
+        ? req.data!
+        : searchReq.vectors ||
+          searchSimpleReq.vectors ||
+          searchSimpleReq.vector ||
+          searchSimpleReq.data;
+
+      // format searching vector
+      searchingVector = formatSearchVector(searchingVector, field.dataType!);
+
+      // create search request
+      requests.push({
+        collection_name: req.collection_name,
+        partition_names: req.partition_names || [],
+        output_fields: req.output_fields || default_output_fields,
+        nq: searchReq.nq || searchingVector.length,
+        dsl: searchReq.expr || searchSimpleReq.filter || '',
+        dsl_type: DslType.BoolExprV1,
+        placeholder_group: buildPlaceholderGroupBytes(
+          milvusProto,
+          searchingVector as VectorTypes[],
+          field.dataType!
+        ),
+        search_params: parseToKeyValue(
+          searchReq.search_params || buildSearchParams(req, name)
+        ),
+        consistency_level:
+          req.consistency_level || (collectionInfo.consistency_level as any),
+      });
+    } else {
+      // if field is not vector, add it to output fields
+      default_output_fields.push(name);
+    }
+  }
+
+  /**
+   *  It will decide the score precision.
+   *  If round_decimal is 3, need return like 3.142
+   *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
+   *  So the score need to slice by round_decimal
+   */
+  const round_decimal =
+    searchReq.search_params?.round_decimal ??
+    (searchSimpleReq.params?.round_decimal as number) ??
+    -1;
+
+  return {
+    isHybridSearch,
+    request: isHybridSearch
+      ? {
+          collection_name: data.collection_name,
+          partition_names: data.partition_names,
+          requests: requests,
+          rank_params: [
+            ...parseToKeyValue(
+              convertRerankParams(searchHybridReq.rerank || RRFRanker())
+            ),
+            { key: 'round_decimal', value: round_decimal },
+            {
+              key: 'limit',
+              value:
+                searchSimpleReq.limit ?? searchSimpleReq.topk ?? DEFAULT_TOPK,
+            },
+          ],
+          output_fields: requests[0]?.output_fields,
+          consistency_level: requests[0]?.consistency_level,
+        }
+      : requests[0],
+    nq: requests[0].nq,
+    round_decimal,
+  };
+};
+
+/**
+ * Formats the search results returned by Milvus into row data for easier use.
+ *
+ * @param {SearchRes} searchRes - The search results returned by Milvus.
+ * @param {Object} options - The options for formatting the search results.
+ * @param {number} options.round_decimal - The number of decimal places to which to round the scores.
+ *
+ * @returns {any[]} The formatted search results.
+ *
+ */
+export const formatSearchResult = (
+  searchRes: SearchRes,
+  options: {
+    round_decimal: number;
+    transformers?: OutputTransformers;
+  }
+) => {
+  const { round_decimal } = options;
+  // build final results array
+  const results: any[] = [];
+  const { topks, scores, fields_data, ids } = searchRes.results;
+  // build fields data map
+  const fieldsDataMap = buildFieldDataMap(fields_data, options.transformers);
+  // build output name array
+  const output_fields = [
+    'id',
+    ...(!!searchRes.results.output_fields?.length
+      ? searchRes.results.output_fields
+      : fields_data.map(f => f.field_name)),
+  ];
+
+  // vector id support int / str id.
+  const idData = ids ? ids[ids.id_field]!.data : {};
+  // add id column
+  fieldsDataMap.set('id', idData as RowData[]);
+  // fieldsDataMap.set('score', scores); TODO: fieldDataMap to support formatter
+
+  /**
+   * This code block formats the search results returned by Milvus into row data for easier use.
+   * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
+   * The `topk` variable is the key we use to splice data for every search result.
+   * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
+   */
+  topks.forEach((v, index) => {
+    const topk = Number(v);
+
+    scores.splice(0, topk).forEach((score, scoreIndex) => {
+      // get correct index
+      const i = index === 0 ? scoreIndex : scoreIndex + topk * index;
+
+      // fix round_decimal
+      const fixedScore =
+        typeof round_decimal === 'undefined' || round_decimal === -1
+          ? score
+          : formatNumberPrecision(score, round_decimal);
+
+      // init result object
+      const result: any = { score: fixedScore };
+
+      // build result,
+      output_fields.forEach(field_name => {
+        // Check if the field_name exists in the fieldsDataMap
+        const isFixedSchema = fieldsDataMap.has(field_name);
+
+        // Get the data for the field_name from the fieldsDataMap
+        // If the field_name is not in the fieldsDataMap, use the DEFAULT_DYNAMIC_FIELD
+        const data = fieldsDataMap.get(
+          isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
+        )!;
+        // make dynamic data[i] safe
+        data[i] = isFixedSchema ? data[i] : data[i] || {};
+        // extract dynamic info from dynamic field if necessary
+        result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
+      });
+
+      // init result slot
+      results[index] = results[index] || [];
+      // push result data
+      results[index].push(result);
+    });
+  });
+
+  return results;
+};
+
+/**
+ * Formats the search vector to match a specific data type.
+ * @param {VectorTypes | VectorTypes[]} searchVector - The search vector or array of vectors to be formatted.
+ * @param {DataType} dataType - The specified data type.
+ * @returns {VectorTypes[]} The formatted search vector or array of vectors.
+ */
+export const formatSearchVector = (
+  searchVector: VectorTypes | VectorTypes[],
+  dataType: DataType
+): VectorTypes[] => {
+  switch (dataType) {
+    case DataType.FloatVector:
+    case DataType.BinaryVector:
+    case DataType.Float16Vector:
+    case DataType.BFloat16Vector:
+      if (!Array.isArray(searchVector)) {
+        return [searchVector] as VectorTypes[];
+      }
+    case DataType.SparseFloatVector:
+      const type = getSparseFloatVectorType(searchVector as SparseVectorArray);
+      if (type !== 'unknown') {
+        return [searchVector] as VectorTypes[];
+      }
+    default:
+      return searchVector as VectorTypes[];
   }
 };

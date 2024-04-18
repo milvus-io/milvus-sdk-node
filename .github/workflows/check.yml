@@ -4,10 +4,12 @@ on:
   pull_request:
     branches:
       - main
+      - 2.4
     types: [opened, synchronize]
   push:
     branches:
       - main
+      - 2.4
 jobs:
   publish:
     runs-on: ubuntu-latest

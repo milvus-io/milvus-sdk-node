@@ -7,6 +7,7 @@ import {
   CreateIndexRequest,
   GetIndexBuildProgressReq,
   GetIndexStateReq,
+  AlterIndexReq,
   ResStatus,
   DescribeIndexResponse,
   GetIndexStateResponse,
@@ -307,6 +308,44 @@ export class Index extends Data {
       this.channelPool,
       'DropIndex',
       data,
+      data.timeout || this.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * Alters an existing index.
+   *
+   * @param {Object} data - The data for altering the index.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {Object} data.params - The new parameters for the index. For example, `{ nlist: number }`.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} - A promise that resolves to a response status object.
+   * @returns {number} return.error_code - The error code number.
+   * @returns {string} return.reason - The cause of the error.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
+   * const alterIndexReq = {
+   *   collection_name: 'my_collection',
+   *   params: { nlist: 20 },
+   * };
+   * const res = await milvusClient.alterIndex(alterIndexReq);
+   * console.log(res);
+   * ```
+   */
+  async alterIndex(data: AlterIndexReq): Promise<ResStatus> {
+    checkCollectionName(data);
+    const promise = await promisify(
+      this.channelPool,
+      'AlterIndex',
+      {
+        collection_name: data.collection_name,
+        index_name: data.index_name,
+        extra_params: parseToKeyValue(data.params),
+      },
       data.timeout || this.timeout
     );
     return promise;

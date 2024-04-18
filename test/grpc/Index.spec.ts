@@ -1,4 +1,10 @@
-import { MilvusClient, ErrorCode, MetricType, IndexType } from '../../milvus';
+import {
+  MilvusClient,
+  ErrorCode,
+  MetricType,
+  IndexType,
+  findKeyValue,
+} from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -38,18 +44,18 @@ describe(`Milvus Index API`, () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
     await milvusClient.createCollection(
-      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: [8] })
     );
     await milvusClient.createCollection(
       genCollectionParams({
         collectionName: COLLECTION_NAME_WITHOUT_INDEX_NAME,
-        dim: 8,
+        dim: [8],
       })
     );
 
     for (let i = 0; i < INDEX_COLLECTIONS.length; i++) {
       await milvusClient.createCollection(
-        genCollectionParams({ collectionName: INDEX_COLLECTIONS[i], dim: 32 })
+        genCollectionParams({ collectionName: INDEX_COLLECTIONS[i], dim: [32] })
       );
     }
   });
@@ -235,6 +241,36 @@ describe(`Milvus Index API`, () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`Create STL_SORT index on int64 should success`, async () => {
+    const res = await milvusClient.createIndex({
+      index_name: 'int64_index',
+      collection_name: COLLECTION_NAME,
+      field_name: 'int64',
+      index_type: IndexType.STL_SORT,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create TRIE index on int64 varchar success`, async () => {
+    const res = await milvusClient.createIndex({
+      index_name: 'varchar_index',
+      collection_name: COLLECTION_NAME,
+      field_name: 'varChar',
+      index_type: IndexType.TRIE,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create INVERTED index on int64 varchar success`, async () => {
+    const res = await milvusClient.createIndex({
+      index_name: 'float_index',
+      collection_name: COLLECTION_NAME,
+      field_name: 'float',
+      index_type: IndexType.INVERTED,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`Create Index without name should success`, async () => {
     const res = await milvusClient.createIndex({
       collection_name: COLLECTION_NAME_WITHOUT_INDEX_NAME,
@@ -266,7 +302,8 @@ describe(`Milvus Index API`, () => {
       collection_name: COLLECTION_NAME,
       index_name: INDEX_NAME,
     });
-    expect(res.index_descriptions[0].index_name).toEqual(INDEX_NAME);
+    const allIndexNames = res.index_descriptions.map(i => i.index_name);
+    expect(allIndexNames.includes(INDEX_NAME)).toEqual(true);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -276,7 +313,9 @@ describe(`Milvus Index API`, () => {
       field_name: VECTOR_FIELD_NAME,
     });
 
-    expect(res.index_descriptions[0].field_name).toEqual(VECTOR_FIELD_NAME);
+    const field_names = res.index_descriptions.map(i => i.field_name);
+    expect(field_names.includes(VECTOR_FIELD_NAME)).toEqual(true);
+
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -332,13 +371,34 @@ describe(`Milvus Index API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Get Index progress with field name should be failed`, async () => {
-    const res = await milvusClient.getIndexBuildProgress({
+  it(`Alter Index should be success`, async () => {
+    const alter = await milvusClient.alterIndex({
       collection_name: COLLECTION_NAME,
-      field_name: VECTOR_FIELD_NAME,
+      index_name: INDEX_NAME,
+      params: {
+        'mmap.enabled': true,
+      },
     });
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME,
+      index_name: INDEX_NAME,
+    });
+    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+    const params = describe.index_descriptions[0].params;
+    expect(findKeyValue(params, 'mmap.enabled')).toEqual("true");
+
+    // console.log('describe', describe.index_descriptions[0].params);
   });
+
+  // @Deprecated
+  // it(`Get Index progress with field name should be failed`, async () => {
+  //   const res = await milvusClient.getIndexBuildProgress({
+  //     collection_name: COLLECTION_NAME,
+  //     field_name: VECTOR_FIELD_NAME,
+  //   });
+  //   expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+  // });
 
   it(`Drop Index with index name`, async () => {
     const res = await milvusClient.dropIndex({

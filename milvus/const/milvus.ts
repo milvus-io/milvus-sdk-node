@@ -124,17 +124,22 @@ export enum IndexType {
   DISKANN = 'DISKANN',
   AUTOINDEX = 'AUTOINDEX',
   ANNOY = 'ANNOY',
+  SPARSE_INVERTED_INDEX = 'SPARSE_INVERTED_INDEX',
+  SPARSE_WAND = 'SPARSE_WAND',
   // 2.3
   GPU_FLAT = 'GPU_FLAT',
   GPU_IVF_FLAT = 'GPU_IVF_FLAT',
   GPU_IVF_PQ = 'GPU_IVF_PQ',
   GPU_IVF_SQ8 = 'GPU_IVF_SQ8',
+  GPU_BRUTE_FORCE = 'GPU_BRUTE_FORCE',
+  GPU_CAGRA = 'GPU_CAGRA',
   RAFT_IVF_FLAT = 'RAFT_IVF_FLAT',
   RAFT_IVF_PQ = 'RAFT_IVF_PQ',
   ScaNN = 'SCANN',
   // scalar
   STL_SORT = 'STL_SORT',
   TRIE = 'Trie',
+  INVERTED = 'INVERTED',
 }
 
 // MsgType
@@ -261,7 +266,18 @@ export enum DataType {
 
   BinaryVector = 100,
   FloatVector = 101,
+  Float16Vector = 102,
+  BFloat16Vector = 103,
+  SparseFloatVector = 104,
 }
+
+export const VectorDataTypes = [
+  DataType.BinaryVector,
+  DataType.FloatVector,
+  DataType.Float16Vector,
+  DataType.BFloat16Vector,
+  DataType.SparseFloatVector,
+];
 
 // data type map
 export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
@@ -279,6 +295,9 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   JSON: 23,
   BinaryVector: 100,
   FloatVector: 101,
+  Float16Vector: 102,
+  BFloat16Vector: 103,
+  SparseFloatVector: 104,
 };
 
 // RBAC: operate user role type
@@ -384,4 +403,9 @@ export enum LoadState {
 export enum ShowCollectionsType {
   All,
   Loaded,
+}
+
+export enum RANKER_TYPE {
+  RRF = 'rrf',
+  WEIGHTED = 'weighted',
 }

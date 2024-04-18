@@ -24,7 +24,7 @@ describe(`Partition API`, () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
     await milvusClient.createCollection(
-      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 128 })
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: [128] })
     );
 
     await milvusClient.createIndex({
