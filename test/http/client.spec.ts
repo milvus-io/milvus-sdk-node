@@ -8,7 +8,6 @@ import {
 
 describe(`HTTP Client test`, () => {
   const baseURL = 'http://192.168.0.1:19530';
-  const version = 'v3';
   const username = 'user';
   const password = 'pass';
   const token = 'token';
@@ -37,18 +36,6 @@ describe(`HTTP Client test`, () => {
     expect(client.baseURL).toBe(
       `${config.endpoint}/${DEFAULT_HTTP_ENDPOINT_VERSION}`
     );
-  });
-
-  it('should return the correct baseURL if version is defined', () => {
-    // Mock configuration object
-    const config = {
-      endpoint: baseURL,
-      version,
-    };
-
-    // Create an instance of HttpBaseClient with the mock configuration
-    const client = new HttpClient(config);
-    expect(client.baseURL).toBe(`${config.endpoint}/${version}`);
   });
 
   it('should return the correct authorization header', () => {

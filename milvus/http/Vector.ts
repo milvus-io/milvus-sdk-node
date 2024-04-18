@@ -11,6 +11,7 @@ import {
   HttpVectorSearchResponse,
   HttpBaseResponse,
   FetchOptions,
+  HttpVectorUpsertResponse,
 } from '../types';
 
 /**
@@ -29,12 +30,16 @@ import {
  */
 export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
+    get vectorPrefix() {
+      return '/vectordb/entities';
+    }
+
     // GET get data
     async get(
       params: HttpVectorGetReq,
       options?: FetchOptions
     ): Promise<HttpVectorQueryResponse> {
-      const url = `/vector/get`;
+      const url = `${this.vectorPrefix}/get`;
       return await this.POST<HttpVectorQueryResponse>(url, params, options);
     }
 
@@ -43,7 +48,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       data: HttpVectorInsertReq,
       options?: FetchOptions
     ): Promise<HttpVectorInsertResponse> {
-      const url = `/vector/insert`;
+      const url = `${this.vectorPrefix}/insert`;
       return await this.POST<HttpVectorInsertResponse>(url, data, options);
     }
 
@@ -51,9 +56,9 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
     async upsert(
       data: HttpVectorInsertReq,
       options?: FetchOptions
-    ): Promise<HttpVectorInsertResponse> {
-      const url = `/vector/upsert`;
-      return await this.POST<HttpVectorInsertResponse>(url, data, options);
+    ): Promise<HttpVectorUpsertResponse> {
+      const url = `${this.vectorPrefix}/upsert`;
+      return await this.POST<HttpVectorUpsertResponse>(url, data, options);
     }
 
     // POST query data
@@ -61,7 +66,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       data: HttpVectorQueryReq,
       options?: FetchOptions
     ): Promise<HttpVectorQueryResponse> {
-      const url = `/vector/query`;
+      const url = `${this.vectorPrefix}/query`;
       return await this.POST<HttpVectorQueryResponse>(url, data, options);
     }
 
@@ -70,7 +75,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       data: HttpVectorSearchReq,
       options?: FetchOptions
     ): Promise<HttpVectorSearchResponse> {
-      const url = `/vector/search`;
+      const url = `${this.vectorPrefix}/search`;
       return await this.POST<HttpVectorSearchResponse>(url, data, options);
     }
 
@@ -79,7 +84,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       data: HttpVectorDeleteReq,
       options?: FetchOptions
     ): Promise<HttpBaseResponse> {
-      const url = `/vector/delete`;
+      const url = `${this.vectorPrefix}/delete`;
       return await this.POST<HttpBaseResponse>(url, data, options);
     }
   };

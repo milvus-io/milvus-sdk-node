@@ -1,5 +1,14 @@
 import { HttpClientConfig, FetchOptions } from './types';
-import { Collection, Vector } from './http';
+import {
+  Collection,
+  Vector,
+  User,
+  Role,
+  Partition,
+  MilvusIndex,
+  Alias,
+  Import,
+} from './http';
 import {
   DEFAULT_DB,
   DEFAULT_HTTP_TIMEOUT,
@@ -48,9 +57,7 @@ export class HttpBaseClient {
   get baseURL() {
     return (
       this.config.baseURL ||
-      `${this.config.endpoint}/${
-        this.config.version || DEFAULT_HTTP_ENDPOINT_VERSION
-      }`
+      `${this.config.endpoint}/${DEFAULT_HTTP_ENDPOINT_VERSION}`
     );
   }
 
@@ -167,5 +174,20 @@ export class HttpBaseClient {
   }
 }
 
-// The HttpClient class extends the functionality of the HttpBaseClient class by mixing in the Collection and Vector APIs.
-export class HttpClient extends Collection(Vector(HttpBaseClient)) {}
+/**
+ * The HttpClient class extends the functionality
+ * of the HttpBaseClient class by mixing in the
+ * - Collection
+ * - Vector
+ * - Alias
+ * - Partition
+ * - MilvusIndex
+ * - Import
+ * - Role
+ * - User APIs.
+ */
+export class HttpClient extends User(
+  Role(
+    MilvusIndex(Import(Alias(Partition(Collection(Vector(HttpBaseClient))))))
+  )
+) {}
