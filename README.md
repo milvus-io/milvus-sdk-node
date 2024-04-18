@@ -140,6 +140,22 @@ const search = await milvusClient.search({
 });
 ```
 
+### New Typescript client
+
+Starting from v2.4.0, we introduced a TypeScript client to provide better support for the [Milvus RESTful API V2](https://milvus.io/api-reference/restful/v2.3.x/About.md), take a look at our [test file](https://github.com/milvus-io/milvus-sdk-node/blob/main/test/http/test.ts).
+
+```javascript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+const client = new HttpClient(config);
+await client.createCollection(params);
+await client.describeCollection(params);
+await client.listCollections(params);
+await client.insert(params);
+await client.upsert(params);
+await client.query(params);
+await client.search(params);
+```
+
 ## Code Examples
 
 This table organizes the examples by technology, providing a brief description and the directory where each example can be found.
