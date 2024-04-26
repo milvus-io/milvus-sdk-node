@@ -53,6 +53,7 @@ import {
   parseToKeyValue,
   CreateCollectionWithFieldsReq,
   CreateCollectionWithSchemaReq,
+  FieldSchema,
 } from '../';
 
 /**
@@ -1056,5 +1057,28 @@ export class Collection extends Database {
     }
 
     return pkFieldType;
+  }
+
+  /**
+   * Get the primary field
+   */
+  async getPkField(data: DescribeCollectionReq): Promise<FieldSchema> {
+    // get collection info
+    const collectionInfo = await this.describeCollection(data);
+
+    // pk field
+    let pkField: FieldSchema = collectionInfo.schema.fields[0];
+    // extract key information
+    for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
+      const f = collectionInfo.schema.fields[i];
+
+      // get pk field info
+      if (f.is_primary_key) {
+        pkField = f;
+        break;
+      }
+    }
+
+    return pkField;
   }
 }

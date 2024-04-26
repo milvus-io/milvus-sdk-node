@@ -1,4 +1,13 @@
-import { KeyValuePair, DataType, ERROR_REASONS, SparseFloatVector } from '../';
+import {
+  KeyValuePair,
+  DataType,
+  ERROR_REASONS,
+  FieldSchema,
+  DataTypeStringEnum,
+  DEFAULT_MIN_INT64,
+  SearchResultData,
+  SparseFloatVector,
+} from '../';
 import { Pool } from 'generic-pool';
 
 /**
@@ -139,6 +148,80 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
   return camelCase ? convertToCamelCase(dataKey) : dataKey;
 };
 
+/**
+ * Returns the query iterator expression based on the provided parameters.
+ *
+ * @param params - The parameters for generating the query iterator expression.
+ * @param params.expr - The expression to be combined with the iterator expression.
+ * @param params.pkField - The primary key field schema.
+ * @param params.page - The current page number.
+ * @param params.pageCache - The cache of previous pages.
+ * @returns The query iterator expression.
+ */
+export const getQueryIteratorExpr = (params: {
+  expr: string;
+  pkField: FieldSchema;
+  lastPKId: string | number;
+}) => {
+  // get params
+  const { expr, lastPKId, pkField } = params;
+
+  // If cache does not exist, return expression based on primaryKey type
+  let compareValue = '';
+  if (!lastPKId) {
+    // get default value
+    compareValue =
+      pkField?.data_type === DataTypeStringEnum.VarChar
+        ? ''
+        : `${DEFAULT_MIN_INT64}`;
+  } else {
+    compareValue = lastPKId as string;
+  }
+
+  // return expr combined with iteratorExpr
+  return getPKFieldExpr({
+    pkField,
+    value: compareValue,
+    expr,
+    condition: '>',
+  });
+};
+
+// return distance range between the first and last item for the given search results
+export const getRangeFromSearchResult = (results: SearchResultData[]) => {
+  // get first item
+  const firstItem = results[0];
+  const lastItem = results[results.length - 1];
+
+  if (firstItem && lastItem) {
+    const radius = lastItem.score * 2 - firstItem.score;
+    return {
+      radius: radius,
+      lastDistance: lastItem.score,
+      id: lastItem.id,
+    };
+  } else {
+    return {
+      radius: 0,
+      lastDistance: 0,
+    };
+  }
+};
+
+// return pk filed != expression based on pk field type, if pk field is string, return pk field != ''
+export const getPKFieldExpr = (data: {
+  pkField: FieldSchema;
+  value: string | number;
+  condition?: string;
+  expr?: string;
+}) => {
+  const { pkField, value, condition = '!=', expr = '' } = data;
+  const pkValue =
+    pkField?.data_type === DataTypeStringEnum.VarChar
+      ? `'${value}'`
+      : `${value}`;
+  return `${pkField?.name} ${condition} ${pkValue}${expr ? ` && ${expr}` : ''}`;
+};
 // get biggest size of sparse vector array
 export const getSparseDim = (data: SparseFloatVector[]) => {
   let dim = 0;

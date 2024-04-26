@@ -216,7 +216,7 @@ export interface MutationResult extends resStatusResponse {
 }
 
 export interface QueryResults extends resStatusResponse {
-  data: { [x: string]: any }[];
+  data: Record<string, any>[];
 }
 
 export interface CountResult extends resStatusResponse {
@@ -282,6 +282,16 @@ export interface SearchReq extends collectionNameReq {
   nq?: number; // number of query vectors
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+}
+
+export interface SearchIteratorReq
+  extends Omit<
+    SearchSimpleReq,
+    'data' | 'vectors' | 'offset' | 'limit' | 'topk'
+  > {
+  data: number[]; // data to search
+  batchSize: number;
+  limit: number;
 }
 
 // simplified search api parameter type
@@ -391,6 +401,12 @@ export interface QueryReq extends collectionNameReq {
   limit?: number; // how many results you want
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+}
+
+export interface QueryIteratorReq
+  extends Omit<QueryReq, 'ids' | 'offset' | 'limit'> {
+  limit: number;
+  batchSize: number;
 }
 
 export interface GetReq extends collectionNameReq {
