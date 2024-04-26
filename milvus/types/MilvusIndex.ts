@@ -66,3 +66,8 @@ export interface GetIndexBuildProgressResponse extends resStatusResponse {
   indexed_rows: number;
   total_rows: number;
 }
+
+export interface AlterIndexReq extends collectionNameReq {
+  index_name: string;
+  params: Record<string, number | string | boolean>;
+}

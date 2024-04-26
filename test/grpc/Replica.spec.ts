@@ -19,7 +19,7 @@ describe(`Replica API`, () => {
     await milvusClient.use(dbParam);
 
     await milvusClient.createCollection(
-      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 8 })
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: [8] })
     );
     await milvusClient.createIndex({
       collection_name: COLLECTION_NAME,

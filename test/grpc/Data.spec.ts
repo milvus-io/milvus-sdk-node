@@ -5,6 +5,7 @@ import {
   ERROR_REASONS,
   DEFAULT_TOPK,
   DEFAULT_COUNT_QUERY_STRING,
+  IndexType,
 } from '../../milvus';
 import {
   IP,
@@ -25,8 +26,8 @@ const dbParam = {
 };
 const createCollectionParams = genCollectionParams({
   collectionName: COLLECTION_NAME,
-  dim: 4,
-  vectorType: DataType.FloatVector,
+  dim: [4],
+  vectorType: [DataType.FloatVector],
   autoID: false,
 });
 const INDEX_NAME = 'collection_index';
@@ -51,14 +52,18 @@ describe(`Data.API`, () => {
       data: generateInsertData(createCollectionParams.fields, 1024),
     });
 
+    await milvusClient.flush({
+      collection_names: [COLLECTION_NAME],
+    });
+
     // create index
     await milvusClient.createIndex({
       index_name: INDEX_NAME,
       collection_name: COLLECTION_NAME,
       field_name: VECTOR_FIELD_NAME,
-      index_type: 'IVF_FLAT',
+      index_type: IndexType.HNSW,
       metric_type: 'L2',
-      params: { nlist: 1024 },
+      params: { M: 4, efConstruction: 8 },
     });
     // load
     await milvusClient.loadCollectionSync({
@@ -164,14 +169,6 @@ describe(`Data.API`, () => {
     }
   });
 
-  it(`Exec search should throw SEARCH_PARAMS_IS_REQUIRED`, async () => {
-    try {
-      await milvusClient.search({ collection_name: 'asd' } as any);
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.VECTORS_OR_VECTOR_IS_MISSING);
-    }
-  });
-
   it(`Exec search should throw error`, async () => {
     try {
       await milvusClient.search({
@@ -187,7 +184,7 @@ describe(`Data.API`, () => {
   //   const res = await milvusClient.search({
   //     collection_name: COLLECTION_NAME,
   //     filter: '',
-  //     vector: [1, 2, 3, 4],
+  //     data: [1, 2, 3, 4],
   //     limit: limit,
   //     metric_type: 'IP',
   //   });
@@ -205,10 +202,10 @@ describe(`Data.API`, () => {
       filter: '',
       data: [1, 2, 3, 4],
       limit: limit,
+      group_by_field: 'varChar',
     });
 
     expect(searchWithData.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(searchWithData.results.length).toEqual(limit);
 
     const searchWithData2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
@@ -220,12 +217,12 @@ describe(`Data.API`, () => {
     expect(searchWithData2.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(searchWithData2.results.length).toEqual(limit);
 
-    // parititon search
+    // partition search
     const partitionSearch = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       partition_names: [PARTITION_NAME],
       filter: '',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       topk: limit,
     });
 
@@ -237,7 +234,7 @@ describe(`Data.API`, () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -250,7 +247,7 @@ describe(`Data.API`, () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024 },
     });
@@ -258,11 +255,11 @@ describe(`Data.API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results.length).toEqual(limit);
 
-    // mutitple vector search search
+    // multiple vector search
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
-      vectors: [[1, 2, 3, 4]],
+      data: [[1, 2, 3, 4]],
       limit: limit,
       offset: 2,
       params: { nprobe: 1024 },
@@ -277,7 +274,7 @@ describe(`Data.API`, () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: 'int64 < 10000',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024 },
     });
@@ -290,7 +287,7 @@ describe(`Data.API`, () => {
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       expr: 'int64 < 10000',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024 },
     });
@@ -305,7 +302,7 @@ describe(`Data.API`, () => {
     const res = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: 'int64 < 10000',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: limit,
       params: { nprobe: 1024, radius: 20, range_filter: 15 },
     });
@@ -321,7 +318,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       filter: '',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: 4,
       output_fields: ['id', 'json', VECTOR_FIELD_NAME],
     };
@@ -343,7 +340,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       filter: 'json["number"] >= 0',
-      vector: [1, 2, 3, 4],
+      data: [1, 2, 3, 4],
       limit: 4,
       output_fields: ['id', 'json'],
     };
@@ -364,7 +361,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       expr: '',
-      vectors: [[1, 2, 3, 4]],
+      data: [[1, 2, 3, 4]],
       search_params: {
         anns_field: VECTOR_FIELD_NAME,
         topk: '4',
@@ -384,7 +381,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       // partition_names: [],
       expr: '',
-      vectors: [[1, 2, 3, 4]],
+      data: [[1, 2, 3, 4]],
       search_params: {
         anns_field: VECTOR_FIELD_NAME,
         topk: '4',
@@ -405,7 +402,7 @@ describe(`Data.API`, () => {
         collection_name: COLLECTION_NAME,
         // partition_names: [],
         expr: '',
-        vectors: [[1, 2, 3]],
+        data: [[1, 2, 3]],
         search_params: {
           anns_field: VECTOR_FIELD_NAME,
           topk: '4',

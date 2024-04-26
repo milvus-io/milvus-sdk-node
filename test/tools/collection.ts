@@ -1,5 +1,6 @@
 import { DataType, ConsistencyLevelEnum } from '../../milvus';
 import { VECTOR_FIELD_NAME, MAX_CAPACITY, MAX_LENGTH } from './const';
+import { GENERATE_VECTOR_NAME } from './';
 
 export const dynamicFields = [
   {
@@ -31,8 +32,8 @@ export const dynamicFields = [
  */
 export const genCollectionParams = (data: {
   collectionName: string;
-  dim: number | string;
-  vectorType?: DataType;
+  dim: number[] | string[];
+  vectorType?: DataType[];
   autoID?: boolean;
   fields?: any[];
   partitionKeyEnabled?: boolean;
@@ -42,8 +43,8 @@ export const genCollectionParams = (data: {
 }) => {
   const {
     collectionName,
-    dim,
-    vectorType = DataType.FloatVector,
+    dim = [8],
+    vectorType = [DataType.FloatVector],
     autoID = true,
     fields = [],
     partitionKeyEnabled,
@@ -52,16 +53,25 @@ export const genCollectionParams = (data: {
     maxCapacity,
   } = data;
 
+  const vectorFields = vectorType.map((type, i) => {
+    const res: any = {
+      name: GENERATE_VECTOR_NAME(i),
+      description: `vector type: ${type}`,
+      data_type: type,
+    };
+
+    if (type !== DataType.SparseFloatVector) {
+      res.dim = Number(dim[i]);
+    }
+
+    return res;
+  });
+
   const params: any = {
     collection_name: collectionName,
     consistency_level: ConsistencyLevelEnum.Strong,
     fields: [
-      {
-        name: VECTOR_FIELD_NAME,
-        description: 'Vector field',
-        data_type: vectorType,
-        dim: Number(dim),
-      },
+      ...vectorFields,
       {
         name: 'id',
         description: 'ID field',

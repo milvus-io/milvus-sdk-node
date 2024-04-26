@@ -23,7 +23,7 @@ describe(`Database API`, () => {
 
     // create collection on another db
     const create = await milvusClient.createCollection(
-      genCollectionParams({ collectionName: COLLECTION_NAME, dim: 4 })
+      genCollectionParams({ collectionName: COLLECTION_NAME, dim: [4] })
     );
     expect(create.error_code).toEqual(ErrorCode.SUCCESS);
 

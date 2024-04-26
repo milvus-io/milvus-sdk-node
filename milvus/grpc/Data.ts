@@ -1,8 +1,8 @@
 import {
   DataType,
+  VectorDataTypes,
   DataTypeMap,
   ERROR_REASONS,
-  DslType,
   DeleteEntitiesReq,
   FlushReq,
   GetFlushStateReq,
@@ -12,22 +12,20 @@ import {
   LoadBalanceReq,
   ImportReq,
   ListImportTasksReq,
-  // ListIndexedSegmentReq,
-  // DescribeSegmentIndexDataReq,
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,
   GetMetricsResponse,
   GetQuerySegmentInfoResponse,
   GePersistentSegmentInfoResponse,
+  buildSearchRequest,
+  formatSearchResult,
   MutationResult,
   QueryResults,
   ResStatus,
   SearchResults,
   ImportResponse,
   ListImportTasksResponse,
-  // ListIndexedSegmentResponse,
-  // DescribeSegmentIndexDataResponse,
   GetMetricsRequest,
   QueryReq,
   GetReq,
@@ -40,23 +38,19 @@ import {
   SearchSimpleReq,
   SearchIteratorReq,
   DEFAULT_TOPK,
+  HybridSearchReq,
   promisify,
   findKeyValue,
   sleep,
-  formatNumberPrecision,
   parseToKeyValue,
   checkCollectionName,
-  checkSearchParams,
-  parseBinaryVectorToBytes,
-  parseFloatVectorToBytes,
   DEFAULT_DYNAMIC_FIELD,
   buildDynamicRow,
   buildFieldDataMap,
   getDataKey,
   Field,
   buildFieldData,
-  Vectors,
-  BinaryVectors,
+  BinaryVector,
   RowData,
   CountReq,
   CountResult,
@@ -67,13 +61,14 @@ import {
   SearchResultData,
   getPKFieldExpr,
   DEFAULT_MAX_SEARCH_SIZE,
+  SparseFloatVector,
+  sparseRowsToBytes,
+  getSparseDim,
+  f32ArrayToBinaryBytes,
 } from '../';
 import { Collection } from './Collection';
 
 export class Data extends Collection {
-  // vectorTypes
-  vectorTypes = [DataType.BinaryVector, DataType.FloatVector];
-
   /**
    * Upsert data into Milvus, view _insert for detail
    */
@@ -94,7 +89,8 @@ export class Data extends Collection {
    * @param {InsertReq} data - The request parameters.
    * @param {string} data.collection_name - The name of the collection.
    * @param {string} [data.partition_name] - The name of the partition (optional).
-   * @param {{ [x: string]: any }[]} data.fields_data - The data to be inserted. If the field type is binary, the vector data length needs to be dimension / 8.
+   * @param {{ [x: string]: any }[]} data.data - The data to be inserted. If the field type is binary, the vector data length needs to be dimension / 8.
+   * @param {InsertTransformers} data.transformers - The transformers for bf16 or f16 data, it accept an f32 array, it should output f16 or bf16 bytes (optional)
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<MutationResult>} The result of the operation.
@@ -186,7 +182,7 @@ export class Data extends Collection {
         }
         if (
           DataTypeMap[field.type] === DataType.BinaryVector &&
-          (rowData[name] as Vectors).length !== field.dim! / 8
+          (rowData[name] as BinaryVector).length !== field.dim! / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
@@ -195,10 +191,16 @@ export class Data extends Collection {
         switch (DataTypeMap[field.type]) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
-            field.data = field.data.concat(buildFieldData(rowData, field));
+            field.data = (field.data as number[]).concat(
+              buildFieldData(rowData, field) as number[]
+            );
             break;
           default:
-            field.data[rowIndex] = buildFieldData(rowData, field);
+            field.data[rowIndex] = buildFieldData(
+              rowData,
+              field,
+              data.transformers
+            );
             break;
         }
       });
@@ -212,54 +214,83 @@ export class Data extends Collection {
       // milvus return string for field type, so we define the DataTypeMap to the value we need.
       // but if milvus change the string, may cause we cant find value.
       const type = DataTypeMap[field.type];
-      const key = this.vectorTypes.includes(type) ? 'vectors' : 'scalars';
+      const key = VectorDataTypes.includes(type) ? 'vectors' : 'scalars';
       const dataKey = getDataKey(type);
       const elementType = DataTypeMap[field.elementType!];
       const elementTypeKey = getDataKey(elementType);
+
+      // build key value
+      let keyValue;
+      switch (type) {
+        case DataType.FloatVector:
+          keyValue = {
+            dim: field.dim,
+            [dataKey]: {
+              data: field.data,
+            },
+          };
+          break;
+        case DataType.BFloat16Vector:
+        case DataType.Float16Vector:
+          keyValue = {
+            dim: field.dim,
+            [dataKey]: Buffer.concat(field.data as Buffer[]),
+          };
+          break;
+        case DataType.BinaryVector:
+          keyValue = {
+            dim: field.dim,
+            [dataKey]: f32ArrayToBinaryBytes(field.data as BinaryVector),
+          };
+          break;
+        case DataType.SparseFloatVector:
+          const dim = getSparseDim(field.data as SparseFloatVector[]);
+          keyValue = {
+            dim,
+            [dataKey]: {
+              dim,
+              contents: sparseRowsToBytes(field.data as SparseFloatVector[]),
+            },
+          };
+          break;
+        case DataType.Array:
+          keyValue = {
+            [dataKey]: {
+              data: field.data.map(d => {
+                return {
+                  [elementTypeKey]: {
+                    type: elementType,
+                    data: d,
+                  },
+                };
+              }),
+              element_type: elementType,
+            },
+          };
+          break;
+        default:
+          keyValue = {
+            [dataKey]: {
+              data: field.data,
+            },
+          };
+          break;
+      }
 
       return {
         type,
         field_name: field.name,
         is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
-        [key]:
-          type === DataType.FloatVector
-            ? {
-                dim: field.dim,
-                [dataKey]: {
-                  data: field.data,
-                },
-              }
-            : type === DataType.BinaryVector
-            ? {
-                dim: field.dim,
-                [dataKey]: parseBinaryVectorToBytes(
-                  field.data as BinaryVectors
-                ),
-              }
-            : type === DataType.Array
-            ? {
-                [dataKey]: {
-                  data: field.data.map(d => {
-                    return {
-                      [elementTypeKey]: {
-                        type: elementType,
-                        data: d,
-                      },
-                    };
-                  }),
-                  element_type: elementType,
-                },
-              }
-            : {
-                [dataKey]: {
-                  data: field.data,
-                },
-              },
+        [key]: keyValue,
       };
     });
 
     // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
+    // delete data
+    try {
+      delete params.data;
+    } catch (e) {}
     // execute Insert
     const promise = await promisify(
       this.channelPool,
@@ -388,6 +419,9 @@ export class Data extends Collection {
    * @param {string} [data.filter] - Scalar field filter expression (optional).
    * @param {string[]} [data.output_fields] - Support scalar field (optional).
    * @param {object} [data.params] - Search params (optional).
+   * @param {OutputTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
    * @returns {Promise<SearchResults>} The result of the operation.
    * @returns {string} status.error_code - The error code of the operation.
    * @returns {string} status.reason - The reason for the error, if any.
@@ -402,376 +436,230 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  async search(data: SearchReq | SearchSimpleReq): Promise<SearchResults> {
-    // params check
-    checkSearchParams(data);
-
-    try {
-      // get collection info
-      const collectionInfo = await this.describeCollection({
-        collection_name: data.collection_name,
-        cache: true,
-      });
-
-      // get information from collection info
-      let vectorType: DataType;
-      let defaultOutputFields = [];
-      let anns_field: string;
-      for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
-        const f = collectionInfo.schema.fields[i];
-        const type = DataTypeMap[f.data_type];
-
-        // filter vector field
-        if (type === DataType.FloatVector || type === DataType.BinaryVector) {
-          // anns field
-          anns_field = f.name;
-          // vector type
-          vectorType = type;
-        } else {
-          // save field name
-          defaultOutputFields.push(f.name);
-        }
-      }
-
-      // create search params
-      const search_params = (data as SearchReq).search_params || {
-        anns_field: anns_field!,
-        topk:
-          (data as SearchSimpleReq).limit ||
-          (data as SearchSimpleReq).topk ||
-          DEFAULT_TOPK,
-        offset: (data as SearchSimpleReq).offset || 0,
-        metric_type: (data as SearchSimpleReq).metric_type || '', // leave it empty
-        params: JSON.stringify((data as SearchSimpleReq).params || {}),
-        ignore_growing: (data as SearchSimpleReq).ignore_growing || false,
-      };
-
-      // create search vectors
-      let searchVectors: number[] | number[][] =
-        (data as SearchReq).vectors ||
-        (data as SearchSimpleReq).data ||
-        (data as SearchSimpleReq).vector;
-
-      // make sure the searchVectors format is correct
-      if (!Array.isArray(searchVectors[0])) {
-        searchVectors = [searchVectors as unknown] as number[][];
-      }
-
-      /**
-       *  It will decide the score precision.
-       *  If round_decimal is 3, need return like 3.142
-       *  And if Milvus return like 3.142, Node will add more number after this like 3.142000047683716.
-       *  So the score need to slice by round_decimal
-       */
-      const round_decimal =
-        (data as SearchReq).search_params?.round_decimal ??
-        ((data as SearchSimpleReq).params?.round_decimal as number);
-
-      // create placeholder_group
-      const PlaceholderGroup = this.milvusProto.lookupType(
-        'milvus.proto.common.PlaceholderGroup'
-      );
-      // tag $0 is hard code in milvus, when dsltype is expr
-      const placeholderGroupBytes = PlaceholderGroup.encode(
-        PlaceholderGroup.create({
-          placeholders: [
-            {
-              tag: '$0',
-              type: vectorType!,
-              values: searchVectors.map(v =>
-                vectorType === DataType.BinaryVector
-                  ? parseBinaryVectorToBytes(v)
-                  : parseFloatVectorToBytes(v)
-              ),
-            },
-          ],
-        })
-      ).finish();
-
-      // get collection's consistency level
-      const collection_consistency_level = collectionInfo.consistency_level;
-
-      const promise: SearchRes = await promisify(
-        this.channelPool,
-        'Search',
-        {
-          collection_name: data.collection_name,
-          partition_names: data.partition_names,
-          output_fields: data.output_fields || defaultOutputFields,
-          nq: (data as SearchReq).nq || searchVectors.length,
-          dsl:
-            (data as SearchReq).expr || (data as SearchSimpleReq).filter || '',
-          dsl_type: DslType.BoolExprV1,
-          placeholder_group: placeholderGroupBytes,
-          search_params: parseToKeyValue(search_params),
-          consistency_level:
-            data.consistency_level || collection_consistency_level,
-        },
-        data.timeout || this.timeout
-      );
-
-      // if search failed
-      // if nothing returned
-      // return empty with status
-      if (
-        promise.status.error_code !== ErrorCode.SUCCESS ||
-        promise.results.scores.length === 0
-      ) {
-        return {
-          status: promise.status,
-          results: [],
-        };
-      }
-
-      // build final results array
-      const results: any[] = [];
-      const { topks, scores, fields_data, ids } = promise.results;
-      // build fields data map
-      const fieldsDataMap = buildFieldDataMap(fields_data);
-      // build output name array
-      const output_fields = [
-        'id',
-        ...(!!promise.results.output_fields?.length
-          ? promise.results.output_fields
-          : fields_data.map(f => f.field_name)),
-      ];
-
-      // vector id support int / str id.
-      const idData = ids ? ids[ids.id_field]!.data : {};
-      // add id column
-      fieldsDataMap.set('id', idData as RowData[]);
-      // fieldsDataMap.set('score', scores); TODO: fieldDataMap to support formatter
-
-      /**
-       * This code block formats the search results returned by Milvus into row data for easier use.
-       * Milvus supports multiple queries to search and returns all columns data, so we need to splice the data for each search result using the `topk` variable.
-       * The `topk` variable is the key we use to splice data for every search result.
-       * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
-       */
-      topks.forEach((v, index) => {
-        const topk = Number(v);
-
-        scores.splice(0, topk).forEach((score, scoreIndex) => {
-          // get correct index
-          const i = index === 0 ? scoreIndex : scoreIndex + topk * index;
-
-          // fix round_decimal
-          const fixedScore =
-            typeof round_decimal === 'undefined' || round_decimal === -1
-              ? score
-              : formatNumberPrecision(score, round_decimal);
-
-          // init result object
-          const result: any = { score: fixedScore };
-
-          // build result,
-          output_fields.forEach(field_name => {
-            // Check if the field_name exists in the fieldsDataMap
-            const isFixedSchema = fieldsDataMap.has(field_name);
-
-            // Get the data for the field_name from the fieldsDataMap
-            // If the field_name is not in the fieldsDataMap, use the DEFAULT_DYNAMIC_FIELD
-            const data = fieldsDataMap.get(
-              isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
-            )!;
-            // make dynamic data[i] safe
-            data[i] = isFixedSchema ? data[i] : data[i] || {};
-            // extract dynamic info from dynamic field if necessary
-            result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
-          });
-
-          // init result slot
-          results[index] = results[index] || [];
-          // push result data
-          results[index].push(result);
-        });
-      });
-
-      return {
-        status: promise.status,
-        // if only searching 1 vector, return the first object of results array
-        results: searchVectors.length === 1 ? results[0] || [] : results,
-      };
-    } catch (err) {
-      /* istanbul ignore next */
-      throw new Error(err);
-    }
-  }
-
-  async searchIterator(data: SearchIteratorReq): Promise<any> {
-    // store client
-    const client = this;
+  async search(
+    data: SearchReq | SearchSimpleReq | HybridSearchReq
+  ): Promise<SearchResults> {
     // get collection info
-    const pkField = await this.getPkField(data);
-    // get available count
-    const count = await client.count({
+    const collectionInfo = await this.describeCollection({
       collection_name: data.collection_name,
-      expr: data.expr || data.filter || '',
+      cache: true,
     });
-    // make sure limit is not exceed the total count
-    const total = data.limit > count.data ? count.data : data.limit;
-    // make sure batch size is  exceed the total count
-    let batchSize = data.batchSize > total ? total : data.batchSize;
-    // make sure batch size is not exceed max search size
-    batchSize =
-      batchSize > DEFAULT_MAX_SEARCH_SIZE ? DEFAULT_MAX_SEARCH_SIZE : batchSize;
 
-    // init expr
-    const initExpr = data.expr || data.filter || '';
-    // init search params object
-    data.params = data.params || {};
-    data.limit = batchSize;
+    // build search params
+    const { request, nq, round_decimal, isHybridSearch } = buildSearchRequest(
+      data,
+      collectionInfo,
+      this.milvusProto
+    );
 
-    // user range filter set
-    const initRadius = Number(data.params.radius) || 0;
-    const initRangeFilter = Number(data.params.range_filter) || 0;
-    // range params object
-    const rangeFilterParams = {
-      radius: initRadius,
-      rangeFilter: initRangeFilter,
-      expr: initExpr,
-    };
+    // execute search
+    const originSearchResult: SearchRes = await promisify(
+      this.channelPool,
+      isHybridSearch ? 'HybridSearch' : 'Search',
+      request,
+      data.timeout || this.timeout
+    );
 
-    // force quite if true, at first, if total is 0, return done
-    let done = total === 0;
-    // batch result store
-    let lastBatchRes: SearchResultData[] = [];
+    // if search failed
+    // if nothing returned
+    // return empty with status
+    if (
+      originSearchResult.status.error_code !== ErrorCode.SUCCESS ||
+      originSearchResult.results.scores.length === 0
+    ) {
+      return {
+        status: originSearchResult.status,
+        results: [],
+      };
+    }
 
-    // build cache
-    const cache = await client.search({
-      ...data,
-      limit: total > DEFAULT_MAX_SEARCH_SIZE ? DEFAULT_MAX_SEARCH_SIZE : total,
+    // build final results array
+    const results = formatSearchResult(originSearchResult, {
+      round_decimal,
+      transformers: data.transformers,
     });
 
     return {
-      currentTotal: 0,
-      [Symbol.asyncIterator]() {
-        return {
-          currentTotal: this.currentTotal,
-          async next() {
-            // check if reach the limit
-            if (
-              (this.currentTotal >= total && this.currentTotal !== 0) ||
-              done
-            ) {
-              return { done: true, value: lastBatchRes };
-            }
-
-            // batch result container
-            const batchRes: SearchResultData[] = [];
-            const bs =
-              this.currentTotal + batchSize > total
-                ? total - this.currentTotal
-                : batchSize;
-
-            // keep getting search data if not reach the batch size
-            while (batchRes.length < bs) {
-              // search results container
-              let searchResults: SearchResults = {
-                status: { error_code: 'SUCCESS', reason: '' },
-                results: [],
-              };
-
-              // Iterate through the cached data, adding it to the search results container until the batch size is reached.
-              if (cache.results.length > 0) {
-                while (
-                  cache.results.length > 0 &&
-                  searchResults.results.length < bs
-                ) {
-                  searchResults.results.push(cache.results.shift()!);
-                }
-              } else if (searchResults.results.length < bs) {
-                // build search params, overwrite range filter
-                if (rangeFilterParams.radius && rangeFilterParams.rangeFilter) {
-                  data.params = {
-                    ...data.params,
-                    radius: rangeFilterParams.radius,
-                    range_filter: 
-                      rangeFilterParams.rangeFilter,
-                  };
-                }
-                // set search expr
-                data.expr = rangeFilterParams.expr;
-
-                console.log('search param', data.params, data.expr);
-
-                // iterate search, if no result, double the radius, until we doubled for 5 times
-                let newSearchRes = await client.search(data);
-                let retry = 0;
-                while (newSearchRes.results.length === 0 && retry < 5) {
-                  newSearchRes = await client.search(data);
-                  if (searchResults.results.length === 0) {
-                    const newRadius = rangeFilterParams.radius * 2;
-
-                    data.params = {
-                      ...data.params,
-                      radius: newRadius,
-                    };
-                  }
-
-                  retry++;
-                }
-
-                // combine search results
-                searchResults.results = [
-                  ...searchResults.results,
-                  ...newSearchRes.results,
-                ];
-              }
-
-              console.log('return', searchResults.results);
-
-              // filter result, batchRes should be unique
-              const filterResult = searchResults.results.filter(
-                r =>
-                  !lastBatchRes.some(l => l.id === r.id) &&
-                  !batchRes.some(c => c.id === r.id)
-              );
-
-              // fill filter result to batch result, it should not exceed the batch size
-              for (let i = 0; i < filterResult.length; i++) {
-                if (batchRes.length < bs) {
-                  batchRes.push(filterResult[i]);
-                }
-              }
-
-              // get data range about last batch result
-              const resultRange = getRangeFromSearchResult(filterResult);
-
-              console.log('result range', resultRange);
-
-              // if no more result, force quite
-              if (resultRange.lastDistance === 0) {
-                done = true;
-                return { done: false, value: batchRes };
-              }
-
-              // update next range and expr
-              rangeFilterParams.rangeFilter = resultRange.lastDistance;
-              rangeFilterParams.radius =
-                rangeFilterParams.radius + resultRange.radius;
-              rangeFilterParams.expr = getPKFieldExpr({
-                pkField,
-                value: resultRange.id as string,
-                expr: initExpr,
-              });
-
-              console.log('last', rangeFilterParams);
-            }
-
-            // store last result
-            lastBatchRes = batchRes;
-
-            // update current total
-            this.currentTotal += batchRes.length;
-
-            // return batch result
-            return { done: false, value: batchRes };
-          },
-        };
-      },
+      status: originSearchResult.status,
+      // nq === 1, return the first object of results array
+      results: nq === 1 ? results[0] || [] : results,
     };
   }
+
+  // async searchIterator(data: SearchIteratorReq): Promise<any> {
+  //   // store client
+  //   const client = this;
+  //   // get collection info
+  //   const pkField = await this.getPkField(data);
+  //   // get available count
+  //   const count = await client.count({
+  //     collection_name: data.collection_name,
+  //     expr: data.expr || data.filter || '',
+  //   });
+  //   // make sure limit is not exceed the total count
+  //   const total = data.limit > count.data ? count.data : data.limit;
+  //   // make sure batch size is  exceed the total count
+  //   let batchSize = data.batchSize > total ? total : data.batchSize;
+  //   // make sure batch size is not exceed max search size
+  //   batchSize =
+  //     batchSize > DEFAULT_MAX_SEARCH_SIZE ? DEFAULT_MAX_SEARCH_SIZE : batchSize;
+
+  //   // init expr
+  //   const initExpr = data.expr || data.filter || '';
+  //   // init search params object
+  //   data.params = data.params || {};
+  //   data.limit = batchSize;
+
+  //   // user range filter set
+  //   const initRadius = Number(data.params.radius) || 0;
+  //   const initRangeFilter = Number(data.params.range_filter) || 0;
+  //   // range params object
+  //   const rangeFilterParams = {
+  //     radius: initRadius,
+  //     rangeFilter: initRangeFilter,
+  //     expr: initExpr,
+  //   };
+
+  //   // force quite if true, at first, if total is 0, return done
+  //   let done = total === 0;
+  //   // batch result store
+  //   let lastBatchRes: SearchResultData[] = [];
+
+  //   // build cache
+  //   const cache = await client.search({
+  //     ...data,
+  //     limit: total > DEFAULT_MAX_SEARCH_SIZE ? DEFAULT_MAX_SEARCH_SIZE : total,
+  //   });
+
+  //   return {
+  //     currentTotal: 0,
+  //     [Symbol.asyncIterator]() {
+  //       return {
+  //         currentTotal: this.currentTotal,
+  //         async next() {
+  //           // check if reach the limit
+  //           if (
+  //             (this.currentTotal >= total && this.currentTotal !== 0) ||
+  //             done
+  //           ) {
+  //             return { done: true, value: lastBatchRes };
+  //           }
+
+  //           // batch result container
+  //           const batchRes: SearchResultData[] = [];
+  //           const bs =
+  //             this.currentTotal + batchSize > total
+  //               ? total - this.currentTotal
+  //               : batchSize;
+
+  //           // keep getting search data if not reach the batch size
+  //           while (batchRes.length < bs) {
+  //             // search results container
+  //             let searchResults: SearchResults = {
+  //               status: { error_code: 'SUCCESS', reason: '' },
+  //               results: [],
+  //             };
+
+  //             // Iterate through the cached data, adding it to the search results container until the batch size is reached.
+  //             if (cache.results.length > 0) {
+  //               while (
+  //                 cache.results.length > 0 &&
+  //                 searchResults.results.length < bs
+  //               ) {
+  //                 searchResults.results.push(cache.results.shift()!);
+  //               }
+  //             } else if (searchResults.results.length < bs) {
+  //               // build search params, overwrite range filter
+  //               if (rangeFilterParams.radius && rangeFilterParams.rangeFilter) {
+  //                 data.params = {
+  //                   ...data.params,
+  //                   radius: rangeFilterParams.radius,
+  //                   range_filter:
+  //                     rangeFilterParams.rangeFilter,
+  //                 };
+  //               }
+  //               // set search expr
+  //               data.expr = rangeFilterParams.expr;
+
+  //               console.log('search param', data.params, data.expr);
+
+  //               // iterate search, if no result, double the radius, until we doubled for 5 times
+  //               let newSearchRes = await client.search(data);
+  //               let retry = 0;
+  //               while (newSearchRes.results.length === 0 && retry < 5) {
+  //                 newSearchRes = await client.search(data);
+  //                 if (searchResults.results.length === 0) {
+  //                   const newRadius = rangeFilterParams.radius * 2;
+
+  //                   data.params = {
+  //                     ...data.params,
+  //                     radius: newRadius,
+  //                   };
+  //                 }
+
+  //                 retry++;
+  //               }
+
+  //               // combine search results
+  //               searchResults.results = [
+  //                 ...searchResults.results,
+  //                 ...newSearchRes.results,
+  //               ];
+  //             }
+
+  //             console.log('return', searchResults.results);
+
+  //             // filter result, batchRes should be unique
+  //             const filterResult = searchResults.results.filter(
+  //               r =>
+  //                 !lastBatchRes.some(l => l.id === r.id) &&
+  //                 !batchRes.some(c => c.id === r.id)
+  //             );
+
+  //             // fill filter result to batch result, it should not exceed the batch size
+  //             for (let i = 0; i < filterResult.length; i++) {
+  //               if (batchRes.length < bs) {
+  //                 batchRes.push(filterResult[i]);
+  //               }
+  //             }
+
+  //             // get data range about last batch result
+  //             const resultRange = getRangeFromSearchResult(filterResult);
+
+  //             console.log('result range', resultRange);
+
+  //             // if no more result, force quite
+  //             if (resultRange.lastDistance === 0) {
+  //               done = true;
+  //               return { done: false, value: batchRes };
+  //             }
+
+  //             // update next range and expr
+  //             rangeFilterParams.rangeFilter = resultRange.lastDistance;
+  //             rangeFilterParams.radius =
+  //               rangeFilterParams.radius + resultRange.radius;
+  //             rangeFilterParams.expr = getPKFieldExpr({
+  //               pkField,
+  //               value: resultRange.id as string,
+  //               expr: initExpr,
+  //             });
+
+  //             console.log('last', rangeFilterParams);
+  //           }
+
+  //           // store last result
+  //           lastBatchRes = batchRes;
+
+  //           // update current total
+  //           this.currentTotal += batchRes.length;
+
+  //           // return batch result
+  //           return { done: false, value: batchRes };
+  //         },
+  //       };
+  //     },
+  //   };
+  // }
 
   /**
    * Executes a query and returns an async iterator that allows iterating over the results in batches.
@@ -860,6 +748,8 @@ export class Data extends Collection {
       },
     };
   }
+  // alias
+  hybridSearch = this.search;
 
   /**
    * Flushes the newly inserted vectors that are temporarily buffered in the cache to the object storage.
@@ -960,7 +850,8 @@ export class Data extends Collection {
    * @param {string[]} [data.partitions_names] - Array of partition names (optional).
    * @param {string[]} data.output_fields - Vector or scalar field to be returned.
    * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
-   * @param {{key: value}[]} [data.params] - An optional key pair json array.
+   * @param {{key: value}[]} [data.params] - An optional key pair json array of search parameters.
+   * @param {OutputTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
    *
    * @returns {Promise<QueryResults>} The result of the operation.
    * @returns {string} status.error_code - The error code of the operation.
@@ -1023,7 +914,10 @@ export class Data extends Collection {
     // always get output_fields from fields_data
     const output_fields = promise.fields_data.map(f => f.field_name);
 
-    const fieldsDataMap = buildFieldDataMap(promise.fields_data);
+    const fieldsDataMap = buildFieldDataMap(
+      promise.fields_data,
+      data.transformers
+    );
 
     // For each output field, check if it has a fixed schema or not
     const fieldDataContainer = output_fields.map(field_name => {

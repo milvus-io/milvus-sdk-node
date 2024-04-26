@@ -21,8 +21,6 @@ import { status as grpcStatus } from '@grpc/grpc-js';
  * @param fields
  */
 export const checkCollectionFields = (fields: FieldType[]) => {
-  // Define arrays of data types that are allowed for vector fields and primary keys, respectively
-  const vectorDataTypes = [DataType.BinaryVector, DataType.FloatVector];
   const int64VarCharTypes = [DataType.Int64, DataType.VarChar];
 
   let hasPrimaryKey = false;
@@ -56,11 +54,11 @@ export const checkCollectionFields = (fields: FieldType[]) => {
     }
 
     // if this is the vector field, check dimension
-    const isVectorField = vectorDataTypes.includes(dataType!);
+    const isVectorField = isVectorType(dataType!);
     const typeParams = field.type_params;
     if (isVectorField) {
       const dim = Number(typeParams?.dim ?? field.dim);
-      if (!dim) {
+      if (!dim && dataType !== DataType.SparseFloatVector) {
         throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM);
       }
 
@@ -161,12 +159,13 @@ export const isInIgnoreRetryCodes = (
 /**
  * Checks if a milvus status message is valid.
  */
-export const isInvalidMessage = (message: {
-  code: number;
-  status?: { code: number };
-}) => {
-  const codesToCheck = [2200];
-
+export const isInvalidMessage = (
+  message: {
+    code: number;
+    status?: { code: number };
+  },
+  codesToCheck: number[] = []
+) => {
   return (
     message &&
     codesToCheck.some(
@@ -205,7 +204,7 @@ export const checkCreateCollectionCompatibility = (
 
   if (hasDynamicSchemaEnabled) {
     throw new Error(
-      `Your milvus server doesn't support dynmaic schmea, please upgrade your server.`
+      `Your milvus server doesn't support dynamic schema, please upgrade your server.`
     );
   }
 
@@ -228,4 +227,19 @@ export const checkCreateCollectionCompatibility = (
       `Your milvus server doesn't support JSON data type, please upgrade your server.`
     );
   }
+};
+
+/**
+ * Checks if the given data type is a vector type.
+ * @param {DataType} type - The data type to check.
+ * @returns {Boolean} True if the data type is a vector type, false otherwise.
+ */
+export const isVectorType = (type: DataType) => {
+  return (
+    type === DataType.BinaryVector ||
+    type === DataType.FloatVector ||
+    type === DataType.Float16Vector ||
+    type === DataType.BFloat16Vector ||
+    type === DataType.SparseFloatVector
+  );
 };

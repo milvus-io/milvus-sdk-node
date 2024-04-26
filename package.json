@@ -1,8 +1,8 @@
 {
   "name": "@zilliz/milvus2-sdk-node",
   "author": "ued@zilliz.com",
-  "version": "2.3.6",
-  "milvusVersion": "v2.3.9",
+  "version": "2.4.1",
+  "milvusVersion": "v2.4.0",
   "main": "dist/milvus",
   "files": [
     "dist"
@@ -22,6 +22,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.10.1",
     "@grpc/proto-loader": "^0.7.10",
+    "@petamoriken/float16": "^3.8.6",
     "dayjs": "^1.11.7",
     "generic-pool": "^3.9.0",
     "lru-cache": "^9.1.2",

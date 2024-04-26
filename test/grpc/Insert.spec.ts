@@ -26,14 +26,14 @@ const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
 const MORE_SCALAR_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_PARAMS = genCollectionParams({
   collectionName: COLLECTION_NAME,
-  dim: 4,
-  vectorType: DataType.FloatVector,
+  dim: [4],
+  vectorType: [DataType.FloatVector],
   autoID: false,
 });
 const COLLECTION_NAME_AUTO_ID_PARAMS = genCollectionParams({
   collectionName: COLLECTION_NAME_AUTO_ID,
-  dim: 16,
-  vectorType: DataType.BinaryVector,
+  dim: [16],
+  vectorType: [DataType.BinaryVector],
   autoID: true,
 });
 
@@ -69,8 +69,8 @@ describe(`Insert API`, () => {
     await milvusClient.createCollection(
       genCollectionParams({
         collectionName: BINARY_COLLECTION_NAME,
-        dim: 8,
-        vectorType: DataType.BinaryVector,
+        dim: [8],
+        vectorType: [DataType.BinaryVector],
         autoID: false,
       })
     );
@@ -335,7 +335,7 @@ describe(`Insert API`, () => {
 
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
-      vector: genFloatVector({ dim: 4 }) as number[],
+      data: genFloatVector({ dim: 4 }) as number[],
       output_fields: ['json', 'id', 'varChar_array'],
     });
     // console.log('search', search.results);

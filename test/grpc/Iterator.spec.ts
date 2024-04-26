@@ -18,8 +18,8 @@ const numPartitions = 3;
 // create
 const createCollectionParams = genCollectionParams({
   collectionName: COLLECTION,
-  dim: 4,
-  vectorType: DataType.FloatVector,
+  dim: [4],
+  vectorType: [DataType.FloatVector],
   autoID: false,
   partitionKeyEnabled: true,
   numPartitions,
@@ -28,8 +28,8 @@ const createCollectionParams = genCollectionParams({
 
 const createCosineCollectionParams = genCollectionParams({
   collectionName: COLLECTION_COSINE,
-  dim: 4,
-  vectorType: DataType.FloatVector,
+  dim: [4],
+  vectorType: [DataType.FloatVector],
   autoID: false,
   partitionKeyEnabled: true,
   numPartitions,
@@ -105,199 +105,199 @@ describe(`Iterator API`, () => {
     await milvusClient.dropDatabase(dbParam);
   });
 
-  // it(`query iterator with batch size = 1 should success`, async () => {
-  //   // page size
-  //   const batchSize = 1;
-  //   const total = 10;
-  //   const iterator = await milvusClient.queryIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+  it(`query iterator with batch size = 1 should success`, async () => {
+    // page size
+    const batchSize = 1;
+    const total = 10;
+    const iterator = await milvusClient.queryIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
 
-  //   const results: any = [];
-  //   let page = 0;
-  //   for await (const value of iterator) {
-  //     results.push(...value);
-  //     page += 1;
-  //   }
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
 
-  //   // page size should equal to page
-  //   expect(page).toEqual(Math.ceil(total / batchSize));
-  //   // results length should equal to data length
-  //   expect(results.length).toEqual(total);
+    // page size should equal to page
+    expect(page).toEqual(Math.ceil(total / batchSize));
+    // results length should equal to data length
+    expect(results.length).toEqual(total);
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(total);
+    // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
 
-  //   // every id in query result should be founded in the original data
-  //   results.forEach((result: any) => {
-  //     const item = dataMap.get(result.id.toString());
-  //     expect(typeof item !== 'undefined').toEqual(true);
-  //   });
-  // });
+    // every id in query result should be founded in the original data
+    results.forEach((result: any) => {
+      const item = dataMap.get(result.id.toString());
+      expect(typeof item !== 'undefined').toEqual(true);
+    });
+  });
 
-  // it(`query iterator with batch size > 16384 should success`, async () => {
-  //   // page size
-  //   const batchSize = 16384;
-  //   const total = data.length;
-  //   const iterator = await milvusClient.queryIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+  it(`query iterator with batch size > 16384 should success`, async () => {
+    // page size
+    const batchSize = 16384;
+    const total = data.length;
+    const iterator = await milvusClient.queryIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
 
-  //   const results: any = [];
-  //   let page = 0;
-  //   for await (const value of iterator) {
-  //     results.push(...value);
-  //     page += 1;
-  //   }
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
 
-  //   // page size should equal to page
-  //   expect(page).toEqual(Math.ceil(total / batchSize));
-  //   // results length should equal to data length
-  //   expect(results.length).toEqual(total);
+    // page size should equal to page
+    expect(page).toEqual(Math.ceil(total / batchSize));
+    // results length should equal to data length
+    expect(results.length).toEqual(total);
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(total);
+    // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
 
-  //   // every id in query result should be founded in the original data
-  //   results.forEach((result: any) => {
-  //     const item = dataMap.get(result.id.toString());
-  //     expect(typeof item !== 'undefined').toEqual(true);
-  //   });
-  // });
+    // every id in query result should be founded in the original data
+    results.forEach((result: any) => {
+      const item = dataMap.get(result.id.toString());
+      expect(typeof item !== 'undefined').toEqual(true);
+    });
+  });
 
-  // it(`query iterator with batch size > total should success`, async () => {
-  //   // page size
-  //   const batchSize = data.length + 1;
-  //   const total = data.length;
-  //   const iterator = await milvusClient.queryIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+  it(`query iterator with batch size > total should success`, async () => {
+    // page size
+    const batchSize = data.length + 1;
+    const total = data.length;
+    const iterator = await milvusClient.queryIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
 
-  //   const results: any = [];
-  //   let page = 0;
-  //   for await (const value of iterator) {
-  //     results.push(...value);
-  //     page += 1;
-  //   }
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
 
-  //   // page size should equal to page
-  //   expect(page).toEqual(
-  //     batchSize > 16384
-  //       ? Math.ceil(total / 16384)
-  //       : Math.ceil(total / batchSize)
-  //   );
-  //   // results length should equal to data length
-  //   expect(results.length).toEqual(total);
+    // page size should equal to page
+    expect(page).toEqual(
+      batchSize > 16384
+        ? Math.ceil(total / 16384)
+        : Math.ceil(total / batchSize)
+    );
+    // results length should equal to data length
+    expect(results.length).toEqual(total);
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(total);
+    // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
 
-  //   // every id in query result should be founded in the original data
-  //   results.forEach((result: any) => {
-  //     const item = dataMap.get(result.id.toString());
-  //     expect(typeof item !== 'undefined').toEqual(true);
-  //   });
-  // });
+    // every id in query result should be founded in the original data
+    results.forEach((result: any) => {
+      const item = dataMap.get(result.id.toString());
+      expect(typeof item !== 'undefined').toEqual(true);
+    });
+  });
 
-  // it(`query iterator with limit < total should success`, async () => {
-  //   // page size
-  //   const batchSize = 2;
-  //   const total = 10;
-  //   const iterator = await milvusClient.queryIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+  it(`query iterator with limit < total should success`, async () => {
+    // page size
+    const batchSize = 2;
+    const total = 10;
+    const iterator = await milvusClient.queryIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
 
-  //   const results: any = [];
-  //   let page = 0;
-  //   for await (const value of iterator) {
-  //     results.push(...value);
-  //     page += 1;
-  //   }
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
 
-  //   // page size should equal to page
-  //   expect(page).toEqual(Math.ceil(total / batchSize));
-  //   // results length should equal to data length
-  //   expect(results.length).toEqual(total);
+    // page size should equal to page
+    expect(page).toEqual(Math.ceil(total / batchSize));
+    // results length should equal to data length
+    expect(results.length).toEqual(total);
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(total);
+    // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
 
-  //   // every id in query result should be founded in the original data
-  //   results.forEach((result: any) => {
-  //     const item = dataMap.get(result.id.toString());
-  //     expect(typeof item !== 'undefined').toEqual(true);
-  //   });
-  // });
+    // every id in query result should be founded in the original data
+    results.forEach((result: any) => {
+      const item = dataMap.get(result.id.toString());
+      expect(typeof item !== 'undefined').toEqual(true);
+    });
+  });
 
-  // it(`query iterator with limit > total should success`, async () => {
-  //   // page size
-  //   const batchSize = 5000;
-  //   const total = 30000;
-  //   const iterator = await milvusClient.queryIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+  it(`query iterator with limit > total should success`, async () => {
+    // page size
+    const batchSize = 5000;
+    const total = 30000;
+    const iterator = await milvusClient.queryIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
 
-  //   const results: any = [];
-  //   let page = 0;
-  //   for await (const value of iterator) {
-  //     results.push(...value);
-  //     page += 1;
-  //   }
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
 
-  //   // page size should equal to page
-  //   expect(page).toEqual(Math.ceil(data.length / batchSize));
-  //   // results length should equal to data length
-  //   expect(results.length).toEqual(data.length);
+    // page size should equal to page
+    expect(page).toEqual(Math.ceil(data.length / batchSize));
+    // results length should equal to data length
+    expect(results.length).toEqual(data.length);
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(data.length);
+    // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(data.length);
 
-  //   // every id in query result should be founded in the original data
-  //   results.forEach((result: any) => {
-  //     const item = dataMap.get(result.id.toString());
-  //     expect(typeof item !== 'undefined').toEqual(true);
-  //   });
-  // });
+    // every id in query result should be founded in the original data
+    results.forEach((result: any) => {
+      const item = dataMap.get(result.id.toString());
+      expect(typeof item !== 'undefined').toEqual(true);
+    });
+  });
 
   // it('search iterator with batch size = total should success', async () => {
   //   const batchSize = 100;
@@ -489,20 +489,20 @@ describe(`Iterator API`, () => {
   //   expect(idSet.size).toEqual(data.length);
   // });
 
-  it('search with cosine similarity should success', async () => {
-    const batchSize = 10000;
-    const total = 2000;
-    const searchRes = await milvusClient.search({
-      collection_name: COLLECTION_COSINE,
-      data: cosineData[0].vector,
-      expr: 'id > 0',
-      output_fields: ['id'],
-      limit: total,
-      params: {
-        radius: 0.6,
-        range_filter: 0.5,
-      },
-    });
-    console.log(searchRes.results.map(s => s.score));
-  });
+  // it('search with cosine similarity should success', async () => {
+  //   const batchSize = 10000;
+  //   const total = 2000;
+  //   const searchRes = await milvusClient.search({
+  //     collection_name: COLLECTION_COSINE,
+  //     data: cosineData[0].vector,
+  //     expr: 'id > 0',
+  //     output_fields: ['id'],
+  //     limit: total,
+  //     params: {
+  //       radius: 0.6,
+  //       range_filter: 0.5,
+  //     },
+  //   });
+  //   console.log(searchRes.results.map(s => s.score));
+  // });
 });

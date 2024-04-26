@@ -24,7 +24,9 @@ import {
   buildDynamicRow,
   getAuthString,
   buildFieldData,
+  formatSearchResult,
   Field,
+  formatSearchVector,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -76,6 +78,10 @@ describe('utils/format', () => {
     const testValue = 3.1231241241234124124;
     const res = formatNumberPrecision(testValue, 3);
     expect(res).toBe(3.123);
+
+    const testValue2 = -3.1231241241234124124;
+    const res2 = formatNumberPrecision(testValue2, 3);
+    expect(res2).toBe(-3.123);
   });
 
   it(`hybridtsToUnixtime should success`, async () => {
@@ -141,12 +147,12 @@ describe('utils/format', () => {
   it('does not throw an error if vectors or vector is defined', () => {
     const data1 = {
       collection_name: 'my_collection',
-      vectors: [[]],
+      data: [[]],
     };
 
     const data2 = {
       collection_name: 'my_collection',
-      vector: [],
+      data: [],
     };
 
     expect(() => checkSearchParams(data1)).not.toThrow();
@@ -367,6 +373,7 @@ describe('utils/format', () => {
             is_primary_key: false,
             description: 'vector field',
             data_type: 'FloatVector',
+            dataType: 101,
             autoID: false,
             state: 'created',
           },
@@ -378,6 +385,7 @@ describe('utils/format', () => {
             is_primary_key: true,
             description: '',
             data_type: 'Int64',
+            dataType: 5,
             autoID: true,
             state: 'created',
           },
@@ -535,4 +543,144 @@ describe('utils/format', () => {
     const field = { type: 'Int', name: 'age' };
     expect(buildFieldData(row, field as Field)).toEqual(25);
   });
+
+  it('should format search results correctly', () => {
+    const searchPromise: any = {
+      results: {
+        fields_data: [
+          {
+            type: 'Int64',
+            field_name: 'id',
+            field_id: '101',
+            is_dynamic: false,
+            scalars: {
+              long_data: { data: ['98286', '40057', '5878', '96232'] },
+              data: 'long_data',
+            },
+            field: 'scalars',
+          },
+        ],
+        scores: [
+          14.632697105407715, 15.0767822265625, 15.287022590637207,
+          15.357033729553223,
+        ],
+        topks: ['4'],
+        output_fields: ['id'],
+        num_queries: '1',
+        top_k: '4',
+        ids: {
+          int_id: { data: ['98286', '40057', '5878', '96232'] },
+          id_field: 'int_id',
+        },
+        group_by_field_value: null,
+      },
+    };
+
+    const options = { round_decimal: 2 };
+
+    const expectedResults = [
+      [
+        { score: 14.63, id: '98286' },
+        { score: 15.07, id: '40057' },
+        { score: 15.28, id: '5878' },
+        { score: 15.35, id: '96232' },
+      ],
+    ];
+
+    const results = formatSearchResult(searchPromise, options);
+
+    expect(results).toEqual(expectedResults);
+  });
+
+  it('should format search vector correctly', () => {
+    // float vector
+    const floatVector = [1, 2, 3];
+    const formattedVector = formatSearchVector(
+      floatVector,
+      DataType.FloatVector
+    );
+    expect(formattedVector).toEqual([floatVector]);
+
+    const floatVectors = [
+      [1, 2, 3],
+      [4, 5, 6],
+    ];
+    expect(formatSearchVector(floatVectors, DataType.FloatVector)).toEqual(
+      floatVectors
+    );
+  });
+
+  // sparse coo vector
+  const sparseCooVector = [
+    { index: 1, value: 2 },
+    { index: 3, value: 4 },
+  ];
+  const formattedSparseCooVector = formatSearchVector(
+    sparseCooVector,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseCooVector).toEqual([sparseCooVector]);
+
+  // sparse csr vector
+  const sparseCsrVector = {
+    indices: [1, 3],
+    values: [2, 4],
+  };
+  const formattedSparseCsrVector = formatSearchVector(
+    sparseCsrVector,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseCsrVector).toEqual([sparseCsrVector]);
+
+  const sparseCsrVectors = [
+    {
+      indices: [1, 3],
+      values: [2, 4],
+    },
+    {
+      indices: [2, 4],
+      values: [3, 5],
+    },
+  ];
+  const formattedSparseCsrVectors = formatSearchVector(
+    sparseCsrVectors,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseCsrVectors).toEqual(sparseCsrVectors);
+
+  // sparse array vector
+  const sparseArrayVector = [0.1, 0.2, 0.3];
+  const formattedSparseArrayVector = formatSearchVector(
+    sparseArrayVector,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseArrayVector).toEqual([sparseArrayVector]);
+
+  const sparseArrayVectors = [
+    [0.1, 0.2, 0.3],
+    [0.4, 0.5, 0.6],
+  ];
+  const formattedSparseArrayVectors = formatSearchVector(
+    sparseArrayVectors,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseArrayVectors).toEqual(sparseArrayVectors);
+
+  // sparse dict vector
+  const sparseDictVector = { 1: 2, 3: 4 };
+  const formattedSparseDictVector = formatSearchVector(
+    sparseDictVector,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseDictVector).toEqual([sparseDictVector]);
+
+  const sparseDictVectors = [
+    { 1: 2, 3: 4 },
+    { 1: 2, 3: 4 },
+  ];
+  const formattedSparseDictVectors = formatSearchVector(
+    sparseDictVectors,
+    DataType.SparseFloatVector
+  );
+  expect(formattedSparseDictVectors).toEqual(sparseDictVectors);
 });

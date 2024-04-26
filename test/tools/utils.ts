@@ -1,3 +1,4 @@
+import {VECTOR_FIELD_NAME} from './'
 /**
  * Generates a random collection name with a prefix and a random string appended to it.
  * @param {string} [pre='collection'] - The prefix to use for the collection name.
@@ -21,3 +22,8 @@ export const timeoutTest = (func: Function, args?: { [x: string]: any }) => {
     }
   };
 };
+
+export const GENERATE_VECTOR_NAME = (i = 0) => {
+  return i === 0 ? VECTOR_FIELD_NAME : `${VECTOR_FIELD_NAME}${i}`
+}
+ 

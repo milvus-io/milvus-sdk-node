@@ -6,6 +6,7 @@ import {
   DataTypeStringEnum,
   DEFAULT_MIN_INT64,
   SearchResultData,
+  SparseFloatVector,
 } from '../';
 import { Pool } from 'generic-pool';
 
@@ -97,8 +98,17 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.FloatVector:
       dataKey = 'float_vector';
       break;
+    case DataType.Float16Vector:
+      dataKey = 'float16_vector';
+      break;
+    case DataType.BFloat16Vector:
+      dataKey = 'bfloat16_vector';
+      break;
     case DataType.BinaryVector:
       dataKey = 'binary_vector';
+      break;
+    case DataType.SparseFloatVector:
+      dataKey = 'sparse_float_vector';
       break;
     case DataType.Double:
       dataKey = 'double_data';
@@ -211,4 +221,15 @@ export const getPKFieldExpr = (data: {
       ? `'${value}'`
       : `${value}`;
   return `${pkField?.name} ${condition} ${pkValue}${expr ? ` && ${expr}` : ''}`;
+};
+// get biggest size of sparse vector array
+export const getSparseDim = (data: SparseFloatVector[]) => {
+  let dim = 0;
+  for (const row of data) {
+    const indices = Object.keys(row).map(Number);
+    if (indices.length > dim) {
+      dim = indices.length;
+    }
+  }
+  return dim;
 };
