@@ -23,6 +23,18 @@ The following table shows the recommended `@zilliz/milvus2-sdk-node` versions fo
 - [Zilliz Cloud](https://cloud.zilliz.com/signup)
 - Node: v18+
 
+## Examples
+
+## Support Apps
+
+Repo: [zilliz-cloud-typescript-example](https://github.com/zilliztech/zilliz-cloud-typescript-example)
+
+| Name                                                                                                                                   | Demo                                                   | Model                 |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | --------------------- |
+| [semantic-search-example](https://github.com/zilliztech/zilliz-cloud-typescript-example/tree/master/semantic-search-example)           | https://zilliz-semantic-search-example.vercel.app      | all-MiniLM-L6-v2      |
+| [semantic-image-search](https://github.com/zilliztech/zilliz-cloud-typescript-example/tree/master/semantic-image-search)               |                                                        | clip-vit-base-patch16 |
+| [semantic-image-search-client](https://github.com/zilliztech/zilliz-cloud-typescript-example/tree/master/semantic-image-search-client) | https://zilliz-semantic-image-search-client.vercel.app | clip-vit-base-patch16 |
+
 ## Installation
 
 You can use npm (Node package manager) or Yarn to install the `@zilliz/milvus2-sdk-node` dependency in your project:
