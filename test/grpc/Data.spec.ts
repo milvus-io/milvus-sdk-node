@@ -537,6 +537,7 @@ describe(`Data.API`, () => {
     await milvusClient.deleteEntities({
       collection_name: COLLECTION_NAME,
       expr: 'id in [2,6]',
+      consistency_level: 'Strong',
     });
 
     const res = await milvusClient.query({

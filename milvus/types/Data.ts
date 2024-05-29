@@ -110,20 +110,27 @@ export interface InsertReq extends collectionNameReq {
   transformers?: InsertTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
 
-export interface DeleteEntitiesReq extends collectionNameReq {
+interface BaseDeleteReq extends collectionNameReq {
+  partition_name?: string; // partition name
+  consistency_level?:
+    | 'Strong'
+    | 'Session'
+    | 'Bounded'
+    | 'Eventually'
+    | 'Customized'; // consistency level
+}
+
+export interface DeleteEntitiesReq extends BaseDeleteReq {
   filter?: string; // filter expression
   expr?: string; // alias for filter
-  partition_name?: string; // partition name
 }
 
-export interface DeleteByIdsReq extends collectionNameReq {
+export interface DeleteByIdsReq extends BaseDeleteReq {
   ids: string[] | number[]; // primary key values
-  partition_name?: string; // partition name
 }
 
-export interface DeleteByFilterReq extends collectionNameReq {
+export interface DeleteByFilterReq extends BaseDeleteReq {
   filter: string; // filter expression
-  partition_name?: string; // partition name
 }
 
 export type DeleteReq = DeleteByIdsReq | DeleteByFilterReq;
