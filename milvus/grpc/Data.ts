@@ -309,6 +309,7 @@ export class Data extends Collection {
    * @param {string} data.collection_name - The name of the collection.
    * @param {string} [data.partition_name] - The name of the partition (optional).
    * @param {string} data.expr - Boolean expression used to filter entities for deletion.
+   * @param {string} [data.consistency_level] - The consistency level of the new collection. Can be "Strong" (Milvus default), "Session", "Bounded", "Eventually", or "Customized".
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<MutationResult>} The result of the operation.
@@ -355,6 +356,7 @@ export class Data extends Collection {
    * @param {string} [data.partition_name] - The name of the partition (optional).
    * @param {(string[] | number[])} [data.ids] - IDs of the entities to delete.
    * @param {string} [data.filter] - Filter expression, takes precedence over ids.
+   * @param {string} [data.consistency_level] - The consistency level of the new collection. Can be "Strong" (Milvus default), "Session", "Bounded", "Eventually", or "Customized".
    * @param {string} [data.expr] - equals to data.filter.
    * @param {number} [data.timeout] - Optional duration of time in milliseconds to allow for the RPC. If undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
