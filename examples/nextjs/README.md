@@ -33,6 +33,14 @@ const nextConfig = {
 module.exports = nextConfig;
 ```
 
+### monorepo
+you can try this tip: 
+
+```javascript
+config.externals.push('@zilliz/milvus2-sdk-node');
+```
+
+
 ## Usage
 
 ### Server Page Component
