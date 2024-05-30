@@ -19,6 +19,7 @@ const dbParam = {
 let runRgTransferTest = false;
 
 describe(`Resource API`, () => {
+  let queryNodeNum = 0;
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
@@ -33,6 +34,8 @@ describe(`Resource API`, () => {
     const queryNodes = metrics.response.nodes_info.filter(
       (node: any) => node.infos.type === 'querynode'
     );
+
+    queryNodeNum = queryNodes.length;
 
     runRgTransferTest = queryNodes.length > 1;
 
@@ -66,6 +69,12 @@ describe(`Resource API`, () => {
 
     const res2 = await milvusClient.createResourceGroup({
       resource_group: resource_group2,
+      // config: {
+      //   requests: { node_num: 1 },
+      //   limits: { node_num: 2 },
+      //   transfer_from: [{ resource_group: DEFAULT_RESOURCE_GROUP }],
+      //   transfer_to: [{ resource_group: DEFAULT_RESOURCE_GROUP }],
+      // },
     });
 
     const res3 = await milvusClient.createResourceGroup({
@@ -89,13 +98,24 @@ describe(`Resource API`, () => {
     const res = await milvusClient.describeResourceGroup({
       resource_group: DEFAULT_RESOURCE_GROUP,
     });
+
+    // console.dir(res, { depth: null });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.resource_group).toHaveProperty('name');
     expect(res.resource_group).toHaveProperty('num_available_node');
     expect(res.resource_group).toHaveProperty('capacity');
+
     expect(typeof res.resource_group.name).toBe('string');
+    expect(res.resource_group.name).toBe(DEFAULT_RESOURCE_GROUP);
     expect(typeof res.resource_group.num_available_node).toBe('number');
+    expect(res.resource_group.num_available_node).toBe(queryNodeNum);
     expect(typeof res.resource_group.capacity).toBe('number');
+
+    const res2 = await milvusClient.describeResourceGroup({
+      resource_group: resource_group2,
+    });
+
+    console.dir(res2, { depth: null });
   });
 
   it(`Transfer node to another rg should be successful`, async () => {
@@ -145,6 +165,8 @@ describe(`Resource API`, () => {
 
   it(`Drop all resource groups should be successful`, async () => {
     const res = await milvusClient.dropAllResourceGroups();
+
+    console.log('xxx', res)
     res.forEach(r => {
       expect(r.error_code).toEqual(ErrorCode.SUCCESS);
     });

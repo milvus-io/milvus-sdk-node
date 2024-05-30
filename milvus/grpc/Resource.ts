@@ -19,6 +19,7 @@ export class Resource extends Partition {
    *
    * @param {Object} data - The data for the resource group.
    * @param {string} data.resource_group - The name of the resource group.
+   * @param {ResourceGroupConfig} data.config - The configuration for the resource group.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} A promise that resolves to the response status.
@@ -232,11 +233,13 @@ export class Resource extends Partition {
         // if capacity is not 0, transfer node back
         if (detail.resource_group.capacity > 0) {
           // istanbul ignore next
-          await this.transferNode({
+          const d = await this.transferNode({
             source_resource_group: sourceRg,
             target_resource_group: DEFAULT_RESOURCE_GROUP,
             num_node: detail.resource_group.capacity,
           });
+
+          console.log('delete', d);
         }
 
         // drop rg
