@@ -254,7 +254,7 @@ export class Resource extends Partition {
         // if capacity is not 0, transfer node back
         if (detail.resource_group.capacity > 0) {
           // istanbul ignore next
-          const d = await this.transferNode({
+          await this.transferNode({
             source_resource_group: sourceRg,
             target_resource_group: DEFAULT_RESOURCE_GROUP,
             num_node: detail.resource_group.capacity,
