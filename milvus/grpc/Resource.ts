@@ -8,6 +8,7 @@ import {
   ListResourceGroupsResponse,
   DescribeResourceGroupsReq,
   DescribeResourceGroupResponse,
+  UpdateRresourceGroupReq,
   TransferNodeReq,
   TransferReplicaReq,
   promisify,
@@ -99,6 +100,24 @@ export class Resource extends Partition {
     const promise = await promisify(
       this.channelPool,
       'DescribeResourceGroup',
+      data,
+      data.timeout || this.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * Updates a resource group.
+   * @param {Object} data - The data for the resource group.
+   * @param {{ [key: string]: ResourceGroupConfig }} data.resource_groups - A map from resource group name to the configuration for the resource group.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
+   * @returns {Promise<ResStatus>} A promise that resolves to the response status.
+   */
+  /* istanbul ignore next */
+  async updateResourceGroups(data: UpdateRresourceGroupReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'UpdateResourceGroups',
       data,
       data.timeout || this.timeout
     );

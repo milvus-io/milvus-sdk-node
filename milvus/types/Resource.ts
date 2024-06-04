@@ -25,7 +25,7 @@ export interface CreateResourceGroupReq extends BaseResourceGroupReq {
   config?: ResourceGroupConfig;
 }
 export interface DescribeResourceGroupsReq extends BaseResourceGroupReq {}
-export interface UpdateRresourceGroupReq {
+export interface UpdateRresourceGroupReq extends GrpcTimeOut {
   resource_groups: { [key: string]: ResourceGroupConfig };
 }
 export interface DropResourceGroupsReq extends BaseResourceGroupReq {}
