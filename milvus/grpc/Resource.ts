@@ -114,7 +114,9 @@ export class Resource extends Partition {
    * @returns {Promise<ResStatus>} A promise that resolves to the response status.
    */
   /* istanbul ignore next */
-  async updateResourceGroups(data: UpdateRresourceGroupReq): Promise<ResStatus> {
+  async updateResourceGroups(
+    data: UpdateRresourceGroupReq
+  ): Promise<ResStatus> {
     const promise = await promisify(
       this.channelPool,
       'UpdateResourceGroups',
@@ -257,8 +259,6 @@ export class Resource extends Partition {
             target_resource_group: DEFAULT_RESOURCE_GROUP,
             num_node: detail.resource_group.capacity,
           });
-
-          console.log('delete', d);
         }
 
         // drop rg
