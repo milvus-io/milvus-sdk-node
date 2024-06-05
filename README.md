@@ -25,7 +25,7 @@ The following table shows the recommended `@zilliz/milvus2-sdk-node` versions fo
 
 ## Examples
 
-## Support Apps
+### Real world examples
 
 Repo: [zilliz-cloud-typescript-example](https://github.com/zilliztech/zilliz-cloud-typescript-example)
 
