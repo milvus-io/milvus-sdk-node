@@ -1,12 +1,23 @@
-import { GrpcTimeOut, resStatusResponse } from './Common';
+import { GrpcTimeOut, resStatusResponse, KeyValuePair } from './Common';
 
 // base
 export interface databaseReq extends GrpcTimeOut {
   db_name: string; // required, database name
 }
+
+// request
 export interface CreateDatabaseRequest extends databaseReq {}
 export interface DropDatabasesRequest extends databaseReq {}
+export interface DescribeDatabaseRequest extends databaseReq {}
+
+// response
 export interface ListDatabasesRequest extends GrpcTimeOut {}
 export interface ListDatabasesResponse extends resStatusResponse {
   db_names: string[]; // database names
+}
+export interface DescribeDatabaseResponse extends resStatusResponse {
+  db_name: string; // database name
+  dbID: number; // database id
+  created_timestamp: number; // created timestamp
+  properties: KeyValuePair[]; // properties
 }
