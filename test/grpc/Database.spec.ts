@@ -62,6 +62,14 @@ describe(`Database API`, () => {
     expect(allDatabases.db_names.length).toBeGreaterThan(1);
   });
 
+  it(`describe database should be ok`, async () => {
+    const describe = await milvusClient.describeDatabase({ db_name: DB_NAME });
+    expect(describe.db_name).toEqual(DB_NAME);
+    expect(describe.dbID * 1).toBeGreaterThan(0);
+    expect(describe.created_timestamp * 1).toBeGreaterThan(0);
+    expect(describe.properties).toEqual([]);
+  });
+
   it(`drop database should be ok`, async () => {
     const drop = await milvusClient.dropDatabase({ db_name: DB_NAME });
     expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
@@ -85,7 +93,9 @@ describe(`Database API`, () => {
     const describeCollectionInDb = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME2,
     });
-    expect(describeCollectionInDb.status.error_code).toEqual(ErrorCode.UnexpectedError);
+    expect(describeCollectionInDb.status.error_code).toEqual(
+      ErrorCode.UnexpectedError
+    );
 
     // create index
     const createIndex = await milvusClient.createIndex({
