@@ -10,6 +10,7 @@ import {
   genCollectionParams,
   generateInsertData,
   dynamicFields,
+  GENERATE_NAME,
 } from '../tools';
 
 export function generateTests(
@@ -115,13 +116,13 @@ export function generateTests(
     it('should create collection successfully', async () => {
       const create = await client.createCollection(createParams);
 
-      expect(create.code).toEqual(200);
+      expect(create.code).toEqual(0);
     });
 
     it('should create collection with only dimension successfully', async () => {
       const createDefault = await client.createCollection(createDefaultParams);
 
-      expect(createDefault.code).toEqual(200);
+      expect(createDefault.code).toEqual(0);
     });
 
     it('should describe collection successfully', async () => {
@@ -130,7 +131,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
       });
 
-      expect(describe.code).toEqual(200);
+      expect(describe.code).toEqual(0);
       expect(describe.data.collectionName).toEqual(createParams.collectionName);
       expect(describe.data.shardsNum).toEqual(1);
       expect(describe.data.enableDynamicField).toEqual(true);
@@ -149,7 +150,7 @@ export function generateTests(
         collectionName: createDefaultParams.collectionName,
       });
 
-      expect(describe.code).toEqual(200);
+      expect(describe.code).toEqual(0);
       expect(describe.data.collectionName).toEqual(
         createDefaultParams.collectionName
       );
@@ -162,7 +163,7 @@ export function generateTests(
 
     it('should list collections successfully', async () => {
       const list = await client.listCollections({ dbName: config.database });
-      expect(list.code).toEqual(200);
+      expect(list.code).toEqual(0);
       expect(list.data.indexOf(createParams.collectionName) !== -1).toEqual(
         true
       );
@@ -174,7 +175,7 @@ export function generateTests(
         data: data,
       });
 
-      expect(insert.code).toEqual(200);
+      expect(insert.code).toEqual(0);
       expect(insert.data.insertCount).toEqual(count);
     });
 
@@ -191,7 +192,7 @@ export function generateTests(
         data: [{ ...target, int64: 0 }],
       });
 
-      expect(upsert.code).toEqual(200);
+      expect(upsert.code).toEqual(0);
       expect(upsert.data.upsertCount).toEqual(1);
       expect(upsert.data.upsertIds).toEqual([target.id]);
     });
@@ -203,7 +204,7 @@ export function generateTests(
         filter: 'id > 0',
       });
 
-      expect(query.code).toEqual(200);
+      expect(query.code).toEqual(0);
       expect(query.data.length).toEqual(data.length);
 
       const ids = query.data.map(d => d.id);
@@ -213,14 +214,14 @@ export function generateTests(
         id: ids,
         outputFields: ['id', 'vector'],
       });
-      expect(get.code).toEqual(200);
+      expect(get.code).toEqual(0);
       expect(get.data.length).toEqual(ids.length);
 
       const del = await client.delete({
         collectionName: createParams.collectionName,
         filter: `id in [${ids.join(',')}]`,
       });
-      expect(del.code).toEqual(200);
+      expect(del.code).toEqual(0);
     });
 
     it('should search data successfully', async () => {
@@ -231,7 +232,7 @@ export function generateTests(
         limit: 5,
       });
 
-      expect(search.code).toEqual(200);
+      expect(search.code).toEqual(0);
       expect(search.data.length).toEqual(5);
       expect(typeof search.data[0].distance).toEqual('number');
     });
@@ -242,12 +243,12 @@ export function generateTests(
         collectionName: createParams.collectionName,
       });
 
-      expect(has.code).toEqual(200);
+      expect(has.code).toEqual(0);
       expect(has.data.has).toEqual(true);
     });
 
     it('should rename collection successfully', async () => {
-      const newCollectionName = 'new_collection_name';
+      const newCollectionName = GENERATE_NAME();
       const rename = await client.renameCollection({
         dbName: config.database,
         collectionName: createParams.collectionName,
@@ -259,8 +260,8 @@ export function generateTests(
         collectionName: newCollectionName,
       });
 
-      expect(rename.code).toEqual(200);
-      expect(describe.code).toEqual(200);
+      expect(rename.code).toEqual(0);
+      expect(describe.code).toEqual(0);
       expect(describe.data.collectionName).toEqual(newCollectionName);
 
       await client.renameCollection({
@@ -276,7 +277,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
       });
 
-      expect(release.code).toEqual(200);
+      expect(release.code).toEqual(0);
     });
 
     it('should load collection successfully', async () => {
@@ -285,7 +286,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
       });
 
-      expect(load.code).toEqual(200);
+      expect(load.code).toEqual(0);
     });
 
     it('should getCollectionStatistics successfully', async () => {
@@ -294,7 +295,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
       });
 
-      expect(statistics.code).toEqual(200);
+      expect(statistics.code).toEqual(0);
       expect(statistics.data.rowCount).toEqual(0);
     });
 
@@ -304,7 +305,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
       });
 
-      expect(state.code).toEqual(200);
+      expect(state.code).toEqual(0);
       expect(state.data.loadState).toMatch('LoadState');
       expect(state.data.loadProgress).toBeLessThanOrEqual(100);
     });
@@ -315,7 +316,7 @@ export function generateTests(
         dbName: config.database,
         collectionName: createParams.collectionName,
       });
-      expect(list.code).toEqual(200);
+      expect(list.code).toEqual(0);
       expect(list.data.length).toEqual(1);
       expect(list.data[0]).toEqual(createParams.vectorFieldName);
     });
@@ -330,8 +331,8 @@ export function generateTests(
         collectionName: createCustomSetupParams.collectionName,
         indexName: createIndexParams.indexName,
       });
-      expect(create.code).toEqual(200);
-      expect(describe.code).toEqual(200);
+      expect(create.code).toEqual(0);
+      expect(describe.code).toEqual(0);
       expect(describe.data[0].indexName).toEqual(createIndexParams.indexName);
       expect(describe.data[0].indexType).toEqual(
         createIndexParams.params.index_type
@@ -347,13 +348,13 @@ export function generateTests(
         indexName: createIndexParams.indexName,
       });
       await client.dropCollection({ collectionName });
-      expect(drop.code).toEqual(200);
+      expect(drop.code).toEqual(0);
     });
 
     /* test alias operations */
     it('should create alias successfully', async () => {
       const create = await client.createAlias(createAliasParams);
-      expect(create.code).toEqual(200);
+      expect(create.code).toEqual(0);
     });
 
     it('should describe alias successfully', async () => {
@@ -361,13 +362,11 @@ export function generateTests(
        * https://github.com/milvus-io/milvus/issues/31978
        * TODO: Alias describe api has issue，temporarily comment
        */
-
       // const describe = await client.describeAlias({
       //   dbName: config.database ?? DEFAULT_DB,
       //   aliasName: createAliasParams.aliasName,
       // });
-      
-      // expect(describe.code).toEqual(200);
+      // expect(describe.code).toEqual(0);
       // expect(describe.data.aliasName).toEqual(createAliasParams.aliasName);
       // expect(describe.data.collectionName).toEqual(
       //   createAliasParams.collectionName
@@ -378,13 +377,13 @@ export function generateTests(
       const list = await client.listAliases({
         dbName: config.database ?? DEFAULT_DB,
       });
-      expect(list.code).toEqual(200);
+      expect(list.code).toEqual(0);
       expect(list.data.length).toBeGreaterThanOrEqual(1);
       expect(list.data[0]).toEqual(createAliasParams.aliasName);
     });
 
     it('should alter alias successfully', async () => {
-      const newCollectionName = 'new_collection';
+      const newCollectionName = GENERATE_NAME();
       await client.createCollection({
         ...createParams,
         collectionName: newCollectionName,
@@ -395,7 +394,7 @@ export function generateTests(
         aliasName: createAliasParams.aliasName,
       });
       await client.dropCollection({ collectionName: newCollectionName });
-      expect(alter.code).toEqual(200);
+      expect(alter.code).toEqual(0);
     });
 
     it('should drop alias successfully', async () => {
@@ -407,7 +406,7 @@ export function generateTests(
           dbName: config.database ?? DEFAULT_DB,
           aliasName: createAliasParams.aliasName,
         });
-        expect(drop.code).toEqual(200);
+        expect(drop.code).toEqual(0);
       }
     });
 
@@ -416,7 +415,7 @@ export function generateTests(
       const list = await client.listPartitions({
         collectionName: createParams.collectionName,
       });
-      expect(list.code).toEqual(200);
+      expect(list.code).toEqual(0);
       expect(list.data.length).toEqual(1);
       expect(list.data[0]).toEqual('_default');
     });
@@ -426,7 +425,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
         partitionName: 'my_partition',
       });
-      expect(create.code).toEqual(200);
+      expect(create.code).toEqual(0);
     });
 
     it('should load partitions successfully', async () => {
@@ -434,7 +433,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
         partitionNames: ['my_partition'],
       });
-      expect(load.code).toEqual(200);
+      expect(load.code).toEqual(0);
     });
 
     it('should release partitions successfully', async () => {
@@ -442,7 +441,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
         partitionNames: ['my_partition'],
       });
-      expect(release.code).toEqual(200);
+      expect(release.code).toEqual(0);
     });
 
     it('should has partition successfully', async () => {
@@ -450,7 +449,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
         partitionName: 'my_partition',
       });
-      expect(has.code).toEqual(200);
+      expect(has.code).toEqual(0);
       expect(has.data.has).toEqual(true);
     });
 
@@ -459,7 +458,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
         partitionName: 'my_partition',
       });
-      expect(statistics.code).toEqual(200);
+      expect(statistics.code).toEqual(0);
       expect(statistics.data.rowCount).toEqual(0);
     });
 
@@ -468,7 +467,7 @@ export function generateTests(
         collectionName: createParams.collectionName,
         partitionName: 'my_partition',
       });
-      expect(drop.code).toEqual(200);
+      expect(drop.code).toEqual(0);
     });
 
     /* test import operations */
@@ -483,13 +482,13 @@ export function generateTests(
       });
       const job = list.data.records.find(j => j.jobId === jobId);
       const progress = await client.getImportJobProgress({ jobId });
-      expect(create.code).toEqual(200);
-      expect(list.code).toEqual(200);
+      expect(create.code).toEqual(0);
+      expect(list.code).toEqual(0);
       if (job) {
         expect(job.collectionName).toEqual(createParams.collectionName);
         expect(job.progress).toBeLessThanOrEqual(100);
       }
-      expect(progress.code).toEqual(200);
+      expect(progress.code).toEqual(0);
       expect(progress.data.jobId).toEqual(jobId);
     });
 
@@ -498,47 +497,47 @@ export function generateTests(
         collectionName: createParams.collectionName,
       });
 
-      expect(drop.code).toEqual(200);
+      expect(drop.code).toEqual(0);
 
       const dropDefault = await client.dropCollection({
         collectionName: createDefaultParams.collectionName,
       });
-      expect(dropDefault.code).toEqual(200);
+      expect(dropDefault.code).toEqual(0);
     });
 
     /* test role operations */
     it('should list roles successfully', async () => {
       const list = await client.listRoles();
-      expect(list.code).toEqual(200);
+      expect(list.code).toEqual(0);
       expect(list.data.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should describe role successfully', async () => {
       const describe = await client.describeRole({ roleName: 'public' });
-      expect(describe.code).toEqual(200);
+      expect(describe.code).toEqual(0);
     });
 
     it('should create role successfully', async () => {
       const create = await client.createRole({
         roleName: roleParams.roleName,
       });
-      expect(create.code).toEqual(200);
+      expect(create.code).toEqual(0);
     });
 
     it('should drop role successfully', async () => {
       const drop = await client.dropRole({ roleName: roleParams.roleName });
-      expect(drop.code).toEqual(200);
+      expect(drop.code).toEqual(0);
     });
 
     /* test user operations */
     it('should create user successfully', async () => {
       const create = await client.createUser(createUserParams);
-      expect(create.code).toEqual(200);
+      expect(create.code).toEqual(0);
     });
 
     it('should list users successfully', async () => {
       const list = await client.listUsers();
-      expect(list.code).toEqual(200);
+      expect(list.code).toEqual(0);
       expect(list.data.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -546,7 +545,7 @@ export function generateTests(
       const describe = await client.describeUser({
         userName: createUserParams.userName,
       });
-      expect(describe.code).toEqual(200);
+      expect(describe.code).toEqual(0);
     });
 
     it('should update user password successfully', async () => {
@@ -556,7 +555,7 @@ export function generateTests(
         password: createUserParams.password,
         newPassword,
       });
-      expect(update.code).toEqual(200);
+      expect(update.code).toEqual(0);
     });
 
     it('should grant role to user successfully', async () => {
@@ -564,7 +563,7 @@ export function generateTests(
         userName: createUserParams.userName,
         roleName: 'public',
       });
-      expect(grant.code).toEqual(200);
+      expect(grant.code).toEqual(0);
     });
 
     it('should revoke role from user successfully', async () => {
@@ -572,14 +571,14 @@ export function generateTests(
         userName: createUserParams.userName,
         roleName: 'public',
       });
-      expect(revoke.code).toEqual(200);
+      expect(revoke.code).toEqual(0);
     });
 
     it('should drop user successfully', async () => {
       const drop = await client.dropUser({
         userName: createUserParams.userName,
       });
-      expect(drop.code).toEqual(200);
+      expect(drop.code).toEqual(0);
     });
   });
 }
