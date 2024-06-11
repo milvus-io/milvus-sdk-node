@@ -88,6 +88,7 @@ export interface Field {
 
 export interface FlushReq extends GrpcTimeOut {
   collection_names: string[]; // collection names
+  db_name?: string; // database name
 }
 
 export interface CountReq extends collectionNameReq {
