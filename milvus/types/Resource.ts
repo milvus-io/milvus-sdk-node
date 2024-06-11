@@ -1,4 +1,4 @@
-import { GrpcTimeOut, resStatusResponse } from './Common';
+import { GrpcTimeOut, resStatusResponse, collectionNameReq } from './Common';
 
 type ResourceGroupConfig = {
   requests?: { node_num: number }; // requests node num in resource group, if node num is less than requests.nodeNum, it will be transfer from other resource group.
@@ -36,10 +36,9 @@ export interface TransferNodeReq extends GrpcTimeOut {
   num_node: number; // required, number of nodes
 }
 
-export interface TransferReplicaReq extends GrpcTimeOut {
+export interface TransferReplicaReq extends collectionNameReq {
   source_resource_group: string; // required, source resource group
   target_resource_group: string; // required, target resource group
-  collection_name: string; // required, collection name
   num_replica: number; // required, number of replica
 }
 
