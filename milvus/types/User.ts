@@ -37,12 +37,15 @@ export interface listRoleReq extends GrpcTimeOut {
 export interface SelectUserReq extends usernameReq {
   includeRoleInfo?: boolean; // optional, include role info, default is false
 }
-export interface OperateRolePrivilegeReq extends roleNameReq {
+
+export interface BaseGrantReq extends roleNameReq {
   object: RbacObjects; // Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.
   objectName: string; // Name of the object to which the role is granted the specified prvilege.
+}
+export interface OperateRolePrivilegeReq extends BaseGrantReq {
   privilegeName: PrivilegesTypes; // Name of the privilege to be granted to the role. This parameter is case-sensitive.
 }
-export interface SelectGrantReq extends OperateRolePrivilegeReq {}
+export interface SelectGrantReq extends BaseGrantReq {}
 export interface ListGrantsReq extends roleNameReq {}
 
 export interface ListCredUsersResponse extends resStatusResponse {
