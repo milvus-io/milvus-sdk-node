@@ -412,7 +412,7 @@ export class Collection extends Database {
    *  const resStatus = await milvusClient.loadCollection({ collection_name: 'my_collection' });
    * ```
    */
-  async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
+  async loadCollectionAsync(data: LoadCollectionReq): Promise<ResStatus> {
     checkCollectionName(data);
 
     const promise = await promisify(
@@ -444,7 +444,7 @@ export class Collection extends Database {
    *  const resStatus = await milvusClient.loadCollectionSync({ collection_name: 'my_collection' });
    * ```
    */
-  async loadCollectionSync(data: LoadCollectionReq): Promise<ResStatus> {
+  async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
     checkCollectionName(data);
 
     const promise = await promisify(
@@ -462,9 +462,14 @@ export class Collection extends Database {
 
     let loadedPercentage = 0;
     while (Number(loadedPercentage) < 100) {
-      let res = await this.getLoadingProgress({
+      const getLoadingProgressParam = {
         collection_name: data.collection_name,
-      });
+      } as GetLoadingProgressReq;
+
+      if (data.db_name) {
+        getLoadingProgressParam.db_name = data.db_name;
+      }
+      let res = await this.getLoadingProgress(getLoadingProgressParam);
 
       if (res.status.error_code !== ErrorCode.SUCCESS) {
         throw new Error(
@@ -478,6 +483,8 @@ export class Collection extends Database {
 
     return promise;
   }
+
+  loadCollectionSync = this.loadCollection;
 
   /**
    * Release a collection from cache to reduce cache usage.
