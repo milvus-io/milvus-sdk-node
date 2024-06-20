@@ -411,7 +411,7 @@ export class Collection extends Database {
    *  const resStatus = await milvusClient.loadCollection({ collection_name: 'my_collection' });
    * ```
    */
-  async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
+  async loadCollectionAsync(data: LoadCollectionReq): Promise<ResStatus> {
     checkCollectionName(data);
 
     const promise = await promisify(
@@ -443,7 +443,7 @@ export class Collection extends Database {
    *  const resStatus = await milvusClient.loadCollectionSync({ collection_name: 'my_collection' });
    * ```
    */
-  async loadCollectionSync(data: LoadCollectionReq): Promise<ResStatus> {
+  async loadCollection(data: LoadCollectionReq): Promise<ResStatus> {
     checkCollectionName(data);
 
     const promise = await promisify(
@@ -477,6 +477,8 @@ export class Collection extends Database {
 
     return promise;
   }
+
+  loadCollectionSync = this.loadCollection;
 
   /**
    * Release a collection from cache to reduce cache usage.
