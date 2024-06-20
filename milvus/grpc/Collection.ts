@@ -462,9 +462,14 @@ export class Collection extends Database {
 
     let loadedPercentage = 0;
     while (Number(loadedPercentage) < 100) {
-      let res = await this.getLoadingProgress({
+      const getLoadingProgressParam = {
         collection_name: data.collection_name,
-      });
+      } as GetLoadingProgressReq;
+
+      if (data.db_name) {
+        getLoadingProgressParam.db_name = data.db_name;
+      }
+      let res = await this.getLoadingProgress(getLoadingProgressParam);
 
       if (res.status.error_code !== ErrorCode.SUCCESS) {
         throw new Error(

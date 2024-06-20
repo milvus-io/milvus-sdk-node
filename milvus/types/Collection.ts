@@ -223,8 +223,7 @@ export interface ReplicasResponse extends resStatusResponse {
   replicas: ReplicaInfo[];
 }
 
-export interface GetLoadingProgressReq extends GrpcTimeOut {
-  collection_name: string;
+export interface GetLoadingProgressReq extends collectionNameReq {
   partition_names?: string[];
 }
 export interface GetLoadingProgressResponse extends resStatusResponse {

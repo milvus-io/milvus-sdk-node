@@ -1,7 +1,7 @@
 import { MilvusClient, ErrorCode, DEFAULT_DB } from '../../milvus';
 import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
 
-let milvusClient = new MilvusClient({ address: IP });
+let milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const DB_NAME = GENERATE_NAME('database');
 const DB_NAME2 = GENERATE_NAME('database');
 const COLLECTION_NAME = GENERATE_NAME();
@@ -111,6 +111,13 @@ describe(`Database API`, () => {
       db_name: DB_NAME2,
     });
     expect(loadCollection.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // release collection
+    const releaseCollection = await milvusClient.releaseCollection({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+    });
+    expect(releaseCollection.error_code).toEqual(ErrorCode.SUCCESS);
 
     // drop collection
     const dropCollections = await milvusClient.dropCollection({
