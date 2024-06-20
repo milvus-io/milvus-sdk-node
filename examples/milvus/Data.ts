@@ -1,3 +1,5 @@
+import { SparseFloatVector } from "@zilliz/milvus2-sdk-node";
+
 // build example data
 export const vectorsData = [
   {
@@ -55,3 +57,43 @@ export const vectorsData = [
     name: 'sb7mt',
   },
 ];
+
+type sparseVectorsDataItem = {
+  vector: SparseFloatVector;
+  height: number;
+  name: string;
+};
+
+export const sparseVectorsData : sparseVectorsDataItem[] = [
+  {
+    "vector": {"1": 0.1, "100": 0.3, "55": 0.324},
+    "height": 20405,
+    "name": "zlnmh"
+  },
+  {
+    "vector": {"5": 0.45, "1234": 0.67, "789": 0.23, "456": 0.89},
+    "height": 93773,
+    "name": "5lr9y"
+  },
+  {
+    "vector": {"12": 0.34, "5678": 0.56, "234": 0.78, "6789": 0.12},
+    "height": 85122,
+    "name": "nes0j"
+  },
+  {
+    "vector": {"3": 0.67, "890": 0.45, "12345": 0.89, "678": 0.23},
+    "height": 92037,
+    "name": "ct2li"
+  },
+  {
+    "vector": {"45": 0.12, "678": 0.34, "2345": 0.56, "7890": 0.78},
+    "height": 31400,
+    "name": "6ghrg"
+  },
+  {
+    "vector": {"67": 0.45, "8901": 0.67, "123": 0.89, "4567": 0.23},
+    "height": 1778,
+    "name": "sb7mt"
+  }
+]
+;
