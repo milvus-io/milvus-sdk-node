@@ -4,6 +4,8 @@ import {
   ListDatabasesRequest,
   ListDatabasesResponse,
   DropDatabasesRequest,
+  DescribeDatabaseRequest,
+  DescribeDatabaseResponse,
   ResStatus,
   promisify,
 } from '../';
@@ -70,6 +72,44 @@ export class Database extends BaseClient {
       'ListDatabases',
       {},
       data?.timeout || this.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * Describes a database.
+   *
+   * @param {DescribeDatabaseRequest} data - The request parameters.
+   * @param {string} data.db_name - The name of the database to describe.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<DescribeDatabaseResponse>} The response from the server.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string} db_name - The name of the database.
+   * @returns {number} dbID - The ID of the database.
+   * @returns {number} created_timestamp - The timestamp of when the database was created.
+   * @returns {KeyValuePair[]} properties - The properties of the database.
+   *
+   * @example
+   * ```
+   * const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   * const res = await milvusClient.describeDatabase({ db_name: 'db_to_describe' });
+   * ```
+   */
+  async describeDatabase(
+    data: DescribeDatabaseRequest
+  ): Promise<DescribeDatabaseResponse> {
+    // check compatibility
+    await this.checkCompatibility({
+      message: `describeDatabase is not supported on this version of milvus.`,
+    });
+
+    const promise = await promisify(
+      this.channelPool,
+      'DescribeDatabase',
+      data,
+      data.timeout || this.timeout
     );
     return promise;
   }

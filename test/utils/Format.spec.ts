@@ -402,6 +402,7 @@ describe('utils/format', () => {
       created_utc_timestamp: '1683515258531',
       consistency_level: 'Bounded',
       num_partitions: '0',
+      collection_name: 'test',
       db_name: '',
     };
 

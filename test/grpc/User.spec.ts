@@ -197,14 +197,15 @@ describe(`User Api`, () => {
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
-    const alias = await authClient.grantPrivilege({
+    const grant = await authClient.grantPrivilege({
       roleName: ROLE_NAME,
       object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
+
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(alias.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(grant.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should list grants successfully`, async () => {
@@ -223,7 +224,6 @@ describe(`User Api`, () => {
       roleName: ROLE_NAME,
       object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
-      privilegeName: Privileges.Search,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -243,6 +243,7 @@ describe(`User Api`, () => {
       objectName: COLLECTION_NAME,
       privilegeName: Privileges.Search,
     });
+
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 

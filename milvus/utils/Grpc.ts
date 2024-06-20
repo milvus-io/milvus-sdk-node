@@ -193,13 +193,16 @@ export const getRetryInterceptor = ({
               newCall.start(savedMetadata, retryListener);
               newCall.sendMessage(savedSendMessage);
             } else {
+              const string = JSON.stringify(savedReceiveMessage);
+              const msg =
+                string.length > 2048 ? string.slice(0, 2048) + '...' : string;
+
               logger.debug(
                 `\x1b[32m[Response(${
                   Date.now() - startTime.getTime()
-                }ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${JSON.stringify(
-                  savedReceiveMessage
-                )}`
+                }ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${msg}`
               );
+
               savedMessageNext(savedReceiveMessage);
               savedStatusNext(status);
             }

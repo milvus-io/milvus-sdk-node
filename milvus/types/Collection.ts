@@ -183,6 +183,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   status: ResStatus;
   schema: CollectionSchema;
   collectionID: string;
+  collection_name: string;
   consistency_level: string;
   aliases: string[];
   virtual_channel_names: string[]; // not useful for now

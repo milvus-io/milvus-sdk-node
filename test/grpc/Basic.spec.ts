@@ -24,6 +24,15 @@ const schema = [
     max_length: 128,
     is_partition_key: false,
   },
+  {
+    name: 'array',
+    description: 'array field',
+    data_type: DataType.Array,
+    element_type: DataType.VarChar,
+    max_capacity: 128,
+    max_length: 128,
+    is_partition_key: false,
+  },
 ];
 
 describe(`Basic API without database`, () => {
@@ -33,6 +42,13 @@ describe(`Basic API without database`, () => {
       fields: schema,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Describe collection should be successful`, async () => {
+    const desc = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(desc.schema.fields.length).toEqual(schema.length);
   });
 
   it(`Create index should be successful`, async () => {

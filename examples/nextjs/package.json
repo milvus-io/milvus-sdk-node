@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@zilliz/milvus2-sdk-node": "^2.3.5",
-    "next": "14.1.0",
+    "@zilliz/milvus2-sdk-node": "^2.4.2",
+    "next": "14.1.1",
     "react": "^18",
     "react-dom": "^18"
   },

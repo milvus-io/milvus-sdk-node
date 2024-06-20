@@ -572,7 +572,6 @@ export class User extends Resource {
    * @param {string} data.roleName - The name of the role.
    * @param {string} data.object - The type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.
    * @param {string} data.objectName - The name of the object to which the role is granted the specified privilege.
-   * @param {string} data.privilegeName - The name of the privilege to be granted to the role. This parameter is case-sensitive.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<Object>} The response object.
@@ -586,29 +585,30 @@ export class User extends Resource {
    *    roleName: 'roleName',
    *    object: '*',
    *    objectName: 'Collection',
-   *    privilegeName: 'CreateIndex'
    *  });
    * ```
    */
   async selectGrant(data: SelectGrantReq): Promise<SelectGrantResponse> {
+    const params: any = {
+      entity: {
+        role: { name: data.roleName },
+        object: { name: data.object },
+        object_name: data.objectName,
+      },
+    };
+
     const promise = await promisify(
       this.channelPool,
       'SelectGrant',
-      {
-        entity: {
-          role: { name: data.roleName },
-          object: { name: data.object },
-          object_name: data.objectName,
-          grantor: {
-            privilege: { name: data.privilegeName },
-          },
-        },
-      },
+      params,
       data.timeout || this.timeout
     );
 
     return promise;
   }
+
+  // alias
+  listGrant = this.selectGrant;
 
   /**
    * Lists all grants for a specific role.

@@ -88,6 +88,7 @@ export interface Field {
 
 export interface FlushReq extends GrpcTimeOut {
   collection_names: string[]; // collection names
+  db_name?: string; // database name
 }
 
 export interface CountReq extends collectionNameReq {
@@ -110,20 +111,27 @@ export interface InsertReq extends collectionNameReq {
   transformers?: InsertTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
 
-export interface DeleteEntitiesReq extends collectionNameReq {
+interface BaseDeleteReq extends collectionNameReq {
+  partition_name?: string; // partition name
+  consistency_level?:
+    | 'Strong'
+    | 'Session'
+    | 'Bounded'
+    | 'Eventually'
+    | 'Customized'; // consistency level
+}
+
+export interface DeleteEntitiesReq extends BaseDeleteReq {
   filter?: string; // filter expression
   expr?: string; // alias for filter
-  partition_name?: string; // partition name
 }
 
-export interface DeleteByIdsReq extends collectionNameReq {
+export interface DeleteByIdsReq extends BaseDeleteReq {
   ids: string[] | number[]; // primary key values
-  partition_name?: string; // partition name
 }
 
-export interface DeleteByFilterReq extends collectionNameReq {
+export interface DeleteByFilterReq extends BaseDeleteReq {
   filter: string; // filter expression
-  partition_name?: string; // partition name
 }
 
 export type DeleteReq = DeleteByIdsReq | DeleteByFilterReq;
@@ -216,7 +224,7 @@ export interface MutationResult extends resStatusResponse {
 }
 
 export interface QueryResults extends resStatusResponse {
-  data: { [x: string]: any }[];
+  data: Record<string, any>[];
 }
 
 export interface CountResult extends resStatusResponse {
@@ -282,6 +290,16 @@ export interface SearchReq extends collectionNameReq {
   nq?: number; // number of query vectors
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+}
+
+export interface SearchIteratorReq
+  extends Omit<
+    SearchSimpleReq,
+    'data' | 'vectors' | 'offset' | 'limit' | 'topk'
+  > {
+  data: number[]; // data to search
+  batchSize: number;
+  limit: number;
 }
 
 // simplified search api parameter type
@@ -391,6 +409,12 @@ export interface QueryReq extends collectionNameReq {
   limit?: number; // how many results you want
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+}
+
+export interface QueryIteratorReq
+  extends Omit<QueryReq, 'ids' | 'offset' | 'limit'> {
+  limit: number;
+  batchSize: number;
 }
 
 export interface GetReq extends collectionNameReq {

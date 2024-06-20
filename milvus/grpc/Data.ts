@@ -36,6 +36,8 @@ import {
   SearchReq,
   SearchRes,
   SearchSimpleReq,
+  SearchIteratorReq,
+  DEFAULT_TOPK,
   HybridSearchReq,
   promisify,
   findKeyValue,
@@ -53,6 +55,12 @@ import {
   CountReq,
   CountResult,
   DEFAULT_COUNT_QUERY_STRING,
+  getQueryIteratorExpr,
+  QueryIteratorReq,
+  getRangeFromSearchResult,
+  SearchResultData,
+  getPKFieldExpr,
+  DEFAULT_MAX_SEARCH_SIZE,
   SparseFloatVector,
   sparseRowsToBytes,
   getSparseDim,
@@ -301,6 +309,7 @@ export class Data extends Collection {
    * @param {string} data.collection_name - The name of the collection.
    * @param {string} [data.partition_name] - The name of the partition (optional).
    * @param {string} data.expr - Boolean expression used to filter entities for deletion.
+   * @param {string} [data.consistency_level] - The consistency level of the new collection. Can be "Strong" (Milvus default), "Session", "Bounded", "Eventually", or "Customized".
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<MutationResult>} The result of the operation.
@@ -347,6 +356,7 @@ export class Data extends Collection {
    * @param {string} [data.partition_name] - The name of the partition (optional).
    * @param {(string[] | number[])} [data.ids] - IDs of the entities to delete.
    * @param {string} [data.filter] - Filter expression, takes precedence over ids.
+   * @param {string} [data.consistency_level] - The consistency level of the new collection. Can be "Strong" (Milvus default), "Session", "Bounded", "Eventually", or "Customized".
    * @param {string} [data.expr] - equals to data.filter.
    * @param {number} [data.timeout] - Optional duration of time in milliseconds to allow for the RPC. If undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
    *
@@ -478,6 +488,268 @@ export class Data extends Collection {
     };
   }
 
+  // async searchIterator(data: SearchIteratorReq): Promise<any> {
+  //   // store client
+  //   const client = this;
+  //   // get collection info
+  //   const pkField = await this.getPkField(data);
+  //   // get available count
+  //   const count = await client.count({
+  //     collection_name: data.collection_name,
+  //     expr: data.expr || data.filter || '',
+  //   });
+  //   // make sure limit is not exceed the total count
+  //   const total = data.limit > count.data ? count.data : data.limit;
+  //   // make sure batch size is  exceed the total count
+  //   let batchSize = data.batchSize > total ? total : data.batchSize;
+  //   // make sure batch size is not exceed max search size
+  //   batchSize =
+  //     batchSize > DEFAULT_MAX_SEARCH_SIZE ? DEFAULT_MAX_SEARCH_SIZE : batchSize;
+
+  //   // init expr
+  //   const initExpr = data.expr || data.filter || '';
+  //   // init search params object
+  //   data.params = data.params || {};
+  //   data.limit = batchSize;
+
+  //   // user range filter set
+  //   const initRadius = Number(data.params.radius) || 0;
+  //   const initRangeFilter = Number(data.params.range_filter) || 0;
+  //   // range params object
+  //   const rangeFilterParams = {
+  //     radius: initRadius,
+  //     rangeFilter: initRangeFilter,
+  //     expr: initExpr,
+  //   };
+
+  //   // force quite if true, at first, if total is 0, return done
+  //   let done = total === 0;
+  //   // batch result store
+  //   let lastBatchRes: SearchResultData[] = [];
+
+  //   // build cache
+  //   const cache = await client.search({
+  //     ...data,
+  //     limit: total > DEFAULT_MAX_SEARCH_SIZE ? DEFAULT_MAX_SEARCH_SIZE : total,
+  //   });
+
+  //   return {
+  //     currentTotal: 0,
+  //     [Symbol.asyncIterator]() {
+  //       return {
+  //         currentTotal: this.currentTotal,
+  //         async next() {
+  //           // check if reach the limit
+  //           if (
+  //             (this.currentTotal >= total && this.currentTotal !== 0) ||
+  //             done
+  //           ) {
+  //             return { done: true, value: lastBatchRes };
+  //           }
+
+  //           // batch result container
+  //           const batchRes: SearchResultData[] = [];
+  //           const bs =
+  //             this.currentTotal + batchSize > total
+  //               ? total - this.currentTotal
+  //               : batchSize;
+
+  //           // keep getting search data if not reach the batch size
+  //           while (batchRes.length < bs) {
+  //             // search results container
+  //             let searchResults: SearchResults = {
+  //               status: { error_code: 'SUCCESS', reason: '' },
+  //               results: [],
+  //             };
+
+  //             // Iterate through the cached data, adding it to the search results container until the batch size is reached.
+  //             if (cache.results.length > 0) {
+  //               while (
+  //                 cache.results.length > 0 &&
+  //                 searchResults.results.length < bs
+  //               ) {
+  //                 searchResults.results.push(cache.results.shift()!);
+  //               }
+  //             } else if (searchResults.results.length < bs) {
+  //               // build search params, overwrite range filter
+  //               if (rangeFilterParams.radius && rangeFilterParams.rangeFilter) {
+  //                 data.params = {
+  //                   ...data.params,
+  //                   radius: rangeFilterParams.radius,
+  //                   range_filter:
+  //                     rangeFilterParams.rangeFilter,
+  //                 };
+  //               }
+  //               // set search expr
+  //               data.expr = rangeFilterParams.expr;
+
+  //               console.log('search param', data.params, data.expr);
+
+  //               // iterate search, if no result, double the radius, until we doubled for 5 times
+  //               let newSearchRes = await client.search(data);
+  //               let retry = 0;
+  //               while (newSearchRes.results.length === 0 && retry < 5) {
+  //                 newSearchRes = await client.search(data);
+  //                 if (searchResults.results.length === 0) {
+  //                   const newRadius = rangeFilterParams.radius * 2;
+
+  //                   data.params = {
+  //                     ...data.params,
+  //                     radius: newRadius,
+  //                   };
+  //                 }
+
+  //                 retry++;
+  //               }
+
+  //               // combine search results
+  //               searchResults.results = [
+  //                 ...searchResults.results,
+  //                 ...newSearchRes.results,
+  //               ];
+  //             }
+
+  //             console.log('return', searchResults.results);
+
+  //             // filter result, batchRes should be unique
+  //             const filterResult = searchResults.results.filter(
+  //               r =>
+  //                 !lastBatchRes.some(l => l.id === r.id) &&
+  //                 !batchRes.some(c => c.id === r.id)
+  //             );
+
+  //             // fill filter result to batch result, it should not exceed the batch size
+  //             for (let i = 0; i < filterResult.length; i++) {
+  //               if (batchRes.length < bs) {
+  //                 batchRes.push(filterResult[i]);
+  //               }
+  //             }
+
+  //             // get data range about last batch result
+  //             const resultRange = getRangeFromSearchResult(filterResult);
+
+  //             console.log('result range', resultRange);
+
+  //             // if no more result, force quite
+  //             if (resultRange.lastDistance === 0) {
+  //               done = true;
+  //               return { done: false, value: batchRes };
+  //             }
+
+  //             // update next range and expr
+  //             rangeFilterParams.rangeFilter = resultRange.lastDistance;
+  //             rangeFilterParams.radius =
+  //               rangeFilterParams.radius + resultRange.radius;
+  //             rangeFilterParams.expr = getPKFieldExpr({
+  //               pkField,
+  //               value: resultRange.id as string,
+  //               expr: initExpr,
+  //             });
+
+  //             console.log('last', rangeFilterParams);
+  //           }
+
+  //           // store last result
+  //           lastBatchRes = batchRes;
+
+  //           // update current total
+  //           this.currentTotal += batchRes.length;
+
+  //           // return batch result
+  //           return { done: false, value: batchRes };
+  //         },
+  //       };
+  //     },
+  //   };
+  // }
+
+  /**
+   * Executes a query and returns an async iterator that allows iterating over the results in batches.
+   *
+   * @param {QueryIteratorReq} data - The query iterator request data.
+   * @returns {Promise<any>} - An async iterator that yields batches of query results.
+   * @throws {Error} - If an error occurs during the query execution.
+   *
+   * @example
+   * const queryData = {
+   *   collection_name: 'my_collection',
+   *   expr: 'age > 30',
+   *   limit: 100,
+   *   pageSize: 10
+   * };
+   *
+   * const iterator = await queryIterator(queryData);
+   *
+   * for await (const batch of iterator) {
+   *   console.log(batch); // Process each batch of query results
+   * }
+   */
+  async queryIterator(data: QueryIteratorReq): Promise<any> {
+    // get collection info
+    const pkField = await this.getPkField(data);
+    // store client;
+    const client = this;
+    // expr
+    const userExpr = data.expr || data.filter || '';
+    // get count
+    const count = await client.count({
+      collection_name: data.collection_name,
+      expr: userExpr,
+    });
+    // total should be the minimum of total and count
+    const total = data.limit > count.data ? count.data : data.limit;
+    const batchSize =
+      data.batchSize > DEFAULT_MAX_SEARCH_SIZE
+        ? DEFAULT_MAX_SEARCH_SIZE
+        : data.batchSize;
+
+    // local variables
+    let expr = userExpr;
+    let lastBatchRes: Record<string, any> = [];
+    let lastPKId: string | number = '';
+    let currentBatchSize = batchSize; // Store the current batch size
+
+    // return iterator
+    return {
+      currentTotal: 0,
+      [Symbol.asyncIterator]() {
+        return {
+          currentTotal: this.currentTotal,
+          async next() {
+            // if reach the limit, return done
+            if (this.currentTotal >= total) {
+              return { done: true, value: lastBatchRes };
+            }
+            // set limit for current batch
+            data.limit = currentBatchSize; // Use the current batch size
+
+            // get current page expr
+            data.expr = getQueryIteratorExpr({
+              expr: expr,
+              pkField,
+              lastPKId,
+            });
+
+            // search data
+            const res = await client.query(data);
+
+            // get last item of the data
+            const lastItem = res.data[res.data.length - 1];
+            // update last pk id
+            lastPKId = lastItem && lastItem[pkField.name];
+
+            // store last batch result
+            lastBatchRes = res.data;
+            // update current total
+            this.currentTotal += lastBatchRes.length;
+            // Update the current batch size based on remaining data
+            currentBatchSize = Math.min(batchSize, total - this.currentTotal);
+            return { done: false, value: lastBatchRes };
+          },
+        };
+      },
+    };
+  }
   // alias
   hybridSearch = this.search;
 

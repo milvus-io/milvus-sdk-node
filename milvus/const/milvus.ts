@@ -300,6 +300,23 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   SparseFloatVector: 104,
 };
 
+// data type string enum
+export enum DataTypeStringEnum {
+  None = 'None',
+  Bool = 'Bool',
+  Int8 = 'Int8',
+  Int16 = 'Int16',
+  Int32 = 'Int32',
+  Int64 = 'Int64',
+  Float = 'Float',
+  Double = 'Double',
+  VarChar = 'VarChar',
+  Array = 'Array',
+  JSON = 'JSON',
+  BinaryVector = 'BinaryVector',
+  FloatVector = 'FloatVector',
+}
+
 // RBAC: operate user role type
 export enum OperateUserRoleType {
   AddUserToRole = 0,

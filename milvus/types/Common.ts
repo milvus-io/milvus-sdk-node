@@ -62,6 +62,7 @@ export type keyValueObj = Record<string, string | number | string[] | number[]>;
 
 export interface collectionNameReq extends GrpcTimeOut {
   collection_name: string; // required, collection name
+  db_name?: string;
 }
 
 export interface partitionNameReq extends collectionNameReq {
