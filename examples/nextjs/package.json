@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@zilliz/milvus2-sdk-node": "^2.4.3",
-    "next": "14.1.1",
+    "next": "^14.2.4",
     "react": "^18",
     "react-dom": "^18"
   },
