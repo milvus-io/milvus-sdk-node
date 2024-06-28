@@ -2,7 +2,7 @@ import { MilvusClient } from '@zilliz/milvus2-sdk-node';
 
 async function getData() {
   const milvusClient = new MilvusClient({
-    address: '10.102.6.196:19530',
+    address: 'localhost:19530',
   });
 
   let res: any = await milvusClient.getMetric({
