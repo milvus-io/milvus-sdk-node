@@ -8,7 +8,7 @@
     "benchp": "autocannon http://localhost:4000 -c 1 -p 10"
   },
   "dependencies": {
-    "@zilliz/milvus2-sdk-node": "^2.2.18",
+    "@zilliz/milvus2-sdk-node": "^2.4.3",
     "express": "^4.19.2"
   },
   "devDependencies": {

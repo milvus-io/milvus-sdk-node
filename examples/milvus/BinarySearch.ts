@@ -12,8 +12,8 @@ const COLLECTION_NAME = GENERATE_NAME();
 (async () => {
   const createParams = genCollectionParams({
     collectionName: COLLECTION_NAME,
-    dim: '128',
-    vectorType: DataType.BinaryVector,
+    dim: ['128'],
+    vectorType: [DataType.BinaryVector],
     autoID: false,
   });
   // create new collection
@@ -74,13 +74,8 @@ const COLLECTION_NAME = GENERATE_NAME();
     // partition_names: [],
     expr: '',
     vectors: [[4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3]],
-    search_params: {
-      anns_field: VECTOR_FIELD_NAME,
-      topk: '4',
-      metric_type: 'Hamming',
-      params: JSON.stringify({ nprobe: 1024 }),
-    },
-    vector_type: DataType.BinaryVector,
+    limit: 4,
+    params: { nprobe: 1024 },
   });
   console.info(
     `Seaching vectors:`,
