@@ -171,13 +171,15 @@ export class BaseClient {
 
     // If the root certificate path is provided, also set to one-way authentication
     this.tlsMode =
-      this.config.tls && this.config.tls.rootCertPath
+      this.config.tls &&
+      (this.config.tls.rootCert || this.config.tls.rootCertPath)
         ? TLS_MODE.ONE_WAY
         : this.tlsMode;
 
     // If the private key path is provided, set to two-way authentication
     this.tlsMode =
-      this.config.tls && this.config.tls.privateKeyPath
+      this.config.tls &&
+      (this.config.tls.privateKey || this.config.tls.privateKeyPath)
         ? TLS_MODE.TWO_WAY
         : this.tlsMode;
 
@@ -187,20 +189,34 @@ export class BaseClient {
         // For one-way authentication, create SSL credentials with the root certificate if provided
         const sslOption = this.config.tls?.rootCertPath
           ? readFileSync(this.config.tls?.rootCertPath)
-          : undefined;
+          : this.config.tls?.rootCert || undefined;
         this.creds = credentials.createSsl(sslOption);
         break;
       case TLS_MODE.TWO_WAY:
         // For two-way authentication, create SSL credentials with the root certificate, private key, certificate chain, and verify options
-        const { rootCertPath, privateKeyPath, certChainPath, verifyOptions } =
-          this.config.tls!;
-        const rootCertBuff: Buffer | null = rootCertPath
+        const {
+          rootCertPath,
+          rootCert,
+          privateKeyPath,
+          privateKey,
+          certChainPath,
+          certChain,
+          verifyOptions,
+        } = this.config.tls!;
+
+        const rootCertBuff: Buffer | null = rootCert
+          ? rootCert
+          : rootCertPath
           ? readFileSync(rootCertPath)
           : null;
-        const privateKeyBuff: Buffer | null = privateKeyPath
+        const privateKeyBuff: Buffer | null = privateKey
+          ? privateKey
+          : privateKeyPath
           ? readFileSync(privateKeyPath)
           : null;
-        const certChainBuff: Buffer | null = certChainPath
+        const certChainBuff: Buffer | null = certChain
+          ? certChain
+          : certChainPath
           ? readFileSync(certChainPath)
           : null;
         this.creds = credentials.createSsl(

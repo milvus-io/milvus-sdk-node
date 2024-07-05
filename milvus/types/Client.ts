@@ -40,10 +40,16 @@ export interface ClientConfig {
   tls?: {
     // root certificate file path, it can be a CA PEM (Certificate Authority PEM) or Server PEM (Server Certificate PEM):
     rootCertPath?: string;
+    // root certificate buffer
+    rootCert?: Buffer;
     // private key path
     privateKeyPath?: string;
+    // private key buffer
+    privateKey?: Buffer;
     // certificate path
     certChainPath?: string;
+    // certificate buffer
+    certChain?: Buffer;
     // verify options
     verifyOptions?: Record<string, any>;
     // server name
