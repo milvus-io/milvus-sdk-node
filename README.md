@@ -45,6 +45,9 @@ npm install @zilliz/milvus2-sdk-node
 yarn add @zilliz/milvus2-sdk-node
 ```
 
+## Milvus TLS Guide
+Please refer to [this doc](https://github.com/milvus-io/milvus-sdk-node/tree/main/test/cert).
+
 ## What's new in v2.4.2
 
 Query iterator is supported, now you can use queryIterator to pass the 16384 limit of milvus.
