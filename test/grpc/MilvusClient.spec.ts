@@ -1,4 +1,5 @@
 import path from 'path';
+import { readFileSync } from 'fs';
 import {
   MilvusClient,
   ERROR_REASONS,
@@ -215,5 +216,19 @@ describe(`Milvus client`, () => {
 
   //   const healthy = await mc.checkHealth();
   //   expect(healthy.isHealthy).toEqual(true);
+
+  //   const mc2 = new MilvusClient({
+  //     address: 'localhost:19530',
+  //     tls: {
+  //       rootCert: readFileSync(`test/cert/ca.pem`),
+  //       privateKey: readFileSync(`test/cert/client.key`),
+  //       certChain: readFileSync(`test/cert/client.pem`),
+  //       serverName: 'localhost',
+  //     },
+  //     logLevel: 'debug',
+  //   });
+
+  //   const healthy2 = await mc2.checkHealth();
+  //   expect(healthy2.isHealthy).toEqual(true);
   // });
 });
