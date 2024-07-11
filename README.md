@@ -48,6 +48,27 @@ yarn add @zilliz/milvus2-sdk-node
 ## Milvus TLS Guide
 Please refer to [this doc](https://github.com/milvus-io/milvus-sdk-node/tree/main/test/cert).
 
+## What's new in v2.4.4
+### API renamed: 
+- `loadCollectionSync` -> `loadCollection`
+- `loadCollection` -> `loadCollectionAsync`
+- `loadCollectionSync` = `loadCollectionSync`
+
+So now you can just call `loadCollection` other than `loadCollectionSync` to load your collection like other language SDK. 
+
+### Support passing certificate file buffer for the TLS connection:
+```javascript
+new MilvusClient({
+  address: 'localhost:19530',
+  tls: {
+    rootCert: readFileSync(`test/cert/ca.pem`),
+    privateKey: readFileSync(`test/cert/client.key`),
+    certChain: readFileSync(`test/cert/client.pem`),
+    serverName: 'localhost',
+  },
+});
+```
+
 ## What's new in v2.4.2
 
 Query iterator is supported, now you can use queryIterator to pass the 16384 limit of milvus.
