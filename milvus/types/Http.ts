@@ -94,8 +94,10 @@ type CollectionCreateSchema = {
   fields: CollectionCreateField[];
 };
 
-export interface HttpCollectionCreateReq extends HttpBaseReq {
-  dimension?: number; // The number of dimensions a vector value should have.This is required if **dtype** of this field is set to **DataType.FLOAT_VECTOR**.
+export interface HttpCollectionCreateReq {
+  dbName: string; // The name of the database where the collection is to be created.
+  collectionName: string; // The name of the collection to create.
+  dimension: number; // The number of dimensions a vector value should have.This is required if **dtype** of this field is set to **DataType.FLOAT_VECTOR**.
   metricType?: string; // The metric type applied to this operation. Possible values are **L2**, **IP**, and **COSINE**.
   idType?: string; // The data type of the primary field. This parameter is designed for the quick-setup of a collection and will be ignored if __schema__ is defined.
   autoID?: boolean; // Whether the primary field automatically increments. This parameter is designed for the quick-setup of a collection and will be ignored if __schema__ is defined.
