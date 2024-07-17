@@ -252,6 +252,8 @@ const password = 'your-milvus-password'; // optional password
 
 // connect to milvus
 const client = new MilvusClient({ address, username, password });
+// wait until connecting finished
+await client.connectPromise;
 ```
 
 ### Create a collection
