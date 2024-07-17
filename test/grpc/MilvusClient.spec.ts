@@ -194,6 +194,14 @@ describe(`Milvus client`, () => {
     expect(Array.isArray(res.reasons)).toBe(true);
   });
 
+  it(`Should throw when server is unavailable`, async () => {
+    const m10 = new MilvusClient({ address: IP.replace(':19530', ':19539') });
+    await expect(m10.connectPromise).rejects.toThrow('UNAVAILABLE');
+    await expect(m10.getVersion()).rejects.toThrow('UNAVAILABLE');
+    await expect(m10.checkCompatibility()).rejects.toThrow('UNAVAILABLE');
+    await expect(m10.checkHealth()).rejects.toThrow('UNAVAILABLE');
+  });
+
   it(`Expect close connection success`, async () => {
     expect(milvusClient.channelPool.size).toBeGreaterThan(0);
 
