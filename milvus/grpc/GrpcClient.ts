@@ -244,6 +244,8 @@ export class GRPCClient extends User {
    * This method returns a Promise that resolves with a `GetVersionResponse` object.
    */
   async getVersion(): Promise<GetVersionResponse> {
+    // wait until connecting finished
+    await this.connectPromise;
     return await promisify(this.channelPool, 'GetVersion', {}, this.timeout);
   }
 
@@ -252,6 +254,8 @@ export class GRPCClient extends User {
    * This method returns a Promise that resolves with a `CheckHealthResponse` object.
    */
   async checkHealth(): Promise<CheckHealthResponse> {
+    // wait until connecting finished
+    await this.connectPromise;
     return await promisify(this.channelPool, 'CheckHealth', {}, this.timeout);
   }
 }
