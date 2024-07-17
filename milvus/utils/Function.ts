@@ -41,14 +41,17 @@ export async function promisify(
           if (err) {
             // If there was an error, reject the Promise with the error
             reject(err);
+          } else {
+            // Otherwise, resolve the Promise with the result
+            resolve(result);
           }
-          // Otherwise, resolve the Promise with the result
-          resolve(result);
+          if (client) {
+            pool.release(client);
+          }
         }
       );
     } catch (e: any) {
       reject(e);
-    } finally {
       if (client) {
         pool.release(client);
       }
