@@ -211,6 +211,27 @@ export interface HttpVectorSearchReq extends HttpVectorQueryReq {
   searchParams?: Record<string, any>;
 }
 
+// hybrid search request
+interface HttpVectorHybridSearchParams {
+  data: FloatVector[];
+  limit: number;
+  filter?: string;
+  outputFields?: string[];
+  offset?: number;
+  annsField?: string;
+  ignoreGrowing?: boolean;
+  metricType?: string;
+  params?: Record<string, string | number>;
+}
+
+export interface HttpVectorHybridSearchReq extends HttpBaseReq {
+  search: HttpVectorHybridSearchParams[];
+  rerank: Record<string, any>;
+  partitionNames?: string[];
+  outputFields?: string[];
+  limit?: number;
+}
+
 export interface HttpVectorSearchResponse extends HttpVectorQueryResponse {
   data: QueryResult & { distance: number | string };
 }

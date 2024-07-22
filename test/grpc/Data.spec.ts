@@ -144,7 +144,11 @@ describe(`Data.API`, () => {
     const res = await milvusClient.flush({
       collection_names: [COLLECTION_NAME],
     });
-    const segIDs = res.coll_segIDs[COLLECTION_NAME].data;
+    if (res.status.error_code === ErrorCode.RateLimit) {
+      expect(res.coll_segIDs[COLLECTION_NAME]).toBeUndefined();
+      return;
+    }
+    const segIDs = res.coll_segIDs[COLLECTION_NAME]?.data;
     await milvusClient.getFlushState({
       segmentIDs: segIDs,
     });

@@ -12,6 +12,7 @@ import {
   HttpBaseResponse,
   FetchOptions,
   HttpVectorUpsertResponse,
+  HttpVectorHybridSearchReq,
 } from '../types';
 
 /**
@@ -76,6 +77,14 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       options?: FetchOptions
     ): Promise<HttpVectorSearchResponse> {
       const url = `${this.vectorPrefix}/search`;
+      return await this.POST<HttpVectorSearchResponse>(url, data, options);
+    }
+
+    async hybridSearch(
+      data: HttpVectorHybridSearchReq,
+      options?: FetchOptions
+    ) {
+      const url = `${this.vectorPrefix}/hybrid_search`;
       return await this.POST<HttpVectorSearchResponse>(url, data, options);
     }
 
