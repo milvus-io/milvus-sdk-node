@@ -70,4 +70,5 @@ export enum ErrorCode {
   UpsertAutoIDTrue = 'UpsertAutoIDTrue',
   CollectionNotExists = 'CollectionNotExists',
   IllegalArgument = 'IllegalArgument',
+  RateLimit = 'RateLimit',
 }

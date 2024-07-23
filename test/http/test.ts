@@ -197,6 +197,30 @@ export function generateTests(
       expect(upsert.data.upsertIds).toEqual([target.id]);
     });
 
+    it('should hybrid search data successfully', async () => {
+      const search = await client.hybridSearch({
+        collectionName: createParams.collectionName,
+        outputFields: ['*'],
+        rerank: {
+          strategy: 'rrf',
+          params: {
+            k: 5,
+          },
+        },
+        search: [
+          {
+            data: [[1, 2, 3, 4]],
+            outputFields: ['*'],
+            limit: 5,
+          },
+        ],
+      });
+
+      expect(search.code).toEqual(0);
+      expect(search.data.length).toEqual(5);
+      expect(typeof search.data[0].distance).toEqual('number');
+    });
+
     it('should query data and get data and delete successfully', async () => {
       const query = await client.query({
         collectionName: createParams.collectionName,

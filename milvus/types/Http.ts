@@ -194,7 +194,7 @@ export interface HttpVectorQueryReq extends HttpBaseReq {
   filter?: string;
   limit?: number;
   offset?: number;
-  params?: Record<string, string | number>;
+  partitionNames?: string[];
 }
 
 type QueryResult = Record<string, any>[];
@@ -204,10 +204,32 @@ export interface HttpVectorQueryResponse
   extends HttpBaseResponse<QueryResult> {}
 
 // search request
-export interface HttpVectorSearchReq
-  extends Omit<HttpVectorQueryReq, 'filter'> {
+export interface HttpVectorSearchReq extends HttpVectorQueryReq {
   data: FloatVector[];
+  annsField?: string;
+  groupingField?: string;
+  searchParams?: Record<string, any>;
+}
+
+// hybrid search request
+interface HttpVectorHybridSearchParams {
+  data: FloatVector[];
+  limit: number;
   filter?: string;
+  outputFields?: string[];
+  offset?: number;
+  annsField?: string;
+  ignoreGrowing?: boolean;
+  metricType?: string;
+  params?: Record<string, string | number>;
+}
+
+export interface HttpVectorHybridSearchReq extends HttpBaseReq {
+  search: HttpVectorHybridSearchParams[];
+  rerank: Record<string, any>;
+  partitionNames?: string[];
+  outputFields?: string[];
+  limit?: number;
 }
 
 export interface HttpVectorSearchResponse extends HttpVectorQueryResponse {
