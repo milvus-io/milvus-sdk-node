@@ -30,6 +30,14 @@ export enum SegmentState {
   Flushing = 'Flushing',
 }
 
+// segment level enum
+export enum SegmentLevel {
+  Legacy = 0, // zero value for legacy logic
+  L0 = 1, // L0 segment, contains delta data for current channel
+  L1 = 2, // L1 segment, normal segment, with no extra compaction attribute
+  L2 = 3, // L2 segment, segment with extra data distribution info
+}
+
 // compaction state enum
 export enum CompactionState {
   UndefiedState = 0,
