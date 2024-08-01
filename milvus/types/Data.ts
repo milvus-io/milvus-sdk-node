@@ -155,10 +155,12 @@ export interface LoadBalanceReq extends GrpcTimeOut {
 
 export interface GetQuerySegmentInfoReq extends GrpcTimeOut {
   collectionName: string; // its collectioName, this is not colleciton_name :<
+  dbName?: string; // database name
 }
 
 export interface GePersistentSegmentInfoReq extends GrpcTimeOut {
   collectionName: string; // its collectioName, this is not colleciton_name:<
+  dbName?: string; // database name
 }
 
 export interface ImportReq extends collectionNameReq {
