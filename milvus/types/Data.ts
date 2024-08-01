@@ -6,6 +6,7 @@ import {
   keyValueObj,
   DataType,
   SegmentState,
+  SegmentLevel,
   ImportState,
   ConsistencyLevelEnum,
   collectionNameReq,
@@ -192,8 +193,10 @@ export interface QuerySegmentInfo {
   num_rows: number;
   index_name: string;
   indexID: number;
-  nodeID: number;
+  nodeID: number; // deployed node id, use nodeIds instead
   state: SegmentState;
+  nodeIds: number[];
+  level: SegmentLevel;
 }
 
 export interface PersistentSegmentInfo {
