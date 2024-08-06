@@ -161,6 +161,7 @@ export interface GetReplicaReq extends GrpcTimeOut {
 
 export interface RenameCollectionReq extends collectionNameReq {
   new_collection_name: string;
+  new_db_name?: string;
 }
 
 export interface BoolResponse extends resStatusResponse {
