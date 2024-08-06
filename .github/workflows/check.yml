@@ -31,7 +31,7 @@ jobs:
         run: |
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
           sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ steps.info.outputs.milvusVersion }}/g" docker-compose.yml
-          docker-compose up -d
+          docker compose up -d
 
       - name: update submodules
         run: |
