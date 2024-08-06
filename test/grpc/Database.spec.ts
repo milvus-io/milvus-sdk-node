@@ -1,7 +1,8 @@
 import { MilvusClient, ErrorCode, DEFAULT_DB } from '../../milvus';
 import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
 
-let milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+let milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const DEFAULT = 'default';
 const DB_NAME = GENERATE_NAME('database');
 const DB_NAME2 = GENERATE_NAME('database');
 const COLLECTION_NAME = GENERATE_NAME();
@@ -33,7 +34,7 @@ describe(`Database API`, () => {
     const useDB = await milvusClient.useDatabase({ db_name: DB_NAME });
     expect(useDB!.error_code).toEqual(ErrorCode.SUCCESS);
 
-    // create collection on another db
+    // create collection in another db
     const create = await milvusClient.createCollection(
       genCollectionParams({ collectionName: COLLECTION_NAME, dim: [4] })
     );
@@ -123,6 +124,37 @@ describe(`Database API`, () => {
     const dropCollections = await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME2,
       db_name: DB_NAME2,
+    });
+    expect(dropCollections.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`move one collection to aonther database should ok`, async () => {
+    // create collection in another db
+    const createCollection = await milvusClient.createCollection({
+      ...genCollectionParams({ collectionName: COLLECTION_NAME2, dim: [4] }),
+      db_name: DB_NAME2,
+    });
+    expect(createCollection.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // move colleciton to DEFAULT
+    const move = await milvusClient.renameCollection({
+      collection_name: COLLECTION_NAME2,
+      new_collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      new_db_name: DEFAULT,
+    });
+
+    const has = await milvusClient.hasCollection({
+      collection_name: COLLECTION_NAME2,
+      db_name: DEFAULT,
+    });
+
+    expect(has.value).toEqual(true);
+
+    // drop collection
+    const dropCollections = await milvusClient.dropCollection({
+      collection_name: COLLECTION_NAME2,
+      db_name: DEFAULT,
     });
     expect(dropCollections.error_code).toEqual(ErrorCode.SUCCESS);
   });

@@ -522,6 +522,8 @@ export class Collection extends Database {
    * @param {RenameCollectionReq} data - The request parameters.
    * @param {string} data.collection_name - The current name of the collection.
    * @param {string} data.new_collection_name - The new name for the collection.
+   * @param {string} data.db_name - Optional, the name of the database where the collection is located.
+   * @param {string} data.new_db_name - Optional, the name of the database where the new collection will be located.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} The response status of the operation.
@@ -538,13 +540,25 @@ export class Collection extends Database {
    * ```
    */
   async renameCollection(data: RenameCollectionReq): Promise<ResStatus> {
+    const req: any = {
+      oldName: data.collection_name,
+      newName: data.new_collection_name,
+    };
+
+    // if db_name is set, add it to the request
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
+    // if new_db_name is set, add it to the request
+    if (data.new_db_name) {
+      req.newDBName = data.new_db_name;
+    }
+
     const promise = await promisify(
       this.channelPool,
       'RenameCollection',
-      {
-        oldName: data.collection_name,
-        newName: data.new_collection_name,
-      },
+      req,
       data.timeout || this.timeout
     );
     return promise;
