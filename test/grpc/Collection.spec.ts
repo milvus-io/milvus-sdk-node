@@ -22,6 +22,7 @@ const NEW_COLLECTION_NAME = GENERATE_NAME();
 const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
+const COLLECTION_WITH_PROPERTY = GENERATE_NAME();
 const ALIAS = 'my_alias';
 const NON_EXISTENT_COLLECTION_NAME = 'none_existent';
 
@@ -49,6 +50,38 @@ describe(`Collection API`, () => {
       consistency_level: 'Eventually',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create Collection with property set should be successful`, async () => {
+    const res = await milvusClient.createCollection({
+      ...genCollectionParams({
+        collectionName: COLLECTION_WITH_PROPERTY,
+        dim: [128],
+      }),
+      properties: {
+        'collection.ttl.seconds': 1000,
+        'mmap.enabled': true,
+      },
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION_WITH_PROPERTY,
+    });
+
+    expect(
+      Number(
+        formatKeyValueData(describe.properties, ['collection.ttl.seconds'])[
+          'collection.ttl.seconds'
+        ]
+      )
+    ).toEqual(1000);
+
+    expect(
+      Boolean(
+        formatKeyValueData(describe.properties, ['mmap.enabled'])['mmap.enabled']
+      )
+    ).toEqual(true);
   });
 
   it(`Should get pk fieldname successfully`, async () => {

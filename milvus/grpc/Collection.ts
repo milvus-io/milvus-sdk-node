@@ -86,6 +86,7 @@ export class Collection extends Database {
    * @param {number} [data.num_partitions] - The number of partitions allowed in the new collection.
    * @param {string} [data.consistency_level] - The consistency level of the new collection. Can be "Strong" (Milvus default), "Session", "Bounded", "Eventually", or "Customized".
    * @param {FieldType[]} data.fields - The fields of the new collection. See [FieldType](https://github.com/milvus-io/milvus-sdk-node/blob/main/milvus/types/Collection.ts#L8) for more details.
+   * @param {properties} [data.properties] - An optional object containing key-value pairs of properties for the collection.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} The response status of the operation.
@@ -160,17 +161,25 @@ export class Collection extends Database {
     const level =
       ConsistencyLevelEnum[consistency_level] ?? ConsistencyLevelEnum.Bounded;
 
+    // build the request object
+    const req: any = {
+      ...data,
+      schema: schemaBytes,
+      consistency_level: level,
+      enable_dynamic_field:
+        data.enableDynamicField || data.enable_dynamic_field,
+    };
+
+    // if properties is set, parse it to key-value pairs
+    if (data.properties) {
+      req.properties = parseToKeyValue(data.properties);
+    }
+
     // Call the promisify function to create the collection.
     const createPromise = await promisify(
       this.channelPool,
       'CreateCollection',
-      {
-        ...data,
-        schema: schemaBytes,
-        consistency_level: level,
-        enable_dynamic_field:
-          data.enableDynamicField || data.enable_dynamic_field,
-      },
+      req,
       data.timeout || this.timeout
     );
 

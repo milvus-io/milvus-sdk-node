@@ -82,6 +82,8 @@ export interface ShowCollectionsReq extends GrpcTimeOut {
   collection_names?: string[];
 }
 
+export type Properties = Record<string, string | number | boolean>;
+
 export interface BaseCreateCollectionReq extends GrpcTimeOut {
   // collection name
   collection_name: string; // required, collection name
@@ -97,6 +99,7 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   partition_key_field?: string; // optional, partition key field
   enable_dynamic_field?: boolean; // optional, enable dynamic field, default is false
   enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
+  properties?: Properties;
 }
 
 export interface CreateCollectionWithFieldsReq extends BaseCreateCollectionReq {
@@ -237,7 +240,7 @@ export interface GetLoadStateResponse extends resStatusResponse {
 }
 
 export interface AlterCollectionReq extends collectionNameReq {
-  properties: Record<string, string | number | boolean>;
+  properties: Properties;
 }
 
 export interface DescribeAliasResponse extends resStatusResponse {
