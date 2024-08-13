@@ -82,6 +82,11 @@ describe(`Collection API`, () => {
         formatKeyValueData(describe.properties, ['mmap.enabled'])['mmap.enabled']
       )
     ).toEqual(true);
+
+    // drop collection
+    await milvusClient.dropCollection({
+      collection_name: COLLECTION_WITH_PROPERTY,
+    });
   });
 
   it(`Should get pk fieldname successfully`, async () => {
