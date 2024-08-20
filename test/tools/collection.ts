@@ -40,6 +40,7 @@ export const genCollectionParams = (data: {
   numPartitions?: number;
   enableDynamic?: boolean;
   maxCapacity?: number;
+  idType?: DataType;
 }) => {
   const {
     collectionName,
@@ -51,6 +52,7 @@ export const genCollectionParams = (data: {
     numPartitions,
     enableDynamic = false,
     maxCapacity,
+    idType = DataType.Int64,
   } = data;
 
   const vectorFields = vectorType.map((type, i) => {
@@ -67,18 +69,25 @@ export const genCollectionParams = (data: {
     return res;
   });
 
+  const idField: any = {
+    name: 'id',
+    description: 'ID field',
+    data_type: idType,
+    is_primary_key: true,
+    autoID,
+  };
+
+  // if idType is varchar, add max length
+  if (idType === DataType.VarChar) {
+    idField.max_length = MAX_LENGTH;
+  }
+
   const params: any = {
     collection_name: collectionName,
     consistency_level: ConsistencyLevelEnum.Strong,
     fields: [
       ...vectorFields,
-      {
-        name: 'id',
-        description: 'ID field',
-        data_type: DataType.Int64,
-        is_primary_key: true,
-        autoID,
-      },
+      idField,
       {
         name: 'int64',
         description: 'int64 field',

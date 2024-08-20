@@ -21,6 +21,7 @@ const milvusClient = new MilvusClient({
   address: IP,
 });
 const COLLECTION_NAME = GENERATE_NAME();
+const VARCHAR_ID_COLLECTION_NAME = GENERATE_NAME();
 const dbParam = {
   db_name: 'Data',
 };
@@ -30,6 +31,14 @@ const createCollectionParams = genCollectionParams({
   vectorType: [DataType.FloatVector],
   autoID: false,
 });
+const createCollectionParamsVarcharID = genCollectionParams({
+  collectionName: VARCHAR_ID_COLLECTION_NAME,
+  dim: [4],
+  vectorType: [DataType.FloatVector],
+  autoID: false,
+  idType: DataType.VarChar,
+});
+
 const INDEX_NAME = 'collection_index';
 const PARTITION_NAME = GENERATE_NAME('partition');
 
@@ -40,6 +49,7 @@ describe(`Data.API`, () => {
     await milvusClient.use(dbParam);
     // create collection
     await milvusClient.createCollection(createCollectionParams);
+    await milvusClient.createCollection(createCollectionParamsVarcharID);
     // create partition
     await milvusClient.createPartition({
       collection_name: COLLECTION_NAME,
@@ -51,9 +61,16 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       data: generateInsertData(createCollectionParams.fields, 1024),
     });
+    await milvusClient.insert({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
+      data: generateInsertData(createCollectionParamsVarcharID.fields, 1024),
+    });
 
     await milvusClient.flush({
       collection_names: [COLLECTION_NAME],
+    });
+    await milvusClient.flush({
+      collection_names: [VARCHAR_ID_COLLECTION_NAME],
     });
 
     // create index
@@ -65,15 +82,29 @@ describe(`Data.API`, () => {
       metric_type: 'L2',
       params: { M: 4, efConstruction: 8 },
     });
+    await milvusClient.createIndex({
+      index_name: INDEX_NAME,
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      index_type: IndexType.HNSW,
+      metric_type: 'L2',
+      params: { M: 4, efConstruction: 8 },
+    });
     // load
     await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
+    });
+    await milvusClient.loadCollectionSync({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
     });
   });
 
   afterAll(async () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
+    });
+    await milvusClient.dropCollection({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
     });
     await milvusClient.dropDatabase(dbParam);
   });
@@ -571,6 +602,22 @@ describe(`Data.API`, () => {
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // query varchar ids collection
+    const query = await milvusClient.query({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
+      expr: 'id != ""',
+    });
+
+    // get query ids
+    const ids = query.data.map(d => d.id);
+
+    const res2 = await milvusClient.delete({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
+      ids: ids,
+    });
+
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`delete by filter should success`, async () => {
