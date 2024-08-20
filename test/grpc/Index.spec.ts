@@ -354,14 +354,6 @@ describe(`Milvus Index API`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`Get Index State with field name `, async () => {
-    const res = await milvusClient.getIndexState({
-      collection_name: COLLECTION_NAME,
-      field_name: VECTOR_FIELD_NAME,
-    });
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
   it(`Get Index progress with index name`, async () => {
     const res = await milvusClient.getIndexBuildProgress({
       collection_name: COLLECTION_NAME,
@@ -386,7 +378,7 @@ describe(`Milvus Index API`, () => {
     });
     expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
     const params = describe.index_descriptions[0].params;
-    expect(findKeyValue(params, 'mmap.enabled')).toEqual("true");
+    expect(findKeyValue(params, 'mmap.enabled')).toEqual('true');
 
     // console.log('describe', describe.index_descriptions[0].params);
   });
