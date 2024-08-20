@@ -32,7 +32,7 @@ describe(`Milvus client`, () => {
     await milvusClient.closeConnection();
   });
 
-  it(`should create a grpc client with cert file successfully`, async () => {
+  it(`should create a grpc client with cert file path successfully`, async () => {
     const m1 = new MilvusClient({
       address: IP,
       tls: {
@@ -48,6 +48,24 @@ describe(`Milvus client`, () => {
     expect(await m1.channelPool).toBeDefined();
     expect(m1.tlsMode).toEqual(TLS_MODE.TWO_WAY);
     expect(m1.clientId).toEqual('1');
+  });
+
+  it(`should create a grpc client with cert file successfully`, async () => {
+    const m1s = new MilvusClient({
+      address: IP,
+      tls: {
+        rootCert: readFileSync(`test/cert/ca.pem`),
+        privateKey: readFileSync(`test/cert/client.key`),
+        certChain: readFileSync(`test/cert/client.pem`),
+        serverName: IP,
+      },
+      id: '1',
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(await m1s.channelPool).toBeDefined();
+    expect(m1s.tlsMode).toEqual(TLS_MODE.TWO_WAY);
+    expect(m1s.clientId).toEqual('1');
   });
 
   it(`should create a grpc client without SSL credentials when ssl is false`, async () => {
@@ -196,7 +214,10 @@ describe(`Milvus client`, () => {
 
   it(`Should throw when server is unavailable`, async () => {
     const m10 = new MilvusClient({ address: IP.replace(':19530', ':19539') });
+    // Await the connection promise and assert the error
     await expect(m10.connectPromise).rejects.toThrow('UNAVAILABLE');
+
+    // Sequentially test the other methods, ensuring each is awaited
     await expect(m10.getVersion()).rejects.toThrow('UNAVAILABLE');
     await expect(m10.checkCompatibility()).rejects.toThrow('UNAVAILABLE');
     await expect(m10.checkHealth()).rejects.toThrow('UNAVAILABLE');
