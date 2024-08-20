@@ -196,7 +196,7 @@ describe(`Partition key API`, () => {
       output_fields: ['varChar'],
     });
 
-    expect(res.status.error_code).toEqual(ErrorCode.UnexpectedError);
+    expect(res.status.error_code).toEqual(ErrorCode.IllegalArgument);
   });
 
   it(`Search Collection should be successful`, async () => {
