@@ -183,7 +183,7 @@ export class Index extends Data {
    * @returns {Promise<ListIndexResponse>} A Promise that resolves to an array of strings representing the names of indexes associated with the specified collection.
    * @returns {Object} return.status - An object with properties 'error_code' (number) and 'reason' (string).
    * @returns {Array<string>} return.string - index names
-   * 
+   *
    * @example
    * ```
    * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
@@ -208,6 +208,7 @@ export class Index extends Data {
 
   /**
    * Get the index building state.
+   * @deprecated
    *
    * @param {Object} data - An object with the following properties:
    * @param {string} data.collection_name - The name of the collection for which the index state is to be retrieved.
@@ -229,6 +230,7 @@ export class Index extends Data {
    * console.log(res);
    * ```
    */
+  /* istanbul ignore next */
   async getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse> {
     checkCollectionName(data);
     const promise = await promisify(
