@@ -537,7 +537,7 @@ describe(`Collection API`, () => {
     await milvusClient.releaseCollection({
       collection_name: LOAD_COLLECTION_NAME,
     });
-    const res = await milvusClient.loadCollection({
+    const res = await milvusClient.loadCollectionAsync({
       collection_name: LOAD_COLLECTION_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
