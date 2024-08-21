@@ -593,6 +593,32 @@ describe(`Data.API`, () => {
     });
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // query varchar ids collection
+    const query0 = await milvusClient.query({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
+      expr: 'id != ""',
+    });
+
+    // get first 3 ids
+    const ids = query0.data.slice(0, 3).map(d => d.id);
+    // query by ids
+    const queryVarcharIds = await milvusClient.query({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
+      ids: ids,
+    });
+    expect(queryVarcharIds.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(queryVarcharIds.data.length).toEqual(3);
+  });
+
+  it('delete withouth colleciton name should throw error', async () => {
+    try {
+      await milvusClient.deleteEntities({
+        expr: 'id > 0',
+      } as any);
+    } catch (error) {
+      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+    }
   });
 
   it(`delete by ids should success`, async () => {
