@@ -1,4 +1,5 @@
 import { GrpcTimeOut, resStatusResponse, KeyValuePair } from './Common';
+import { Properties } from './';
 
 // base
 export interface databaseReq extends GrpcTimeOut {
@@ -21,3 +22,9 @@ export interface DescribeDatabaseResponse extends resStatusResponse {
   created_timestamp: number; // created timestamp
   properties: KeyValuePair[]; // properties
 }
+export interface AlterDatabaseRequest extends GrpcTimeOut {
+  db_name: string; // database name
+  db_id?: string; // database id
+  properties: Properties;
+}
+export interface AlterDatabaseResponse extends resStatusResponse {}

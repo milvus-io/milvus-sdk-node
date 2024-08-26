@@ -6,8 +6,11 @@ import {
   DropDatabasesRequest,
   DescribeDatabaseRequest,
   DescribeDatabaseResponse,
+  AlterDatabaseRequest,
+  AlterDatabaseResponse,
   ResStatus,
   promisify,
+  parseToKeyValue,
 } from '../';
 
 export class Database extends BaseClient {
@@ -143,6 +146,41 @@ export class Database extends BaseClient {
       data,
       data.timeout || this.timeout
     );
+    return promise;
+  }
+
+  /**
+   * Modifies database properties.
+   *
+   * @param {AlterDatabaseRequest} data - The request parameters.
+   * @param {string} data.db_name - The name of the database to modify.
+   * @param {Object} data.properties - The properties to modify. For example, to change the TTL, use {"database.replica.number": 18000}.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.alterDatabase({
+   *    database: 'my-db',
+   *    properties: {"database.replica.number": 18000}
+   *  });
+   * ```
+   */
+  async alterDatabase(data: AlterDatabaseRequest): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'AlterDatabase',
+      {
+        db_name: data.db_name,
+        properties: parseToKeyValue(data.properties),
+      },
+      data?.timeout || this.timeout
+    );
+
     return promise;
   }
 }
