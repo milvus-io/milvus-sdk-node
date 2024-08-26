@@ -1,7 +1,7 @@
 import { MilvusClient, ErrorCode, DEFAULT_DB } from '../../milvus';
 import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
 
-let milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+let milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const DEFAULT = 'default';
 const DB_NAME = GENERATE_NAME('database');
 const DB_NAME2 = GENERATE_NAME('database');
@@ -157,6 +157,21 @@ describe(`Database API`, () => {
       db_name: DEFAULT,
     });
     expect(dropCollections.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`alter database should be ok`, async () => {
+    const alter = await milvusClient.alterDatabase({
+      db_name: DEFAULT_DB,
+      properties: { 'database.replica.number': 2 },
+    });
+    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeDatabase({
+      db_name: DEFAULT_DB,
+    });
+    expect(describe.properties).toEqual([
+      { key: 'database.replica.number', value: '2' },
+    ]);
   });
 
   // it(`drop database should be ok`, async () => {
