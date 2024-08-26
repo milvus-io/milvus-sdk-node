@@ -161,16 +161,16 @@ describe(`Database API`, () => {
 
   it(`alter database should be ok`, async () => {
     const alter = await milvusClient.alterDatabase({
-      db_name: DEFAULT_DB,
-      properties: { 'database.replica.number': 2 },
+      db_name: DB_NAME2,
+      properties: { 'database.diskQuota.mb': 2048 },
     });
     expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
 
     const describe = await milvusClient.describeDatabase({
-      db_name: DEFAULT_DB,
+      db_name: DB_NAME2,
     });
     expect(describe.properties).toEqual([
-      { key: 'database.replica.number', value: '2' },
+      { key: 'database.diskQuota.mb', value: '2048' },
     ]);
   });
 
