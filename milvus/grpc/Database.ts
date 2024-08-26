@@ -165,7 +165,7 @@ export class Database extends BaseClient {
    * ```
    *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
    *  const resStatus = await milvusClient.alterDatabase({
-   *    database: 'my-collection',
+   *    database: 'my-db',
    *    properties: {"database.replica.number": 18000}
    *  });
    * ```
