@@ -1,7 +1,7 @@
 import { MilvusClient, ErrorCode, DataType } from '../../milvus';
 import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 const schema = [
   {
@@ -90,7 +90,9 @@ describe(`Partial load API `, () => {
     console.dir(query, { depth: null });
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
     // result should not contain 'array' field
-    expect(Object.keys(query.data[0]).length).toEqual(3);
+    const keys = Object.keys(query.data[0]);
+    expect(keys.length).toEqual(3);
+    expect(keys.includes('array')).toBeFalsy();
   });
 
   it(`search should be successful`, async () => {

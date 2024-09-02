@@ -693,71 +693,62 @@ export const buildSearchRequest = (
     searchHybridReq.data[0].anns_field
   );
 
-  // output fields(reference fields)
-  const default_output_fields: string[] = [];
-
   // Iterate through collection fields, create search request
   for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
     const field = collectionInfo.schema.fields[i];
-    const { name, dataType } = field;
+    const { name } = field;
 
-    // if field  type is vector, build the request
-    if (isVectorType(dataType)) {
-      let req: SearchSimpleReq | (HybridSearchReq & HybridSearchSingleReq) =
-        data as SearchSimpleReq;
+    let req: SearchSimpleReq | (HybridSearchReq & HybridSearchSingleReq) =
+      data as SearchSimpleReq;
 
-      if (isHybridSearch) {
-        const singleReq = searchHybridReq.data.find(d => d.anns_field === name);
-        // if it is hybrid search and no request target is not found, skip
-        if (!singleReq) {
-          continue;
-        }
-        // merge single request with hybrid request
-        req = Object.assign(cloneObj(data), singleReq);
-      } else {
-        // if it is not hybrid search, and we have built one request, skip
-        const skip =
-          requests.length === 1 ||
-          (typeof req.anns_field !== 'undefined' && req.anns_field !== name);
-        if (skip) {
-          continue;
-        }
+    if (isHybridSearch) {
+      const singleReq = searchHybridReq.data.find(d => d.anns_field === name);
+      // if it is hybrid search and no request target is not found, skip
+      if (!singleReq) {
+        continue;
       }
-
-      // get search vectors
-      let searchingVector: VectorTypes | VectorTypes[] = isHybridSearch
-        ? req.data!
-        : searchReq.vectors ||
-          searchSimpleReq.vectors ||
-          searchSimpleReq.vector ||
-          searchSimpleReq.data;
-
-      // format searching vector
-      searchingVector = formatSearchVector(searchingVector, field.dataType!);
-
-      // create search request
-      requests.push({
-        collection_name: req.collection_name,
-        partition_names: req.partition_names || [],
-        output_fields: req.output_fields || default_output_fields,
-        nq: searchReq.nq || searchingVector.length,
-        dsl: searchReq.expr || searchSimpleReq.filter || '',
-        dsl_type: DslType.BoolExprV1,
-        placeholder_group: buildPlaceholderGroupBytes(
-          milvusProto,
-          searchingVector as VectorTypes[],
-          field.dataType!
-        ),
-        search_params: parseToKeyValue(
-          searchReq.search_params || buildSearchParams(req, name)
-        ),
-        consistency_level:
-          req.consistency_level || (collectionInfo.consistency_level as any),
-      });
+      // merge single request with hybrid request
+      req = Object.assign(cloneObj(data), singleReq);
     } else {
-      // if field is not vector, add it to output fields
-      default_output_fields.push(name);
+      // if it is not hybrid search, and we have built one request, skip
+      const skip =
+        requests.length === 1 ||
+        (typeof req.anns_field !== 'undefined' && req.anns_field !== name);
+      if (skip) {
+        continue;
+      }
     }
+
+    // get search vectors
+    let searchingVector: VectorTypes | VectorTypes[] = isHybridSearch
+      ? req.data!
+      : searchReq.vectors ||
+        searchSimpleReq.vectors ||
+        searchSimpleReq.vector ||
+        searchSimpleReq.data;
+
+    // format searching vector
+    searchingVector = formatSearchVector(searchingVector, field.dataType!);
+
+    // create search request
+    requests.push({
+      collection_name: req.collection_name,
+      partition_names: req.partition_names || [],
+      output_fields: req.output_fields || ['*'],
+      nq: searchReq.nq || searchingVector.length,
+      dsl: searchReq.expr || searchSimpleReq.filter || '',
+      dsl_type: DslType.BoolExprV1,
+      placeholder_group: buildPlaceholderGroupBytes(
+        milvusProto,
+        searchingVector as VectorTypes[],
+        field.dataType!
+      ),
+      search_params: parseToKeyValue(
+        searchReq.search_params || buildSearchParams(req, name)
+      ),
+      consistency_level:
+        req.consistency_level || (collectionInfo.consistency_level as any),
+    });
   }
 
   /**
