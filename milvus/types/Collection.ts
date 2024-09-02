@@ -101,6 +101,7 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   enable_dynamic_field?: boolean; // optional, enable dynamic field, default is false
   enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
   properties?: Properties;
+  db_name?: string;
 }
 
 export interface CreateCollectionWithFieldsReq extends BaseCreateCollectionReq {
