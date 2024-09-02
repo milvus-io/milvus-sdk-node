@@ -127,6 +127,8 @@ export interface LoadCollectionReq extends collectionNameReq {
   replica_number?: number; // optional, replica number, default is 1
   resource_groups?: string[]; // optional, resource groups
   refresh?: boolean; // optional, refresh, default is false
+  load_fields?: string[]; // optional, load fields
+  skip_load_dynamic_field?: boolean; // optional, skip load dynamic field, default is false
 }
 export interface ReleaseLoadCollectionReq extends collectionNameReq {}
 
