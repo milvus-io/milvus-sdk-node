@@ -80,6 +80,7 @@ export interface FieldType {
 export interface ShowCollectionsReq extends GrpcTimeOut {
   type?: ShowCollectionsType;
   collection_names?: string[];
+  db_name?: string;
 }
 
 export type Properties = Record<string, string | number | boolean>;
