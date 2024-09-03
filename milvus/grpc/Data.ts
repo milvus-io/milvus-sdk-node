@@ -127,9 +127,13 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.INSERT_CHECK_FIELD_DATA_IS_REQUIRED);
     }
     const { collection_name } = data;
-    const collectionInfo = await this.describeCollection({
-      collection_name,
-    });
+
+    const describeReq = { collection_name };
+    if (data.db_name) {
+      (describeReq as any).db_name = data.db_name;
+    }
+
+    const collectionInfo = await this.describeCollection(describeReq);
 
     if (collectionInfo.status.error_code !== ErrorCode.SUCCESS) {
       throw collectionInfo;
@@ -453,6 +457,10 @@ export class Data extends Collection {
       collectionInfo,
       this.milvusProto
     );
+
+    if (data.db_name) {
+      (request as any).db_name = data.db_name;
+    }
 
     // execute search
     const originSearchResult: SearchRes = await promisify(
@@ -962,11 +970,16 @@ export class Data extends Collection {
   }
 
   async count(data: CountReq): Promise<CountResult> {
-    const queryResult = await this.query({
+    const req: any = {
       collection_name: data.collection_name,
       expr: data.expr || '',
       output_fields: [DEFAULT_COUNT_QUERY_STRING],
-    });
+    };
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+    const queryResult = await this.query(req);
 
     return {
       status: queryResult.status,

@@ -250,13 +250,19 @@ export class Collection extends Database {
   async showCollections(
     data?: ShowCollectionsReq
   ): Promise<ShowCollectionsResponse> {
+    const req: any = {
+      type: data ? data.type : ShowCollectionsType.All,
+      collection_names: data?.collection_names || [],
+    };
+
+    if (data?.db_name) {
+      req.db_name = data.db_name;
+    }
+
     const promise = await promisify(
       this.channelPool,
       'ShowCollections',
-      {
-        type: data ? data.type : ShowCollectionsType.All,
-        collection_names: data?.collection_names || [],
-      },
+      req,
       data?.timeout || this.timeout
     );
     const result: CollectionData[] = [];
@@ -296,13 +302,20 @@ export class Collection extends Database {
    */
   async alterCollection(data: AlterCollectionReq): Promise<ResStatus> {
     checkCollectionName(data);
+
+    const req: any = {
+      collection_name: data.collection_name,
+      properties: parseToKeyValue(data.properties),
+    };
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
     const promise = await promisify(
       this.channelPool,
       'AlterCollection',
-      {
-        collection_name: data.collection_name,
-        properties: parseToKeyValue(data.properties),
-      },
+      req,
       data?.timeout || this.timeout
     );
 
