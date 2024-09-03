@@ -1,5 +1,10 @@
 import { MilvusClient, ErrorCode, DEFAULT_DB } from '../../milvus';
-import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
+import {
+  IP,
+  genCollectionParams,
+  GENERATE_NAME,
+  generateInsertData,
+} from '../tools';
 
 let milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const DEFAULT = 'default';
@@ -78,11 +83,26 @@ describe(`Database API`, () => {
 
   it(`using db_name in API should be ok`, async () => {
     // create collection on another db
+    const params = genCollectionParams({
+      collectionName: COLLECTION_NAME2,
+      dim: [4],
+    });
     const createCollection = await milvusClient.createCollection({
-      ...genCollectionParams({ collectionName: COLLECTION_NAME2, dim: [4] }),
+      ...params,
       db_name: DB_NAME2,
     });
     expect(createCollection.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // gen data
+    const vectors = generateInsertData(params.fields, 5);
+
+    // insert
+    const insert = await milvusClient.insert({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      data: vectors,
+    });
+    expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     // describe collection
     const describeCollection = await milvusClient.describeCollection({
@@ -98,13 +118,76 @@ describe(`Database API`, () => {
       ErrorCode.UnexpectedError
     );
 
+    // alterCollection
+    const alterCollection = await milvusClient.alterCollection({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      properties: { 'collection.segment.rowLimit': 10000 },
+    });
+    expect(alterCollection.error_code).toEqual(ErrorCode.SUCCESS);
+    const describeCollectionAfterAlter = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+    });
+    expect(describeCollectionAfterAlter.properties).toEqual([
+      { key: 'collection.segment.rowLimit', value: '10000' },
+    ]);
+
+    // show collections
+    const showCollections = await milvusClient.showCollections({
+      db_name: DB_NAME2,
+    });
+    expect(showCollections.data.length).toBeGreaterThan(0);
+
+    // create partition
+    const createPartition = await milvusClient.createPartition({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      partition_name: 'partition1',
+    });
+    expect(createPartition.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // show partitions
+    const showPartitions = await milvusClient.showPartitions({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+    });
+    expect(showPartitions.partition_names).toContain('partition1');
+
+    // getCollectionStatistics
+    const getCollectionStatistics = await milvusClient.getCollectionStatistics({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+    });
+    expect(getCollectionStatistics.status.error_code).toEqual(
+      ErrorCode.SUCCESS
+    );
+
     // create index
     const createIndex = await milvusClient.createIndex({
       collection_name: COLLECTION_NAME2,
       db_name: DB_NAME2,
       field_name: 'vector',
+      index_name: 'vector2',
     });
     expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // alter index
+    const alterIndex = await milvusClient.alterIndex({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      index_name: 'vector2',
+      params: { 'mmap.enabled': true },
+    });
+    expect(alterIndex.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // describe index
+    const describeIndex = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      index_name: 'vector2',
+    });
+    expect(describeIndex.index_descriptions[0].index_name).toEqual('vector2');
 
     // load collection
     const loadCollection = await milvusClient.loadCollection({
@@ -112,6 +195,21 @@ describe(`Database API`, () => {
       db_name: DB_NAME2,
     });
     expect(loadCollection.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // query
+    const query = await milvusClient.count({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+    });
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // search
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      data: [1, 2, 3, 4],
+    });
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     // release collection
     const releaseCollection = await milvusClient.releaseCollection({

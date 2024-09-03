@@ -340,14 +340,20 @@ export class Index extends Data {
    */
   async alterIndex(data: AlterIndexReq): Promise<ResStatus> {
     checkCollectionName(data);
+    const req = {
+      collection_name: data.collection_name,
+      index_name: data.index_name,
+      extra_params: parseToKeyValue(data.params),
+    } as any;
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
     const promise = await promisify(
       this.channelPool,
       'AlterIndex',
-      {
-        collection_name: data.collection_name,
-        index_name: data.index_name,
-        extra_params: parseToKeyValue(data.params),
-      },
+      req,
       data.timeout || this.timeout
     );
     return promise;
