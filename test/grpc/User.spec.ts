@@ -76,7 +76,9 @@ describe(`User Api`, () => {
       password: PASSWORD,
     });
     const res = await authClient.listUsers();
-    expect(res.usernames).toEqual(['root', USERNAME]);
+    expect(res.usernames).toContain(USERNAME);
+    expect(res.usernames).toContain('root');
+    expect(res.usernames.length).toEqual(2);
   });
 
   it(`Auth client with token expect success`, async () => {
@@ -86,7 +88,9 @@ describe(`User Api`, () => {
       token: `${USERNAME}:${PASSWORD}`,
     });
     const res = await authClient.listUsers();
-    expect(res.usernames).toEqual(['root', USERNAME]);
+    expect(res.usernames).toContain(USERNAME);
+    expect(res.usernames).toContain('root');
+    expect(res.usernames.length).toEqual(2);
   });
 
   it(`Clean all role privileges`, async () => {
