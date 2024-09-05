@@ -93,6 +93,12 @@ describe(`Partition API`, () => {
     expect(list.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(list.partition_names).toEqual(res.partition_names);
     expect(list.partitionIDs.length).toEqual(res.partitionIDs.length);
+    expect(list.data.length).toEqual(res.data.length);
+    const resultKeys = Object.keys(list.data[0]);
+    expect(resultKeys).toContain('name');
+    expect(resultKeys).toContain('id');
+    expect(resultKeys).toContain('timestamp');
+    expect(resultKeys).toContain('loadedPercentage');
   });
 
   it(

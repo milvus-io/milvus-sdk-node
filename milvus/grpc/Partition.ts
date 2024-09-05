@@ -18,6 +18,7 @@ import {
   formatKeyValueData,
   ErrorCode,
   sleep,
+  PartitionData,
 } from '../';
 
 export class Partition extends Index {
@@ -114,6 +115,16 @@ export class Partition extends Index {
       data,
       data.timeout || this.timeout
     );
+    const result: PartitionData[] = [];
+    promise.partition_names.forEach((name: string, index: number) => {
+      result.push({
+        name,
+        id: promise.partitionIDs[index],
+        timestamp: promise.created_utc_timestamps[index],
+        loadedPercentage: promise.inMemory_percentages[index],
+      });
+    });
+    promise.data = result;
     return promise;
   }
   showPartitions = this.listPartitions;
