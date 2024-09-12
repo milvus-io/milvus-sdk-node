@@ -54,6 +54,7 @@ import {
   CreateCollectionWithFieldsReq,
   CreateCollectionWithSchemaReq,
   FieldSchema,
+  isVectorType,
 } from '../';
 
 /**
@@ -1041,9 +1042,12 @@ export class Collection extends Database {
    *  });
    * ```
    */
-  async getPkFieldName(data: DescribeCollectionReq): Promise<string> {
+  async getPkFieldName(
+    data: DescribeCollectionReq,
+    desc?: DescribeCollectionResponse
+  ): Promise<string> {
     // get collection info
-    const collectionInfo = await this.describeCollection(data);
+    const collectionInfo = desc ? desc : await this.describeCollection(data);
 
     // pk field
     let pkField = '';
@@ -1081,10 +1085,11 @@ export class Collection extends Database {
    * ```
    */
   async getPkFieldType(
-    data: DescribeCollectionReq
+    data: DescribeCollectionReq,
+    desc?: DescribeCollectionResponse
   ): Promise<keyof typeof DataType> {
     // get collection info
-    const collectionInfo = await this.describeCollection(data);
+    const collectionInfo = desc ? desc : await this.describeCollection(data);
 
     // pk field type
     let pkFieldType: keyof typeof DataType = 'Int64';

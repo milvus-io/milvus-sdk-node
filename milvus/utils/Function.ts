@@ -7,6 +7,7 @@ import {
   DEFAULT_MIN_INT64,
   SearchResultData,
   SparseFloatVector,
+  FieldData,
 } from '../';
 import { Pool } from 'generic-pool';
 
@@ -235,4 +236,12 @@ export const getSparseDim = (data: SparseFloatVector[]) => {
     }
   }
   return dim;
+};
+
+// get valid data
+// create a length array with valid data, if the data is undefined or null, return false, otherwise return true
+export const getValidDataArray = (data: FieldData[], length: number) => {
+  return Array.from({ length }).map((_, i) => {
+    return data[i] !== undefined && data[i] !== null;
+  });
 };

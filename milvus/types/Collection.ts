@@ -32,6 +32,7 @@ export interface FieldSchema {
   is_partition_key?: boolean;
   is_dynamic?: boolean;
   is_clustering_key?: boolean;
+  nullable?: boolean;
 }
 
 export interface CollectionData {
@@ -75,6 +76,7 @@ export interface FieldType {
   max_capacity?: TypeParam;
   max_length?: TypeParam;
   default_value?: number | string;
+  nullable?: boolean;
 }
 
 export interface ShowCollectionsReq extends GrpcTimeOut {
