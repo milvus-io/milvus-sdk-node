@@ -575,7 +575,9 @@ export const buildFieldData = (
         ? f16Transformer(rowData[name] as Float16Vector)
         : rowData[name];
     case DataType.JSON:
-      return Buffer.from(JSON.stringify(rowData[name] || {}));
+      return rowData[name]
+        ? Buffer.from(JSON.stringify(rowData[name] || {}))
+        : Buffer.alloc(0);
     case DataType.Array:
       const elementField = { ...field, type: elementType! };
       return buildFieldData(rowData, elementField, transformers);
