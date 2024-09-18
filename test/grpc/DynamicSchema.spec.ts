@@ -26,7 +26,7 @@ const createCollectionParams = genCollectionParams({
   dim: [4],
   vectorType: [DataType.FloatVector],
   autoID: false,
-  partitionKeyEnabled: true,
+  partitionKeyEnabled: false,
   numPartitions,
   enableDynamic: true,
 });
@@ -122,7 +122,7 @@ describe(`Dynamic schema API`, () => {
     const arrays = query.data.map(v => v.int32_array);
     const bools = query.data.map(v => v.bool);
     const floats = query.data.map(v => v.float);
-    console.log('bool', floats, bools, varChars);
+    console.log('varchar', varChars);
     //  some of floats should be equal to DEFAULT_NUM_VALUE
     expect(floats.some(v => Number(v) === DEFAULT_NUM_VALUE)).toEqual(true);
     // some of varChar should be equal to DEFAULT_STRING_VALUE
