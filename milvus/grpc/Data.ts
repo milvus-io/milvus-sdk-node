@@ -291,7 +291,13 @@ export class Data extends Collection {
           break;
       }
 
-      const needValidData = field.nullable || field.default_value;
+      const needValidData =
+        key !== 'vectors' &&
+        (field.nullable === true ||
+          (typeof field.default_value !== 'undefined' &&
+            field.default_value !== null));
+
+            console.log('field', field.name, field.nullable, field.default_value, needValidData);
 
       return {
         type,
@@ -940,7 +946,7 @@ export class Data extends Collection {
     // build field data map
     const fieldsDataMap = buildFieldDataMap(
       promise.fields_data,
-      data.transformers,
+      data.transformers
     );
 
     // For each output field, check if it has a fixed schema or not
