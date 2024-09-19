@@ -214,6 +214,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   shards_num: number;
   num_partitions?: string; // int64
   db_name: string;
+  functions: Functions[];
 }
 
 export interface GetCompactionPlansResponse extends resStatusResponse {

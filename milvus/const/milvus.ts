@@ -117,6 +117,8 @@ export enum MetricType {
   SUBSTRUCTURE = 'SUBSTRUCTURE',
   // SUPERSTRUCTURE superstructure
   SUPERSTRUCTURE = 'SUPERSTRUCTURE',
+  // BM 25
+  BM25 = 'BM25',
 }
 
 // Index types
