@@ -279,6 +279,11 @@ export enum DataType {
   SparseFloatVector = 104,
 }
 
+export enum FunctionType {
+  Unknown = 0,
+  BM25 = 1,
+}
+
 export const VectorDataTypes = [
   DataType.BinaryVector,
   DataType.FloatVector,

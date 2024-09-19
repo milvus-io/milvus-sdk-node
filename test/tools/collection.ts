@@ -1,4 +1,4 @@
-import { DataType, ConsistencyLevelEnum } from '../../milvus';
+import { DataType, ConsistencyLevelEnum, FunctionType } from '../../milvus';
 import { VECTOR_FIELD_NAME, MAX_CAPACITY, MAX_LENGTH } from './const';
 import { GENERATE_VECTOR_NAME } from './';
 
@@ -41,6 +41,7 @@ export const genCollectionParams = (data: {
   enableDynamic?: boolean;
   maxCapacity?: number;
   idType?: DataType;
+  withFunctions?: boolean;
 }) => {
   const {
     collectionName,
@@ -53,6 +54,7 @@ export const genCollectionParams = (data: {
     enableDynamic = false,
     maxCapacity,
     idType = DataType.Int64,
+    withFunctions = false,
   } = data;
 
   const vectorFields = vectorType.map((type, i) => {
@@ -150,6 +152,25 @@ export const genCollectionParams = (data: {
 
   if (partitionKeyEnabled && typeof numPartitions === 'number') {
     params.num_partitions = numPartitions;
+  }
+
+  if (withFunctions) {
+    params.functions = [
+      {
+        name: 'text_bm25_emb',
+        description: 'bm25 function',
+        type: FunctionType.BM25,
+        inputs: ['varChar'],
+        outputs: ['sparse'],
+        params: {
+          bm25_k1: 1.2, // if k1 and b are not specified, default
+          bm25_b: 0.75, // value of 1.2 and 0.75 will be used.
+          analyzer_params: {
+            tokenizer: 'jieba',
+          },
+        },
+      },
+    ];
   }
 
   return params;

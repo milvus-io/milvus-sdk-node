@@ -13,6 +13,7 @@ import {
   LoadState,
   DataTypeMap,
   ShowCollectionsType,
+  FunctionType,
 } from '../';
 
 // returned from milvus
@@ -85,6 +86,15 @@ export interface ShowCollectionsReq extends GrpcTimeOut {
 
 export type Properties = Record<string, string | number | boolean>;
 
+export type Functions = {
+  name: string;
+  description?: string;
+  type: FunctionType;
+  inputs: string[];
+  outputs?: string[];
+  params: Record<string, any>;
+};
+
 export interface BaseCreateCollectionReq extends GrpcTimeOut {
   // collection name
   collection_name: string; // required, collection name
@@ -100,8 +110,9 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   partition_key_field?: string; // optional, partition key field
   enable_dynamic_field?: boolean; // optional, enable dynamic field, default is false
   enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
-  properties?: Properties;
-  db_name?: string;
+  properties?: Properties; // optional, collection properties
+  db_name?: string; // optional, db name
+  functions?: Functions[]; // optionals, doc-in/doc-out functions
 }
 
 export interface CreateCollectionWithFieldsReq extends BaseCreateCollectionReq {
