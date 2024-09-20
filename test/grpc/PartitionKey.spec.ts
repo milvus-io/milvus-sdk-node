@@ -12,7 +12,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP , logLevel: 'debug' });
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME2 = GENERATE_NAME();
 const COLLECTION_NAME3 = GENERATE_NAME();
@@ -132,7 +132,7 @@ describe(`Partition key API`, () => {
 
   it(`it should create collection successfully with partition_key_field set`, async () => {
     const createCollectionParams = genCollectionParams({
-      collectionName: COLLECTION_NAME2,
+      collectionName: COLLECTION_NAME3,
       dim: [4],
       vectorType: [DataType.FloatVector],
       autoID: false,

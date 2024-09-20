@@ -297,8 +297,6 @@ export class Data extends Collection {
           (typeof field.default_value !== 'undefined' &&
             field.default_value !== null));
 
-            console.log('field', field.name, field.nullable, field.default_value, needValidData);
-
       return {
         type,
         field_name: field.name,

@@ -114,6 +114,7 @@ export const genCollectionParams = (data: {
       {
         name: 'default_value',
         nullable: true,
+        default_value: DEFAULT_NUM_VALUE,
         description: 'int64 field',
         data_type: 'Int64', //
       },
@@ -121,7 +122,6 @@ export const genCollectionParams = (data: {
         name: 'varChar',
         description: 'VarChar field',
         data_type: DataType.VarChar,
-        nullable: true,
         default_value: DEFAULT_STRING_VALUE,
         max_length: MAX_LENGTH,
         is_partition_key: partitionKeyEnabled,
