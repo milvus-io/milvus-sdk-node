@@ -90,8 +90,8 @@ export type Functions = {
   name: string;
   description?: string;
   type: FunctionType;
-  inputs: string[];
-  outputs?: string[];
+  input_field_names: string[];
+  output_field_names?: string[];
   params: Record<string, any>;
 };
 

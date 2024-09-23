@@ -160,8 +160,8 @@ export const genCollectionParams = (data: {
         name: 'text_bm25_emb',
         description: 'bm25 function',
         type: FunctionType.BM25,
-        inputs: ['varChar'],
-        outputs: ['sparse'],
+        input_field_names: ['varChar'],
+        output_field_names: ['sparse'],
         params: {
           bm25_k1: 1.2, // if k1 and b are not specified, default
           bm25_b: 0.75, // value of 1.2 and 0.75 will be used.
@@ -171,6 +171,12 @@ export const genCollectionParams = (data: {
         },
       },
     ];
+    params.fields.push({
+      name: 'sparse',
+      description: 'sparse field',
+      data_type: DataType.SparseFloatVector,
+      is_function_output: true,
+    });
   }
 
   return params;
