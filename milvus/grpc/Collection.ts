@@ -178,12 +178,7 @@ export class Collection extends Database {
     // if functions is set, parse its params to key-value pairs, and delete inputs and outputs
     if (data.functions) {
       data.functions.forEach((func: any) => {
-        func.input_field_names = func.input_field_names;
-        func.output_field_names = func.output_field_names;
         func.params = parseToKeyValue(func.params);
-
-        delete func.inputs;
-        delete func.outputs;
       });
     }
 
