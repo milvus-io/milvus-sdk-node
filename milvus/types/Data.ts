@@ -418,7 +418,7 @@ export interface QueryReq extends collectionNameReq {
 
 export interface QueryIteratorReq
   extends Omit<QueryReq, 'ids' | 'offset' | 'limit'> {
-  limit: number;
+  limit?: number;
   batchSize: number;
 }
 
