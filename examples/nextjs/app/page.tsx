@@ -1,8 +1,8 @@
 import { MilvusClient } from '@zilliz/milvus2-sdk-node';
 
-async function getData() {
+async function getData(address: string) {
   const milvusClient = new MilvusClient({
-    address: 'localhost:19530',
+    address,
   });
 
   let res: any = await milvusClient.getMetric({
@@ -17,7 +17,24 @@ async function getData() {
 }
 
 export default async function Home() {
-  const data = await getData();
+  const address = `10.102.5.223:19530`;
 
-  return <>{JSON.stringify(data)}</>;
+  const data = await getData(address);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="max-w-4xl w-full p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-center mb-4">
+          Welcome to Milvus
+        </h1>
+        <h2 className="text-xl font-bold text-center mb-4">{address}</h2>
+
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <pre className="whitespace-pre-wrap text-sm text-gray-800">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        </div>
+      </div>
+    </div>
+  );
 }
