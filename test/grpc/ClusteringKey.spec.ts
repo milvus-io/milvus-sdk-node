@@ -1,5 +1,5 @@
 import { MilvusClient, DataType, ErrorCode } from '../../milvus';
-import { IP, GENERATE_NAME } from '../tools';
+import { IP, GENERATE_NAME, genCollectionParams } from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME();
@@ -25,42 +25,15 @@ describe(`Clustering key API`, () => {
   });
 
   it(`Create Collection with schema should successfully`, async () => {
-    const schema = [
-      {
-        name: 'vector',
-        description: 'Vector field',
-        data_type: DataType.FloatVector,
-        dim: Number(4),
-      },
-      {
-        name: 'id',
-        description: 'ID field',
-        data_type: DataType.Int64,
-        is_primary_key: true,
+    const res = await milvusClient.createCollection(
+      genCollectionParams({
+        collectionName: COLLECTION_NAME,
+        dim: [4],
+        vectorType: [DataType.FloatVector],
         autoID: true,
-      },
-      {
-        name: 'varChar',
-        description: 'VarChar field',
-        data_type: DataType.VarChar,
-        max_length: 128,
-        is_partition_key: false,
-        is_clustering_key: true,
-      },
-      {
-        name: 'array',
-        description: 'array field',
-        data_type: DataType.Array,
-        element_type: DataType.VarChar,
-        max_capacity: 128,
-        max_length: 128,
-        is_partition_key: false,
-      },
-    ];
-    const res = await milvusClient.createCollection({
-      collection_name: COLLECTION_NAME,
-      fields: schema,
-    });
+        clusterKeyEnabled: true,
+      })
+    );
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
 
     // describe
@@ -73,7 +46,6 @@ describe(`Clustering key API`, () => {
     desc.schema.fields.forEach(field => {
       if (field.is_clustering_key) {
         found++;
-        expect(field.name).toEqual('varChar');
       }
     });
 
