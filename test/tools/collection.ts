@@ -37,6 +37,7 @@ export const genCollectionParams = (data: {
   autoID?: boolean;
   fields?: any[];
   partitionKeyEnabled?: boolean;
+  clusterKeyEnabled?: boolean;
   numPartitions?: number;
   enableDynamic?: boolean;
   maxCapacity?: number;
@@ -53,6 +54,7 @@ export const genCollectionParams = (data: {
     enableDynamic = false,
     maxCapacity,
     idType = DataType.Int64,
+    clusterKeyEnabled = false,
   } = data;
 
   const vectorFields = vectorType.map((type, i) => {
@@ -150,6 +152,10 @@ export const genCollectionParams = (data: {
 
   if (partitionKeyEnabled && typeof numPartitions === 'number') {
     params.num_partitions = numPartitions;
+  }
+
+  if (clusterKeyEnabled) {
+    params.clustring_key_field = 'int64';
   }
 
   return params;

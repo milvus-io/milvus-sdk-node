@@ -295,6 +295,7 @@ export const formatCollectionSchema = (
     enable_dynamic_field,
     enableDynamicField,
     partition_key_field,
+    clustring_key_field,
   } = data;
 
   let fields = (data as CreateCollectionWithFieldsReq).fields;
@@ -318,6 +319,8 @@ export const formatCollectionSchema = (
         isPrimaryKey: !!field.is_primary_key,
         isPartitionKey:
           !!field.is_partition_key || field.name === partition_key_field,
+        isClusteringKey:
+          !!field.is_clustering_key || field.name === clustring_key_field,
       };
 
       // if element type exist and
