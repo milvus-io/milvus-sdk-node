@@ -301,6 +301,7 @@ describe('utils/format', () => {
           dataType: 5,
           isPrimaryKey: true,
           isPartitionKey: false,
+          isClusteringKey: false,
         },
         {
           typeParams: [
@@ -317,6 +318,7 @@ describe('utils/format', () => {
           dataType: 101,
           isPrimaryKey: false,
           isPartitionKey: false,
+          isClusteringKey: false,
         },
         {
           typeParams: [
@@ -334,6 +336,7 @@ describe('utils/format', () => {
           isPrimaryKey: false,
           isPartitionKey: false,
           elementType: 5,
+          isClusteringKey: false,
         },
       ],
     };
@@ -866,7 +869,7 @@ describe('utils/format', () => {
       describeCollectionResponse,
       milvusProto
     );
-    console.dir(searchRequest, { depth: null });
+    // console.dir(searchRequest, { depth: null });
     expect(searchRequest.isHybridSearch).toEqual(true);
     expect(searchRequest.request.collection_name).toEqual('test');
     expect(searchRequest.request.output_fields).toEqual(['vector', 'vector1']);
