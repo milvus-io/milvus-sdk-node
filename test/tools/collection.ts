@@ -136,7 +136,7 @@ export const genCollectionParams = (data: {
         name: 'int32_array',
         description: 'int array field',
         data_type: DataType.Array,
-        // nullable: true,
+        nullable: true,
         element_type: 'Int32',
         max_capacity: maxCapacity || MAX_CAPACITY,
       },

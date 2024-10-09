@@ -122,7 +122,7 @@ describe(`Dynamic schema API`, () => {
     const arrays = query.data.map(v => v.int32_array);
     const bools = query.data.map(v => v.bool);
     const floats = query.data.map(v => v.float);
-    console.log('varchar', varChars);
+    console.dir(arrays, { depth: null });
     //  some of floats should be equal to DEFAULT_NUM_VALUE
     expect(floats.some(v => Number(v) === DEFAULT_NUM_VALUE)).toEqual(true);
     // some of varChar should be equal to DEFAULT_STRING_VALUE
@@ -135,6 +135,8 @@ describe(`Dynamic schema API`, () => {
     expect(jsons.some(v => v === null)).toEqual(true);
     // some of bools should be null
     expect(bools.some(v => v === null)).toEqual(true);
+    // some of array should be null
+    expect(arrays.some(v => v === null)).toEqual(true);
   });
 
   it(`search with dynamic field should success`, async () => {
