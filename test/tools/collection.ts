@@ -157,7 +157,7 @@ export const genCollectionParams = (data: {
   if (withFunctions) {
     params.functions = [
       {
-        name: 'text_bm25_emb',
+        name: 'function_text_field',
         description: 'bm25 function',
         type: FunctionType.BM25,
         input_field_names: ['varChar'],

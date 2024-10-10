@@ -22,7 +22,7 @@ export interface FieldSchema {
   index_params: KeyValuePair[];
   fieldID: string | number;
   name: string;
-  is_primary_key?: boolean;
+  is_primary_key: boolean;
   description: string;
   data_type: keyof typeof DataType;
   autoID: boolean;
@@ -30,9 +30,11 @@ export interface FieldSchema {
   element_type?: keyof typeof DataType;
   default_value?: number | string;
   dataType: DataType;
-  is_partition_key?: boolean;
-  is_dynamic?: boolean;
-  is_clustering_key?: boolean;
+  is_partition_key: boolean;
+  is_dynamic: boolean;
+  is_clustering_key: boolean;
+  is_function_output: boolean;
+  nullable: boolean;
 }
 
 export interface CollectionData {
@@ -68,6 +70,7 @@ export interface FieldType {
   element_type?: DataType | keyof typeof DataTypeMap;
   is_primary_key?: boolean;
   is_partition_key?: boolean;
+  is_function_output?: boolean;
   type_params?: {
     [key: string]: TypeParam;
   };
@@ -86,7 +89,7 @@ export interface ShowCollectionsReq extends GrpcTimeOut {
 
 export type Properties = Record<string, string | number | boolean>;
 
-export type Functions = {
+export type Function = {
   name: string;
   description?: string;
   type: FunctionType;
@@ -112,7 +115,7 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
   properties?: Properties; // optional, collection properties
   db_name?: string; // optional, db name
-  functions?: Functions[]; // optionals, doc-in/doc-out functions
+  functions?: Function[]; // optionals, doc-in/doc-out functions
 }
 
 export interface CreateCollectionWithFieldsReq extends BaseCreateCollectionReq {
@@ -214,7 +217,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   shards_num: number;
   num_partitions?: string; // int64
   db_name: string;
-  functions: Functions[];
+  functions: Function[];
 }
 
 export interface GetCompactionPlansResponse extends resStatusResponse {

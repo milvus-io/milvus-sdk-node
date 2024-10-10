@@ -54,43 +54,52 @@ describe(`Functions schema API`, () => {
       collection_name: COLLECTION,
     });
     console.dir(describe, { depth: null });
-    // expect(describe.schema.enable_dynamic_field).toEqual(true);
+    // expect the 'sparse' field to be created
+    expect(describe.schema.fields.length).toEqual(
+      createCollectionParams.fields.length
+    );
+    // extract the 'sparse' field
+    const sparse = describe.schema.fields.find(
+      field => field.is_function_output
+    );
+    // expect the 'sparse' field's name to be 'sparse'
+    expect(sparse!.name).toEqual('sparse');
   });
 
-  // it(`Insert data with function field should success`, async () => {
-  //   const data = generateInsertData(
-  //     [...createCollectionParams.fields, ...dynamicFields],
-  //     20
-  //   );
+  it(`Insert data with function field should success`, async () => {
+    const data = generateInsertData(
+      [...createCollectionParams.fields, ...dynamicFields],
+      10
+    );
 
-  //   const insert = await milvusClient.insert({
-  //     collection_name: COLLECTION,
-  //     fields_data: data,
-  //   });
+    const insert = await milvusClient.insert({
+      collection_name: COLLECTION,
+      fields_data: data,
+    });
 
-  //   expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
+    expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
-  // it(`Create index on function output field should success`, async () => {
-  //   // create index
-  //   const createIndex = await milvusClient.createIndex({
-  //     collection_name: COLLECTION,
-  //     index_name: 't',
-  //     field_name: 'function_output',
-  //     index_type: 'SPARSE_INVERTED_INDEX',
-  //     metric_type: 'BM25',
-  //     params: { drop_ratio_build: 0.3, bm25_k1: 1.25, bm25_b: 0.8 },
-  //   });
+  it(`Create index on function output field should success`, async () => {
+    // create index
+    const createIndex = await milvusClient.createIndex({
+      collection_name: COLLECTION,
+      index_name: 't',
+      field_name: 'sparse',
+      index_type: 'SPARSE_INVERTED_INDEX',
+      metric_type: 'BM25',
+      params: { drop_ratio_build: 0.3, bm25_k1: 1.25, bm25_b: 0.8 },
+    });
 
-  //   expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
 
-  //   // load
-  //   const load = await milvusClient.loadCollectionSync({
-  //     collection_name: COLLECTION,
-  //   });
+    // load
+    const load = await milvusClient.loadCollection({
+      collection_name: COLLECTION,
+    });
 
-  //   expect(load.error_code).toEqual(ErrorCode.SUCCESS);
-  // });
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
   // it(`query with function output field should success`, async () => {
   //   // query

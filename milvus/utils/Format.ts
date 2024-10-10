@@ -69,7 +69,10 @@ export const parseToKeyValue = (data?: {
 }): KeyValuePair[] => {
   return data
     ? Object.keys(data).reduce(
-        (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
+        (pre: any[], cur: string) => [
+          ...pre,
+          { key: cur, value: String(data[cur]) },
+        ],
         []
       )
     : [];
@@ -287,7 +290,7 @@ export const cloneObj = <T>(obj: T): T => {
  */
 export const formatCollectionSchema = (
   data: CreateCollectionReq,
-  fieldSchemaType: Type
+  schemaTypes: Record<string, Type>
 ): { [k: string]: any } => {
   const {
     collection_name,
@@ -295,6 +298,7 @@ export const formatCollectionSchema = (
     enable_dynamic_field,
     enableDynamicField,
     partition_key_field,
+    functions,
   } = data;
 
   let fields = (data as CreateCollectionWithFieldsReq).fields;
@@ -309,23 +313,29 @@ export const formatCollectionSchema = (
     enableDynamicField: !!enableDynamicField || !!enable_dynamic_field,
     fields: fields.map(field => {
       // Assign the typeParams property to the result of parseToKeyValue(type_params).
-      const { type_params, ...rest } = assignTypeParams(field);
+      const {
+        type_params,
+        data_type,
+        element_type,
+        is_function_output,
+        is_partition_key,
+        is_primary_key,
+        ...rest
+      } = assignTypeParams(field);
       const dataType = convertToDataType(field.data_type);
       const createObj: any = {
         ...rest,
         typeParams: parseToKeyValue(type_params),
         dataType,
-        isPrimaryKey: !!field.is_primary_key,
+        isPrimaryKey: !!is_primary_key,
         isPartitionKey:
-          !!field.is_partition_key || field.name === partition_key_field,
+          !!is_partition_key || field.name === partition_key_field,
+        isFunctionOutput: !!is_function_output,
       };
 
       // if element type exist and
-      if (
-        dataType === DataType.Array &&
-        typeof field.element_type !== 'undefined'
-      ) {
-        createObj.elementType = convertToDataType(field.element_type);
+      if (dataType === DataType.Array && typeof element_type !== 'undefined') {
+        createObj.elementType = convertToDataType(element_type);
       }
 
       if (typeof field.default_value !== 'undefined') {
@@ -335,9 +345,23 @@ export const formatCollectionSchema = (
           [dataKey]: field.default_value,
         };
       }
-      return fieldSchemaType.create(createObj);
+      return schemaTypes.fieldSchemaType.create(createObj);
     }),
-  };
+    functions: [],
+  } as any;
+
+  // if functions is set, parse its params to key-value pairs, and delete inputs and outputs
+  if (functions) {
+    payload.functions = functions.map((func: any) => {
+      const { input_field_names, output_field_names, ...rest } = func;
+      return schemaTypes.functionSchemaType.create({
+        ...rest,
+        inputFieldNames: input_field_names,
+        outputFieldNames: output_field_names,
+        params: parseToKeyValue(func.params),
+      });
+    });
+  }
 
   return payload;
 };
