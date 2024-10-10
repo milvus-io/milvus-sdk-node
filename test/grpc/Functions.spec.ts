@@ -1,9 +1,4 @@
-import {
-  MilvusClient,
-  DataType,
-  ErrorCode,
-  ConsistencyLevelEnum,
-} from '../../milvus';
+import { MilvusClient, DataType, ErrorCode } from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -12,7 +7,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'Functions',
@@ -64,6 +59,13 @@ describe(`Functions schema API`, () => {
     );
     // expect the 'sparse' field's name to be 'sparse'
     expect(sparse!.name).toEqual('sparse');
+
+    // expect functions are in the schema
+    expect(describe.schema.functions.length).toEqual(1);
+    expect(describe.schema.functions[0].name).toEqual('bm25');
+    expect(describe.schema.functions[0].input_field_names).toEqual(['varChar']);
+    expect(describe.schema.functions[0].output_field_names).toEqual(['sparse']);
+    expect(describe.schema.functions[0].type).toEqual('BM25');
   });
 
   it(`Insert data with function field should success`, async () => {

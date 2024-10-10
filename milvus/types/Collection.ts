@@ -199,6 +199,7 @@ export interface CollectionSchema {
   enable_dynamic_field: boolean;
   autoID: boolean;
   fields: FieldSchema[];
+  functions: Function[];
 }
 
 export interface DescribeCollectionResponse extends TimeStamp {
@@ -217,7 +218,6 @@ export interface DescribeCollectionResponse extends TimeStamp {
   shards_num: number;
   num_partitions?: string; // int64
   db_name: string;
-  functions: Function[];
 }
 
 export interface GetCompactionPlansResponse extends resStatusResponse {

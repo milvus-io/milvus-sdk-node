@@ -157,18 +157,12 @@ export const genCollectionParams = (data: {
   if (withFunctions) {
     params.functions = [
       {
-        name: 'function_text_field',
+        name: 'bm25',
         description: 'bm25 function',
         type: FunctionType.BM25,
         input_field_names: ['varChar'],
         output_field_names: ['sparse'],
-        params: {
-          bm25_k1: 1.2, // if k1 and b are not specified, default
-          bm25_b: 0.75, // value of 1.2 and 0.75 will be used.
-          analyzer_params: {
-            tokenizer: 'jieba',
-          },
-        },
+        params: {},
       },
     ];
     params.fields.push({
