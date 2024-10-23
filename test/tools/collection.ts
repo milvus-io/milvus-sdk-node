@@ -1,5 +1,10 @@
-import { DataType, ConsistencyLevelEnum, FunctionType } from '../../milvus';
-import { VECTOR_FIELD_NAME, MAX_CAPACITY, MAX_LENGTH } from './const';
+import {
+  DataType,
+  ConsistencyLevelEnum,
+  FunctionType,
+  Function,
+} from '../../milvus';
+import { MAX_CAPACITY, MAX_LENGTH } from './const';
 import { GENERATE_VECTOR_NAME } from './';
 
 export const dynamicFields = [
@@ -41,7 +46,7 @@ export const genCollectionParams = (data: {
   enableDynamic?: boolean;
   maxCapacity?: number;
   idType?: DataType;
-  withFunctions?: boolean;
+  functions?: Function[];
 }) => {
   const {
     collectionName,
@@ -54,7 +59,7 @@ export const genCollectionParams = (data: {
     enableDynamic = false,
     maxCapacity,
     idType = DataType.Int64,
-    withFunctions = false,
+    functions,
   } = data;
 
   const vectorFields = vectorType.map((type, i) => {
@@ -117,6 +122,7 @@ export const genCollectionParams = (data: {
         data_type: DataType.VarChar,
         max_length: MAX_LENGTH,
         is_partition_key: partitionKeyEnabled,
+        enable_tokenizer: true,
       },
       {
         name: 'json',
@@ -154,23 +160,8 @@ export const genCollectionParams = (data: {
     params.num_partitions = numPartitions;
   }
 
-  if (withFunctions) {
-    params.functions = [
-      {
-        name: 'bm25',
-        description: 'bm25 function',
-        type: FunctionType.BM25,
-        input_field_names: ['varChar'],
-        output_field_names: ['sparse'],
-        params: {},
-      },
-    ];
-    params.fields.push({
-      name: 'sparse',
-      description: 'sparse field',
-      data_type: DataType.SparseFloatVector,
-      is_function_output: true,
-    });
+  if (functions && functions?.length > 0) {
+    params.functions = functions;
   }
 
   return params;

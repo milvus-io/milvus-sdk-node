@@ -1,4 +1,11 @@
-import { MilvusClient, DataType, ErrorCode } from '../../milvus';
+import {
+  MilvusClient,
+  DataType,
+  ErrorCode,
+  MetricType,
+  ConsistencyLevelEnum,
+  FunctionType,
+} from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -7,7 +14,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'Functions',
@@ -23,7 +30,38 @@ const createCollectionParams = genCollectionParams({
   partitionKeyEnabled: true,
   numPartitions,
   enableDynamic: true,
-  withFunctions: true,
+  fields: [
+    {
+      name: 'sparse',
+      description: 'sparse field',
+      data_type: DataType.SparseFloatVector,
+      is_function_output: true,
+    },
+    {
+      name: 'sparse2',
+      description: 'sparse field2',
+      data_type: DataType.SparseFloatVector,
+      is_function_output: true,
+    },
+  ],
+  functions: [
+    {
+      name: 'bm25f1',
+      description: 'bm25 function',
+      type: FunctionType.BM25,
+      input_field_names: ['varChar'],
+      output_field_names: ['sparse'],
+      params: {},
+    },
+    {
+      name: 'bm25f2',
+      description: 'bm25 function',
+      type: FunctionType.BM25,
+      input_field_names: ['varChar'],
+      output_field_names: ['sparse2'],
+      params: {},
+    },
+  ],
 });
 
 describe(`Functions schema API`, () => {
@@ -48,7 +86,6 @@ describe(`Functions schema API`, () => {
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION,
     });
-    console.dir(describe, { depth: null });
     // expect the 'sparse' field to be created
     expect(describe.schema.fields.length).toEqual(
       createCollectionParams.fields.length
@@ -61,11 +98,17 @@ describe(`Functions schema API`, () => {
     expect(sparse!.name).toEqual('sparse');
 
     // expect functions are in the schema
-    expect(describe.schema.functions.length).toEqual(1);
-    expect(describe.schema.functions[0].name).toEqual('bm25');
+    expect(describe.schema.functions.length).toEqual(2);
+    expect(describe.schema.functions[0].name).toEqual('bm25f1');
     expect(describe.schema.functions[0].input_field_names).toEqual(['varChar']);
     expect(describe.schema.functions[0].output_field_names).toEqual(['sparse']);
     expect(describe.schema.functions[0].type).toEqual('BM25');
+    expect(describe.schema.functions[1].name).toEqual('bm25f2');
+    expect(describe.schema.functions[1].input_field_names).toEqual(['varChar']);
+    expect(describe.schema.functions[1].output_field_names).toEqual([
+      'sparse2',
+    ]);
+    expect(describe.schema.functions[1].type).toEqual('BM25');
   });
 
   it(`Insert data with function field should success`, async () => {
@@ -84,16 +127,36 @@ describe(`Functions schema API`, () => {
 
   it(`Create index on function output field should success`, async () => {
     // create index
-    const createIndex = await milvusClient.createIndex({
+    const createVectorIndex = await milvusClient.createIndex({
       collection_name: COLLECTION,
       index_name: 't',
+      field_name: 'vector',
+      index_type: 'HNSW',
+      metric_type: MetricType.COSINE,
+      params: { M: 4, efConstruction: 8 },
+    });
+
+    const createIndex = await milvusClient.createIndex({
+      collection_name: COLLECTION,
+      index_name: 't2',
       field_name: 'sparse',
       index_type: 'SPARSE_INVERTED_INDEX',
       metric_type: 'BM25',
       params: { drop_ratio_build: 0.3, bm25_k1: 1.25, bm25_b: 0.8 },
     });
 
+    const createIndex2 = await milvusClient.createIndex({
+      collection_name: COLLECTION,
+      index_name: 't3',
+      field_name: 'sparse2',
+      index_type: 'SPARSE_INVERTED_INDEX',
+      metric_type: 'BM25',
+      params: { drop_ratio_build: 0.3, bm25_k1: 1.25, bm25_b: 0.8 },
+    });
+
+    expect(createVectorIndex.error_code).toEqual(ErrorCode.SUCCESS);
     expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(createIndex2.error_code).toEqual(ErrorCode.SUCCESS);
 
     // load
     const load = await milvusClient.loadCollection({
@@ -103,54 +166,69 @@ describe(`Functions schema API`, () => {
     expect(load.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  // it(`query with function output field should success`, async () => {
-  //   // query
-  //   const query = await milvusClient.query({
-  //     collection_name: COLLECTION,
-  //     limit: 10,
-  //     expr: 'id > 0',
-  //     output_fields: [
-  //       'json',
-  //       'vector',
-  //       'id',
-  //       'dynamic_int64',
-  //       'dynamic_varChar',
-  //       'function_output',
-  //     ],
-  //     consistency_level: ConsistencyLevelEnum.Session,
-  //   });
+  it(`query with function output field should success`, async () => {
+    // query
+    const query = await milvusClient.query({
+      collection_name: COLLECTION,
+      limit: 10,
+      expr: 'id > 0',
+      output_fields: ['vector', 'id', 'varChar', 'sparse', 'sparse2'],
+      consistency_level: ConsistencyLevelEnum.Strong,
+    });
 
-  //   expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
-  //   expect(query.data.length).toEqual(10);
-  // });
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(query.data.length).toEqual(10);
+    // data should have 'sparse' field
+    expect(query.data[0].hasOwnProperty('sparse')).toBeTruthy();
+    // data should have 'sparse2' field
+    expect(query.data[0].hasOwnProperty('sparse2')).toBeTruthy();
+  });
 
-  // it(`search with function field should success`, async () => {
-  //   // search
-  //   const search = await milvusClient.search({
-  //     collection_name: COLLECTION,
-  //     limit: 10,
-  //     data: [
-  //       [1, 2, 3, 4],
-  //       [1, 2, 3, 4],
-  //     ],
-  //     expr: 'id > 0',
-  //     output_fields: ['*'],
-  //     consistency_level: ConsistencyLevelEnum.Session,
-  //   });
+  it(`search with varchar should success`, async () => {
+    // search nq = 1
+    const search = await milvusClient.search({
+      collection_name: COLLECTION,
+      limit: 10,
+      data: 'apple',
+      anns_field: 'sparse',
+      output_fields: ['*'],
+      params: { drop_ratio_search: 0.6 },
+      consistency_level: ConsistencyLevelEnum.Strong,
+    });
 
-  //   expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
-  //   expect(search.results.length).toEqual(2);
-  //   expect(search.results[0].length).toEqual(10);
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
 
-  //   // search
-  //   const search2 = await milvusClient.search({
-  //     collection_name: COLLECTION,
-  //     limit: 10,
-  //     data: [1, 2, 3, 4],
-  //     expr: 'id > 0',
-  //     output_fields: ['json', 'id', 'dynamic_int64', 'function_output'],
-  //   });
-  //   expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
-  //   expect(search2.results.length).toEqual(10);
-  // });
+    // nq > 1
+    const search2 = await milvusClient.search({
+      collection_name: COLLECTION,
+      limit: 10,
+      data: ['apple', 'banana'],
+      anns_field: 'sparse',
+      output_fields: ['*'],
+      params: { drop_ratio_search: 0.6 },
+      consistency_level: ConsistencyLevelEnum.Strong,
+    });
+
+    expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // multiple search
+    const search3 = await milvusClient.search({
+      collection_name: COLLECTION,
+      limit: 10,
+      data: [
+        {
+          data: 'apple',
+          anns_field: 'sparse',
+          params: { nprobe: 2 },
+        },
+        {
+          data: [1, 2, 3, 4],
+          anns_field: 'vector',
+        },
+      ],
+      consistency_level: ConsistencyLevelEnum.Strong,
+    });
+
+    expect(search3.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 });

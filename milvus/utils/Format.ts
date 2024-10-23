@@ -41,6 +41,10 @@ import {
   f32ArrayToF16Bytes,
   bf16BytesToF32Array,
   f16BytesToF32Array,
+  TypeParam,
+  SearchDataType,
+  FieldSchema,
+  SearchMultipleDataType,
 } from '../';
 
 /**
@@ -69,10 +73,7 @@ export const parseToKeyValue = (data?: {
 }): KeyValuePair[] => {
   return data
     ? Object.keys(data).reduce(
-        (pre: any[], cur: string) => [
-          ...pre,
-          { key: cur, value: String(data[cur]) },
-        ],
+        (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
         []
       )
     : [];
@@ -191,21 +192,34 @@ export const formatAddress = (address: string) => {
  */
 export const assignTypeParams = (
   field: FieldType,
-  typeParamKeys: string[] = ['dim', 'max_length', 'max_capacity']
+  typeParamKeys: string[] = [
+    'dim',
+    'max_length',
+    'max_capacity',
+    'enable_match',
+    'enable_tokenizer',
+    'tokenizer_params',
+  ]
 ) => {
   let newField = cloneObj<FieldType>(field);
   typeParamKeys.forEach(key => {
     if (newField.hasOwnProperty(key)) {
       // if the property exists in the field object, assign it to the type_params object
       newField.type_params = newField.type_params || {};
-      newField.type_params[key] = String(newField[key as keyof FieldType]);
+      newField.type_params[key] =
+        typeof newField[key as keyof FieldType] !== 'object'
+          ? String(newField[key as keyof FieldType] ?? '')
+          : (newField[key as keyof FieldType] as TypeParam);
       // delete the property from the field object
       delete newField[key as keyof FieldType];
     }
 
     if (newField.type_params && newField.type_params[key]) {
-      // if the property already exists in the type_params object, convert it to a string
-      newField.type_params[key] = String(newField.type_params[key]);
+      // if the property already exists in the type_params object, convert it to a string,
+      newField.type_params[key] =
+        typeof newField.type_params[key] !== 'object'
+          ? String(newField.type_params[key])
+          : newField.type_params[key];
     }
   });
   return newField;
@@ -269,7 +283,7 @@ export const convertToDataType = (
   throw new Error(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT);
 };
 
-/**
+/**dd
  * Creates a deep copy of the provided object using JSON.parse and JSON.stringify.
  * Note that this function is not efficient and may cause performance issues if used with large or complex objects. It also does not handle cases where the object being cloned contains functions or prototype methods.
  *
@@ -326,6 +340,7 @@ export const formatCollectionSchema = (
       const createObj: any = {
         ...rest,
         typeParams: parseToKeyValue(type_params),
+        data_type, // compatibility with old version
         dataType,
         isPrimaryKey: !!is_primary_key,
         isPartitionKey:
@@ -336,6 +351,7 @@ export const formatCollectionSchema = (
       // if element type exist and
       if (dataType === DataType.Array && typeof element_type !== 'undefined') {
         createObj.elementType = convertToDataType(element_type);
+        createObj.element_type = element_type; // compatibility with old version
       }
 
       if (typeof field.default_value !== 'undefined') {
@@ -739,7 +755,9 @@ export const buildSearchRequest = (
         // merge single request with hybrid request
         req = Object.assign(cloneObj(data), singleReq);
       } else {
-        // if it is not hybrid search, and we have built one request, skip
+        // if it is not hybrid search, and we have built one request
+        // or user has specified an anns_field to search and is not matching
+        //  skip
         const skip =
           requests.length === 1 ||
           (typeof req.anns_field !== 'undefined' && req.anns_field !== name);
@@ -748,29 +766,29 @@ export const buildSearchRequest = (
         }
       }
 
-      // get search vectors
-      let searchingVector: VectorTypes | VectorTypes[] = isHybridSearch
+      // get search data
+      let searchData: SearchDataType | SearchMultipleDataType = isHybridSearch
         ? req.data!
         : searchReq.vectors ||
           searchSimpleReq.vectors ||
           searchSimpleReq.vector ||
           searchSimpleReq.data;
 
-      // format searching vector
-      searchingVector = formatSearchVector(searchingVector, field.dataType!);
+      // format searching data
+      searchData = formatSearchData(searchData, field);
 
       // create search request
       requests.push({
         collection_name: req.collection_name,
         partition_names: req.partition_names || [],
         output_fields: req.output_fields || default_output_fields,
-        nq: searchReq.nq || searchingVector.length,
+        nq: searchReq.nq || searchData.length,
         dsl: searchReq.expr || searchSimpleReq.filter || '',
         dsl_type: DslType.BoolExprV1,
         placeholder_group: buildPlaceholderGroupBytes(
           milvusProto,
-          searchingVector as VectorTypes[],
-          field.dataType!
+          searchData as VectorTypes[],
+          field
         ),
         search_params: parseToKeyValue(
           searchReq.search_params || buildSearchParams(req, name)
@@ -906,28 +924,36 @@ export const formatSearchResult = (
 
 /**
  * Formats the search vector to match a specific data type.
- * @param {VectorTypes | VectorTypes[]} searchVector - The search vector or array of vectors to be formatted.
+ * @param {SearchDataType[]} searchVector - The search vector or array of vectors to be formatted.
  * @param {DataType} dataType - The specified data type.
  * @returns {VectorTypes[]} The formatted search vector or array of vectors.
  */
-export const formatSearchVector = (
-  searchVector: VectorTypes | VectorTypes[],
-  dataType: DataType
-): VectorTypes[] => {
+export const formatSearchData = (
+  searchData: SearchDataType | SearchMultipleDataType,
+  field: FieldSchema
+): SearchMultipleDataType => {
+  const { dataType, is_function_output } = field;
+
+  if (is_function_output) {
+    return (
+      Array.isArray(searchData) ? searchData : [searchData]
+    ) as SearchMultipleDataType;
+  }
+
   switch (dataType) {
     case DataType.FloatVector:
     case DataType.BinaryVector:
     case DataType.Float16Vector:
     case DataType.BFloat16Vector:
-      if (!Array.isArray(searchVector)) {
-        return [searchVector] as VectorTypes[];
+      if (!Array.isArray(searchData)) {
+        return [searchData] as VectorTypes[];
       }
     case DataType.SparseFloatVector:
-      const type = getSparseFloatVectorType(searchVector as SparseVectorArray);
+      const type = getSparseFloatVectorType(searchData as SparseVectorArray);
       if (type !== 'unknown') {
-        return [searchVector] as VectorTypes[];
+        return [searchData] as VectorTypes[];
       }
     default:
-      return searchVector as VectorTypes[];
+      return searchData as VectorTypes[];
   }
 };

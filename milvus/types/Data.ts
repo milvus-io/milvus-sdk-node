@@ -282,7 +282,7 @@ export interface SearchParam {
   group_by_field?: string; // group by field
 }
 
-// old search api parameter type
+// old search api parameter type, deprecated
 export interface SearchReq extends collectionNameReq {
   anns_field?: string; // your vector field name
   partition_names?: string[]; // partition names
@@ -307,13 +307,18 @@ export interface SearchIteratorReq
   limit: number;
 }
 
+export type SearchTextType = string | string[];
+export type SearchVectorType = VectorTypes | VectorTypes[];
+export type SearchDataType = SearchVectorType | SearchTextType;
+export type SearchMultipleDataType = VectorTypes[] | SearchTextType[];
+
 // simplified search api parameter type
 export interface SearchSimpleReq extends collectionNameReq {
   partition_names?: string[]; // partition names
-  anns_field?: string; // your vector field name
-  data?: VectorTypes[] | VectorTypes; // vector to search
-  vector?: VectorTypes; // alias for data
-  vectors?: VectorTypes[]; // alias for data
+  anns_field?: string; // your vector field name，rquired if you are searching on multiple vector fields collection
+  data?: SearchDataType; // vector or text to search
+  vector?: VectorTypes; // alias for data, deprecated
+  vectors?: VectorTypes[]; // alias for data, deprecated
   output_fields?: string[];
   limit?: number; // how many results you want
   topk?: number; // limit alias
@@ -333,7 +338,7 @@ export type HybridSearchSingleReq = Pick<
   SearchParam,
   'anns_field' | 'ignore_growing' | 'group_by_field'
 > & {
-  data: VectorTypes[] | VectorTypes; // vector to search
+  data: SearchDataType; // vector to search
   expr?: string; // filter expression
   params?: keyValueObj; // extra search parameters
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors

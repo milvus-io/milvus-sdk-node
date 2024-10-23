@@ -59,7 +59,7 @@ export interface ReplicaInfo {
   node_ids: string[];
 }
 
-export type TypeParam = string | number;
+export type TypeParam = string | number | Record<string, any>;
 export type TypeParamKey = 'dim' | 'max_length' | 'max_capacity';
 
 // create collection
@@ -79,6 +79,9 @@ export interface FieldType {
   max_capacity?: TypeParam;
   max_length?: TypeParam;
   default_value?: number | string;
+  enable_match?: boolean;
+  tokenizer_params?: Record<string, any>;
+  enable_tokenizer?: boolean;
 }
 
 export interface ShowCollectionsReq extends GrpcTimeOut {
@@ -218,6 +221,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   shards_num: number;
   num_partitions?: string; // int64
   db_name: string;
+  functions: Function[];
 }
 
 export interface GetCompactionPlansResponse extends resStatusResponse {

@@ -26,8 +26,9 @@ import {
   buildFieldData,
   formatSearchResult,
   Field,
-  formatSearchVector,
+  formatSearchData,
   buildSearchRequest,
+  FieldSchema,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -166,12 +167,15 @@ describe('utils/format', () => {
     expect(methodName).toBe('123');
   });
 
-  it('should assign properties with keys `dim` or `max_length` to the `type_params` object and delete them from the `field` object', () => {
+  it('should assign properties with keys `dim` or `max_length` to the `type_params`, `enable_match`, `tokenizer_params`, `enable_tokenizer` object and delete them from the `field` object', () => {
     const field = {
       name: 'vector',
       data_type: 'BinaryVector',
       dim: 128,
       max_length: 100,
+      enable_match: true,
+      tokenizer_params: { key: 'value' },
+      enable_tokenizer: true,
     } as FieldType;
     const expectedOutput = {
       name: 'vector',
@@ -179,6 +183,9 @@ describe('utils/format', () => {
       type_params: {
         dim: '128',
         max_length: '100',
+        enable_match: 'true',
+        tokenizer_params: { key: 'value' },
+        enable_tokenizer: 'true',
       },
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);
@@ -261,7 +268,7 @@ describe('utils/format', () => {
         },
         {
           name: 'testField2',
-          data_type: DataType.FloatVector,
+          data_type: 'FloatVector',
           is_primary_key: false,
           description: 'Test VECTOR field',
           dim: 64,
@@ -274,7 +281,7 @@ describe('utils/format', () => {
           element_type: DataType.Int64,
         },
       ],
-    };
+    } as any;
 
     const schemaProtoPath = path.resolve(
       __dirname,
@@ -284,6 +291,9 @@ describe('utils/format', () => {
 
     const fieldSchemaType = schemaProto.lookupType(
       'milvus.proto.schema.FieldSchema'
+    );
+    const functionSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.FunctionSchema'
     );
 
     const expectedResult = {
@@ -295,50 +305,45 @@ describe('utils/format', () => {
           typeParams: [],
           indexParams: [],
           name: 'testField1',
-          data_type: 5,
-          is_primary_key: true,
           description: 'Test PRIMARY KEY field',
+          data_type: 5,
           dataType: 5,
           isPrimaryKey: true,
           isPartitionKey: false,
+          isFunctionOutput: false,
         },
         {
-          typeParams: [
-            {
-              key: 'dim',
-              value: '64',
-            },
-          ],
+          typeParams: [{ key: 'dim', value: '64' }],
           indexParams: [],
           name: 'testField2',
-          data_type: 101,
-          is_primary_key: false,
           description: 'Test VECTOR field',
+          data_type: 'FloatVector',
           dataType: 101,
           isPrimaryKey: false,
           isPartitionKey: false,
+          isFunctionOutput: false,
         },
         {
-          typeParams: [
-            {
-              key: 'max_capacity',
-              value: '64',
-            },
-          ],
+          typeParams: [{ key: 'max_capacity', value: '64' }],
           indexParams: [],
           name: 'arrayField',
-          data_type: 22,
           description: 'Test Array field',
-          element_type: 5,
+          data_type: 22,
           dataType: 22,
           isPrimaryKey: false,
           isPartitionKey: false,
+          isFunctionOutput: false,
           elementType: 5,
+          element_type: 5,
         },
       ],
+      functions: [],
     };
 
-    const payload = formatCollectionSchema(data, fieldSchemaType);
+    const payload = formatCollectionSchema(data, {
+      fieldSchemaType,
+      functionSchemaType,
+    });
     expect(payload).toEqual(expectedResult);
   });
 
@@ -377,6 +382,11 @@ describe('utils/format', () => {
             dataType: 101,
             autoID: false,
             state: 'created',
+            is_dynamic: false,
+            is_clustering_key: false,
+            is_function_output: false,
+            nullable: false,
+            is_partition_key: false,
           },
           {
             fieldID: '2',
@@ -389,12 +399,18 @@ describe('utils/format', () => {
             dataType: 5,
             autoID: true,
             state: 'created',
+            is_dynamic: false,
+            is_clustering_key: false,
+            is_function_output: false,
+            nullable: false,
+            is_partition_key: false,
           },
         ],
         name: 'collection_v8mt0v7x',
         description: '',
         enable_dynamic_field: false,
         autoID: false,
+        functions: [],
       },
       shards_num: 1,
       start_positions: [],
@@ -597,19 +613,29 @@ describe('utils/format', () => {
   it('should format search vector correctly', () => {
     // float vector
     const floatVector = [1, 2, 3];
-    const formattedVector = formatSearchVector(
-      floatVector,
-      DataType.FloatVector
-    );
+    const formattedVector = formatSearchData(floatVector, {
+      dataType: DataType.FloatVector,
+    } as FieldSchema);
     expect(formattedVector).toEqual([floatVector]);
 
     const floatVectors = [
       [1, 2, 3],
       [4, 5, 6],
     ];
-    expect(formatSearchVector(floatVectors, DataType.FloatVector)).toEqual(
-      floatVectors
-    );
+    expect(
+      formatSearchData(floatVectors, {
+        dataType: DataType.FloatVector,
+      } as FieldSchema)
+    ).toEqual(floatVectors);
+
+    // varchar
+    const varcharVector = 'hello world';
+    expect(
+      formatSearchData(varcharVector, {
+        dataType: DataType.SparseFloatVector,
+        is_function_output: true,
+      } as FieldSchema)
+    ).toEqual([varcharVector]);
   });
 
   it('should format sparse vectors correctly', () => {
@@ -618,10 +644,9 @@ describe('utils/format', () => {
       { index: 1, value: 2 },
       { index: 3, value: 4 },
     ];
-    const formattedSparseCooVector = formatSearchVector(
-      sparseCooVector,
-      DataType.SparseFloatVector
-    );
+    const formattedSparseCooVector = formatSearchData(sparseCooVector, {
+      dataType: DataType.SparseFloatVector,
+    } as FieldSchema);
     expect(formattedSparseCooVector).toEqual([sparseCooVector]);
 
     // sparse csr vector
@@ -629,10 +654,9 @@ describe('utils/format', () => {
       indices: [1, 3],
       values: [2, 4],
     };
-    const formattedSparseCsrVector = formatSearchVector(
-      sparseCsrVector,
-      DataType.SparseFloatVector
-    );
+    const formattedSparseCsrVector = formatSearchData(sparseCsrVector, {
+      dataType: DataType.SparseFloatVector,
+    } as FieldSchema);
     expect(formattedSparseCsrVector).toEqual([sparseCsrVector]);
 
     const sparseCsrVectors = [
@@ -645,46 +669,41 @@ describe('utils/format', () => {
         values: [3, 5],
       },
     ];
-    const formattedSparseCsrVectors = formatSearchVector(
-      sparseCsrVectors,
-      DataType.SparseFloatVector
-    );
+    const formattedSparseCsrVectors = formatSearchData(sparseCsrVectors, {
+      dataType: DataType.SparseFloatVector,
+    } as FieldSchema);
     expect(formattedSparseCsrVectors).toEqual(sparseCsrVectors);
 
     // sparse array vector
     const sparseArrayVector = [0.1, 0.2, 0.3];
-    const formattedSparseArrayVector = formatSearchVector(
-      sparseArrayVector,
-      DataType.SparseFloatVector
-    );
+    const formattedSparseArrayVector = formatSearchData(sparseArrayVector, {
+      dataType: DataType.SparseFloatVector,
+    } as FieldSchema);
     expect(formattedSparseArrayVector).toEqual([sparseArrayVector]);
 
     const sparseArrayVectors = [
       [0.1, 0.2, 0.3],
       [0.4, 0.5, 0.6],
     ];
-    const formattedSparseArrayVectors = formatSearchVector(
-      sparseArrayVectors,
-      DataType.SparseFloatVector
-    );
+    const formattedSparseArrayVectors = formatSearchData(sparseArrayVectors, {
+      dataType: DataType.SparseFloatVector,
+    } as FieldSchema);
     expect(formattedSparseArrayVectors).toEqual(sparseArrayVectors);
 
     // sparse dict vector
     const sparseDictVector = { 1: 2, 3: 4 };
-    const formattedSparseDictVector = formatSearchVector(
-      sparseDictVector,
-      DataType.SparseFloatVector
-    );
+    const formattedSparseDictVector = formatSearchData(sparseDictVector, {
+      dataType: DataType.SparseFloatVector,
+    } as FieldSchema);
     expect(formattedSparseDictVector).toEqual([sparseDictVector]);
 
     const sparseDictVectors = [
       { 1: 2, 3: 4 },
       { 1: 2, 3: 4 },
     ];
-    const formattedSparseDictVectors = formatSearchVector(
-      sparseDictVectors,
-      DataType.SparseFloatVector
-    );
+    const formattedSparseDictVectors = formatSearchData(sparseDictVectors, {
+      dataType: DataType.SparseFloatVector,
+    } as FieldSchema);
     expect(formattedSparseDictVectors).toEqual(sparseDictVectors);
   });
 
@@ -866,7 +885,6 @@ describe('utils/format', () => {
       describeCollectionResponse,
       milvusProto
     );
-    console.dir(searchRequest, { depth: null });
     expect(searchRequest.isHybridSearch).toEqual(true);
     expect(searchRequest.request.collection_name).toEqual('test');
     expect(searchRequest.request.output_fields).toEqual(['vector', 'vector1']);

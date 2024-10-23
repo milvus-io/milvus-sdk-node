@@ -162,8 +162,6 @@ export class Collection extends Database {
     // it should follow CollectionSchema in schema.proto
     const payload = formatCollectionSchema(data, schemaTypes);
 
-    console.dir(payload, { depth: null });
-
     // Create the collectionParams object from the payload.
     const collectionSchema = schemaTypes.collectionSchemaType.create(payload);
 
