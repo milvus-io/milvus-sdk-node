@@ -65,6 +65,7 @@ import {
   sparseRowsToBytes,
   getSparseDim,
   f32ArrayToBinaryBytes,
+  NO_LIMIT,
 } from '../';
 import { Collection } from './Collection';
 
@@ -706,6 +707,10 @@ export class Data extends Collection {
       collection_name: data.collection_name,
       expr: userExpr,
     });
+    // if limit not set, set it to count
+    if (!data.limit || data.limit === NO_LIMIT) {
+      data.limit = count.data;
+    }
     // total should be the minimum of total and count
     const total = data.limit > count.data ? count.data : data.limit;
     const batchSize =

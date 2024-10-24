@@ -71,6 +71,7 @@ export interface FieldType {
   is_primary_key?: boolean;
   is_partition_key?: boolean;
   is_function_output?: boolean;
+  is_clustering_key?: boolean;
   type_params?: {
     [key: string]: TypeParam;
   };
@@ -114,6 +115,7 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
     | 'Customized'; // optional,consistency level, default is 'Bounded'
   num_partitions?: number; // optional, partitions number, default is 1
   partition_key_field?: string; // optional, partition key field
+  clustring_key_field?: string; // optional, clustring key field
   enable_dynamic_field?: boolean; // optional, enable dynamic field, default is false
   enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
   properties?: Properties; // optional, collection properties
