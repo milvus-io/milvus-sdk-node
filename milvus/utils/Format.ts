@@ -10,7 +10,7 @@ import {
   DescribeCollectionResponse,
   getDataKey,
   RowData,
-  Field,
+  _Field,
   JSON,
   FieldData,
   CreateCollectionWithFieldsReq,
@@ -421,7 +421,7 @@ export const formatDescribedCol = (
  */
 export const buildDynamicRow = (
   rowData: RowData,
-  fieldMap: Map<string, Field>,
+  fieldMap: Map<string, _Field>,
   dynamicFieldName: string
 ) => {
   const originRow = cloneObj(rowData);
@@ -537,16 +537,26 @@ export const buildFieldDataMap = (
         });
       }
 
-      // decode json
       switch (dataKey) {
+        // decode json
         case 'json_data':
           field_data.forEach((buffer: any, i: number) => {
-            // console.log(JSON.parse(buffer.toString()));
-            field_data[i] = JSON.parse(buffer.toString());
+            field_data[i] = buffer.length
+              ? JSON.parse(buffer.toString())
+              : null;
           });
           break;
         default:
           break;
+      }
+
+      // set the field data with null if item.valid_data is not empty array, it the item in valid_data is false, set the field data with null
+      if (item.valid_data && item.valid_data.length) {
+        item.valid_data.forEach((v: any, i: number) => {
+          if (!v) {
+            field_data[i] = null;
+          }
+        });
       }
     }
 
@@ -591,7 +601,7 @@ export const getAuthString = (data: {
  */
 export const buildFieldData = (
   rowData: RowData,
-  field: Field,
+  field: _Field,
   transformers?: InsertTransformers
 ): FieldData => {
   const { type, elementType, name } = field;
@@ -614,7 +624,9 @@ export const buildFieldData = (
         ? f16Transformer(rowData[name] as Float16Vector)
         : rowData[name];
     case DataType.JSON:
-      return Buffer.from(JSON.stringify(rowData[name] || {}));
+      return rowData[name]
+        ? Buffer.from(JSON.stringify(rowData[name] || {}))
+        : Buffer.alloc(0);
     case DataType.Array:
       const elementField = { ...field, type: elementType! };
       return buildFieldData(rowData, elementField, transformers);

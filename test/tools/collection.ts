@@ -1,10 +1,14 @@
 import {
+  MAX_CAPACITY,
+  MAX_LENGTH,
+  DEFAULT_NUM_VALUE,
+  DEFAULT_STRING_VALUE,
+} from './const';
+import {
   DataType,
   ConsistencyLevelEnum,
-  FunctionType,
   Function,
 } from '../../milvus';
-import { MAX_CAPACITY, MAX_LENGTH } from './const';
 import { GENERATE_VECTOR_NAME } from './';
 
 export const dynamicFields = [
@@ -105,23 +109,27 @@ export const genCollectionParams = (data: {
       {
         name: 'float',
         description: 'Float field',
+        default_value: DEFAULT_NUM_VALUE,
         data_type: DataType.Float,
       },
       {
         name: 'bool',
         description: 'bool field',
+        nullable: true,
         data_type: DataType.Bool,
       },
       {
         name: 'default_value',
-        // default_value: DEFAULT_VALUE,
+        nullable: true,
+        default_value: DEFAULT_NUM_VALUE,
         description: 'int64 field',
-        data_type: 'Int64', // test string data type
+        data_type: 'Int64', //
       },
       {
         name: 'varChar',
         description: 'VarChar field',
         data_type: DataType.VarChar,
+        default_value: DEFAULT_STRING_VALUE,
         max_length: MAX_LENGTH,
         is_partition_key: partitionKeyEnabled,
         enable_tokenizer: true,
@@ -129,13 +137,15 @@ export const genCollectionParams = (data: {
       {
         name: 'json',
         description: 'JSON field',
+        nullable: true,
         data_type: DataType.JSON,
       },
       {
         name: 'int32_array',
         description: 'int array field',
         data_type: DataType.Array,
-        element_type: 'Int32', // test string element type
+        nullable: true,
+        element_type: 'Int32',
         max_capacity: maxCapacity || MAX_CAPACITY,
       },
       {

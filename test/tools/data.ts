@@ -283,15 +283,14 @@ export const generateInsertData = (
 
     for (const field of fields) {
       // Skip autoID and fields with default values
-      if (field.autoID || typeof field.default_value !== 'undefined') {
+      if (field.autoID) {
         continue;
       }
 
       // get data type
       const data_type = convertToDataType(field.data_type);
 
-      // Skip fields with default values
-      if (typeof field.default_value !== 'undefined') {
+      if ((field.nullable || field.default_value) && Math.random() < 0.5) {
         continue;
       }
 

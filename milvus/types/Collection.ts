@@ -30,11 +30,11 @@ export interface FieldSchema {
   element_type?: keyof typeof DataType;
   default_value?: number | string;
   dataType: DataType;
-  is_partition_key: boolean;
-  is_dynamic: boolean;
-  is_clustering_key: boolean;
+  is_partition_key?: boolean;
+  is_dynamic?: boolean;
+  is_clustering_key?: boolean;
+  nullable?: boolean;
   is_function_output: boolean;
-  nullable: boolean;
 }
 
 export interface CollectionData {
@@ -80,6 +80,7 @@ export interface FieldType {
   max_capacity?: TypeParam;
   max_length?: TypeParam;
   default_value?: number | string;
+  nullable?: boolean;
   enable_match?: boolean;
   tokenizer_params?: Record<string, any>;
   enable_tokenizer?: boolean;
