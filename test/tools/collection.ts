@@ -1,5 +1,10 @@
-import { DataType, ConsistencyLevelEnum } from '../../milvus';
-import { VECTOR_FIELD_NAME, MAX_CAPACITY, MAX_LENGTH } from './const';
+import {
+  DataType,
+  ConsistencyLevelEnum,
+  FunctionType,
+  Function,
+} from '../../milvus';
+import { MAX_CAPACITY, MAX_LENGTH } from './const';
 import { GENERATE_VECTOR_NAME } from './';
 
 export const dynamicFields = [
@@ -41,6 +46,7 @@ export const genCollectionParams = (data: {
   enableDynamic?: boolean;
   maxCapacity?: number;
   idType?: DataType;
+  functions?: Function[];
 }) => {
   const {
     collectionName,
@@ -53,6 +59,7 @@ export const genCollectionParams = (data: {
     enableDynamic = false,
     maxCapacity,
     idType = DataType.Int64,
+    functions,
   } = data;
 
   const vectorFields = vectorType.map((type, i) => {
@@ -115,6 +122,7 @@ export const genCollectionParams = (data: {
         data_type: DataType.VarChar,
         max_length: MAX_LENGTH,
         is_partition_key: partitionKeyEnabled,
+        enable_tokenizer: true,
       },
       {
         name: 'json',
@@ -150,6 +158,10 @@ export const genCollectionParams = (data: {
 
   if (partitionKeyEnabled && typeof numPartitions === 'number') {
     params.num_partitions = numPartitions;
+  }
+
+  if (functions && functions?.length > 0) {
+    params.functions = functions;
   }
 
   return params;

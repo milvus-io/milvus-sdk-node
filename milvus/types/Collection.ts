@@ -13,6 +13,7 @@ import {
   LoadState,
   DataTypeMap,
   ShowCollectionsType,
+  FunctionType,
 } from '../';
 
 // returned from milvus
@@ -21,7 +22,7 @@ export interface FieldSchema {
   index_params: KeyValuePair[];
   fieldID: string | number;
   name: string;
-  is_primary_key?: boolean;
+  is_primary_key: boolean;
   description: string;
   data_type: keyof typeof DataType;
   autoID: boolean;
@@ -29,9 +30,11 @@ export interface FieldSchema {
   element_type?: keyof typeof DataType;
   default_value?: number | string;
   dataType: DataType;
-  is_partition_key?: boolean;
-  is_dynamic?: boolean;
-  is_clustering_key?: boolean;
+  is_partition_key: boolean;
+  is_dynamic: boolean;
+  is_clustering_key: boolean;
+  is_function_output: boolean;
+  nullable: boolean;
 }
 
 export interface CollectionData {
@@ -56,7 +59,7 @@ export interface ReplicaInfo {
   node_ids: string[];
 }
 
-export type TypeParam = string | number;
+export type TypeParam = string | number | Record<string, any>;
 export type TypeParamKey = 'dim' | 'max_length' | 'max_capacity';
 
 // create collection
@@ -67,6 +70,7 @@ export interface FieldType {
   element_type?: DataType | keyof typeof DataTypeMap;
   is_primary_key?: boolean;
   is_partition_key?: boolean;
+  is_function_output?: boolean;
   type_params?: {
     [key: string]: TypeParam;
   };
@@ -75,6 +79,9 @@ export interface FieldType {
   max_capacity?: TypeParam;
   max_length?: TypeParam;
   default_value?: number | string;
+  enable_match?: boolean;
+  tokenizer_params?: Record<string, any>;
+  enable_tokenizer?: boolean;
 }
 
 export interface ShowCollectionsReq extends GrpcTimeOut {
@@ -84,6 +91,15 @@ export interface ShowCollectionsReq extends GrpcTimeOut {
 }
 
 export type Properties = Record<string, string | number | boolean>;
+
+export type Function = {
+  name: string;
+  description?: string;
+  type: FunctionType;
+  input_field_names: string[];
+  output_field_names?: string[];
+  params: Record<string, any>;
+};
 
 export interface BaseCreateCollectionReq extends GrpcTimeOut {
   // collection name
@@ -100,8 +116,9 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   partition_key_field?: string; // optional, partition key field
   enable_dynamic_field?: boolean; // optional, enable dynamic field, default is false
   enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
-  properties?: Properties;
-  db_name?: string;
+  properties?: Properties; // optional, collection properties
+  db_name?: string; // optional, db name
+  functions?: Function[]; // optionals, doc-in/doc-out functions
 }
 
 export interface CreateCollectionWithFieldsReq extends BaseCreateCollectionReq {
@@ -185,6 +202,7 @@ export interface CollectionSchema {
   enable_dynamic_field: boolean;
   autoID: boolean;
   fields: FieldSchema[];
+  functions: Function[];
 }
 
 export interface DescribeCollectionResponse extends TimeStamp {
@@ -203,6 +221,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   shards_num: number;
   num_partitions?: string; // int64
   db_name: string;
+  functions: Function[];
 }
 
 export interface GetCompactionPlansResponse extends resStatusResponse {
