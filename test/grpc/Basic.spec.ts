@@ -1,7 +1,7 @@
 import { MilvusClient, ErrorCode, DataType } from '../../milvus';
 import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 const schema = [
   {
@@ -49,6 +49,14 @@ describe(`Basic API without database`, () => {
       collection_name: COLLECTION_NAME,
     });
     expect(desc.schema.fields.length).toEqual(schema.length);
+    expect(desc.schema.fields[0].name).toEqual('vector');
+    expect(desc.schema.fields[1].name).toEqual('id');
+    expect(desc.schema.fields[2].name).toEqual('varChar');
+    expect(desc.schema.fields[3].name).toEqual('array');
+    // test primary key
+    expect(desc.schema.fields[1].is_primary_key).toEqual(true);
+    // test partition key
+    expect(desc.schema.fields[2].is_partition_key).toEqual(false);
   });
 
   it(`Create index should be successful`, async () => {

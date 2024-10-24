@@ -66,6 +66,7 @@ import {
   getSparseDim,
   f32ArrayToBinaryBytes,
   getValidDataArray,
+  NO_LIMIT,
 } from '../';
 import { Collection } from './Collection';
 
@@ -142,9 +143,11 @@ export class Data extends Collection {
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
+    // and if function field is set, you need to ignore the field value in the data.
     const fieldMap = new Map<string, _Field>(
       collectionInfo.schema.fields
         .filter(v => !v.is_primary_key || !v.autoID)
+        .filter(v => !v.is_function_output)
         .map(v => [
           v.name,
           {
@@ -721,6 +724,10 @@ export class Data extends Collection {
       collection_name: data.collection_name,
       expr: userExpr,
     });
+    // if limit not set, set it to count
+    if (!data.limit || data.limit === NO_LIMIT) {
+      data.limit = count.data;
+    }
     // total should be the minimum of total and count
     const total = data.limit > count.data ? count.data : data.limit;
     const batchSize =

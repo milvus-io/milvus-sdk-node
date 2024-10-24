@@ -146,15 +146,28 @@ export class Collection extends Database {
       validatePartitionNumbers(num_partitions);
     }
 
+    // Get the CollectionSchemaType and FieldSchemaType from the schemaProto object.
+    const schemaTypes = {
+      collectionSchemaType: this.schemaProto.lookupType(
+        this.protoInternalPath.collectionSchema
+      ),
+      fieldSchemaType: this.schemaProto.lookupType(
+        this.protoInternalPath.fieldSchema
+      ),
+      functionSchemaType: this.schemaProto.lookupType(
+        this.protoInternalPath.functionSchema
+      ),
+    };
+
     // Create the payload object with the collection_name, description, and fields.
     // it should follow CollectionSchema in schema.proto
-    const payload = formatCollectionSchema(data, this.fieldSchemaType);
+    const payload = formatCollectionSchema(data, schemaTypes);
 
     // Create the collectionParams object from the payload.
-    const collectionSchema = this.collectionSchemaType.create(payload);
+    const collectionSchema = schemaTypes.collectionSchemaType.create(payload);
 
     // Encode the collectionParams object to bytes.
-    const schemaBytes = this.collectionSchemaType
+    const schemaBytes = schemaTypes.collectionSchemaType
       .encode(collectionSchema)
       .finish();
 

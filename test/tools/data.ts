@@ -294,6 +294,11 @@ export const generateInsertData = (
         continue;
       }
 
+      // skip fields with is_function_output = true
+      if (field.is_function_output) {
+        continue;
+      }
+
       // Parameters used to generate all types of data
       const genDataParams = {
         dim: Number(field.dim || (field.type_params && field.type_params.dim)),

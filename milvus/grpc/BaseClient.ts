@@ -67,15 +67,13 @@ export class BaseClient {
   protected schemaProto: Root;
   // The Milvus protobuf.
   protected milvusProto: Root;
-  // The milvus collection schema Type
-  protected collectionSchemaType: Type;
-  // The milvus field schema Type
-  protected fieldSchemaType: Type;
+
   // milvus proto
   protected readonly protoInternalPath = {
     serviceName: 'milvus.proto.milvus.MilvusService',
     collectionSchema: 'milvus.proto.schema.CollectionSchema',
     fieldSchema: 'milvus.proto.schema.FieldSchema',
+    functionSchema: 'milvus.proto.schema.FunctionSchema',
   };
 
   /**
@@ -135,14 +133,6 @@ export class BaseClient {
     // Load the Milvus protobuf
     this.schemaProto = protobuf.loadSync(this.protoFilePath.schema);
     this.milvusProto = protobuf.loadSync(this.protoFilePath.milvus);
-
-    // Get the CollectionSchemaType and FieldSchemaType from the schemaProto object.
-    this.collectionSchemaType = this.schemaProto.lookupType(
-      this.protoInternalPath.collectionSchema
-    );
-    this.fieldSchemaType = this.schemaProto.lookupType(
-      this.protoInternalPath.fieldSchema
-    );
 
     // options
     this.channelOptions = {
