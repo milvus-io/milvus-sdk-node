@@ -32,6 +32,14 @@ const createCollectionParams = genCollectionParams({
   enableDynamic: true,
   fields: [
     {
+      name: 'text',
+      description: 'text field',
+      data_type: DataType.VarChar,
+      max_length: 20,
+      is_partition_key: false,
+      enable_tokenizer: true,
+    },
+    {
       name: 'sparse',
       description: 'sparse field',
       data_type: DataType.SparseFloatVector,
@@ -49,7 +57,7 @@ const createCollectionParams = genCollectionParams({
       name: 'bm25f1',
       description: 'bm25 function',
       type: FunctionType.BM25,
-      input_field_names: ['varChar'],
+      input_field_names: ['text'],
       output_field_names: ['sparse'],
       params: {},
     },
@@ -57,7 +65,7 @@ const createCollectionParams = genCollectionParams({
       name: 'bm25f2',
       description: 'bm25 function',
       type: FunctionType.BM25,
-      input_field_names: ['varChar'],
+      input_field_names: ['text'],
       output_field_names: ['sparse2'],
       params: {},
     },
@@ -100,11 +108,11 @@ describe(`Functions schema API`, () => {
     // expect functions are in the schema
     expect(describe.schema.functions.length).toEqual(2);
     expect(describe.schema.functions[0].name).toEqual('bm25f1');
-    expect(describe.schema.functions[0].input_field_names).toEqual(['varChar']);
+    expect(describe.schema.functions[0].input_field_names).toEqual(['text']);
     expect(describe.schema.functions[0].output_field_names).toEqual(['sparse']);
     expect(describe.schema.functions[0].type).toEqual('BM25');
     expect(describe.schema.functions[1].name).toEqual('bm25f2');
-    expect(describe.schema.functions[1].input_field_names).toEqual(['varChar']);
+    expect(describe.schema.functions[1].input_field_names).toEqual(['text']);
     expect(describe.schema.functions[1].output_field_names).toEqual([
       'sparse2',
     ]);
@@ -172,7 +180,7 @@ describe(`Functions schema API`, () => {
       collection_name: COLLECTION,
       limit: 10,
       expr: 'id > 0',
-      output_fields: ['vector', 'id', 'varChar', 'sparse', 'sparse2'],
+      output_fields: ['vector', 'id', 'text', 'sparse', 'sparse2'],
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 

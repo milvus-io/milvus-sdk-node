@@ -68,12 +68,18 @@ export const formatKeyValueData = (data: KeyValuePair[], keys: string[]) => {
  * @param data Object
  * @returns {KeyValuePair[]}
  */
-export const parseToKeyValue = (data?: {
-  [x: string]: any;
-}): KeyValuePair[] => {
+export const parseToKeyValue = (
+  data?: {
+    [x: string]: any;
+  },
+  valueToString?: boolean
+): KeyValuePair[] => {
   return data
     ? Object.keys(data).reduce(
-        (pre: any[], cur: string) => [...pre, { key: cur, value: data[cur] }],
+        (pre: any[], cur: string) => [
+          ...pre,
+          { key: cur, value: valueToString ? String(data[cur]) : data[cur] },
+        ],
         []
       )
     : [];
@@ -374,7 +380,7 @@ export const formatCollectionSchema = (
         ...rest,
         inputFieldNames: input_field_names,
         outputFieldNames: output_field_names,
-        params: parseToKeyValue(func.params),
+        params: parseToKeyValue(func.params, true),
       });
     });
   }

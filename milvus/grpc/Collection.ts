@@ -188,13 +188,6 @@ export class Collection extends Database {
       req.properties = parseToKeyValue(data.properties);
     }
 
-    // if functions is set, parse its params to key-value pairs, and delete inputs and outputs
-    if (data.functions) {
-      data.functions.forEach((func: any) => {
-        func.params = parseToKeyValue(func.params);
-      });
-    }
-
     // Call the promisify function to create the collection.
     const createPromise = await promisify(
       this.channelPool,

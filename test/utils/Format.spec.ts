@@ -76,6 +76,15 @@ describe('utils/format', () => {
     ]);
   });
 
+  it(`should convert  {row_count:4, b: 3} t0 [{key:"row_count",value:'4'}, {key: "b", value: '4'}]`, () => {
+    const testValue = { row_count: '4', b: 3 };
+    const res = parseToKeyValue(testValue, true);
+    expect(res).toMatchObject([
+      { key: 'row_count', value: '4' },
+      { key: 'b', value: '3' },
+    ]);
+  });
+
   it(`should convert [{key:"row_count",value:4}] to {row_count:4}`, () => {
     const testValue = 3.1231241241234124124;
     const res = formatNumberPrecision(testValue, 3);
@@ -421,6 +430,7 @@ describe('utils/format', () => {
       num_partitions: '0',
       collection_name: 'test',
       db_name: '',
+      functions: [],
     };
 
     const formatted = formatDescribedCol(response);
