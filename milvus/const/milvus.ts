@@ -117,6 +117,8 @@ export enum MetricType {
   SUBSTRUCTURE = 'SUBSTRUCTURE',
   // SUPERSTRUCTURE superstructure
   SUPERSTRUCTURE = 'SUPERSTRUCTURE',
+  // BM 25
+  BM25 = 'BM25',
 }
 
 // Index types
@@ -277,6 +279,11 @@ export enum DataType {
   Float16Vector = 102,
   BFloat16Vector = 103,
   SparseFloatVector = 104,
+}
+
+export enum FunctionType {
+  Unknown = 0,
+  BM25 = 1,
 }
 
 export const VectorDataTypes = [

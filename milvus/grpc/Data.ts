@@ -142,9 +142,11 @@ export class Data extends Collection {
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
+    // and if function field is set, you need to ignore the field value in the data.
     const fieldMap = new Map<string, Field>(
       collectionInfo.schema.fields
         .filter(v => !v.is_primary_key || !v.autoID)
+        .filter(v => !v.is_function_output)
         .map(v => [
           v.name,
           {
