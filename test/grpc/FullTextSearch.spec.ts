@@ -25,7 +25,7 @@ const numPartitions = 3;
 const createCollectionParams = genCollectionParams({
   collectionName: COLLECTION,
   dim: [4],
-  vectorType: [DataType.FloatVector],
+  vectorType: [DataType.SparseFloatVector],
   autoID: false,
   partitionKeyEnabled: true,
   numPartitions,
@@ -41,12 +41,6 @@ const createCollectionParams = genCollectionParams({
       enable_match: true,
       analyzer_params: { tokenizer: 'jieba' },
     },
-    {
-      name: 'sparse',
-      description: 'sparse field',
-      data_type: DataType.SparseFloatVector,
-      is_function_output: true,
-    },
   ],
   functions: [
     {
@@ -54,7 +48,7 @@ const createCollectionParams = genCollectionParams({
       description: 'bm25 function',
       type: FunctionType.BM25,
       input_field_names: ['text'],
-      output_field_names: ['sparse'],
+      output_field_names: ['vector'],
       params: {},
     },
   ],
@@ -82,22 +76,22 @@ describe(`Full text search API`, () => {
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION,
     });
-    // expect the 'sparse' field to be created
+    // expect the 'vector' field to be created
     expect(describe.schema.fields.length).toEqual(
       createCollectionParams.fields.length
     );
-    // extract the 'sparse' field
-    const sparse = describe.schema.fields.find(
+    // extract the 'vector' field
+    const vector = describe.schema.fields.find(
       field => field.is_function_output
     );
-    // expect the 'sparse' field's name to be 'sparse'
-    expect(sparse!.name).toEqual('sparse');
+    // expect the 'vector' field's name to be 'vector'
+    expect(vector!.name).toEqual('vector');
 
     // expect functions are in the schema
     expect(describe.schema.functions.length).toEqual(1);
     expect(describe.schema.functions[0].name).toEqual('bm25f1');
     expect(describe.schema.functions[0].input_field_names).toEqual(['text']);
-    expect(describe.schema.functions[0].output_field_names).toEqual(['sparse']);
+    expect(describe.schema.functions[0].output_field_names).toEqual(['vector']);
     expect(describe.schema.functions[0].type).toEqual('BM25');
   });
 
@@ -116,26 +110,15 @@ describe(`Full text search API`, () => {
   });
 
   it(`Create index on function output field should success`, async () => {
-    // create index
-    const createVectorIndex = await milvusClient.createIndex({
-      collection_name: COLLECTION,
-      index_name: 't',
-      field_name: 'vector',
-      index_type: 'HNSW',
-      metric_type: MetricType.COSINE,
-      params: { M: 4, efConstruction: 8 },
-    });
-
     const createIndex = await milvusClient.createIndex({
       collection_name: COLLECTION,
       index_name: 't2',
-      field_name: 'sparse',
+      field_name: 'vector',
       index_type: 'SPARSE_INVERTED_INDEX',
-      metric_type: 'BM25',
+      metric_type: MetricType.BM25,
       params: { bm25_k1: 1.25, bm25_b: 0.75 }, //drop_ratio_build: 0.3,
     });
 
-    expect(createVectorIndex.error_code).toEqual(ErrorCode.SUCCESS);
     expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
 
     // load
@@ -152,14 +135,14 @@ describe(`Full text search API`, () => {
       collection_name: COLLECTION,
       limit: 10,
       expr: 'id > 0',
-      output_fields: ['vector', 'id', 'text', 'sparse'],
+      output_fields: ['vector', 'id', 'text'],
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(query.data.length).toEqual(10);
     // data should have 'sparse' field
-    expect(query.data[0].hasOwnProperty('sparse')).toBeTruthy();
+    expect(query.data[0].hasOwnProperty('vector')).toBeTruthy();
   });
 
   it(`search with text should success`, async () => {
@@ -168,7 +151,7 @@ describe(`Full text search API`, () => {
       collection_name: COLLECTION,
       limit: 10,
       data: 'apple',
-      anns_field: 'sparse',
+      anns_field: 'vector',
       output_fields: ['*'],
       params: { drop_ratio_search: 0.6 },
       consistency_level: ConsistencyLevelEnum.Strong,
@@ -181,7 +164,7 @@ describe(`Full text search API`, () => {
       collection_name: COLLECTION,
       limit: 10,
       data: ['apple', 'banana'],
-      anns_field: 'sparse',
+      anns_field: 'vector',
       output_fields: ['*'],
       params: { drop_ratio_search: 0.6 },
       consistency_level: ConsistencyLevelEnum.Strong,
@@ -196,7 +179,7 @@ describe(`Full text search API`, () => {
       data: [
         {
           data: 'apple',
-          anns_field: 'sparse',
+          anns_field: 'vector',
           params: { nprobe: 2 },
         },
         {

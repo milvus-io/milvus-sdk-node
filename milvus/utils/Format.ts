@@ -328,7 +328,27 @@ export const formatCollectionSchema = (
     fields = (data as CreateCollectionWithSchemaReq).schema;
   }
 
-  const payload = {
+  let payload = {} as any;
+
+  const functionOutputFields: string[] = [];
+
+  // if functions is set, parse its params to key-value pairs, and delete inputs and outputs
+  if (functions) {
+    payload.functions = functions.map((func: any) => {
+      const { input_field_names, output_field_names, ...rest } = func;
+
+      functionOutputFields.push(...output_field_names);
+
+      return schemaTypes.functionSchemaType.create({
+        ...rest,
+        inputFieldNames: input_field_names,
+        outputFieldNames: output_field_names,
+        params: parseToKeyValue(func.params, true),
+      });
+    });
+  }
+
+  payload = {
     name: collection_name,
     description: description || '',
     enableDynamicField: !!enableDynamicField || !!enable_dynamic_field,
@@ -352,7 +372,8 @@ export const formatCollectionSchema = (
         isPrimaryKey: !!is_primary_key,
         isPartitionKey:
           !!is_partition_key || field.name === partition_key_field,
-        isFunctionOutput: !!is_function_output,
+        isFunctionOutput:
+          !!is_function_output || functionOutputFields.includes(field.name),
         isClusteringKey:
           !!field.is_clustering_key || field.name === clustring_key_field,
       };
@@ -372,21 +393,8 @@ export const formatCollectionSchema = (
       }
       return schemaTypes.fieldSchemaType.create(createObj);
     }),
-    functions: [],
-  } as any;
-
-  // if functions is set, parse its params to key-value pairs, and delete inputs and outputs
-  if (functions) {
-    payload.functions = functions.map((func: any) => {
-      const { input_field_names, output_field_names, ...rest } = func;
-      return schemaTypes.functionSchemaType.create({
-        ...rest,
-        inputFieldNames: input_field_names,
-        outputFieldNames: output_field_names,
-        params: parseToKeyValue(func.params, true),
-      });
-    });
-  }
+    ...payload,
+  };
 
   return payload;
 };

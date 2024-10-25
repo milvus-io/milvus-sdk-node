@@ -29,6 +29,7 @@ import {
   formatSearchData,
   buildSearchRequest,
   FieldSchema,
+  CreateCollectionReq,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -289,8 +290,23 @@ describe('utils/format', () => {
           max_capacity: 64,
           element_type: DataType.Int64,
         },
+        {
+          name: 'sparse',
+          data_type: DataType.SparseFloatVector,
+          description: 'sparse field',
+        },
       ],
-    } as any;
+      functions: [
+        {
+          name: 'bm25f1',
+          description: 'bm25 function',
+          type: 1,
+          input_field_names: ['testField1'],
+          output_field_names: ['sparse'],
+          params: { a: 1 },
+        },
+      ],
+    } as CreateCollectionReq;
 
     const schemaProtoPath = path.resolve(
       __dirname,
@@ -344,18 +360,42 @@ describe('utils/format', () => {
           isPrimaryKey: false,
           isPartitionKey: false,
           isFunctionOutput: false,
+          isClusteringKey: false,
           elementType: 5,
           element_type: 5,
+        },
+        {
+          typeParams: [],
+          indexParams: [],
+          name: 'sparse',
+          description: 'sparse field',
+          data_type: 104,
+          dataType: 104,
+          isPrimaryKey: false,
+          isPartitionKey: false,
+          isFunctionOutput: true,
           isClusteringKey: false,
         },
       ],
-      functions: [],
+      functions: [
+        {
+          inputFieldNames: ['testField1'],
+          inputFieldIds: [],
+          outputFieldNames: ['sparse'],
+          outputFieldIds: [],
+          params: [{ key: 'a', value: '1' }],
+          name: 'bm25f1',
+          description: 'bm25 function',
+          type: 1,
+        },
+      ],
     };
 
     const payload = formatCollectionSchema(data, {
       fieldSchemaType,
       functionSchemaType,
     });
+
     expect(payload).toEqual(expectedResult);
   });
 
