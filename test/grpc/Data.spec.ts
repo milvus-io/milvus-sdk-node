@@ -31,6 +31,14 @@ const createCollectionParams = genCollectionParams({
   dim: [4],
   vectorType: [DataType.FloatVector],
   autoID: false,
+  fields: [
+    {
+      name: 'varChar2',
+      description: 'VarChar2 field',
+      data_type: DataType.VarChar,
+      max_length: 100,
+    },
+  ],
 });
 const createCollectionParamsVarcharID = genCollectionParams({
   collectionName: VARCHAR_ID_COLLECTION_NAME,
@@ -62,6 +70,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       data: generateInsertData(createCollectionParams.fields, 1024),
     });
+
     await milvusClient.insert({
       collection_name: VARCHAR_ID_COLLECTION_NAME,
       data: generateInsertData(createCollectionParamsVarcharID.fields, 1024),
@@ -101,13 +110,25 @@ describe(`Data.API`, () => {
   });
 
   afterAll(async () => {
-    await milvusClient.dropCollection({
+    const searchParams = {
       collection_name: COLLECTION_NAME,
-    });
-    await milvusClient.dropCollection({
-      collection_name: VARCHAR_ID_COLLECTION_NAME,
-    });
-    await milvusClient.dropDatabase(dbParam);
+      // partition_names: [],
+      filter: 'json["number"] >= 0',
+      data: [1, 2, 3, 4],
+      limit: 4,
+      output_fields: ['id', 'json'],
+    };
+    const res = await milvusClient.search(searchParams);
+
+    console.log('xxx2', res);
+
+    // await milvusClient.dropCollection({
+    //   collection_name: COLLECTION_NAME,
+    // });
+    // await milvusClient.dropCollection({
+    //   collection_name: VARCHAR_ID_COLLECTION_NAME,
+    // });
+    // await milvusClient.dropDatabase(dbParam);
   });
 
   it(`it should insert successfully`, async () => {
@@ -232,14 +253,26 @@ describe(`Data.API`, () => {
   it(`Exec simple search without params and output fields should success`, async () => {
     const limit = 4;
 
-    // collection search
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    });
+
+    // find varchar2 field
+    const varChar2Field = describe.schema.fields.find(
+      f => f.name === 'varChar2'
+    )
+    
+    console.dir(varChar2Field, { depth: null });
+
     const searchWithData = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
       data: [1, 2, 3, 4],
       limit: limit,
-      group_by_field: 'varChar',
+      group_by_field: 'varChar2',
     });
+
+    console.log('searchWithData', searchWithData);
 
     expect(searchWithData.status.error_code).toEqual(ErrorCode.SUCCESS);
 
@@ -381,6 +414,8 @@ describe(`Data.API`, () => {
       output_fields: ['id', 'json'],
     };
     const res = await milvusClient.search(searchParams);
+
+    console.log('xxx', res);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(

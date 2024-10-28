@@ -200,7 +200,7 @@ export const getRetryInterceptor = ({
               logger.debug(
                 `\x1b[32m[Response(${
                   Date.now() - startTime.getTime()
-                }ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${string}`
+                }ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${msg}`
               );
 
               savedMessageNext(savedReceiveMessage);
@@ -217,7 +217,7 @@ export const getRetryInterceptor = ({
         const msg =
           string.length > 2048 ? string.slice(0, 2048) + '...' : string;
         logger.debug(
-          `\x1b[34m[Request]\x1b[0m${clientId}>${dbname}>\x1b[1m${methodName}(${timeoutInSeconds})\x1b[0m: ${string}`
+          `\x1b[34m[Request]\x1b[0m${clientId}>${dbname}>\x1b[1m${methodName}(${timeoutInSeconds})\x1b[0m: ${msg}`
         );
         savedSendMessage = message;
         next(message);
