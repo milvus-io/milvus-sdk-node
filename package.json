@@ -1,8 +1,8 @@
 {
-  "name": "@zilliz/milvus2-sdk-node",
+  "name": "@watson-conversation/milvus2-sdk-node-ibm",
   "author": "ued@zilliz.com",
   "milvusVersion": "master-20241024-f78f6112-amd64",
-  "version": "2.4.9",
+  "version": "0.0.1",
   "main": "dist/milvus",
   "files": [
     "dist"
@@ -20,7 +20,7 @@
     "doc-json": "npx typedoc milvus --json"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.8.22",
+    "@grpc/grpc-js": "^1.12.1",
     "@grpc/proto-loader": "^0.7.10",
     "@petamoriken/float16": "^3.8.6",
     "dayjs": "^1.11.7",
@@ -42,6 +42,6 @@
     "typescript": "^5.0.4"
   },
   "publishConfig": {
-    "access": "public"
+    "registry": "https://na.artifactory.swg-devops.com/artifactory/api/npm/wcp-wcs-npm-local/"
   }
 }
