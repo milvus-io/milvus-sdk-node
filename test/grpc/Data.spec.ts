@@ -19,7 +19,7 @@ import { timeoutTest } from '../tools';
 
 const milvusClient = new MilvusClient({
   address: IP,
-  logLevel: 'debug',
+  logLevel: 'info',
 });
 const COLLECTION_NAME = GENERATE_NAME();
 const VARCHAR_ID_COLLECTION_NAME = GENERATE_NAME();
@@ -120,15 +120,13 @@ describe(`Data.API`, () => {
     };
     const res = await milvusClient.search(searchParams);
 
-    console.log('xxx2', res);
-
-    // await milvusClient.dropCollection({
-    //   collection_name: COLLECTION_NAME,
-    // });
-    // await milvusClient.dropCollection({
-    //   collection_name: VARCHAR_ID_COLLECTION_NAME,
-    // });
-    // await milvusClient.dropDatabase(dbParam);
+    await milvusClient.dropCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    await milvusClient.dropCollection({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
+    });
+    await milvusClient.dropDatabase(dbParam);
   });
 
   it(`it should insert successfully`, async () => {
@@ -258,11 +256,9 @@ describe(`Data.API`, () => {
     });
 
     // find varchar2 field
-    const varChar2Field = describe.schema.fields.find(
-      f => f.name === 'varChar2'
-    )
-    
-    console.dir(varChar2Field, { depth: null });
+    describe.schema.fields.find(f => f.name === 'varChar2');
+
+    // console.dir(varChar2Field, { depth: null });
 
     const searchWithData = await milvusClient.search({
       collection_name: COLLECTION_NAME,
@@ -271,8 +267,6 @@ describe(`Data.API`, () => {
       limit: limit,
       group_by_field: 'varChar2',
     });
-
-    console.log('searchWithData', searchWithData);
 
     expect(searchWithData.status.error_code).toEqual(ErrorCode.SUCCESS);
 
@@ -414,8 +408,6 @@ describe(`Data.API`, () => {
       output_fields: ['id', 'json'],
     };
     const res = await milvusClient.search(searchParams);
-
-    console.log('xxx', res);
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(
