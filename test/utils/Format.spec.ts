@@ -557,10 +557,16 @@ describe('utils/format', () => {
   it('should return the JSON stringified value of the field for JSON type', () => {
     const row = { name: 'John', data: { age: 25, city: 'New York' } };
     const field = { type: 'JSON', name: 'data' };
-    expect(JSON.parse(buildFieldData(row, field as _Field)!.toString())).toEqual({
+    expect(
+      JSON.parse(buildFieldData(row, field as _Field)!.toString())
+    ).toEqual({
       age: 25,
       city: 'New York',
     });
+
+    // if json field is not in the row, should return Buffer.alloc(0)
+    const row2 = { name: 'John' };
+    expect(buildFieldData(row2, field as _Field)).toEqual(Buffer.alloc(0));
   });
 
   it('should recursively call buildFieldData for Array type', () => {
