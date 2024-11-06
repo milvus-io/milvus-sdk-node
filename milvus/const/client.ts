@@ -16,4 +16,5 @@ export enum TLS_MODE {
   DISABLED,
   ONE_WAY,
   TWO_WAY,
+  UNAUTHORIZED
 }

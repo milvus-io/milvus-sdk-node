@@ -7,6 +7,7 @@ import {
   ChannelOptions,
   credentials,
   ChannelCredentials,
+  VerifyOptions,
 } from '@grpc/grpc-js';
 import { Pool } from 'generic-pool';
 import {
@@ -173,6 +174,8 @@ export class BaseClient {
         ? TLS_MODE.TWO_WAY
         : this.tlsMode;
 
+    this.tlsMode = this.config.tls?.skipCertCheck ? TLS_MODE.UNAUTHORIZED : this.tlsMode;
+
     // Create credentials based on the TLS mode
     switch (this.tlsMode) {
       case TLS_MODE.ONE_WAY:
@@ -215,6 +218,14 @@ export class BaseClient {
           certChainBuff,
           verifyOptions
         );
+        break;
+      case TLS_MODE.UNAUTHORIZED:
+        const opts: VerifyOptions = {
+          checkServerIdentity : () => { return undefined; },
+          rejectUnauthorized : false
+        };
+
+        this.creds = credentials.createSsl(null, null, null, opts);
         break;
       default:
         // If no TLS mode is specified, create insecure credentials

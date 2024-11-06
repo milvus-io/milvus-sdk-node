@@ -68,6 +68,21 @@ describe(`Milvus client`, () => {
     expect(m1s.clientId).toEqual('1');
   });
 
+  it(`should create a grpc client with skipCertCheck option successfully`, async () => {
+    const m1u = new MilvusClient({
+      address: IP,
+      tls: {
+        skipCertCheck : true
+      },
+      id: '1',
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(await m1u.channelPool).toBeDefined();
+    expect(m1u.tlsMode).toEqual(TLS_MODE.UNAUTHORIZED);
+    expect(m1u.clientId).toEqual('1');
+  });
+
   it(`should create a grpc client without SSL credentials when ssl is false`, async () => {
     const m2 = new MilvusClient({
       address: IP,
