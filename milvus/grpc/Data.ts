@@ -48,7 +48,7 @@ import {
   buildDynamicRow,
   buildFieldDataMap,
   getDataKey,
-  Field,
+  _Field,
   buildFieldData,
   BinaryVector,
   RowData,
@@ -65,6 +65,7 @@ import {
   sparseRowsToBytes,
   getSparseDim,
   f32ArrayToBinaryBytes,
+  getValidDataArray,
   NO_LIMIT,
 } from '../';
 import { Collection } from './Collection';
@@ -143,7 +144,7 @@ export class Data extends Collection {
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
     // and if function field is set, you need to ignore the field value in the data.
-    const fieldMap = new Map<string, Field>(
+    const fieldMap = new Map<string, _Field>(
       collectionInfo.schema.fields
         .filter(v => !v.is_primary_key || !v.autoID)
         .filter(v => !v.is_function_output)
@@ -155,6 +156,8 @@ export class Data extends Collection {
             elementType: v.element_type,
             dim: Number(findKeyValue(v.type_params, 'dim')),
             data: [], // values container
+            nullable: v.nullable,
+            default_value: v.default_value,
           },
         ])
     );
@@ -167,6 +170,7 @@ export class Data extends Collection {
         type: 'JSON',
         elementType: 'None',
         data: [], // value container
+        nullable: false,
       });
     }
 
@@ -225,6 +229,10 @@ export class Data extends Collection {
       const dataKey = getDataKey(type);
       const elementType = DataTypeMap[field.elementType!];
       const elementTypeKey = getDataKey(elementType);
+      const valid_data = getValidDataArray(
+        field.data,
+        data.fields_data?.length!
+      );
 
       // build key value
       let keyValue;
@@ -263,14 +271,16 @@ export class Data extends Collection {
         case DataType.Array:
           keyValue = {
             [dataKey]: {
-              data: field.data.map(d => {
-                return {
-                  [elementTypeKey]: {
-                    type: elementType,
-                    data: d,
-                  },
-                };
-              }),
+              data: field.data
+                .filter(v => v !== undefined)
+                .map(d => {
+                  return {
+                    [elementTypeKey]: {
+                      type: elementType,
+                      data: d,
+                    },
+                  };
+                }),
               element_type: elementType,
             },
           };
@@ -278,17 +288,24 @@ export class Data extends Collection {
         default:
           keyValue = {
             [dataKey]: {
-              data: field.data,
+              data: field.data.filter(v => v !== undefined),
             },
           };
           break;
       }
+
+      const needValidData =
+        key !== 'vectors' &&
+        (field.nullable === true ||
+          (typeof field.default_value !== 'undefined' &&
+            field.default_value !== null));
 
       return {
         type,
         field_name: field.name,
         is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
         [key]: keyValue,
+        valid_data: needValidData ? valid_data : [],
       };
     });
 
@@ -931,6 +948,7 @@ export class Data extends Collection {
     // always get output_fields from fields_data
     const output_fields = promise.fields_data.map(f => f.field_name);
 
+    // build field data map
     const fieldsDataMap = buildFieldDataMap(
       promise.fields_data,
       data.transformers

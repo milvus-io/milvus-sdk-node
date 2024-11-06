@@ -25,7 +25,7 @@ import {
   getAuthString,
   buildFieldData,
   formatSearchResult,
-  Field,
+  _Field,
   formatSearchData,
   buildSearchRequest,
   FieldSchema,
@@ -467,7 +467,7 @@ describe('utils/format', () => {
           name: 'key1',
           type: 'VarChar',
           data: [{ key1: 'value1' }],
-        } as Field,
+        } as _Field,
       ],
     ]);
     const dynamicField = 'dynamic';
@@ -487,7 +487,7 @@ describe('utils/format', () => {
           name: 'key1',
           type: 'VarChar',
           data: [{ key1: 'value1' }],
-        } as Field,
+        } as _Field,
       ],
       [
         'key2',
@@ -495,7 +495,7 @@ describe('utils/format', () => {
           name: 'key2',
           type: 'VarChar',
           data: [{ key2: 'value2' }],
-        } as Field,
+        } as _Field,
       ],
     ]);
     const dynamicField = 'dynamic';
@@ -516,7 +516,7 @@ describe('utils/format', () => {
           name: 'key1',
           type: 'VarChar',
           data: [{ key1: 'value1' }],
-        } as Field,
+        } as _Field,
       ],
     ]);
     const dynamicField = 'dynamic';
@@ -548,31 +548,37 @@ describe('utils/format', () => {
   it('should return the value of the field for BinaryVector and FloatVector types', () => {
     const row = { name: 'John', vector: [1, 2, 3] };
     const field = { type: 'BinaryVector', name: 'vector' };
-    expect(buildFieldData(row, field as Field)).toEqual([1, 2, 3]);
+    expect(buildFieldData(row, field as _Field)).toEqual([1, 2, 3]);
 
     field.type = 'FloatVector';
-    expect(buildFieldData(row, field as Field)).toEqual([1, 2, 3]);
+    expect(buildFieldData(row, field as _Field)).toEqual([1, 2, 3]);
   });
 
   it('should return the JSON stringified value of the field for JSON type', () => {
     const row = { name: 'John', data: { age: 25, city: 'New York' } };
     const field = { type: 'JSON', name: 'data' };
-    expect(JSON.parse(buildFieldData(row, field as Field).toString())).toEqual({
+    expect(
+      JSON.parse(buildFieldData(row, field as _Field)!.toString())
+    ).toEqual({
       age: 25,
       city: 'New York',
     });
+
+    // if json field is not in the row, should return Buffer.alloc(0)
+    const row2 = { name: 'John' };
+    expect(buildFieldData(row2, field as _Field)).toEqual(Buffer.alloc(0));
   });
 
   it('should recursively call buildFieldData for Array type', () => {
     const row = { name: 'John', array: [1, 2, 3] };
     const field = { type: 'Array', elementType: 'Int', name: 'array' };
-    expect(buildFieldData(row, field as Field)).toEqual([1, 2, 3]);
+    expect(buildFieldData(row, field as _Field)).toEqual([1, 2, 3]);
   });
 
   it('should return the value of the field for other types', () => {
     const row = { name: 'John', age: 25 };
     const field = { type: 'Int', name: 'age' };
-    expect(buildFieldData(row, field as Field)).toEqual(25);
+    expect(buildFieldData(row, field as _Field)).toEqual(25);
   });
 
   it('should format search results correctly', () => {

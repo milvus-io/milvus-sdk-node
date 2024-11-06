@@ -72,19 +72,22 @@ export type FieldData =
   | VarChar
   | JSON
   | Array
-  | VectorTypes;
+  | VectorTypes
+  | null;
 
 // Represents a row of data in Milvus.
 export interface RowData {
   [x: string]: FieldData;
 }
 
-export interface Field {
+export interface _Field {
   name: string;
   type: keyof typeof DataType;
   elementType?: keyof typeof DataType;
   data: FieldData[];
   dim?: number;
+  nullable?: boolean;
+  default_value?: FieldData;
 }
 
 export interface FlushReq extends GrpcTimeOut {
@@ -455,6 +458,8 @@ export interface QueryRes extends resStatusResponse {
       [x: string]: any;
       data: string;
     };
+    is_dynamic: boolean;
+    valid_data: boolean[];
   }[];
   output_fields: string[];
   collection_name: string;
