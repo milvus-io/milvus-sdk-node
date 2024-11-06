@@ -266,6 +266,7 @@ describe(`Data.API`, () => {
       data: [1, 2, 3, 4],
       limit: limit,
       group_by_field: 'varChar2',
+      group_size: 2,
     });
 
     expect(searchWithData.status.error_code).toEqual(ErrorCode.SUCCESS);

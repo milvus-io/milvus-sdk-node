@@ -658,6 +658,12 @@ export const buildSearchParams = (
   if (data.group_by_field) {
     search_params.group_by_field = data.group_by_field;
   }
+  if (data.strict_group_size) {
+    search_params.strict_group_size = data.strict_group_size;
+  }
+  if (data.group_size) {
+    search_params.group_size = data.group_size;
+  }
 
   return search_params;
 };

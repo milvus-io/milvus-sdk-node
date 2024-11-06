@@ -29,6 +29,8 @@ import {
   formatSearchData,
   buildSearchRequest,
   FieldSchema,
+  buildSearchParams,
+  SearchSimpleReq,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -936,5 +938,53 @@ describe('utils/format', () => {
         }
       }
     );
+  });
+
+  it('should build search params correctly', () => {
+    const data: SearchSimpleReq = {
+      collection_name: 'test',
+      data: [1, 2, 3, 4, 5, 6, 7, 8],
+      params: { nprobe: 2 },
+      limit: 2,
+      output_fields: ['vector', 'vector1'],
+    };
+    const anns_field = 'anns_field2';
+
+    const newSearchParams = buildSearchParams(data, anns_field);
+
+    expect(newSearchParams).toEqual({
+      anns_field: 'anns_field2',
+      params: '{"nprobe":2}',
+      topk: 2,
+      offset: 0,
+      metric_type: '',
+      ignore_growing: false,
+    });
+
+    const data2: SearchSimpleReq = {
+      collection_name: 'test',
+      data: [1, 2, 3, 4, 5, 6, 7, 8],
+      anns_field: 'vector',
+      params: { nprobe: 2 },
+      limit: 2,
+      output_fields: ['vector', 'vector1'],
+      group_by_field: 'group_by_field_value',
+      group_size: 5,
+      strict_group_size: true,
+    };
+
+    const newSearchParams2 = buildSearchParams(data2, anns_field);
+
+    expect(newSearchParams2).toEqual({
+      anns_field: 'vector',
+      params: '{"nprobe":2}',
+      topk: 2,
+      offset: 0,
+      metric_type: '',
+      ignore_growing: false,
+      group_by_field: 'group_by_field_value',
+      group_size: 5,
+      strict_group_size: true,
+    });
   });
 });
