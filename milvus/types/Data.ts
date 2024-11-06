@@ -283,6 +283,8 @@ export interface SearchParam {
   round_decimal?: number; // round decimal
   ignore_growing?: boolean; // ignore growing
   group_by_field?: string; // group by field
+  group_size?: number; // group size
+  strict_group_size?: boolean; // if strict group size
 }
 
 // old search api parameter type, deprecated
@@ -333,6 +335,8 @@ export interface SearchSimpleReq extends collectionNameReq {
   consistency_level?: ConsistencyLevelEnum; // consistency level
   ignore_growing?: boolean; // ignore growing
   group_by_field?: string; // group by field
+  group_size?: number; // group size
+  strict_group_size?: boolean; // if strict group size
   round_decimal?: number; // round decimal
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
