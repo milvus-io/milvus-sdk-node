@@ -91,7 +91,11 @@ describe('Collection Api', () => {
 
     try {
       await milvusClient.createCollection(
-        genCollectionParams({ collectionName: 'any', dim: [8] })
+        genCollectionParams({
+          collectionName: 'any',
+          vectorType: [DataType.BinaryVector],
+          dim: [6],
+        })
       );
     } catch (error) {
       expect(error.message).toEqual(

@@ -54,6 +54,8 @@ export interface ClientConfig {
     verifyOptions?: Record<string, any>;
     // server name
     serverName?: string;
+    // skip certificate check entirely
+    skipCertCheck?: boolean;
   };
 
   // generic-pool options: refer to https://github.com/coopernurse/node-pool

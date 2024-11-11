@@ -10,6 +10,7 @@ import {
   SparseFloatVector,
   getDataKey,
   DataType,
+  getValidDataArray,
 } from '../../milvus';
 
 describe('Function API testing', () => {
@@ -348,5 +349,32 @@ describe('Function API testing', () => {
     expect(getDataKey(DataType.Array, true)).toEqual('arrayData');
     expect(getDataKey(DataType.JSON, true)).toEqual('jsonData');
     expect(getDataKey(DataType.None, true)).toEqual('none');
+  });
+
+  it('should return the valid array', () => {
+    const a = [1, 2, 3];
+    const length = 5;
+    const result = getValidDataArray(a, length);
+    expect(result).toEqual([true, true, true, false, false]);
+
+    const b = [1, null, 3];
+    const result2 = getValidDataArray(b, length);
+    expect(result2).toEqual([true, false, true, false, false]);
+
+    const c: any = [];
+    const result3 = getValidDataArray(c, length);
+    expect(result3).toEqual([false, false, false, false, false]);
+
+    const d: any = [1, 2, 3, 4, undefined];
+    const result4 = getValidDataArray(d, length);
+    expect(result4).toEqual([true, true, true, true, false]);
+
+    const e = [
+      [1, 2],
+      [3, 4],
+      [5, 6],
+    ];
+    const result5 = getValidDataArray(e, length);
+    expect(result5).toEqual([true, true, true, false, false]);
   });
 });
