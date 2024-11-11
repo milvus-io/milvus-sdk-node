@@ -150,6 +150,8 @@ export enum IndexType {
   STL_SORT = 'STL_SORT',
   TRIE = 'Trie',
   INVERTED = 'INVERTED',
+  // 2.5
+  BITMAP = 'BITMAP',
 }
 
 // MsgType
