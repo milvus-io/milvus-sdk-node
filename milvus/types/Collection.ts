@@ -83,7 +83,7 @@ export interface FieldType {
   nullable?: boolean;
   enable_match?: boolean;
   tokenizer_params?: Record<string, any>;
-  enable_tokenizer?: boolean;
+  enable_analyzer?: boolean;
 }
 
 export interface ShowCollectionsReq extends GrpcTimeOut {

@@ -132,7 +132,7 @@ export const genCollectionParams = (data: {
         default_value: DEFAULT_STRING_VALUE,
         max_length: MAX_LENGTH,
         is_partition_key: partitionKeyEnabled,
-        enable_tokenizer: true,
+        enable_analyzer: true,
       },
       {
         name: 'json',

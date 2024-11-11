@@ -4,7 +4,7 @@ import {
   ErrorCode,
   MetricType,
   ConsistencyLevelEnum,
-  FunctionType,
+  IndexType,
 } from '../../milvus';
 import {
   IP,
@@ -14,7 +14,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'FullTextSearch',
@@ -25,7 +25,7 @@ const numPartitions = 3;
 const createCollectionParams = genCollectionParams({
   collectionName: COLLECTION,
   dim: [4],
-  vectorType: [DataType.SparseFloatVector],
+  vectorType: [DataType.FloatVector],
   autoID: false,
   partitionKeyEnabled: true,
   numPartitions,
@@ -37,19 +37,9 @@ const createCollectionParams = genCollectionParams({
       data_type: DataType.VarChar,
       max_length: 200,
       is_partition_key: false,
-      enable_tokenizer: true,
+      enable_analyzer: true,
       enable_match: true,
       analyzer_params: { tokenizer: 'jieba' },
-    },
-  ],
-  functions: [
-    {
-      name: 'bm25f1',
-      description: 'bm25 function',
-      type: FunctionType.BM25,
-      input_field_names: ['text'],
-      output_field_names: ['vector'],
-      params: {},
     },
   ],
 });
@@ -80,19 +70,27 @@ describe(`Full text search API`, () => {
     expect(describe.schema.fields.length).toEqual(
       createCollectionParams.fields.length
     );
-    // extract the 'vector' field
-    const vector = describe.schema.fields.find(
-      field => field.is_function_output
-    );
-    // expect the 'vector' field's name to be 'vector'
-    expect(vector!.name).toEqual('vector');
 
-    // expect functions are in the schema
-    expect(describe.schema.functions.length).toEqual(1);
-    expect(describe.schema.functions[0].name).toEqual('bm25f1');
-    expect(describe.schema.functions[0].input_field_names).toEqual(['text']);
-    expect(describe.schema.functions[0].output_field_names).toEqual(['vector']);
-    expect(describe.schema.functions[0].type).toEqual('BM25');
+    // find varchar field
+    const text = describe.schema.fields.find(field => field.name === 'text');
+
+    const enableMatch = text?.type_params?.find(
+      param => param.key === 'enable_match'
+    );
+
+    const enableAnalyzer = text?.type_params?.find(
+      param => param.key === 'enable_analyzer'
+    );
+
+    const analyzerParams = text?.type_params?.find(
+      param => param.key === 'analyzer_params'
+    );
+
+    expect(enableMatch?.value).toEqual('true');
+    expect(enableAnalyzer?.value).toEqual('true');
+    expect(JSON.parse(analyzerParams?.value as any)).toEqual({
+      tokenizer: 'jieba',
+    });
   });
 
   it(`Insert data with function field should success`, async () => {
@@ -114,9 +112,8 @@ describe(`Full text search API`, () => {
       collection_name: COLLECTION,
       index_name: 't2',
       field_name: 'vector',
-      index_type: 'SPARSE_INVERTED_INDEX',
-      metric_type: MetricType.BM25,
-      params: { bm25_k1: 1.25, bm25_b: 0.75 }, //drop_ratio_build: 0.3,
+      index_type: IndexType.AUTOINDEX,
+      metric_type: MetricType.COSINE,
     });
 
     expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
@@ -135,14 +132,16 @@ describe(`Full text search API`, () => {
       collection_name: COLLECTION,
       limit: 10,
       expr: 'id > 0',
-      output_fields: ['vector', 'id', 'text'],
+      output_fields: ['text'],
+      filter: "TEXT_MATCH(text, 'apple')",
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(query.data.length).toEqual(10);
-    // data should have 'sparse' field
-    expect(query.data[0].hasOwnProperty('vector')).toBeTruthy();
+    // every text value should be 'apple'
+    query.data.forEach(item => {
+      expect(item.text).toEqual('apple');
+    });
   });
 
   it(`search with text should success`, async () => {
@@ -150,27 +149,34 @@ describe(`Full text search API`, () => {
     const search = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,
-      data: 'apple',
-      anns_field: 'vector',
-      output_fields: ['*'],
+      data: [1, 2, 3, 4],
+      output_fields: ['text'],
+      filter: "TEXT_MATCH(text, 'apple')",
       params: { drop_ratio_search: 0.6 },
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // expect text value to be 'apple'
+    expect(search.results[0].text).toEqual('apple');
 
     // nq > 1
     const search2 = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,
-      data: ['apple', 'banana'],
-      anns_field: 'vector',
+      data: [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+      ],
       output_fields: ['*'],
+      filter: "TEXT_MATCH(text, 'apple')",
       params: { drop_ratio_search: 0.6 },
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
     expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // expect text value to be 'apple'
+    expect(search2.results[0][0].text).toEqual('apple');
 
     // multiple search
     const search3 = await milvusClient.search({
@@ -178,18 +184,22 @@ describe(`Full text search API`, () => {
       limit: 10,
       data: [
         {
-          data: 'apple',
+          data: [1, 2, 3, 4],
           anns_field: 'vector',
           params: { nprobe: 2 },
         },
         {
-          data: [1, 2, 3, 4],
+          data: [5, 6, 7, 8],
           anns_field: 'vector',
         },
       ],
+      filter: "TEXT_MATCH(text, 'apple')",
+      output_fields: ['text'],
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
     expect(search3.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // expect text value to be 'apple'
+    expect(search3.results[0].text).toEqual('apple');
   });
 });

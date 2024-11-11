@@ -179,15 +179,15 @@ describe('utils/format', () => {
     expect(methodName).toBe('123');
   });
 
-  it('should assign properties with keys `dim` or `max_length` to the `type_params`, `enable_match`, `tokenizer_params`, `enable_tokenizer` object and delete them from the `field` object', () => {
+  it('should assign properties with keys `dim` or `max_length` to the `type_params`, `enable_match`, `analyzer_params`, `enable_analyzer` object and delete them from the `field` object', () => {
     const field = {
       name: 'vector',
       data_type: 'BinaryVector',
       dim: 128,
       max_length: 100,
       enable_match: true,
-      tokenizer_params: { key: 'value' },
-      enable_tokenizer: true,
+      analyzer_params: { key: 'value' },
+      enable_analyzer: true,
     } as FieldType;
     const expectedOutput = {
       name: 'vector',
@@ -196,8 +196,8 @@ describe('utils/format', () => {
         dim: '128',
         max_length: '100',
         enable_match: 'true',
-        tokenizer_params: { key: 'value' },
-        enable_tokenizer: 'true',
+        analyzer_params: JSON.stringify({ key: 'value' }),
+        enable_analyzer: 'true',
       },
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);

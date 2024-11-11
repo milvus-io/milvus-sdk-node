@@ -14,7 +14,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'Functions',
@@ -37,7 +37,7 @@ const createCollectionParams = genCollectionParams({
       data_type: DataType.VarChar,
       max_length: 20,
       is_partition_key: false,
-      enable_tokenizer: true,
+      enable_analyzer: true,
     },
     {
       name: 'sparse',
@@ -203,6 +203,8 @@ describe(`Functions schema API`, () => {
       params: { drop_ratio_search: 0.6 },
       consistency_level: ConsistencyLevelEnum.Strong,
     });
+
+    console.log(search)
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
 

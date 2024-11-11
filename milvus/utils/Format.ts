@@ -189,11 +189,11 @@ export const formatAddress = (address: string) => {
 };
 
 /**
- * Assigns properties with keys `dim` or `max_length` to the `type_params` object of a `FieldType` object.
- * If the property exists in the `field` object, it is converted to a string and then deleted from the `field` object.
- * If the property already exists in the `type_params` object, it is also converted to a string.
+ * Assigns specified properties from the `field` object to `type_params` within the `FieldType` object.
+ * Converts properties to strings, serializing objects as JSON strings if needed, then removes them from `field`.
  *
- * @param field The `FieldType` object to modify.
+ * @param field - The `FieldType` object to modify.
+ * @param typeParamKeys - Keys to assign to `type_params` if present in `field`.
  * @returns The modified `FieldType` object.
  */
 export const assignTypeParams = (
@@ -203,31 +203,30 @@ export const assignTypeParams = (
     'max_length',
     'max_capacity',
     'enable_match',
-    'enable_tokenizer',
-    'tokenizer_params',
+    'enable_analyzer',
+    'analyzer_params',
   ]
-) => {
-  let newField = cloneObj<FieldType>(field);
+): FieldType => {
+  const newField = cloneObj<FieldType>(field);
+
+  // Initialize `type_params` if undefined
+  newField.type_params ??= {};
+
   typeParamKeys.forEach(key => {
-    if (newField.hasOwnProperty(key)) {
-      // if the property exists in the field object, assign it to the type_params object
-      newField.type_params = newField.type_params || {};
-      newField.type_params[key] =
-        typeof newField[key as keyof FieldType] !== 'object'
-          ? String(newField[key as keyof FieldType] ?? '')
-          : (newField[key as keyof FieldType] as TypeParam);
-      // delete the property from the field object
+    if (key in newField) {
+      const value = newField[key as keyof FieldType];
+      // Convert the value to a string, JSON-stringify if it’s an object
+      newField.type_params![key] =
+        typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
       delete newField[key as keyof FieldType];
     }
-
-    if (newField.type_params && newField.type_params[key]) {
-      // if the property already exists in the type_params object, convert it to a string,
-      newField.type_params[key] =
-        typeof newField.type_params[key] !== 'object'
-          ? String(newField.type_params[key])
-          : newField.type_params[key];
-    }
   });
+
+  // delete type_params if it's empty
+  if (!Object.keys(newField.type_params).length) {
+    delete newField.type_params;
+  }
+
   return newField;
 };
 
