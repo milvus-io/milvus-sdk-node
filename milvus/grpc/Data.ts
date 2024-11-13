@@ -67,7 +67,6 @@ import {
   f32ArrayToBinaryBytes,
   getValidDataArray,
   NO_LIMIT,
-  DescribeCollectionReq,
 } from '../';
 import { Collection } from './Collection';
 
@@ -466,19 +465,11 @@ export class Data extends Collection {
   async search(
     data: SearchReq | SearchSimpleReq | HybridSearchReq
   ): Promise<SearchResults> {
-    // default collection request
-    const describeCollectionRequest = {
+    // get collection info
+    const collectionInfo = await this.describeCollection({
       collection_name: data.collection_name,
       cache: true,
-    } as DescribeCollectionReq;
-
-    // get collection info
-    if (data.db_name) {
-      // if the request has `db_name` pass it to the request.
-      describeCollectionRequest.db_name = data.db_name;
-    }
-
-    const collectionInfo = await this.describeCollection(describeCollectionRequest);
+    });
 
     // build search params
     const { request, nq, round_decimal, isHybridSearch } = buildSearchRequest(
