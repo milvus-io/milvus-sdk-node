@@ -204,8 +204,6 @@ describe(`Functions schema API`, () => {
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
-    console.log(search)
-
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     // nq > 1
