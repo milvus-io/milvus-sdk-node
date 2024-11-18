@@ -96,7 +96,7 @@ describe(`Full text search API`, () => {
   it(`Insert data with function field should success`, async () => {
     const data = generateInsertData(
       [...createCollectionParams.fields, ...dynamicFields],
-      10
+      500
     );
 
     const insert = await milvusClient.insert({
