@@ -29,6 +29,7 @@ import {
   formatSearchData,
   buildSearchRequest,
   FieldSchema,
+  CreateCollectionReq,
   buildSearchParams,
   SearchSimpleReq,
 } from '../../milvus';
@@ -178,15 +179,15 @@ describe('utils/format', () => {
     expect(methodName).toBe('123');
   });
 
-  it('should assign properties with keys `dim` or `max_length` to the `type_params`, `enable_match`, `tokenizer_params`, `enable_tokenizer` object and delete them from the `field` object', () => {
+  it('should assign properties with keys `dim` or `max_length` to the `type_params`, `enable_match`, `analyzer_params`, `enable_analyzer` object and delete them from the `field` object', () => {
     const field = {
       name: 'vector',
       data_type: 'BinaryVector',
       dim: 128,
       max_length: 100,
       enable_match: true,
-      tokenizer_params: { key: 'value' },
-      enable_tokenizer: true,
+      analyzer_params: { key: 'value' },
+      enable_analyzer: true,
     } as FieldType;
     const expectedOutput = {
       name: 'vector',
@@ -195,8 +196,8 @@ describe('utils/format', () => {
         dim: '128',
         max_length: '100',
         enable_match: 'true',
-        tokenizer_params: { key: 'value' },
-        enable_tokenizer: 'true',
+        analyzer_params: JSON.stringify({ key: 'value' }),
+        enable_analyzer: 'true',
       },
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);
@@ -291,8 +292,23 @@ describe('utils/format', () => {
           max_capacity: 64,
           element_type: DataType.Int64,
         },
+        {
+          name: 'sparse',
+          data_type: DataType.SparseFloatVector,
+          description: 'sparse field',
+        },
       ],
-    } as any;
+      functions: [
+        {
+          name: 'bm25f1',
+          description: 'bm25 function',
+          type: 1,
+          input_field_names: ['testField1'],
+          output_field_names: ['sparse'],
+          params: { a: 1 },
+        },
+      ],
+    } as CreateCollectionReq;
 
     const schemaProtoPath = path.resolve(
       __dirname,
@@ -346,18 +362,42 @@ describe('utils/format', () => {
           isPrimaryKey: false,
           isPartitionKey: false,
           isFunctionOutput: false,
+          isClusteringKey: false,
           elementType: 5,
           element_type: 5,
+        },
+        {
+          typeParams: [],
+          indexParams: [],
+          name: 'sparse',
+          description: 'sparse field',
+          data_type: 104,
+          dataType: 104,
+          isPrimaryKey: false,
+          isPartitionKey: false,
+          isFunctionOutput: true,
           isClusteringKey: false,
         },
       ],
-      functions: [],
+      functions: [
+        {
+          inputFieldNames: ['testField1'],
+          inputFieldIds: [],
+          outputFieldNames: ['sparse'],
+          outputFieldIds: [],
+          params: [{ key: 'a', value: '1' }],
+          name: 'bm25f1',
+          description: 'bm25 function',
+          type: 1,
+        },
+      ],
     };
 
     const payload = formatCollectionSchema(data, {
       fieldSchemaType,
       functionSchemaType,
     });
+
     expect(payload).toEqual(expectedResult);
   });
 

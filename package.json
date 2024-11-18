@@ -1,7 +1,7 @@
 {
   "name": "@zilliz/milvus2-sdk-node",
   "author": "ued@zilliz.com",
-  "milvusVersion": "master-20241113-af433ffd-amd64",
+  "milvusVersion": "master-20241118-12ed40e1-amd64",
   "version": "2.4.9",
   "main": "dist/milvus",
   "files": [
