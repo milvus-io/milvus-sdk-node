@@ -17,7 +17,7 @@ async function getData(address: string) {
 }
 
 export default async function Home() {
-  const address = `10.102.5.223:19530`;
+  const address = `127.0.0.1:19530`;
 
   const data = await getData(address);
 
