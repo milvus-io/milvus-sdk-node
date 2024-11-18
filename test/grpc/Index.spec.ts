@@ -14,7 +14,7 @@ import {
 } from '../tools';
 import { timeoutTest } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 // names
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_WITHOUT_INDEX_NAME = GENERATE_NAME();
@@ -267,6 +267,16 @@ describe(`Milvus Index API`, () => {
       collection_name: COLLECTION_NAME,
       field_name: 'float',
       index_type: IndexType.INVERTED,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create Bitmap index on int32_array array should success`, async () => {
+    const res = await milvusClient.createIndex({
+      index_name: 'bitmap_index',
+      collection_name: COLLECTION_NAME,
+      field_name: 'int32_array',
+      index_type: IndexType.BITMAP,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
