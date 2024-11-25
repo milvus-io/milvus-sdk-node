@@ -184,12 +184,20 @@ describe(`Functions schema API`, () => {
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
-    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(query.data.length).toEqual(10);
-    // data should have 'sparse' field
-    expect(query.data[0].hasOwnProperty('sparse')).toBeTruthy();
-    // data should have 'sparse2' field
-    expect(query.data[0].hasOwnProperty('sparse2')).toBeTruthy();
+    expect(query.status.error_code).toEqual(ErrorCode.UnexpectedError);
+    expect(query.status.reason).toEqual(
+      'not allowed to retrieve raw data of field sparse'
+    );
+
+    const query2 = await milvusClient.query({
+      collection_name: COLLECTION,
+      limit: 10,
+      expr: 'id > 0',
+      output_fields: ['vector', 'id', 'text'],
+      consistency_level: ConsistencyLevelEnum.Strong,
+    });
+
+    expect(query2.data.length).toEqual(10);
   });
 
   it(`search with varchar should success`, async () => {
