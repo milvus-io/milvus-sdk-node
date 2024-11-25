@@ -1,7 +1,11 @@
 import { MilvusClient, ErrorCode, DataType } from '../../milvus';
 import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({
+  address: IP,
+  logLevel: 'debug',
+  logPrefix: 'Basic API',
+});
 const COLLECTION_NAME = GENERATE_NAME();
 const schema = [
   {

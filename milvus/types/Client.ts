@@ -36,6 +36,8 @@ export interface ClientConfig {
   database?: string;
   // log level
   logLevel?: string;
+  // log prefix
+  logPrefix?: string;
 
   tls?: {
     // root certificate file path, it can be a CA PEM (Certificate Authority PEM) or Server PEM (Server Certificate PEM):

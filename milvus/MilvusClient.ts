@@ -57,6 +57,9 @@ export class MilvusClient extends GRPCClient {
     if (this.config.logLevel) {
       logger.level = this.config.logLevel;
     }
+    if (this.config.logPrefix) {
+      logger.defaultMeta = { service: this.config.logPrefix };
+    }
 
     logger.debug(
       `new client initialized, version: ${MilvusClient.sdkInfo.version} `
