@@ -1,4 +1,4 @@
-import { MilvusClient, ErrorCode, DEFAULT_DB } from '../../milvus';
+import { MilvusClient, ErrorCode, DEFAULT_DB, formatKeyValueData } from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -10,6 +10,7 @@ let milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const DEFAULT = 'default';
 const DB_NAME = GENERATE_NAME('database');
 const DB_NAME2 = GENERATE_NAME('database');
+const DB_WITH_PROPERTY = GENERATE_NAME();
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME2 = GENERATE_NAME();
 
@@ -270,6 +271,33 @@ describe(`Database API`, () => {
     expect(describe.properties).toEqual([
       { key: 'database.diskQuota.mb', value: '2048' },
     ]);
+  });
+
+  it(`create db with property set should be successful`, async () => {
+    const res = await milvusClient.createDatabase({
+      db_name: DB_WITH_PROPERTY,
+      properties: {
+        'replicate.id': "local-mac",
+      },
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeDatabase({
+      db_name: DB_WITH_PROPERTY,
+    });
+
+    expect(
+      String(
+        formatKeyValueData(describe.properties, ['replicate.id'])[
+          'replicate.id'
+        ]
+      )
+    ).toEqual("local-mac");
+
+    // drop collection
+    await milvusClient.dropDatabase({
+      db_name: DB_WITH_PROPERTY,
+    });
   });
 
   // it(`drop database should be ok`, async () => {
