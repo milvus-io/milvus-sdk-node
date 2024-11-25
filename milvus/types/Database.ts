@@ -7,7 +7,9 @@ export interface databaseReq extends GrpcTimeOut {
 }
 
 // request
-export interface CreateDatabaseRequest extends databaseReq {}
+export interface CreateDatabaseRequest extends databaseReq {
+  properties?: Properties; // optional, properties
+}
 export interface DropDatabasesRequest extends databaseReq {}
 export interface DescribeDatabaseRequest extends databaseReq {}
 
