@@ -4,7 +4,7 @@ import {
   ErrorCode,
   MetricType,
   ConsistencyLevelEnum,
-  IndexType,
+  FunctionType,
 } from '../../milvus';
 import {
   IP,
@@ -14,7 +14,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'FullTextSearch',
@@ -35,16 +35,43 @@ const createCollectionParams = genCollectionParams({
       name: 'text',
       description: 'text field',
       data_type: DataType.VarChar,
-      max_length: 200,
+      max_length: 20,
       is_partition_key: false,
       enable_analyzer: true,
-      enable_match: true,
-      analyzer_params: { tokenizer: 'jieba' },
+    },
+    {
+      name: 'sparse',
+      description: 'sparse field',
+      data_type: DataType.SparseFloatVector,
+      is_function_output: true,
+    },
+    {
+      name: 'sparse2',
+      description: 'sparse field2',
+      data_type: DataType.SparseFloatVector,
+    },
+  ],
+  functions: [
+    {
+      name: 'bm25f1',
+      description: 'bm25 function',
+      type: FunctionType.BM25,
+      input_field_names: ['text'],
+      output_field_names: ['sparse'],
+      params: {},
+    },
+    {
+      name: 'bm25f2',
+      description: 'bm25 function',
+      type: FunctionType.BM25,
+      input_field_names: ['text'],
+      output_field_names: ['sparse2'],
+      params: {},
     },
   ],
 });
 
-describe(`Full text search API`, () => {
+describe(`FulltextSearch API`, () => {
   beforeAll(async () => {
     // create db and use db
     await milvusClient.createDatabase(dbParam);
@@ -66,37 +93,43 @@ describe(`Full text search API`, () => {
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION,
     });
-    // expect the 'vector' field to be created
+    // expect the 'sparse' field to be created
     expect(describe.schema.fields.length).toEqual(
       createCollectionParams.fields.length
     );
-
-    // find varchar field
-    const text = describe.schema.fields.find(field => field.name === 'text');
-
-    const enableMatch = text?.type_params?.find(
-      param => param.key === 'enable_match'
+    // extract the 'sparse' field
+    const sparse = describe.schema.fields.find(
+      field => field.is_function_output
     );
 
-    const enableAnalyzer = text?.type_params?.find(
-      param => param.key === 'enable_analyzer'
-    );
+    // expect the 'sparse' field's name to be 'sparse'
+    expect(sparse!.name).toEqual('sparse');
 
-    const analyzerParams = text?.type_params?.find(
-      param => param.key === 'analyzer_params'
-    );
+    // expect functions are in the schema
+    expect(describe.schema.functions.length).toEqual(2);
+    expect(describe.schema.functions[0].name).toEqual('bm25f1');
+    expect(describe.schema.functions[0].input_field_names).toEqual(['text']);
+    expect(describe.schema.functions[0].output_field_names).toEqual(['sparse']);
+    expect(describe.schema.functions[0].type).toEqual('BM25');
+    expect(describe.schema.functions[1].name).toEqual('bm25f2');
+    expect(describe.schema.functions[1].input_field_names).toEqual(['text']);
+    expect(describe.schema.functions[1].output_field_names).toEqual([
+      'sparse2',
+    ]);
+    expect(describe.schema.functions[1].type).toEqual('BM25');
 
-    expect(enableMatch?.value).toEqual('true');
-    expect(enableAnalyzer?.value).toEqual('true');
-    expect(JSON.parse(analyzerParams?.value as any)).toEqual({
-      tokenizer: 'jieba',
-    });
+    // find the `sparse2` field
+    const sparse2 = describe.schema.fields.find(
+      field => field.name === 'sparse2'
+    );
+    // its function output should be true
+    expect(sparse2!.is_function_output).toEqual(true);
   });
 
   it(`Insert data with function field should success`, async () => {
     const data = generateInsertData(
       [...createCollectionParams.fields, ...dynamicFields],
-      500
+      10
     );
 
     const insert = await milvusClient.insert({
@@ -108,15 +141,37 @@ describe(`Full text search API`, () => {
   });
 
   it(`Create index on function output field should success`, async () => {
+    // create index
+    const createVectorIndex = await milvusClient.createIndex({
+      collection_name: COLLECTION,
+      index_name: 't',
+      field_name: 'vector',
+      index_type: 'HNSW',
+      metric_type: MetricType.COSINE,
+      params: { M: 4, efConstruction: 8 },
+    });
+
     const createIndex = await milvusClient.createIndex({
       collection_name: COLLECTION,
       index_name: 't2',
-      field_name: 'vector',
-      index_type: IndexType.AUTOINDEX,
-      metric_type: MetricType.COSINE,
+      field_name: 'sparse',
+      index_type: 'SPARSE_INVERTED_INDEX',
+      metric_type: 'BM25',
+      params: { drop_ratio_build: 0.3, bm25_k1: 1.25, bm25_b: 0.8 },
     });
 
+    const createIndex2 = await milvusClient.createIndex({
+      collection_name: COLLECTION,
+      index_name: 't3',
+      field_name: 'sparse2',
+      index_type: 'SPARSE_INVERTED_INDEX',
+      metric_type: 'BM25',
+      params: { drop_ratio_build: 0.3, bm25_k1: 1.25, bm25_b: 0.8 },
+    });
+
+    expect(createVectorIndex.error_code).toEqual(ErrorCode.SUCCESS);
     expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(createIndex2.error_code).toEqual(ErrorCode.SUCCESS);
 
     // load
     const load = await milvusClient.loadCollection({
@@ -132,51 +187,52 @@ describe(`Full text search API`, () => {
       collection_name: COLLECTION,
       limit: 10,
       expr: 'id > 0',
-      output_fields: ['text'],
-      filter: "TEXT_MATCH(text, 'apple')",
+      output_fields: ['vector', 'id', 'text', 'sparse', 'sparse2'],
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
-    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
-    // every text value should be 'apple'
-    query.data.forEach(item => {
-      expect(item.text).toEqual('apple');
+    expect(query.status.error_code).toEqual(ErrorCode.UnexpectedError);
+    expect(query.status.reason).toEqual(
+      'not allowed to retrieve raw data of field sparse'
+    );
+
+    const query2 = await milvusClient.query({
+      collection_name: COLLECTION,
+      limit: 10,
+      expr: 'id > 0',
+      output_fields: ['vector', 'id', 'text', '$meta'],
+      consistency_level: ConsistencyLevelEnum.Strong,
     });
+
+    expect(query2.data.length).toEqual(10);
   });
 
-  it(`search with text should success`, async () => {
+  it(`search with varchar should success`, async () => {
     // search nq = 1
     const search = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,
-      data: [1, 2, 3, 4],
-      output_fields: ['text'],
-      filter: "TEXT_MATCH(text, 'apple')",
+      data: 'apple',
+      anns_field: 'sparse',
+      output_fields: ['*'],
       params: { drop_ratio_search: 0.6 },
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
-    // expect text value to be 'apple'
-    expect(search.results[0].text).toEqual('apple');
 
     // nq > 1
     const search2 = await milvusClient.search({
       collection_name: COLLECTION,
       limit: 10,
-      data: [
-        [1, 2, 3, 4],
-        [5, 6, 7, 8],
-      ],
+      data: ['apple', 'banana'],
+      anns_field: 'sparse',
       output_fields: ['*'],
-      filter: "TEXT_MATCH(text, 'apple')",
       params: { drop_ratio_search: 0.6 },
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
     expect(search2.status.error_code).toEqual(ErrorCode.SUCCESS);
-    // expect text value to be 'apple'
-    expect(search2.results[0][0].text).toEqual('apple');
 
     // multiple search
     const search3 = await milvusClient.search({
@@ -184,22 +240,18 @@ describe(`Full text search API`, () => {
       limit: 10,
       data: [
         {
-          data: [1, 2, 3, 4],
-          anns_field: 'vector',
+          data: 'apple',
+          anns_field: 'sparse',
           params: { nprobe: 2 },
         },
         {
-          data: [5, 6, 7, 8],
+          data: [1, 2, 3, 4],
           anns_field: 'vector',
         },
       ],
-      filter: "TEXT_MATCH(text, 'apple')",
-      output_fields: ['text'],
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
     expect(search3.status.error_code).toEqual(ErrorCode.SUCCESS);
-    // expect text value to be 'apple'
-    expect(search3.results[0].text).toEqual('apple');
   });
 });
