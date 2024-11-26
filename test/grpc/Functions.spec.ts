@@ -14,7 +14,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'Functions',
@@ -49,7 +49,6 @@ const createCollectionParams = genCollectionParams({
       name: 'sparse2',
       description: 'sparse field2',
       data_type: DataType.SparseFloatVector,
-      is_function_output: true,
     },
   ],
   functions: [
@@ -102,6 +101,7 @@ describe(`Functions schema API`, () => {
     const sparse = describe.schema.fields.find(
       field => field.is_function_output
     );
+
     // expect the 'sparse' field's name to be 'sparse'
     expect(sparse!.name).toEqual('sparse');
 
@@ -117,6 +117,13 @@ describe(`Functions schema API`, () => {
       'sparse2',
     ]);
     expect(describe.schema.functions[1].type).toEqual('BM25');
+
+    // find the `sparse2` field
+    const sparse2 = describe.schema.fields.find(
+      field => field.name === 'sparse2'
+    );
+    // its function output should be true
+    expect(sparse2!.is_function_output).toEqual(true);
   });
 
   it(`Insert data with function field should success`, async () => {
