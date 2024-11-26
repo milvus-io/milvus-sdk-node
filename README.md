@@ -13,7 +13,8 @@ The following table shows the recommended `@zilliz/milvus2-sdk-node` versions fo
 
 | Milvus version | Node sdk version | Installation                               |
 | :------------: | :--------------: | :----------------------------------------- |
-|    v2.4.0+     |    **latest**    | `yarn add @zilliz/milvus2-sdk-node@latest` |
+|    v2.5.0+     |    **latest**    | `yarn add @zilliz/milvus2-sdk-node@latest` |
+|    v2.4.0+     |      v2.4.9      | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
 |    v2.3.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
 |    v2.2.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
 
@@ -46,17 +47,21 @@ yarn add @zilliz/milvus2-sdk-node
 ```
 
 ## Milvus TLS Guide
+
 Please refer to [this doc](https://github.com/milvus-io/milvus-sdk-node/tree/main/test/cert).
 
 ## What's new in v2.4.4
-### API renamed: 
+
+### API renamed:
+
 - `loadCollectionSync` -> `loadCollection`
 - `loadCollection` -> `loadCollectionAsync`
 - `loadCollectionSync` = `loadCollectionSync`
 
-So now you can just call `loadCollection` other than `loadCollectionSync` to load your collection like other language SDK. 
+So now you can just call `loadCollection` other than `loadCollectionSync` to load your collection like other language SDK.
 
 ### Support passing certificate file buffer for the TLS connection:
+
 ```javascript
 new MilvusClient({
   address: 'localhost:19530',
