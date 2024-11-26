@@ -429,7 +429,8 @@ export const formatDescribedCol = (
 export const buildDynamicRow = (
   rowData: RowData,
   fieldMap: Map<string, _Field>,
-  dynamicFieldName: string
+  dynamicFieldName: string,
+  functionOutputFields: string[]
 ) => {
   const originRow = cloneObj(rowData);
 
@@ -443,9 +444,11 @@ export const buildDynamicRow = (
       // if the key is in the fieldMap, add it to the non-dynamic fields
       row[key] = originRow[key];
     } else {
-      const obj: JSON = row[dynamicFieldName] as JSON;
-      // otherwise, add it to the dynamic field
-      obj[key] = originRow[key];
+      if (!functionOutputFields.includes(key)) {
+        const obj: JSON = row[dynamicFieldName] as JSON;
+        // otherwise, add it to the dynamic field
+        obj[key] = originRow[key];
+      }
     }
   }
 

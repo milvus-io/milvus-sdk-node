@@ -488,15 +488,21 @@ describe('utils/format', () => {
     const data = {};
     const fieldsDataMap = new Map();
     const dynamicField = 'dynamic';
-    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField, []);
     expect(result).toEqual({});
   });
 
   it('should return an object with dynamicField key when all data contains keys not in fieldsDataMap', () => {
-    const data = { key: 'value' };
+    const data = { key: 'value', key2: 'value2' };
     const fieldsDataMap = new Map();
     const dynamicField = 'dynamic';
-    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
+    const ignoreFields = ['key2'];
+    const result = buildDynamicRow(
+      data,
+      fieldsDataMap,
+      dynamicField,
+      ignoreFields
+    );
     expect(result).toEqual({ [dynamicField]: { key: 'value' } });
   });
 
@@ -513,7 +519,7 @@ describe('utils/format', () => {
       ],
     ]);
     const dynamicField = 'dynamic';
-    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField, []);
     expect(result).toEqual({
       key1: 'value1',
       [dynamicField]: { key2: 'value2' },
@@ -541,7 +547,7 @@ describe('utils/format', () => {
       ],
     ]);
     const dynamicField = 'dynamic';
-    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField, []);
     expect(result).toEqual({
       [dynamicField]: {},
       key1: 'value1',
@@ -562,7 +568,7 @@ describe('utils/format', () => {
       ],
     ]);
     const dynamicField = 'dynamic';
-    const result = buildDynamicRow(data, fieldsDataMap, dynamicField);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField, []);
     expect(result).toEqual({
       key1: 'value1',
       [dynamicField]: { key2: 'value2' },
