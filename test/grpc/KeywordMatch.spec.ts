@@ -39,7 +39,7 @@ const createCollectionParams = genCollectionParams({
       is_partition_key: false,
       enable_analyzer: true,
       enable_match: true,
-      analyzer_params: { tokenizer: 'jieba' },
+      analyzer_params: { type: 'english' },
     },
   ],
 });
@@ -89,7 +89,7 @@ describe(`Keyword match API`, () => {
     expect(enableMatch?.value).toEqual('true');
     expect(enableAnalyzer?.value).toEqual('true');
     expect(JSON.parse(analyzerParams?.value as any)).toEqual({
-      tokenizer: 'jieba',
+      type: 'english',
     });
   });
 
