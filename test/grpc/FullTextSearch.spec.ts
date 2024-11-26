@@ -14,7 +14,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'FullTextSearch',
@@ -251,8 +251,6 @@ describe(`FulltextSearch API`, () => {
       ],
       consistency_level: ConsistencyLevelEnum.Strong,
     });
-
-    console.dir(search3, { depth: null });
 
     expect(search3.status.error_code).toEqual(ErrorCode.SUCCESS);
   });

@@ -145,22 +145,27 @@ export class Data extends Collection {
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     // If primarykey is set `autoid = true`, you cannot insert the data.
     // and if function field is set, you need to ignore the field value in the data.
+    const functionOutputFields: string[] = [];
     const fieldMap = new Map<string, _Field>(
-      collectionInfo.schema.fields
-        .filter(v => !v.is_primary_key || !v.autoID)
-        .filter(v => !v.is_function_output)
-        .map(v => [
-          v.name,
-          {
-            name: v.name,
-            type: v.data_type, // milvus return string here
-            elementType: v.element_type,
-            dim: Number(findKeyValue(v.type_params, 'dim')),
-            data: [], // values container
-            nullable: v.nullable,
-            default_value: v.default_value,
-          },
-        ])
+      collectionInfo.schema.fields.reduce((acc, v) => {
+        if (v.is_function_output) {
+          functionOutputFields.push(v.name); // ignore function field
+        } else if (!v.is_primary_key || !v.autoID) {
+          acc.push([
+            v.name,
+            {
+              name: v.name,
+              type: v.data_type, // milvus return string here
+              elementType: v.element_type,
+              dim: Number(findKeyValue(v.type_params, 'dim')),
+              data: [], // values container
+              nullable: v.nullable,
+              default_value: v.default_value,
+            },
+          ]);
+        }
+        return acc;
+      }, [] as [string, _Field][])
     );
 
     // dynamic field is enabled, create $meta field
@@ -179,7 +184,12 @@ export class Data extends Collection {
     data.fields_data.forEach((rowData, rowIndex) => {
       // if support dynamic field, all field not in the schema would be grouped to a dynamic field
       rowData = isDynamic
-        ? buildDynamicRow(rowData, fieldMap, DEFAULT_DYNAMIC_FIELD)
+        ? buildDynamicRow(
+            rowData,
+            fieldMap,
+            DEFAULT_DYNAMIC_FIELD,
+            functionOutputFields
+          )
         : rowData;
 
       // get each fieldname from the row object
@@ -230,10 +240,18 @@ export class Data extends Collection {
       const dataKey = getDataKey(type);
       const elementType = DataTypeMap[field.elementType!];
       const elementTypeKey = getDataKey(elementType);
-      const valid_data = getValidDataArray(
-        field.data,
-        data.fields_data?.length!
-      );
+
+      // check if need valid data
+      const needValidData =
+        key !== 'vectors' &&
+        (field.nullable === true ||
+          (typeof field.default_value !== 'undefined' &&
+            field.default_value !== null));
+
+      // get valid data
+      const valid_data = needValidData
+        ? getValidDataArray(field.data, data.fields_data?.length!)
+        : [];
 
       // build key value
       let keyValue;
@@ -295,18 +313,12 @@ export class Data extends Collection {
           break;
       }
 
-      const needValidData =
-        key !== 'vectors' &&
-        (field.nullable === true ||
-          (typeof field.default_value !== 'undefined' &&
-            field.default_value !== null));
-
       return {
         type,
         field_name: field.name,
         is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
         [key]: keyValue,
-        valid_data: needValidData ? valid_data : [],
+        valid_data: valid_data,
       };
     });
 
@@ -478,7 +490,9 @@ export class Data extends Collection {
       describeCollectionRequest.db_name = data.db_name;
     }
 
-    const collectionInfo = await this.describeCollection(describeCollectionRequest);
+    const collectionInfo = await this.describeCollection(
+      describeCollectionRequest
+    );
 
     // build search params
     const { request, nq, round_decimal, isHybridSearch } = buildSearchRequest(
