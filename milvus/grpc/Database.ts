@@ -40,7 +40,10 @@ export class Database extends BaseClient {
     const promise = await promisify(
       this.channelPool,
       'CreateDatabase',
-      data,
+      {
+        db_name: data.db_name,
+        properties: parseToKeyValue(data.properties),
+      },
       data.timeout || this.timeout
     );
     return promise;
