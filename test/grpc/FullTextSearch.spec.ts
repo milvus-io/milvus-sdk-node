@@ -252,6 +252,8 @@ describe(`FulltextSearch API`, () => {
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
+    console.dir(search3, { depth: null });
+
     expect(search3.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });
