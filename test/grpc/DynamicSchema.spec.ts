@@ -13,7 +13,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'DynamicSchema',
@@ -53,6 +53,20 @@ describe(`Dynamic schema API`, () => {
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION,
     });
+
+    // find varchar field
+    const varCharField = describe.schema.fields.find(
+      v => v.name === 'varChar'
+    )!;
+    // find int64 field
+    const int64Field = describe.schema.fields.find(
+      v => v.name === 'default_value'
+    )!;
+
+    // test default value
+    expect(varCharField.default_value).toEqual(DEFAULT_STRING_VALUE);
+    expect(int64Field.default_value).toEqual(DEFAULT_NUM_VALUE);
+
     expect(describe.schema.enable_dynamic_field).toEqual(true);
   });
 
@@ -115,6 +129,7 @@ describe(`Dynamic schema API`, () => {
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(query.data.length).toEqual(10);
+
     // get test values
     const varChars = query.data.map(v => v.varChar);
     const defaultValues = query.data.map(v => v.default_value);
@@ -123,13 +138,11 @@ describe(`Dynamic schema API`, () => {
     const bools = query.data.map(v => v.bool);
     const floats = query.data.map(v => v.float);
     //  some of floats should be equal to DEFAULT_NUM_VALUE
-    expect(floats.some(v => Number(v) === DEFAULT_NUM_VALUE)).toEqual(true);
+    expect(floats.some(v => v === DEFAULT_NUM_VALUE)).toEqual(true);
     // some of varChar should be equal to DEFAULT_STRING_VALUE
     expect(varChars.some(v => v === DEFAULT_STRING_VALUE)).toEqual(true);
     // some of default_value should be equal to DEFAULT_NUM_VALUE
-    expect(defaultValues.some(v => Number(v) === DEFAULT_NUM_VALUE)).toEqual(
-      true
-    );
+    expect(defaultValues.some(v => v === DEFAULT_NUM_VALUE)).toEqual(true);
     // some of json should be null
     expect(jsons.some(v => v === null)).toEqual(true);
     // some of bools should be null
@@ -173,13 +186,11 @@ describe(`Dynamic schema API`, () => {
     const bools = search.results.map(v => v.bool);
     const floats = search.results.map(v => v.float);
     //  some of floats should be equal to DEFAULT_NUM_VALUE
-    expect(floats.some(v => Number(v) === DEFAULT_NUM_VALUE)).toEqual(true);
+    expect(floats.some(v => v === DEFAULT_NUM_VALUE)).toEqual(true);
     // some of varChar should be equal to DEFAULT_STRING_VALUE
     expect(varChars.some(v => v === DEFAULT_STRING_VALUE)).toEqual(true);
     // some of default_value should be equal to DEFAULT_NUM_VALUE
-    expect(defaultValues.some(v => Number(v) === DEFAULT_NUM_VALUE)).toEqual(
-      true
-    );
+    expect(defaultValues.some(v => v === DEFAULT_NUM_VALUE)).toEqual(true);
     // some of json should be null
     expect(jsons.some(v => v === null)).toEqual(true);
     // some of bools should be null

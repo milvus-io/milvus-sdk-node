@@ -16,27 +16,6 @@ import {
   FunctionType,
 } from '../';
 
-// returned from milvus
-export interface FieldSchema {
-  type_params: KeyValuePair[];
-  index_params: KeyValuePair[];
-  fieldID: string | number;
-  name: string;
-  is_primary_key: boolean;
-  description: string;
-  data_type: keyof typeof DataType;
-  autoID: boolean;
-  state: string;
-  element_type?: keyof typeof DataType;
-  default_value?: number | string;
-  dataType: DataType;
-  is_partition_key?: boolean;
-  is_dynamic?: boolean;
-  is_clustering_key?: boolean;
-  nullable?: boolean;
-  is_function_output: boolean;
-}
-
 export interface CollectionData {
   name: string;
   id: string;
@@ -59,11 +38,38 @@ export interface ReplicaInfo {
   node_ids: string[];
 }
 
-export type TypeParam = string | number | Record<string, any>;
-export type TypeParamKey = 'dim' | 'max_length' | 'max_capacity';
+export type TypeParam = string | number | boolean | Record<string, any>;
+export type TypeParamKey =
+  | 'dim'
+  | 'max_length'
+  | 'max_capacity'
+  | 'analyzer_params'
+  | 'enable_analyzer'
+  | 'enable_match';
+
+// returned from milvus
+export type FieldSchema = {
+  type_params: KeyValuePair<TypeParamKey, TypeParam>[];
+  index_params: KeyValuePair[];
+  fieldID: string | number;
+  name: string;
+  is_primary_key: boolean;
+  description: string;
+  data_type: keyof typeof DataType;
+  autoID: boolean;
+  state: string;
+  element_type?: keyof typeof DataType;
+  default_value?: number | string;
+  dataType: DataType;
+  is_partition_key?: boolean;
+  is_dynamic?: boolean;
+  is_clustering_key?: boolean;
+  nullable?: boolean;
+  is_function_output: boolean;
+} & Partial<Record<TypeParamKey, TypeParam>>;
 
 // create collection
-export interface FieldType {
+export type FieldType = {
   name: string;
   description?: string;
   data_type: DataType | keyof typeof DataTypeMap;
@@ -72,19 +78,11 @@ export interface FieldType {
   is_partition_key?: boolean;
   is_function_output?: boolean;
   is_clustering_key?: boolean;
-  type_params?: {
-    [key: string]: TypeParam;
-  };
+  type_params?: Record<TypeParamKey, TypeParam>;
   autoID?: boolean;
-  dim?: TypeParam;
-  max_capacity?: TypeParam;
-  max_length?: TypeParam;
   default_value?: number | string;
   nullable?: boolean;
-  enable_match?: boolean;
-  tokenizer_params?: Record<string, any>;
-  enable_analyzer?: boolean;
-}
+} & Partial<Record<TypeParamKey, TypeParam>>;
 
 export interface ShowCollectionsReq extends GrpcTimeOut {
   type?: ShowCollectionsType;

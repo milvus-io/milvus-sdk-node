@@ -41,10 +41,11 @@ import {
   f32ArrayToF16Bytes,
   bf16BytesToF32Array,
   f16BytesToF32Array,
-  TypeParam,
   SearchDataType,
   FieldSchema,
   SearchMultipleDataType,
+  TypeParamKey,
+  TypeParam,
 } from '../';
 
 /**
@@ -198,7 +199,7 @@ export const formatAddress = (address: string) => {
  */
 export const assignTypeParams = (
   field: FieldType,
-  typeParamKeys: string[] = [
+  typeParamKeys: TypeParamKey[] = [
     'dim',
     'max_length',
     'max_capacity',
@@ -210,7 +211,7 @@ export const assignTypeParams = (
   const newField = cloneObj<FieldType>(field);
 
   // Initialize `type_params` if undefined
-  newField.type_params ??= {};
+  newField.type_params ??= {} as Record<TypeParamKey, TypeParam>;
 
   typeParamKeys.forEach(key => {
     if (key in newField) {
@@ -413,6 +414,17 @@ export const formatDescribedCol = (
   // add a dataType property which indicate datatype number
   newData.schema?.fields?.forEach(f => {
     f.dataType = DataTypeMap[f.data_type];
+    // if default_value is set, parse it to the correct format
+    if (f.default_value) {
+      const defaultValue = f.default_value as any;
+      f.default_value = defaultValue[defaultValue.data];
+    }
+    // extract type params(key value pair = {key: 'xxx', value: any}), and assign it to the field object(key)
+    if (f.type_params && f.type_params.length > 0) {
+      f.type_params.forEach(keyValuePair => {
+        f[keyValuePair.key] = keyValuePair.value;
+      });
+    }
   });
 
   return newData;

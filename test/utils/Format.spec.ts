@@ -440,6 +440,7 @@ describe('utils/format', () => {
             is_clustering_key: false,
             is_function_output: false,
             nullable: false,
+            default_value: { long_data: 123, data: 'long_data' } as any,
             is_partition_key: false,
           },
           {
@@ -453,10 +454,35 @@ describe('utils/format', () => {
             dataType: 5,
             autoID: true,
             state: 'created',
+            default_value: { string_data: 'd', data: 'string_data' } as any,
             is_dynamic: false,
             is_clustering_key: false,
             is_function_output: false,
             nullable: false,
+            is_partition_key: false,
+          },
+          {
+            fieldID: '3',
+            type_params: [
+              { key: 'enable_match', value: 'true' },
+              { key: 'enable_analyzer', value: 'true' },
+              { key: 'dim', value: '3' },
+              { key: 'analyzer_params', value: '{}' },
+              { key: 'max_capacity', value: '23' },
+            ],
+            index_params: [],
+            name: 'vector',
+            is_primary_key: false,
+            description: 'vector field',
+            data_type: 'FloatVector',
+            dataType: 101,
+            autoID: false,
+            state: 'created',
+            is_dynamic: false,
+            is_clustering_key: false,
+            is_function_output: false,
+            nullable: false,
+            default_value: { bool_data: false, data: 'bool_data' } as any,
             is_partition_key: false,
           },
         ],
@@ -481,7 +507,16 @@ describe('utils/format', () => {
     const formatted = formatDescribedCol(response);
 
     expect(formatted.schema.fields[0].dataType).toBe(101);
+    expect(formatted.schema.fields[0].dim).toBe('128');
+    expect(formatted.schema.fields[0].default_value).toBe(123);
     expect(formatted.schema.fields[1].dataType).toBe(5);
+    expect(formatted.schema.fields[1].default_value).toBe('d');
+    expect(formatted.schema.fields[2].default_value).toBe(false);
+    expect(formatted.schema.fields[2].enable_match).toBe('true');
+    expect(formatted.schema.fields[2].enable_analyzer).toBe('true');
+    expect(formatted.schema.fields[2].dim).toBe('3');
+    expect(formatted.schema.fields[2].analyzer_params).toBe('{}');
+    expect(formatted.schema.fields[2].max_capacity).toBe('23');
   });
 
   it('should return an empty object when data is empty', () => {

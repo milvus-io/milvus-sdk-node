@@ -40,7 +40,6 @@ import {
   DEFAULT_TOPK,
   HybridSearchReq,
   promisify,
-  findKeyValue,
   sleep,
   parseToKeyValue,
   checkCollectionName,
@@ -157,7 +156,7 @@ export class Data extends Collection {
               name: v.name,
               type: v.data_type, // milvus return string here
               elementType: v.element_type,
-              dim: Number(findKeyValue(v.type_params, 'dim')),
+              dim: v.dim as number,
               data: [], // values container
               nullable: v.nullable,
               default_value: v.default_value,
