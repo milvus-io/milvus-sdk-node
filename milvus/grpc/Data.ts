@@ -156,7 +156,7 @@ export class Data extends Collection {
               name: v.name,
               type: v.data_type, // milvus return string here
               elementType: v.element_type,
-              dim: v.dim as number,
+              dim: Number(v.dim),
               data: [], // values container
               nullable: v.nullable,
               default_value: v.default_value,
