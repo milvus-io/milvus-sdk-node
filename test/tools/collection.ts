@@ -122,8 +122,8 @@ export const genCollectionParams = (data: {
         name: 'default_value',
         nullable: true,
         default_value: DEFAULT_NUM_VALUE,
-        description: 'int64 field',
-        data_type: 'Int64', //
+        description: 'int32 field',
+        data_type: 'Int32', //
       },
       {
         name: 'varChar',

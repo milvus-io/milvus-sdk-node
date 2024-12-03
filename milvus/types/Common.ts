@@ -11,9 +11,9 @@ export interface MsgBase {
   };
 }
 
-export interface KeyValuePair {
-  key: string;
-  value: string | number;
+export interface KeyValuePair<T = string, U = string | number> {
+  key: T;
+  value: U;
 }
 
 interface NumberArray {

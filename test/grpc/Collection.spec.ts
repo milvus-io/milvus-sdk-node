@@ -79,7 +79,9 @@ describe(`Collection API`, () => {
 
     expect(
       Boolean(
-        formatKeyValueData(describe.properties, ['mmap.enabled'])['mmap.enabled']
+        formatKeyValueData(describe.properties, ['mmap.enabled'])[
+          'mmap.enabled'
+        ]
       )
     ).toEqual(true);
 
