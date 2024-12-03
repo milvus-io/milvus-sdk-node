@@ -78,7 +78,7 @@ export type FieldType = {
   is_partition_key?: boolean;
   is_function_output?: boolean;
   is_clustering_key?: boolean;
-  type_params?: Record<TypeParamKey, TypeParam>;
+  type_params?: Partial<Record<TypeParamKey, TypeParam>>;
   autoID?: boolean;
   default_value?: number | string;
   nullable?: boolean;
