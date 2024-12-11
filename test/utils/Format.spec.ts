@@ -562,7 +562,7 @@ describe('utils/format', () => {
   });
 
   it('should return an object with keys from data and fieldsDataMap', () => {
-    const data = { key1: 'value1', key2: 'value2' };
+    const data = { key1: 'value1', key2: null };
     const fieldsDataMap = new Map([
       [
         'key1',
@@ -577,7 +577,7 @@ describe('utils/format', () => {
         {
           name: 'key2',
           type: 'VarChar',
-          data: [{ key2: 'value2' }],
+          data: [{ key2: null }],
         } as _Field,
       ],
     ]);
@@ -586,7 +586,7 @@ describe('utils/format', () => {
     expect(result).toEqual({
       [dynamicField]: {},
       key1: 'value1',
-      key2: 'value2',
+      key2: undefined,
     });
   });
 

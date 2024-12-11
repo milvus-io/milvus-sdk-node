@@ -453,8 +453,8 @@ export const buildDynamicRow = (
     row[dynamicFieldName] = row[dynamicFieldName] || ({} as JSON); // initialize the dynamic field object
 
     if (fieldMap.has(key)) {
-      // if the key is in the fieldMap, add it to the non-dynamic fields
-      row[key] = originRow[key];
+      // if the key is in the fieldMap, add it to the non-dynamic fields, if it's not null, otherwise set it to undefined
+      row[key] = originRow[key] === null ? undefined : originRow[key];
     } else {
       if (!functionOutputFields.includes(key)) {
         const obj: JSON = row[dynamicFieldName] as JSON;
