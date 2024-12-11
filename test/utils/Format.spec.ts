@@ -586,7 +586,7 @@ describe('utils/format', () => {
     expect(result).toEqual({
       [dynamicField]: {},
       key1: 'value1',
-      key2: undefined,
+      key2: null,
     });
   });
 

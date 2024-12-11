@@ -212,9 +212,7 @@ export class Data extends Collection {
         switch (DataTypeMap[field.type]) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
-            field.data = (field.data as number[]).concat(
-              buildFieldData(rowData, field) as number[]
-            );
+            field.data = field.data.concat(buildFieldData(rowData, field));
             break;
           default:
             field.data[rowIndex] = buildFieldData(
