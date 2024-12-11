@@ -290,7 +290,11 @@ export const generateInsertData = (
       // get data type
       const data_type = convertToDataType(field.data_type);
 
-      if ((field.nullable || field.default_value) && Math.random() < 0.5) {
+      if (field.nullable && Math.random() < 0.5) {
+        value[field.name] = null;
+        continue;
+      }
+      if (field.default_value && Math.random() < 0.5) {
         continue;
       }
 

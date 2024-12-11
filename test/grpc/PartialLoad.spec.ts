@@ -87,7 +87,7 @@ describe(`Partial load API `, () => {
       expr: `id > 0`,
       output_fields: ['*'],
     });
-    console.dir(query, { depth: null });
+    // console.dir(query, { depth: null });
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
     // result should not contain 'array' field
     const keys = Object.keys(query.data[0]);

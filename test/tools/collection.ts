@@ -7,7 +7,7 @@ import {
 import {
   DataType,
   ConsistencyLevelEnum,
-  Function,
+  FunctionObject,
 } from '../../milvus';
 import { GENERATE_VECTOR_NAME } from './';
 
@@ -51,7 +51,7 @@ export const genCollectionParams = (data: {
   enableDynamic?: boolean;
   maxCapacity?: number;
   idType?: DataType;
-  functions?: Function[];
+  functions?: FunctionObject[];
 }) => {
   const {
     collectionName,
