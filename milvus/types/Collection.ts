@@ -92,7 +92,7 @@ export interface ShowCollectionsReq extends GrpcTimeOut {
 
 export type Properties = Record<string, string | number | boolean>;
 
-export type Function = {
+export type FunctionObject = {
   name: string;
   description?: string;
   type: FunctionType;
@@ -119,7 +119,7 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
   properties?: Properties; // optional, collection properties
   db_name?: string; // optional, db name
-  functions?: Function[]; // optionals, doc-in/doc-out functions
+  functions?: FunctionObject[]; // optionals, doc-in/doc-out functions
 }
 
 export interface CreateCollectionWithFieldsReq extends BaseCreateCollectionReq {
@@ -203,7 +203,7 @@ export interface CollectionSchema {
   enable_dynamic_field: boolean;
   autoID: boolean;
   fields: FieldSchema[];
-  functions: Function[];
+  functions: FunctionObject[];
 }
 
 export interface DescribeCollectionResponse extends TimeStamp {
@@ -222,7 +222,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   shards_num: number;
   num_partitions?: string; // int64
   db_name: string;
-  functions: Function[];
+  functions: FunctionObject[];
 }
 
 export interface GetCompactionPlansResponse extends resStatusResponse {
