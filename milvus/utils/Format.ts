@@ -651,9 +651,11 @@ export const buildFieldData = (
         : Buffer.alloc(0);
     case DataType.Array:
       const elementField = { ...field, type: elementType! };
-      return buildFieldData(rowData, elementField, transformers);
+      return rowData[name] === null
+        ? undefined
+        : buildFieldData(rowData, elementField, transformers);
     default:
-      return rowData[name];
+      return rowData[name] === null ? undefined : rowData[name];
   }
 };
 

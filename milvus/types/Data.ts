@@ -73,7 +73,8 @@ export type FieldData =
   | JSON
   | Array
   | VectorTypes
-  | null;
+  | null
+  | undefined;
 
 // Represents a row of data in Milvus.
 export interface RowData {
@@ -107,13 +108,27 @@ export type InsertTransformers = {
   [DataType.Float16Vector]?: (f16: Float16Vector) => Buffer;
 };
 
-export interface InsertReq extends collectionNameReq {
+// Base properties shared by both variants
+interface BaseInsertReq extends collectionNameReq {
   partition_name?: string; // partition name
-  data?: RowData[]; // data to insert
-  fields_data?: RowData[]; // alias for data
-  hash_keys?: Number[]; // user can generate hash value depend on primarykey value
+  hash_keys?: number[]; // user can generate hash value depend on primarykey value
   transformers?: InsertTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
+
+// Variant with data property
+interface DataInsertReq extends BaseInsertReq {
+  data: RowData[]; // data to insert
+  fields_data?: never; // Ensure fields_data cannot be used
+}
+
+// Variant with fields_data property
+interface FieldsDataInsertReq extends BaseInsertReq {
+  fields_data: RowData[]; // alias for data
+  data?: never; // Ensure data cannot be used
+}
+
+// Union type to enforce mutual exclusivity
+export type InsertReq = DataInsertReq | FieldsDataInsertReq;
 
 interface BaseDeleteReq extends collectionNameReq {
   partition_name?: string; // partition name
