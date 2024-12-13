@@ -28,5 +28,12 @@ export interface AlterDatabaseRequest extends GrpcTimeOut {
   db_name: string; // database name
   db_id?: string; // database id
   properties: Properties;
+  delete_properties?: string[];
+}
+
+export interface DropDatabasePropertiesRequest extends GrpcTimeOut {
+  db_name: string; // database name
+  delete_properties: string[]; // deleted properties
+
 }
 export interface AlterDatabaseResponse extends resStatusResponse {}

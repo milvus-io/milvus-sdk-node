@@ -7,7 +7,7 @@ import {
   DescribeDatabaseRequest,
   DescribeDatabaseResponse,
   AlterDatabaseRequest,
-  AlterDatabaseResponse,
+  DropDatabasePropertiesRequest,
   ResStatus,
   promisify,
   parseToKeyValue,
@@ -180,6 +180,44 @@ export class Database extends BaseClient {
       {
         db_name: data.db_name,
         properties: parseToKeyValue(data.properties),
+      },
+      data?.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * Drops database properties.
+   *
+   * @param {DropDatabasePropertiesRequest}
+   * @param {string} data.db_name - The name of the database to modify.
+   * @param {string[]} data.delete_properties - The properties to delete. For example, to delete the TTL, use ["database.replica.number"].
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   *
+   * ```
+   * const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   * const resStatus = await milvusClient.dropDatabaseProperties({
+   *   db_name: 'my-db',
+   *  delete_properties: ["database.replica.number"]
+   * });
+   * ```
+   */
+  async dropDatabaseProperties(
+    data: DropDatabasePropertiesRequest
+  ): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'AlterDatabase',
+      {
+        db_name: data.db_name,
+        delete_keys: data.delete_properties,
       },
       data?.timeout || this.timeout
     );
