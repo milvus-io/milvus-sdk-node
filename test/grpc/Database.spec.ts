@@ -139,6 +139,21 @@ describe(`Database API`, () => {
       { key: 'collection.segment.rowLimit', value: '10000' },
     ]);
 
+    // drop collection properties
+    const dropCollectionProperties =
+      await milvusClient.dropCollectionProperties({
+        collection_name: COLLECTION_NAME2,
+        db_name: DB_NAME2,
+        properties: ['collection.segment.rowLimit'],
+      });
+    expect(dropCollectionProperties.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describeCollectionAfterDrop = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+    });
+    expect(describeCollectionAfterDrop.properties).toEqual([]);
+
     // show collections
     const showCollections = await milvusClient.showCollections({
       db_name: DB_NAME2,
