@@ -688,6 +688,9 @@ export const buildSearchParams = (
   if (data.group_size) {
     search_params.group_size = data.group_size;
   }
+  if (data.hints) {
+    search_params.hints = data.hints;
+  }
 
   return search_params;
 };
