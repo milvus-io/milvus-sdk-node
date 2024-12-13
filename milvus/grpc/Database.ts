@@ -217,7 +217,7 @@ export class Database extends BaseClient {
       'AlterDatabase',
       {
         db_name: data.db_name,
-        delete_keys: data.delete_properties,
+        delete_keys: data.properties,
       },
       data?.timeout || this.timeout
     );

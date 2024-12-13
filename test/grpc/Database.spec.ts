@@ -11,7 +11,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-let milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+let milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const DEFAULT = 'default';
 const DB_NAME = GENERATE_NAME('database');
 const DB_NAME2 = GENERATE_NAME('database');
@@ -281,7 +281,7 @@ describe(`Database API`, () => {
   it(`drop database properties should be ok`, async () => {
     const drop = await milvusClient.dropDatabaseProperties({
       db_name: DB_NAME2,
-      delete_properties: ['database.diskQuota.mb'],
+      properties: ['database.diskQuota.mb'],
     });
     expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
 
