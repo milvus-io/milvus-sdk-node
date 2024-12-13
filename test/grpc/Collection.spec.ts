@@ -82,6 +82,25 @@ describe(`Collection API`, () => {
         formatKeyValueData(describe.properties, ['mmap.enabled'])['mmap.enabled']
       )
     ).toEqual(true);
+  });
+
+  it(`Drop Collection properties should be successful`, async () => {
+    const dropRes = await milvusClient.dropCollectionProperties({
+      collection_name: COLLECTION_WITH_PROPERTY,
+      properties: ['collection.ttl.seconds'],
+    });
+
+    expect(dropRes.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION_WITH_PROPERTY,
+    });
+
+    expect(
+      formatKeyValueData(describe.properties, ['collection.ttl.seconds'])[
+        'collection.ttl.seconds'
+      ]
+    ).toBeUndefined();
 
     // drop collection
     await milvusClient.dropCollection({

@@ -1,4 +1,9 @@
-import { MilvusClient, ErrorCode, DEFAULT_DB, formatKeyValueData } from '../../milvus';
+import {
+  MilvusClient,
+  ErrorCode,
+  DEFAULT_DB,
+  formatKeyValueData,
+} from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -133,6 +138,21 @@ describe(`Database API`, () => {
     expect(describeCollectionAfterAlter.properties).toEqual([
       { key: 'collection.segment.rowLimit', value: '10000' },
     ]);
+
+    // drop collection properties
+    const dropCollectionProperties =
+      await milvusClient.dropCollectionProperties({
+        collection_name: COLLECTION_NAME2,
+        db_name: DB_NAME2,
+        properties: ['collection.segment.rowLimit'],
+      });
+    expect(dropCollectionProperties.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describeCollectionAfterDrop = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+    });
+    expect(describeCollectionAfterDrop.properties).toEqual([]);
 
     // show collections
     const showCollections = await milvusClient.showCollections({
@@ -273,11 +293,24 @@ describe(`Database API`, () => {
     ]);
   });
 
+  it(`drop database properties should be ok`, async () => {
+    const drop = await milvusClient.dropDatabaseProperties({
+      db_name: DB_NAME2,
+      properties: ['database.diskQuota.mb'],
+    });
+    expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeDatabase({
+      db_name: DB_NAME2,
+    });
+    expect(describe.properties).toEqual([]);
+  });
+
   it(`create db with property set should be successful`, async () => {
     const res = await milvusClient.createDatabase({
       db_name: DB_WITH_PROPERTY,
       properties: {
-        'replicate.id': "local-mac",
+        'replicate.id': 'local-mac',
       },
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
@@ -292,7 +325,7 @@ describe(`Database API`, () => {
           'replicate.id'
         ]
       )
-    ).toEqual("local-mac");
+    ).toEqual('local-mac');
 
     // drop collection
     await milvusClient.dropDatabase({

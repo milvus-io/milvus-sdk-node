@@ -246,7 +246,12 @@ export interface GetLoadStateResponse extends resStatusResponse {
 }
 
 export interface AlterCollectionReq extends collectionNameReq {
-  properties: Properties;
+  properties: Properties; // required, properties
+  delete_keys?: string[]; // optional, deleted properties, strings array
+}
+
+export interface DropCollectionPropertiesReq extends collectionNameReq {
+  properties: string[]; // required, deleted properties, strings array
 }
 
 export interface DescribeAliasResponse extends resStatusResponse {
