@@ -300,6 +300,7 @@ export interface SearchParam {
   group_by_field?: string; // group by field
   group_size?: number; // group size
   strict_group_size?: boolean; // if strict group size
+  hints?: string; // hints to improve milvus search performance
 }
 
 // old search api parameter type, deprecated
@@ -352,6 +353,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   group_by_field?: string; // group by field
   group_size?: number; // group size
   strict_group_size?: boolean; // if strict group size
+  hints?: string; // hints to improve milvus search performance
   round_decimal?: number; // round decimal
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
