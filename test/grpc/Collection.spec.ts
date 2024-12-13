@@ -15,7 +15,7 @@ import {
 } from '../tools';
 import { timeoutTest } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION_NAME = GENERATE_NAME();
 const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
@@ -434,6 +434,25 @@ describe(`Collection API`, () => {
     expect(
       Boolean(formatKeyValueData(describe.properties, [key2])[key2])
     ).toEqual(value2);
+  });
+
+  it(`Alter collection field should success`, async () => {
+    const key = 'mmap.enabled';
+    const value = true;
+
+    const alter = await milvusClient.alterCollectionField({
+      collection_name: LOAD_COLLECTION_NAME,
+      field_name: 'json',
+      properties: { [key]: value },
+    });
+
+    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+
+    console.dir(describe, { depth: null });
   });
 
   it(`Load Collection Sync throw COLLECTION_NAME_IS_REQUIRED`, async () => {

@@ -268,6 +268,11 @@ export interface AlterCollectionReq extends collectionNameReq {
   delete_keys?: string[]; // optional, deleted properties, strings array
 }
 
+export interface AlterCollectionFieldReq extends collectionNameReq {
+  field_name: string; // required, field name
+  properties: Properties; // required, properties
+}
+
 export interface DropCollectionPropertiesReq extends collectionNameReq {
   properties: string[]; // required, deleted properties, strings array
 }

@@ -55,6 +55,7 @@ import {
   CreateCollectionWithSchemaReq,
   FieldSchema,
   DropCollectionPropertiesReq,
+  AlterCollectionFieldReq,
   isVectorType,
 } from '../';
 
@@ -357,7 +358,7 @@ export class Collection extends Database {
    * const milvusClient = new milvusClient(MILUVS_ADDRESS);
    * const resStatus = await milvusClient.dropCollectionProperties({
    *  collection_name: 'my-collection',
-   * delete_keys: ["collection.ttl.seconds"]
+   *  delete_keys: ["collection.ttl.seconds"]
    * });
    * ```
    *
@@ -381,6 +382,54 @@ export class Collection extends Database {
       {
         ...req,
       },
+      data?.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * Modifies a collection field's properties.
+   * Note that this operation only modifies the properties of the field, not the field itself.
+   *
+   * @param {AlterCollectionFieldReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to modify.
+   * @param {string} data.field_name - The name of the field to modify.
+   * @param {Object} data.properties - The properties to modify. For example, to change the field's data type, use {"field_type": DataType.Int64}.
+   * @param {string} [data.db_name] - The name of the database where the collection is located.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   * ```
+   * const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   * const resStatus = await milvusClient.alterCollectionField({
+   *   collection_name: 'my-collection',
+   *   field_name: 'my-field',
+   *   properties: {"mmap.enabled": true}
+   * });
+   * ```
+   */
+  async alterCollectionField(
+    data: AlterCollectionFieldReq
+  ): Promise<ResStatus> {
+    const req: any = {
+      collection_name: data.collection_name,
+      field_name: data.field_name,
+      properties: parseToKeyValue(data.properties),
+    };
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
+    const promise = await promisify(
+      this.channelPool,
+      'AlterCollectionField',
+      req,
       data?.timeout || this.timeout
     );
 
