@@ -1,4 +1,4 @@
-name: Node sdk 2.x release
+name: Publish package to npm
 
 on:
   release:
