@@ -244,6 +244,7 @@ export interface SearchResultData {
 
 export interface SearchResults extends resStatusResponse {
   results: SearchResultData[];
+  recalls: number[];
 }
 
 export interface ImportResponse extends resStatusResponse {
@@ -393,6 +394,7 @@ export interface SearchRes extends resStatusResponse {
     topks: number[];
     output_fields: string[];
     group_by_field_value: string;
+    recalls: number[];
   };
 }
 
