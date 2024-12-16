@@ -520,6 +520,7 @@ export class Data extends Collection {
       return {
         status: originSearchResult.status,
         results: [],
+        recalls: [],
       };
     }
 
@@ -533,6 +534,7 @@ export class Data extends Collection {
       status: originSearchResult.status,
       // nq === 1, return the first object of results array
       results: nq === 1 ? results[0] || [] : results,
+      recalls: originSearchResult.results.recalls,
     };
   }
 
