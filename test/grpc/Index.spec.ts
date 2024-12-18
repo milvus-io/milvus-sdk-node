@@ -390,6 +390,23 @@ describe(`Milvus Index API`, () => {
     const params = describe.index_descriptions[0].params;
     expect(findKeyValue(params, 'mmap.enabled')).toEqual('true');
 
+    const alter2 = await milvusClient.alterIndexProperties({
+      collection_name: COLLECTION_NAME,
+      index_name: INDEX_NAME,
+      params: {
+        'mmap.enabled': false,
+      },
+    });
+
+    const describe2 = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME,
+      index_name: INDEX_NAME,
+    });
+
+    expect(alter2.error_code).toEqual(ErrorCode.SUCCESS);
+    const params2 = describe2.index_descriptions[0].params;
+    expect(findKeyValue(params2, 'mmap.enabled')).toEqual('false');
+
     // console.log('describe', describe.index_descriptions[0].params);
   });
 
