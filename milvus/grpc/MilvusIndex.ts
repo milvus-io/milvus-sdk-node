@@ -8,6 +8,7 @@ import {
   GetIndexBuildProgressReq,
   GetIndexStateReq,
   AlterIndexReq,
+  DropIndexPropertiesReq,
   ResStatus,
   DescribeIndexResponse,
   GetIndexStateResponse,
@@ -338,12 +339,59 @@ export class Index extends Data {
    * console.log(res);
    * ```
    */
-  async alterIndex(data: AlterIndexReq): Promise<ResStatus> {
+  async alterIndexProperties(data: AlterIndexReq): Promise<ResStatus> {
     checkCollectionName(data);
     const req = {
       collection_name: data.collection_name,
       index_name: data.index_name,
       extra_params: parseToKeyValue(data.params),
+    } as any;
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
+    const promise = await promisify(
+      this.channelPool,
+      'AlterIndex',
+      req,
+      data.timeout || this.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * @deprecated
+   */
+  alterIndex = this.alterIndexProperties;
+
+  /**
+   * Drop index properties.
+   * @param {DropIndexPropertiesReq} data - The data for dropping the index properties.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} data.index_name - The name of the index.
+   * @param {string[]} data.properties - The properties to be dropped.
+   * @param {string} [data.db_name] - The name of the database.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or an error occurs. Default is undefined.
+   * @returns {Promise<ResStatus>} - A promise that resolves to a response status object.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILUVS_ADDRESS);
+   * const dropIndexPropertiesReq = {
+   *  collection_name: 'my_collection',
+   *  index_name: 'my_index',
+   *  properties: ['mmap.enabled'],
+   * };
+   * const res = await milvusClient.dropIndexProperties(dropIndexPropertiesReq);
+   * console.log(res);
+   * ```
+   */
+  async dropIndexProperties(data: DropIndexPropertiesReq): Promise<ResStatus> {
+    const req = {
+      collection_name: data.collection_name,
+      index_name: data.index_name,
+      delete_keys: data.properties,
     } as any;
 
     if (data.db_name) {
