@@ -393,6 +393,23 @@ describe(`Milvus Index API`, () => {
     // console.log('describe', describe.index_descriptions[0].params);
   });
 
+  it(`Drop Index properties with field name should be success`, async () => {
+    const res = await milvusClient.dropIndexProperties({
+      collection_name: COLLECTION_NAME,
+      index_name: INDEX_NAME,
+      properties: ['mmap.enabled'],
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME,
+      index_name: INDEX_NAME,
+    });
+
+    const params = describe.index_descriptions[0].params;
+    expect(findKeyValue(params, 'mmap.enabled')).toEqual(undefined);
+  });
+
   // @Deprecated
   // it(`Get Index progress with field name should be failed`, async () => {
   //   const res = await milvusClient.getIndexBuildProgress({
