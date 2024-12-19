@@ -13,6 +13,7 @@ import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
+  DEFAULT_NUM_VALUE,
   // DEFAULT_VALUE,
 } from '../tools';
 import { timeoutTest } from '../tools';
@@ -517,16 +518,45 @@ describe(`Data.API`, () => {
   it(`Query with data limit and offset`, async () => {
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
-      expr: 'id > 0',
-      output_fields: ['id', VECTOR_FIELD_NAME, 'default_value'],
+      expr: `id > 0 and default_value != ${DEFAULT_NUM_VALUE}`,
+      output_fields: ['id', VECTOR_FIELD_NAME, 'default_value', 'int32_array'],
       offset: 0,
       limit: 3,
     });
 
-    // res.data.forEach(d => {
-    //   expect(d.default_value).toEqual(DEFAULT_VALUE);
-    // });
     expect(res.data.length).toBe(3);
+
+    const res2 = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'id > {value}',
+      output_fields: ['id', VECTOR_FIELD_NAME, 'default_value'],
+      offset: 0,
+      limit: 3,
+      exprValues: { value: 0 },
+    });
+
+    expect(res2.data.length).toBe(3);
+
+    // get all default values
+    const default_values = res.data.map(d => d.default_value);
+
+    // query by ids
+    const res3 = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: `default_value in [${default_values.join(',')}]`,
+      output_fields: ['default_value'],
+    });
+
+    expect(res3.data.length).toBe(default_values.length);
+
+    const res4 = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'default_value in {default_values}',
+      output_fields: ['default_value'],
+      exprValues: { default_values },
+    });
+
+    expect(res4.data.length).toBe(default_values.length);
   });
 
   it(`Query with count(*)`, async () => {
@@ -586,6 +616,17 @@ describe(`Data.API`, () => {
       limit: 3,
     });
     expect(res.data.length).toBe(3);
+
+    const template = 'json["number"] >= {value}';
+    const res2 = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: template,
+      output_fields: ['id', 'json', VECTOR_FIELD_NAME],
+      offset: 0,
+      limit: 3,
+      exprValues: { value: 1.0 },
+    });
+    expect(res2.data.length).toBe(3);
   });
 
   it(`Query with data without limit and offset`, async () => {

@@ -1021,12 +1021,12 @@ type TemplateValue =
   | { array_val: TemplateArrayValue };
 
 type TemplateArrayValue =
-  | { bool_data: boolean[] }
-  | { long_data: number[] }
-  | { double_data: number[] }
-  | { string_data: string[] }
-  | { json_data: object[] }
-  | { array_data: TemplateArrayValue[] };
+  | { bool_data: { data: boolean[] } }
+  | { long_data: { data: number[] } }
+  | { double_data: { data: number[] } }
+  | { string_data: { data: string[] } }
+  | { json_data: { data: any[] } }
+  | { array_data: { data: TemplateArrayValue[] } };
 
 export const formatExprValues = (
   exprValues: Record<string, any>
@@ -1057,17 +1057,53 @@ export const formatExprValues = (
 const convertArray = (arr: any[]): TemplateArrayValue => {
   const first = arr[0];
 
-  if (typeof first === 'boolean') {
-    return { bool_data: arr };
-  } else if (typeof first === 'number') {
-    return Number.isInteger(first) ? { long_data: arr } : { double_data: arr };
-  } else if (typeof first === 'string') {
-    return { string_data: arr };
-  } else if (typeof first === 'object' && !Array.isArray(first)) {
-    return { json_data: arr };
-  } else if (Array.isArray(first)) {
-    return { array_data: arr.map(convertArray) };
-  }
+  switch (typeof first) {
+    case 'boolean':
+      return {
+        bool_data: {
+          data: arr,
+        },
+      };
 
-  throw new Error('Unsupported array type');
+    case 'number':
+      if (Number.isInteger(first)) {
+        return {
+          long_data: {
+            data: arr,
+          },
+        };
+      } else {
+        return {
+          double_data: {
+            data: arr,
+          },
+        };
+      }
+
+    case 'string':
+      return {
+        string_data: {
+          data: arr,
+        },
+      };
+
+    case 'object':
+      if (Array.isArray(first)) {
+        console.log('array_data', arr);
+        return {
+          array_data: {
+            data: arr.map(convertArray),
+          },
+        };
+      } else {
+        return {
+          json_data: {
+            data: arr,
+          },
+        };
+      }
+
+    default:
+      throw new Error('Unsupported array type');
+  }
 };

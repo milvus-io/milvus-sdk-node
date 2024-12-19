@@ -1117,52 +1117,101 @@ describe('utils/format', () => {
       number: { int64_val: 25 },
       float: { float_val: 5.9 },
       string: { string_val: 'Alice' },
-      strArr: { array_val: { string_data: ['developer', 'javascript'] } },
-      boolArr: { array_val: { bool_data: [true, false] } },
-      numberArr: { array_val: { long_data: [1, 2, 3, 4] } },
-      doubleArr: { array_val: { double_data: [1.1, 2.2, 3.3] } },
+      strArr: {
+        array_val: { string_data: { data: ['developer', 'javascript'] } },
+      },
+      boolArr: {
+        array_val: { bool_data: { data: [true, false] } },
+      },
+      numberArr: {
+        array_val: { long_data: { data: [1, 2, 3, 4] } },
+      },
+      doubleArr: {
+        array_val: { double_data: { data: [1.1, 2.2, 3.3] } },
+      },
       jsonArr: {
-        array_val: { json_data: [{ key: 'value' }, { key: 'value' }] },
+        array_val: {
+          json_data: { data: [{ key: 'value' }, { key: 'value' }] },
+        },
       },
       intArrArr: {
         array_val: {
-          array_data: [{ long_data: [1, 2] }, { long_data: [3, 4] }],
+          array_data: {
+            data: [
+              {
+                long_data: { data: [1, 2] },
+              },
+              {
+                long_data: { data: [3, 4] },
+              },
+            ],
+          },
         },
       },
       doubleArrArr: {
         array_val: {
-          array_data: [
-            { double_data: [1.1, 2.2] },
-            { double_data: [3.3, 4.4] },
-          ],
+          array_data: {
+            data: [
+              {
+                double_data: { data: [1.1, 2.2] },
+              },
+              {
+                double_data: { data: [3.3, 4.4] },
+              },
+            ],
+          },
         },
       },
       boolArrArr: {
         array_val: {
-          array_data: [
-            { bool_data: [true, false] },
-            { bool_data: [false, true] },
-          ],
+          array_data: {
+            data: [
+              {
+                bool_data: { data: [true, false] },
+              },
+              {
+                bool_data: { data: [false, true] },
+              },
+            ],
+          },
         },
       },
       strArrArr: {
         array_val: {
-          array_data: [
-            { string_data: ['a', 'b'] },
-            { string_data: ['c', 'd'] },
-          ],
+          array_data: {
+            data: [
+              {
+                string_data: { data: ['a', 'b'] },
+              },
+              {
+                string_data: { data: ['c', 'd'] },
+              },
+            ],
+          },
         },
       },
       intArrArrArr: {
         array_val: {
-          array_data: [
-            {
-              array_data: [{ long_data: [1, 2] }, { long_data: [3, 4] }],
-            },
-            {
-              array_data: [{ long_data: [5, 6] }, { long_data: [7, 8] }],
-            },
-          ],
+          array_data: {
+            data: [
+              {
+                array_data: {
+                  data: [
+                    { long_data: { data: [1, 2] } },
+                    { long_data: { data: [3, 4] } },
+                  ],
+                },
+              },
+              {
+                array_data: {
+                  data: [
+                    { long_data: { data: [5, 6] } },
+                    { long_data: { data: [7, 8] } },
+                  ],
+                },
+              },
+            ],
+          },
         },
       },
     });
