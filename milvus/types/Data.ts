@@ -1,3 +1,4 @@
+import { Key } from 'readline';
 import {
   GrpcTimeOut,
   KeyValuePair,
@@ -435,17 +436,21 @@ export type OutputTransformers = {
   [DataType.SparseFloatVector]?: (sparse: SparseVectorDic) => SparseFloatVector;
 };
 
-export interface QueryReq extends collectionNameReq {
+type BaseQueryReq = collectionNameReq & {
   output_fields?: string[]; // fields to return
   partition_names?: string[]; // partition names
   ids?: string[] | number[]; // primary key values
-  expr?: string; // filter expression
+  expr?: string; // filter expression, or template string, eg: "key = {key}"
   filter?: string; // alias for expr
   offset?: number; // skip how many results
   limit?: number; // how many results you want
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
-}
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
+};
+
+export type QueryReq = BaseQueryReq &
+  ({ expr?: string; filter?: never } | { filter?: string; expr?: never });
 
 export interface QueryIteratorReq
   extends Omit<QueryReq, 'ids' | 'offset' | 'limit'> {

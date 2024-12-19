@@ -46,6 +46,7 @@ import {
   SearchMultipleDataType,
   TypeParamKey,
   TypeParam,
+  keyValueObj,
 } from '../';
 
 /**
@@ -1010,4 +1011,63 @@ export const formatSearchData = (
     default:
       return searchData as VectorTypes[];
   }
+};
+
+type TemplateValue =
+  | { bool_val: boolean }
+  | { int64_val: number }
+  | { float_val: number }
+  | { string_val: string }
+  | { array_val: TemplateArrayValue };
+
+type TemplateArrayValue =
+  | { bool_data: boolean[] }
+  | { long_data: number[] }
+  | { double_data: number[] }
+  | { string_data: string[] }
+  | { json_data: object[] }
+  | { array_data: TemplateArrayValue[] };
+
+export const formatExprValues = (
+  exprValues: Record<string, any>
+): Record<string, TemplateValue> => {
+  const result: Record<string, TemplateValue> = {};
+
+  for (const [key, value] of Object.entries(exprValues)) {
+    if (Array.isArray(value)) {
+      // Handle arrays
+      result[key] = { array_val: convertArray(value) };
+    } else {
+      // Handle primitive types
+      if (typeof value === 'boolean') {
+        result[key] = { bool_val: value };
+      } else if (typeof value === 'number') {
+        result[key] = Number.isInteger(value)
+          ? { int64_val: value }
+          : { float_val: value };
+      } else if (typeof value === 'string') {
+        result[key] = { string_val: value };
+      }
+    }
+  }
+
+  return result;
+};
+
+const convertArray = (arr: any[]): TemplateArrayValue => {
+  const first = arr[0];
+
+  if (typeof first === 'boolean') {
+    return { bool_data: arr };
+  } else if (typeof first === 'number') {
+    return Number.isInteger(first) ? { long_data: arr } : { double_data: arr };
+  } else if (typeof first === 'string') {
+    return { string_data: arr };
+  } else if (typeof first === 'object' && !Array.isArray(first)) {
+    return { json_data: arr };
+  } else if (Array.isArray(first)) {
+    return { array_data: arr.map(convertArray) };
+  }
+
+  throw new Error('Unsupported array type');
 };

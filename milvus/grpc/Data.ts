@@ -67,6 +67,7 @@ import {
   getValidDataArray,
   NO_LIMIT,
   DescribeCollectionReq,
+  formatExprValues,
 } from '../';
 import { Collection } from './Collection';
 
@@ -785,7 +786,7 @@ export class Data extends Collection {
             });
 
             // search data
-            const res = await client.query(data);
+            const res = await client.query(data as QueryReq);
 
             // get last item of the data
             const lastItem = res.data[res.data.length - 1];
@@ -955,6 +956,11 @@ export class Data extends Collection {
 
     // filter > expr or empty > ids
     data.expr = data.filter || data.expr || primaryKeyInIdsExpression;
+
+    // if exprValues exist, format it
+    if (data.exprValues) {
+      (data as any).expr_template_values = formatExprValues(data.exprValues);
+    }
 
     // Execute the query and get the results
     const promise: QueryRes = await promisify(
