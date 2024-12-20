@@ -670,6 +670,7 @@ describe(`Data.API`, () => {
     expect(res.data.length).toEqual(0);
   });
 
+  let default_values: string[] = [];
   it(`query by ids success`, async () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
@@ -682,10 +683,12 @@ describe(`Data.API`, () => {
     const query0 = await milvusClient.query({
       collection_name: VARCHAR_ID_COLLECTION_NAME,
       expr: 'id != ""',
+      output_fields: ['id', 'default_value'],
     });
 
     // get first 3 ids
     const ids = query0.data.slice(0, 3).map(d => d.id);
+    default_values = query0.data.slice(0, 3).map(d => d.default_value);
     // query by ids
     const queryVarcharIds = await milvusClient.query({
       collection_name: VARCHAR_ID_COLLECTION_NAME,
@@ -693,6 +696,25 @@ describe(`Data.API`, () => {
     });
     expect(queryVarcharIds.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(queryVarcharIds.data.length).toEqual(3);
+  });
+
+  it(`delete entities with exprValues should success`, async () => {
+    const res = await milvusClient.deleteEntities({
+      collection_name: COLLECTION_NAME,
+      expr: 'default_value in {value}',
+      exprValues: { value: default_values },
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // query again
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'default_value in {value}',
+      exprValues: { value: default_values },
+    });
+
+    expect(query.data.length).toEqual(0);
   });
 
   it('delete withouth colleciton name should throw error', async () => {
@@ -728,6 +750,14 @@ describe(`Data.API`, () => {
     });
 
     expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // query again
+    const query2 = await milvusClient.query({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
+      expr: 'id != ""',
+    });
+
+    expect(query2.data.length).toEqual(0);
   });
 
   it(`delete by filter should success`, async () => {

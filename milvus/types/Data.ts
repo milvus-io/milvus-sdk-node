@@ -139,12 +139,11 @@ interface BaseDeleteReq extends collectionNameReq {
     | 'Bounded'
     | 'Eventually'
     | 'Customized'; // consistency level
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
 }
 
-export interface DeleteEntitiesReq extends BaseDeleteReq {
-  filter?: string; // filter expression
-  expr?: string; // alias for filter
-}
+export type DeleteEntitiesReq = BaseDeleteReq &
+  ({ expr?: string; filter?: never } | { filter?: string; expr?: never });
 
 export interface DeleteByIdsReq extends BaseDeleteReq {
   ids: string[] | number[]; // primary key values

@@ -374,10 +374,17 @@ export class Data extends Collection {
     // filter > expr
     data.expr = data.filter || data.expr;
 
+    const req = data as any;
+
+    // if exprValues exist, format it
+    if (data.exprValues) {
+      req.expr_template_values = formatExprValues(data.exprValues);
+    }
+
     const promise = await promisify(
       this.channelPool,
       'Delete',
-      data,
+      req,
       data.timeout || this.timeout
     );
     return promise;
@@ -439,7 +446,8 @@ export class Data extends Collection {
     if ((data as DeleteByFilterReq).filter) {
       expr = (data as DeleteByFilterReq).filter;
     }
-    const req = { ...data, expr };
+    const req = { ...data, expr } as any;
+
     return this.deleteEntities(req);
   }
 
