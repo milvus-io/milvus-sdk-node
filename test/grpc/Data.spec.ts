@@ -349,6 +349,20 @@ describe(`Data.API`, () => {
       expect(Number(r.int64)).toBeLessThan(10000);
     });
 
+    const resExprValues = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: 'int64 < {value}',
+      exprValues: { value: 10000 },
+      data: [1, 2, 3, 4],
+      limit: limit,
+      params: { nprobe: 1024 },
+    });
+
+    expect(resExprValues.status.error_code).toEqual(ErrorCode.SUCCESS);
+    resExprValues.results.forEach(r => {
+      expect(Number(r.int64)).toBeLessThan(10000);
+    });
+
     const res2 = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       expr: 'int64 < 10000',

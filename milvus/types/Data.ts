@@ -310,6 +310,7 @@ export interface SearchReq extends collectionNameReq {
   anns_field?: string; // your vector field name
   partition_names?: string[]; // partition names
   expr?: string; // filter expression
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   search_params: SearchParam; // search parameters
   vectors: VectorTypes[]; // vectors to search
   output_fields?: string[]; // fields to return
@@ -348,6 +349,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   offset?: number; // skip how many results
   filter?: string; // filter expression
   expr?: string; // alias for filter
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   params?: keyValueObj; // extra search parameters
   metric_type?: string; // distance metric type
   consistency_level?: ConsistencyLevelEnum; // consistency level
@@ -366,6 +368,7 @@ export type HybridSearchSingleReq = Pick<
 > & {
   data: SearchDataType; // vector to search
   expr?: string; // filter expression
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   params?: keyValueObj; // extra search parameters
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 };
@@ -379,7 +382,13 @@ export type RerankerObj = {
 // hybrid search api parameter type
 export type HybridSearchReq = Omit<
   SearchSimpleReq,
-  'data' | 'vector' | 'vectors' | 'params' | 'anns_field'
+  | 'data'
+  | 'vector'
+  | 'vectors'
+  | 'params'
+  | 'anns_field'
+  | 'expr'
+  | 'exprValues'
 > & {
   // search requests
   data: HybridSearchSingleReq[];

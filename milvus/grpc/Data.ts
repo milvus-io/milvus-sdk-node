@@ -499,6 +499,7 @@ export class Data extends Collection {
       this.milvusProto
     );
 
+    // if db_name exist, pass it to the request
     if (data.db_name) {
       (request as any).db_name = data.db_name;
     }
