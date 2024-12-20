@@ -131,7 +131,6 @@ describe(`Keyword match API`, () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION,
       limit: 10,
-      expr: 'id > 0',
       output_fields: ['text'],
       filter: "TEXT_MATCH(text, 'apple')",
       consistency_level: ConsistencyLevelEnum.Strong,

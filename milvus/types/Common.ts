@@ -60,7 +60,7 @@ export interface TimeStampArray {
 
 export type keyValueObj = Record<
   string,
-  string | number | string[] | number[] | boolean
+  string | number | string[] | number[] | boolean | unknown
 >;
 
 export interface collectionNameReq extends GrpcTimeOut {

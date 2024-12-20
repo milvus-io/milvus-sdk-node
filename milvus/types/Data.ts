@@ -1,3 +1,4 @@
+import { Key } from 'readline';
 import {
   GrpcTimeOut,
   KeyValuePair,
@@ -138,12 +139,11 @@ interface BaseDeleteReq extends collectionNameReq {
     | 'Bounded'
     | 'Eventually'
     | 'Customized'; // consistency level
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
 }
 
-export interface DeleteEntitiesReq extends BaseDeleteReq {
-  filter?: string; // filter expression
-  expr?: string; // alias for filter
-}
+export type DeleteEntitiesReq = BaseDeleteReq &
+  ({ expr?: string; filter?: never } | { filter?: string; expr?: never });
 
 export interface DeleteByIdsReq extends BaseDeleteReq {
   ids: string[] | number[]; // primary key values
@@ -309,6 +309,7 @@ export interface SearchReq extends collectionNameReq {
   anns_field?: string; // your vector field name
   partition_names?: string[]; // partition names
   expr?: string; // filter expression
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   search_params: SearchParam; // search parameters
   vectors: VectorTypes[]; // vectors to search
   output_fields?: string[]; // fields to return
@@ -347,6 +348,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   offset?: number; // skip how many results
   filter?: string; // filter expression
   expr?: string; // alias for filter
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   params?: keyValueObj; // extra search parameters
   metric_type?: string; // distance metric type
   consistency_level?: ConsistencyLevelEnum; // consistency level
@@ -365,6 +367,7 @@ export type HybridSearchSingleReq = Pick<
 > & {
   data: SearchDataType; // vector to search
   expr?: string; // filter expression
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   params?: keyValueObj; // extra search parameters
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 };
@@ -378,7 +381,13 @@ export type RerankerObj = {
 // hybrid search api parameter type
 export type HybridSearchReq = Omit<
   SearchSimpleReq,
-  'data' | 'vector' | 'vectors' | 'params' | 'anns_field'
+  | 'data'
+  | 'vector'
+  | 'vectors'
+  | 'params'
+  | 'anns_field'
+  | 'expr'
+  | 'exprValues'
 > & {
   // search requests
   data: HybridSearchSingleReq[];
@@ -435,17 +444,21 @@ export type OutputTransformers = {
   [DataType.SparseFloatVector]?: (sparse: SparseVectorDic) => SparseFloatVector;
 };
 
-export interface QueryReq extends collectionNameReq {
+type BaseQueryReq = collectionNameReq & {
   output_fields?: string[]; // fields to return
   partition_names?: string[]; // partition names
   ids?: string[] | number[]; // primary key values
-  expr?: string; // filter expression
+  expr?: string; // filter expression, or template string, eg: "key = {key}"
   filter?: string; // alias for expr
   offset?: number; // skip how many results
   limit?: number; // how many results you want
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
-}
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
+};
+
+export type QueryReq = BaseQueryReq &
+  ({ expr?: string; filter?: never } | { filter?: string; expr?: never });
 
 export interface QueryIteratorReq
   extends Omit<QueryReq, 'ids' | 'offset' | 'limit'> {

@@ -67,6 +67,7 @@ import {
   getValidDataArray,
   NO_LIMIT,
   DescribeCollectionReq,
+  formatExprValues,
 } from '../';
 import { Collection } from './Collection';
 
@@ -373,10 +374,17 @@ export class Data extends Collection {
     // filter > expr
     data.expr = data.filter || data.expr;
 
+    const req = data as any;
+
+    // if exprValues exist, format it
+    if (data.exprValues) {
+      req.expr_template_values = formatExprValues(data.exprValues);
+    }
+
     const promise = await promisify(
       this.channelPool,
       'Delete',
-      data,
+      req,
       data.timeout || this.timeout
     );
     return promise;
@@ -438,7 +446,8 @@ export class Data extends Collection {
     if ((data as DeleteByFilterReq).filter) {
       expr = (data as DeleteByFilterReq).filter;
     }
-    const req = { ...data, expr };
+    const req = { ...data, expr } as any;
+
     return this.deleteEntities(req);
   }
 
@@ -498,6 +507,7 @@ export class Data extends Collection {
       this.milvusProto
     );
 
+    // if db_name exist, pass it to the request
     if (data.db_name) {
       (request as any).db_name = data.db_name;
     }
@@ -785,7 +795,7 @@ export class Data extends Collection {
             });
 
             // search data
-            const res = await client.query(data);
+            const res = await client.query(data as QueryReq);
 
             // get last item of the data
             const lastItem = res.data[res.data.length - 1];
@@ -955,6 +965,11 @@ export class Data extends Collection {
 
     // filter > expr or empty > ids
     data.expr = data.filter || data.expr || primaryKeyInIdsExpression;
+
+    // if exprValues exist, format it
+    if (data.exprValues) {
+      (data as any).expr_template_values = formatExprValues(data.exprValues);
+    }
 
     // Execute the query and get the results
     const promise: QueryRes = await promisify(
