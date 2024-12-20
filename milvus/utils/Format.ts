@@ -1122,6 +1122,10 @@ const convertArray = (arr: any[]): TemplateArrayValue => {
       }
 
     default:
-      throw new Error('Unsupported array type');
+      return {
+        string_data: {
+          data: arr,
+        },
+      };
   }
 };

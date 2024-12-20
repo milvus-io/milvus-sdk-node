@@ -1122,6 +1122,7 @@ describe('utils/format', () => {
           [7, 8],
         ],
       ],
+      defaultArr: [undefined, undefined],
     };
 
     const formattedExprValues = formatExprValues(exprValues);
@@ -1226,6 +1227,11 @@ describe('utils/format', () => {
               },
             ],
           },
+        },
+      },
+      defaultArr: {
+        array_val: {
+          string_data: { data: [undefined, undefined] },
         },
       },
     });
