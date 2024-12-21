@@ -126,7 +126,7 @@ describe(`Database API`, () => {
     );
 
     // alterCollection
-    const alterCollection = await milvusClient.alterCollection({
+    const alterCollection = await milvusClient.alterCollectionProperties({
       collection_name: COLLECTION_NAME2,
       db_name: DB_NAME2,
       properties: { 'collection.segment.rowLimit': 10000 },
