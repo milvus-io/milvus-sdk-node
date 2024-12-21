@@ -315,7 +315,9 @@ export class Collection extends Database {
    *  });
    * ```
    */
-  async alterCollection(data: AlterCollectionReq): Promise<ResStatus> {
+  async alterCollectionProperties(
+    data: AlterCollectionReq
+  ): Promise<ResStatus> {
     checkCollectionName(data);
 
     const req: any = {
@@ -336,6 +338,11 @@ export class Collection extends Database {
 
     return promise;
   }
+
+  /**
+   * @deprecated Use alterCollectionProperties instead.
+   */
+  alterCollection = this.alterCollectionProperties;
 
   /**
    * Drops collection properties.

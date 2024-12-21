@@ -408,7 +408,7 @@ describe(`Collection API`, () => {
     const key = 'collection.ttl.seconds';
     const value = 18000;
 
-    const alter = await milvusClient.alterCollection({
+    const alter = await milvusClient.alterCollectionProperties({
       collection_name: LOAD_COLLECTION_NAME,
       properties: { [key]: value },
     });
@@ -417,7 +417,7 @@ describe(`Collection API`, () => {
     const key2 = 'mmap.enabled';
     const value2 = true;
 
-    const alter2 = await milvusClient.alterCollection({
+    const alter2 = await milvusClient.alterCollectionProperties({
       collection_name: LOAD_COLLECTION_NAME,
       properties: { [key2]: value2 },
     });
