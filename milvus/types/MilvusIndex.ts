@@ -71,3 +71,8 @@ export interface AlterIndexReq extends collectionNameReq {
   index_name: string;
   params: Record<string, number | string | boolean>;
 }
+
+export interface DropIndexPropertiesReq extends collectionNameReq {
+  index_name: string;
+  properties: string[];
+}

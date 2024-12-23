@@ -3,6 +3,7 @@ import {
   ErrorCode,
   DEFAULT_DB,
   formatKeyValueData,
+  findKeyValue,
 } from '../../milvus';
 import {
   IP,
@@ -125,7 +126,7 @@ describe(`Database API`, () => {
     );
 
     // alterCollection
-    const alterCollection = await milvusClient.alterCollection({
+    const alterCollection = await milvusClient.alterCollectionProperties({
       collection_name: COLLECTION_NAME2,
       db_name: DB_NAME2,
       properties: { 'collection.segment.rowLimit': 10000 },
@@ -194,7 +195,7 @@ describe(`Database API`, () => {
     expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
 
     // alter index
-    const alterIndex = await milvusClient.alterIndex({
+    const alterIndex = await milvusClient.alterIndexProperties({
       collection_name: COLLECTION_NAME2,
       db_name: DB_NAME2,
       index_name: 'vector2',
@@ -209,6 +210,26 @@ describe(`Database API`, () => {
       index_name: 'vector2',
     });
     expect(describeIndex.index_descriptions[0].index_name).toEqual('vector2');
+    const p1 = describeIndex.index_descriptions[0].params;
+    expect(findKeyValue(p1, 'mmap.enabled')).toEqual('true');
+
+    // drop index properties
+    const dropIndexProperties = await milvusClient.dropIndexProperties({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      index_name: 'vector2',
+      properties: ['mmap.enabled'],
+    });
+    expect(dropIndexProperties.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // describe index
+    const describeIndexAfterDrop = await milvusClient.describeIndex({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      index_name: 'vector2',
+    });
+    const p2 = describeIndexAfterDrop.index_descriptions[0].params;
+    expect(findKeyValue(p2, 'mmap.enabled')).toEqual(undefined);
 
     // load collection
     const loadCollection = await milvusClient.loadCollection({

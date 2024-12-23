@@ -1,15 +1,21 @@
-name: Milvus2 Node sdk check when open pr
+name: Run tests and coverage
 
 on:
   pull_request:
     branches:
       - main
-      - 2.5
+      - 2.4
     types: [opened, synchronize]
+    paths-ignore:
+      - '.github/**'
+      - '*.md'
   push:
     branches:
       - main
-      - 2.5
+      - 2.4
+    paths-ignore:
+      - '.github/**'
+      - '*.md'
 jobs:
   publish:
     runs-on: ubuntu-latest
