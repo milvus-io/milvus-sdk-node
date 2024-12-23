@@ -208,6 +208,7 @@ export const assignTypeParams = (
     'enable_match',
     'enable_analyzer',
     'analyzer_params',
+    'mmap.enabled',
   ]
 ): FieldType => {
   const newField = cloneObj<FieldType>(field);

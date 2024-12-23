@@ -15,7 +15,7 @@ import {
 } from '../tools';
 import { timeoutTest } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 const NUMBER_DIM_COLLECTION_NAME = GENERATE_NAME();
 const NEW_COLLECTION_NAME = GENERATE_NAME();
@@ -444,6 +444,7 @@ describe(`Collection API`, () => {
       collection_name: LOAD_COLLECTION_NAME,
       field_name: 'json',
       properties: { [key]: value },
+      db_name: 'Collection', // pass test case
     });
 
     expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
@@ -452,7 +453,30 @@ describe(`Collection API`, () => {
       collection_name: LOAD_COLLECTION_NAME,
     });
 
-    console.dir(describe, { depth: null });
+    // find json field
+    const jsonField = describe.schema.fields.find(
+      f => f.name === 'json'
+    ) as any;
+    expect(jsonField['mmap.enabled']).toEqual('true');
+
+    const alter2 = await milvusClient.alterCollectionFieldProperties({
+      collection_name: LOAD_COLLECTION_NAME,
+      field_name: 'varChar',
+      properties: { max_length: 1024 },
+      db_name: 'Collection', // pass test case
+    });
+    expect(alter2.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe2 = await milvusClient.describeCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+
+    // find varChar field
+    const varCharField = describe2.schema.fields.find(
+      f => f.name === 'varChar'
+    ) as any;
+
+    expect(varCharField['max_length']).toEqual('1024');
   });
 
   it(`Load Collection Sync throw COLLECTION_NAME_IS_REQUIRED`, async () => {

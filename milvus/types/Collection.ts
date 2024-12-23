@@ -45,7 +45,8 @@ export type TypeParamKey =
   | 'max_capacity'
   | 'analyzer_params'
   | 'enable_analyzer'
-  | 'enable_match';
+  | 'enable_match'
+  | 'mmap.enabled';
 
 // returned from milvus
 export type FieldSchema = {
