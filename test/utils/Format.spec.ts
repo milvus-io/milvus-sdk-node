@@ -28,6 +28,7 @@ import {
   Field,
   formatSearchVector,
   buildSearchRequest,
+  formatExprValues,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -901,5 +902,155 @@ describe('utils/format', () => {
         }
       }
     );
+  });
+
+  it('should format exprValues correctly', () => {
+    const exprValues = {
+      bool: true,
+      number: 25,
+      float: 5.9,
+      string: 'Alice',
+      strArr: ['developer', 'javascript'],
+      boolArr: [true, false],
+      numberArr: [1, 2, 3, 4],
+      doubleArr: [1.1, 2.2, 3.3],
+      jsonArr: [{ key: 'value' }, { key: 'value' }],
+      intArrArr: [
+        [1, 2],
+        [3, 4],
+      ],
+      doubleArrArr: [
+        [1.1, 2.2],
+        [3.3, 4.4],
+      ],
+      boolArrArr: [
+        [true, false],
+        [false, true],
+      ],
+      strArrArr: [
+        ['a', 'b'],
+        ['c', 'd'],
+      ],
+      intArrArrArr: [
+        [
+          [1, 2],
+          [3, 4],
+        ],
+        [
+          [5, 6],
+          [7, 8],
+        ],
+      ],
+      defaultArr: [undefined, undefined],
+    };
+    const formattedExprValues = formatExprValues(exprValues);
+    expect(formattedExprValues).toEqual({
+      bool: { bool_val: true },
+      number: { int64_val: 25 },
+      float: { float_val: 5.9 },
+      string: { string_val: 'Alice' },
+      strArr: {
+        array_val: { string_data: { data: ['developer', 'javascript'] } },
+      },
+      boolArr: {
+        array_val: { bool_data: { data: [true, false] } },
+      },
+      numberArr: {
+        array_val: { long_data: { data: [1, 2, 3, 4] } },
+      },
+      doubleArr: {
+        array_val: { double_data: { data: [1.1, 2.2, 3.3] } },
+      },
+      jsonArr: {
+        array_val: {
+          json_data: { data: [{ key: 'value' }, { key: 'value' }] },
+        },
+      },
+      intArrArr: {
+        array_val: {
+          array_data: {
+            data: [
+              {
+                long_data: { data: [1, 2] },
+              },
+              {
+                long_data: { data: [3, 4] },
+              },
+            ],
+          },
+        },
+      },
+      doubleArrArr: {
+        array_val: {
+          array_data: {
+            data: [
+              {
+                double_data: { data: [1.1, 2.2] },
+              },
+              {
+                double_data: { data: [3.3, 4.4] },
+              },
+            ],
+          },
+        },
+      },
+      boolArrArr: {
+        array_val: {
+          array_data: {
+            data: [
+              {
+                bool_data: { data: [true, false] },
+              },
+              {
+                bool_data: { data: [false, true] },
+              },
+            ],
+          },
+        },
+      },
+      strArrArr: {
+        array_val: {
+          array_data: {
+            data: [
+              {
+                string_data: { data: ['a', 'b'] },
+              },
+              {
+                string_data: { data: ['c', 'd'] },
+              },
+            ],
+          },
+        },
+      },
+      intArrArrArr: {
+        array_val: {
+          array_data: {
+            data: [
+              {
+                array_data: {
+                  data: [
+                    { long_data: { data: [1, 2] } },
+                    { long_data: { data: [3, 4] } },
+                  ],
+                },
+              },
+              {
+                array_data: {
+                  data: [
+                    { long_data: { data: [5, 6] } },
+                    { long_data: { data: [7, 8] } },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      },
+      defaultArr: {
+        array_val: {
+          string_data: { data: [undefined, undefined] },
+        },
+      },
+    });
   });
 });

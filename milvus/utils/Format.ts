@@ -910,3 +910,91 @@ export const formatSearchVector = (
       return searchVector as VectorTypes[];
   }
 };
+
+type TemplateValue =
+  | { bool_val: boolean }
+  | { int64_val: number }
+  | { float_val: number }
+  | { string_val: string }
+  | { array_val: TemplateArrayValue };
+type TemplateArrayValue =
+  | { bool_data: { data: boolean[] } }
+  | { long_data: { data: number[] } }
+  | { double_data: { data: number[] } }
+  | { string_data: { data: string[] } }
+  | { json_data: { data: any[] } }
+  | { array_data: { data: TemplateArrayValue[] } };
+export const formatExprValues = (
+  exprValues: Record<string, any>
+): Record<string, TemplateValue> => {
+  const result: Record<string, TemplateValue> = {};
+  for (const [key, value] of Object.entries(exprValues)) {
+    if (Array.isArray(value)) {
+      // Handle arrays
+      result[key] = { array_val: convertArray(value) };
+    } else {
+      // Handle primitive types
+      if (typeof value === 'boolean') {
+        result[key] = { bool_val: value };
+      } else if (typeof value === 'number') {
+        result[key] = Number.isInteger(value)
+          ? { int64_val: value }
+          : { float_val: value };
+      } else if (typeof value === 'string') {
+        result[key] = { string_val: value };
+      }
+    }
+  }
+  return result;
+};
+const convertArray = (arr: any[]): TemplateArrayValue => {
+  const first = arr[0];
+  switch (typeof first) {
+    case 'boolean':
+      return {
+        bool_data: {
+          data: arr,
+        },
+      };
+    case 'number':
+      if (Number.isInteger(first)) {
+        return {
+          long_data: {
+            data: arr,
+          },
+        };
+      } else {
+        return {
+          double_data: {
+            data: arr,
+          },
+        };
+      }
+    case 'string':
+      return {
+        string_data: {
+          data: arr,
+        },
+      };
+    case 'object':
+      if (Array.isArray(first)) {
+        return {
+          array_data: {
+            data: arr.map(convertArray),
+          },
+        };
+      } else {
+        return {
+          json_data: {
+            data: arr,
+          },
+        };
+      }
+    default:
+      return {
+        string_data: {
+          data: arr,
+        },
+      };
+  }
+};
