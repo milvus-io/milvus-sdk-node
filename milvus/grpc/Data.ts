@@ -153,7 +153,7 @@ export class Data extends Collection {
             name: v.name,
             type: v.data_type, // milvus return string here
             elementType: v.element_type,
-            dim: Number(findKeyValue(v.type_params, 'dim')),
+            dim: Number(v.dim),
             data: [], // values container
           },
         ])

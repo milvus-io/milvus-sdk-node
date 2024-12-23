@@ -204,6 +204,7 @@ describe('utils/format', () => {
       type_params: {
         dim: 100,
         max_length: 50,
+        'mmap.enabled': true,
       },
       dim: 200,
       max_length: 75,
@@ -214,6 +215,7 @@ describe('utils/format', () => {
       type_params: {
         dim: '200',
         max_length: '75',
+        'mmap.enabled': true,
       },
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);
@@ -414,6 +416,7 @@ describe('utils/format', () => {
     const formatted = formatDescribedCol(response);
 
     expect(formatted.schema.fields[0].dataType).toBe(101);
+    expect(formatted.schema.fields[0].dim).toBe('128');
     expect(formatted.schema.fields[1].dataType).toBe(5);
   });
 

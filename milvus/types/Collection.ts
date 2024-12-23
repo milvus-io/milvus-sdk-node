@@ -15,25 +15,6 @@ import {
   ShowCollectionsType,
 } from '../';
 
-// returned from milvus
-export interface FieldSchema {
-  type_params: KeyValuePair[];
-  index_params: KeyValuePair[];
-  fieldID: string | number;
-  name: string;
-  is_primary_key?: boolean;
-  description: string;
-  data_type: keyof typeof DataType;
-  autoID: boolean;
-  state: string;
-  element_type?: keyof typeof DataType;
-  default_value?: number | string;
-  dataType: DataType;
-  is_partition_key?: boolean;
-  is_dynamic?: boolean;
-  is_clustering_key?: boolean;
-}
-
 export interface CollectionData {
   name: string;
   id: string;
@@ -56,8 +37,30 @@ export interface ReplicaInfo {
   node_ids: string[];
 }
 
-export type TypeParam = string | number;
-export type TypeParamKey = 'dim' | 'max_length' | 'max_capacity';
+export type TypeParam = string | number | boolean | Record<string, any>;
+export type TypeParamKey =
+  | 'dim'
+  | 'max_length'
+  | 'max_capacity'
+  | 'mmap.enabled';
+
+// returned from milvus
+export type FieldSchema = {
+  type_params: KeyValuePair<TypeParamKey, TypeParam>[];
+  index_params: KeyValuePair[];
+  fieldID: string | number;
+  name: string;
+  is_primary_key: boolean;
+  description: string;
+  data_type: keyof typeof DataType;
+  autoID: boolean;
+  state: string;
+  element_type?: keyof typeof DataType;
+  dataType: DataType;
+  is_partition_key?: boolean;
+  is_dynamic?: boolean;
+  is_clustering_key?: boolean;
+} & Partial<Record<TypeParamKey, TypeParam>>;
 
 // create collection
 export interface FieldType {
@@ -264,4 +267,9 @@ export interface ListAliasesResponse extends resStatusResponse {
   db_name: string;
   aliases: string[];
   collection_name: string;
+}
+
+export interface AlterCollectionFieldPropertiesReq extends collectionNameReq {
+  field_name: string; // required, field name
+  properties: Properties; // required, properties
 }
