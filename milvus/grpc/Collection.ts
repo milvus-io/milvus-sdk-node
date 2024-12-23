@@ -55,7 +55,7 @@ import {
   CreateCollectionWithSchemaReq,
   FieldSchema,
   DropCollectionPropertiesReq,
-  AlterCollectionFieldReq,
+  AlterCollectionFieldPropertiesReq,
   isVectorType,
 } from '../';
 
@@ -399,7 +399,7 @@ export class Collection extends Database {
    * Modifies a collection field's properties.
    * Note that this operation only modifies the properties of the field, not the field itself.
    *
-   * @param {AlterCollectionFieldReq} data - The request parameters.
+   * @param {AlterCollectionFieldPropertiesReq} data - The request parameters.
    * @param {string} data.collection_name - The name of the collection to modify.
    * @param {string} data.field_name - The name of the field to modify.
    * @param {Object} data.properties - The properties to modify. For example, to change the field's data type, use {"field_type": DataType.Int64}.
@@ -420,8 +420,8 @@ export class Collection extends Database {
    * });
    * ```
    */
-  async alterCollectionField(
-    data: AlterCollectionFieldReq
+  async alterCollectionFieldProperties(
+    data: AlterCollectionFieldPropertiesReq
   ): Promise<ResStatus> {
     const req: any = {
       collection_name: data.collection_name,

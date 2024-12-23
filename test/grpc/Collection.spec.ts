@@ -436,11 +436,11 @@ describe(`Collection API`, () => {
     ).toEqual(value2);
   });
 
-  it(`Alter collection field should success`, async () => {
+  it(`Alter collection field properties should success`, async () => {
     const key = 'mmap.enabled';
     const value = true;
 
-    const alter = await milvusClient.alterCollectionField({
+    const alter = await milvusClient.alterCollectionFieldProperties({
       collection_name: LOAD_COLLECTION_NAME,
       field_name: 'json',
       properties: { [key]: value },
