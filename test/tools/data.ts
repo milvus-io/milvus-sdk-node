@@ -5,7 +5,7 @@ import {
   FieldType,
   SparseVectorCOO,
 } from '../../milvus';
-import { MAX_LENGTH, P_KEY_VALUES } from './const';
+import { MAX_LENGTH, P_KEY_VALUES, DEFAULT_NUM_VALUE } from './const';
 import Long from 'long';
 
 interface DataGenerator {
@@ -282,17 +282,17 @@ export const generateInsertData = (
     const value: { [x: string]: FieldData } = {}; // Initialize an empty object to store the generated values for this data point
 
     for (const field of fields) {
-      // Skip autoID and fields with default values
-      if (field.autoID || typeof field.default_value !== 'undefined') {
+      // Skip autoID and fields
+      if (field.autoID) {
         continue;
       }
 
       // get data type
       const data_type = convertToDataType(field.data_type);
 
-      // Skip fields with default values
-      if (typeof field.default_value !== 'undefined') {
-        continue;
+      // if field name is default_value, insert 50% of data with default value
+      if (field.name === 'default_value' && Math.random() > 0.5) {
+        value[field.name] = DEFAULT_NUM_VALUE;
       }
 
       // Parameters used to generate all types of data
