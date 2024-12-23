@@ -402,7 +402,7 @@ export class Collection extends Database {
    * @param {AlterCollectionFieldPropertiesReq} data - The request parameters.
    * @param {string} data.collection_name - The name of the collection to modify.
    * @param {string} data.field_name - The name of the field to modify.
-   * @param {Object} data.properties - The properties to modify. For example, to change the field's data type, use {"field_type": DataType.Int64}.
+   * @param {Object} data.properties - The properties to modify. For example, to change field mmap setting and max_length, use { 'mmap.enabled', true, max_length: 128}.
    * @param {string} [data.db_name] - The name of the database where the collection is located.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
