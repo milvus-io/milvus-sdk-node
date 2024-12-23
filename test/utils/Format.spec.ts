@@ -706,7 +706,8 @@ describe('utils/format', () => {
         [1, 2, 3],
         [4, 5, 6],
       ],
-      expr: 'id > 0',
+      expr: 'id > {value}',
+      exprValues: { value: 1 },
       output_fields: ['*'],
     };
 
@@ -764,6 +765,10 @@ describe('utils/format', () => {
     expect(searchRequest.request.collection_name).toEqual('test');
     expect(searchRequest.request.output_fields).toEqual(['*']);
     expect(searchRequest.request.consistency_level).toEqual('Session');
+    expect(searchRequest.request.dsl).toEqual('id > {value}');
+    expect(searchRequest.request.expr_template_values).toEqual(
+      formatExprValues({ value: 1 })
+    );
     expect(searchRequest.nq).toEqual(2);
     const searchParamsKeyValuePairArray = (searchRequest.request as any)
       .search_params;
@@ -800,10 +805,13 @@ describe('utils/format', () => {
           data: [1, 2, 3, 4, 5, 6, 7, 8],
           anns_field: 'vector',
           params: { nprobe: 2 },
+          expr: 'id > 0',
         },
         {
           data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
           anns_field: 'vector1',
+          expr: 'id > {value}',
+          exprValues: { value: 1 },
         },
       ],
       limit: 2,
@@ -895,10 +903,15 @@ describe('utils/format', () => {
           expect(searchParamsKeyValuePairObject.anns_field).toEqual('vector');
           expect(searchParamsKeyValuePairObject.params).toEqual('{"nprobe":2}');
           expect(searchParamsKeyValuePairObject.topk).toEqual(2);
+          expect(request.dsl).toEqual('id > 0');
         } else {
           expect(searchParamsKeyValuePairObject.anns_field).toEqual('vector1');
           expect(searchParamsKeyValuePairObject.params).toEqual('{}');
           expect(searchParamsKeyValuePairObject.topk).toEqual(2);
+          expect(request.dsl).toEqual('id > {value}');
+          expect(request.expr_template_values).toEqual(
+            formatExprValues({ value: 1 })
+          );
         }
       }
     );

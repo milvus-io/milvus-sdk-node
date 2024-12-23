@@ -41,6 +41,7 @@ import {
   f32ArrayToF16Bytes,
   bf16BytesToF32Array,
   f16BytesToF32Array,
+  keyValueObj,
 } from '../';
 
 /**
@@ -643,6 +644,21 @@ export const convertRerankParams = (rerank: RerankerObj) => {
   return r;
 };
 
+type FormatedSearchRequest = {
+  collection_name: string;
+  partition_names: string[];
+  output_fields: string[];
+  nq?: number;
+  dsl?: string;
+  dsl_type?: DslType;
+  placeholder_group?: Uint8Array;
+  search_params?: KeyValuePair[];
+  consistency_level: ConsistencyLevelEnum;
+  expr?: string;
+  expr_template_values?: keyValueObj;
+  rank_params?: KeyValuePair[];
+};
+
 /**
  * This method is used to build search request for a given data.
  * It first fetches the collection info and then constructs the search request based on the data type.
@@ -676,17 +692,7 @@ export const buildSearchRequest = (
   const searchSimpleReq = data as SearchSimpleReq;
 
   // Initialize requests array
-  const requests: {
-    collection_name: string;
-    partition_names: string[];
-    output_fields: string[];
-    nq: number;
-    dsl: string;
-    dsl_type: DslType;
-    placeholder_group: Uint8Array;
-    search_params: KeyValuePair[];
-    consistency_level: ConsistencyLevelEnum;
-  }[] = [];
+  const requests: FormatedSearchRequest[] = [];
 
   // detect if the request is hybrid search request
   const isHybridSearch = !!(
@@ -739,12 +745,12 @@ export const buildSearchRequest = (
       searchingVector = formatSearchVector(searchingVector, field.dataType!);
 
       // create search request
-      requests.push({
+      const request: FormatedSearchRequest = {
         collection_name: req.collection_name,
         partition_names: req.partition_names || [],
         output_fields: req.output_fields || default_output_fields,
         nq: searchReq.nq || searchingVector.length,
-        dsl: searchReq.expr || searchSimpleReq.filter || '',
+        dsl: req.expr || searchReq.expr || searchSimpleReq.filter || '', // expr
         dsl_type: DslType.BoolExprV1,
         placeholder_group: buildPlaceholderGroupBytes(
           milvusProto,
@@ -756,7 +762,14 @@ export const buildSearchRequest = (
         ),
         consistency_level:
           req.consistency_level || (collectionInfo.consistency_level as any),
-      });
+      };
+
+      // if exprValues is set, add it to the request(inner)
+      if (req.exprValues) {
+        request.expr_template_values = formatExprValues(req.exprValues);
+      }
+
+      requests.push(request);
     }
   }
 
@@ -774,7 +787,7 @@ export const buildSearchRequest = (
   return {
     isHybridSearch,
     request: isHybridSearch
-      ? {
+      ? ({
           collection_name: data.collection_name,
           partition_names: data.partition_names,
           requests: requests,
@@ -791,7 +804,7 @@ export const buildSearchRequest = (
           ],
           output_fields: requests[0]?.output_fields,
           consistency_level: requests[0]?.consistency_level,
-        }
+        } as FormatedSearchRequest)
       : requests[0],
     nq: requests[0].nq,
     round_decimal,
@@ -924,6 +937,7 @@ type TemplateArrayValue =
   | { string_data: { data: string[] } }
   | { json_data: { data: any[] } }
   | { array_data: { data: TemplateArrayValue[] } };
+
 export const formatExprValues = (
   exprValues: Record<string, any>
 ): Record<string, TemplateValue> => {

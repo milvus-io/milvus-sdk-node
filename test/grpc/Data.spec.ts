@@ -13,12 +13,13 @@ import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
-  // DEFAULT_VALUE,
+  DEFAULT_NUM_VALUE,
 } from '../tools';
 import { timeoutTest } from '../tools';
 
 const milvusClient = new MilvusClient({
   address: IP,
+  logLevel: 'info',
 });
 const COLLECTION_NAME = GENERATE_NAME();
 const VARCHAR_ID_COLLECTION_NAME = GENERATE_NAME();
@@ -30,6 +31,14 @@ const createCollectionParams = genCollectionParams({
   dim: [4],
   vectorType: [DataType.FloatVector],
   autoID: false,
+  fields: [
+    {
+      name: 'varChar2',
+      description: 'VarChar2 field',
+      data_type: DataType.VarChar,
+      max_length: 100,
+    },
+  ],
 });
 const createCollectionParamsVarcharID = genCollectionParams({
   collectionName: VARCHAR_ID_COLLECTION_NAME,
@@ -61,6 +70,7 @@ describe(`Data.API`, () => {
       collection_name: COLLECTION_NAME,
       data: generateInsertData(createCollectionParams.fields, 1024),
     });
+
     await milvusClient.insert({
       collection_name: VARCHAR_ID_COLLECTION_NAME,
       data: generateInsertData(createCollectionParamsVarcharID.fields, 1024),
@@ -100,6 +110,16 @@ describe(`Data.API`, () => {
   });
 
   afterAll(async () => {
+    const searchParams = {
+      collection_name: COLLECTION_NAME,
+      // partition_names: [],
+      filter: 'json["number"] >= 0',
+      data: [1, 2, 3, 4],
+      limit: 4,
+      output_fields: ['id', 'json'],
+    };
+    const res = await milvusClient.search(searchParams);
+
     await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,
     });
@@ -231,13 +251,21 @@ describe(`Data.API`, () => {
   it(`Exec simple search without params and output fields should success`, async () => {
     const limit = 4;
 
-    // collection search
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    });
+
+    // find varchar2 field
+    describe.schema.fields.find(f => f.name === 'varChar2');
+
+    // console.dir(varChar2Field, { depth: null });
+
     const searchWithData = await milvusClient.search({
       collection_name: COLLECTION_NAME,
       filter: '',
-      data: [1, 2, 3, 4],
+      vector: [1, 2, 3, 4],
       limit: limit,
-      group_by_field: 'varChar',
+      group_by_field: 'varChar2',
     });
 
     expect(searchWithData.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -316,6 +344,20 @@ describe(`Data.API`, () => {
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     res.results.forEach(r => {
+      expect(Number(r.int64)).toBeLessThan(10000);
+    });
+
+    const resExprValues = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: 'int64 < {value}',
+      exprValues: { value: 10000 },
+      data: [1, 2, 3, 4],
+      limit: limit,
+      params: { nprobe: 1024 },
+    });
+
+    expect(resExprValues.status.error_code).toEqual(ErrorCode.SUCCESS);
+    resExprValues.results.forEach(r => {
       expect(Number(r.int64)).toBeLessThan(10000);
     });
 
@@ -488,16 +530,47 @@ describe(`Data.API`, () => {
   it(`Query with data limit and offset`, async () => {
     const res = await milvusClient.query({
       collection_name: COLLECTION_NAME,
-      expr: 'id > 0',
-      output_fields: ['id', VECTOR_FIELD_NAME, 'default_value'],
+      expr: `id > 0 and default_value != ${DEFAULT_NUM_VALUE}`,
+      output_fields: ['id', VECTOR_FIELD_NAME, 'default_value', 'int32_array'],
       offset: 0,
       limit: 3,
     });
 
-    // res.data.forEach(d => {
-    //   expect(d.default_value).toEqual(DEFAULT_VALUE);
-    // });
     expect(res.data.length).toBe(3);
+
+    const res2 = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'id > {value}',
+      output_fields: ['id', VECTOR_FIELD_NAME, 'default_value'],
+      offset: 0,
+      limit: 3,
+      exprValues: { value: 0 },
+    });
+
+    expect(res2.data.length).toBe(3);
+
+    // get all default values
+    const default_values = res.data.map(d => d.default_value);
+    
+    console.log('default_values', default_values);
+
+    // query by ids
+    const res3 = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: `default_value in [${default_values.join(',')}]`,
+      output_fields: ['default_value'],
+    });
+
+    expect(res3.data.length).toBe(default_values.length);
+
+    const res4 = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'default_value in {default_values}',
+      output_fields: ['default_value'],
+      exprValues: { default_values },
+    });
+
+    expect(res4.data.length).toBe(default_values.length);
   });
 
   it(`Query with count(*)`, async () => {
@@ -557,6 +630,17 @@ describe(`Data.API`, () => {
       limit: 3,
     });
     expect(res.data.length).toBe(3);
+
+    const template = 'json["number"] >= {value}';
+    const res2 = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: template,
+      output_fields: ['id', 'json', VECTOR_FIELD_NAME],
+      offset: 0,
+      limit: 3,
+      exprValues: { value: 1.0 },
+    });
+    expect(res2.data.length).toBe(3);
   });
 
   it(`Query with data without limit and offset`, async () => {
@@ -586,6 +670,7 @@ describe(`Data.API`, () => {
     expect(res.data.length).toEqual(0);
   });
 
+  let default_values: string[] = [];
   it(`query by ids success`, async () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
@@ -598,10 +683,12 @@ describe(`Data.API`, () => {
     const query0 = await milvusClient.query({
       collection_name: VARCHAR_ID_COLLECTION_NAME,
       expr: 'id != ""',
+      output_fields: ['id', 'default_value'],
     });
 
     // get first 3 ids
     const ids = query0.data.slice(0, 3).map(d => d.id);
+    default_values = query0.data.slice(0, 3).map(d => d.default_value);
     // query by ids
     const queryVarcharIds = await milvusClient.query({
       collection_name: VARCHAR_ID_COLLECTION_NAME,
@@ -609,6 +696,25 @@ describe(`Data.API`, () => {
     });
     expect(queryVarcharIds.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(queryVarcharIds.data.length).toEqual(3);
+  });
+
+  it(`delete entities with exprValues should success`, async () => {
+    const res = await milvusClient.deleteEntities({
+      collection_name: COLLECTION_NAME,
+      expr: 'default_value in {value}',
+      exprValues: { value: default_values },
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // query again
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'default_value in {value}',
+      exprValues: { value: default_values },
+    });
+
+    expect(query.data.length).toEqual(0);
   });
 
   it('delete withouth colleciton name should throw error', async () => {
@@ -644,6 +750,14 @@ describe(`Data.API`, () => {
     });
 
     expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // query again
+    const query2 = await milvusClient.query({
+      collection_name: VARCHAR_ID_COLLECTION_NAME,
+      expr: 'id != ""',
+    });
+
+    expect(query2.data.length).toEqual(0);
   });
 
   it(`delete by filter should success`, async () => {
