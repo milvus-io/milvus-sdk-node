@@ -45,7 +45,8 @@ export type TypeParamKey =
   | 'max_capacity'
   | 'analyzer_params'
   | 'enable_analyzer'
-  | 'enable_match';
+  | 'enable_match'
+  | 'mmap.enabled';
 
 // returned from milvus
 export type FieldSchema = {
@@ -266,6 +267,11 @@ export interface GetLoadStateResponse extends resStatusResponse {
 export interface AlterCollectionReq extends collectionNameReq {
   properties: Properties; // required, properties
   delete_keys?: string[]; // optional, deleted properties, strings array
+}
+
+export interface AlterCollectionFieldPropertiesReq extends collectionNameReq {
+  field_name: string; // required, field name
+  properties: Properties; // required, properties
 }
 
 export interface DropCollectionPropertiesReq extends collectionNameReq {

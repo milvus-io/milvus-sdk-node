@@ -191,6 +191,7 @@ describe('utils/format', () => {
       enable_match: true,
       analyzer_params: { key: 'value' },
       enable_analyzer: true,
+      'mmap.enabled': true,
     } as FieldType;
     const expectedOutput = {
       name: 'vector',
@@ -201,6 +202,7 @@ describe('utils/format', () => {
         enable_match: 'true',
         analyzer_params: JSON.stringify({ key: 'value' }),
         enable_analyzer: 'true',
+        'mmap.enabled': 'true',
       },
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);
