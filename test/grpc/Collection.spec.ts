@@ -79,7 +79,9 @@ describe(`Collection API`, () => {
 
     expect(
       Boolean(
-        formatKeyValueData(describe.properties, ['mmap.enabled'])['mmap.enabled']
+        formatKeyValueData(describe.properties, ['mmap.enabled'])[
+          'mmap.enabled'
+        ]
       )
     ).toEqual(true);
   });
@@ -432,6 +434,41 @@ describe(`Collection API`, () => {
     expect(
       Boolean(formatKeyValueData(describe.properties, [key2])[key2])
     ).toEqual(value2);
+  });
+
+  it(`Alter collection field properties should success`, async () => {
+    const key = 'mmap.enabled';
+    const value = true;
+    const alter = await milvusClient.alterCollectionFieldProperties({
+      collection_name: LOAD_COLLECTION_NAME,
+      field_name: 'json',
+      properties: { [key]: value },
+      db_name: 'Collection', // pass test case
+    });
+    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+    const describe = await milvusClient.describeCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+    // find json field
+    const jsonField = describe.schema.fields.find(
+      f => f.name === 'json'
+    ) as any;
+    expect(jsonField['mmap.enabled']).toEqual('true');
+    const alter2 = await milvusClient.alterCollectionFieldProperties({
+      collection_name: LOAD_COLLECTION_NAME,
+      field_name: 'varChar',
+      properties: { max_length: 1024 },
+      db_name: 'Collection', // pass test case
+    });
+    expect(alter2.error_code).toEqual(ErrorCode.SUCCESS);
+    const describe2 = await milvusClient.describeCollection({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+    // find varChar field
+    const varCharField = describe2.schema.fields.find(
+      f => f.name === 'varChar'
+    ) as any;
+    expect(varCharField['max_length']).toEqual('1024');
   });
 
   it(`Load Collection Sync throw COLLECTION_NAME_IS_REQUIRED`, async () => {

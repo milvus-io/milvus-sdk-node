@@ -42,6 +42,8 @@ import {
   bf16BytesToF32Array,
   f16BytesToF32Array,
   keyValueObj,
+  TypeParamKey,
+  TypeParam,
 } from '../';
 
 /**
@@ -189,23 +191,33 @@ export const formatAddress = (address: string) => {
  */
 export const assignTypeParams = (
   field: FieldType,
-  typeParamKeys: string[] = ['dim', 'max_length', 'max_capacity']
+  typeParamKeys: TypeParamKey[] = [
+    'dim',
+    'max_length',
+    'max_capacity',
+    'mmap.enabled',
+  ]
 ) => {
-  let newField = cloneObj<FieldType>(field);
+  const newField = cloneObj<FieldType>(field);
+
+  // Initialize `type_params` if undefined
+  newField.type_params ??= {} as Record<TypeParamKey, TypeParam>;
+
   typeParamKeys.forEach(key => {
-    if (newField.hasOwnProperty(key)) {
-      // if the property exists in the field object, assign it to the type_params object
-      newField.type_params = newField.type_params || {};
-      newField.type_params[key] = String(newField[key as keyof FieldType]);
-      // delete the property from the field object
+    if (key in newField) {
+      const value = newField[key as keyof FieldType];
+      // Convert the value to a string, JSON-stringify if it’s an object
+      newField.type_params![key] =
+        typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
       delete newField[key as keyof FieldType];
     }
-
-    if (newField.type_params && newField.type_params[key]) {
-      // if the property already exists in the type_params object, convert it to a string
-      newField.type_params[key] = String(newField.type_params[key]);
-    }
   });
+
+  // delete type_params if it's empty
+  if (!Object.keys(newField.type_params).length) {
+    delete newField.type_params;
+  }
+
   return newField;
 };
 
@@ -361,6 +373,12 @@ export const formatDescribedCol = (
   // add a dataType property which indicate datatype number
   newData.schema?.fields?.forEach(f => {
     f.dataType = DataTypeMap[f.data_type];
+    // extract type params(key value pair = {key: 'xxx', value: any}), and assign it to the field object(key)
+    if (f.type_params && f.type_params.length > 0) {
+      f.type_params.forEach(keyValuePair => {
+        f[keyValuePair.key] = keyValuePair.value;
+      });
+    }
   });
 
   return newData;
