@@ -1,4 +1,3 @@
-import exp from 'constants';
 import {
   MilvusClient,
   ERROR_REASONS,
@@ -7,7 +6,6 @@ import {
   Roles,
   Privileges,
   RbacObjects,
-  OperatePrivilegeGroupType,
 } from '../../milvus';
 import { timeoutTest } from '../tools';
 import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
@@ -215,14 +213,27 @@ describe(`User Api`, () => {
     expect(grant.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`it should grant privilege use grantPrivilegeV2 successfully`, async () => {
+    const res = await authClient.grantPrivilegeV2({
+      role: ROLE_NAME,
+      collection_name: COLLECTION_NAME,
+      db_name: 'default',
+      privilege: Privileges.Query,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`It should list grants successfully`, async () => {
     const res = await authClient.listGrants({
       roleName: ROLE_NAME,
     });
-    expect(res.entities.length).toEqual(1);
+    expect(res.entities.length).toEqual(2);
     expect(res.entities[0].object_name).toEqual(COLLECTION_NAME);
     expect(res.entities[0].object.name).toEqual(RbacObjects.Collection);
-    expect(res.entities[0].grantor.privilege.name).toEqual(Privileges.Search);
+    expect(res.entities[0].grantor.privilege.name).toEqual(Privileges.Query);
+    expect(res.entities[1].object_name).toEqual(COLLECTION_NAME);
+    expect(res.entities[1].object.name).toEqual(RbacObjects.Collection);
+    expect(res.entities[1].grantor.privilege.name).toEqual(Privileges.Search);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -251,6 +262,16 @@ describe(`User Api`, () => {
       privilegeName: Privileges.Search,
     });
 
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`It should revoke privilege use revokePrivilegeV2 successfully`, async () => {
+    const res = await authClient.revokePrivilegeV2({
+      role: ROLE_NAME,
+      collection_name: COLLECTION_NAME,
+      db_name: 'default',
+      privilege: Privileges.Query,
+    });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
@@ -293,17 +314,10 @@ describe(`User Api`, () => {
   it(`add privileges to a privilege group`, async () => {
     const res = await authClient.addPrivilegesToGroup({
       group_name: PRIVILEGE_GRP_NAME,
-      privileges: [Privileges.Query],
+      privileges: [Privileges.Query, Privileges.Search],
     });
 
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
-
-    const res2 = await authClient.operatePrivilegeGroup({
-      group_name: PRIVILEGE_GRP_NAME,
-      privileges: [{ name: Privileges.Search }],
-      type: OperatePrivilegeGroupType.AddPrivilegesToGroup,
-    });
-    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`remove privileges from a privilege group`, async () => {
@@ -320,6 +334,7 @@ describe(`User Api`, () => {
     const grp = res.privilege_groups.find(
       g => g.group_name === PRIVILEGE_GRP_NAME
     )!;
+
     expect(grp.group_name).toEqual(PRIVILEGE_GRP_NAME);
     expect(grp.privileges.map(p => p.name)).toContain(Privileges.Search);
   });
