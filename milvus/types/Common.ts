@@ -36,7 +36,8 @@ export interface GrpcTimeOut {
 export type PrivilegesTypes =
   | CollectionPrivileges
   | UserPrivileges
-  | GlobalPrivileges;
+  | GlobalPrivileges
+  | string;
 
 export interface ResStatus {
   error_code: string | number;

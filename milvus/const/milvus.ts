@@ -434,3 +434,8 @@ export enum RANKER_TYPE {
   RRF = 'rrf',
   WEIGHTED = 'weighted',
 }
+
+export enum OperatePrivilegeGroupType {
+  AddPrivilegesToGroup = 0,
+  RemovePrivilegesFromGroup = 1,
+}
