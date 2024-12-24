@@ -1,3 +1,4 @@
+import exp from 'constants';
 import {
   MilvusClient,
   ERROR_REASONS,
@@ -6,17 +7,19 @@ import {
   Roles,
   Privileges,
   RbacObjects,
+  OperatePrivilegeGroupType,
 } from '../../milvus';
 import { timeoutTest } from '../tools';
 import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 let authClient: MilvusClient;
 const USERNAME = 'username';
 const PASSWORD = '123456';
 const NEW_PASSWORD = '1234567';
 const ROLE_NAME = GENERATE_NAME('role');
 const COLLECTION_NAME = GENERATE_NAME();
+const PRIVILEGE_GRP_NAME = GENERATE_NAME('privilege');
 
 describe(`User Api`, () => {
   beforeAll(async () => {
@@ -274,9 +277,57 @@ describe(`User Api`, () => {
     }
   });
 
-  // last test
+  // last test for user
   it(`Auth client delete user expect success`, async () => {
     const res = await authClient.deleteUser({ username: USERNAME });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`create a privilege group`, async () => {
+    const res = await authClient.createPrivilegeGroup({
+      group_name: PRIVILEGE_GRP_NAME,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`add privileges to a privilege group`, async () => {
+    const res = await authClient.addPrivilegesToGroup({
+      group_name: PRIVILEGE_GRP_NAME,
+      privileges: [Privileges.Query],
+    });
+
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res2 = await authClient.operatePrivilegeGroup({
+      group_name: PRIVILEGE_GRP_NAME,
+      privileges: [{ name: Privileges.Search }],
+      type: OperatePrivilegeGroupType.AddPrivilegesToGroup,
+    });
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`remove privileges from a privilege group`, async () => {
+    const res = await authClient.removePrivilegesFromGroup({
+      group_name: PRIVILEGE_GRP_NAME,
+      privileges: [Privileges.Query],
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`list privilege groups`, async () => {
+    const res = await authClient.listPrivilegeGroups();
+    expect(res.privilege_groups.length).toBeGreaterThan(0);
+    const grp = res.privilege_groups.find(
+      g => g.group_name === PRIVILEGE_GRP_NAME
+    )!;
+    expect(grp.group_name).toEqual(PRIVILEGE_GRP_NAME);
+    expect(grp.privileges.map(p => p.name)).toContain(Privileges.Search);
+  });
+
+  it(`drop a privilege group`, async () => {
+    const res = await authClient.dropPrivilegeGroup({
+      group_name: PRIVILEGE_GRP_NAME,
+    });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });
