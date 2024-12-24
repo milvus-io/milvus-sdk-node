@@ -107,3 +107,13 @@ export interface OperatePrivilegeGroupReq extends GrpcTimeOut {
   privileges: PrivilegeEntity[]; // required, privileges
   type: OperatePrivilegeGroupType; // required, operation type
 }
+
+export interface AddPrivilegesToGroupReq extends GrpcTimeOut {
+  group_name: string; // required, group name
+  privileges: PrivilegesTypes[]; // required, privileges
+}
+
+export interface RemovePrivilegesFromGroupReq extends GrpcTimeOut {
+  group_name: string; // required, group name
+  privileges: PrivilegesTypes[]; // required, privileges
+}

@@ -21,6 +21,9 @@ import {
   CreatePrivilegeGroupReq,
   DropPrivilegeGroupReq,
   OperatePrivilegeGroupReq,
+  AddPrivilegesToGroupReq,
+  RemovePrivilegesFromGroupReq,
+  OperatePrivilegeGroupType,
   GrpcTimeOut,
   ListCredUsersResponse,
   ResStatus,
@@ -700,10 +703,12 @@ export class User extends Resource {
    * });
    * ```
    */
-  async createPrivilegeGroup(data: CreatePrivilegeGroupReq): Promise<ResStatus> {
+  async createPrivilegeGroup(
+    data: CreatePrivilegeGroupReq
+  ): Promise<ResStatus> {
     const promise = await promisify(
       this.channelPool,
-      'CreatePrivilegeGroupRequest',
+      'CreatePrivilegeGroup',
       data,
       data.timeout || this.timeout
     );
@@ -721,7 +726,7 @@ export class User extends Resource {
    *
    * @example
    * ```javascript
-   * milvusClient.dropPrivilegeGroup({
+   * await milvusClient.dropPrivilegeGroup({
    *  group_name: 'exampleGroup',
    * });
    * ```
@@ -729,7 +734,7 @@ export class User extends Resource {
   async dropPrivilegeGroup(data: DropPrivilegeGroupReq): Promise<ResStatus> {
     const promise = await promisify(
       this.channelPool,
-      'DropPrivilegeGroupRequest',
+      'DropPrivilegeGroup',
       data,
       data.timeout || this.timeout
     );
@@ -753,7 +758,7 @@ export class User extends Resource {
    *
    * @example
    * ```javascript
-   * const grps = await milvusClient.listPrivilegeGroups();
+   * await milvusClient.listPrivilegeGroups();
    * ```
    */
   async listPrivilegeGroups(
@@ -761,7 +766,7 @@ export class User extends Resource {
   ): Promise<ListPrivilegeGroupsResponse> {
     const promise = await promisify(
       this.channelPool,
-      'ListPrivilegeGroupRequest',
+      'ListPrivilegeGroups',
       {},
       data?.timeout || this.timeout
     );
@@ -773,16 +778,101 @@ export class User extends Resource {
    * Operate a privilege group in Milvus.
    * @param {OperatePrivilegeGroupReq} data - The privilege group data.
    * @param {string} data.group_name - The name of the privilege group to be operated.
-   * @param {string[]} data.privileges - The privileges to be operated.
+   * @param {PrivilegeEntity[]} data.privileges - The privileges to be operated.
    * @param {OperatePrivilegeGroupType} data.type - The operation type.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    * @returns {Promise<any>} The response object.
+   *
+   * @example
+   * ```javascript
+   * await milvusClient.operatePrivilegeGroup({
+   * group_name: 'exampleGroup',
+   * privileges: [{name: 'CreateCollection'}],
+   * type: OperatePrivilegeGroupType.AddPrivilegesToGroup,
+   * });
+   * ```
    */
-  async operatePrivilegeGroup(data: OperatePrivilegeGroupReq): Promise<ResStatus> {
+  async operatePrivilegeGroup(
+    data: OperatePrivilegeGroupReq
+  ): Promise<ResStatus> {
     const promise = await promisify(
       this.channelPool,
-      'OperatePrivilegeGroupRequest',
+      'OperatePrivilegeGroup',
       data,
+      data.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * add privileges to a privilege group in Milvus.
+   * @param {AddPrivilegesToGroupReq} data - The privilege group data.
+   * @param {string} data.group_name - The name of the privilege group to be operated.
+   * @param {string[]} data.privileges - The privileges to be added to the group.
+   *
+   * @returns {Promise<ResStatus>} The response object.
+   * @returns {ResStatus} response.status - The response status.
+   * @returns {number} response.status.error_code - The error code number.
+   * @returns {string} response.status.reason - The cause of the error, if any.
+   *
+   * @example
+   * ```javascript
+   * await milvusClient.addPrivilegesToGroup({
+   * group_name: 'exampleGroup',
+   * privileges: ['CreateCollection', 'DropCollection'],
+   * });
+   *
+   * ```
+   */
+  async addPrivilegesToGroup(
+    data: AddPrivilegesToGroupReq
+  ): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'OperatePrivilegeGroup',
+      {
+        group_name: data.group_name,
+        privileges: data.privileges.map(p => ({ name: p })),
+        type: OperatePrivilegeGroupType.AddPrivilegesToGroup,
+      },
+      data.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * remove privileges from a privilege group in Milvus.
+   * @param {RemovePrivilegesFromGroupReq} data - The privilege group data.
+   * @param {string} data.group_name - The name of the privilege group to be operated.
+   * @param {string[]} data.privileges - The privileges to be removed from the group.
+   *
+   * @returns {Promise<ResStatus>} The response object.
+   * @returns {ResStatus} response.status - The response status.
+   * @returns {number} response.status.error_code - The error code number.
+   * @returns {string} response.status.reason - The cause of the error, if any.
+   *
+   * @example
+   * ```javascript
+   * await milvusClient.removePrivilegesFromGroup({
+   * group_name: 'exampleGroup',
+   * privileges: ['CreateCollection', 'DropCollection'],
+   * });
+   *
+   * ```
+   */
+  async removePrivilegesFromGroup(
+    data: RemovePrivilegesFromGroupReq
+  ): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'OperatePrivilegeGroup',
+      {
+        group_name: data.group_name,
+        privileges: data.privileges.map(p => ({ name: p })),
+        type: OperatePrivilegeGroupType.RemovePrivilegesFromGroup,
+      },
       data.timeout || this.timeout
     );
 
