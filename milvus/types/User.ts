@@ -1,5 +1,5 @@
 import { GrpcTimeOut, PrivilegesTypes, resStatusResponse } from './Common';
-import { RbacObjects } from '../';
+import { RbacObjects, OperatePrivilegeGroupType } from '../';
 
 // base
 export interface usernameReq extends GrpcTimeOut {
@@ -83,4 +83,27 @@ export interface SelectGrantResponse extends resStatusResponse {
 
 export interface HasRoleResponse extends resStatusResponse {
   hasRole: boolean;
+}
+
+export interface CreatePrivilegeGroupReq extends GrpcTimeOut {
+  group_name: string; // required, name
+}
+
+export interface DropPrivilegeGroupReq extends GrpcTimeOut {
+  group_name: string; // required, name
+}
+
+export type PrivelegeGroup = {
+  group_name: string; // name
+  privileges: PrivilegeEntity[]; // privileges
+};
+
+export interface ListPrivilegeGroupsResponse extends resStatusResponse {
+  privilege_groups: PrivelegeGroup[]; // privilege groups
+}
+
+export interface OperatePrivilegeGroupReq extends GrpcTimeOut {
+  group_name: string; // required, group name
+  privileges: PrivilegeEntity[]; // required, privileges
+  type: OperatePrivilegeGroupType; // required, operation type
 }

@@ -18,6 +18,9 @@ import {
   ListGrantsReq,
   HasRoleReq,
   listRoleReq,
+  CreatePrivilegeGroupReq,
+  DropPrivilegeGroupReq,
+  OperatePrivilegeGroupReq,
   GrpcTimeOut,
   ListCredUsersResponse,
   ResStatus,
@@ -25,6 +28,7 @@ import {
   SelectUserResponse,
   SelectGrantResponse,
   HasRoleResponse,
+  ListPrivilegeGroupsResponse,
   promisify,
   stringToBase64,
 } from '../';
@@ -679,5 +683,109 @@ export class User extends Resource {
       status: result.status,
       hasRole: result.results.map(r => r.role.name).includes(data.roleName),
     };
+  }
+
+  /**
+   * Create a new privilege group in Milvus.
+   * @param {CreatePrivilegeGroupReq} data - The privilege group data.
+   * @param {string} data.group_name - The name of the new privilege group.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status.
+   *
+   * @example
+   * ```javascript
+   * milvusClient.createPrivilegeGroup({
+   *  group_name: 'exampleGroup',
+   * });
+   * ```
+   */
+  async createPrivilegeGroup(data: CreatePrivilegeGroupReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'CreatePrivilegeGroupRequest',
+      data,
+      data.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * Drop a privilege group in Milvus.
+   * @param {DropPrivilegeGroupReq} data - The privilege group data.
+   * @param {string} data.group_name - The name of the privilege group to be dropped.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status.
+   *
+   * @example
+   * ```javascript
+   * milvusClient.dropPrivilegeGroup({
+   *  group_name: 'exampleGroup',
+   * });
+   * ```
+   */
+  async dropPrivilegeGroup(data: DropPrivilegeGroupReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'DropPrivilegeGroupRequest',
+      data,
+      data.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * List all privilege groups in Milvus.
+   * @param {GrpcTimeOut} data - The data object.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ListPrivilegeGroupsResponse>} The response object.
+   * @returns {ResStatus} response.status - The response status.
+   * @returns {number} response.status.error_code - The error code number.
+   * @returns {string} response.status.reason - The cause of the error, if any.
+   * @returns {PrivelegeGroup[]} response.privilege_groups - An array of privilege groups.
+   * @returns {string} response.privilege_groups.group_name - The name of the privilege group.
+   * @returns {PrivilegeEntity[]} response.privilege_groups.privileges - An array of privileges.
+   * @returns {string} response.privilege_groups.privileges.name - The name of the privilege.
+   *
+   * @example
+   * ```javascript
+   * const grps = await milvusClient.listPrivilegeGroups();
+   * ```
+   */
+  async listPrivilegeGroups(
+    data?: GrpcTimeOut
+  ): Promise<ListPrivilegeGroupsResponse> {
+    const promise = await promisify(
+      this.channelPool,
+      'ListPrivilegeGroupRequest',
+      {},
+      data?.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * Operate a privilege group in Milvus.
+   * @param {OperatePrivilegeGroupReq} data - The privilege group data.
+   * @param {string} data.group_name - The name of the privilege group to be operated.
+   * @param {string[]} data.privileges - The privileges to be operated.
+   * @param {OperatePrivilegeGroupType} data.type - The operation type.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   * @returns {Promise<any>} The response object.
+   */
+  async operatePrivilegeGroup(data: OperatePrivilegeGroupReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'OperatePrivilegeGroupRequest',
+      data,
+      data.timeout || this.timeout
+    );
+
+    return promise;
   }
 }
