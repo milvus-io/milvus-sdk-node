@@ -1,3 +1,4 @@
+import exp from 'constants';
 import {
   MilvusClient,
   ERROR_REASONS,
@@ -6,6 +7,7 @@ import {
   Roles,
   Privileges,
   RbacObjects,
+  OperatePrivilegeGroupType,
 } from '../../milvus';
 import { timeoutTest } from '../tools';
 import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
@@ -291,10 +293,17 @@ describe(`User Api`, () => {
   it(`add privileges to a privilege group`, async () => {
     const res = await authClient.addPrivilegesToGroup({
       group_name: PRIVILEGE_GRP_NAME,
-      privileges: [Privileges.Search, Privileges.Query],
+      privileges: [Privileges.Query],
     });
 
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res2 = await authClient.operatePrivilegeGroup({
+      group_name: PRIVILEGE_GRP_NAME,
+      privileges: [{ name: Privileges.Search }],
+      type: OperatePrivilegeGroupType.AddPrivilegesToGroup,
+    });
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`remove privileges from a privilege group`, async () => {
@@ -312,7 +321,7 @@ describe(`User Api`, () => {
       g => g.group_name === PRIVILEGE_GRP_NAME
     )!;
     expect(grp.group_name).toEqual(PRIVILEGE_GRP_NAME);
-    expect(grp.privileges.map(p => p.name)).toContain( Privileges.Search);
+    expect(grp.privileges.map(p => p.name)).toContain(Privileges.Search);
   });
 
   it(`drop a privilege group`, async () => {
