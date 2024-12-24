@@ -23,6 +23,9 @@ import {
   OperatePrivilegeGroupReq,
   AddPrivilegesToGroupReq,
   RemovePrivilegesFromGroupReq,
+  OperatePrivilegeV2Request,
+  GrantPrivilegeV2Request,
+  RevokePrivilegeV2Request,
   OperatePrivilegeGroupType,
   GrpcTimeOut,
   ListCredUsersResponse,
@@ -775,37 +778,6 @@ export class User extends Resource {
   }
 
   /**
-   * Operate a privilege group in Milvus.
-   * @param {OperatePrivilegeGroupReq} data - The privilege group data.
-   * @param {string} data.group_name - The name of the privilege group to be operated.
-   * @param {PrivilegeEntity[]} data.privileges - The privileges to be operated.
-   * @param {OperatePrivilegeGroupType} data.type - The operation type.
-   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
-   * @returns {Promise<any>} The response object.
-   *
-   * @example
-   * ```javascript
-   * await milvusClient.operatePrivilegeGroup({
-   * group_name: 'exampleGroup',
-   * privileges: [{name: 'CreateCollection'}],
-   * type: OperatePrivilegeGroupType.AddPrivilegesToGroup,
-   * });
-   * ```
-   */
-  async operatePrivilegeGroup(
-    data: OperatePrivilegeGroupReq
-  ): Promise<ResStatus> {
-    const promise = await promisify(
-      this.channelPool,
-      'OperatePrivilegeGroup',
-      data,
-      data.timeout || this.timeout
-    );
-
-    return promise;
-  }
-
-  /**
    * add privileges to a privilege group in Milvus.
    * @param {AddPrivilegesToGroupReq} data - The privilege group data.
    * @param {string} data.group_name - The name of the privilege group to be operated.
@@ -872,6 +844,78 @@ export class User extends Resource {
         group_name: data.group_name,
         privileges: data.privileges.map(p => ({ name: p })),
         type: OperatePrivilegeGroupType.RemovePrivilegesFromGroup,
+      },
+      data.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * Grant a privilege to a role in Milvus.
+   * @param {GrantPrivilegeV2Request} data - The privilege data.
+   * @param {string} data.role - The name of the role.
+   * @param {string} data.privilege - The name of the privilege.
+   * @param {string} data.db_name - The name of the database.
+   * @param {string} data.collection_name - The name of the collection.
+   * @returns {Promise<ResStatus>} The response object.
+   *
+   * @example
+   * ```javascript
+   * await milvusClient.grantPrivilegeV2({
+   *  role: 'exampleRole',
+   *  privilege: 'CreateCollection',
+   *  db_name: 'exampleDB',
+   *  collection_name: 'exampleCollection',
+   * });
+   * ```
+   */
+  async grantPrivilegeV2(data: GrantPrivilegeV2Request): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'OperatePrivilegeV2',
+      {
+        role: { name: data.role },
+        grantor: { privilege: { name: data.privilege } },
+        type: OperatePrivilegeType.Grant,
+        db_name: data.db_name,
+        collection_name: data.collection_name,
+      },
+      data.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * Revoke a privilege from a role in Milvus.
+   * @param {RevokePrivilegeV2Request} data - The privilege data.
+   * @param {string} data.role - The name of the role.
+   * @param {string} data.privilege - The name of the privilege.
+   * @param {string} data.db_name - The name of the database.
+   * @param {string} data.collection_name - The name of the collection.
+   * @returns {Promise<ResStatus>} The response object.
+   *
+   * @example
+   * ```javascript
+   * await milvusClient.revokePrivilegeV2({
+   *  role: 'exampleRole',
+   *  privilege: 'CreateCollection',
+   *  db_name: 'exampleDB',
+   *  collection_name: 'exampleCollection',
+   * });
+   * ```
+   * */
+  async revokePrivilegeV2(data: RevokePrivilegeV2Request): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'OperatePrivilegeV2',
+      {
+        role: { name: data.role },
+        grantor: { privilege: { name: data.privilege } },
+        type: OperatePrivilegeType.Revoke,
+        db_name: data.db_name,
+        collection_name: data.collection_name,
       },
       data.timeout || this.timeout
     );
