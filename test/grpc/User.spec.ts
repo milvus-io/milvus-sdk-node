@@ -10,7 +10,7 @@ import {
 import { timeoutTest } from '../tools';
 import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 let authClient: MilvusClient;
 const USERNAME = 'username';
 const PASSWORD = '123456';
