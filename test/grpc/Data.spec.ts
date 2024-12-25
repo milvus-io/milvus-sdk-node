@@ -573,6 +573,20 @@ describe(`Data.API`, () => {
     expect(res4.data.length).toBe(default_values.length);
   });
 
+  it(`Query withouth output fields should success`, async () => {
+    const res = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'id > 0',
+      offset: 0,
+      limit: 3,
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.data.length).toBe(3);
+    // fields of data should > 1
+    expect(Object.keys(res.data[0]).length).toBeGreaterThan(1);
+  });
+
   it(`Query with count(*)`, async () => {
     const queryString = 'count(*)';
     const res = await milvusClient.query({
