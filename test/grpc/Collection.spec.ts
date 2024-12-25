@@ -502,6 +502,14 @@ describe(`Collection API`, () => {
     expect(typeof res.progress).toEqual('string'); // int64 in node is string
   });
 
+  it(`refresh load on LOAD_COLLECTION_NAME_SYNC c should success`, async () => {
+    const res = await milvusClient.refreshLoad({
+      collection_name: LOAD_COLLECTION_NAME_SYNC,
+      db_name: 'Collection',
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`Get load state throw COLLECTION_NAME_IS_REQUIRED`, async () => {
     try {
       await milvusClient.getLoadState({} as any);

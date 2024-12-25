@@ -137,6 +137,7 @@ export interface LoadCollectionReq extends collectionNameReq {
   load_fields?: string[]; // optional, load fields
   skip_load_dynamic_field?: boolean; // optional, skip load dynamic field, default is false
 }
+export interface RefreshLoadReq extends collectionNameReq {}
 export interface ReleaseLoadCollectionReq extends collectionNameReq {}
 
 export interface DropCollectionReq extends collectionNameReq {}
