@@ -947,6 +947,7 @@ export class Data extends Collection {
       'Query',
       {
         ...data,
+        output_fields: data.output_fields || ['*'],
         query_params: parseToKeyValue({ ...limits, ...offset }),
       },
       data.timeout || this.timeout
