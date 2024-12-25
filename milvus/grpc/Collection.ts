@@ -56,6 +56,7 @@ import {
   FieldSchema,
   DropCollectionPropertiesReq,
   AlterCollectionFieldPropertiesReq,
+  RefreshLoadReq,
   isVectorType,
 } from '../';
 
@@ -565,6 +566,28 @@ export class Collection extends Database {
       data.timeout || this.timeout
     );
     return promise;
+  }
+
+  /**
+   * Refresh the loading status of a collection.
+   *
+   * @param {RefreshLoadReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to refresh.
+   * @param {string} [data.db_name] - The name of the database where the collection is located.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const resStatus = await milvusClient.refreshLoad({ collection_name: 'my_collection' });
+   * ```
+   */
+  async refreshLoad(data: RefreshLoadReq): Promise<ResStatus> {
+    return this.loadCollectionAsync({...data, refresh: true});
   }
 
   /**
