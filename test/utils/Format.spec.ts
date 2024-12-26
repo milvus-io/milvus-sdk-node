@@ -615,6 +615,71 @@ describe('utils/format', () => {
     });
   });
 
+  it('should return an object with dynamicField key when data contains keys not in fieldsDataMap and an empty dynamicField object', () => {
+    const dynamicField = 'dynamic';
+    const data = { key1: 'value1', key2: 'value2', [dynamicField]: {} };
+    const fieldsDataMap = new Map([
+      [
+        'key1',
+        {
+          name: 'key1',
+          type: 'VarChar',
+          data: [{ key1: 'value1' }],
+        } as _Field,
+      ],
+      [
+        // this mirrors the dynamic field map in grpc.Data._insert method
+        dynamicField,
+        {
+          name: dynamicField,
+          type: 'JSON',
+          data: [],
+        } as _Field,
+      ],
+    ]);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField, []);
+    expect(result).toEqual({
+      key1: 'value1',
+      [dynamicField]: { key2: 'value2' },
+    });
+  });
+
+  it('should return an object with dynamicField key when data contains keys not in fieldsDataMap and a non-empty dynamicField object', () => {
+    const dynamicField = 'dynamic';
+    const data = {
+      key1: 'value1',
+      key2: 'value2',
+      [dynamicField]: {
+        key2: 'value22',
+        key3: 'value3',
+      },
+    };
+    const fieldsDataMap = new Map([
+      [
+        'key1',
+        {
+          name: 'key1',
+          type: 'VarChar',
+          data: [{ key1: 'value1' }],
+        } as _Field,
+      ],
+      [
+        // this mirrors the dynamic field map in grpc.Data._insert method
+        dynamicField,
+        {
+          name: dynamicField,
+          type: 'JSON',
+          data: [],
+        } as _Field,
+      ],
+    ]);
+    const result = buildDynamicRow(data, fieldsDataMap, dynamicField, []);
+    expect(result).toEqual({
+      key1: 'value1',
+      [dynamicField]: { key2: 'value22', key3: 'value3' },
+    });
+  });
+
   it('should return an empty string if no credentials are provided', () => {
     const authString = getAuthString({});
     expect(authString).toEqual('');

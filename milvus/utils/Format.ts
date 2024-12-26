@@ -453,6 +453,10 @@ export const buildDynamicRow = (
 
   // iterate through each key in the input data object
   for (let key in originRow) {
+    if (key === dynamicFieldName) {
+      // ignore the dynamic field key for now
+      continue;
+    }
     row[dynamicFieldName] = row[dynamicFieldName] || ({} as JSON); // initialize the dynamic field object
 
     if (fieldMap.has(key)) {
@@ -465,6 +469,13 @@ export const buildDynamicRow = (
         obj[key] = originRow[key];
       }
     }
+  }
+
+  // do this last to prevent any non-deterministic behavior with loop order
+  if (originRow[dynamicFieldName]) {
+    // extend the dynamic field object with the input dynamic field object
+    row[dynamicFieldName] = row[dynamicFieldName] || ({} as JSON);
+    Object.assign(row[dynamicFieldName] as JSON, originRow[dynamicFieldName]);
   }
 
   return row; // return the generated dynamic row object
