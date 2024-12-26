@@ -146,7 +146,7 @@ export class Data extends Collection {
     // If primarykey is set `autoid = true`, you cannot insert the data.
     const fieldMap = new Map<string, Field>(
       collectionInfo.schema.fields
-        .filter(v => !v.is_primary_key || !v.autoID)
+        .filter(v => !v.autoID || upsert)
         .map(v => [
           v.name,
           {

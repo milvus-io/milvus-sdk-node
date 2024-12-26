@@ -11,6 +11,7 @@ import {
   genCollectionParams,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
+  dynamicFields,
 } from '../tools';
 
 const milvusClient = new MilvusClient({ address: IP });
@@ -29,6 +30,14 @@ const COLLECTION_NAME_AUTO_ID_PARAMS = genCollectionParams({
   dim: [4],
   vectorType: [DataType.FloatVector],
   autoID: true,
+  enableDynamic: true,
+  fields: [
+    {
+      name: 'other_ids',
+      data_type: DataType.Int32,
+      description: '',
+    },
+  ],
 });
 
 const PARTITION_NAME = 'test';
@@ -56,6 +65,30 @@ describe(`Upsert API`, () => {
 
     // create collection autoid = true and float_vector
     await milvusClient.createCollection(COLLECTION_NAME_AUTO_ID_PARAMS);
+    // create index before load
+    await milvusClient.createIndex({
+      collection_name: COLLECTION_NAME_AUTO_ID,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'IVF_FLAT',
+        metric_type: 'L2',
+        params: JSON.stringify({ nlist: 1024 }),
+      },
+    });
+    // load collection
+    await milvusClient.loadCollectionSync({
+      collection_name: COLLECTION_NAME_AUTO_ID,
+    });
+    // pare data
+    const vectorsData = generateInsertData(
+      [...COLLECTION_NAME_AUTO_ID_PARAMS.fields, ...dynamicFields],
+      10
+    );
+    // insert data
+    await milvusClient.insert({
+      collection_name: COLLECTION_NAME_AUTO_ID,
+      fields_data: vectorsData,
+    });
 
     // create collection autoid = false and binary_vector
 
@@ -162,20 +195,46 @@ describe(`Upsert API`, () => {
     }
   });
 
-  it(`Upsert Data on float field and autoId is true expect error`, async () => {
-    const vectorsData = generateInsertData(
-      COLLECTION_NAME_AUTO_ID_PARAMS.fields,
-      10
-    );
+  it(`Upsert Data on float field and autoId is true expect successful`, async () => {
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME_AUTO_ID,
+      expr: 'id > 0',
+      limit: 4,
+    });
 
+    const other_ids = query.data.map((item: any) => item.other_ids);
+
+    // modify the bool field to true
+    const vectorsData = query.data.map((item: any) => {
+      item.bool = true;
+      item.dynamic_upserted_int32 = 100;
+      return item;
+    });
+
+    // upsert the data
     const params: InsertReq = {
       collection_name: COLLECTION_NAME_AUTO_ID,
       fields_data: vectorsData,
     };
 
+    // expect successful
     const res = await milvusClient.upsert(params);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
-    expect(res.status.error_code).toEqual(ErrorCode.IllegalArgument);
+    // query these id
+    const query2 = await milvusClient.query({
+      collection_name: COLLECTION_NAME_AUTO_ID,
+      expr: `other_ids in [${other_ids.join(',')}]`,
+      limit: 4,
+    });
+    // check the bool field
+    expect(query2.data.every((item: any) => item.bool)).toBeTruthy();
+    // check the dynamic field
+    expect(
+      query2.data.every(
+        (item: any) => item.$meta.dynamic_upserted_int32 === 100
+      )
+    ).toBeTruthy();
   });
 
   it(`Upsert Data on different scalar fields`, async () => {
