@@ -6,6 +6,7 @@ import {
   Roles,
   Privileges,
   RbacObjects,
+  RBACMeta,
 } from '../../milvus';
 import { timeoutTest } from '../tools';
 import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
@@ -339,10 +340,57 @@ describe(`User Api`, () => {
     expect(grp.privileges.map(p => p.name)).toContain(Privileges.Search);
   });
 
+  let backupRBACMeta: RBACMeta;
+  it(`should backup RBAC meta`, async () => {
+    const res = await authClient.backupRBAC();
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // it should have one privilege group
+    expect(res.RBAC_meta.privilege_groups.length).toEqual(1);
+    backupRBACMeta = res.RBAC_meta;
+  });
+
   it(`drop a privilege group`, async () => {
     const res = await authClient.dropPrivilegeGroup({
       group_name: PRIVILEGE_GRP_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`restore RBAC meta`, async () => {
+    // make sure no privilege group
+    const pgrp = await authClient.listPrivilegeGroups();
+    // try to find the group
+    const theGrp = pgrp.privilege_groups.find(
+      g => g.group_name === PRIVILEGE_GRP_NAME
+    );
+    expect(theGrp).toBeUndefined();
+
+    // restore meta
+    const res = await authClient.restoreRBAC({
+      RBAC_meta: backupRBACMeta,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // recheck
+    const listRes = await authClient.listPrivilegeGroups();
+    const grp = listRes.privilege_groups.find(
+      g => g.group_name === PRIVILEGE_GRP_NAME
+    )!;
+
+    expect(grp.group_name).toEqual(PRIVILEGE_GRP_NAME);
+    expect(grp.privileges.map(p => p.name)).toContain(Privileges.Search);
+
+    // // restore again should be ok
+    // const res2 = await authClient.restoreRBAC({
+    //   RBAC_meta: backupRBACMeta,
+    // });
+    // console.log('res2', res2);
+    // expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // drop it again
+    const dropRes = await authClient.dropPrivilegeGroup({
+      group_name: PRIVILEGE_GRP_NAME,
+    });
+    expect(dropRes.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });

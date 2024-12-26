@@ -4,6 +4,7 @@ import {
   OperatePrivilegeGroupType,
   OperatePrivilegeType,
 } from '../';
+import exp from 'constants';
 
 // base
 export interface usernameReq extends GrpcTimeOut {
@@ -63,6 +64,18 @@ export type RoleResult = {
   role: RoleEntity;
   entities: GrantEntity[];
 };
+export type PrivelegeGroup = {
+  group_name: string; // name
+  privileges: PrivilegeEntity[]; // privileges
+};
+
+export type RBACMeta = {
+  users: User[];
+  roles: RoleEntity[];
+  grants: GrantEntity[];
+  privilege_groups: PrivelegeGroup[];
+};
+
 export interface SelectRoleResponse extends resStatusResponse {
   results: RoleResult[];
 }
@@ -115,11 +128,6 @@ export interface DropPrivilegeGroupReq extends GrpcTimeOut {
   group_name: string; // required, name
 }
 
-export type PrivelegeGroup = {
-  group_name: string; // name
-  privileges: PrivilegeEntity[]; // privileges
-};
-
 export interface ListPrivilegeGroupsResponse extends resStatusResponse {
   privilege_groups: PrivelegeGroup[]; // privilege groups
 }
@@ -138,4 +146,13 @@ export interface AddPrivilegesToGroupReq extends GrpcTimeOut {
 export interface RemovePrivilegesFromGroupReq extends GrpcTimeOut {
   group_name: string; // required, group name
   privileges: PrivilegesTypes[]; // required, privileges
+}
+
+export interface BackupRBACRequest extends GrpcTimeOut {}
+export interface RestoreRBACRequest extends GrpcTimeOut {
+  RBAC_meta: RBACMeta; // required, RBAC meta
+}
+
+export interface BackupRBACResponse extends resStatusResponse {
+  RBAC_meta: RBACMeta; // RBAC meta
 }
