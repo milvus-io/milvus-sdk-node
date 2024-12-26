@@ -20,12 +20,12 @@ import {
   listRoleReq,
   CreatePrivilegeGroupReq,
   DropPrivilegeGroupReq,
-  OperatePrivilegeGroupReq,
   AddPrivilegesToGroupReq,
   RemovePrivilegesFromGroupReq,
-  OperatePrivilegeV2Request,
   GrantPrivilegeV2Request,
   RevokePrivilegeV2Request,
+  BackupRBACRequest,
+  RestoreRBACRequest,
   OperatePrivilegeGroupType,
   GrpcTimeOut,
   ListCredUsersResponse,
@@ -35,8 +35,10 @@ import {
   SelectGrantResponse,
   HasRoleResponse,
   ListPrivilegeGroupsResponse,
+  BackupRBACResponse,
   promisify,
   stringToBase64,
+  RBACMeta,
 } from '../';
 
 export class User extends Resource {
@@ -917,6 +919,56 @@ export class User extends Resource {
         db_name: data.db_name,
         collection_name: data.collection_name,
       },
+      data.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * backup RBAC data in Milvus.
+   * @param {BackupRBACRequest} data - The data object.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<BackupRBACResponse>} The response object.
+   *
+   * @example
+   * ```javascript
+   * await milvusClient.BackupRBAC();
+   * ```
+   *
+   */
+  async backupRBAC(data?: BackupRBACRequest): Promise<BackupRBACResponse> {
+    const promise = await promisify(
+      this.channelPool,
+      'BackupRBAC',
+      data || {},
+      data?.timeout || this.timeout
+    );
+
+    return promise;
+  }
+
+  /**
+   * restore RBAC data in Milvus.
+   * @param {RestoreRBACRequest} data - The data object.
+   * @param {RBACMeta} data.RBAC_meta - The rbac meta data returned from the backupRBAC API.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response object.
+   *
+   * @example
+   * ```javascript
+   * await milvusClient.restoreRBAC({
+   *   RBAC_meta: rbacMeta,
+   * });
+   * ```
+   */
+  async restoreRBAC(data: RestoreRBACRequest): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'RestoreRBAC',
+      data,
       data.timeout || this.timeout
     );
 
