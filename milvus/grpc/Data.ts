@@ -143,14 +143,17 @@ export class Data extends Collection {
     }
 
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
-    // If primarykey is set `autoid = true`, you cannot insert the data.
+    // If primarykey is set `autoid = true`, you don't need to insert the primary key field,
     // and if function field is set, you need to ignore the field value in the data.
     const functionOutputFields: string[] = [];
     const fieldMap = new Map<string, _Field>(
       collectionInfo.schema.fields.reduce((acc, v) => {
+        // if autoID is true, ignore the primary key field or if upsert is true
+        const insertable = !v.autoID || upsert;
+
         if (v.is_function_output) {
           functionOutputFields.push(v.name); // ignore function field
-        } else if (!v.is_primary_key || !v.autoID) {
+        } else if (insertable) {
           acc.push([
             v.name,
             {
