@@ -208,6 +208,9 @@ describe(`Upsert API`, () => {
     const vectorsData = query.data.map((item: any) => {
       item.bool = true;
       item.dynamic_upserted_int32 = 100;
+      item.$meta.dynamic_varChar = 'test';
+      item.dynamic_JSON = { a: 1 };
+      item.int32_array = null;
       return item;
     });
 
@@ -234,6 +237,16 @@ describe(`Upsert API`, () => {
       query2.data.every(
         (item: any) => item.$meta.dynamic_upserted_int32 === 100
       )
+    ).toBeTruthy();
+    expect(
+      query2.data.every((item: any) => item.$meta.dynamic_varChar === 'test')
+    ).toBeTruthy();
+    expect(
+      query2.data.every((item: any) => item.$meta.dynamic_JSON.a === 1)
+    ).toBeTruthy();
+    // check the int32_array field
+    expect(
+      query2.data.every((item: any) => item.int32_array === null)
     ).toBeTruthy();
   });
 
