@@ -26,6 +26,7 @@ import {
   RevokePrivilegeV2Request,
   BackupRBACRequest,
   RestoreRBACRequest,
+  ListUserRoleAndGrantsRequest,
   OperatePrivilegeGroupType,
   GrpcTimeOut,
   ListCredUsersResponse,
@@ -36,9 +37,11 @@ import {
   HasRoleResponse,
   ListPrivilegeGroupsResponse,
   BackupRBACResponse,
+  ListUserRoleAndGrantsResponse,
   promisify,
   stringToBase64,
-  RBACMeta,
+  _ObjectGrants,
+  ROOT_USER,
 } from '../';
 
 export class User extends Resource {
@@ -973,5 +976,175 @@ export class User extends Resource {
     );
 
     return promise;
+  }
+
+  /**
+   * listUserRolesAndGrants, list all grants and roles of a user.
+   * @param {ListUserRoleAndGrantsRequest} data - The data object.
+   * @param {string} data.username - The name of the user.
+   *
+   * @returns {Promise<ListUserPrivilegesResponse>} The response object.
+   *
+   * @example
+   * ```javascript
+   * await milvusClient.listUserRolesAndGrants({
+   *   username: 'exampleUser',
+   * });
+   */
+  async listUserRolesAndGrants(
+    data: ListUserRoleAndGrantsRequest
+  ): Promise<ListUserRoleAndGrantsResponse> {
+    // get all roles of the user
+    const userInfo = await this.describeUser({
+      username: data.username,
+      includeRoleInfo: true,
+    });
+
+    const entities = [];
+    const userRoles: string[] = [];
+    // iterate through roles
+    const roles = userInfo.results[0].roles;
+    for (let i = 0; i < roles.length; i++) {
+      const role = roles[i];
+      // get all grants that specific to the role
+      const grants = await this.listGrants({
+        roleName: role.name,
+      });
+
+      // iterate throught these grant
+      for (let j = 0; j < grants.entities.length; j++) {
+        const entity = grants.entities[j];
+        entities.push(entity);
+        // if the role is not in the userRoles array, add it
+        if (!userRoles.includes(entity.role.name)) {
+          userRoles.push(entity.role.name);
+        }
+      }
+    }
+
+    return {
+      status: userInfo.status,
+      grants: entities,
+      roles: userRoles,
+    };
+  }
+
+  /**
+   * listObjectsGrants, list all grants of objects.
+   * @returns {Promise<{[key: string]: _ObjectGrants}>} The response object.
+   * @example
+   * ```javascript
+   *  await milvusClient.listObjectsGrants();
+   * ```
+   * */
+
+  async listObjectsGrants(): Promise<{ [key: string]: _ObjectGrants }> {
+    // get all users
+    const users = await this.listUsers();
+    // list user's roles and grants
+    const userRolesGrants = [];
+    for (let i = 0; i < users.usernames.length; i++) {
+      const user = users.usernames[i];
+      const userRolesGrantsRes = await this.listUserRolesAndGrants({
+        username: user,
+      });
+      userRolesGrants.push({
+        username: user,
+        roles: userRolesGrantsRes.roles,
+        grants: userRolesGrantsRes.grants,
+      });
+    }
+
+    console.dir(userRolesGrants, { depth: null });
+
+    // create a map of objects and their grants
+    const Collection: _ObjectGrants = {
+      '*': {
+        users: [ROOT_USER],
+        roles: [],
+      },
+    };
+    const Database: _ObjectGrants = {
+      '*': {
+        users: [ROOT_USER],
+        roles: [],
+      },
+    };
+    const Instance: _ObjectGrants = {
+      '*': {
+        users: [ROOT_USER],
+        roles: [],
+      },
+    };
+
+    for (let i = 0; i < userRolesGrants.length; i++) {
+      const user = userRolesGrants[i];
+      for (let j = 0; j < user.grants.length; j++) {
+        const grant = user.grants[j];
+        const object = grant.object.name;
+        const objectName = grant.object_name;
+        const dbName = grant.db_name;
+
+        switch (object) {
+          case 'Collection':
+            if (!Collection[objectName]) {
+              Collection[objectName] = {
+                users: [ROOT_USER],
+                roles: [],
+              };
+            }
+            if (!Collection[objectName].users.includes(user.username)) {
+              Collection[objectName].users.push(user.username);
+            }
+
+            if (!Collection[objectName].roles.includes(grant.role.name)) {
+              Collection[objectName].roles.push(grant.role.name);
+            }
+            break;
+
+          case 'Database':
+            if (!Database[dbName]) {
+              Database[dbName] = {
+                users: [ROOT_USER],
+                roles: [],
+              };
+            }
+            if (!Database[dbName].users.includes(user.username)) {
+              Database[dbName].users.push(user.username);
+            }
+
+            if (!Database[dbName].roles.includes(grant.role.name)) {
+              Database[dbName].roles.push(grant.role.name);
+            }
+            break;
+
+          case 'Instance':
+            if (!Instance[dbName]) {
+              Instance[dbName] = {
+                users: [ROOT_USER],
+                roles: [],
+              };
+            }
+
+            if (!Instance[dbName].users.includes(user.username)) {
+              Instance[dbName].users.push(user.username);
+            }
+
+            if (!Instance[dbName].roles.includes(grant.role.name)) {
+              Instance[dbName].roles.push(grant.role.name);
+            }
+
+            break;
+          default:
+            break;
+        }
+      }
+    }
+
+    return {
+      Collection,
+      Database,
+      Instance,
+    };
   }
 }

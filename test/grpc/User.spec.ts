@@ -1,3 +1,4 @@
+import exp from 'constants';
 import {
   MilvusClient,
   ERROR_REASONS,
@@ -247,12 +248,38 @@ describe(`User Api`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`It should check role name  successfully`, async () => {
+  it(`It should list user roles and grants successfully`, async () => {
+    const userRolesAndGrants = await authClient.listUserRolesAndGrants({
+      username: USERNAME,
+    });
+    expect(userRolesAndGrants.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(userRolesAndGrants.roles.length).toEqual(1);
+    expect(userRolesAndGrants.grants.length).toEqual(2);
+    expect(userRolesAndGrants.roles[0]).toEqual(ROLE_NAME);
+    expect(userRolesAndGrants.grants[0].object_name).toEqual(COLLECTION_NAME);
+    expect(userRolesAndGrants.grants[0].object.name).toEqual('Collection');
+    expect(userRolesAndGrants.grants[0].grantor.privilege.name).toEqual(
+      'Query'
+    );
+    expect(userRolesAndGrants.grants[1].object_name).toEqual(COLLECTION_NAME);
+    expect(userRolesAndGrants.grants[1].object.name).toEqual('Collection');
+    expect(userRolesAndGrants.grants[1].grantor.privilege.name).toEqual(
+      'Search'
+    );
+  });
+
+  it(`It should check role name successfully`, async () => {
     const res = await authClient.hasRole({
       roleName: ROLE_NAME,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.hasRole).toEqual(true);
+  });
+
+  it(`it should list objects grants`, async () => {
+    const res = await authClient.listObjectsGrants();
+
+    console.dir(res, { depth: null });
   });
 
   it(`It should revoke privilege to role successfully`, async () => {

@@ -44,7 +44,7 @@ export interface SelectUserReq extends usernameReq {
 }
 
 export interface BaseGrantReq extends roleNameReq {
-  object: RbacObjects; // Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.
+  object: RbacObjects | string; // Type of the operational object to which the specified privilege belongs, such as Collection, Index, Partition, etc. This parameter is case-sensitive.
   objectName: string; // Name of the object to which the role is granted the specified prvilege.
 }
 export interface OperateRolePrivilegeReq extends BaseGrantReq {
@@ -84,7 +84,7 @@ export type UserResult = { user: User; roles: RoleEntity[] };
 export interface SelectUserResponse extends resStatusResponse {
   results: UserResult[];
 }
-export type ObjectEntity = { name: RbacObjects };
+export type ObjectEntity = { name: RbacObjects | string };
 export type PrivilegeEntity = { name: PrivilegesTypes };
 export type Grantor = { user: User; privilege: PrivilegeEntity };
 export type GrantEntity = {
@@ -156,3 +156,17 @@ export interface RestoreRBACRequest extends GrpcTimeOut {
 export interface BackupRBACResponse extends resStatusResponse {
   RBAC_meta: RBACMeta; // RBAC meta
 }
+
+export interface ListUserRoleAndGrantsRequest extends GrpcTimeOut {
+  username: string; // required, username
+}
+
+export interface ListUserRoleAndGrantsResponse extends resStatusResponse {
+  roles: string[]; // roles
+  grants: GrantEntity[]; // grants
+}
+
+// internal types
+export type _ObjectGrants = {
+  [key: string]: { users: string[]; roles: string[] };
+};

@@ -448,3 +448,5 @@ export enum OperatePrivilegeGroupType {
   AddPrivilegesToGroup = 0,
   RemovePrivilegesFromGroup = 1,
 }
+
+export const ROOT_USER = 'root';
