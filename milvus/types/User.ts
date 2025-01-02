@@ -25,7 +25,9 @@ export interface UpdateUserReq extends usernameReq {
 export interface ListUsersReq extends GrpcTimeOut {}
 
 export interface CreateRoleReq extends roleNameReq {}
-export interface DropRoleReq extends roleNameReq {}
+export interface DropRoleReq extends roleNameReq {
+  force_drop?: boolean; // optional, force drop, default is false
+}
 export interface HasRoleReq extends roleNameReq {}
 export interface AddUserToRoleReq extends roleNameReq {
   username: string; // required, username
@@ -49,9 +51,12 @@ export interface BaseGrantReq extends roleNameReq {
 }
 export interface OperateRolePrivilegeReq extends BaseGrantReq {
   privilegeName: PrivilegesTypes; // Name of the privilege to be granted to the role. This parameter is case-sensitive.
+  db_name?: string; // required, db name
 }
 export interface SelectGrantReq extends BaseGrantReq {}
-export interface ListGrantsReq extends roleNameReq {}
+export interface ListGrantsReq extends roleNameReq {
+  db_name?: string; // required, db name
+}
 
 export interface ListCredUsersResponse extends resStatusResponse {
   usernames: string[]; // usernames
@@ -159,6 +164,7 @@ export interface BackupRBACResponse extends resStatusResponse {
 
 export interface ListUserRoleAndGrantsRequest extends GrpcTimeOut {
   username: string; // required, username
+  databases?: string[]; // required, db name
 }
 
 export interface ListUserRoleAndGrantsResponse extends resStatusResponse {
@@ -167,6 +173,12 @@ export interface ListUserRoleAndGrantsResponse extends resStatusResponse {
 }
 
 // internal types
-export type _ObjectGrants = {
+export type ObjectGrants = {
   [key: string]: { users: string[]; roles: string[] };
 };
+
+export type UserRoleGrants = {
+  username: string;
+  roles: string[];
+  grants: GrantEntity[];
+}

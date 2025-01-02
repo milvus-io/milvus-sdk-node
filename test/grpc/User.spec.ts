@@ -1,4 +1,3 @@
-import exp from 'constants';
 import {
   MilvusClient,
   ERROR_REASONS,
@@ -12,16 +11,19 @@ import {
 import { timeoutTest } from '../tools';
 import { IP, genCollectionParams, GENERATE_NAME } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 let authClient: MilvusClient;
 const USERNAME = 'username';
 const PASSWORD = '123456';
 const NEW_PASSWORD = '1234567';
 const ROLE_NAME = GENERATE_NAME('role');
+const ROLE_NAME2 = GENERATE_NAME('role');
 const COLLECTION_NAME = GENERATE_NAME();
+const COLLECTION_NAME2 = GENERATE_NAME();
 const PRIVILEGE_GRP_NAME = GENERATE_NAME('privilege');
+const DB_NAME = 'test_db';
 
-describe(`User Api`, () => {
+describe(`Users and Roles Api`, () => {
   beforeAll(async () => {
     authClient = new MilvusClient(IP, false, USERNAME, NEW_PASSWORD);
     await authClient.createCollection(
@@ -32,11 +34,36 @@ describe(`User Api`, () => {
         autoID: false,
       })
     );
+
+    // create a database for privilege
+    await authClient.createDatabase({
+      db_name: DB_NAME,
+    });
+
+    // create a collection in another db
+    await authClient.createCollection({
+      ...genCollectionParams({
+        collectionName: COLLECTION_NAME,
+        dim: [4],
+        vectorType: [DataType.FloatVector],
+        autoID: false,
+      }),
+      db_name: DB_NAME,
+    });
   });
 
   afterAll(async () => {
     await authClient.dropCollection({
       collection_name: COLLECTION_NAME,
+    });
+    await authClient.dropCollection({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME,
+    });
+
+    // drop db
+    await authClient.dropDatabase({
+      db_name: DB_NAME,
     });
     authClient.closeConnection();
   });
@@ -147,7 +174,12 @@ describe(`User Api`, () => {
     const res = await authClient.createRole({
       roleName: ROLE_NAME,
     });
+
+    const res2 = await authClient.createRole({
+      roleName: ROLE_NAME2,
+    });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should add user to role successfully`, async () => {
@@ -156,11 +188,18 @@ describe(`User Api`, () => {
       roleName: ROLE_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res2 = await authClient.addUserToRole({
+      username: USERNAME,
+      roleName: ROLE_NAME2,
+    });
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should list roles successfully`, async () => {
     const res = await authClient.listRoles();
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results.length).toEqual(4);
   });
 
   it(`It should get role successfully`, async () => {
@@ -178,6 +217,13 @@ describe(`User Api`, () => {
       res.results[0].users[0].name
     );
     expect(alias.results[0].role.name).toEqual(res.results[0].role.name);
+
+    const res2 = await authClient.selectRole({
+      roleName: ROLE_NAME2,
+    });
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.results[0].users[0].name).toEqual(USERNAME);
+    expect(res2.results[0].role.name).toEqual(ROLE_NAME2);
   });
 
   it(`It should get user successfully`, async () => {
@@ -187,14 +233,19 @@ describe(`User Api`, () => {
     const alias = await authClient.describeUser({
       username: USERNAME,
     });
+
+    const roles = res.results[0].roles.map(r => r.name);
+    const roles2 = alias.results[0].roles.map(r => r.name);
+
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].user.name).toEqual(USERNAME);
-    expect(res.results[0].roles[0].name).toEqual(ROLE_NAME);
+    expect(roles).toContain(ROLE_NAME);
+    expect(roles).toContain(ROLE_NAME2);
+
     expect(alias.status.error_code).toEqual(res.status.error_code);
-    expect(alias.results[0].user.name).toEqual(res.results[0].user.name);
-    expect(alias.results[0].roles[0].name).toEqual(
-      res.results[0].roles[0].name
-    );
+    expect(alias.results[0].user.name).toEqual(USERNAME);
+    expect(roles2).toContain(ROLE_NAME);
+    expect(roles2).toContain(ROLE_NAME2);
   });
 
   it(`It should grant privilege to role successfully`, async () => {
@@ -225,10 +276,21 @@ describe(`User Api`, () => {
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`it should grant privilege use grantPrivilegeV2 to another db successfully`, async () => {
+    const res = await authClient.grantPrivilegeV2({
+      role: ROLE_NAME,
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME,
+      privilege: Privileges.Query,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`It should list grants successfully`, async () => {
     const res = await authClient.listGrants({
       roleName: ROLE_NAME,
     });
+
     expect(res.entities.length).toEqual(2);
     expect(res.entities[0].object_name).toEqual(COLLECTION_NAME);
     expect(res.entities[0].object.name).toEqual(RbacObjects.Collection);
@@ -237,6 +299,18 @@ describe(`User Api`, () => {
     expect(res.entities[1].object.name).toEqual(RbacObjects.Collection);
     expect(res.entities[1].grantor.privilege.name).toEqual(Privileges.Search);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res2 = await authClient.listGrants({
+      roleName: ROLE_NAME,
+      db_name: DB_NAME,
+    });
+
+    expect(res2.entities.length).toEqual(1);
+    expect(res2.entities[0].object_name).toEqual(COLLECTION_NAME2);
+    expect(res2.entities[0].object.name).toEqual(RbacObjects.Collection);
+    expect(res2.entities[0].grantor.privilege.name).toEqual(Privileges.Query);
+    expect(res2.entities[0].db_name).toEqual(DB_NAME);
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should select grant successfully`, async () => {
@@ -265,6 +339,32 @@ describe(`User Api`, () => {
     expect(userRolesAndGrants.grants[1].object.name).toEqual('Collection');
     expect(userRolesAndGrants.grants[1].grantor.privilege.name).toEqual(
       'Search'
+    );
+
+    const userRolesAndGrants2 = await authClient.listUserRolesAndGrants({
+      username: USERNAME,
+      databases: ['default', DB_NAME],
+    });
+
+    expect(userRolesAndGrants2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(userRolesAndGrants2.roles.length).toEqual(1);
+    expect(userRolesAndGrants2.grants.length).toEqual(3);
+    expect(userRolesAndGrants2.roles[0]).toEqual(ROLE_NAME);
+    expect(userRolesAndGrants2.grants[0].object_name).toEqual(COLLECTION_NAME);
+    expect(userRolesAndGrants2.grants[0].object.name).toEqual('Collection');
+    expect(userRolesAndGrants2.grants[0].grantor.privilege.name).toEqual(
+      'Query'
+    );
+    expect(userRolesAndGrants2.grants[1].object_name).toEqual(COLLECTION_NAME);
+    expect(userRolesAndGrants2.grants[1].object.name).toEqual('Collection');
+    expect(userRolesAndGrants2.grants[1].grantor.privilege.name).toEqual(
+      'Search'
+    );
+    expect(userRolesAndGrants2.grants[2].object_name).toEqual(COLLECTION_NAME2);
+    expect(userRolesAndGrants2.grants[2].db_name).toEqual(DB_NAME);
+    expect(userRolesAndGrants2.grants[2].object.name).toEqual('Collection');
+    expect(userRolesAndGrants2.grants[2].grantor.privilege.name).toEqual(
+      'Query'
     );
   });
 
@@ -301,6 +401,14 @@ describe(`User Api`, () => {
       privilege: Privileges.Query,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res2 = await authClient.revokePrivilegeV2({
+      role: ROLE_NAME,
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME,
+      privilege: Privileges.Query,
+    });
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should remove user from role successfully`, async () => {
@@ -384,6 +492,9 @@ describe(`User Api`, () => {
   });
 
   it(`restore RBAC meta`, async () => {
+    // clear all roles again
+    await authClient.dropAllRoles();
+
     // make sure no privilege group
     const pgrp = await authClient.listPrivilegeGroups();
     // try to find the group

@@ -40,8 +40,10 @@ import {
   ListUserRoleAndGrantsResponse,
   promisify,
   stringToBase64,
-  _ObjectGrants,
+  ObjectGrants,
   ROOT_USER,
+  DEFAULT_DB,
+  UserRoleGrants,
 } from '../';
 
 export class User extends Resource {
@@ -244,6 +246,7 @@ export class User extends Resource {
       'DropRole',
       {
         role_name: data.roleName,
+        force_drop: data.force_drop || false,
       },
       data.timeout || this.timeout
     );
@@ -504,20 +507,26 @@ export class User extends Resource {
    * ```
    */
   async revokePrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus> {
+    const req: any = {
+      entity: {
+        role: { name: data.roleName },
+        object: { name: data.object },
+        object_name: data.objectName,
+        grantor: {
+          privilege: { name: data.privilegeName },
+        },
+      },
+      type: OperatePrivilegeType.Revoke,
+    };
+
+    if (data.db_name) {
+      req.entity.db_name = data.db_name;
+    }
+
     const promise = await promisify(
       this.channelPool,
       'OperatePrivilege',
-      {
-        entity: {
-          role: { name: data.roleName },
-          object: { name: data.object },
-          object_name: data.objectName,
-          grantor: {
-            privilege: { name: data.privilegeName },
-          },
-        },
-        type: OperatePrivilegeType.Revoke,
-      },
+      req,
       data.timeout || this.timeout
     );
 
@@ -542,42 +551,23 @@ export class User extends Resource {
    */
   /* istanbul ignore next */
   async dropAllRoles(data?: GrpcTimeOut): Promise<ResStatus[]> {
-    // find all roles
-    const res = await this.listRoles({ timeout: data?.timeout });
+    const listRoles = await this.listRoles(data);
 
-    const promises = [];
+    // loop user to find all roles
+    const promises: ResStatus[] = [];
 
-    // iterate through roles
-    for (let i = 0; i < res.results.length; i++) {
-      const r = res.results[i];
-      // get all grants that specific to the role
-      const grants = await this.listGrants({
-        roleName: r.role.name,
+    for (let i = 0; i < listRoles.results.length; i++) {
+      const role = listRoles.results[i].role.name;
+
+      const p = await this.dropRole({
+        roleName: role,
+        force_drop: true,
+        timeout: data?.timeout,
       });
-
-      // iterate throught these grant
-      for (let j = 0; j < grants.entities.length; j++) {
-        const entity = grants.entities[j];
-        // revoke grant
-        await this.revokeRolePrivilege({
-          roleName: entity.role.name,
-          object: entity.object.name,
-          objectName: entity.object_name,
-          privilegeName: entity.grantor.privilege.name,
-          timeout: data?.timeout,
-        });
-      }
-
-      promises.push(
-        // drop the role
-        await this.dropRole({
-          roleName: r.role.name,
-          timeout: data?.timeout,
-        })
-      );
+      promises.push(p);
     }
 
-    return promises;
+    return Promise.all(promises);
   }
 
   /**
@@ -653,14 +643,20 @@ export class User extends Resource {
    * ```
    */
   async listGrants(data: ListGrantsReq): Promise<SelectGrantResponse> {
+    const req: any = {
+      entity: {
+        role: { name: data.roleName },
+      },
+    };
+
+    if (data.db_name) {
+      req.entity.db_name = data.db_name;
+    }
+
     const promise = await promisify(
       this.channelPool,
       'SelectGrant',
-      {
-        entity: {
-          role: { name: data.roleName },
-        },
-      },
+      req,
       data.timeout || this.timeout
     );
 
@@ -1000,24 +996,33 @@ export class User extends Resource {
       includeRoleInfo: true,
     });
 
+    // if no databases provided, use default
+    const databases = data.databases || [DEFAULT_DB];
+    // create an array to store all entities
     const entities = [];
     const userRoles: string[] = [];
     // iterate through roles
     const roles = userInfo.results[0].roles;
     for (let i = 0; i < roles.length; i++) {
       const role = roles[i];
-      // get all grants that specific to the role
-      const grants = await this.listGrants({
-        roleName: role.name,
-      });
 
-      // iterate throught these grant
-      for (let j = 0; j < grants.entities.length; j++) {
-        const entity = grants.entities[j];
-        entities.push(entity);
-        // if the role is not in the userRoles array, add it
-        if (!userRoles.includes(entity.role.name)) {
-          userRoles.push(entity.role.name);
+      // loop through databases
+      for (let j = 0; j < databases.length; j++) {
+        const db = databases[j];
+        // get all grants that specific to the role
+        const grants = await this.listGrants({
+          roleName: role.name,
+          db_name: db,
+        });
+
+        // iterate throught these grant
+        for (let k = 0; k < grants.entities.length; k++) {
+          const entity = grants.entities[k];
+          entities.push(entity);
+          // if the role is not in the userRoles array, add it
+          if (!userRoles.includes(entity.role.name)) {
+            userRoles.push(entity.role.name);
+          }
         }
       }
     }
@@ -1030,23 +1035,25 @@ export class User extends Resource {
   }
 
   /**
-   * listObjectsGrants, list all grants of objects.
-   * @returns {Promise<{[key: string]: _ObjectGrants}>} The response object.
+   * listUsersRoleGrants, list all grants and roles of all users.
+   * @returns {Promise<UserRoleGrants[]>} The response object.
    * @example
    * ```javascript
-   *  await milvusClient.listObjectsGrants();
+   * await milvusClient.listUsersRoleGrants();
    * ```
    * */
-
-  async listObjectsGrants(): Promise<{ [key: string]: _ObjectGrants }> {
+  async listAllRolesAndGrants(data?: GrpcTimeOut): Promise<UserRoleGrants[]> {
     // get all users
-    const users = await this.listUsers();
+    const users = await this.listUsers(data);
+    // get all databases
+    const dbs = await this.listDatabases(data);
     // list user's roles and grants
     const userRolesGrants = [];
     for (let i = 0; i < users.usernames.length; i++) {
       const user = users.usernames[i];
       const userRolesGrantsRes = await this.listUserRolesAndGrants({
         username: user,
+        databases: dbs.db_names,
       });
       userRolesGrants.push({
         username: user,
@@ -1055,30 +1062,44 @@ export class User extends Resource {
       });
     }
 
-    console.dir(userRolesGrants, { depth: null });
+    return userRolesGrants;
+  }
+
+  /**
+   * listObjectsGrants, list all grants of objects.
+   * @returns {Promise<{[key: string]: ObjectGrants}>} The response object.
+   * @example
+   * ```javascript
+   *  await milvusClient.listObjectsGrants();
+   * ```
+   * */
+  async listObjectsGrants(): Promise<{ [key: string]: ObjectGrants }> {
+    // get all users roles and grants
+    const allRolesGrants = await this.listAllRolesAndGrants();
+    console.dir(allRolesGrants, { depth: null });
 
     // create a map of objects and their grants
-    const Collection: _ObjectGrants = {
+    const Collection: ObjectGrants = {
       '*': {
         users: [ROOT_USER],
         roles: [],
       },
     };
-    const Database: _ObjectGrants = {
+    const Database: ObjectGrants = {
       '*': {
         users: [ROOT_USER],
         roles: [],
       },
     };
-    const Instance: _ObjectGrants = {
+    const Instance: ObjectGrants = {
       '*': {
         users: [ROOT_USER],
         roles: [],
       },
     };
 
-    for (let i = 0; i < userRolesGrants.length; i++) {
-      const user = userRolesGrants[i];
+    for (let i = 0; i < allRolesGrants.length; i++) {
+      const user = allRolesGrants[i];
       for (let j = 0; j < user.grants.length; j++) {
         const grant = user.grants[j];
         const object = grant.object.name;
