@@ -176,4 +176,10 @@ export type UserRoleGrants = {
   username: string;
   roles: string[];
   grants: GrantEntity[];
-}
+};
+
+export type DatabaseUsersRoles = {
+  db_name: string;
+  users: string[];
+  roles: string[];
+};

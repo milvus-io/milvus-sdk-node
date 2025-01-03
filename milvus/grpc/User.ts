@@ -44,6 +44,7 @@ import {
   DEFAULT_DB,
   UserRoleGrants,
   GrantEntity,
+  DatabaseUsersRoles,
 } from '../';
 
 export class User extends Resource {
@@ -1090,56 +1091,29 @@ export class User extends Resource {
     return userRolesGrants;
   }
 
-  async listUsersAndRolesByDatabase(data: { db_name: string }): Promise<any> {
+  async listUsersAndRolesByDatabase(data: {
+    db_name: string;
+  }): Promise<DatabaseUsersRoles> {
     // get all users roles and grants
     const allRolesGrants = await this.listAllRolesAndGrants();
-    /*
-    [
-      { username: 'root', roles: [], grants: [] },
-      {
-        username: 'username',
-        roles: [ 'role_70vspt8y', 'role_mxzqlvzl' ],
-        grants: [
-          {
-            role: { name: 'role_70vspt8y' },
-            object: { name: 'Collection' },
-            object_name: 'collection_6pbla80f',
-            grantor: { user: { name: 'username' }, privilege: { name: 'Query' } },
-            db_name: 'test_db'
-          },
-          {
-            role: { name: 'role_mxzqlvzl' },
-            object: { name: 'Collection' },
-            object_name: 'collection_oxisczvh',
-            grantor: { user: { name: 'username' }, privilege: { name: 'Query' } },
-            db_name: 'default'
-          },
-          {
-            role: { name: 'role_mxzqlvzl' },
-            object: { name: 'Collection' },
-            object_name: 'collection_oxisczvh',
-            grantor: { user: { name: 'username' }, privilege: { name: 'Search' } },
-            db_name: 'default'
-          }
-        ]
-      }
-    ]
-      */
-    console.dir(allRolesGrants, { depth: null });
 
-    const usersRoles = [];
+    const usersRoles: DatabaseUsersRoles = {
+      db_name: data.db_name,
+      users: [],
+      roles: [],
+    };
     for (let i = 0; i < allRolesGrants.length; i++) {
       const user = allRolesGrants[i];
-      const roles = user.roles;
       const grants = user.grants;
       for (let j = 0; j < grants.length; j++) {
         const grant = grants[j];
         if (grant.db_name === data.db_name || grant.db_name === ALL_OBJECTS) {
-          usersRoles.push({
-            username: user.username,
-            roles,
-          });
-          break;
+          if (!usersRoles.users.includes(user.username)) {
+            usersRoles.users.push(user.username);
+          }
+          if (!usersRoles.roles.includes(grant.role.name)) {
+            usersRoles.roles.push(grant.role.name);
+          }
         }
       }
     }

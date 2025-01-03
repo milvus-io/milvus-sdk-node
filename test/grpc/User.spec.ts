@@ -560,11 +560,23 @@ describe(`Users and Roles Api`, () => {
     expect(assignRole2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it('check privilege group', async () => {
+  it('list Users AndRoles By Database', async () => {
     const res = await authClient.listUsersAndRolesByDatabase({
       db_name: 'default',
     });
-    console.dir(res, { depth: null });
+
+    expect(res.users.length).toEqual(1);
+    expect(res.users[0]).toEqual(USERNAME);
+    expect(res.roles.length).toEqual(2);
+    expect(res.db_name).toEqual('default');
+
+    const res2 = await authClient.listUsersAndRolesByDatabase({
+      db_name: DB_NAME,
+    });
+    expect(res2.users.length).toEqual(1);
+    expect(res2.users[0]).toEqual(USERNAME);
+    expect(res2.roles.length).toEqual(1);
+    expect(res2.db_name).toEqual(DB_NAME);
   });
 
   it('remove all role again', async () => {
