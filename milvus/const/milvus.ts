@@ -450,3 +450,4 @@ export enum OperatePrivilegeGroupType {
 }
 
 export const ROOT_USER = 'root';
+export const ALL_OBJECTS = '*';

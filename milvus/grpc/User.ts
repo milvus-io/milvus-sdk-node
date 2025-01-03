@@ -40,8 +40,7 @@ import {
   ListUserRoleAndGrantsResponse,
   promisify,
   stringToBase64,
-  ObjectGrants,
-  ROOT_USER,
+  ALL_OBJECTS,
   DEFAULT_DB,
   UserRoleGrants,
 } from '../';
@@ -975,19 +974,20 @@ export class User extends Resource {
   }
 
   /**
-   * listUserRolesAndGrants, list all grants and roles of a user.
+   * listRoleAndGrantsByUser, list all grants and roles of a user.
    * @param {ListUserRoleAndGrantsRequest} data - The data object.
    * @param {string} data.username - The name of the user.
+   * @param {string[]} [data.databases] - The name of the databases. If not provided, the default database is used.
    *
    * @returns {Promise<ListUserPrivilegesResponse>} The response object.
    *
    * @example
    * ```javascript
-   * await milvusClient.listUserRolesAndGrants({
+   * await milvusClient.listRoleAndGrantsByUser({
    *   username: 'exampleUser',
    * });
    */
-  async listUserRolesAndGrants(
+  async listRolesAndGrantsByUser(
     data: ListUserRoleAndGrantsRequest
   ): Promise<ListUserRoleAndGrantsResponse> {
     // get all roles of the user
@@ -1051,7 +1051,7 @@ export class User extends Resource {
     const userRolesGrants = [];
     for (let i = 0; i < users.usernames.length; i++) {
       const user = users.usernames[i];
-      const userRolesGrantsRes = await this.listUserRolesAndGrants({
+      const userRolesGrantsRes = await this.listRolesAndGrantsByUser({
         username: user,
         databases: dbs.db_names,
       });
@@ -1065,107 +1065,60 @@ export class User extends Resource {
     return userRolesGrants;
   }
 
-  /**
-   * listObjectsGrants, list all grants of objects.
-   * @returns {Promise<{[key: string]: ObjectGrants}>} The response object.
-   * @example
-   * ```javascript
-   *  await milvusClient.listObjectsGrants();
-   * ```
-   * */
-  async listObjectsGrants(): Promise<{ [key: string]: ObjectGrants }> {
+  async listUsersAndRolesByDatabase(data: { db_name: string }): Promise<any> {
     // get all users roles and grants
     const allRolesGrants = await this.listAllRolesAndGrants();
+    /*
+    [
+      { username: 'root', roles: [], grants: [] },
+      {
+        username: 'username',
+        roles: [ 'role_70vspt8y', 'role_mxzqlvzl' ],
+        grants: [
+          {
+            role: { name: 'role_70vspt8y' },
+            object: { name: 'Collection' },
+            object_name: 'collection_6pbla80f',
+            grantor: { user: { name: 'username' }, privilege: { name: 'Query' } },
+            db_name: 'test_db'
+          },
+          {
+            role: { name: 'role_mxzqlvzl' },
+            object: { name: 'Collection' },
+            object_name: 'collection_oxisczvh',
+            grantor: { user: { name: 'username' }, privilege: { name: 'Query' } },
+            db_name: 'default'
+          },
+          {
+            role: { name: 'role_mxzqlvzl' },
+            object: { name: 'Collection' },
+            object_name: 'collection_oxisczvh',
+            grantor: { user: { name: 'username' }, privilege: { name: 'Search' } },
+            db_name: 'default'
+          }
+        ]
+      }
+    ]
+      */
     console.dir(allRolesGrants, { depth: null });
 
-    // create a map of objects and their grants
-    const Collection: ObjectGrants = {
-      '*': {
-        users: [ROOT_USER],
-        roles: [],
-      },
-    };
-    const Database: ObjectGrants = {
-      '*': {
-        users: [ROOT_USER],
-        roles: [],
-      },
-    };
-    const Instance: ObjectGrants = {
-      '*': {
-        users: [ROOT_USER],
-        roles: [],
-      },
-    };
-
+    const usersRoles = [];
     for (let i = 0; i < allRolesGrants.length; i++) {
       const user = allRolesGrants[i];
-      for (let j = 0; j < user.grants.length; j++) {
-        const grant = user.grants[j];
-        const object = grant.object.name;
-        const objectName = grant.object_name;
-        const dbName = grant.db_name;
-
-        switch (object) {
-          case 'Collection':
-            if (!Collection[objectName]) {
-              Collection[objectName] = {
-                users: [ROOT_USER],
-                roles: [],
-              };
-            }
-            if (!Collection[objectName].users.includes(user.username)) {
-              Collection[objectName].users.push(user.username);
-            }
-
-            if (!Collection[objectName].roles.includes(grant.role.name)) {
-              Collection[objectName].roles.push(grant.role.name);
-            }
-            break;
-
-          case 'Database':
-            if (!Database[dbName]) {
-              Database[dbName] = {
-                users: [ROOT_USER],
-                roles: [],
-              };
-            }
-            if (!Database[dbName].users.includes(user.username)) {
-              Database[dbName].users.push(user.username);
-            }
-
-            if (!Database[dbName].roles.includes(grant.role.name)) {
-              Database[dbName].roles.push(grant.role.name);
-            }
-            break;
-
-          case 'Instance':
-            if (!Instance[dbName]) {
-              Instance[dbName] = {
-                users: [ROOT_USER],
-                roles: [],
-              };
-            }
-
-            if (!Instance[dbName].users.includes(user.username)) {
-              Instance[dbName].users.push(user.username);
-            }
-
-            if (!Instance[dbName].roles.includes(grant.role.name)) {
-              Instance[dbName].roles.push(grant.role.name);
-            }
-
-            break;
-          default:
-            break;
+      const roles = user.roles;
+      const grants = user.grants;
+      for (let j = 0; j < grants.length; j++) {
+        const grant = grants[j];
+        if (grant.db_name === data.db_name || grant.db_name === ALL_OBJECTS) {
+          usersRoles.push({
+            username: user.username,
+            roles,
+          });
+          break;
         }
       }
     }
 
-    return {
-      Collection,
-      Database,
-      Instance,
-    };
+    return usersRoles;
   }
 }

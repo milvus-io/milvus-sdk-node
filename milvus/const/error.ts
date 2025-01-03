@@ -71,4 +71,5 @@ export enum ErrorCode {
   CollectionNotExists = 'CollectionNotExists',
   IllegalArgument = 'IllegalArgument',
   RateLimit = 'RateLimit',
+  OperatePrivilegeFailure = 'OperatePrivilegeFailure',
 }

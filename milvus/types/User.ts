@@ -172,11 +172,6 @@ export interface ListUserRoleAndGrantsResponse extends resStatusResponse {
   grants: GrantEntity[]; // grants
 }
 
-// internal types
-export type ObjectGrants = {
-  [key: string]: { users: string[]; roles: string[] };
-};
-
 export type UserRoleGrants = {
   username: string;
   roles: string[];

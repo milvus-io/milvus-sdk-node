@@ -43,7 +43,7 @@ describe(`Users and Roles Api`, () => {
     // create a collection in another db
     await authClient.createCollection({
       ...genCollectionParams({
-        collectionName: COLLECTION_NAME,
+        collectionName: COLLECTION_NAME2,
         dim: [4],
         vectorType: [DataType.FloatVector],
         autoID: false,
@@ -323,7 +323,7 @@ describe(`Users and Roles Api`, () => {
   });
 
   it(`It should list user roles and grants successfully`, async () => {
-    const userRolesAndGrants = await authClient.listUserRolesAndGrants({
+    const userRolesAndGrants = await authClient.listRolesAndGrantsByUser({
       username: USERNAME,
     });
     expect(userRolesAndGrants.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -341,7 +341,7 @@ describe(`Users and Roles Api`, () => {
       'Search'
     );
 
-    const userRolesAndGrants2 = await authClient.listUserRolesAndGrants({
+    const userRolesAndGrants2 = await authClient.listRolesAndGrantsByUser({
       username: USERNAME,
       databases: ['default', DB_NAME],
     });
@@ -366,12 +366,6 @@ describe(`Users and Roles Api`, () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.hasRole).toEqual(true);
-  });
-
-  it(`it should list objects grants`, async () => {
-    const res = await authClient.listObjectsGrants();
-
-    console.dir(res, { depth: null });
   });
 
   it(`It should revoke privilege to role successfully`, async () => {
@@ -401,6 +395,14 @@ describe(`Users and Roles Api`, () => {
       privilege: Privileges.Query,
     });
     expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res3 = await authClient.revokePrivilegeV2({
+      role: ROLE_NAME2,
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME,
+      privilege: Privileges.Query,
+    });
+    expect(res3.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should remove user from role successfully`, async () => {
@@ -412,10 +414,15 @@ describe(`Users and Roles Api`, () => {
   });
 
   it(`It should drop role successfully`, async () => {
-    const res = await authClient.dropRole({
+    const drop = await authClient.dropRole({
       roleName: ROLE_NAME,
     });
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const drop2 = await authClient.dropRole({
+      roleName: ROLE_NAME2,
+    });
+    expect(drop2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Auth client delete user expect error`, async () => {
@@ -467,20 +474,118 @@ describe(`Users and Roles Api`, () => {
     expect(grp.privileges.map(p => p.name)).toContain(Privileges.Search);
   });
 
+  it(`assignle privilege group to a role`, async () => {
+    // create another grp is Insert
+    const grp = await authClient.createPrivilegeGroup({
+      group_name: 'insert',
+    });
+    expect(grp.error_code).toEqual(ErrorCode.SUCCESS);
+    const add = await authClient.addPrivilegesToGroup({
+      group_name: 'insert',
+      privileges: [Privileges.Insert],
+    });
+    expect(add.error_code).toEqual(ErrorCode.SUCCESS);
+    // create user
+    const user = await authClient.createUser({
+      username: USERNAME,
+      password: PASSWORD,
+    });
+    expect(user.error_code).toEqual(ErrorCode.SUCCESS);
+    // create role
+    const createRole = await authClient.createRole({
+      roleName: ROLE_NAME,
+    });
+    expect(createRole.error_code).toEqual(ErrorCode.SUCCESS);
+    // create role2
+    const createRole2 = await authClient.createRole({
+      roleName: ROLE_NAME2,
+    });
+    expect(createRole2.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // assign privilege group to role
+    const grant1 = await authClient.grantPrivilegeV2({
+      role: ROLE_NAME,
+      privilege: PRIVILEGE_GRP_NAME,
+      collection_name: COLLECTION_NAME,
+      db_name: 'default',
+    });
+    expect(grant1.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // assign privilege group to role2
+    const grant2 = await authClient.grantPrivilegeV2({
+      role: ROLE_NAME2,
+      privilege: PRIVILEGE_GRP_NAME,
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME,
+    });
+    expect(grant2.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // assign privlege group to role2
+    const grant3 = await authClient.grantPrivilegeV2({
+      role: ROLE_NAME2,
+      privilege: Privileges.Insert,
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME,
+    });
+    expect(grant3.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // assign insert grp to role2 with collection_name * and db_name *
+    const grant4 = await authClient.grantPrivilegeV2({
+      role: ROLE_NAME2,
+      privilege: 'insert',
+      collection_name: '*',
+      db_name: '*',
+    });
+    expect(grant4.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // assign role to a user
+    const assignRole = await authClient.addUserToRole({
+      username: USERNAME,
+      roleName: ROLE_NAME,
+    });
+    expect(assignRole.error_code).toEqual(ErrorCode.SUCCESS);
+    const assignRole2 = await authClient.addUserToRole({
+      username: USERNAME,
+      roleName: ROLE_NAME2,
+    });
+    expect(assignRole2.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it('check privilege group', async () => {
+    const res = await authClient.listUsersAndRolesByDatabase({
+      db_name: 'default',
+    });
+    console.dir(res, { depth: null });
+  });
+
+  it('remove all role again', async () => {
+    await authClient.dropAllRoles();
+  });
+
+  it('drop user again', async () => {
+    const drop = await authClient.deleteUser({ username: USERNAME });
+    expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   let backupRBACMeta: RBACMeta;
   it(`should backup RBAC meta`, async () => {
     const res = await authClient.backupRBAC();
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     // it should have one privilege group
-    expect(res.RBAC_meta.privilege_groups.length).toEqual(1);
+    expect(res.RBAC_meta.privilege_groups.length).toEqual(2);
     backupRBACMeta = res.RBAC_meta;
   });
 
-  it(`drop a privilege group`, async () => {
+  it(`drop two privilege groups`, async () => {
     const res = await authClient.dropPrivilegeGroup({
       group_name: PRIVILEGE_GRP_NAME,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res2 = await authClient.dropPrivilegeGroup({
+      group_name: 'insert',
+    });
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`restore RBAC meta`, async () => {
@@ -510,17 +615,26 @@ describe(`Users and Roles Api`, () => {
     expect(grp.group_name).toEqual(PRIVILEGE_GRP_NAME);
     expect(grp.privileges.map(p => p.name)).toContain(Privileges.Search);
 
-    // // restore again should be ok
-    // const res2 = await authClient.restoreRBAC({
-    //   RBAC_meta: backupRBACMeta,
-    // });
-    // console.log('res2', res2);
-    // expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
+    // check the other group
+    const grp2 = listRes.privilege_groups.find(g => g.group_name === 'insert')!;
+    expect(grp2.group_name).toEqual('insert');
+    expect(grp2.privileges.map(p => p.name)).toContain(Privileges.Insert);
+
+    // restore again should be error
+    const res2 = await authClient.restoreRBAC({
+      RBAC_meta: backupRBACMeta,
+    });
+    expect(res2.error_code).toEqual(ErrorCode.OperatePrivilegeFailure);
 
     // drop it again
     const dropRes = await authClient.dropPrivilegeGroup({
       group_name: PRIVILEGE_GRP_NAME,
     });
     expect(dropRes.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const dropRes2 = await authClient.dropPrivilegeGroup({
+      group_name: 'insert',
+    });
+    expect(dropRes2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });
