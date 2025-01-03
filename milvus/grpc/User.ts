@@ -43,6 +43,7 @@ import {
   ALL_OBJECTS,
   DEFAULT_DB,
   UserRoleGrants,
+  GrantEntity,
 } from '../';
 
 export class User extends Resource {
@@ -996,11 +997,21 @@ export class User extends Resource {
       includeRoleInfo: true,
     });
 
+    // if nouser found, return empty array
+    if (userInfo.results.length === 0) {
+      return {
+        status: userInfo.status,
+        grants: [],
+        roles: [],
+      };
+    }
+
     // if no databases provided, use default
     const databases = data.databases || [DEFAULT_DB];
     // create an array to store all entities
-    const entities = [];
     const userRoles: string[] = [];
+    const uniqueGrantsMap = new Map<string, GrantEntity>();
+
     // iterate through roles
     const roles = userInfo.results[0].roles;
     for (let i = 0; i < roles.length; i++) {
@@ -1017,11 +1028,25 @@ export class User extends Resource {
 
         // iterate throught these grant
         for (let k = 0; k < grants.entities.length; k++) {
-          const entity = grants.entities[k];
-          entities.push(entity);
+          const grant = grants.entities[k];
+          // Create a unique key based on the properties of the grant
+          const key = JSON.stringify({
+            role: grant.role.name,
+            object: grant.object.name,
+            object_name: grant.object_name,
+            grantor: {
+              user: grant.grantor.user.name,
+              privilege: grant.grantor.privilege.name,
+            },
+            db_name: grant.db_name,
+          });
+
+          if (!uniqueGrantsMap.has(key)) {
+            uniqueGrantsMap.set(key, grant);
+          }
           // if the role is not in the userRoles array, add it
-          if (!userRoles.includes(entity.role.name)) {
-            userRoles.push(entity.role.name);
+          if (!userRoles.includes(grant.role.name)) {
+            userRoles.push(grant.role.name);
           }
         }
       }
@@ -1029,7 +1054,7 @@ export class User extends Resource {
 
     return {
       status: userInfo.status,
-      grants: entities,
+      grants: Array.from(uniqueGrantsMap.values()),
       roles: userRoles,
     };
   }

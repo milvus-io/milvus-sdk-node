@@ -358,6 +358,15 @@ describe(`Users and Roles Api`, () => {
     expect(grant3).toBeDefined();
     expect(grant3!.object.name).toEqual('Collection');
     expect(grant3!.grantor.privilege.name).toEqual('Query');
+
+    // no user
+    const noUser = await authClient.listRolesAndGrantsByUser({
+      username: 'root2',
+      databases: ['default', DB_NAME],
+    });
+
+    expect(noUser.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(noUser.roles.length).toEqual(0);
   });
 
   it(`It should check role name successfully`, async () => {
