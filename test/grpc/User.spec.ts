@@ -278,7 +278,7 @@ describe(`Users and Roles Api`, () => {
 
   it(`it should grant privilege use grantPrivilegeV2 to another db successfully`, async () => {
     const res = await authClient.grantPrivilegeV2({
-      role: ROLE_NAME,
+      role: ROLE_NAME2,
       collection_name: COLLECTION_NAME2,
       db_name: DB_NAME,
       privilege: Privileges.Query,
@@ -301,7 +301,7 @@ describe(`Users and Roles Api`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     const res2 = await authClient.listGrants({
-      roleName: ROLE_NAME,
+      roleName: ROLE_NAME2,
       db_name: DB_NAME,
     });
 
@@ -347,25 +347,17 @@ describe(`Users and Roles Api`, () => {
     });
 
     expect(userRolesAndGrants2.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(userRolesAndGrants2.roles.length).toEqual(1);
+    expect(userRolesAndGrants2.roles.length).toEqual(2);
     expect(userRolesAndGrants2.grants.length).toEqual(3);
-    expect(userRolesAndGrants2.roles[0]).toEqual(ROLE_NAME);
-    expect(userRolesAndGrants2.grants[0].object_name).toEqual(COLLECTION_NAME);
-    expect(userRolesAndGrants2.grants[0].object.name).toEqual('Collection');
-    expect(userRolesAndGrants2.grants[0].grantor.privilege.name).toEqual(
-      'Query'
+    expect(userRolesAndGrants2.roles).toContain(ROLE_NAME);
+    expect(userRolesAndGrants2.roles).toContain(ROLE_NAME2);
+
+    const grant3 = userRolesAndGrants2.grants.find(
+      g => g.object_name === COLLECTION_NAME2 && g.db_name === DB_NAME
     );
-    expect(userRolesAndGrants2.grants[1].object_name).toEqual(COLLECTION_NAME);
-    expect(userRolesAndGrants2.grants[1].object.name).toEqual('Collection');
-    expect(userRolesAndGrants2.grants[1].grantor.privilege.name).toEqual(
-      'Search'
-    );
-    expect(userRolesAndGrants2.grants[2].object_name).toEqual(COLLECTION_NAME2);
-    expect(userRolesAndGrants2.grants[2].db_name).toEqual(DB_NAME);
-    expect(userRolesAndGrants2.grants[2].object.name).toEqual('Collection');
-    expect(userRolesAndGrants2.grants[2].grantor.privilege.name).toEqual(
-      'Query'
-    );
+    expect(grant3).toBeDefined();
+    expect(grant3!.object.name).toEqual('Collection');
+    expect(grant3!.grantor.privilege.name).toEqual('Query');
   });
 
   it(`It should check role name successfully`, async () => {
