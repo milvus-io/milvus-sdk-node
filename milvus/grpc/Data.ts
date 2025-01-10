@@ -621,8 +621,8 @@ export class Data extends Collection {
               params[ITER_SEARCH_ID_KEY] =
                 batchRes.search_iterator_v2_results!.token;
               params[ITER_SEARCH_LAST_BOUND_KEY] =
-                batchRes.search_iterator_v2_results?.last_bound || '';
-              params[GUARANTEE_TIMESTAMP_KEY] = batchRes.session_ts || 0;
+                batchRes.search_iterator_v2_results?.last_bound;
+              params[GUARANTEE_TIMESTAMP_KEY] = batchRes.session_ts;
               params[ITER_SEARCH_BATCH_SIZE_KEY] = batchSize;
 
               return {

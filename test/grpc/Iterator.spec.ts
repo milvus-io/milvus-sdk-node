@@ -372,8 +372,8 @@ describe(`Iterator API`, () => {
     });
   });
 
-  it('search iterator with batch size = 2 should success', async () => {
-    const batchSize = 2;
+  it('search iterator with batch size = 1 should success', async () => {
+    const batchSize = 1;
     const total = 30;
     const iterator = await milvusClient.searchIterator({
       collection_name: COLLECTION,
