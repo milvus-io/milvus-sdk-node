@@ -681,7 +681,8 @@ export const buildSearchParams = (
     ignore_growing: data.ignore_growing ?? false,
   };
 
-  // if group_by_field is set, add it to the search params
+  // if group_by_field is set
+  // reminder: never add this kind of key again, just put params in the params object
   if (data.group_by_field) {
     search_params.group_by_field = data.group_by_field;
   }
@@ -693,6 +694,11 @@ export const buildSearchParams = (
   }
   if (data.hints) {
     search_params.hints = data.hints;
+  }
+
+  // data.params -> search_params
+  for (let key in data.params) {
+    search_params[key] = data.params[key];
   }
 
   return search_params;
