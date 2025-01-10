@@ -3,7 +3,7 @@ import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
 const milvusClient = new MilvusClient({
   address: IP,
-  logLevel: 'debug',
+  logLevel: 'info',
   logPrefix: 'Basic API',
 });
 const COLLECTION_NAME = GENERATE_NAME();
