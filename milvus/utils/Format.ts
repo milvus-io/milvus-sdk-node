@@ -937,7 +937,6 @@ export const formatSearchResult = (
   const fieldsDataMap = buildFieldDataMap(fields_data, options.transformers);
   // build output name array
   const output_fields = [
-    'id',
     ...(!!searchRes.results.output_fields?.length
       ? searchRes.results.output_fields
       : fields_data.map(f => f.field_name)),
