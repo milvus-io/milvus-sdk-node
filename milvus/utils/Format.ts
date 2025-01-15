@@ -937,16 +937,11 @@ export const formatSearchResult = (
   const fieldsDataMap = buildFieldDataMap(fields_data, options.transformers);
   // build output name array
   const output_fields = [
-    'id',
     ...(!!searchRes.results.output_fields?.length
       ? searchRes.results.output_fields
       : fields_data.map(f => f.field_name)),
   ];
 
-  // vector id support int / str id.
-  const idData = ids ? ids[ids.id_field]!.data : {};
-  // add id column
-  fieldsDataMap.set('id', idData as RowData[]);
   // fieldsDataMap.set('score', scores); TODO: fieldDataMap to support formatter
 
   /**
