@@ -535,6 +535,10 @@ export class Data extends Collection {
         recalls: [],
         session_ts: -1,
         collection_name: data.collection_name,
+        search_iterator_v2_results:
+          originSearchResult.results.search_iterator_v2_results,
+        _search_iterator_v2_results:
+          originSearchResult.results._search_iterator_v2_results,
       };
     }
 
@@ -626,7 +630,7 @@ export class Data extends Collection {
               params[ITER_SEARCH_BATCH_SIZE_KEY] = batchSize;
 
               return {
-                done: currentTotal > total,
+                done: currentTotal > total || !batchRes.results.length,
                 value: batchRes.results,
               };
             } catch (error) {

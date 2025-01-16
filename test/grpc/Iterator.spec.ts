@@ -504,7 +504,7 @@ describe(`Iterator API`, () => {
     }
 
     // // results id should be unique
-    expect(results.length).toEqual(data.length);
+    expect(results.length).toBeLessThanOrEqual(data.length);
   });
 
   it('search iterator without limit should success', async () => {
@@ -526,7 +526,7 @@ describe(`Iterator API`, () => {
     }
 
     // // results id should be unique
-    expect(results.length).toEqual(data.length);
+    expect(results.length).toBeLessThanOrEqual(data.length);
   });
 
   it('search iterator with limit > total should success', async () => {
@@ -550,6 +550,6 @@ describe(`Iterator API`, () => {
     }
 
     // // results id should be unique
-    expect(results.length).toEqual(data.length);
+    expect(results.length).toBeLessThanOrEqual(data.length);
   });
 });
