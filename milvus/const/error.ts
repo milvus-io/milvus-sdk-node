@@ -60,6 +60,7 @@ export const ERROR_REASONS = {
     'Only non-primary key Int64 or VarChar field support partition key.',
   PARTITION_KEY_FIELD_MAXED_OUT: `Only ${MAX_PARTITION_KEY_FIELD_COUNT} field supports partition key. `,
   IDS_REQUIRED: 'The `ids` is missing or empty.',
+  NO_ANNS_FEILD_FOUND_IN_SEARCH: 'Target anns field not found, please check your search parameters.',
 };
 
 export enum ErrorCode {

@@ -8,6 +8,7 @@ import {
   WeightedRanker,
   f32ArrayToF16Bytes,
   f16BytesToF32Array,
+  ERROR_REASONS,
 } from '../../milvus';
 import {
   IP,
@@ -359,5 +360,17 @@ describe(`Multiple vectors API testing`, () => {
     expect(search.results.map(r => r.id)).toEqual(
       originSearch.results.map(r => r.id)
     );
+  });
+
+  it(`should return error, if no anns_field found in search parameters`, async () => {
+    try {
+      await milvusClient.search({
+        collection_name: COLLECTION_NAME,
+        anns_field: 'vectorxxx',
+        data: [1, 2, 3, 4, 5, 6, 7, 8],
+      });
+    } catch (e) {
+      expect(e.message).toEqual(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
+    }
   });
 });
