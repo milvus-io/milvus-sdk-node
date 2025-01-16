@@ -536,8 +536,10 @@ export class Data extends Collection {
         session_ts: -1,
         collection_name: data.collection_name,
         search_iterator_v2_results:
+          originSearchResult.results &&
           originSearchResult.results.search_iterator_v2_results,
         _search_iterator_v2_results:
+          originSearchResult.results &&
           originSearchResult.results._search_iterator_v2_results,
       };
     }
