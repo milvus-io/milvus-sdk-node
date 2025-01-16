@@ -572,6 +572,11 @@ export class Data extends Collection {
       expr: data.expr || data.filter || '',
     });
 
+    // get collection Info
+    const collectionInfo = await this.describeCollection({
+      collection_name: data.collection_name,
+    });
+
     // if limit not set, set it to count
     if (!data.limit || data.limit === NO_LIMIT) {
       data.limit = count.data;
@@ -590,6 +595,7 @@ export class Data extends Collection {
     const ITER_SEARCH_BATCH_SIZE_KEY = 'search_iter_batch_size';
     const ITER_SEARCH_LAST_BOUND_KEY = 'search_iter_last_bound';
     const GUARANTEE_TIMESTAMP_KEY = 'guarantee_timestamp';
+    const COLLECTION_ID = 'collection_id';
 
     let currentTotal = 0;
 
@@ -600,6 +606,7 @@ export class Data extends Collection {
       [ITER_SEARCH_V2_KEY]: true,
       [ITER_SEARCH_BATCH_SIZE_KEY]: batchSize,
       [GUARANTEE_TIMESTAMP_KEY]: 0,
+      [COLLECTION_ID]: collectionInfo.collectionID,
     };
 
     return {
