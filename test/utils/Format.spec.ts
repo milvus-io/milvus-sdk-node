@@ -34,8 +34,6 @@ import {
   SearchSimpleReq,
   formatExprValues,
 } from '../../milvus';
-import { json } from 'stream/consumers';
-import exp from 'constants';
 
 describe('utils/format', () => {
   it(`all kinds of url should be supported`, async () => {
@@ -1037,6 +1035,97 @@ describe('utils/format', () => {
         }
       }
     );
+  });
+
+  it(`it should get NO_ANNS_FEILD_FOUND_IN_SEARCH if buildSearchRequest with wrong searchParams`, () => {
+    // path
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+
+    const searchParams = {
+      collection_name: 'test',
+      data: [
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8],
+          anns_field: 'vector3xxx',
+          params: { nprobe: 2 },
+          expr: 'id > 0',
+        },
+        {
+          data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+          anns_field: 'vector12',
+          expr: 'id > {value}',
+          exprValues: { value: 1 },
+        },
+      ],
+      limit: 2,
+      output_fields: ['vector', 'vector1'],
+    };
+
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      collectionID: 0,
+      consistency_level: 'Session',
+      num_partitions: '0',
+      aliases: [],
+      virtual_channel_names: {},
+      physical_channel_names: {},
+      start_positions: [],
+      shards_num: 1,
+      created_timestamp: '0',
+      created_utc_timestamp: '0',
+      properties: [],
+      db_name: '',
+      schema: {
+        name: 'test',
+        description: '',
+        enable_dynamic_field: false,
+        autoID: false,
+        fields: [
+          {
+            name: 'id',
+            fieldID: '1',
+            dataType: 5,
+            is_primary_key: true,
+            description: 'id field',
+            data_type: 'Int64',
+            type_params: [],
+            index_params: [],
+          },
+          {
+            name: 'vector',
+            fieldID: '2',
+            dataType: 101,
+            is_primary_key: false,
+            description: 'vector field',
+            data_type: 'FloatVector',
+            type_params: [{ key: 'dim', value: '3' }],
+            index_params: [],
+          },
+          {
+            name: 'vector1',
+            fieldID: '2',
+            dataType: 101,
+            is_primary_key: false,
+            description: 'vector field2',
+            data_type: 'FloatVector',
+            type_params: [{ key: 'dim', value: '3' }],
+            index_params: [],
+          },
+        ],
+      },
+    } as any;
+
+    try {
+      buildSearchRequest(searchParams, describeCollectionResponse, milvusProto);
+    } catch (err) {
+      console.log(err)
+      expect(err.message).toEqual(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
+    }
   });
 
   it('should build search params correctly', () => {

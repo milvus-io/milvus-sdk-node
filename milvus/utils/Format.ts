@@ -884,6 +884,11 @@ export const buildSearchRequest = (
     ? formatExprValues(searchSimpleReq.exprValues)
     : undefined;
 
+  // if no anns_field found in search request, throw error
+  if (requests.length === 0) {
+    throw new Error(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
+  }
+
   return {
     isHybridSearch: isHybridSearch,
     request: isHybridSearch
