@@ -372,210 +372,184 @@ describe(`Iterator API`, () => {
     });
   });
 
-  // it('search iterator with batch size = total should success', async () => {
-  //   const batchSize = 100;
-  //   const total = 100;
-  //   const iterator = await milvusClient.searchIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     data: data[0].vector,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+  it('search iterator with batch size = 1 should success', async () => {
+    const batchSize = 1;
+    const total = 30;
+    const iterator = await milvusClient.searchIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      data: data[0].vector,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
 
-  //   const results: any = [];
-  //   // let batch = 0;
-  //   for await (const value of iterator) {
-  //     // console.log(`batch${batch++}`, value.length);
-  //     // console.log(value.map((item: any) => item.score));
-  //     results.push(...value);
-  //   }
+    const results: any = [];
+    // let batch = 0;
+    for await (const value of iterator) {
+      // console.log(`batch${batch++}`, value.length);
+      // console.log(value.map((item: any) => item.score));
+      results.push(...value);
+    }
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(total);
-  // });
+    // // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
+  });
 
-  // it('search iterator with batch size > total should success', async () => {
-  //   const batchSize = 200;
-  //   const total = 100;
-  //   const iterator = await milvusClient.searchIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     data: data[0].vector,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+  it('search iterator with batch size = total should success', async () => {
+    const batchSize = 5000;
+    const total = 5000;
+    const iterator = await milvusClient.searchIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      data: data[0].vector,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
 
-  //   const results: any = [];
-  //   // let batch = 0;
-  //   for await (const value of iterator) {
-  //     // console.log(`batch${batch++}`, value.length);
-  //     // console.log(value.map((item: any) => item.score));
-  //     results.push(...value);
-  //   }
+    const results: any = [];
+    // let batch = 0;
+    for await (const value of iterator) {
+      // console.log(`batch${batch++}`, value.length);
+      // console.log(value.map((item: any) => item.score));
+      results.push(...value);
+    }
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(total);
-  // });
+    // // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
+  });
 
-  // it('search iterator with batch size < total should success', async () => {
-  //   const batchSize = 33;
-  //   const total = 100;
-  //   const iterator = await milvusClient.searchIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     data: data[0].vector,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+  it('search iterator with batch size > total should success', async () => {
+    const batchSize = 20000;
+    const total = 10000;
+    const iterator = await milvusClient.searchIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      data: data[0].vector,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
 
-  //   const results: any = [];
-  //   let batchTimes = 0;
-  //   for await (const value of iterator) {
-  //     // console.log(`batch${batch++}`, value.length);
-  //     // console.log(value.map((item: any) => item.score));
-  //     batchTimes++;
-  //     results.push(...value);
-  //   }
-  //   expect(batchTimes).toEqual(Math.ceil(total / batchSize));
+    const results: any = [];
+    // let batch = 0;
+    for await (const value of iterator) {
+      // console.log(`batch${batch++}`, value.length);
+      // console.log(value.map((item: any) => item.score));
+      results.push(...value);
+    }
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(total);
-  // });
+    // // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
+  });
 
-  // it('search iterator with batch size = 2 should success, and ignore total', async () => {
-  //   const batchSize = 2;
-  //   const total = 10;
-  //   const iterator = await milvusClient.searchIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     data: [0.1, 0.2, 0.3, 0.4],
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+  it('search iterator with batch size < total should success', async () => {
+    const batchSize = 3000;
+    const total = 10000;
+    const iterator = await milvusClient.searchIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      data: data[0].vector,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: total,
+    });
 
-  //   const results: any = [];
-  //   // let batch = 0;
-  //   for await (const value of iterator) {
-  //     // console.log(`batch${batch++}`, value.length);
-  //     // console.log(value.map((item: any) => item.score));
-  //     results.push(...value);
-  //   }
+    const results: any = [];
+    // let batch = 0;
+    for await (const value of iterator) {
+      // console.log(`batch${batch++}`, value.length);
+      // console.log(value.map((item: any) => item.score));
+      results.push(...value);
+    }
 
-  //   expect(results.length).toEqual(total);
+    // // results id should be unique
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(total);
+  });
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(total);
-  // });
+  it('search iterator with limit = -1 should success', async () => {
+    const batchSize = 3000;
+    const iterator = await milvusClient.searchIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      data: data[0].vector,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: NO_LIMIT,
+    });
 
-  // it('search iterator with batch size = 1 should success, and ignore total', async () => {
-  //   const search = await milvusClient.search({
-  //     collection_name: COLLECTION,
-  //     data: [0.1, 0.2, 0.3, 0.4],
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: 10,
-  //   });
+    const results: any = [];
+    // let batch = 0;
+    for await (const value of iterator) {
+      // console.log(`batch${batch++}`, value.length);
+      // console.log(value.map((item: any) => item.score));
+      results.push(...value);
+    }
 
-  //   const batchSize = 1;
-  //   const total = 10;
-  //   const iterator = await milvusClient.searchIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     data: [0.1, 0.2, 0.3, 0.4],
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
+    // // results id should be unique
+    expect(results.length).toBeLessThanOrEqual(data.length);
+  });
 
-  //   const results: any = [];
-  //   // let batch = 0;
-  //   for await (const value of iterator) {
-  //     // console.log(`batch${batch++}`, value.length);
-  //     // console.log(value.map((item: any) => item.score));
-  //     results.push(...value);
-  //   }
+  it('search iterator without limit should success', async () => {
+    const batchSize = 3000;
+    const iterator = await milvusClient.searchIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      data: data[0].vector,
+      expr: 'id > 0',
+      output_fields: ['id'],
+    });
 
-  //   expect(results.length).toEqual(total);
+    const results: any = [];
+    // let batch = 0;
+    for await (const value of iterator) {
+      // console.log(`batch${batch++}`, value.length);
+      // console.log(value.map((item: any) => item.score));
+      results.push(...value);
+    }
 
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(total);
+    // // results id should be unique
+    expect(results.length).toBeLessThanOrEqual(data.length);
+  });
 
-  //   // get result scores
-  //   const scores = results.map((result: any) => result.score);
+  it('search iterator with limit > total should success', async () => {
+    const batchSize = 3000;
+    const limit = 30000;
+    const iterator = await milvusClient.searchIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      data: data[0].vector,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: limit,
+    });
 
-  //   // compare with search result, should be equal
-  //   expect(scores).toEqual(search.results.map(s => s.score));
-  // });
+    const results: any = [];
+    // let batch = 0;
+    for await (const value of iterator) {
+      // console.log(`batch${batch++}`, value.length);
+      // console.log(value.map((item: any) => item.score));
+      results.push(...value);
+    }
 
-  // it('search iterator with limit > all data count should success, and ignore total', async () => {
-  //   const batchSize = 5000;
-  //   const total = 30000;
-  //   const iterator = await milvusClient.searchIterator({
-  //     collection_name: COLLECTION,
-  //     batchSize: batchSize,
-  //     data: data[0].vector,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //   });
-
-  //   const results: any = [];
-  //   // let batch = 0;
-  //   for await (const value of iterator) {
-  //     // console.log(`batch${batch++}`, value.length);
-  //     // console.log(value.map((item: any) => item.score));
-  //     results.push(...value);
-  //   }
-
-  //   expect(results.length).toEqual(data.length);
-
-  //   // results id should be unique
-  //   const idSet = new Set();
-  //   results.forEach((result: any) => {
-  //     idSet.add(result.id);
-  //   });
-  //   expect(idSet.size).toEqual(data.length);
-  // });
-
-  // it('search with cosine similarity should success', async () => {
-  //   const batchSize = 10000;
-  //   const total = 2000;
-  //   const searchRes = await milvusClient.search({
-  //     collection_name: COLLECTION_COSINE,
-  //     data: cosineData[0].vector,
-  //     expr: 'id > 0',
-  //     output_fields: ['id'],
-  //     limit: total,
-  //     params: {
-  //       radius: 0.6,
-  //       range_filter: 0.5,
-  //     },
-  //   });
-  //   console.log(searchRes.results.map(s => s.score));
-  // });
+    // // results id should be unique
+    expect(results.length).toBeLessThanOrEqual(data.length);
+  });
 });

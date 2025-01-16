@@ -191,27 +191,6 @@ export const getQueryIteratorExpr = (params: {
   });
 };
 
-// return distance range between the first and last item for the given search results
-export const getRangeFromSearchResult = (results: SearchResultData[]) => {
-  // get first item
-  const firstItem = results[0];
-  const lastItem = results[results.length - 1];
-
-  if (firstItem && lastItem) {
-    const radius = lastItem.score * 2 - firstItem.score;
-    return {
-      radius: radius,
-      lastDistance: lastItem.score,
-      id: lastItem.id,
-    };
-  } else {
-    return {
-      radius: 0,
-      lastDistance: 0,
-    };
-  }
-};
-
 // return pk filed != expression based on pk field type, if pk field is string, return pk field != ''
 export const getPKFieldExpr = (data: {
   pkField: FieldSchema;

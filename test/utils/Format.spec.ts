@@ -1147,13 +1147,14 @@ describe('utils/format', () => {
       offset: 0,
       metric_type: '',
       ignore_growing: false,
+      nprobe: 2,
     });
 
     const data2: SearchSimpleReq = {
       collection_name: 'test',
       data: [1, 2, 3, 4, 5, 6, 7, 8],
       anns_field: 'vector',
-      params: { nprobe: 2 },
+      params: { nprobe: 2, test: 'test' },
       limit: 2,
       output_fields: ['vector', 'vector1'],
       group_by_field: 'group_by_field_value',
@@ -1162,10 +1163,10 @@ describe('utils/format', () => {
     };
 
     const newSearchParams2 = buildSearchParams(data2, anns_field);
-
+    console.dir(newSearchParams2, { depth: null });
     expect(newSearchParams2).toEqual({
       anns_field: 'vector',
-      params: '{"nprobe":2}',
+      params: '{"nprobe":2,"test":"test"}',
       topk: 2,
       offset: 0,
       metric_type: '',
@@ -1173,6 +1174,8 @@ describe('utils/format', () => {
       group_by_field: 'group_by_field_value',
       group_size: 5,
       strict_group_size: true,
+      test: 'test',
+      nprobe: 2,
     });
   });
 

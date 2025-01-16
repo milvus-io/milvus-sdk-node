@@ -1,4 +1,3 @@
-import { Key } from 'readline';
 import {
   GrpcTimeOut,
   KeyValuePair,
@@ -263,6 +262,11 @@ export interface SearchResultData {
 export interface SearchResults extends resStatusResponse {
   results: SearchResultData[];
   recalls: number[];
+  session_ts: number;
+  collection_name: string;
+  all_search_count?: number;
+  search_iterator_v2_results?: Record<string, any>;
+  _search_iterator_v2_results?: string;
 }
 
 export interface ImportResponse extends resStatusResponse {
@@ -302,6 +306,7 @@ export interface SearchParam {
   group_size?: number; // group size
   strict_group_size?: boolean; // if strict group size
   hints?: string; // hints to improve milvus search performance
+  [key: string]: any; // extra search parameters
 }
 
 // old search api parameter type, deprecated
@@ -320,16 +325,6 @@ export interface SearchReq extends collectionNameReq {
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
 
-export interface SearchIteratorReq
-  extends Omit<
-    SearchSimpleReq,
-    'data' | 'vectors' | 'offset' | 'limit' | 'topk'
-  > {
-  data: number[]; // data to search
-  batchSize: number;
-  limit: number;
-}
-
 export type SearchTextType = string | string[];
 export type SearchVectorType = VectorTypes | VectorTypes[];
 export type SearchDataType = SearchVectorType | SearchTextType;
@@ -338,7 +333,7 @@ export type SearchMultipleDataType = VectorTypes[] | SearchTextType[];
 // simplified search api parameter type
 export interface SearchSimpleReq extends collectionNameReq {
   partition_names?: string[]; // partition names
-  anns_field?: string; // your vector field name，rquired if you are searching on multiple vector fields collection
+  anns_field?: string; // your vector field name，required if you are searching on multiple vector fields collection
   data?: SearchDataType; // vector or text to search
   vector?: VectorTypes; // alias for data, deprecated
   vectors?: VectorTypes[]; // alias for data, deprecated
@@ -371,6 +366,12 @@ export type HybridSearchSingleReq = Pick<
   params?: keyValueObj; // extra search parameters
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 };
+
+export interface SearchIteratorReq
+  extends Omit<SearchSimpleReq, 'vectors' | 'offset' | 'limit' | 'topk'> {
+  limit?: number; // Optional. Specifies the maximum number of items. Default is no limit (-1 or if not set).
+  batchSize: number; // Specifies the number of items to return in each batch. if it exceeds 16384, it will be set to 16384
+}
 
 // rerank strategy and parameters
 export type RerankerObj = {
@@ -433,7 +434,12 @@ export interface SearchRes extends resStatusResponse {
     output_fields: string[];
     group_by_field_value: string;
     recalls: number[];
+    search_iterator_v2_results?: Record<string, any>;
+    _search_iterator_v2_results?: string;
+    all_search_count?: number;
   };
+  collection_name: string;
+  session_ts: number;
 }
 
 // because in javascript, there is no float16 and bfloat16 type
@@ -462,8 +468,8 @@ export type QueryReq = BaseQueryReq &
 
 export interface QueryIteratorReq
   extends Omit<QueryReq, 'ids' | 'offset' | 'limit'> {
-  limit?: number;
-  batchSize: number;
+  limit?: number; // Optional. Specifies the maximum number of items. Default is no limit (-1 or if not set).
+  batchSize: number; // Specifies the number of items to return in each batch. if it exceeds 16384, it will be set to 16384
 }
 
 export interface GetReq extends collectionNameReq {
