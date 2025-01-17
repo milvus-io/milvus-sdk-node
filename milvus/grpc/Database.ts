@@ -187,6 +187,10 @@ export class Database extends BaseClient {
     return promise;
   }
 
+  // alais
+  /* istanbul ignore next */
+  alterDatabaseProperties = this.alterDatabase;
+
   /**
    * Drops database properties.
    *
