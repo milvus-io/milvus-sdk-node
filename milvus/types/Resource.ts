@@ -1,10 +1,16 @@
-import { GrpcTimeOut, resStatusResponse, collectionNameReq } from './Common';
+import {
+  GrpcTimeOut,
+  resStatusResponse,
+  collectionNameReq,
+  KeyValuePair,
+} from './Common';
 
 type ResourceGroupConfig = {
   requests?: { node_num: number }; // requests node num in resource group, if node num is less than requests.nodeNum, it will be transfer from other resource group.
   limits?: { node_num: number }; // limited node num in resource group, if node num is more than limits.nodeNum, it will be transfer to other resource group.
   transfer_from?: { resource_group: string }[]; // missing node should be transfer from given resource group at high priority in repeated list.
   transfer_to?: { resource_group: string }[]; // redundant node should be transfer to given resource group at high priority in repeated list.
+  node_filters?: { node_labels: KeyValuePair }; // node in resource group must match node filters
 };
 
 type ResourceGroup = {
