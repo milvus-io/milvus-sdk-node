@@ -72,7 +72,7 @@ describe(`Milvus client`, () => {
     const m1u = new MilvusClient({
       address: IP,
       tls: {
-        skipCertCheck : true
+        skipCertCheck: true,
       },
       id: '1',
       __SKIP_CONNECT__: true,
@@ -208,6 +208,21 @@ describe(`Milvus client`, () => {
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED);
     }
+  });
+
+  it(`should add trace interceptor if enableTrace is true`, async () => {
+    const nonTraceClient = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+    expect(nonTraceClient.channelOptions.interceptors.length).toEqual(2);
+    const traceClient = new MilvusClient({
+      address: IP,
+      trace: true,
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(traceClient.channelOptions.interceptors.length).toEqual(3);
   });
 
   it(`Expect get node sdk info`, async () => {
