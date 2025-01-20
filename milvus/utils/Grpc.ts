@@ -21,7 +21,7 @@ interface Carrier {
   tracestate?: string;
 }
 import { DEFAULT_DB } from '../const';
-import packjson from '../../package.json';
+import sdkInfo from '../../sdk.json';
 
 interface IServiceDetails {
   protoPath: string; // file to your proto file
@@ -239,7 +239,7 @@ export const getRetryInterceptor = ({
 export const getTraceInterceptor = () => {
   // Get the name and version of the client.
   const name = 'milvus-node-client';
-  const version = packjson.version;
+  const version = sdkInfo.version;
   // Get the tracer.
   const tracer = trace.getTracer(name, version);
 
