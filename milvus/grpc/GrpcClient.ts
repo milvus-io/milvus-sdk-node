@@ -17,6 +17,7 @@ import {
   getAuthString,
   getRetryInterceptor,
   getMetaInterceptor,
+  getTraceInterceptor,
   ErrorCode,
   DEFAULT_DB,
   METADATA,
@@ -96,7 +97,16 @@ export class GRPCClient extends User {
     });
 
     // interceptors
-    const interceptors = [metaInterceptor, retryInterceptor];
+    const interceptors = [metaInterceptor];
+
+    // add trace if necessary
+    if (this.config.trace) {
+      // add trace interceptor
+      interceptors.push(getTraceInterceptor());
+    }
+
+    // add retry interceptor
+    interceptors.push(retryInterceptor);
 
     // add interceptors
     this.channelOptions.interceptors = interceptors;

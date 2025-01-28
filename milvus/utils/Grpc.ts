@@ -15,7 +15,13 @@ import {
   isInvalidMessage,
   logger,
 } from '.';
+import { context, propagation, Span, trace } from '@opentelemetry/api';
+interface Carrier {
+  traceparent?: string;
+  tracestate?: string;
+}
 import { DEFAULT_DB } from '../const';
+import sdkInfo from '../../sdk.json';
 
 interface IServiceDetails {
   protoPath: string; // file to your proto file
@@ -225,3 +231,41 @@ export const getRetryInterceptor = ({
     };
     return new InterceptingCall(nextCall(options), requester);
   };
+
+/**
+ * Returns a gRPC interceptor function that adds trace context to outgoing requests.
+ */
+/* istanbul ignore next */
+export const getTraceInterceptor = () => {
+  // Get the name and version of the client.
+  const name = 'milvus-node-client';
+  const version = sdkInfo.version;
+  // Get the tracer.
+  const tracer = trace.getTracer(name, version);
+
+  return function (options: any, nextCall: any) {
+    // Create a new InterceptingCall object with nextCall(options) as its first parameter.
+    return new InterceptingCall(nextCall(options), {
+      // Define the start method of the InterceptingCall object.
+      start: function (metadata, listener, next) {
+        tracer.startActiveSpan('grpc-intercept', (span: Span) => {
+          // Set the span context.
+          const output: Carrier = {};
+          // Inject the span context into the metadata.
+          propagation.inject(context.active(), output);
+          // Add the traceparent and tracestate to the metadata.
+          const { traceparent, tracestate } = output;
+          if (traceparent) {
+            metadata.add('traceparent', traceparent);
+          }
+          if (tracestate) {
+            metadata.add('tracestate', tracestate);
+          }
+          span.end();
+        });
+        // Call next(metadata, listener) to continue the call with the modified metadata.
+        next(metadata, listener);
+      },
+    });
+  };
+};

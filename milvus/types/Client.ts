@@ -71,6 +71,9 @@ export interface ClientConfig {
   // Number converts int64 to number, it will lose precision
   // String converts int64 to string, it's the default behavior
   loaderOptions?: LoaderOption;
+
+  // enable trace
+  trace?: boolean;
 }
 
 export interface ServerInfo {
