@@ -31,11 +31,36 @@ describe(`User Api`, () => {
         autoID: false,
       })
     );
+
+    // create another database
+    await authClient.createDatabase({
+      db_name: 'another_db',
+    });
+
+    // create another collection
+    await authClient.createCollection({
+      ...genCollectionParams({
+        collectionName: 'another_collection',
+        dim: [4],
+        vectorType: [DataType.FloatVector],
+        autoID: false,
+      }),
+      db_name: 'another_db',
+    });
   });
 
   afterAll(async () => {
     await authClient.dropCollection({
       collection_name: COLLECTION_NAME,
+    });
+
+    await authClient.dropCollection({
+      collection_name: 'another_collection',
+      db_name: 'another_db',
+    });
+
+    await authClient.dropDatabase({
+      db_name: 'another_db',
     });
     authClient.closeConnection();
   });
@@ -222,20 +247,40 @@ describe(`User Api`, () => {
       privilege: Privileges.Query,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res2 = await authClient.grantPrivilegeV2({
+      role: ROLE_NAME,
+      collection_name: COLLECTION_NAME,
+      db_name: 'another_db',
+      privilege: Privileges.Query,
+    });
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should list grants successfully`, async () => {
     const res = await authClient.listGrants({
       roleName: ROLE_NAME,
     });
-    expect(res.entities.length).toEqual(2);
-    expect(res.entities[0].object_name).toEqual(COLLECTION_NAME);
-    expect(res.entities[0].object.name).toEqual(RbacObjects.Collection);
-    expect(res.entities[0].grantor.privilege.name).toEqual(Privileges.Query);
-    expect(res.entities[1].object_name).toEqual(COLLECTION_NAME);
-    expect(res.entities[1].object.name).toEqual(RbacObjects.Collection);
-    expect(res.entities[1].grantor.privilege.name).toEqual(Privileges.Search);
-    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // it should have one entity of db_name = 'another_db' and two entities of db_name = 'default'
+    expect(res.entities.length).toEqual(3);
+    const db1 = res.entities.find(e => e.db_name === 'default');
+    expect(db1).toBeDefined();
+    const db2 = res.entities.find(e => e.db_name === 'another_db');
+    expect(db2).toBeDefined();
+
+    // it should have three entities of collection_name = COLLECTION_NAME
+    const col = res.entities.filter(e => e.object_name === COLLECTION_NAME);
+    expect(col.length).toEqual(3);
+
+
+    const res2 = await authClient.listGrants({
+      roleName: ROLE_NAME,
+      db_name: 'another_db',
+    });
+
+    // it should have one entity of db_name = 'another_db'
+    expect(res2.entities.length).toEqual(1);
   });
 
   it(`It should select grant successfully`, async () => {
@@ -244,7 +289,19 @@ describe(`User Api`, () => {
       object: RbacObjects.Collection,
       objectName: COLLECTION_NAME,
     });
+
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.entities.length).toEqual(2);
+
+    const res2 = await authClient.selectGrant({
+      roleName: ROLE_NAME,
+      object: RbacObjects.Collection,
+      objectName: COLLECTION_NAME,
+      db_name: 'another_db',
+    });
+
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.entities.length).toEqual(1);
   });
 
   it(`It should check role name  successfully`, async () => {
@@ -274,6 +331,14 @@ describe(`User Api`, () => {
       privilege: Privileges.Query,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const res2 = await authClient.revokePrivilegeV2({
+      role: ROLE_NAME,
+      collection_name: COLLECTION_NAME,
+      db_name: 'another_db',
+      privilege: Privileges.Query,
+    });
+    expect(res2.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`It should remove user from role successfully`, async () => {

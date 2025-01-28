@@ -609,6 +609,10 @@ export class User extends Resource {
       },
     };
 
+    if (data.db_name) {
+      params.entity.db_name = data.db_name;
+    }
+
     const promise = await promisify(
       this.channelPool,
       'SelectGrant',
@@ -656,6 +660,7 @@ export class User extends Resource {
       {
         entity: {
           role: { name: data.roleName },
+          db_name: data.db_name || '*',
         },
       },
       data.timeout || this.timeout
