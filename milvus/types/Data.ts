@@ -371,6 +371,7 @@ export interface SearchIteratorReq
   extends Omit<SearchSimpleReq, 'vectors' | 'offset' | 'limit' | 'topk'> {
   limit?: number; // Optional. Specifies the maximum number of items. Default is no limit (-1 or if not set).
   batchSize: number; // Specifies the number of items to return in each batch. if it exceeds 16384, it will be set to 16384
+  external_filter_fn?: (row: SearchResultData) => boolean; // Optional. Specifies the external filter function.
 }
 
 // rerank strategy and parameters
