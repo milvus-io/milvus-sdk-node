@@ -1,4 +1,9 @@
-import { MilvusClient, DataType, NO_LIMIT } from '../../milvus';
+import {
+  MilvusClient,
+  DataType,
+  NO_LIMIT,
+  SearchResultData,
+} from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -426,6 +431,39 @@ describe(`Iterator API`, () => {
       idSet.add(result.id);
     });
     expect(idSet.size).toEqual(total);
+  });
+
+  it('search iterator with external_filter_fn should success', async () => {
+    const batchSize = 5000;
+    const total = 5000;
+    const iterator = await milvusClient.searchIterator({
+      collection_name: COLLECTION,
+      batchSize: batchSize,
+      data: data[0].vector,
+      expr: 'id > 0',
+      output_fields: ['id', 'default_value'],
+      limit: total,
+      external_filter_fn: (batchRes: SearchResultData) => {
+        return batchRes.default_value === 100;
+      },
+    });
+
+    const results: any = [];
+    // let batch = 0;
+    for await (const value of iterator) {
+      // console.log(`batch${batch++}`, value.length);
+      // console.log(value.map((item: any) => item.score));
+
+      results.push(...value);
+    }
+
+    // all default_value should be 100
+    results.forEach((result: any) => {
+      expect(result.default_value).toEqual(100);
+    });
+
+    // result should be less than total
+    expect(results.length).toBeLessThanOrEqual(total);
   });
 
   it('search iterator with batch size > total should success', async () => {

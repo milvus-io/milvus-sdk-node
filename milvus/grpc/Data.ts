@@ -484,18 +484,18 @@ export class Data extends Collection {
    * ```
    */
   async search(
-    data: SearchReq | SearchSimpleReq | HybridSearchReq
+    params: SearchReq | SearchSimpleReq | HybridSearchReq
   ): Promise<SearchResults> {
     // default collection request
     const describeCollectionRequest = {
-      collection_name: data.collection_name,
+      collection_name: params.collection_name,
       cache: true,
     } as DescribeCollectionReq;
 
     // get collection info
-    if (data.db_name) {
+    if (params.db_name) {
       // if the request has `db_name` pass it to the request.
-      describeCollectionRequest.db_name = data.db_name;
+      describeCollectionRequest.db_name = params.db_name;
     }
 
     const collectionInfo = await this.describeCollection(
@@ -504,14 +504,14 @@ export class Data extends Collection {
 
     // build search params
     const { request, nq, round_decimal, isHybridSearch } = buildSearchRequest(
-      data,
+      params,
       collectionInfo,
       this.milvusProto
     );
 
     // if db_name exist, pass it to the request
-    if (data.db_name) {
-      (request as any).db_name = data.db_name;
+    if (params.db_name) {
+      (request as any).db_name = params.db_name;
     }
 
     // execute search
@@ -519,7 +519,7 @@ export class Data extends Collection {
       this.channelPool,
       isHybridSearch ? 'HybridSearch' : 'Search',
       request,
-      data.timeout || this.timeout
+      params.timeout || this.timeout
     );
 
     // if search failed
@@ -534,7 +534,7 @@ export class Data extends Collection {
         results: [],
         recalls: [],
         session_ts: -1,
-        collection_name: data.collection_name,
+        collection_name: params.collection_name,
         search_iterator_v2_results:
           originSearchResult.results &&
           originSearchResult.results.search_iterator_v2_results,
@@ -547,7 +547,7 @@ export class Data extends Collection {
     // build final results array
     const results = formatSearchResult(originSearchResult, {
       round_decimal,
-      transformers: data.transformers,
+      transformers: params.transformers,
     });
 
     return {
@@ -556,7 +556,7 @@ export class Data extends Collection {
       results: nq === 1 ? results[0] || [] : results,
       recalls: originSearchResult.results.recalls,
       session_ts: originSearchResult.session_ts,
-      collection_name: data.collection_name,
+      collection_name: params.collection_name,
       all_search_count: originSearchResult.results.all_search_count,
       search_iterator_v2_results:
         originSearchResult.results.search_iterator_v2_results,
@@ -565,30 +565,30 @@ export class Data extends Collection {
     };
   }
 
-  async searchIterator(data: SearchIteratorReq): Promise<any> {
+  async searchIterator(param: SearchIteratorReq): Promise<any> {
     const client = this;
 
     // Get available count
     const count = await client.count({
-      collection_name: data.collection_name,
-      expr: data.expr || data.filter || '',
+      collection_name: param.collection_name,
+      expr: param.expr || param.filter || '',
     });
 
     // get collection Info
     const collectionInfo = await this.describeCollection({
-      collection_name: data.collection_name,
+      collection_name: param.collection_name,
     });
 
     // if limit not set, set it to count
-    if (!data.limit || data.limit === NO_LIMIT) {
-      data.limit = count.data;
+    if (!param.limit || param.limit === NO_LIMIT) {
+      param.limit = count.data;
     }
 
     // Ensure limit does not exceed the total count
-    const total = Math.min(data.limit, count.data);
+    const total = Math.min(param.limit, count.data);
 
     // Ensure batch size does not exceed the total count or max search size
-    let batchSize = Math.min(data.batchSize, total, DEFAULT_MAX_SEARCH_SIZE);
+    let batchSize = Math.min(param.batchSize, total, DEFAULT_MAX_SEARCH_SIZE);
 
     // Iterator fields
     const ITERATOR_FIELD = 'iterator';
@@ -603,7 +603,7 @@ export class Data extends Collection {
 
     // search iterator special params
     const params: any = {
-      ...data.params,
+      ...param.params,
       [ITERATOR_FIELD]: true,
       [ITER_SEARCH_V2_KEY]: true,
       [ITER_SEARCH_BATCH_SIZE_KEY]: batchSize,
@@ -621,7 +621,7 @@ export class Data extends Collection {
 
             try {
               const batchRes = await client.search({
-                ...data,
+                ...param,
                 params,
                 limit: batchSize,
               });
@@ -640,7 +640,9 @@ export class Data extends Collection {
 
               return {
                 done: currentTotal > total || !batchRes.results.length,
-                value: batchRes.results,
+                value: param.external_filter_fn
+                  ? batchRes.results.filter(param.external_filter_fn)
+                  : batchRes.results,
               };
             } catch (error) {
               console.error('Error during search iteration:', error);
