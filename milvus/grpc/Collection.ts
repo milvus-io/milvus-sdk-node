@@ -587,7 +587,7 @@ export class Collection extends Database {
    * ```
    */
   async refreshLoad(data: RefreshLoadReq): Promise<ResStatus> {
-    return this.loadCollectionAsync({...data, refresh: true});
+    return this.loadCollectionAsync({ ...data, refresh: true });
   }
 
   /**
@@ -1092,6 +1092,8 @@ export class Collection extends Database {
     );
     return res;
   }
+  // alias
+  describeReplics = this.getReplicas;
 
   /**
    * Get the loading progress of a collection.
