@@ -1093,7 +1093,7 @@ export class Collection extends Database {
     return res;
   }
   // alias
-  describeReplics = this.getReplicas;
+  describeReplicas = this.getReplicas;
 
   /**
    * Get the loading progress of a collection.
