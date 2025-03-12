@@ -127,7 +127,7 @@ export class Data extends Collection {
     }
     const { collection_name } = data;
 
-    const describeReq = { collection_name };
+    const describeReq = { collection_name, cache: true };
     if (data.db_name) {
       (describeReq as any).db_name = data.db_name;
     }
@@ -225,7 +225,11 @@ export class Data extends Collection {
     });
 
     // The actual data we pass to Milvus gRPC.
-    const params = { ...data, num_rows: data.fields_data.length };
+    const params = {
+      ...data,
+      num_rows: data.fields_data.length,
+      schema_timestamp: collectionInfo.update_timestamp,
+    };
 
     // transform data from map to array, milvus grpc params
     params.fields_data = Array.from(fieldMap.values()).map(field => {
@@ -325,12 +329,20 @@ export class Data extends Collection {
       delete params.data;
     } catch (e) {}
     // execute Insert
-    const promise = await promisify(
+    let promise = await promisify(
       this.channelPool,
       upsert ? 'Upsert' : 'Insert',
       params,
       timeout
     );
+
+    // if schema mismatch, reload collection info and redo the insert request
+    if (promise.status.error_code === ErrorCode.SchemaMismatch) {
+      // load collection info without cache
+      await this.describeCollection({ collection_name });
+      // redo the insert request
+      promise = await this._insert(data, upsert);
+    }
 
     return promise;
   }
