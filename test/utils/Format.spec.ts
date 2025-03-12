@@ -505,6 +505,7 @@ describe('utils/format', () => {
       collection_name: 'test',
       db_name: '',
       functions: [],
+      update_timestamp: 0
     };
 
     const formatted = formatDescribedCol(response);
