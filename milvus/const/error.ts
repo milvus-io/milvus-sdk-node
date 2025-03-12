@@ -72,4 +72,5 @@ export enum ErrorCode {
   CollectionNotExists = 'CollectionNotExists',
   IllegalArgument = 'IllegalArgument',
   RateLimit = 'RateLimit',
+  SchemaMismatch = 'SchemaMismatch',
 }

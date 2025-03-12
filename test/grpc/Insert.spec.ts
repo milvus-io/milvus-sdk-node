@@ -14,7 +14,7 @@ import {
   genFloatVector,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const longClient = new MilvusClient({
   address: IP,
   loaderOptions: { longs: Function },
@@ -340,6 +340,32 @@ describe(`Insert API`, () => {
     });
     // console.log('search', search.results);
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Insert Data on float field expect success`, async () => {
+    const dataToInsert = generateInsertData(COLLECTION_NAME_PARAMS.fields, 10);
+    const params: InsertReq = {
+      collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
+      fields_data: dataToInsert,
+    };
+
+    // release collection
+    await milvusClient.releaseCollection({
+      collection_name: COLLECTION_NAME,
+    });
+
+    // alter mmap for this collection
+    await milvusClient.alterCollectionProperties({
+      collection_name: COLLECTION_NAME,
+      properties: {
+        'mmap.enabled': true,
+      },
+    });
+
+    // do the insert
+    const res = await milvusClient.insert(params);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`Insert data on float field expect missing field throw error`, async () => {
