@@ -104,6 +104,13 @@ export const genJSON: DataGenerator = () => {
       }
     : {};
 };
+/**
+ * Generates a int starting from 0 to 255
+ * @returns {number} The generated int.
+ */
+export const genInt16: DataGenerator = () => {
+  return Math.floor(Math.random() * 256);
+};
 
 /**
  * Generates a random binary vector of a given dimension.
@@ -249,7 +256,7 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.None]: genNone,
   [DataType.Bool]: genBool,
   [DataType.Int8]: genInt,
-  [DataType.Int16]: genInt,
+  [DataType.Int16]: genInt16,
   [DataType.Int32]: genInt,
   [DataType.Int64]: genInt64,
   [DataType.Float]: genFloat,
