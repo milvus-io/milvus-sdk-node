@@ -964,9 +964,18 @@ export const formatSearchResult = (
   topks.forEach((v, index) => {
     const topk = Number(v);
 
+    // if topk is 0, we need to return empty array
+    if (topk === 0) {
+      results[index] = [];
+      return;
+    }
+
+    // slice scores, offset is used to get the correct index
+    let offset = 0;
+
     scores.splice(0, topk).forEach((score, scoreIndex) => {
       // get correct index
-      const i = index === 0 ? scoreIndex : scoreIndex + topk * index;
+      const i = offset + scoreIndex;
 
       // fix round_decimal
       const fixedScore =
@@ -998,6 +1007,8 @@ export const formatSearchResult = (
       // push result data
       results[index].push(result);
     });
+    // next offset
+    offset += topk;
   });
 
   return results;

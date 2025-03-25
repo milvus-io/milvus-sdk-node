@@ -23,6 +23,12 @@ const p = {
   collectionName: COLLECTION_NAME,
   vectorType: [DataType.SparseFloatVector],
   dim: [24], // useless
+  fields: [
+    {
+      data_type: DataType.Int16,
+      name: 'int',
+    },
+  ],
 };
 const collectionParams = genCollectionParams(p);
 const data = generateInsertData(collectionParams.fields, 10);
@@ -50,8 +56,6 @@ describe(`Sparse vectors type:dict API testing`, () => {
       (field: any) => field.data_type === 'SparseFloatVector'
     );
     expect(sparseFloatVectorFields.length).toBe(1);
-
-    // console.dir(describe.schema, { depth: null });
   });
 
   it(`insert sparse vector data should be successful`, async () => {
@@ -59,8 +63,6 @@ describe(`Sparse vectors type:dict API testing`, () => {
       collection_name: COLLECTION_NAME,
       data,
     });
-
-    // console.log('data to insert', data);
 
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(insert.succ_index.length).toEqual(data.length);
@@ -123,13 +125,25 @@ describe(`Sparse vectors type:dict API testing`, () => {
 
   it(`search with sparse vector with nq > 1 should be successful`, async () => {
     const search = await milvusClient.search({
-      data: [data[0].vector, data[1].vector],
+      data: [
+        data[0].vector,
+        data[1].vector,
+        data[2].vector,
+        data[3].vector,
+        data[4].vector,
+        data[5].vector,
+      ],
       collection_name: COLLECTION_NAME,
-      output_fields: ['id', 'vector'],
+      output_fields: ['id', 'vector', 'int'],
       limit: 5,
+      filter: 'int < 128',
+      params: {
+        radius: 0.1,
+        range_filter: 1,
+      },
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(search.results.length).toEqual(2);
+    expect(search.results.length).toEqual(6);
   });
 });
