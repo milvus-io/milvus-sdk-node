@@ -505,7 +505,7 @@ describe('utils/format', () => {
       collection_name: 'test',
       db_name: '',
       functions: [],
-      update_timestamp: 0
+      update_timestamp: 0,
     };
 
     const formatted = formatDescribedCol(response);
@@ -714,6 +714,78 @@ describe('utils/format', () => {
     const results = formatSearchResult(searchPromise, options);
 
     expect(results).toEqual(expectedResults);
+
+    const searchPromise2: any = {
+      results: {
+        fields_data: [
+          {
+            type: 'Int64',
+            field_name: 'id',
+            field_id: '101',
+            is_dynamic: false,
+            scalars: {
+              long_data: {
+                data: [
+                  '98286',
+                  '40057',
+                  '5878',
+                  '96232',
+                  '98286',
+                  '40057',
+                  '5878',
+                  '96232',
+                ],
+              },
+              data: 'long_data',
+            },
+            field: 'scalars',
+          },
+        ],
+        scores: [
+          14.632697105407715, 15.0767822265625, 15.287022590637207,
+          15.357033729553223, 14.0, 15.0767822265625, 15.287022590637207,
+          15.357033729553223,
+        ],
+        topks: ['4', '0', '4'],
+        output_fields: ['id'],
+        num_queries: '1',
+        top_k: '8',
+        ids: {
+          int_id: {
+            data: [
+              '98286',
+              '40057',
+              '5878',
+              '96232',
+              '98286',
+              '40057',
+              '5878',
+              '96232',
+            ],
+          },
+          id_field: 'int_id',
+        },
+        group_by_field_value: null,
+      },
+    };
+
+    const expectedResults2 = [
+      [
+        { score: 14.632697105407715, id: '98286' },
+        { score: 15.0767822265625, id: '40057' },
+        { score: 15.287022590637207, id: '5878' },
+        { score: 15.357033729553223, id: '96232' },
+      ],
+      [],
+      [
+        { score: 14.0, id: '98286' },
+        { score: 15.0767822265625, id: '40057' },
+        { score: 15.287022590637207, id: '5878' },
+        { score: 15.357033729553223, id: '96232' },
+      ],
+    ];
+    const results2 = formatSearchResult(searchPromise2, { round_decimal: -1 });
+    expect(results2).toEqual(expectedResults2);
   });
 
   it('should format search vector correctly', () => {
@@ -1124,7 +1196,7 @@ describe('utils/format', () => {
     try {
       buildSearchRequest(searchParams, describeCollectionResponse, milvusProto);
     } catch (err) {
-      console.log(err)
+      console.log(err);
       expect(err.message).toEqual(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
     }
   });
