@@ -1,3 +1,4 @@
+import exp from 'constants';
 import {
   MilvusClient,
   ErrorCode,
@@ -38,6 +39,9 @@ const collectionParamsWithTypedArr = genCollectionParams(typedP);
 
 const data = generateInsertData(collectionParamsWithArr.fields, 4);
 const typedData = generateInsertData(collectionParamsWithTypedArr.fields, 4);
+
+console.log('data', data);
+console.log('typedData', typedData);
 
 // console.dir(data, { depth: null });
 describe(`Int8 vectors API testing`, () => {
@@ -113,19 +117,24 @@ describe(`Int8 vectors API testing`, () => {
       filter: 'id > 0',
       output_fields: ['vector', 'id'],
     });
+
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(query.data.length).toEqual(data.length + typedData.length);
+
+    // console.dir(query, { depth: null });
   });
 
-  // it(`search with sparse vector should be successful`, async () => {
-  //   const search = await milvusClient.search({
-  //     data: data[0].vector,
-  //     collection_name: COLLECTION_NAME,
-  //     output_fields: ['id', 'vector'],
-  //     limit: 5,
-  //   });
+  it(`search with sparse vector should be successful`, async () => {
+    const search = await milvusClient.search({
+      data: data[0].vector,
+      collection_name: COLLECTION_NAME,
+      output_fields: ['id', 'vector'],
+      limit: 5,
+    });
 
-  //   expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
-  //   expect(search.results.length).toBeGreaterThan(0);
-  // });
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toBeGreaterThan(0);
+  });
 
   // it(`search with sparse vector with nq > 1 should be successful`, async () => {
   //   const search = await milvusClient.search({

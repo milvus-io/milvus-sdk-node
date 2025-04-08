@@ -451,6 +451,7 @@ export type OutputTransformers = {
   [DataType.BFloat16Vector]?: (bf16bytes: Uint8Array) => BFloat16Vector;
   [DataType.Float16Vector]?: (f16: Uint8Array) => Float16Vector;
   [DataType.SparseFloatVector]?: (sparse: SparseVectorDic) => SparseFloatVector;
+  [DataType.Int8Vector]?: (int8Vector: Int8Array) => Int8Vector;
 };
 
 type BaseQueryReq = collectionNameReq & {

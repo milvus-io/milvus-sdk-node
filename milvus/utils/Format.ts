@@ -41,6 +41,7 @@ import {
   f32ArrayToF16Bytes,
   bf16BytesToF32Array,
   f16BytesToF32Array,
+  int8VectorBytesToF32Array,
   SearchDataType,
   FieldSchema,
   SearchMultipleDataType,
@@ -512,6 +513,26 @@ export const buildFieldDataMap = (
             }
             field_data[index].push(v);
           });
+          break;
+
+        case 'int8_vector':
+          field_data = [];
+          const int8Dim = Number(item.vectors!.dim);
+          const int8Bytes = item.vectors![dataKey]!;
+
+          const localTransformers = transformers || {
+            [DataType.Int8Vector]: int8VectorBytesToF32Array,
+          };
+
+          // split buffer data to int8 vector
+          for (let i = 0; i < int8Bytes.byteLength; i += int8Dim) {
+            const slice = int8Bytes.slice(i, i + int8Dim);
+
+            field_data.push(
+              localTransformers[DataType.Int8Vector]!(new Int8Array(slice))
+            );
+          }
+
           break;
 
         case 'float16_vector':
