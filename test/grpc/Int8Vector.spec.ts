@@ -1,4 +1,3 @@
-import exp from 'constants';
 import {
   MilvusClient,
   ErrorCode,
@@ -134,17 +133,27 @@ describe(`Int8 vectors API testing`, () => {
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toBeGreaterThan(0);
+
+    const searchTyped = await milvusClient.search({
+      data: typedData[0].vector,
+      collection_name: COLLECTION_NAME,
+      output_fields: ['id', 'vector'],
+      limit: 5,
+    });
+
+    expect(searchTyped.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(searchTyped.results.length).toBeGreaterThan(0);
   });
 
-  // it(`search with sparse vector with nq > 1 should be successful`, async () => {
-  //   const search = await milvusClient.search({
-  //     data: [data[0].vector, data[1].vector],
-  //     collection_name: COLLECTION_NAME,
-  //     output_fields: ['id', 'vector'],
-  //     limit: 5,
-  //   });
+  it(`search with sparse vector with nq > 1 should be successful`, async () => {
+    const search = await milvusClient.search({
+      data: [data[0].vector, data[1].vector],
+      collection_name: COLLECTION_NAME,
+      output_fields: ['id', 'vector'],
+      limit: 5,
+    });
 
-  //   expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
-  //   expect(search.results.length).toEqual(2);
-  // });
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(2);
+  });
 });

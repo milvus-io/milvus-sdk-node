@@ -1059,6 +1059,7 @@ export const formatSearchData = (
     case DataType.BinaryVector:
     case DataType.Float16Vector:
     case DataType.BFloat16Vector:
+    case DataType.Int8Vector:
       if (!Array.isArray(searchData)) {
         return [searchData] as VectorTypes[];
       }

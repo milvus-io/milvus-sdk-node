@@ -329,6 +329,11 @@ export const buildPlaceholderGroupBytes = (
           Array.isArray(v) ? f32ArrayToF16Bytes(v as Float16Vector) : v
         );
         break;
+      case DataType.Int8Vector:
+        bytes = data.map(v =>
+          Array.isArray(v) ? f32ArrayToInt8Bytes(v as Int8Vector) : v
+        );
+        break;
       case DataType.SparseFloatVector:
         bytes = data.map(v => sparseToBytes(v as SparseFloatVector));
 
