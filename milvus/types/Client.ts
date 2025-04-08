@@ -1,6 +1,7 @@
 import { ChannelOptions } from '@grpc/grpc-js';
 import { Options as LoaderOption } from '@grpc/proto-loader';
 import { Options } from 'generic-pool';
+import { ResStatus } from './';
 
 /**
  * Configuration options for the Milvus client.
@@ -77,4 +78,28 @@ export interface ServerInfo {
   go_version?: string;
   deploy_mode?: string;
   reserved?: { [key: string]: any };
+}
+
+export interface RunAnalyzerRequest {
+  analyzer_params: Record<string, any>;
+  text: string | string[];
+  with_detail: boolean;
+  with_hash: boolean;
+}
+
+type AnalyzerToken = {
+  token: string;
+  start_offset: number;
+  end_offset: number;
+  position: number;
+  position_length: number;
+  hash: number;
+};
+export type AnalyzerResult = {
+  tokens: AnalyzerToken[];
+};
+
+export interface RunAnalyzerResponse {
+  status: ResStatus;
+  results: AnalyzerResult[];
 }

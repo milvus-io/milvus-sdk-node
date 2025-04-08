@@ -26,6 +26,8 @@ import {
   ClientConfig,
   DEFAULT_POOL_MAX,
   DEFAULT_POOL_MIN,
+  RunAnalyzerRequest,
+  RunAnalyzerResponse,
 } from '../';
 import { User } from './User';
 
@@ -266,5 +268,26 @@ export class GRPCClient extends User {
     // wait until connecting finished
     await this.connectPromise;
     return await promisify(this.channelPool, 'CheckHealth', {}, this.timeout);
+  }
+
+  /**
+   * Runs an analyzer on the provided text.
+   * @param {RunAnalyzerRequest} data - The request object containing analyzer parameters and text.
+   * @returns {Promise<RunAnalyzerResponse>} - A Promise that resolves with the analyzer response.
+   */
+  async runAnalyzer(data: RunAnalyzerRequest): Promise<RunAnalyzerResponse> {
+    return await promisify(
+      this.channelPool,
+      'RunAnalyzer',
+      {
+        analyzer_params: JSON.stringify(data.analyzer_params),
+        placeholder: (Array.isArray(data.text) ? data.text : [data.text]).map(
+          d => new TextEncoder().encode(String(d))
+        ),
+        with_detail: data.with_detail,
+        with_hash: data.with_hash,
+      },
+      this.timeout
+    );
   }
 }
