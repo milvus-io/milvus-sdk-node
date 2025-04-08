@@ -5,17 +5,21 @@ on:
     branches:
       - main
       - 2.4
+      - 2.5
     types: [opened, synchronize]
     paths-ignore:
       - '.github/**'
       - '*.md'
+      - 'examples/**'
   push:
     branches:
       - main
       - 2.4
+      - 2.5
     paths-ignore:
       - '.github/**'
       - '*.md'
+      - 'examples/**'
 jobs:
   publish:
     runs-on: ubuntu-latest
