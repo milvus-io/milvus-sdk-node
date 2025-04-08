@@ -261,16 +261,6 @@ export const int8VectorRowsToBytes = (data: Int8Vector[]): Buffer => {
 };
 
 /**
- * Convert int8 bytes to Int8Array
- * @param {Buffer} data - The Int8 bytes to convert.
- * @returns {Array} The Int8 array.
- */
-export const int8VectorBytesToF32Array = (data: Int8Array): number[] => {
-  const int8Array = new Int8Array(data.buffer);
-  return Array.from(int8Array);
-};
-
-/**
  * Parses the provided buffer data into a sparse row representation.
  *
  * @param {Buffer} bufferData - The buffer data to parse.

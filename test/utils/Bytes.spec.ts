@@ -8,6 +8,8 @@ import {
   f16BytesToF32Array,
   f32ArrayToBf16Bytes,
   bf16BytesToF32Array,
+  f32ArrayToInt8Bytes,
+  int8VectorRowsToBytes,
 } from '../../milvus';
 
 describe('Data <-> Bytes Test', () => {
@@ -104,5 +106,20 @@ describe('Data <-> Bytes Test', () => {
     for (let i = 0; i < data.length; i++) {
       expect(data[i]).toBeCloseTo(f32Array[i], 2);
     }
+  });
+
+  it(`should transform f32 -> int8array`, () => {
+    const data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const int8Bytes = f32ArrayToInt8Bytes(data);
+    const int8Array = Array.from(int8Bytes);
+    expect(int8Array.length).toEqual(data.length);
+    expect(int8Array).toEqual(data);
+
+    const data2 = new Int8Array(data);
+    const int8Bytes2 = f32ArrayToInt8Bytes(data2);
+
+    expect(int8Bytes2).toEqual(Buffer.from(data2.buffer));
+    const int8Array2 = Array.from(int8Bytes2);
+    expect(int8Array2).toEqual(data);
   });
 });

@@ -41,7 +41,6 @@ import {
   f32ArrayToF16Bytes,
   bf16BytesToF32Array,
   f16BytesToF32Array,
-  int8VectorBytesToF32Array,
   SearchDataType,
   FieldSchema,
   SearchMultipleDataType,
@@ -49,7 +48,6 @@ import {
   TypeParam,
   keyValueObj,
 } from '../';
-import { get } from 'http';
 
 /**
  * Formats key-value data based on the provided keys.
@@ -521,16 +519,14 @@ export const buildFieldDataMap = (
           const int8Bytes = item.vectors![dataKey]!;
 
           const localTransformers = transformers || {
-            [DataType.Int8Vector]: int8VectorBytesToF32Array,
+            [DataType.Int8Vector]: Array.from,
           };
 
           // split buffer data to int8 vector
           for (let i = 0; i < int8Bytes.byteLength; i += int8Dim) {
             const slice = int8Bytes.slice(i, i + int8Dim);
 
-            field_data.push(
-              localTransformers[DataType.Int8Vector]!(new Int8Array(slice))
-            );
+            field_data.push(localTransformers[DataType.Int8Vector]!(slice));
           }
 
           break;

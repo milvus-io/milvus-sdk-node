@@ -12,7 +12,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
@@ -38,9 +38,6 @@ const collectionParamsWithTypedArr = genCollectionParams(typedP);
 
 const data = generateInsertData(collectionParamsWithArr.fields, 4);
 const typedData = generateInsertData(collectionParamsWithTypedArr.fields, 4);
-
-console.log('data', data);
-console.log('typedData', typedData);
 
 // console.dir(data, { depth: null });
 describe(`Int8 vectors API testing`, () => {
