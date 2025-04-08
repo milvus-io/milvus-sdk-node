@@ -84,6 +84,37 @@ describe(`FulltextSearch API`, () => {
     await milvusClient.dropDatabase(dbParam);
   });
 
+  it(`run anyly analyzer should success`, async () => {
+    const runAnalyzer = await milvusClient.runAnalyzer({
+      analyzer_params: {
+        tokenizer: 'standard',
+        filter: ['lowercase'],
+      },
+      text: 'Would you like to eat an apple?',
+      with_detail: true,
+      with_hash: true,
+    });
+
+    expect(runAnalyzer.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(runAnalyzer.results.length).toEqual(1);
+    expect(runAnalyzer.results[0].tokens.length).toEqual(7);
+
+    const runAnalyzer2 = await milvusClient.runAnalyzer({
+      analyzer_params: {
+        tokenizer: 'standard',
+        filter: ['lowercase'],
+      },
+      text: ['Would you like to eat an apple?', 'I like apple'],
+      with_detail: true,
+      with_hash: true,
+    });
+
+    expect(runAnalyzer2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(runAnalyzer2.results.length).toEqual(2);
+    expect(runAnalyzer2.results[0].tokens.length).toEqual(7);
+    expect(runAnalyzer2.results[1].tokens.length).toEqual(3);
+  });
+
   it(`Create schema with function collection should success`, async () => {
     const create = await milvusClient.createCollection(createCollectionParams);
 
