@@ -58,6 +58,8 @@ import {
   DEFAULT_MAX_SEARCH_SIZE,
   SparseFloatVector,
   sparseRowsToBytes,
+  Int8Vector,
+  int8VectorRowsToBytes,
   getSparseDim,
   f32ArrayToBinaryBytes,
   getValidDataArray,
@@ -287,6 +289,13 @@ export class Data extends Collection {
             },
           };
           break;
+        case DataType.Int8Vector:
+          keyValue = {
+            dim: field.dim,
+            [dataKey]: int8VectorRowsToBytes(field.data as Int8Vector[]),
+          };
+          break;
+
         case DataType.Array:
           keyValue = {
             [dataKey]: {

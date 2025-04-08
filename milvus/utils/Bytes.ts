@@ -4,6 +4,7 @@ import {
   FloatVector,
   BinaryVector,
   SparseFloatVector,
+  Int8Vector,
   DataType,
   SearchMultipleDataType,
   Float16Vector,
@@ -226,6 +227,37 @@ export const sparseRowsToBytes = (data: SparseFloatVector[]): Uint8Array[] => {
     result.push(sparseToBytes(row));
   }
   return result;
+};
+
+/**
+ * Convert Int8Array to int8 bytes
+ * @param {Int8Vector} number of array or Int8Array.
+ * @returns {Bytes} The Int8 bytes.
+ */
+export const f32ArrayToInt8Bytes = (array: Int8Vector) => {
+  // if array is Int8Array, return it directly
+  if (array instanceof Int8Array) {
+    return Buffer.from(array.buffer);
+  }
+
+  const int8Array = new Int8Array(array.length);
+  for (let i = 0; i < array.length; i++) {
+    int8Array[i] = Math.round(array[i]);
+  }
+  return Buffer.from(int8Array.buffer);
+};
+
+/**
+ * Convert int8 vector to bytes
+ * @param {Int8Vector} array - The Int8 vector to convert.
+ * @returns {Buffer} The Int8 bytes.
+ */
+export const int8VectorRowsToBytes = (data: Int8Vector[]): Buffer => {
+  const result: Uint8Array[] = [];
+  for (const row of data) {
+    result.push(f32ArrayToInt8Bytes(row));
+  }
+  return Buffer.concat(result);
 };
 
 /**

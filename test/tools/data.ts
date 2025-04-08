@@ -18,6 +18,7 @@ interface DataGenerator {
     is_partition_key?: boolean;
     index?: number;
     sparseType?: string;
+    int8VectorType?: 'array' | 'typed_array';
   }): FieldData;
 }
 
@@ -244,6 +245,26 @@ export const genSparseVector: DataGenerator = params => {
   }
 };
 
+export const genInt8Vector: DataGenerator = params => {
+  const dim = params!.dim;
+
+  if (params!.int8VectorType === 'array') {
+    const int8Array: number[] = [];
+    for (let i = 0; i < dim!; i++) {
+      int8Array[i] = Math.floor(Math.random() * 256) - 128; // Generate random int8 value (-128 to 127)
+    }
+    return int8Array;
+  } else {
+    // use Int8Array typed array
+    const int8ArrayView = new Int8Array(dim!);
+    for (let i = 0; i < dim!; i++) {
+      int8ArrayView[i] = Math.floor(Math.random() * 256) - 128;
+    }
+    const int8Array = Array.from(int8ArrayView);
+    return int8Array;
+  }
+};
+
 export const genFloat16: DataGenerator = params => {
   const float32Array = genFloatVector(params);
   // console.log('origin float32array', float32Array);
@@ -269,6 +290,7 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.Float16Vector]: genFloat16,
   [DataType.BFloat16Vector]: genFloat16,
   [DataType.SparseFloatVector]: genSparseVector,
+  [DataType.Int8Vector]: genInt8Vector,
 };
 
 /**

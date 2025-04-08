@@ -635,6 +635,7 @@ export const buildFieldData = (
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
     case DataType.FloatVector:
+    case DataType.Int8Vector:
       return rowData[name];
     case DataType.BFloat16Vector:
       const bf16Transformer =

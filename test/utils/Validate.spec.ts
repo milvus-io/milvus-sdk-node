@@ -10,6 +10,7 @@ import {
   FieldType,
   checkCreateCollectionCompatibility,
   CreateCollectionReq,
+  isVectorType,
 } from '../../milvus';
 
 describe('utils/validate', () => {
@@ -362,5 +363,17 @@ describe('utils/validate', () => {
     };
 
     expect(() => checkCreateCollectionCompatibility(data)).not.toThrow();
+  });
+
+  it('should return true for vector types', () => {
+    expect(isVectorType(DataType.BinaryVector)).toBe(true);
+    expect(isVectorType(DataType.FloatVector)).toBe(true);
+    expect(isVectorType(DataType.Float16Vector)).toBe(true);
+    expect(isVectorType(DataType.BFloat16Vector)).toBe(true);
+    expect(isVectorType(DataType.SparseFloatVector)).toBe(true);
+    expect(isVectorType(DataType.Int8Vector)).toBe(true);
+    expect(isVectorType(DataType.Int64)).toBe(false);
+    expect(isVectorType(DataType.Int8)).toBe(false);
+    expect(isVectorType(DataType.Int32)).toBe(false);
   });
 });

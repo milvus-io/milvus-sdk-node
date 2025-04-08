@@ -25,6 +25,7 @@ export type SparseVectorCSR = {
   indices: number[];
   values: number[];
 };
+export type Int8Vector = number[] | Int8Array;
 export type SparseVectorCOO = { index: number; value: number }[];
 
 export type SparseFloatVector =
@@ -39,7 +40,8 @@ export type VectorTypes =
   | Float16Vector
   | BinaryVector
   | BFloat16Vector
-  | SparseFloatVector;
+  | SparseFloatVector
+  | Int8Vector;
 export type Bool = boolean;
 export type Int8 = number;
 export type Int16 = number;
