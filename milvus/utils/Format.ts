@@ -354,51 +354,79 @@ export const formatCollectionSchema = (
     name: collection_name,
     description: description || '',
     enableDynamicField: !!enableDynamicField || !!enable_dynamic_field,
-    fields: fields.map(field => {
-      // Assign the typeParams property to the result of parseToKeyValue(type_params).
-      const {
-        type_params,
-        data_type,
-        element_type,
-        is_function_output,
-        is_partition_key,
-        is_primary_key,
-        ...rest
-      } = assignTypeParams(field);
-      const dataType = convertToDataType(field.data_type);
-      const createObj: any = {
-        ...rest,
-        typeParams: parseToKeyValue(type_params),
-        data_type, // compatibility with old version
-        dataType,
-        isPrimaryKey: !!is_primary_key,
-        isPartitionKey:
-          !!is_partition_key || field.name === partition_key_field,
-        isFunctionOutput:
-          !!is_function_output || functionOutputFields.includes(field.name),
-        isClusteringKey:
-          !!field.is_clustering_key || field.name === clustring_key_field,
-      };
-
-      // if element type exist and
-      if (dataType === DataType.Array && typeof element_type !== 'undefined') {
-        createObj.elementType = convertToDataType(element_type);
-        createObj.element_type = element_type; // compatibility with old version
-      }
-
-      if (typeof field.default_value !== 'undefined') {
-        const dataKey = getDataKey(createObj.dataType, true);
-
-        createObj.defaultValue = {
-          [dataKey]: field.default_value,
-        };
-      }
-      return schemaTypes.fieldSchemaType.create(createObj);
-    }),
+    fields: fields.map(field =>
+      formatFieldSchema(field, schemaTypes, {
+        partition_key_field,
+        functionOutputFields,
+        clustring_key_field,
+      })
+    ),
     ...payload,
   };
 
   return payload;
+};
+
+/**
+ * Formats a field schema by converting its properties to the appropriate types and adding additional properties.
+ *
+ * @param {FieldType} field - The field to format.
+ * @param {Record<string, Type>} schemaTypes - The schema types to use for formatting.
+ * @param {Object} [override] - Optional override object for additional properties.
+ * @returns {Object} The formatted field schema.
+ */
+export const formatFieldSchema = (
+  field: FieldType,
+  schemaTypes: Record<string, Type>,
+  override?: {
+    partition_key_field?: string;
+    functionOutputFields?: string[];
+    clustring_key_field?: string;
+  }
+): { [k: string]: any } => {
+  const {
+    partition_key_field,
+    functionOutputFields = [],
+    clustring_key_field,
+  } = override || {};
+  // Assign the typeParams property to the result of parseToKeyValue(type_params).
+  const {
+    type_params,
+    data_type,
+    element_type,
+    is_function_output,
+    is_partition_key,
+    is_primary_key,
+    ...rest
+  } = assignTypeParams(field);
+  const dataType = convertToDataType(field.data_type);
+  const createObj: any = {
+    ...rest,
+    typeParams: parseToKeyValue(type_params),
+    data_type, // compatibility with old version
+    dataType,
+    isPrimaryKey: !!is_primary_key,
+    isPartitionKey: !!is_partition_key || field.name === partition_key_field,
+    isFunctionOutput:
+      !!is_function_output || functionOutputFields.includes(field.name),
+    isClusteringKey:
+      !!field.is_clustering_key || field.name === clustring_key_field,
+  };
+
+  // if element type exist and
+  if (dataType === DataType.Array && typeof element_type !== 'undefined') {
+    createObj.elementType = convertToDataType(element_type);
+    createObj.element_type = element_type; // compatibility with old version
+  }
+
+  if (typeof field.default_value !== 'undefined') {
+    const dataKey = getDataKey(createObj.dataType, true);
+
+    createObj.defaultValue = {
+      [dataKey]: field.default_value,
+    };
+  }
+  return schemaTypes.fieldSchemaType.create(createObj);
 };
 
 /**

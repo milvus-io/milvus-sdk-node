@@ -103,7 +103,6 @@ export type FunctionObject = {
 };
 
 export interface BaseCreateCollectionReq extends GrpcTimeOut {
-  // collection name
   collection_name: string; // required, collection name
   shards_num?: number; // optional, shards number, default is 1
   description?: string; // optional, description of the collection
@@ -135,6 +134,13 @@ export interface CreateCollectionWithSchemaReq extends BaseCreateCollectionReq {
 export type CreateCollectionReq =
   | CreateCollectionWithFieldsReq
   | CreateCollectionWithSchemaReq;
+
+// add collection field req
+export interface AddCollectionFieldReq extends collectionNameReq {
+  collection_name: string; // required, collection name
+  db_name?: string; // optional, db name
+  field: FieldType; // required, field of the collection
+}
 
 export interface HasCollectionReq extends collectionNameReq {}
 

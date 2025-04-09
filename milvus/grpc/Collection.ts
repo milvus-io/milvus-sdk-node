@@ -58,6 +58,8 @@ import {
   AlterCollectionFieldPropertiesReq,
   RefreshLoadReq,
   isVectorType,
+  AddCollectionFieldReq,
+  formatFieldSchema,
 } from '../';
 
 /**
@@ -202,6 +204,31 @@ export class Collection extends Database {
 
     // Return the promise.
     return createPromise;
+  }
+
+  async addCollectionField(data: AddCollectionFieldReq): Promise<ResStatus> {
+    // Get the CollectionSchemaType and FieldSchemaType from the schemaProto object.
+    const schemaTypes = {
+      fieldSchemaType: this.schemaProto.lookupType(
+        this.protoInternalPath.fieldSchema
+      ),
+    };
+
+    // Create the payload object with the collection_name, description, and fields.
+    // it should follow CollectionSchema in schema.proto
+    const payload = formatFieldSchema(data.field, schemaTypes);
+    const schema = schemaTypes.fieldSchemaType.create(payload);
+    const schemaBytes = schemaTypes.fieldSchemaType.encode(schema).finish();
+
+    return await promisify(
+      this.channelPool,
+      'AddCollectionField',
+      {
+        ...data,
+        schema: schemaBytes,
+      },
+      data.timeout || this.timeout
+    );
   }
 
   /**
