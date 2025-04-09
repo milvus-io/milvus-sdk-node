@@ -28,11 +28,12 @@ const p = {
   collectionName: COLLECTION_NAME,
   vectorType: [
     DataType.FloatVector,
-    DataType.FloatVector,
+    DataType.Int8Vector,
     DataType.Float16Vector,
     DataType.SparseFloatVector,
   ],
   dim: [8, 16, 4, 8],
+  int8VectorType: 'array',
 };
 const collectionParams = genCollectionParams(p);
 
@@ -59,7 +60,7 @@ describe(`Multiple vectors API testing`, () => {
     const floatVectorFields = describe.schema.fields.filter(
       (field: any) => field.data_type === 'FloatVector'
     );
-    expect(floatVectorFields.length).toBe(2);
+    expect(floatVectorFields.length).toBe(1);
 
     // console.dir(describe.schema, { depth: null });
   });

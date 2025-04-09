@@ -260,8 +260,7 @@ export const genInt8Vector: DataGenerator = params => {
     for (let i = 0; i < dim!; i++) {
       int8ArrayView[i] = Math.floor(Math.random() * 256) - 128;
     }
-    const int8Array = Array.from(int8ArrayView);
-    return int8Array;
+    return int8ArrayView;
   }
 };
 

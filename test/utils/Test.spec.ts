@@ -2,6 +2,7 @@ import {
   generateInsertData,
   genCollectionParams,
   genSparseVector,
+  genInt8Vector,
 } from '../tools';
 import {
   DataType,
@@ -9,6 +10,7 @@ import {
   SparseVectorDic,
   SparseVectorCSR,
   SparseVectorCOO,
+  Int8Vector,
 } from '../../milvus';
 
 describe(`utils/test`, () => {
@@ -244,5 +246,36 @@ describe(`utils/test`, () => {
       expect(parseInt(key, 10)).toBeLessThan(24);
       expect(typeof sparseObject[key]).toBe('number');
     }
+  });
+
+  it('Generate int8 vector with custom parameters', () => {
+    const params = {
+      dim: 24,
+      dataType: DataType.Int8,
+      int8VectorType: 'array',
+    } as any;
+    const int8Vector = genInt8Vector(params) as Int8Vector;
+    expect(Array.isArray(int8Vector)).toBe(true);
+    expect(int8Vector.length).toBeLessThanOrEqual(24);
+    int8Vector.forEach(item => {
+      expect(typeof item).toBe('number');
+      expect(item).toBeLessThanOrEqual(127);
+      expect(item).toBeGreaterThanOrEqual(-128);
+    });
+
+    // test typed int8 vector
+    const typedParams = {
+      int8VectorType: 'typed_array',
+      dim: 24,
+      dataType: DataType.Int8,
+    } as any;
+    const typedInt8Vector = genInt8Vector(typedParams) as Int8Vector;
+    expect(typedInt8Vector instanceof Int8Array).toBe(true);
+    expect(typedInt8Vector.length).toBe(24);
+    typedInt8Vector.forEach(item => {
+      expect(typeof item).toBe('number');
+      expect(item).toBeLessThanOrEqual(127);
+      expect(item).toBeGreaterThanOrEqual(-128);
+    });
   });
 });

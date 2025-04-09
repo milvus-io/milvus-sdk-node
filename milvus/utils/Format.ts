@@ -518,15 +518,16 @@ export const buildFieldDataMap = (
           const int8Dim = Number(item.vectors!.dim);
           const int8Bytes = item.vectors![dataKey]!;
 
-          const localTransformers = transformers || {
+          const localTransformers = {
             [DataType.Int8Vector]: Array.from,
+            ...transformers,
           };
 
           // split buffer data to int8 vector
           for (let i = 0; i < int8Bytes.byteLength; i += int8Dim) {
             const slice = int8Bytes.slice(i, i + int8Dim);
 
-            field_data.push(localTransformers[DataType.Int8Vector]!(slice));
+            field_data.push(localTransformers[DataType.Int8Vector](slice));
           }
 
           break;
@@ -547,9 +548,10 @@ export const buildFieldDataMap = (
               ? DataType.Float16Vector
               : DataType.BFloat16Vector;
 
-            const localTransformers = transformers || {
+            const localTransformers = {
               [DataType.BFloat16Vector]: bf16BytesToF32Array,
               [DataType.Float16Vector]: f16BytesToF32Array,
+              ...transformers,
             };
 
             field_data.push(localTransformers[dataType]!(slice));
