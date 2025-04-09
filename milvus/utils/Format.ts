@@ -48,7 +48,6 @@ import {
   TypeParam,
   keyValueObj,
 } from '../';
-import { get } from 'http';
 
 /**
  * Formats key-value data based on the provided keys.
@@ -514,6 +513,25 @@ export const buildFieldDataMap = (
           });
           break;
 
+        case 'int8_vector':
+          field_data = [];
+          const int8Dim = Number(item.vectors!.dim);
+          const int8Bytes = item.vectors![dataKey]!;
+
+          const localTransformers = {
+            [DataType.Int8Vector]: Array.from,
+            ...transformers,
+          };
+
+          // split buffer data to int8 vector
+          for (let i = 0; i < int8Bytes.byteLength; i += int8Dim) {
+            const slice = int8Bytes.slice(i, i + int8Dim);
+
+            field_data.push(localTransformers[DataType.Int8Vector](slice));
+          }
+
+          break;
+
         case 'float16_vector':
         case 'bfloat16_vector':
           field_data = [];
@@ -530,9 +548,10 @@ export const buildFieldDataMap = (
               ? DataType.Float16Vector
               : DataType.BFloat16Vector;
 
-            const localTransformers = transformers || {
+            const localTransformers = {
               [DataType.BFloat16Vector]: bf16BytesToF32Array,
               [DataType.Float16Vector]: f16BytesToF32Array,
+              ...transformers,
             };
 
             field_data.push(localTransformers[dataType]!(slice));
@@ -635,6 +654,7 @@ export const buildFieldData = (
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
     case DataType.FloatVector:
+    case DataType.Int8Vector:
       return rowData[name];
     case DataType.BFloat16Vector:
       const bf16Transformer =
@@ -1037,6 +1057,7 @@ export const formatSearchData = (
     case DataType.BinaryVector:
     case DataType.Float16Vector:
     case DataType.BFloat16Vector:
+    case DataType.Int8Vector:
       if (!Array.isArray(searchData)) {
         return [searchData] as VectorTypes[];
       }

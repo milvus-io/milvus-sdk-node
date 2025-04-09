@@ -240,6 +240,7 @@ export const isVectorType = (type: DataType) => {
     type === DataType.FloatVector ||
     type === DataType.Float16Vector ||
     type === DataType.BFloat16Vector ||
-    type === DataType.SparseFloatVector
+    type === DataType.SparseFloatVector ||
+    type === DataType.Int8Vector
   );
 };

@@ -281,6 +281,7 @@ export enum DataType {
   Float16Vector = 102,
   BFloat16Vector = 103,
   SparseFloatVector = 104,
+  Int8Vector = 105,
 }
 
 export enum FunctionType {
@@ -294,6 +295,7 @@ export const VectorDataTypes = [
   DataType.Float16Vector,
   DataType.BFloat16Vector,
   DataType.SparseFloatVector,
+  DataType.Int8Vector,
 ];
 
 // data type map
@@ -315,6 +317,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   Float16Vector: 102,
   BFloat16Vector: 103,
   SparseFloatVector: 104,
+  Int8Vector: 105,
 };
 
 // data type string enum

@@ -114,6 +114,9 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.SparseFloatVector:
       dataKey = 'sparse_float_vector';
       break;
+    case DataType.Int8Vector:
+      dataKey = 'int8_vector';
+      break;
     case DataType.Double:
       dataKey = 'double_data';
       break;
