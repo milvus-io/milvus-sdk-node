@@ -104,7 +104,7 @@ export class MilvusClient extends GRPCClient {
       const createCollectionRes = await this._createCollection(data);
 
       if (createCollectionRes.error_code !== ErrorCode.SUCCESS) {
-        throw new Error(createCollectionRes.reason);
+        throw createCollectionRes;
       }
 
       // if index params available
@@ -127,7 +127,7 @@ export class MilvusClient extends GRPCClient {
         );
 
         if (failedIndex) {
-          throw new Error(failedIndex.reason);
+          throw failedIndex;
         }
 
         // load collection sync
