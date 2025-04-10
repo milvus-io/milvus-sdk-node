@@ -109,7 +109,7 @@ describe(`Multiple vectors API testing`, () => {
         metric_type: MetricType.IP,
         index_type: IndexType.SPARSE_WAND,
         params: {
-          drop_ratio_build: 0.2,
+          inverted_index_algo: "DAAT_MAXSCORE",
         },
       },
     ]);
