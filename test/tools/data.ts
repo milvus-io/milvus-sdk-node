@@ -101,6 +101,11 @@ export const genJSON: DataGenerator = () => {
         string: genVarChar({ max_length: 4 }),
         float: genFloat(),
         number: genInt(),
+        static: {
+          string_key: 'apple',
+          int: 1,
+          float: 1.1,
+        }
       }
     : {};
 };
