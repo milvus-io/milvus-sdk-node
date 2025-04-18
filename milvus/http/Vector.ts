@@ -77,7 +77,22 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       options?: FetchOptions
     ): Promise<HttpVectorSearchResponse> {
       const url = `${this.vectorPrefix}/search`;
-      return await this.POST<HttpVectorSearchResponse>(url, data, options);
+      const res = await this.POST<HttpVectorSearchResponse>(url, data, options);
+
+      // if topks > 1, we need to split the results with topk
+      // for example, if topks = [5,5], we need to split the res.data into 2 groups, each one with 5
+      if (res.topks.length > 1) {
+        const topks = res.topks;
+        const results = res.data;
+        const newResults = [];
+        for (let i = 0; i < topks.length; i++) {
+          newResults.push(results.slice(i * topks[i], (i + 1) * topks[i]));
+        }
+        // Store split results in a new property instead of overwriting data
+        (res as any).data = newResults;
+      }
+
+      return res;
     }
 
     async hybridSearch(
