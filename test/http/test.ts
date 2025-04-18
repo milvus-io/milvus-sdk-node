@@ -257,8 +257,23 @@ export function generateTests(
       });
 
       expect(search.code).toEqual(0);
-      expect(search.data.length).toEqual(5);
-      expect(typeof search.data[0].distance).toEqual('number');
+      // Check if data is an array and not empty before accessing elements
+      expect(Array.isArray(search.data)).toBe(true);
+      expect(search.data.length).toBeGreaterThanOrEqual(1);
+
+      // Check if the first element is NOT an array (single query result expected)
+      if (!Array.isArray(search.data[0])) {
+        expect(search.data.length).toEqual(5); // Assuming limit applies to the single query
+        expect(typeof search.data[0].distance).toEqual('number');
+      } else {
+        // This case might indicate an unexpected response structure for a single vector search
+        // Or the API always returns 2D array even for single vector search
+        // Adjust assertion based on actual API behavior if needed
+        // For now, let's assume the test expects a 1D array here
+        throw new Error(
+          'Expected search.data to be a one-dimensional array for single vector search'
+        );
+      }
     });
 
     it('should search data successfully if nq > 1', async () => {
@@ -273,8 +288,21 @@ export function generateTests(
       });
 
       expect(search.code).toEqual(0);
-      expect(search.data.length).toEqual(2);
-      expect(typeof search.data[0][0].distance).toEqual('number');
+      // Check if data is an array and not empty
+      expect(Array.isArray(search.data)).toBe(true);
+      expect(search.data.length).toEqual(2); // Expecting results for 2 queries
+
+      // Check if the first element IS an array (multi-query result expected)
+      if (Array.isArray(search.data[0])) {
+        // Check if the inner array is not empty before accessing its elements
+        expect(search.data[0].length).toBeGreaterThanOrEqual(1);
+        expect(typeof search.data[0][0].distance).toEqual('number');
+      } else {
+        // This case would be unexpected for a multi-vector search
+        throw new Error(
+          'Expected search.data to be a two-dimensional array for multi-vector search'
+        );
+      }
     });
 
     it('should hasCollection successfully', async () => {
