@@ -261,6 +261,22 @@ export function generateTests(
       expect(typeof search.data[0].distance).toEqual('number');
     });
 
+    it('should search data successfully if nq > 1', async () => {
+      const search = await client.search({
+        collectionName: createParams.collectionName,
+        outputFields: ['*'],
+        data: [
+          [1, 2, 3, 4],
+          [1, 2, 3, 4],
+        ],
+        limit: 5,
+      });
+
+      expect(search.code).toEqual(0);
+      expect(search.data.length).toEqual(2);
+      expect(typeof search.data[0][0].distance).toEqual('number');
+    });
+
     it('should hasCollection successfully', async () => {
       const has = await client.hasCollection({
         dbName: config.database ?? DEFAULT_DB,

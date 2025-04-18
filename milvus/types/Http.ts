@@ -234,6 +234,7 @@ export interface HttpVectorHybridSearchReq extends HttpBaseReq {
 
 export interface HttpVectorSearchResponse extends HttpVectorQueryResponse {
   data: QueryResult & { distance: number | string };
+  topks: number[];
 }
 
 /* partition operation */
