@@ -961,54 +961,51 @@ export const formatSearchResult = (
    * The `topk` variable is the key we use to splice data for every search result.
    * The `scores` array is spliced using the `topk` value, and the resulting scores are formatted to the specified precision using the `formatNumberPrecision` function. The resulting row data is then pushed to the `results` array.
    */
-  topks.forEach((v, index) => {
+  let offset = 0;
+  topks.forEach((v, queryIndex) => {
     const topk = Number(v);
+    const queryResults: any[] = [];
 
-    // if topk is 0, we need to return empty array
-    if (topk === 0) {
-      results[index] = [];
-      return;
+    if (topk > 0) {
+      for (let hitIndex = 0; hitIndex < topk; hitIndex++) {
+        const absoluteIndex = offset + hitIndex; // Correct index for flat arrays
+
+        const score = scores[absoluteIndex]; // Access score without modifying array
+        const fixedScore =
+          typeof round_decimal === 'undefined' || round_decimal === -1
+            ? score
+            : formatNumberPrecision(score, round_decimal);
+
+        const result: any = { score: fixedScore };
+
+        // Get ID - Assuming ID field name is known or included in output_fields
+        // Example: const idFieldName = collectionInfo.schema.primary_field_name;
+        // if (fieldsDataMap.has(idFieldName)) {
+        //    result.id = fieldsDataMap.get(idFieldName)![absoluteIndex];
+        // }
+
+        output_fields.forEach(field_name => {
+          const isFixedSchema = fieldsDataMap.has(field_name);
+          const dataArray = fieldsDataMap.get(
+            isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
+          )!;
+
+          // Safer read-only access for dynamic fields
+          const value = isFixedSchema
+            ? dataArray[absoluteIndex]
+            : dataArray[absoluteIndex]
+            ? dataArray[absoluteIndex][field_name]
+            : undefined;
+
+          result[field_name] = value;
+        });
+
+        queryResults.push(result);
+      }
     }
 
-    // slice scores, offset is used to get the correct index
-    let offset = 0;
-
-    scores.splice(0, topk).forEach((score, scoreIndex) => {
-      // get correct index
-      const i = offset + scoreIndex;
-
-      // fix round_decimal
-      const fixedScore =
-        typeof round_decimal === 'undefined' || round_decimal === -1
-          ? score
-          : formatNumberPrecision(score, round_decimal);
-
-      // init result object
-      const result: any = { score: fixedScore };
-
-      // build result,
-      output_fields.forEach(field_name => {
-        // Check if the field_name exists in the fieldsDataMap
-        const isFixedSchema = fieldsDataMap.has(field_name);
-
-        // Get the data for the field_name from the fieldsDataMap
-        // If the field_name is not in the fieldsDataMap, use the DEFAULT_DYNAMIC_FIELD
-        const data = fieldsDataMap.get(
-          isFixedSchema ? field_name : DEFAULT_DYNAMIC_FIELD
-        )!;
-        // make dynamic data[i] safe
-        data[i] = isFixedSchema ? data[i] : data[i] || {};
-        // extract dynamic info from dynamic field if necessary
-        result[field_name] = isFixedSchema ? data[i] : data[i][field_name];
-      });
-
-      // init result slot
-      results[index] = results[index] || [];
-      // push result data
-      results[index].push(result);
-    });
-    // next offset
-    offset += topk;
+    results[queryIndex] = queryResults;
+    offset += topk; // Update offset for the next query's results
   });
 
   return results;
