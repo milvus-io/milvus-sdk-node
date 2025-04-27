@@ -10,7 +10,6 @@ export interface HasPartitionReq extends PartitionParent {}
 export interface DropPartitionReq extends PartitionParent {}
 export interface GetPartitionStatisticsReq extends PartitionParent {}
 export interface ShowPartitionsReq extends collectionNameReq {
-  partition_names?: string[]; // optional, partition names
   type?: ShowPartitionsType; // optional, partition type
 }
 
