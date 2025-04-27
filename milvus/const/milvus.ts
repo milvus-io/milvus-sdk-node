@@ -439,6 +439,11 @@ export enum ShowCollectionsType {
   Loaded,
 }
 
+export enum ShowPartitionsType {
+  All,
+  Loaded,
+}
+
 export enum RANKER_TYPE {
   RRF = 'rrf',
   WEIGHTED = 'weighted',

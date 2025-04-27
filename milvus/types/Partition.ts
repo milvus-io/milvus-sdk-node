@@ -1,5 +1,6 @@
 import { ResStatus, TimeStampArray, collectionNameReq } from './Common';
 import { CollectionData } from './';
+import { ShowPartitionsType } from '../';
 
 interface PartitionParent extends collectionNameReq {
   partition_name: string;
@@ -8,7 +9,10 @@ export interface CreatePartitionReq extends PartitionParent {}
 export interface HasPartitionReq extends PartitionParent {}
 export interface DropPartitionReq extends PartitionParent {}
 export interface GetPartitionStatisticsReq extends PartitionParent {}
-export interface ShowPartitionsReq extends collectionNameReq {}
+export interface ShowPartitionsReq extends collectionNameReq {
+  partition_names?: string[]; // optional, partition names
+  type?: ShowPartitionsType; // optional, partition type
+}
 
 export interface LoadPartitionsReq extends collectionNameReq {
   partition_names: string[]; // required, partition names

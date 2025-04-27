@@ -3,6 +3,7 @@ import {
   ErrorCode,
   ERROR_REASONS,
   LoadState,
+  ShowPartitionsType,
 } from '../../milvus';
 import {
   IP,
@@ -139,6 +140,27 @@ describe(`Partition API`, () => {
 
     expect(load.error_code).toEqual(ErrorCode.SUCCESS);
     expect(loadstate.state).toEqual(LoadState.LoadStateLoaded);
+
+    const loadedPartitions = await milvusClient.showPartitions({
+      collection_name: COLLECTION_NAME,
+      type: ShowPartitionsType.Loaded,
+    });
+
+    expect(loadedPartitions.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(loadedPartitions.partition_names).toEqual([PARTITION_NAME]);
+    expect(loadedPartitions.partitionIDs.length).toEqual(1);
+    expect(loadedPartitions.data.length).toEqual(1);
+    expect(loadedPartitions.data[0].name).toEqual(PARTITION_NAME);
+    expect(loadedPartitions.data[0].loadedPercentage).toEqual('100');
+    expect(loadedPartitions.data[0].id).toEqual(
+      loadedPartitions.partitionIDs[0]
+    );
+    expect(loadedPartitions.data[0].timestamp).toBeDefined();
+
+    const collectionLoadState = await milvusClient.getLoadState({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(collectionLoadState.state).toEqual(LoadState.LoadStateLoaded);
   });
 
   it(`create new partition should success`, async () => {
