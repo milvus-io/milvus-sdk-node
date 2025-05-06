@@ -1,6 +1,5 @@
-import path from 'path';
 import crypto from 'crypto';
-import protobuf, { Root, Type } from 'protobufjs';
+import protobuf, { INamespace, Root } from 'protobufjs';
 import { readFileSync } from 'fs';
 import {
   Client,
@@ -19,16 +18,8 @@ import {
   CONNECT_STATUS,
   TLS_MODE,
 } from '../';
-
-// path
-const milvusProtoPath = path.resolve(
-  __dirname,
-  '../../proto/proto/milvus.proto'
-);
-const schemaProtoPath = path.resolve(
-  __dirname,
-  '../../proto/proto/schema.proto'
-);
+import milvusProtoJson from '../proto-json/milvus.base';
+import schemaProtoJson from '../proto-json/schema.base';
 
 /**
  * Base gRPC client, setup all configuration here
@@ -54,11 +45,6 @@ export class BaseClient {
   // public client!: Promise<Client>;
   // The timeout for connecting to the Milvus service.
   public timeout: number = DEFAULT_CONNECT_TIMEOUT;
-  // The path to the Milvus protobuf file, user can define it from clientConfig
-  public protoFilePath = {
-    milvus: milvusProtoPath,
-    schema: schemaProtoPath,
-  };
 
   // ChannelCredentials object used for authenticating the client on the gRPC channel.
   protected creds!: ChannelCredentials;
@@ -124,16 +110,9 @@ export class BaseClient {
     // Assign the configuration object.
     this.config = config;
 
-    // setup proto file path
-    if (this.config.protoFilePath) {
-      const { milvus, schema } = this.config.protoFilePath;
-      this.protoFilePath.milvus = milvus ?? this.protoFilePath.milvus;
-      this.protoFilePath.schema = schema ?? this.protoFilePath.schema;
-    }
-
     // Load the Milvus protobuf
-    this.schemaProto = protobuf.loadSync(this.protoFilePath.schema);
-    this.milvusProto = protobuf.loadSync(this.protoFilePath.milvus);
+    this.schemaProto = protobuf.Root.fromJSON(schemaProtoJson as INamespace);
+    this.milvusProto = protobuf.Root.fromJSON(milvusProtoJson as INamespace);
 
     // options
     this.channelOptions = {
@@ -174,7 +153,9 @@ export class BaseClient {
         ? TLS_MODE.TWO_WAY
         : this.tlsMode;
 
-    this.tlsMode = this.config.tls?.skipCertCheck ? TLS_MODE.UNAUTHORIZED : this.tlsMode;
+    this.tlsMode = this.config.tls?.skipCertCheck
+      ? TLS_MODE.UNAUTHORIZED
+      : this.tlsMode;
 
     // Create credentials based on the TLS mode
     switch (this.tlsMode) {
@@ -221,8 +202,10 @@ export class BaseClient {
         break;
       case TLS_MODE.UNAUTHORIZED:
         const opts: VerifyOptions = {
-          checkServerIdentity : () => { return undefined; },
-          rejectUnauthorized : false
+          checkServerIdentity: () => {
+            return undefined;
+          },
+          rejectUnauthorized: false,
         };
 
         this.creds = credentials.createSsl(null, null, null, opts);
