@@ -1,8 +1,9 @@
 import { MilvusClient } from '@zilliz/milvus2-sdk-node';
 
-async function getData(address: string) {
+async function getData(address: string, token?: string) {
   const milvusClient = new MilvusClient({
     address,
+    token: token,
   });
 
   // 获取 system_info
@@ -20,8 +21,9 @@ async function getData(address: string) {
 
 export default async function Home() {
   const address = process.env.MILVUS_ADDRESS || '127.0.0.1:19530';
+  const token = process.env.MILVUS_TOKEN || undefined;
 
-  const { systemInfo, collections } = await getData(address);
+  const { systemInfo, collections } = await getData(address, token);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
