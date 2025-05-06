@@ -5,21 +5,23 @@ async function getData(address: string) {
     address,
   });
 
+  // 获取 system_info
   let res: any = await milvusClient.getMetric({
     request: { metric_type: 'system_info' },
   });
 
-  const result = res.response.nodes_info.map((v: any) => {
-    return v.infos;
-  });
+  const systemInfo = res.response.nodes_info.map((v: any) => v.infos);
 
-  return result;
+  // 获取 collection 列表
+  const collections = (await milvusClient.showCollections()) as any;
+
+  return { systemInfo, collections: collections.data };
 }
 
 export default async function Home() {
-  const address = `127.0.0.1:19530`;
+  const address = process.env.MILVUS_ADDRESS || '127.0.0.1:19530';
 
-  const data = await getData(address);
+  const { systemInfo, collections } = await getData(address);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -29,9 +31,17 @@ export default async function Home() {
         </h1>
         <h2 className="text-xl font-bold text-center mb-4">{address}</h2>
 
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-gray-50 p-4 rounded-lg mb-4">
+          <h3 className="font-semibold mb-2">Collections count: </h3>
           <pre className="whitespace-pre-wrap text-sm text-gray-800">
-            {JSON.stringify(data, null, 2)}
+            {collections.length}
+          </pre>
+        </div>
+
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h3 className="font-semibold mb-2">System info: </h3>
+          <pre className="whitespace-pre-wrap text-sm text-gray-800">
+            {JSON.stringify(systemInfo, null, 2)}
           </pre>
         </div>
       </div>
