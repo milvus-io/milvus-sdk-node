@@ -1,37 +1,36 @@
-import { spawn, ChildProcess } from 'child_process';
+import { spawn } from 'child_process';
 import * as path from 'path';
-import * as fs from 'fs';
+import { logger } from '../utils/logger';
 
 export interface MilvusLiteServerOptions {
   dataPath?: string;
-  debug?: boolean;
+  logLevel?: string;
 }
+
+type MilvusLiteServerResponse = {
+  uri: string;
+  version: string;
+  stopServer: () => Promise<void>;
+};
 
 export function startMilvusLiteServer(
   options: MilvusLiteServerOptions = {}
-): Promise<string> {
+): Promise<MilvusLiteServerResponse> {
   const dataPath = options.dataPath || '';
-  const debug = options.debug ?? false;
   const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
 
-  let childProcess: ChildProcess | null = null;
-  let localUri = '';
-  let uriFilePath: string | null = null;
+  logger.level = options.logLevel || 'info';
 
   return new Promise((resolve, reject) => {
     const startPy = path.join(__dirname, 'start.py');
 
-    if (debug) {
-      console.log('Starting Milvus Lite server with python script:', startPy);
-      console.log('Data path:', dataPath);
-    }
+    logger.debug(`Starting Milvus Lite server with python script: ${startPy}`);
 
-    const childProcess = spawn(pythonCmd, ['-u', startPy, dataPath], {
-      detached: true,
-    });
+    const childProcess = spawn(pythonCmd, ['-u', startPy, dataPath], {});
 
     process.on('SIGINT', () => {
       if (childProcess) {
+        logger.debug('SIGINT received, killing milvus lite server process');
         childProcess.kill('SIGINT');
       }
       process.exit();
@@ -39,6 +38,7 @@ export function startMilvusLiteServer(
 
     process.on('SIGTERM', () => {
       if (childProcess) {
+        logger.debug('SIGTERM received, killing milvus lite server process');
         childProcess.kill('SIGTERM');
       }
       process.exit();
@@ -46,21 +46,18 @@ export function startMilvusLiteServer(
 
     process.on('exit', () => {
       if (childProcess) {
+        logger.debug('Process exit, killing milvus lite server process');
         childProcess.kill();
       }
     });
 
     childProcess.on('error', (err: Error) => {
-      if (debug) {
-        console.error('Error starting Milvus Lite server:', err);
-      }
+      logger.error(`Error starting Milvus Lite server: ${err}`);
       reject(err);
     });
 
     childProcess.on('exit', (code: number) => {
-      if (debug) {
-        console.log('Milvus Lite server exited with code:', code);
-      }
+      logger.debug(`Milvus Lite server exited with code: ${code}`);
       if (code !== 0) {
         reject(new Error(`Milvus Lite server exited with code ${code}`));
       }
@@ -71,14 +68,18 @@ export function startMilvusLiteServer(
       try {
         const parsed = JSON.parse(message);
         if (parsed.uri) {
-          localUri = parsed.uri;
-          uriFilePath = parsed.uri_file_path;
+          logger.debug(`Milvus Lite server started successfully:${message}}`);
 
-          if (debug) {
-            console.log('Milvus Lite server started successfully:', localUri);
-          }
-
-          resolve(parsed.uri);
+          resolve({
+            uri: parsed.uri,
+            version: parsed.version,
+            stopServer: async () => {
+              if (childProcess) {
+                logger.debug('Stopping Milvus Lite server');
+                childProcess.kill();
+              }
+            },
+          });
         }
       } catch (e) {
         // ignore JSON parse errors

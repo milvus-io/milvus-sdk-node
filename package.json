@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "pre": "git submodule update --remote && rm -rf proto/proto/google && mkdir -p proto/proto/google/protobuf && wget https://raw.githubusercontent.com/protocolbuffers/protobuf/main/src/google/protobuf/descriptor.proto -O proto/proto/google/protobuf/descriptor.proto",
-    "build": "rm -rf dist && tsc --declaration && node build.js",
+    "build": "rm -rf dist && tsc --declaration && node build.js && npm run copy-lite-py",
+    "copy-lite-py": "cp milvus/lite/start.py dist/milvus/lite/",
     "test": "NODE_ENV=dev jest",
     "test-cloud": "NODE_ENV=dev jest test/http --testPathIgnorePatterns=none",
     "bench": "ts-node test/tools/bench.ts",

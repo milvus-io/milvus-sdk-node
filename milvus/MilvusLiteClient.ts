@@ -1,5 +1,6 @@
-import { MilvusClient } from '../MilvusClient';
-import { startMilvusLiteServer } from './MilvusLiteServer';
+import { MilvusClient } from './MilvusClient';
+import { CONNECT_STATUS } from './const';
+import { startMilvusLiteServer } from './lite/MilvusLiteServer';
 
 export async function MilvusLiteClient(
   options: {
@@ -9,9 +10,9 @@ export async function MilvusLiteClient(
 ): Promise<MilvusClient> {
   const { address, logLevel } = options;
 
-  const uri = await startMilvusLiteServer({
+  const { uri, stopServer } = await startMilvusLiteServer({
     dataPath: address,
-    debug: logLevel === 'debug',
+    logLevel,
   });
 
   if (!uri) {
@@ -21,6 +22,12 @@ export async function MilvusLiteClient(
     address: uri,
     logLevel,
   });
+
+  client.closeConnection = async () => {
+    // Close the server process
+    await stopServer();
+    return CONNECT_STATUS.SHUTDOWN;
+  };
 
   return client;
 }

@@ -5,6 +5,12 @@ import time
 import sys
 import signal
 
+try:
+    import milvus_lite
+    MILVUS_LITE_VERSION = milvus_lite.__version__
+except Exception:
+    MILVUS_LITE_VERSION = "unknown"
+
 def start_milvus(db_path="test.db"):
     try:
         local_uri = server_manager_instance.start_and_get_uri(db_path)
@@ -12,7 +18,7 @@ def start_milvus(db_path="test.db"):
             print(json.dumps({"error": "Failed to start Milvus Lite."}), flush=True)
             sys.exit(1)
 
-        print(json.dumps({ "uri": local_uri}), flush=True)
+        print(json.dumps({ "uri": local_uri, "version": MILVUS_LITE_VERSION}), flush=True)
 
         while True:
             time.sleep(1)
