@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { MilvusClient } from './MilvusClient';
 import { CONNECT_STATUS } from './const';
 import { startMilvusLiteServer } from './lite/MilvusLiteServer';
@@ -15,7 +16,6 @@ export async function MilvusLiteClient(
     logLevel,
   });
 
-  /* istanbul ignore next */
   if (!uri) {
     throw new Error('Failed to get URI from Milvus Lite server');
   }

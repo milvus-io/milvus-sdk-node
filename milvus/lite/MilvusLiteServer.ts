@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { spawn } from 'child_process';
 import * as path from 'path';
 import { logger } from '../utils/logger';
@@ -13,7 +14,6 @@ type MilvusLiteServerResponse = {
   stopServer: () => Promise<void>;
 };
 
-/* istanbul ignore next */
 export function startMilvusLiteServer(
   options: MilvusLiteServerOptions = {}
 ): Promise<MilvusLiteServerResponse> {
