@@ -6,3 +6,6 @@ coverage
 .DS_Store
 yarn-error.log
 .idea
+
+.test.db.lock
+test.db
