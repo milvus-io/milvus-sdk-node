@@ -1,7 +1,8 @@
 {
   "name": "@zilliz/milvus2-sdk-node",
   "author": "Zilliz",
-  "milvusVersion": "v2.5.10",
+  "milvusVersion": "v2.5.11",
+  "milvusLiteVersion": "2.5.0rc1",
   "version": "2.5.8",
   "main": "dist/milvus",
   "files": [
@@ -9,12 +10,13 @@
   ],
   "scripts": {
     "pre": "git submodule update --remote && rm -rf proto/proto/google && mkdir -p proto/proto/google/protobuf && wget https://raw.githubusercontent.com/protocolbuffers/protobuf/main/src/google/protobuf/descriptor.proto -O proto/proto/google/protobuf/descriptor.proto",
-    "build": "rm -rf dist && tsc --declaration && node build.js",
+    "build": "rm -rf dist && tsc --declaration && node build.js && npm run copy-lite-py",
+    "copy-lite-py": "cp milvus/lite/start.py dist/milvus/lite/",
     "test": "NODE_ENV=dev jest",
     "test-cloud": "NODE_ENV=dev jest test/http --testPathIgnorePatterns=none",
     "bench": "ts-node test/tools/bench.ts",
     "coverage": "NODE_ENV=dev jest --coverage=true --config jest.config.js --no-cache",
-    "build-test": " yarn build && NODE_ENV=dev jest test/build/Collection.spec.ts --testPathIgnorePatterns=none",
+    "build-test": " yarn build && NODE_ENV=dev jest test/build --testPathIgnorePatterns=none",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc",
     "doc-json": "npx typedoc milvus --json"

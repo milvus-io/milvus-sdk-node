@@ -48,6 +48,10 @@ jobs:
           git submodule init
           yarn pre
 
+      - name: Install milvus-lite
+        run: |
+          pip install milvus-lite==${{ steps.info.outputs.milvusLiteVersion }}
+
       - name: Run Test coverage
         run: |
           yarn
