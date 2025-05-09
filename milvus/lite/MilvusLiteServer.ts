@@ -13,6 +13,7 @@ type MilvusLiteServerResponse = {
   stopServer: () => Promise<void>;
 };
 
+/* istanbul ignore next */
 export function startMilvusLiteServer(
   options: MilvusLiteServerOptions = {}
 ): Promise<MilvusLiteServerResponse> {

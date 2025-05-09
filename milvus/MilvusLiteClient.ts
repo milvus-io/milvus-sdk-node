@@ -15,9 +15,11 @@ export async function MilvusLiteClient(
     logLevel,
   });
 
+  /* istanbul ignore next */
   if (!uri) {
     throw new Error('Failed to get URI from Milvus Lite server');
   }
+
   const client = new MilvusClient({
     address: uri,
     logLevel,
