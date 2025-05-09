@@ -22,6 +22,10 @@ jobs:
           git submodule init
           yarn pre
 
+      - name: Generate proto json
+        run: |
+          yarn proto:json
+
       - name: Build app
         run: |
           yarn build
