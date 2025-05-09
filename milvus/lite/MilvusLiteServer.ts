@@ -1,21 +1,15 @@
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as os from 'os';
 
 export interface MilvusLiteServerOptions {
   dataPath?: string;
   debug?: boolean;
 }
 
-export interface MilvusLiteServerInstance {
-  stop: () => Promise<void>;
-  getUri: () => string;
-}
-
 export function startMilvusLiteServer(
   options: MilvusLiteServerOptions = {}
-): Promise<MilvusLiteServerInstance> {
+): Promise<string> {
   const dataPath = options.dataPath || '';
   const debug = options.debug ?? false;
   const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
@@ -32,8 +26,28 @@ export function startMilvusLiteServer(
       console.log('Data path:', dataPath);
     }
 
-    childProcess = spawn(pythonCmd, ['-u', startPy, dataPath], {
+    const childProcess = spawn(pythonCmd, ['-u', startPy, dataPath], {
       detached: true,
+    });
+
+    process.on('SIGINT', () => {
+      if (childProcess) {
+        childProcess.kill('SIGINT');
+      }
+      process.exit();
+    });
+
+    process.on('SIGTERM', () => {
+      if (childProcess) {
+        childProcess.kill('SIGTERM');
+      }
+      process.exit();
+    });
+
+    process.on('exit', () => {
+      if (childProcess) {
+        childProcess.kill();
+      }
     });
 
     childProcess.on('error', (err: Error) => {
@@ -54,87 +68,21 @@ export function startMilvusLiteServer(
 
     childProcess.stdout?.on('data', (data: Buffer) => {
       const message = data.toString();
-      if (debug) {
-        console.log('Milvus Lite server stdout:', message);
-      }
-    });
-
-    let uriFileFound = false;
-
-    const checkUriFile = () => {
-      const possiblePaths = [path.join(os.homedir(), 'milvus_lite_uri.json')];
-
-      for (const filePath of possiblePaths) {
-        try {
-          if (fs.existsSync(filePath)) {
-            const data = fs.readFileSync(filePath, 'utf8');
-            const parsed = JSON.parse(data);
-            if (parsed.uri) {
-              uriFilePath = filePath;
-              localUri = parsed.uri;
-
-              try {
-                // check if the uri is valid
-                fs.accessSync(localUri.replace('unix:', ''), fs.constants.R_OK);
-
-                if (debug) {
-                  console.log(`Found URI file at ${filePath}:`, localUri);
-                  console.log('Full content:', parsed);
-                  console.log('Server started successfully');
-                }
-
-                resolve({
-                  stop: () => stopServer(childProcess, uriFilePath, debug),
-                  getUri: () => localUri,
-                });
-                uriFileFound = true;
-              } catch (e) {
-                if (debug) {
-                  console.error(`Error accessing URI file ${filePath}:`, e);
-                }
-                continue;
-              }
-            }
-          }
-        } catch (e) {
-          if (debug) {
-            console.error(`Error reading URI file ${filePath}:`, e);
-          }
-        }
-      }
-
-      if (!uriFileFound) {
-        setTimeout(checkUriFile, 500);
-      }
-    };
-
-    checkUriFile();
-  });
-}
-
-async function stopServer(
-  childProcess: ChildProcess | null,
-  uriFilePath: string | null,
-  debug: boolean
-): Promise<void> {
-  if (!childProcess) return;
-
-  return new Promise(resolve => {
-    childProcess.kill('SIGTERM');
-
-    if (uriFilePath) {
       try {
-        fs.unlinkSync(uriFilePath);
-        if (debug) {
-          console.log(`Removed URI file: ${uriFilePath}`);
+        const parsed = JSON.parse(message);
+        if (parsed.uri) {
+          localUri = parsed.uri;
+          uriFilePath = parsed.uri_file_path;
+
+          if (debug) {
+            console.log('Milvus Lite server started successfully:', localUri);
+          }
+
+          resolve(parsed.uri);
         }
       } catch (e) {
-        if (debug) {
-          console.error(`Failed to remove URI file: ${e}`);
-        }
+        // ignore JSON parse errors
       }
-    }
-
-    resolve();
+    });
   });
 }

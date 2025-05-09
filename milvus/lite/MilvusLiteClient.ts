@@ -9,12 +9,11 @@ export async function MilvusLiteClient(
 ): Promise<MilvusClient> {
   const { address, logLevel } = options;
 
-  const { getUri } = await startMilvusLiteServer({
+  const uri = await startMilvusLiteServer({
     dataPath: address,
     debug: logLevel === 'debug',
   });
 
-  const uri = getUri();
   if (!uri) {
     throw new Error('Failed to get URI from Milvus Lite server');
   }
