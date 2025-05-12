@@ -175,6 +175,8 @@ export function generateTests(
         data: data,
       });
 
+      console.dir(insert, { depth: null });
+
       expect(insert.code).toEqual(0);
       expect(insert.data.insertCount).toEqual(count);
     });
@@ -191,6 +193,8 @@ export function generateTests(
         collectionName: createParams.collectionName,
         data: [{ ...target, int64: 0 }],
       });
+
+      console.dir(upsert, { depth: null });
 
       expect(upsert.code).toEqual(0);
       expect(upsert.data.upsertCount).toEqual(1);
