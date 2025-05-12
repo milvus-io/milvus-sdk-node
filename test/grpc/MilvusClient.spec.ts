@@ -127,21 +127,6 @@ describe(`Milvus client`, () => {
     expect(await m5.channelPool).toBeDefined();
   });
 
-  it(`should setup protofile path successfully`, async () => {
-    const m6 = new MilvusClient({
-      address: IP,
-      protoFilePath: {
-        milvus: milvusProtoPath,
-        schema: schemaProtoPath,
-      },
-      __SKIP_CONNECT__: true,
-    });
-
-    expect(await m6.channelPool).toBeDefined();
-    expect(m6.protoFilePath.milvus).toEqual(milvusProtoPath);
-    expect(m6.protoFilePath.schema).toEqual(schemaProtoPath);
-  });
-
   it(`should set tls to 1 if root cert provided`, async () => {
     const m7 = new MilvusClient({
       address: IP,

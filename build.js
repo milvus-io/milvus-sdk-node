@@ -1,6 +1,6 @@
-const fs = require("fs");
-const path = require("path");
-const packageJson = require("./package.json");
+const fs = require('fs');
+const path = require('path');
+const packageJson = require('./package.json');
 
 function copyFileSync(source, target) {
   let targetFile = target;
@@ -13,31 +13,6 @@ function copyFileSync(source, target) {
   }
 
   fs.writeFileSync(targetFile, fs.readFileSync(source));
-}
-
-function copyFolderRecursiveSync(source, target) {
-  let files = [];
-  if (!fs.existsSync(target)){
-    fs.mkdirSync(target, { recursive: true });
-}
-  // Check if folder needs to be created or integrated
-  let targetFolder = path.join(target, path.basename(source));
-  if (!fs.existsSync(targetFolder)) {
-    fs.mkdirSync(targetFolder);
-  }
-
-  // Copy
-  if (fs.lstatSync(source).isDirectory()) {
-    files = fs.readdirSync(source);
-    files.forEach(function (file) {
-      let curSource = path.join(source, file);
-      if (fs.lstatSync(curSource).isDirectory()) {
-        copyFolderRecursiveSync(curSource, targetFolder);
-      } else {
-        copyFileSync(curSource, targetFolder);
-      }
-    });
-  }
 }
 
 function removeDistPackageJson(source) {
@@ -67,11 +42,9 @@ function writeSdkJson(path) {
   }
 }
 
-copyFolderRecursiveSync("./proto/proto", "./dist/proto");
-
 // if dist has package.json need delete it.
 // otherwise npm publish will use package.json inside dist then will missing files.
-removeDistPackageJson("./dist/package.json");
+removeDistPackageJson('./dist/package.json');
 
 // Because of we dont need package.json in dist folder, so we can write sdk info into sdk.json file.
-writeSdkJson("./dist/sdk.json");
+writeSdkJson('./dist/sdk.json');
