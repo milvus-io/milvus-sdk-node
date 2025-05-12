@@ -17,7 +17,8 @@
     "build-test": " yarn build && NODE_ENV=dev jest test/build/Collection.spec.ts --testPathIgnorePatterns=none",
     "example": "npx ts-node",
     "doc": "rm -rf docs && npx typedoc",
-    "doc-json": "npx typedoc milvus --json"
+    "doc-json": "npx typedoc milvus --json",
+    "proto:json": "yarn test test/utils/ProtoJson.spec.ts"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.12.1",
