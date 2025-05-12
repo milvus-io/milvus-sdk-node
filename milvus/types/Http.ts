@@ -195,6 +195,7 @@ export interface HttpVectorQueryReq extends HttpBaseReq {
   limit?: number;
   offset?: number;
   partitionNames?: string[];
+  consistencyLevel?: string;
 }
 
 type QueryResult = Record<string, any>[];
