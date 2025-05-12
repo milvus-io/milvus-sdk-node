@@ -191,7 +191,7 @@ export function generateTests(
       const target = data[0];
       const upsert = await client.upsert({
         collectionName: createParams.collectionName,
-        data: [{ ...target, int64: 0 }],
+        data: [{ ...target, int64: 2 }],
       });
 
       console.dir(upsert, { depth: null });
