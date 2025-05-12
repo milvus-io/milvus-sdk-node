@@ -57,6 +57,18 @@ export function startMilvusLiteServer(
       reject(err);
     });
 
+    childProcess.stderr?.on('data', (data: Buffer) => {
+      const message = data.toString();
+      logger.error(`Milvus Lite server stderr: ${message}`);
+      if (message.includes("No module named 'milvus_lite'")) {
+        reject(
+          new Error(
+            'Milvus Lite is not installed. Please install it using "pip install milvus-lite".'
+          )
+        );
+      }
+    });
+
     childProcess.on('exit', (code: number) => {
       logger.debug(`Milvus Lite server exited with code: ${code}`);
       if (code !== 0) {

@@ -25,11 +25,11 @@ def start_milvus(db_path="test.db"):
     except KeyboardInterrupt:
         print(json.dumps({"info": "Shutting down..."}), flush=True)
     finally:
-        server_manager_instance.stop()
+        server_manager_instance.release_all()
 
 def handle_exit(signum, frame):
     print(json.dumps({"info": "Received exit signal, shutting down..."}), flush=True)
-    server_manager_instance.stop()
+    server_manager_instance.release_all()
     sys.exit(0)
 
 signal.signal(signal.SIGINT, handle_exit)
