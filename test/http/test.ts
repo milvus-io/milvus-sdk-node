@@ -185,6 +185,7 @@ export function generateTests(
         filter: 'id > 0',
         limit: 1,
         outputFields: ['*'],
+        consistencyLevel: 'Strong',
       });
       const target = data[0];
       const upsert = await client.upsert({
