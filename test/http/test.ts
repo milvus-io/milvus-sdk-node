@@ -175,7 +175,8 @@ export function generateTests(
         data: data,
       });
 
-      console.dir(insert, { depth: null });
+      console.log('data', data)
+
 
       expect(insert.code).toEqual(0);
       expect(insert.data.insertCount).toEqual(count);
@@ -185,10 +186,13 @@ export function generateTests(
       const { data } = await client.query({
         collectionName: createParams.collectionName,
         filter: 'id > 0',
+        dbName: config.database,
         limit: 1,
         outputFields: ['*'],
-      });
+        consistencyLevel: 'Strong'
+      } as any);
       const target = data[0];
+      console.log('target', target);
       const upsert = await client.upsert({
         collectionName: createParams.collectionName,
         data: [{ ...target, int64: 2 }],
