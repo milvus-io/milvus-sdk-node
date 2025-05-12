@@ -225,6 +225,7 @@ export interface DescribeCollectionResponse extends TimeStamp {
   num_partitions?: string; // int64
   db_name: string;
   functions: FunctionObject[];
+  update_timestamp_str: string;
   update_timestamp: number;
 }
 
