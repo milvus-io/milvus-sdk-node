@@ -506,6 +506,7 @@ describe('utils/format', () => {
       db_name: '',
       functions: [],
       update_timestamp: 0,
+      update_timestamp_str: '0',
     };
 
     const formatted = formatDescribedCol(response);
