@@ -1,5 +1,4 @@
-import path from 'path';
-import { loadSync, Options } from '@grpc/proto-loader';
+import { Options, fromJSON } from '@grpc/proto-loader';
 import {
   loadPackageDefinition,
   ServiceClientConstructor,
@@ -22,9 +21,10 @@ interface Carrier {
 }
 import { DEFAULT_DB } from '../const';
 import sdkInfo from '../../sdk.json';
+import milvusProtoJson from '../proto-json/milvus';
+import { INamespace } from 'protobufjs';
 
 interface IServiceDetails {
-  protoPath: string; // file to your proto file
   serviceName: string; // service route, for example: milvus.proto.milvus.MilvusService
 }
 
@@ -37,10 +37,9 @@ export const getGRPCService = (
   proto: IServiceDetails,
   options: Options
 ): ServiceClientConstructor => {
-  // Resolve the proto file path.
-  const PROTO_PATH = path.resolve(__dirname, proto.protoPath);
   // Load the proto file.
-  const packageDefinition = loadSync(PROTO_PATH, options);
+  const packageDefinition = fromJSON(milvusProtoJson as INamespace, options);
+
   // Load the gRPC object.
   const grpcObj: GrpcObject = loadPackageDefinition(packageDefinition);
   // Get the service object from the gRPC object.
@@ -49,9 +48,7 @@ export const getGRPCService = (
     .reduce((a, b) => a[b], grpcObj as any);
   // Check that the service object is valid.
   if (service?.name !== 'ServiceClientImpl') {
-    throw new Error(
-      `Unable to load service: ${proto.serviceName} from ${proto.protoPath}`
-    );
+    throw new Error(`Unable to load service: ${proto.serviceName}`);
   }
   // Return the service client constructor.
   return service as ServiceClientConstructor;

@@ -13,6 +13,7 @@ import { IP, GENERATE_NAME } from '../tools';
 
 const milvusClient = new MilvusClient({
   address: IP,
+  logLevel: 'info',
 });
 const FAST_CREATE_COL_NAME = GENERATE_NAME();
 const CREATE_COL_SCHEMA_INDEX_NAME = GENERATE_NAME();
@@ -238,7 +239,7 @@ describe(`High level API testing`, () => {
         index_params: index_params[0],
       });
     } catch (error) {
-      expect(error.message.includes('invalid dimension')).toEqual(true);
+      expect(error.reason.includes('invalid dimension')).toEqual(true);
     }
 
     try {
@@ -256,7 +257,7 @@ describe(`High level API testing`, () => {
         },
       });
     } catch (error) {
-      expect(error.message.includes('non-exist')).toEqual(true);
+      expect(error.reason.includes('non-exist')).toEqual(true);
     }
   });
 });

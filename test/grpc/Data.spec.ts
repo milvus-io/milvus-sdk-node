@@ -67,9 +67,10 @@ describe(`Data.API`, () => {
     });
 
     // insert data
+    const data = generateInsertData(createCollectionParams.fields, 1024);
     await milvusClient.insert({
       collection_name: COLLECTION_NAME,
-      data: generateInsertData(createCollectionParams.fields, 1024),
+      data: data,
     });
 
     await milvusClient.insert({
@@ -101,6 +102,7 @@ describe(`Data.API`, () => {
       metric_type: 'L2',
       params: { M: 4, efConstruction: 8 },
     });
+
     // load
     await milvusClient.loadCollectionSync({
       collection_name: COLLECTION_NAME,
@@ -128,6 +130,20 @@ describe(`Data.API`, () => {
       collection_name: VARCHAR_ID_COLLECTION_NAME,
     });
     await milvusClient.dropDatabase(dbParam);
+  });
+
+  it('it should create json index successfully', async () => {
+    const res = await milvusClient.createIndex({
+      index_name: 'json',
+      collection_name: COLLECTION_NAME,
+      field_name: 'json',
+      index_type: IndexType.INVERTED,
+      params: {
+        json_path: `json[\"static\"][\"string_key\"]`,
+        json_cast_type: 'varchar',
+      },
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`it should insert successfully`, async () => {

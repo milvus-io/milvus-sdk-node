@@ -9,10 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@uiw/react-codemirror": "^4.23.3",
-    "@zilliz/milvus2-sdk-node": "^2.4.9",
-    "codemirror": "^6.0.1",
-    "next": "^15.0.3",
+    "@zilliz/milvus2-sdk-node": "^2.5.8",
+    "next": "^15.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

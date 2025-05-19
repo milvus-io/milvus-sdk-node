@@ -232,8 +232,13 @@ export interface HttpVectorHybridSearchReq extends HttpBaseReq {
   limit?: number;
 }
 
+type QueryResultWithDistance = {
+  distance: number | string;
+} & QueryResult;
+
 export interface HttpVectorSearchResponse extends HttpVectorQueryResponse {
-  data: QueryResult & { distance: number | string };
+  data: QueryResultWithDistance | QueryResultWithDistance[];
+  topks: number[];
 }
 
 /* partition operation */

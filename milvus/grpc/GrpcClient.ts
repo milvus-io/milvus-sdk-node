@@ -65,7 +65,6 @@ export class GRPCClient extends User {
     // Get the gRPC service for Milvus
     const MilvusService = getGRPCService(
       {
-        protoPath: this.protoFilePath.milvus,
         serviceName: this.protoInternalPath.serviceName, // the name of the Milvus service
       },
       { ...LOADER_OPTIONS, ...this.config.loaderOptions }

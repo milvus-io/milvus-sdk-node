@@ -287,6 +287,7 @@ export enum DataType {
 export enum FunctionType {
   Unknown = 0,
   BM25 = 1,
+  TEXTEMBEDDING = 2,
 }
 
 export const VectorDataTypes = [
@@ -438,6 +439,11 @@ export enum LoadState {
 }
 
 export enum ShowCollectionsType {
+  All,
+  Loaded,
+}
+
+export enum ShowPartitionsType {
   All,
   Loaded,
 }

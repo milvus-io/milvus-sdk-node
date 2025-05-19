@@ -788,6 +788,77 @@ describe('utils/format', () => {
     expect(results2).toEqual(expectedResults2);
   });
 
+  // Add new test case for multiple queries and fields
+  it('should format multiple query results with multiple fields correctly', () => {
+    const multiQuerySearchRes = {
+      status: { error_code: 'Success', reason: '' },
+      results: {
+        num_queries: 2,
+        top_k: 2,
+        fields_data: [
+          // Data for 'id' field (Int64)
+          {
+            type: 'Int64',
+            field_name: 'id',
+            field_id: 101,
+            field: 'scalars',
+            scalars: {
+              long_data: { data: ['10', '20', '30', '40'] }, // 2 results for query 1, 2 for query 2
+              data: 'long_data',
+            },
+          },
+          // Data for 'meta' field (VarChar)
+          {
+            type: 'VarChar',
+            field_name: 'meta',
+            field_id: 102,
+            field: 'scalars',
+            scalars: {
+              string_data: { data: ['meta1', 'meta2', 'meta3', 'meta4'] },
+              data: 'string_data',
+            },
+          },
+          // Data for 'vector' field (FloatVector) - Usually not requested, but for testing format
+          {
+            type: 'FloatVector',
+            field_name: 'vector',
+            field_id: 103,
+            field: 'vectors',
+            vectors: {
+              dim: '2',
+              float_vector: { data: [1.1, 1.2, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2] }, // 4 vectors * 2 dim
+            },
+          },
+        ],
+        scores: [0.9, 0.8, 0.7, 0.6], // 2 scores for query 1, 2 for query 2
+        ids: {
+          int_id: { data: ['10', '20', '30', '40'] },
+          id_field: 'int_id',
+        },
+        topks: ['2', '2'], // Query 1 gets top 2, Query 2 gets top 2
+        output_fields: ['id', 'meta'], // Requesting id and meta fields
+      } as any,
+    };
+
+    const options = { round_decimal: 1 }; // Round scores to 1 decimal place
+
+    const expectedResults = [
+      // Results for Query 1
+      [
+        { score: 0.9, id: '10', meta: 'meta1' },
+        { score: 0.8, id: '20', meta: 'meta2' },
+      ],
+      // Results for Query 2
+      [
+        { score: 0.7, id: '30', meta: 'meta3' },
+        { score: 0.6, id: '40', meta: 'meta4' },
+      ],
+    ];
+
+    const results = formatSearchResult(multiQuerySearchRes as any, options);
+    expect(results).toEqual(expectedResults);
+  });
+
   it('should format search vector correctly', () => {
     // float vector
     const floatVector = [1, 2, 3];

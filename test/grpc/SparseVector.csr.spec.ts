@@ -78,7 +78,7 @@ describe(`Sparse vectors type:CSR API testing`, () => {
         metric_type: MetricType.IP,
         index_type: IndexType.SPARSE_WAND,
         params: {
-          drop_ratio_build: 0.2,
+          inverted_index_algo: "DAAT_MAXSCORE",
         },
       },
     ]);
@@ -121,6 +121,10 @@ describe(`Sparse vectors type:CSR API testing`, () => {
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
+      params: {
+        drop_ratio_search: 0.2,
+        dim_max_score_ratio: 0.9,
+      },
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
@@ -133,6 +137,10 @@ describe(`Sparse vectors type:CSR API testing`, () => {
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
+      params: {
+        drop_ratio_search: 0.2,
+        dim_max_score_ratio: 0.9,
+      },
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
