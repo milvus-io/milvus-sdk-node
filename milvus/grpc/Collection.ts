@@ -206,6 +206,32 @@ export class Collection extends Database {
     return createPromise;
   }
 
+  /**
+   * Add a new field to an existing collection in Milvus.
+   *
+   * @param {AddCollectionFieldReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to add the field to.
+   * @param {FieldType} data.field - The field schema to be added.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   * const resStatus = await milvusClient.addCollectionField({
+   *   collection_name: 'my_collection',
+   *   field: {
+   *     name: 'new_field',
+   *     data_type: 'Int64',
+   *     is_primary_key: false,
+   *     description: 'A new field'
+   *   }
+   * });
+   * ```
+   */
   async addCollectionField(data: AddCollectionFieldReq): Promise<ResStatus> {
     // Get the CollectionSchemaType and FieldSchemaType from the schemaProto object.
     const schemaTypes = {
