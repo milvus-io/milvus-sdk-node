@@ -697,6 +697,11 @@ export default {
                       "rule": "repeated",
                       "type": "common.KeyValuePair",
                       "id": 5
+                    },
+                    "delete_keys": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 6
                     }
                   }
                 },
@@ -1551,6 +1556,14 @@ export default {
                     "pending_index_rows": {
                       "type": "int64",
                       "id": 9
+                    },
+                    "min_index_version": {
+                      "type": "int32",
+                      "id": 10
+                    },
+                    "max_index_version": {
+                      "type": "int32",
+                      "id": 11
                     }
                   }
                 },
