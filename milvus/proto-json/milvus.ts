@@ -697,6 +697,11 @@ export default {
                       "rule": "repeated",
                       "type": "common.KeyValuePair",
                       "id": 5
+                    },
+                    "delete_keys": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 6
                     }
                   }
                 },
