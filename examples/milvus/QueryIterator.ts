@@ -8,9 +8,11 @@ const COLLECTION_NAME = 'hello_milvus';
     address: 'localhost:19530',
     username: 'root',
     password: 'Milvus',
+    logLevel: 'debug',
   });
 
   console.log('Node client is initialized.');
+  const dim = 1024;
   // create collection
   const create = await milvusClient.createCollection({
     collection_name: COLLECTION_NAME,
@@ -26,7 +28,7 @@ const COLLECTION_NAME = 'hello_milvus';
         name: 'vector',
         description: 'Vector field',
         data_type: DataType.FloatVector,
-        dim: 8,
+        dim: 1024,
       },
       { name: 'height', description: 'int64 field', data_type: DataType.Int64 },
       {
@@ -39,13 +41,14 @@ const COLLECTION_NAME = 'hello_milvus';
   });
   console.log('Create collection is finished.', create);
 
-  const rows = 50000;
+  const rows = 1000;
+  const batchCount = 10; // Number of times to insert
 
   const generateInsertData = () => {
     const data = [];
     for (let i = 0; i < rows; i++) {
       data.push({
-        vector: new Array(8).fill(0).map(() => Math.random()),
+        vector: new Array(dim).fill(0).map(() => Math.random()),
         height: 150 + i,
         name: `name_${i}`,
       });
@@ -53,13 +56,15 @@ const COLLECTION_NAME = 'hello_milvus';
     return data;
   };
 
-  const params: InsertReq = {
-    collection_name: COLLECTION_NAME,
-    fields_data: generateInsertData(),
-  };
-  // insert data into collection
-  await milvusClient.insert(params);
-  console.log(`Data is inserted. ${rows} rows`);
+  // insert data into collection in batches
+  for (let batch = 0; batch < batchCount; batch++) {
+    const params: InsertReq = {
+      collection_name: COLLECTION_NAME,
+      fields_data: generateInsertData(),
+    };
+    const insert = await milvusClient.insert(params);
+    console.log(`Batch ${batch + 1}: Data is inserted. ${rows} rows`, insert);
+  }
 
   // create index
   const createIndex = await milvusClient.createIndex({
