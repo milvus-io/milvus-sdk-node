@@ -8,7 +8,7 @@ const COLLECTION_NAME = 'hello_milvus';
     address: 'localhost:19530',
     username: 'root',
     password: 'Milvus',
-    logLevel: 'debug',
+    logLevel: 'info',
   });
 
   console.log('Node client is initialized.');
