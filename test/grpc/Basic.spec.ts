@@ -3,7 +3,7 @@ import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
 const milvusClient = new MilvusClient({
   address: IP,
-  logLevel: 'debug',
+  logLevel: 'info',
   logPrefix: 'Basic API',
 });
 const COLLECTION_NAME = GENERATE_NAME();
@@ -59,6 +59,7 @@ const schemaToAdd: FieldType[] = [
     max_length: 128,
     nullable: true,
     is_partition_key: false,
+    ['mmap.enabled']: true,
   },
 ];
 
@@ -199,8 +200,10 @@ describe(`Basic API without database`, () => {
       expr: `id > 0`,
       output_fields: ['new_varChar', 'new_array'],
     });
+
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(query.data[0].length).toEqual(2);
+    expect(Object.keys(query.data[0])).toContain('new_varChar');
+    expect(Object.keys(query.data[0])).toContain('new_array');
   });
 
   it(`search with new field should be successful`, async () => {
@@ -209,8 +212,10 @@ describe(`Basic API without database`, () => {
       data: [1, 2, 3, 4],
       output_fields: ['new_varChar', 'new_array'],
     });
+
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(search.results[0].length).toEqual(2);
+    expect(Object.keys(search.results[0])).toContain('new_varChar');
+    expect(Object.keys(search.results[0])).toContain('new_array');
   });
 
   it(`release again should be successful`, async () => {
