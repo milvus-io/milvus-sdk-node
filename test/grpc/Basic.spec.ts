@@ -1,4 +1,4 @@
-import { MilvusClient, ErrorCode, DataType } from '../../milvus';
+import { MilvusClient, ErrorCode, DataType, FieldType } from '../../milvus';
 import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
 const milvusClient = new MilvusClient({
@@ -7,7 +7,7 @@ const milvusClient = new MilvusClient({
   logPrefix: 'Basic API',
 });
 const COLLECTION_NAME = GENERATE_NAME();
-const schema = [
+const schema: FieldType[] = [
   {
     name: 'vector',
     description: 'Vector field',
@@ -39,7 +39,44 @@ const schema = [
   },
 ];
 
+const schemaToAdd: FieldType[] = [
+  {
+    name: 'new_varChar',
+    description: 'new VarChar field',
+    data_type: DataType.VarChar,
+    max_length: 128,
+    is_partition_key: false,
+    nullable: true,
+    default_value: 'default',
+  },
+
+  {
+    name: 'new_array',
+    description: 'new array field',
+    data_type: DataType.Array,
+    element_type: DataType.VarChar,
+    max_capacity: 128,
+    max_length: 128,
+    nullable: true,
+    is_partition_key: false,
+    ['mmap.enabled']: true,
+  },
+];
+
+const dbParam = {
+  db_name: 'Basic_API',
+};
+
 describe(`Basic API without database`, () => {
+  beforeAll(async () => {
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
+  });
+
+  afterAll(async () => {
+    await milvusClient.dropDatabase(dbParam);
+  });
+
   it(`Create collection should be successful`, async () => {
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
@@ -129,7 +166,79 @@ describe(`Basic API without database`, () => {
       timeout: 15000,
     });
     expect(release.error_code).toEqual(ErrorCode.SUCCESS);
+  });
 
+  it(`add field should be successful`, async () => {
+    const addVarChar = await milvusClient.addCollectionField({
+      collection_name: COLLECTION_NAME,
+      field: schemaToAdd[0],
+    });
+    expect(addVarChar.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const addArray = await milvusClient.addCollectionField({
+      collection_name: COLLECTION_NAME,
+      field: schemaToAdd[1],
+    });
+    expect(addArray.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(describe.schema.fields.length).toEqual(
+      schema.length + schemaToAdd.length
+    );
+    expect(describe.schema.fields[4].name).toEqual('new_varChar');
+    expect(describe.schema.fields[5].name).toEqual('new_array');
+  });
+
+  it(`insert data with new field should be successful`, async () => {
+    const data = generateInsertData([...schema, ...schemaToAdd]);
+    const insert = await milvusClient.insert({
+      collection_name: COLLECTION_NAME,
+      data,
+    });
+    expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`load collection with new field should be successful`, async () => {
+    const load = await milvusClient.loadCollectionSync({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`query with new field should be successful`, async () => {
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: `id > 0`,
+      output_fields: ['new_varChar', 'new_array'],
+    });
+
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(Object.keys(query.data[0])).toContain('new_varChar');
+    expect(Object.keys(query.data[0])).toContain('new_array');
+  });
+
+  it(`search with new field should be successful`, async () => {
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      data: [1, 2, 3, 4],
+      output_fields: ['new_varChar', 'new_array'],
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(Object.keys(search.results[0])).toContain('new_varChar');
+    expect(Object.keys(search.results[0])).toContain('new_array');
+  });
+
+  it(`release again should be successful`, async () => {
+    const release = await milvusClient.releaseCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(release.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`drop should be successful`, async () => {
     // drop
     const drop = await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME,

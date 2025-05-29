@@ -4502,6 +4502,23 @@ export default {
                     "withHash": {
                       "type": "bool",
                       "id": 5
+                    },
+                    "dbName": {
+                      "type": "string",
+                      "id": 6
+                    },
+                    "collectionName": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "fieldName": {
+                      "type": "string",
+                      "id": 8
+                    },
+                    "analyzerNames": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 9
                     }
                   }
                 },
@@ -4851,6 +4868,7 @@ export default {
                     "UnsubDmChannel": 516,
                     "GetDistribution": 517,
                     "SyncDistribution": 518,
+                    "RunAnalyzer": 519,
                     "SegmentInfo": 600,
                     "SystemInfo": 601,
                     "GetRecoveryInfo": 602,
