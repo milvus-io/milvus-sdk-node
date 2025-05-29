@@ -180,13 +180,25 @@ export function generateTests(
     });
 
     it('should upsert data successfully', async () => {
-      const { data } = await client.query({
-        collectionName: createParams.collectionName,
-        filter: 'id > 0',
-        limit: 1,
-        outputFields: ['*'],
-      });
-      const target = data[0];
+      let target: any;
+      let times = 0;
+
+      // if data is undefined, query again
+      while (!target) {
+        const { data } = await client.query({
+          collectionName: createParams.collectionName,
+          filter: 'id > 0',
+          limit: 1,
+          outputFields: ['*'],
+          consistencyLevel: 'Strong',
+        });
+        target = data[0];
+
+        times++;
+      }
+
+      console.log('finnaly query times', times);
+
       const upsert = await client.upsert({
         collectionName: createParams.collectionName,
         data: [{ ...target, int64: 0 }],

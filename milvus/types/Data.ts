@@ -115,6 +115,7 @@ interface BaseInsertReq extends collectionNameReq {
   partition_name?: string; // partition name
   hash_keys?: number[]; // user can generate hash value depend on primarykey value
   transformers?: InsertTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  skip_check_schema?: boolean; // skip schema check
 }
 
 // Variant with data property

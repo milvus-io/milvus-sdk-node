@@ -230,8 +230,15 @@ export class Data extends Collection {
     const params = {
       ...data,
       num_rows: data.fields_data.length,
-      schema_timestamp: collectionInfo.update_timestamp,
+      schema_timestamp:
+        collectionInfo.update_timestamp_str ||
+        (collectionInfo.update_timestamp as string | number | undefined),
     };
+    /* istanbul ignore next if */
+    if (data.skip_check_schema) {
+      // if skip_check_schema is true, we need to remove the schema_timestamp from the params
+      delete params.schema_timestamp; // This completely removes the property
+    }
 
     // transform data from map to array, milvus grpc params
     params.fields_data = Array.from(fieldMap.values()).map(field => {
