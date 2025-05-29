@@ -63,7 +63,20 @@ const schemaToAdd: FieldType[] = [
   },
 ];
 
+const dbParam = {
+  db_name: 'Basic_API',
+};
+
 describe(`Basic API without database`, () => {
+  beforeAll(async () => {
+    await milvusClient.createDatabase(dbParam);
+    await milvusClient.use(dbParam);
+  });
+
+  afterAll(async () => {
+    await milvusClient.dropDatabase(dbParam);
+  });
+
   it(`Create collection should be successful`, async () => {
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
