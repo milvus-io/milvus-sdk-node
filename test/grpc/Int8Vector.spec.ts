@@ -65,7 +65,7 @@ describe(`Int8 vectors API testing`, () => {
     expect(int8VField.length).toBe(1);
   });
 
-  it(`insert sparse vector data should be successful`, async () => {
+  it(`insert int8 vector data should be successful`, async () => {
     const insert = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data,
@@ -120,7 +120,7 @@ describe(`Int8 vectors API testing`, () => {
     // console.dir(query, { depth: null });
   });
 
-  it(`search with sparse vector should be successful`, async () => {
+  it(`search with int8 vector should be successful`, async () => {
     const search = await milvusClient.search({
       data: data[0].vector,
       collection_name: COLLECTION_NAME,
@@ -142,7 +142,7 @@ describe(`Int8 vectors API testing`, () => {
     expect(searchTyped.results.length).toBeGreaterThan(0);
   });
 
-  it(`search with sparse vector with nq > 1 should be successful`, async () => {
+  it(`search with int8 vector with nq > 1 should be successful`, async () => {
     const search = await milvusClient.search({
       data: [data[0].vector, data[1].vector],
       collection_name: COLLECTION_NAME,
