@@ -1547,6 +1547,14 @@ export default {
                     "pendingIndexRows": {
                       "type": "int64",
                       "id": 9
+                    },
+                    "minIndexVersion": {
+                      "type": "int32",
+                      "id": 10
+                    },
+                    "maxIndexVersion": {
+                      "type": "int32",
+                      "id": 11
                     }
                   }
                 },
