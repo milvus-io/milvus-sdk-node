@@ -1017,6 +1017,7 @@ export default {
                     "UnsubDmChannel": 516,
                     "GetDistribution": 517,
                     "SyncDistribution": 518,
+                    "RunAnalyzer": 519,
                     "SegmentInfo": 600,
                     "SystemInfo": 601,
                     "GetRecoveryInfo": 602,

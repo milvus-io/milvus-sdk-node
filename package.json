@@ -3,7 +3,7 @@
   "author": "Zilliz",
   "milvusVersion": "v2.5.12",
   "milvusLiteVersion": "2.5.0rc1",
-  "version": "2.5.9",
+  "version": "2.5.10",
   "main": "dist/milvus",
   "files": [
     "dist"
