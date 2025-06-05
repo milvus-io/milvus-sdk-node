@@ -184,17 +184,32 @@ export const getRetryInterceptor = ({
               );
 
               logger.debug(
-                `\x1b[31m[Retry(${_retryDelay}ms]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m:, status: ${JSON.stringify(
+                `\x1b[35m[Retry Delay ${_retryDelay}ms]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: status: ${JSON.stringify(
                   status
                 )}`
               );
 
               // set new deadline
               options.deadline = new Date(Date.now() + timeout);
-              // create new call
-              const newCall = nextCall(options);
-              newCall.start(savedMetadata, retryListener);
-              newCall.sendMessage(savedSendMessage);
+              // create new call with delay
+              logger.debug(
+                `\x1b[35m[Retry Attempt ${retryCount}/${maxRetries}]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: Will retry in ${_retryDelay}ms`
+              );
+              setTimeout(() => {
+                logger.debug(
+                  `\x1b[35m[Retry Executing ${retryCount}/${maxRetries}]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: Starting retry attempt`
+                );
+                const newCall = nextCall(options);
+                newCall.start(savedMetadata, retryListener);
+                // Log retry request message
+                const string = JSON.stringify(savedSendMessage);
+                const msg =
+                  string.length > 4096 ? string.slice(0, 4096) + '...' : string;
+                logger.debug(
+                  `\x1b[35m[Retry Request]\x1b[0m${clientId}>${dbname}>\x1b[1m${methodName}(${timeoutInSeconds})\x1b[0m: ${msg}`
+                );
+                newCall.sendMessage(savedSendMessage);
+              }, _retryDelay);
             } else {
               const string = JSON.stringify(savedReceiveMessage);
               const msg =
