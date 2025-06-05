@@ -693,6 +693,11 @@ export default {
                       "rule": "repeated",
                       "type": "common.KeyValuePair",
                       "id": 5
+                    },
+                    "delete_keys": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 6
                     }
                   }
                 },
@@ -4456,6 +4461,23 @@ export default {
                     "with_hash": {
                       "type": "bool",
                       "id": 5
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 6
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "field_name": {
+                      "type": "string",
+                      "id": 8
+                    },
+                    "analyzer_names": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 9
                     }
                   }
                 },
@@ -4804,6 +4826,7 @@ export default {
                     "UnsubDmChannel": 516,
                     "GetDistribution": 517,
                     "SyncDistribution": 518,
+                    "RunAnalyzer": 519,
                     "SegmentInfo": 600,
                     "SystemInfo": 601,
                     "GetRecoveryInfo": 602,
