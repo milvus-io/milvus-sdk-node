@@ -1,0 +1,9 @@
+{
+  "name": "cloud",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "p-queue": "^8.1.0"
+  }
+}
