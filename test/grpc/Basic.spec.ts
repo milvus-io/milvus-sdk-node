@@ -63,6 +63,44 @@ const schemaToAdd: FieldType[] = [
   },
 ];
 
+const fieldsToAdd: FieldType[] = [
+  {
+    name: 'new_varChar2',
+    description: 'new VarChar field',
+    data_type: DataType.VarChar,
+    max_length: 128,
+    is_partition_key: false,
+    nullable: true,
+    default_value: 'default',
+  },
+
+  {
+    name: 'new_array2',
+    description: 'new array field',
+    data_type: DataType.Array,
+    element_type: DataType.VarChar,
+    max_capacity: 128,
+    max_length: 128,
+    nullable: true,
+    is_partition_key: false,
+    ['mmap.enabled']: true,
+  },
+];
+
+const wrongFieldsToAdd: FieldType[] = [
+  {
+    name: 'new_array2',
+    description: 'new array field',
+    data_type: DataType.Array,
+    element_type: DataType.VarChar,
+    max_capacity: 128,
+    max_length: 128,
+    nullable: false,
+    is_partition_key: false,
+    ['mmap.enabled']: true,
+  },
+];
+
 const dbParam = {
   db_name: 'Basic_API',
 };
@@ -191,6 +229,28 @@ describe(`Basic API without database`, () => {
     expect(describe.schema.fields[5].name).toEqual('new_array');
   });
 
+  it(`load collection with new field should be successful`, async () => {
+    const load = await milvusClient.loadCollectionSync({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`query with new field should be successful, data should be null`, async () => {
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: `id > 0`,
+      output_fields: ['new_varChar', 'new_array'],
+      limit: 10,
+    });
+
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(Object.keys(query.data[0])).toContain('new_varChar');
+    expect(Object.keys(query.data[0])).toContain('new_array');
+    expect(query.data[0].new_varChar).toBeNull();
+    expect(query.data[0].new_array).toBeNull();
+  });
+
   it(`insert data with new field should be successful`, async () => {
     const data = generateInsertData([...schema, ...schemaToAdd]);
     const insert = await milvusClient.insert({
@@ -198,13 +258,6 @@ describe(`Basic API without database`, () => {
       data,
     });
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
-  });
-
-  it(`load collection with new field should be successful`, async () => {
-    const load = await milvusClient.loadCollectionSync({
-      collection_name: COLLECTION_NAME,
-    });
-    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`query with new field should be successful`, async () => {
@@ -229,6 +282,31 @@ describe(`Basic API without database`, () => {
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(Object.keys(search.results[0])).toContain('new_varChar');
     expect(Object.keys(search.results[0])).toContain('new_array');
+  });
+
+  it(`add fields should be successful`, async () => {
+    const addVarChar = await milvusClient.addCollectionFields({
+      collection_name: COLLECTION_NAME,
+      fields: fieldsToAdd,
+    });
+    expect(addVarChar.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(describe.schema.fields.length).toEqual(
+      schema.length + schemaToAdd.length + fieldsToAdd.length
+    );
+    expect(describe.schema.fields[6].name).toEqual('new_varChar2');
+    expect(describe.schema.fields[7].name).toEqual('new_array2');
+  });
+
+  it('add wrong fields should be failed', async () => {
+    const addWrongFields = await milvusClient.addCollectionFields({
+      collection_name: COLLECTION_NAME,
+      fields: wrongFieldsToAdd,
+    });
+    expect(addWrongFields.error_code).toEqual(ErrorCode.IllegalArgument);
   });
 
   it(`release again should be successful`, async () => {

@@ -142,6 +142,12 @@ export interface AddCollectionFieldReq extends collectionNameReq {
   field: FieldType; // required, field of the collection
 }
 
+export interface AddCollectionFieldsReq extends collectionNameReq {
+  collection_name: string; // required, collection name
+  db_name?: string; // optional, db name
+  fields: FieldType[]; // required, fields of the collection
+}
+
 export interface HasCollectionReq extends collectionNameReq {}
 
 export interface DescribeCollectionReq extends collectionNameReq {
