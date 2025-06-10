@@ -1,7 +1,7 @@
 {
   "name": "@zilliz/milvus2-sdk-node",
   "author": "Zilliz",
-  "milvusVersion": "master-20250529-3a740441-amd64",
+  "milvusVersion": "master-20250610-28610967-amd64",
   "version": "2.5.7",
   "main": "dist/milvus",
   "files": [
