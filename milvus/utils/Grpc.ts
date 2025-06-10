@@ -215,11 +215,23 @@ export const getRetryInterceptor = ({
               const msg =
                 string.length > 4096 ? string.slice(0, 4096) + '...' : string;
 
-              logger.debug(
-                `\x1b[32m[Response(${
-                  Date.now() - startTime.getTime()
-                }ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${msg}`
-              );
+              const totalTime = Date.now() - startTime.getTime();
+
+              // Add retry information to error message if this is a failure after retries
+              if (needRetry && retryCount > 0) {
+                // This is a final failure after retries, modify the error details
+                const originalDetails = status.details || '';
+                const retryInfo = ` (retried ${retryCount} times, ${totalTime}ms)`;
+                status.details = originalDetails + retryInfo;
+
+                logger.debug(
+                  `\x1b[31m[Failed after retries(${totalTime}ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${msg}`
+                );
+              } else {
+                logger.debug(
+                  `\x1b[32m[Response(${totalTime}ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${msg}`
+                );
+              }
 
               savedMessageNext(savedReceiveMessage);
               savedStatusNext(status);

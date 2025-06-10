@@ -35,7 +35,9 @@ export default {
                     "Float16Vector": 102,
                     "BFloat16Vector": 103,
                     "SparseFloatVector": 104,
-                    "Int8Vector": 105
+                    "Int8Vector": 105,
+                    "ArrayOfVector": 106,
+                    "ArrayOfStruct": 200
                   }
                 },
                 "FunctionType": {
@@ -222,6 +224,32 @@ export default {
                     "dbName": {
                       "type": "string",
                       "id": 8
+                    },
+                    "structArrayFields": {
+                      "rule": "repeated",
+                      "type": "StructArrayFieldSchema",
+                      "id": 9
+                    }
+                  }
+                },
+                "StructArrayFieldSchema": {
+                  "fields": {
+                    "fieldID": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "fields": {
+                      "rule": "repeated",
+                      "type": "FieldSchema",
+                      "id": 4
                     }
                   }
                 },
@@ -446,7 +474,8 @@ export default {
                         "float16Vector",
                         "bfloat16Vector",
                         "sparseFloatVector",
-                        "int8Vector"
+                        "int8Vector",
+                        "vectorArray"
                       ]
                     }
                   },
@@ -478,6 +507,36 @@ export default {
                     "int8Vector": {
                       "type": "bytes",
                       "id": 7
+                    },
+                    "vectorArray": {
+                      "type": "VectorArray",
+                      "id": 8
+                    }
+                  }
+                },
+                "VectorArray": {
+                  "fields": {
+                    "dim": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "data": {
+                      "rule": "repeated",
+                      "type": "VectorField",
+                      "id": 2
+                    },
+                    "elementType": {
+                      "type": "DataType",
+                      "id": 3
+                    }
+                  }
+                },
+                "StructArrayField": {
+                  "fields": {
+                    "fields": {
+                      "rule": "repeated",
+                      "type": "FieldData",
+                      "id": 1
                     }
                   }
                 },
@@ -486,7 +545,8 @@ export default {
                     "field": {
                       "oneof": [
                         "scalars",
-                        "vectors"
+                        "vectors",
+                        "structArrays"
                       ]
                     }
                   },
@@ -506,6 +566,10 @@ export default {
                     "vectors": {
                       "type": "VectorField",
                       "id": 4
+                    },
+                    "structArrays": {
+                      "type": "StructArrayField",
+                      "id": 8
                     },
                     "fieldId": {
                       "type": "int64",
