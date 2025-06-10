@@ -59,6 +59,7 @@ import {
   RefreshLoadReq,
   isVectorType,
   AddCollectionFieldReq,
+  AddCollectionFieldsReq,
   formatFieldSchema,
 } from '../';
 
@@ -223,12 +224,12 @@ export class Collection extends Database {
    * const milvusClient = new MilvusClient(MILVUS_ADDRESS);
    * const resStatus = await milvusClient.addCollectionField({
    *   collection_name: 'my_collection',
-   *   field: {
+   *   field: [{
    *     name: 'new_field',
    *     data_type: 'Int64',
    *     is_primary_key: false,
    *     description: 'A new field'
-   *   }
+   *   }]
    * });
    * ```
    */
@@ -255,6 +256,56 @@ export class Collection extends Database {
       },
       data.timeout || this.timeout
     );
+  }
+
+  /**
+   * Add multiple new fields to an existing collection in Milvus.
+   *
+   * @param {AddCollectionFieldsReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to add the fields to.
+   * @param {FieldType[]} data.fields - Array of field schemas to be added.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   * const resStatus = await milvusClient.addCollectionFields({
+   *   collection_name: 'my_collection',
+   *   fields: [
+   *     {
+   *       name: 'new_field_1',
+   *       data_type: 'Int64',
+   *       is_primary_key: false,
+   *       description: 'First new field'
+   *     },
+   *     {
+   *       name: 'new_field_2',
+   *       data_type: 'FloatVector',
+   *       dim: 128,
+   *       description: 'Second new field'
+   *     }
+   *   ]
+   * });
+   * ```
+   */
+  async addCollectionFields(data: AddCollectionFieldsReq): Promise<ResStatus> {
+    for (const field of data.fields) {
+      const result = await this.addCollectionField({
+        collection_name: data.collection_name,
+        field,
+        timeout: data.timeout,
+      });
+
+      if (result.error_code !== ErrorCode.SUCCESS) {
+        return result;
+      }
+    }
+
+    return { error_code: ErrorCode.SUCCESS, reason: '', code: 0 };
   }
 
   /**
