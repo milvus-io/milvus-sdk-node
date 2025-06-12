@@ -6,7 +6,6 @@ import {
   ChannelOptions,
   credentials,
   ChannelCredentials,
-  VerifyOptions,
 } from '@grpc/grpc-js';
 import { Pool } from 'generic-pool';
 import {
@@ -20,6 +19,12 @@ import {
 } from '../';
 import milvusProtoJson from '../proto-json/milvus.base';
 import schemaProtoJson from '../proto-json/schema.base';
+
+// Define VerifyOptions interface
+interface VerifyOptions {
+  checkServerIdentity?: (host: string, cert: any) => Error | undefined;
+  rejectUnauthorized?: boolean;
+}
 
 /**
  * Base gRPC client, setup all configuration here
