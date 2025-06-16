@@ -2,7 +2,7 @@ name: Publish package to npm
 
 on:
   release:
-    types: [released]
+    types: [released, prereleased]
 
 jobs:
   publish:
