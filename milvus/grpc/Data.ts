@@ -574,7 +574,7 @@ export class Data extends Collection {
 
     // build final results array
     const results = formatSearchResult(originSearchResult, {
-      round_decimal,
+      round_decimal: round_decimal || -1,
       transformers: params.transformers,
     });
 

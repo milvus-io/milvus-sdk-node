@@ -21,8 +21,7 @@ const dbParam = {
 };
 const numPartitions = 3;
 
-// create
-const createCollectionParams = genCollectionParams({
+const params = {
   collectionName: COLLECTION,
   dim: [4],
   vectorType: [DataType.FloatVector],
@@ -50,6 +49,11 @@ const createCollectionParams = genCollectionParams({
       description: 'sparse field2',
       data_type: DataType.SparseFloatVector,
     },
+    {
+      name: 'int_field',
+      description: 'int field',
+      data_type: DataType.Int32,
+    },
   ],
   functions: [
     {
@@ -69,7 +73,10 @@ const createCollectionParams = genCollectionParams({
       params: {},
     },
   ],
-});
+};
+
+// create
+const createCollectionParams = genCollectionParams(params);
 
 describe(`FulltextSearch API`, () => {
   beforeAll(async () => {
@@ -124,6 +131,7 @@ describe(`FulltextSearch API`, () => {
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION,
     });
+    console.dir(describe, { depth: null });
     // expect the 'sparse' field to be created
     expect(describe.schema.fields.length).toEqual(
       createCollectionParams.fields.length
@@ -284,5 +292,68 @@ describe(`FulltextSearch API`, () => {
     });
 
     expect(search3.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`search with rerank function should success`, async () => {
+    const search = await milvusClient.search({
+      collection_name: COLLECTION,
+      limit: 1,
+      data: 'apple',
+      anns_field: 'sparse',
+      output_fields: ['*'],
+      params: { drop_ratio_search: 0.6 },
+      consistency_level: ConsistencyLevelEnum.Strong,
+      rerank: {
+        name: 'rerank',
+        type: FunctionType.RERANK,
+        input_field_names: ['int_field'],
+        params: {
+          reranker: 'decay',
+          function: 'exp',
+          origin: 100,
+          offset: 0,
+          decay: 0.5,
+          scale: 100,
+        },
+      },
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(1);
+  });
+
+  it(`hybrid search with rerank function should success`, async () => {
+    const search = await milvusClient.search({
+      collection_name: COLLECTION,
+      limit: 1,
+      data: [
+        {
+          data: 'apple',
+          anns_field: 'sparse',
+          params: { nprobe: 2 },
+        },
+        {
+          data: [1, 2, 3, 4],
+          anns_field: 'vector',
+        },
+      ],
+      rerank: {
+        name: 'rerank',
+        type: FunctionType.RERANK,
+        input_field_names: ['int_field'],
+        params: {
+          reranker: 'decay',
+          function: 'exp',
+          origin: 100,
+          offset: 0,
+          decay: 0.5,
+          scale: 100,
+        },
+      },
+      consistency_level: ConsistencyLevelEnum.Strong,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(1);
   });
 });

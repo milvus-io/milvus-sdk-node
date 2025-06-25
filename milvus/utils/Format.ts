@@ -47,6 +47,7 @@ import {
   TypeParamKey,
   TypeParam,
   keyValueObj,
+  FunctionObject,
 } from '../';
 
 /**
@@ -218,7 +219,7 @@ export const assignTypeParams = (
   typeParamKeys.forEach(key => {
     if (key in newField) {
       const value = newField[key as keyof FieldType];
-      // Convert the value to a string, JSON-stringify if it’s an object
+      // Convert the value to a string, JSON-stringify if it's an object
       newField.type_params![key] =
         typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
       delete newField[key as keyof FieldType];
@@ -336,15 +337,15 @@ export const formatCollectionSchema = (
 
   // if functions is set, parse its params to key-value pairs, and delete inputs and outputs
   if (functions) {
-    payload.functions = functions.map((func: any) => {
+    payload.functions = functions.map((func: FunctionObject) => {
       const { input_field_names, output_field_names, ...rest } = func;
 
-      functionOutputFields.push(...output_field_names);
+      functionOutputFields.push(...(output_field_names || []));
 
       return schemaTypes.functionSchemaType.create({
         ...rest,
-        inputFieldNames: input_field_names,
-        outputFieldNames: output_field_names,
+        inputFieldNames: input_field_names || [],
+        outputFieldNames: output_field_names || [],
         params: parseToKeyValue(func.params, true),
       });
     });
@@ -804,6 +805,42 @@ type FormatedSearchRequest = {
   expr?: string;
   expr_template_values?: keyValueObj;
   rank_params?: KeyValuePair[];
+  function_score?: any;
+  requests?: FormatedSearchRequest[];
+};
+
+/**
+ * Creates function_score object for search requests
+ * @param isRerankFunction - Whether the rerank is a function object
+ * @param searchHybridReq - The hybrid search request
+ * @param schemaTypes - Schema types for creating function objects
+ * @returns Function score object or empty object
+ */
+const createFunctionScore = (
+  hasRerankFunction: boolean,
+  searchHybridReq: HybridSearchReq
+) => {
+  if (!hasRerankFunction) {
+    return {};
+  }
+
+  return {
+    function_score: {
+      functions: [searchHybridReq.rerank as FunctionObject].map(
+        (func: FunctionObject) => {
+          const { input_field_names, output_field_names, ...rest } = func;
+          const result = {
+            ...rest,
+            input_field_names: input_field_names || [],
+            output_field_names: output_field_names || [],
+            params: parseToKeyValue(func.params, true),
+          };
+          return result;
+        }
+      ),
+      params: [],
+    },
+  };
 };
 
 /**
@@ -829,14 +866,20 @@ type FormatedSearchRequest = {
  * @returns {number} return.round_decimal - The score precision.
  */
 export const buildSearchRequest = (
-  data: SearchReq | SearchSimpleReq | HybridSearchReq,
+  params: SearchReq | SearchSimpleReq | HybridSearchReq,
   collectionInfo: DescribeCollectionResponse,
   milvusProto: Root
 ) => {
   // type cast
-  const searchReq = data as SearchReq;
-  const searchHybridReq = data as HybridSearchReq;
-  const searchSimpleReq = data as SearchSimpleReq;
+  const searchReq = params as SearchReq;
+  const searchHybridReq = params as HybridSearchReq;
+  const searchSimpleReq = params as SearchSimpleReq;
+  const searchSimpleOrHybridReq = params as SearchSimpleReq | HybridSearchReq;
+  const hasRerankFunction = !!(
+    searchSimpleOrHybridReq.rerank &&
+    typeof searchSimpleOrHybridReq.rerank === 'object' &&
+    'type' in searchSimpleOrHybridReq.rerank
+  );
 
   // Initialize requests array
   const requests: FormatedSearchRequest[] = [];
@@ -860,7 +903,7 @@ export const buildSearchRequest = (
     // if field  type is vector, build the request
     if (isVectorType(dataType)) {
       let req: SearchSimpleReq | (HybridSearchReq & HybridSearchSingleReq) =
-        data as SearchSimpleReq;
+        params as SearchSimpleReq;
 
       if (isHybridSearch) {
         const singleReq = searchHybridReq.data.find(d => d.anns_field === name);
@@ -869,7 +912,7 @@ export const buildSearchRequest = (
           continue;
         }
         // merge single request with hybrid request
-        req = Object.assign(cloneObj(data), singleReq);
+        req = Object.assign(cloneObj(params), singleReq);
       } else {
         // if it is not hybrid search, and we have built one request
         // or user has specified an anns_field to search and is not matching
@@ -933,11 +976,6 @@ export const buildSearchRequest = (
     (searchSimpleReq.params?.round_decimal as number) ??
     -1;
 
-  // outter expr_template_values
-  const expr_template_values = searchSimpleReq.exprValues
-    ? formatExprValues(searchSimpleReq.exprValues)
-    : undefined;
-
   // if no anns_field found in search request, throw error
   if (requests.length === 0) {
     throw new Error(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
@@ -946,28 +984,38 @@ export const buildSearchRequest = (
   return {
     isHybridSearch: isHybridSearch,
     request: isHybridSearch
-      ? ({
-          collection_name: data.collection_name,
-          partition_names: data.partition_names,
+      ? {
+          collection_name: params.collection_name,
+          partition_names: params.partition_names,
           requests: requests,
-          rank_params: [
-            ...parseToKeyValue(
-              convertRerankParams(searchHybridReq.rerank || RRFRanker())
-            ),
-            { key: 'round_decimal', value: round_decimal },
-            {
-              key: 'limit',
-              value:
-                searchSimpleReq.limit ?? searchSimpleReq.topk ?? DEFAULT_TOPK,
-            },
-          ],
           output_fields: requests[0]?.output_fields,
           consistency_level: requests[0]?.consistency_level,
-        } as FormatedSearchRequest)
-      : requests[0],
+
+          // if ranker is set and it is a hybrid search, add it to the request
+          ...createFunctionScore(hasRerankFunction, searchHybridReq),
+
+          // if ranker is not exist, use RRFRanker ranker
+          ...{
+            rank_params: [
+              ...(!hasRerankFunction
+                ? parseToKeyValue(convertRerankParams(RRFRanker()))
+                : []),
+              { key: 'round_decimal', value: round_decimal },
+              {
+                key: 'limit',
+                value:
+                  searchSimpleReq.limit ?? searchSimpleReq.topk ?? DEFAULT_TOPK,
+              },
+            ],
+          },
+        }
+      : ({
+          ...requests[0],
+          ...createFunctionScore(hasRerankFunction, searchHybridReq),
+        } as FormatedSearchRequest),
+    // if round_decimal is set, add it to the return object
+    ...(round_decimal !== -1 ? { round_decimal } : {}),
     nq: requests[0].nq,
-    round_decimal,
-    expr_template_values,
   };
 };
 

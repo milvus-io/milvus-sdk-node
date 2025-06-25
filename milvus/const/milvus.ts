@@ -288,6 +288,7 @@ export enum FunctionType {
   Unknown = 0,
   BM25 = 1,
   TEXTEMBEDDING = 2,
+  RERANK = 3,
 }
 
 export const VectorDataTypes = [
