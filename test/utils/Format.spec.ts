@@ -1083,8 +1083,9 @@ describe('utils/format', () => {
       },
       limit: 1,
       round_decimal: -1,
-      filter: 'id > 0',
+      filter: 'id > {value}',
       output_fields: ['*'],
+      exprValues: { value: 1 },
     };
 
     const describeCollectionResponse = {
@@ -1141,7 +1142,10 @@ describe('utils/format', () => {
     expect(searchRequest.request.collection_name).toEqual('test');
     expect(searchRequest.request.output_fields).toEqual(['*']);
     expect(searchRequest.request.consistency_level).toEqual('Session');
-    expect((searchRequest.request as any).dsl).toEqual('id > 0');
+    expect((searchRequest.request as any).dsl).toEqual('id > {value}');
+    expect(searchRequest.request.expr_template_values).toEqual(
+      formatExprValues({ value: 1 })
+    );
     expect(searchRequest.request.function_score).toEqual({
       functions: [
         {
@@ -1199,7 +1203,6 @@ describe('utils/format', () => {
       describeCollectionResponse,
       milvusProto
     );
-    console.dir(searchRequest2, { depth: null });
 
     expect(searchRequest2.request.function_score).toEqual({
       functions: [
@@ -1441,7 +1444,7 @@ describe('utils/format', () => {
     try {
       buildSearchRequest(searchParams, describeCollectionResponse, milvusProto);
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       expect(err.message).toEqual(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
     }
   });
@@ -1481,7 +1484,6 @@ describe('utils/format', () => {
     };
 
     const newSearchParams2 = buildSearchParams(data2, anns_field);
-    console.dir(newSearchParams2, { depth: null });
     expect(newSearchParams2).toEqual({
       anns_field: 'vector',
       params: '{"nprobe":2,"test":"test"}',

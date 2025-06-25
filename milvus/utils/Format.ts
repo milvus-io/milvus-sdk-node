@@ -351,8 +351,6 @@ export const formatCollectionSchema = (
     });
   }
 
-  console.dir(payload.functions, { depth: null });
-
   payload = {
     name: collection_name,
     description: description || '',
