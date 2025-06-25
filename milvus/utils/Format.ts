@@ -806,6 +806,7 @@ type FormatedSearchRequest = {
   expr_template_values?: keyValueObj;
   rank_params?: KeyValuePair[];
   function_score?: any;
+  requests?: FormatedSearchRequest[];
 };
 
 /**
@@ -989,15 +990,6 @@ export const buildSearchRequest = (
           requests: requests,
           output_fields: requests[0]?.output_fields,
           consistency_level: requests[0]?.consistency_level,
-
-          // if expr_template_values is set, add it to the return object
-          ...(searchSimpleReq.exprValues
-            ? {
-                expr_template_values: formatExprValues(
-                  searchSimpleReq.exprValues
-                ),
-              }
-            : {}),
 
           // if ranker is set and it is a hybrid search, add it to the request
           ...createFunctionScore(hasRerankFunction, searchHybridReq),

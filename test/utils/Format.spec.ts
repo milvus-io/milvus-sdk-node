@@ -34,7 +34,6 @@ import {
   SearchSimpleReq,
   formatExprValues,
   FunctionType,
-  ConsistencyLevelEnum,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -1023,22 +1022,22 @@ describe('utils/format', () => {
       },
     } as any;
 
-    const searchRequest = buildSearchRequest(
+    const result = buildSearchRequest(
       searchParams,
       describeCollectionResponse,
       milvusProto
     );
-    expect(searchRequest.isHybridSearch).toEqual(false);
-    expect(searchRequest.request.collection_name).toEqual('test');
-    expect(searchRequest.request.output_fields).toEqual(['*']);
-    expect(searchRequest.request.consistency_level).toEqual('Session');
-    expect((searchRequest.request as any).dsl).toEqual('id > {value}');
-    expect(searchRequest.request.expr_template_values).toEqual(
+
+    expect(result.isHybridSearch).toEqual(false);
+    expect(result.request.collection_name).toEqual('test');
+    expect(result.request.output_fields).toEqual(['*']);
+    expect(result.request.consistency_level).toEqual('Session');
+    expect((result.request as any).dsl).toEqual('id > {value}');
+    expect((result.request as any).expr_template_values).toEqual(
       formatExprValues({ value: 1 })
     );
-    expect(searchRequest.nq).toEqual(2);
-    const searchParamsKeyValuePairArray = (searchRequest.request as any)
-      .search_params;
+    expect(result.nq).toEqual(2);
+    const searchParamsKeyValuePairArray = (result.request as any).search_params;
 
     // transform key value to object
     const searchParamsKeyValuePairObject = searchParamsKeyValuePairArray.reduce(
@@ -1120,6 +1119,20 @@ describe('utils/format', () => {
             index_params: [],
           },
           {
+            name: 'int_field',
+            fieldID: '2',
+            dataType: 5,
+            is_primary_key: false,
+            description: 'int field',
+          },
+          {
+            name: 'sparse',
+            fieldID: '3',
+            dataType: 102,
+            is_primary_key: false,
+            description: 'sparse field',
+          },
+          {
             name: 'vector',
             fieldID: '2',
             dataType: 101,
@@ -1133,20 +1146,21 @@ describe('utils/format', () => {
       },
     } as any;
 
-    const searchRequest = buildSearchRequest(
+    const result = buildSearchRequest(
       searchParams,
       describeCollectionResponse,
       milvusProto
     );
-    expect(searchRequest.isHybridSearch).toEqual(false);
-    expect(searchRequest.request.collection_name).toEqual('test');
-    expect(searchRequest.request.output_fields).toEqual(['*']);
-    expect(searchRequest.request.consistency_level).toEqual('Session');
-    expect((searchRequest.request as any).dsl).toEqual('id > {value}');
-    expect(searchRequest.request.expr_template_values).toEqual(
+
+    expect(result.isHybridSearch).toEqual(false);
+    expect(result.request.collection_name).toEqual('test');
+    expect(result.request.output_fields).toEqual(['*']);
+    expect(result.request.consistency_level).toEqual('Session');
+    expect((result.request as any).dsl).toEqual('id > {value}');
+    expect((result.request as any).expr_template_values).toEqual(
       formatExprValues({ value: 1 })
     );
-    expect(searchRequest.request.function_score).toEqual({
+    expect(result.request.function_score).toEqual({
       functions: [
         {
           name: 'rerank',
@@ -1177,6 +1191,8 @@ describe('utils/format', () => {
           data: 'apple',
           anns_field: 'sparse',
           params: { nprobe: 2 },
+          exprValues: { value: 1 },
+          output_fields: ['*'],
         },
         {
           data: [1, 2, 3, 4],
@@ -1196,15 +1212,22 @@ describe('utils/format', () => {
           scale: 100,
         },
       },
+
+      expr: 'id > {value}',
     };
 
-    const searchRequest2 = buildSearchRequest(
+    const result2 = buildSearchRequest(
       searchParams2,
       describeCollectionResponse,
       milvusProto
     );
 
-    expect(searchRequest2.request.function_score).toEqual({
+    expect(result2.isHybridSearch).toEqual(true);
+    expect(result2.request.requests![0].expr_template_values).toEqual(
+      formatExprValues({ value: 1 })
+    );
+    expect(result2.request.requests![0].dsl).toEqual('id > {value}');
+    expect(result2.request.function_score).toEqual({
       functions: [
         {
           name: 'rerank',
@@ -1225,7 +1248,7 @@ describe('utils/format', () => {
     });
 
     // test rank_params
-    expect(searchRequest2.request.rank_params).toEqual([
+    expect(result2.request.rank_params).toEqual([
       { key: 'round_decimal', value: -1 },
       { key: 'limit', value: 1 },
     ]);
