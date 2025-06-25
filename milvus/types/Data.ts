@@ -12,6 +12,7 @@ import {
   collectionNameReq,
   resStatusResponse,
   RANKER_TYPE,
+  FunctionObject,
 } from '../';
 
 // all value types supported by milvus
@@ -357,6 +358,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   hints?: string; // hints to improve milvus search performance
   round_decimal?: number; // round decimal
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  rerank?: RerankerObj | FunctionObject; // reranker
 }
 
 export type HybridSearchSingleReq = Pick<
@@ -397,8 +399,9 @@ export type HybridSearchReq = Omit<
   // search requests
   data: HybridSearchSingleReq[];
 
-  // reranker
-  rerank?: RerankerObj;
+  params?: keyValueObj; //  search parameters
+
+  rerank?: RerankerObj | FunctionObject; // reranker
 };
 
 // search api response type

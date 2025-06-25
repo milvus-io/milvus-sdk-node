@@ -33,6 +33,8 @@ import {
   buildSearchParams,
   SearchSimpleReq,
   formatExprValues,
+  FunctionType,
+  ConsistencyLevelEnum,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -1030,7 +1032,7 @@ describe('utils/format', () => {
     expect(searchRequest.request.collection_name).toEqual('test');
     expect(searchRequest.request.output_fields).toEqual(['*']);
     expect(searchRequest.request.consistency_level).toEqual('Session');
-    expect(searchRequest.request.dsl).toEqual('id > {value}');
+    expect((searchRequest.request as any).dsl).toEqual('id > {value}');
     expect(searchRequest.request.expr_template_values).toEqual(
       formatExprValues({ value: 1 })
     );
@@ -1053,6 +1055,177 @@ describe('utils/format', () => {
     expect(searchParamsKeyValuePairObject.offset).toEqual(0);
     expect(searchParamsKeyValuePairObject.metric_type).toEqual('');
     expect(searchParamsKeyValuePairObject.ignore_growing).toEqual(false);
+  });
+
+  it('should build search request with rerank function correctly', () => {
+    // path
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+
+    const searchParams = {
+      collection_name: 'test',
+      data: [1, 2, 3],
+      rerank: {
+        name: 'rerank',
+        type: FunctionType.RERANK,
+        input_field_names: ['int_field'],
+        params: {
+          reranker: 'decay',
+          function: 'exp',
+          origin: 100,
+          offset: 0,
+          decay: 0.5,
+          scale: 100,
+        },
+      },
+      limit: 1,
+      round_decimal: -1,
+      filter: 'id > 0',
+      output_fields: ['*'],
+    };
+
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      collectionID: 0,
+      consistency_level: 'Session',
+      num_partitions: '0',
+      aliases: [],
+      virtual_channel_names: {},
+      physical_channel_names: {},
+      start_positions: [],
+      shards_num: 1,
+      created_timestamp: '0',
+      created_utc_timestamp: '0',
+      properties: [],
+      db_name: '',
+      schema: {
+        name: 'test',
+        description: '',
+        enable_dynamic_field: false,
+        autoID: false,
+        fields: [
+          {
+            name: 'id',
+            fieldID: '1',
+            dataType: 5,
+            is_primary_key: true,
+            description: 'id field',
+            data_type: 'Int64',
+            type_params: [],
+            index_params: [],
+          },
+          {
+            name: 'vector',
+            fieldID: '2',
+            dataType: 101,
+            is_primary_key: false,
+            description: 'vector field',
+            data_type: 'FloatVector',
+            type_params: [{ key: 'dim', value: '3' }],
+            index_params: [],
+          },
+        ],
+      },
+    } as any;
+
+    const searchRequest = buildSearchRequest(
+      searchParams,
+      describeCollectionResponse,
+      milvusProto
+    );
+    expect(searchRequest.isHybridSearch).toEqual(false);
+    expect(searchRequest.request.collection_name).toEqual('test');
+    expect(searchRequest.request.output_fields).toEqual(['*']);
+    expect(searchRequest.request.consistency_level).toEqual('Session');
+    expect((searchRequest.request as any).dsl).toEqual('id > 0');
+    expect(searchRequest.request.function_score).toEqual({
+      functions: [
+        {
+          name: 'rerank',
+          type: 3,
+          params: [
+            {
+              key: 'reranker',
+              value: 'decay',
+            },
+            { key: 'function', value: 'exp' },
+            { key: 'origin', value: '100' },
+            { key: 'offset', value: '0' },
+            { key: 'decay', value: '0.5' },
+            { key: 'scale', value: '100' },
+          ],
+          input_field_names: ['int_field'],
+          output_field_names: [],
+        },
+      ],
+      params: [],
+    });
+
+    const searchParams2 = {
+      collection_name: 'test',
+      limit: 1,
+      data: [
+        {
+          data: 'apple',
+          anns_field: 'sparse',
+          params: { nprobe: 2 },
+        },
+        {
+          data: [1, 2, 3, 4],
+          anns_field: 'vector',
+        },
+      ],
+      rerank: {
+        name: 'rerank',
+        type: FunctionType.RERANK,
+        input_field_names: ['int_field'],
+        params: {
+          reranker: 'decay',
+          function: 'exp',
+          origin: 100,
+          offset: 0,
+          decay: 0.5,
+          scale: 100,
+        },
+      },
+    };
+
+    const searchRequest2 = buildSearchRequest(
+      searchParams2,
+      describeCollectionResponse,
+      milvusProto
+    );
+    console.dir(searchRequest2, { depth: null });
+
+    expect(searchRequest2.request.function_score).toEqual({
+      functions: [
+        {
+          name: 'rerank',
+          type: 3,
+          params: [
+            { key: 'reranker', value: 'decay' },
+            { key: 'function', value: 'exp' },
+            { key: 'origin', value: '100' },
+            { key: 'offset', value: '0' },
+            { key: 'decay', value: '0.5' },
+            { key: 'scale', value: '100' },
+          ],
+          input_field_names: ['int_field'],
+          output_field_names: [],
+        },
+      ],
+      params: [],
+    });
+
+    // test rank_params
+    expect(searchRequest2.request.rank_params).toEqual([
+      { key: 'round_decimal', value: -1 },
+      { key: 'limit', value: 1 },
+    ]);
   });
 
   it('should build hybrid search request correctly', () => {
