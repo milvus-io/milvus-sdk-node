@@ -14,7 +14,7 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'FullTextSearch',
