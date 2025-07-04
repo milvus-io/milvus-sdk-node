@@ -502,9 +502,9 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  async search(
-    params: SearchReq | SearchSimpleReq | HybridSearchReq
-  ): Promise<SearchResults> {
+  async search<T extends SearchReq | SearchSimpleReq | HybridSearchReq>(
+    params: T
+  ): Promise<SearchResults<T>> {
     // default collection request
     const describeCollectionRequest = {
       collection_name: params.collection_name,
