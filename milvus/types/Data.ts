@@ -260,8 +260,23 @@ export interface SearchResultData {
   id: string;
 }
 
-export interface SearchResults extends resStatusResponse {
-  results: SearchResultData[];
+export type DetermineResultsType<T extends Record<string, any>> =
+  T['vectors'] extends [VectorTypes]
+    ? SearchResultData[]
+    : T['vectors'] extends VectorTypes[]
+    ? SearchResultData[][]
+    : T['vector'] extends VectorTypes
+    ? SearchResultData[]
+    : T['data'] extends [any]
+    ? SearchResultData[]
+    : T['data'] extends VectorTypes[] | string[]
+    ? SearchResultData[][]
+    : SearchResultData[];
+
+export interface SearchResults<
+  T extends SearchReq | SearchSimpleReq | HybridSearchReq
+> extends resStatusResponse {
+  results: DetermineResultsType<T>;
   recalls: number[];
   session_ts: number;
   collection_name: string;
@@ -317,7 +332,7 @@ export interface SearchReq extends collectionNameReq {
   expr?: string; // filter expression
   exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   search_params: SearchParam; // search parameters
-  vectors: VectorTypes[]; // vectors to search
+  vectors: VectorTypes[] | [VectorTypes]; // vectors to search
   output_fields?: string[]; // fields to return
   travel_timestamp?: string; // time travel
   vector_type: DataType.BinaryVector | DataType.FloatVector; // vector field type
@@ -326,8 +341,8 @@ export interface SearchReq extends collectionNameReq {
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
 
-export type SearchTextType = string | string[];
-export type SearchVectorType = VectorTypes | VectorTypes[];
+export type SearchTextType = string | string[] | [string];
+export type SearchVectorType = VectorTypes | VectorTypes[] | [VectorTypes];
 export type SearchDataType = SearchVectorType | SearchTextType;
 export type SearchMultipleDataType = VectorTypes[] | SearchTextType[];
 
@@ -337,7 +352,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   anns_field?: string; // your vector field name，required if you are searching on multiple vector fields collection
   data?: SearchDataType; // vector or text to search
   vector?: VectorTypes; // alias for data, deprecated
-  vectors?: VectorTypes[]; // alias for data, deprecated
+  vectors?: VectorTypes[] | [VectorTypes]; // alias for data, deprecated
   output_fields?: string[];
   limit?: number; // how many results you want
   topk?: number; // limit alias
