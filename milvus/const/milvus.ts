@@ -152,6 +152,8 @@ export enum IndexType {
   INVERTED = 'INVERTED',
   // 2.5
   BITMAP = 'BITMAP',
+  // 2.6 
+  IVF_RABITQ = 'IVF_RABITQ',
 }
 
 // MsgType
