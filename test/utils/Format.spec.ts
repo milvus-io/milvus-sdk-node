@@ -191,6 +191,24 @@ describe('utils/format', () => {
       analyzer_params: { key: 'value' },
       enable_analyzer: true,
       'mmap.enabled': true,
+      multi_analyzer_params: {
+        analyzers: {
+          english: {
+            type: 'english',
+          },
+          chinese: {
+            type: 'chinese',
+          },
+          default: {
+            tokenizer: 'icu',
+          },
+        },
+        by_field: 'language',
+        alias: {
+          cn: 'chinese',
+          en: 'english',
+        },
+      },
     } as FieldType;
     const expectedOutput = {
       name: 'vector',
@@ -202,6 +220,24 @@ describe('utils/format', () => {
         analyzer_params: JSON.stringify({ key: 'value' }),
         enable_analyzer: 'true',
         'mmap.enabled': 'true',
+        multi_analyzer_params: JSON.stringify({
+          analyzers: {
+            english: {
+              type: 'english',
+            },
+            chinese: {
+              type: 'chinese',
+            },
+            default: {
+              tokenizer: 'icu',
+            },
+          },
+          by_field: 'language',
+          alias: {
+            cn: 'chinese',
+            en: 'english',
+          },
+        }),
       },
     };
     expect(assignTypeParams(field)).toEqual(expectedOutput);

@@ -46,6 +46,7 @@ export type TypeParamKey =
   | 'analyzer_params'
   | 'enable_analyzer'
   | 'enable_match'
+  | 'multi_analyzer_params'
   | 'mmap.enabled';
 
 // returned from milvus
