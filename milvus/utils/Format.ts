@@ -208,6 +208,7 @@ export const assignTypeParams = (
     'enable_match',
     'enable_analyzer',
     'analyzer_params',
+    'multi_analyzer_params',
     'mmap.enabled',
   ]
 ): FieldType => {
