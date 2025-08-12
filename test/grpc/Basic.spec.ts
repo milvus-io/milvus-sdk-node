@@ -247,7 +247,7 @@ describe(`Basic API without database`, () => {
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(Object.keys(query.data[0])).toContain('new_varChar');
     expect(Object.keys(query.data[0])).toContain('new_array');
-    expect(query.data[0].new_varChar).toBeNull();
+    expect(query.data[0].new_varChar).toBe('default');
     expect(query.data[0].new_array).toBeNull();
   });
 

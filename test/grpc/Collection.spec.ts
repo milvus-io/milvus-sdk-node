@@ -653,7 +653,7 @@ describe(`Collection API`, () => {
       collection_name: LOAD_COLLECTION_NAME,
     });
 
-    await milvusClient.createAlias({
+    const aliasRes = await milvusClient.createAlias({
       collection_name: LOAD_COLLECTION_NAME,
       alias: ALIAS,
     });
@@ -662,8 +662,12 @@ describe(`Collection API`, () => {
       collection_name: LOAD_COLLECTION_NAME,
     });
 
+    const listAliases = await milvusClient.listAliases({
+      collection_name: LOAD_COLLECTION_NAME,
+    });
+
     expect(res0.aliases[0]).not.toEqual(ALIAS);
-    expect(res.aliases[0]).toEqual(ALIAS);
+    expect(listAliases.aliases[0]).toEqual(ALIAS);
   });
 
   it(`Alter alias success`, async () => {
