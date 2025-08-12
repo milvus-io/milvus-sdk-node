@@ -8,3 +8,5 @@ export * from './types';
 export * from './grpc/GrpcClient';
 export * from './MilvusClient';
 export * from './HttpClient';
+// bulk writer
+export * from './bulk-writer';
