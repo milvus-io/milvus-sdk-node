@@ -119,6 +119,8 @@ export enum MetricType {
   SUPERSTRUCTURE = 'SUPERSTRUCTURE',
   // BM 25
   BM25 = 'BM25',
+  // MHJACCARD
+  MHJACCARD = 'MHJACCARD',
 }
 
 // Index types
@@ -152,8 +154,9 @@ export enum IndexType {
   INVERTED = 'INVERTED',
   // 2.5
   BITMAP = 'BITMAP',
-  // 2.6 
+  // 2.6
   IVF_RABITQ = 'IVF_RABITQ',
+  MINHASH_LSH = 'MINHASH_LSH',
 }
 
 // MsgType

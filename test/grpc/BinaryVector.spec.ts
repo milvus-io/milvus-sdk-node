@@ -21,8 +21,8 @@ const dbParam = {
 
 const p = {
   collectionName: COLLECTION_NAME,
-  vectorType: [DataType.BinaryVector],
-  dim: [16],
+  vectorType: [DataType.BinaryVector, DataType.BinaryVector],
+  dim: [16, 16],
 };
 const collectionParams = genCollectionParams(p);
 const data = generateInsertData(collectionParams.fields, 10);
@@ -49,7 +49,7 @@ describe(`Binary vectors API testing`, () => {
     const binaryVectorFields = describe.schema.fields.filter(
       (field: any) => field.data_type === 'BinaryVector'
     );
-    expect(binaryVectorFields.length).toBe(1);
+    expect(binaryVectorFields.length).toBe(2);
 
     // console.dir(describe.schema, { depth: null });
   });
@@ -75,6 +75,16 @@ describe(`Binary vectors API testing`, () => {
         index_type: IndexType.BIN_IVF_FLAT,
         params: {
           nlist: 10,
+        },
+      },
+      {
+        collection_name: COLLECTION_NAME,
+        field_name: 'vector1',
+        metric_type: MetricType.MHJACCARD,
+        index_type: IndexType.MINHASH_LSH,
+        params: {
+          mh_lsh_band: 60,
+          mh_element_bit_width: 100,
         },
       },
     ]);
