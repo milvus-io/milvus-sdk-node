@@ -11,6 +11,7 @@ import {
 } from './validators';
 import { Buffer } from './Buffer';
 import { BulkWriterOptions, CommitOptions } from './types';
+import Long from 'long';
 
 /**
  * Base class for bulk data writing operations.
@@ -134,7 +135,15 @@ export abstract class BulkWriter {
       // Handle nullable fields with default values
       if (field.nullable && field.default_value !== undefined) {
         if (!row.hasOwnProperty(fieldName) || row[fieldName] === null) {
-          row[fieldName] = field.default_value;
+          // Only deep copy if the field value is an object/array that might be shared
+          if (
+            typeof field.default_value === 'object' &&
+            field.default_value !== null
+          ) {
+            row[fieldName] = JSON.parse(JSON.stringify(field.default_value));
+          } else {
+            row[fieldName] = field.default_value;
+          }
           continue;
         }
       } else if (field.nullable) {
@@ -144,7 +153,15 @@ export abstract class BulkWriter {
         }
       } else if (field.default_value !== undefined) {
         if (!row.hasOwnProperty(fieldName) || row[fieldName] === null) {
-          row[fieldName] = field.default_value;
+          // Only deep copy if the field value is an object/array that might be shared
+          if (
+            typeof field.default_value === 'object' &&
+            field.default_value !== null
+          ) {
+            row[fieldName] = JSON.parse(JSON.stringify(field.default_value));
+          } else {
+            row[fieldName] = field.default_value;
+          }
           continue;
         }
       } else if (!row.hasOwnProperty(fieldName) || row[fieldName] === null) {
@@ -159,7 +176,28 @@ export abstract class BulkWriter {
         row[fieldName],
         fieldName
       );
-      row[fieldName] = validationResult.value;
+
+      // For vector fields and other complex types, always ensure we have a proper copy
+      // to avoid reference issues and ensure data integrity
+      if (
+        this.isVectorField(field.dataType) ||
+        (typeof validationResult.value === 'object' &&
+          validationResult.value !== null)
+      ) {
+        // Special handling for Long objects to preserve type information
+        if (Long.isLong && Long.isLong(validationResult.value)) {
+          row[fieldName] = validationResult.value;
+        }
+        // For vector fields, ensure we preserve the array structure
+        else if (Array.isArray(validationResult.value)) {
+          row[fieldName] = [...validationResult.value];
+        } else {
+          row[fieldName] = JSON.parse(JSON.stringify(validationResult.value));
+        }
+      } else {
+        row[fieldName] = validationResult.value;
+      }
+
       rowSize += validationResult.size;
     }
   }
@@ -174,36 +212,41 @@ export abstract class BulkWriter {
   ): { value: any; size: number } {
     const dataType = field.dataType;
 
-    // Field validation strategies using Record for type safety
-    const validators: Partial<
+    // Unified field processor mapping
+    const fieldProcessors: Partial<
       Record<DataType, () => { value: any; size: number }>
     > = {
       [DataType.FloatVector]: () => {
         const dim = Number(field.dim) || 0;
-        const [validatedVector, byteLen] = validateFloatVector(value, dim);
-        return { value: validatedVector, size: byteLen };
+        const validatedVector = validateFloatVector(value, dim);
+        return { value: validatedVector, size: dim * 4 };
       },
+
       [DataType.BinaryVector]: () => {
         const dim = Number(field.dim) || 0;
-        const [validatedVector, byteLen] = validateBinaryVector(value, dim);
-        return { value: validatedVector, size: byteLen };
+        const validatedVector = validateBinaryVector(value, dim);
+        return { value: validatedVector, size: Math.ceil(dim / 8) };
       },
+
       [DataType.Int8Vector]: () => {
         const dim = Number(field.dim) || 0;
-        const [validatedVector, byteLen] = validateInt8Vector(value, dim);
-        return { value: validatedVector, size: byteLen };
+        const validatedVector = validateInt8Vector(value, dim);
+        return { value: validatedVector, size: dim };
       },
+
       [DataType.VarChar]: () => {
         const maxLength = Number(field.max_length) || 65535;
         const validatedValue = validateVarchar(value, maxLength);
         return { value: validatedValue, size: validatedValue.length };
       },
+
       [DataType.JSON]: () => {
         if (!validateJSON(value)) {
           throw new Error(`Invalid JSON value for field '${fieldName}'`);
         }
         return { value, size: JSON.stringify(value).length };
       },
+
       [DataType.Array]: () => {
         const maxCapacity = Number(field.max_capacity) || 1000;
         const elementType = field.element_type;
@@ -215,20 +258,53 @@ export abstract class BulkWriter {
         validateArray(value, maxCapacity);
         return { value, size: (value as any[]).length * 8 };
       },
+
+      [DataType.Int64]: () => {
+        // Special handling for int64 to ensure 64-bit precision
+        if (typeof value === 'bigint') {
+          return { value, size: 8 };
+        }
+
+        // Handle Long object from 'long' library
+        if (
+          value !== null &&
+          typeof value === 'object' &&
+          'low' in value &&
+          'high' in value &&
+          'unsigned' in value
+        ) {
+          return { value, size: 8 };
+        }
+
+        // For regular numbers, ensure they're within safe range
+        if (typeof value === 'number' && Number.isInteger(value)) {
+          if (
+            value < Number.MIN_SAFE_INTEGER ||
+            value > Number.MAX_SAFE_INTEGER
+          ) {
+            throw new Error(
+              `Int64 field '${fieldName}' value ${value} is outside safe integer range. Use BigInt or Long for values beyond ±2^53-1`
+            );
+          }
+          return { value, size: 8 };
+        }
+
+        throw new Error(
+          `Invalid int64 value for field '${fieldName}'. Expected BigInt, Long object, or safe integer`
+        );
+      },
     };
 
-    // Use validator if available, otherwise fall back to scalar validation
-    const validator = validators[dataType];
-    if (validator) {
-      return validator();
+    // Process field using processor or fallback to scalar validation
+    const processor = fieldProcessors[dataType];
+    if (processor) {
+      return processor();
     }
 
-    // Scalar types
-    const typeName = DataType[dataType];
-    if (!isScalarValid[typeName] || !isScalarValid[typeName](value)) {
+    if (!isScalarValid[dataType] || !isScalarValid[dataType](value)) {
       throw new Error(`Invalid scalar value for field '${fieldName}'`);
     }
-    return { value, size: TYPE_SIZE[typeName] || 8 };
+    return { value, size: TYPE_SIZE[dataType] || 8 };
   }
 
   /**
@@ -236,6 +312,7 @@ export abstract class BulkWriter {
    */
   private estimateRowSize(row: Record<string, any>): number {
     let size = 0;
+
     for (const field of this.schema.fields) {
       if (field.is_primary_key && field.autoID) continue;
       if (field.is_function_output) continue;
@@ -244,9 +321,11 @@ export abstract class BulkWriter {
       if (value === null || value === undefined) continue;
 
       const dataType = field.dataType;
+
+      // Size estimation strategies
       const sizeEstimators: Partial<Record<DataType, () => number>> = {
         [DataType.FloatVector]: () => (Number(field.dim) || 0) * 4,
-        [DataType.BinaryVector]: () => (Number(field.dim) || 0) / 8,
+        [DataType.BinaryVector]: () => Math.ceil((Number(field.dim) || 0) / 8),
         [DataType.Int8Vector]: () => Number(field.dim) || 0,
         [DataType.VarChar]: () => String(value).length,
         [DataType.JSON]: () => JSON.stringify(value).length,
@@ -257,10 +336,23 @@ export abstract class BulkWriter {
       if (sizeEstimator) {
         size += sizeEstimator();
       } else {
+        // Fallback to type size constants
         const typeName = DataType[dataType];
         size += TYPE_SIZE[typeName] || 8;
       }
     }
+
     return size;
+  }
+
+  /**
+   * Check if a field is a vector type
+   */
+  private isVectorField(dataType: DataType): boolean {
+    return (
+      dataType === DataType.FloatVector ||
+      dataType === DataType.BinaryVector ||
+      dataType === DataType.Int8Vector
+    );
   }
 }

@@ -1,5 +1,11 @@
 import { HttpClient } from '../HttpClient';
-import { HttpImportCreateReq, HttpImportListResponse, HttpImportProgressReq } from '../types/Http';
+import { 
+  HttpImportCreateReq, 
+  HttpImportListResponse, 
+  HttpImportProgressReq,
+  HttpImportCreateResponse,
+  HttpImportProgressResponse as HttpImportProgressResponseType
+} from '../types/Http';
 
 import { BulkImportOptions, ImportJobResponse, ImportProgressResponse, WaitForImportOptions } from './types';
 
@@ -15,15 +21,11 @@ export class BulkImportClient extends HttpClient {
     const params: HttpImportCreateReq = {
       collectionName: options.collectionName,
       dbName: options.dbName || '',
-      partitionName: options.partitionName || '',
       files: options.files || [],
-      objectUrl: options.objectUrl || '',
-      clusterId: options.clusterId || '',
-      accessKey: options.accessKey || '',
-      secretKey: options.secretKey || '',
-      stageName: options.stageName || '',
-      dataPaths: options.dataPaths || [],
-      options: options.options || {},
+      options: {
+        timeout: options.options?.timeout || '300s',
+        ...options.options,
+      },
     };
 
     const response = await this.createImportJobs(params);
@@ -34,7 +36,7 @@ export class BulkImportClient extends HttpClient {
 
     return {
       jobId: response.data?.jobId || '',
-      status: response.status || '',
+      status: 'created',
       message: response.message,
     };
   }
@@ -45,7 +47,7 @@ export class BulkImportClient extends HttpClient {
   async getImportProgress(jobId: string, clusterId?: string): Promise<ImportProgressResponse> {
     const params: HttpImportProgressReq = {
       jobId,
-      clusterId: clusterId || '',
+      dbName: '', // Required by type but not used for progress
     };
 
     const response = await this.getImportJobProgress(params);
@@ -54,41 +56,46 @@ export class BulkImportClient extends HttpClient {
       throw new Error(`Failed to get import progress: ${response.message}`);
     }
 
-    const data = response.data;
+    // Cast to the correct response type
+    const progressResponse = response as HttpImportProgressResponseType;
+    const data = progressResponse.data;
+    
     return {
       jobId: data?.jobId || jobId,
       state: data?.state || '',
-      rowCount: data?.rowCount || 0,
-      idList: data?.idList || [],
-      infos: data?.infos || [],
-      collectionId: data?.collectionId || 0,
-      segmentIds: data?.segmentIds || [],
-      createTs: data?.createTs || 0,
+      rowCount: data?.importedRows || 0,
+      idList: [], // Not available in HTTP response
+      infos: [], // Not available in HTTP response
+      collectionId: 0, // Not available in HTTP response
+      segmentIds: [], // Not available in HTTP response
+      createTs: 0, // Not available in HTTP response
     };
   }
 
   /**
    * List all import jobs for a collection.
    */
-  async listImportJobs(collectionName?: string, clusterId?: string): Promise<ImportProgressResponse[]> {
-    const response = await this.listImportJobs({
+  async listImportJobsForCollection(collectionName?: string, clusterId?: string): Promise<ImportProgressResponse[]> {
+    const params = {
       collectionName: collectionName || '',
-      clusterId: clusterId || '',
-    });
+      dbName: '',
+    };
+
+    const response = await this.listImportJobs(params);
 
     if (response.code !== 0) {
       throw new Error(`Failed to list import jobs: ${response.message}`);
     }
 
-    return (response.data?.jobs || []).map((job: any) => ({
+    return (response.data?.records || []).map((job: any) => ({
       jobId: job.jobId || '',
       state: job.state || '',
-      rowCount: job.rowCount || 0,
-      idList: job.idList || [],
-      infos: job.infos || [],
-      collectionId: job.collectionId || 0,
-      segmentIds: job.segmentIds || [],
-      createTs: job.createTs || 0,
+      rowCount: job.importedRows || 0,
+      idList: [],
+      infos: [],
+      collectionId: 0,
+      segmentIds: [],
+      createTs: 0,
     }));
   }
 

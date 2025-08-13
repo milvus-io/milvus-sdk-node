@@ -3,6 +3,7 @@ import * as path from 'path';
 import { CollectionSchema, FieldSchema } from '../types/Collection';
 import { DataType } from '..';
 import { BulkFileType, DYNAMIC_FIELD_NAME } from './constants';
+import Long from 'long';
 
 /**
  * In-memory columnar buffer aligned with collection schema.
@@ -124,7 +125,8 @@ export class Buffer {
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       const row: Record<string, any> = {};
       for (const k of keys) {
-        row[k] = this.columns[k][rowIndex];
+        const value = this.columns[k][rowIndex];
+        row[k] = this.serializeValue(value);
       }
       rows.push(row);
     }
@@ -132,7 +134,26 @@ export class Buffer {
     const filePath = `${localPath}.json`;
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
+
     await fs.writeFile(filePath, JSON.stringify({ rows }, null, 2), 'utf-8');
     return [filePath];
+  }
+
+  /**
+   * Serialize values to ensure proper handling of special types
+   * Handles BigInt and Long objects for int64 fields
+   */
+  private serializeValue(value: any): any {
+    // BigInt -> string
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+
+    // Long -> string
+    if (Long.isLong(value)) {
+      return value.toString();
+    }
+
+    return value;
   }
 }

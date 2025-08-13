@@ -5,44 +5,51 @@ export function validateFloatVector(x: unknown, dim: number): number[] {
   if (!Array.isArray(x) || x.length !== dim) {
     throw new Error(`Invalid float vector: expected array with dim=${dim}`);
   }
-  const arr = x as unknown[];
-  for (let i = 0; i < arr.length; i++) {
-    const v = arr[i];
+  
+  // Ensure all elements are valid numbers
+  const result: number[] = [];
+  for (let i = 0; i < x.length; i++) {
+    const v = x[i];
     if (typeof v !== 'number' || !Number.isFinite(v)) {
-      throw new Error(`Invalid float vector element at ${i}`);
+      throw new Error(`Invalid float vector element at ${i}: expected number, got ${typeof v}`);
     }
+    result.push(v);
   }
-  return arr as number[];
+  return result;
 }
 
 export function validateBinaryVector(x: unknown, dim: number): number[] {
   // Binary vector is stored as bytes where 8 dim == 1 byte
-  const byteLen = dim / 8;
+  const byteLen = Math.ceil(dim / 8);
   if (!Array.isArray(x) || x.length !== byteLen) {
     throw new Error(`Invalid binary vector: expected array with length=${byteLen}`);
   }
-  const arr = x as unknown[];
-  for (let i = 0; i < arr.length; i++) {
-    const v = arr[i];
+  
+  const result: number[] = [];
+  for (let i = 0; i < x.length; i++) {
+    const v = x[i];
     if (!Number.isInteger(v as number) || (v as number) < 0 || (v as number) > 255) {
-      throw new Error(`Invalid binary vector element at ${i}`);
+      throw new Error(`Invalid binary vector element at ${i}: expected integer 0-255, got ${v}`);
     }
+    result.push(v as number);
   }
-  return arr as number[];
+  return result;
 }
 
 export function validateInt8Vector(x: unknown, dim: number): number[] {
   if (!Array.isArray(x) || x.length !== dim) {
     throw new Error(`Invalid int8 vector: expected array with dim=${dim}`);
   }
-  const arr = x as unknown[];
-  for (let i = 0; i < arr.length; i++) {
-    const v = arr[i];
+  
+  const result: number[] = [];
+  for (let i = 0; i < x.length; i++) {
+    const v = x[i];
     if (!Number.isInteger(v as number) || (v as number) < -128 || (v as number) > 127) {
-      throw new Error(`Invalid int8 vector element at ${i}`);
+      throw new Error(`Invalid int8 vector element at ${i}: expected integer -128 to 127, got ${v}`);
     }
+    result.push(v as number);
   }
-  return arr as number[];
+  return result;
 }
 
 export function validateVarchar(x: unknown, maxLength: number): string {

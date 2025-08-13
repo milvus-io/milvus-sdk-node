@@ -100,7 +100,7 @@ export class LocalBulkWriter extends BulkWriter {
       if (exists) {
         const files = await fs.readdir(uuidDir);
         if (files.length === 0) {
-          await fs.rmdir(uuidDir);
+          await fs.rm(uuidDir, { recursive: true });
         }
       }
     } catch (error) {

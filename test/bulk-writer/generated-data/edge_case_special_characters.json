@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "float_vector": [
+      0.1,
+      0.2,
+      0.3
+    ],
+    "varchar": "Hello, \"World\"!",
+    "json": {
+      "key": "value with \"quotes\""
+    }
+  },
+  {
+    "id": 2,
+    "float_vector": [
+      0.4,
+      0.5,
+      0.6
+    ],
+    "varchar": "Line1\nLine2",
+    "json": {
+      "newline": "text\nhere"
+    }
+  }
+]
