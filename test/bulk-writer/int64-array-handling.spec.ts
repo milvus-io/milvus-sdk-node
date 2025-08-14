@@ -36,9 +36,9 @@ describe('Int64 Array Handling in BulkWriter', () => {
   };
 
   // delete the temp directory after all tests
-  // afterAll(async () => {
-  //   await fs.rm(path.join(__dirname, 'temp'), { recursive: true, force: true });
-  // });
+  afterAll(async () => {
+    await fs.rm(path.join(__dirname, 'temp'), { recursive: true, force: true });
+  });
 
   describe('Auto Strategy with Int64 Arrays', () => {
     let bulkWriter: LocalBulkWriter;

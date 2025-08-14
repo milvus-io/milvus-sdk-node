@@ -51,7 +51,7 @@ describe('LocalBulkWriter - Simple Tests', () => {
   afterAll(async () => {
     // Remove test data directory
     try {
-      // await fs.rm(testDataDir, { recursive: true });
+      await fs.rm(testDataDir, { recursive: true });
 
       // remove collection
       await milvusClient.dropCollection({
@@ -128,8 +128,6 @@ describe('LocalBulkWriter - Simple Tests', () => {
 
     const testData = generateInsertData(collectionInfo.schema.fields as any, 3);
 
-    // console.dir(testData, { depth: null });
-
     for (const row of testData) {
       jsonWriter.appendRow(row);
     }
@@ -151,7 +149,6 @@ describe('LocalBulkWriter - Simple Tests', () => {
     for (const file of files) {
       const content = await fs.readFile(file, 'utf-8');
       const data = JSON.parse(content);
-      console.dir(data, { depth: null });
       // compare each row of testData with data.rows
       for (const row of testData) {
         const rowData = data.rows.find(
@@ -203,14 +200,23 @@ describe('LocalBulkWriter - Simple Tests', () => {
       bulkWriter.appendRow(row);
     }
 
-    // Test async commit
-    await bulkWriter.commit({ async: true });
+    // Test async commit - should return immediately
+    const startTime = Date.now();
+    const commitPromise = bulkWriter.commit({ async: true });
+    const endTime = Date.now();
 
-    // Wait a bit for async operation
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Async commit should return very quickly (within 10ms)
+    expect(endTime - startTime).toBeLessThan(10);
 
+    // Wait for async operation to complete
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Verify files were created asynchronously
     const files = bulkWriter.batchFiles;
     expect(files.length).toBeGreaterThan(1);
+
+    // Verify the commit promise resolves (it should be a no-op for async mode)
+    await commitPromise;
   });
 
   it('should handle commit with callback', async () => {
@@ -356,5 +362,85 @@ describe('LocalBulkWriter - Simple Tests', () => {
     const data = JSON.parse(content);
     expect(data).toHaveProperty('rows');
     expect(data.rows.length).toBe(1);
+  });
+
+  it('should demonstrate timing difference between sync and async commit', async () => {
+    const testData = generateInsertData(
+      collectionInfo.schema.fields as any,
+      1000
+    );
+
+    for (const row of testData) {
+      bulkWriter.appendRow(row);
+    }
+
+    // Test sync commit timing
+    const syncStart = Date.now();
+    await bulkWriter.commit({ async: false });
+    const syncEnd = Date.now();
+    const syncDuration = syncEnd - syncStart;
+
+    // Test async commit timing
+    const asyncStart = Date.now();
+    const asyncPromise = bulkWriter.commit({ async: true });
+    const asyncEnd = Date.now();
+    const asyncDuration = asyncEnd - asyncStart;
+
+    // Async commit should return much faster than sync commit
+    expect(asyncDuration).toBeLessThan(syncDuration);
+    expect(asyncDuration).toBeLessThan(10); // Should return within 10ms
+
+    // Wait for async operation to complete
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Both should have created the same files
+    const syncFiles = bulkWriter.batchFiles;
+    expect(syncFiles.length).toBeGreaterThan(0);
+
+    // Verify async promise resolves (should be a no-op)
+    await asyncPromise;
+  });
+
+  it('should reset buffer metrics at correct time for sync vs async', async () => {
+    const testData = generateInsertData(
+      collectionInfo.schema.fields as any,
+      500
+    );
+
+    for (const row of testData) {
+      bulkWriter.appendRow(row);
+    }
+
+    // Check buffer state before commit
+    expect(bulkWriter.currentBufferSize).toBeGreaterThan(0);
+    expect(bulkWriter.currentBufferRowCount).toBeGreaterThan(0);
+
+    // Test sync commit - metrics should be reset immediately after completion
+    await bulkWriter.commit({ async: false });
+
+    // In sync mode, metrics should be reset immediately
+    expect(bulkWriter.currentBufferSize).toBe(0);
+    expect(bulkWriter.currentBufferRowCount).toBe(0);
+
+    // Add more data for async test
+    for (const row of testData) {
+      bulkWriter.appendRow(row);
+    }
+
+    // Test async commit - metrics should NOT be reset immediately
+    const asyncPromise = bulkWriter.commit({ async: true });
+
+    // In async mode, metrics should still have values (reset happens later)
+    expect(bulkWriter.currentBufferSize).toBeGreaterThan(0);
+    expect(bulkWriter.currentBufferRowCount).toBeGreaterThan(0);
+
+    // Wait for async operation to complete
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Now metrics should be reset
+    expect(bulkWriter.currentBufferSize).toBe(0);
+    expect(bulkWriter.currentBufferRowCount).toBe(0);
+
+    await asyncPromise;
   });
 });

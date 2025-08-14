@@ -74,26 +74,26 @@ export class LocalBulkWriter extends BulkWriter {
   private async flushBuffer(options: CommitOptions = {}): Promise<void> {
     const { async = false, callback } = options;
 
-    // Flush strategy based on async flag
-    const flushStrategies = {
-      async: () => {
-        setImmediate(async () => {
-          try {
-            await this.flushChunkedData(callback);
-          } catch (error) {
-            console.error('Async flush failed:', error);
-          }
-        });
-      },
-      sync: () => this.flushChunkedData(callback),
-    };
-
-    // Execute appropriate flush strategy
-    await flushStrategies[async ? 'async' : 'sync']();
-
-    // Reset buffer metrics after successful flush
-    this.bufferSize = 0;
-    this.bufferRowCount = 0;
+    if (async) {
+      // Fire and forget - don't await, return immediately
+      setImmediate(async () => {
+        try {
+          await this.flushChunkedData(callback);
+          // Reset buffer metrics after async completion
+          this.bufferSize = 0;
+          this.bufferRowCount = 0;
+        } catch (error) {
+          console.error('Async flush failed:', error);
+        }
+      });
+      return; // Return immediately for async mode
+    } else {
+      // Synchronous execution - await completion
+      await this.flushChunkedData(callback);
+      // Reset buffer metrics after sync completion
+      this.bufferSize = 0;
+      this.bufferRowCount = 0;
+    }
   }
 
   /**
@@ -214,35 +214,5 @@ export class LocalBulkWriter extends BulkWriter {
   private makeDirectoriesSync() {
     const uuidDir = path.join(this.localPath, this.writerUuid);
     this.localPath = uuidDir;
-  }
-
-  /**
-   * Legacy flush method - kept for backward compatibility but not used in new implementation.
-   * @deprecated Use flushChunkedData instead
-   */
-  private async flush(callback?: (files: string[]) => void): Promise<void> {
-    this.flushCount++;
-    const targetPath = path.join(this.localPath, this.flushCount.toString());
-
-    const oldBuffer = this.newBuffer();
-    if (oldBuffer && oldBuffer.rowCount > 0) {
-      try {
-        const fileList = await oldBuffer.persist(targetPath, {
-          bufferSize: this.currentBufferSize,
-          bufferRowCount: this.currentBufferRowCount,
-        });
-
-        console.log('fileList', fileList);
-
-        this.localFiles.push(...fileList);
-
-        if (callback) {
-          callback(fileList);
-        }
-      } catch (error) {
-        console.error('Flush failed:', error);
-        throw error;
-      }
-    }
   }
 }

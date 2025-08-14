@@ -22,25 +22,26 @@ The auto strategy intelligently detects the input type and handles it appropriat
 - **BigInt**: Preserved as-is for full precision
 - **Long objects**: Preserved as-is (from 'long' library)
 - **Strings**: Validated and kept as strings if they represent valid int64 values
-- **Numbers**: 
+- **Numbers**:
   - Safe integers (±2^53-1): kept as numbers
   - Unsafe integers: automatically converted to strings to preserve precision
 
 **Best for:** Mixed data sources, general-purpose use cases
 
 **Example:**
+
 ```typescript
 const writer = new LocalBulkWriter({
   schema,
   localPath: '/tmp/data',
-  config: { int64Strategy: 'auto' }
+  config: { int64Strategy: 'auto' },
 });
 
 // These will all work correctly
-writer.appendRow({ id: 123, value: 456 });                    // Safe integers
-writer.appendRow({ id: '9007199254740992', value: '789' });   // String representation
-writer.appendRow({ id: BigInt(1), value: BigInt(2) });        // BigInt
-writer.appendRow({ id: new Long(1, 0, false), value: 3 });   // Long object
+writer.appendRow({ id: 123, value: 456 }); // Safe integers
+writer.appendRow({ id: '9007199254740992', value: '789' }); // String representation
+writer.appendRow({ id: BigInt(1), value: BigInt(2) }); // BigInt
+writer.appendRow({ id: new Long(1, 0, false), value: 3 }); // Long object
 ```
 
 ### 2. String Strategy
@@ -56,11 +57,12 @@ Always converts int64 values to strings, ensuring full precision preservation:
 **Best for:** Data preservation, JSON compatibility, external API integration
 
 **Example:**
+
 ```typescript
 const writer = new LocalBulkWriter({
   schema,
   localPath: '/tmp/data',
-  config: { int64Strategy: 'string' }
+  config: { int64Strategy: 'string' },
 });
 
 writer.appendRow({ id: 123, value: BigInt('9223372036854775807') });
@@ -80,14 +82,15 @@ Only accepts safe integers (±2^53-1) and rejects values that could lose precisi
 **Best for:** Performance-critical applications, when you know all values are safe
 
 **Example:**
+
 ```typescript
 const writer = new LocalBulkWriter({
   schema,
   localPath: '/tmp/data',
-  config: { int64Strategy: 'number' }
+  config: { int64Strategy: 'number' },
 });
 
-writer.appendRow({ id: 123, value: 456 });                    // ✅ Accepted
+writer.appendRow({ id: 123, value: 456 }); // ✅ Accepted
 writer.appendRow({ id: 9007199254740991, value: -9007199254740991 }); // ✅ Accepted
 
 // These will throw errors:
@@ -108,11 +111,12 @@ Always converts int64 values to BigInt for mathematical operations:
 **Best for:** Mathematical operations, calculations requiring full precision
 
 **Example:**
+
 ```typescript
 const writer = new LocalBulkWriter({
   schema,
   localPath: '/tmp/data',
-  config: { int64Strategy: 'bigint' }
+  config: { int64Strategy: 'bigint' },
 });
 
 writer.appendRow({ id: 123, value: '456' });
@@ -131,8 +135,8 @@ const writer = new LocalBulkWriter({
   localPath: '/tmp/data',
   config: {
     int64Strategy: 'string', // 'auto' | 'string' | 'number' | 'bigint'
-    cleanupOnExit: true
-  }
+    cleanupOnExit: true,
+  },
 });
 ```
 
@@ -172,12 +176,14 @@ writer.appendRow({
 ```
 
 **Supported input types for int64 array elements:**
+
 - Numbers (within safe integer range)
 - Strings (valid int64 format)
 - BigInt objects
 - Long objects (from 'long' library)
 
 **Output behavior by strategy:**
+
 - **Auto**: Mixed types, smart conversion
 - **String**: All elements converted to strings
 - **Number**: Only safe integers accepted
@@ -185,20 +191,22 @@ writer.appendRow({
 
 ## Strategy Selection Guide
 
-| Use Case | Recommended Strategy | Reason |
-|-----------|---------------------|---------|
-| General purpose, mixed data | `auto` | Smart detection, handles edge cases |
-| External APIs returning string IDs | `string` | Preserves exact format, no conversion |
-| Performance-critical, safe integers only | `number` | Fastest, strict validation |
-| Mathematical operations | `bigint` | Full precision arithmetic |
-| Legacy system integration | `string` | Compatible with string-based systems |
+| Use Case                                 | Recommended Strategy | Reason                                |
+| ---------------------------------------- | -------------------- | ------------------------------------- |
+| General purpose, mixed data              | `auto`               | Smart detection, handles edge cases   |
+| External APIs returning string IDs       | `string`             | Preserves exact format, no conversion |
+| Performance-critical, safe integers only | `number`             | Fastest, strict validation            |
+| Mathematical operations                  | `bigint`             | Full precision arithmetic             |
+| Legacy system integration                | `string`             | Compatible with string-based systems  |
 
 ## Migration from Previous Versions
 
 The default behavior has changed from strict number-only validation to intelligent auto-detection. If you need the previous strict behavior, use:
 
 ```typescript
-config: { int64Strategy: 'number' }
+config: {
+  int64Strategy: 'number';
+}
 ```
 
 ## Error Handling
