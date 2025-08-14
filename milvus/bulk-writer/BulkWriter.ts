@@ -38,7 +38,10 @@ export abstract class BulkWriter {
     this.schema = schema;
     this.chunkSize = chunkSize;
     this.fileType = fileType;
-    this.config = config;
+    this.config = {
+      int64Strategy: 'auto',
+      ...config,
+    };
 
     if (schema.fields.length === 0) {
       throw new Error('Collection schema fields list is empty');
@@ -256,42 +259,17 @@ export abstract class BulkWriter {
           );
         }
         validateArray(value, maxCapacity);
+
+        // Special handling for int64 arrays to apply int64 strategy
+        if (elementType === 'Int64') {
+          return this.validateInt64Array(value, fieldName, maxCapacity);
+        }
+
         return { value, size: (value as any[]).length * 8 };
       },
 
       [DataType.Int64]: () => {
-        // Special handling for int64 to ensure 64-bit precision
-        if (typeof value === 'bigint') {
-          return { value, size: 8 };
-        }
-
-        // Handle Long object from 'long' library
-        if (
-          value !== null &&
-          typeof value === 'object' &&
-          'low' in value &&
-          'high' in value &&
-          'unsigned' in value
-        ) {
-          return { value, size: 8 };
-        }
-
-        // For regular numbers, ensure they're within safe range
-        if (typeof value === 'number' && Number.isInteger(value)) {
-          if (
-            value < Number.MIN_SAFE_INTEGER ||
-            value > Number.MAX_SAFE_INTEGER
-          ) {
-            throw new Error(
-              `Int64 field '${fieldName}' value ${value} is outside safe integer range. Use BigInt or Long for values beyond ±2^53-1`
-            );
-          }
-          return { value, size: 8 };
-        }
-
-        throw new Error(
-          `Invalid int64 value for field '${fieldName}'. Expected BigInt, Long object, or safe integer`
-        );
+        return this.validateInt64Field(value, fieldName);
       },
     };
 
@@ -305,6 +283,280 @@ export abstract class BulkWriter {
       throw new Error(`Invalid scalar value for field '${fieldName}'`);
     }
     return { value, size: TYPE_SIZE[dataType] || 8 };
+  }
+
+  /**
+   * Enhanced int64 validation with multiple strategies
+   */
+  private validateInt64Field(
+    value: any,
+    fieldName: string
+  ): { value: any; size: number } {
+    const strategy = this.config?.int64Strategy || 'auto';
+
+    // Strategy-based validation
+    switch (strategy) {
+      case 'string':
+        return this.validateInt64AsString(value, fieldName);
+      case 'number':
+        return this.validateInt64AsNumber(value, fieldName);
+      case 'bigint':
+        return this.validateInt64AsBigInt(value, fieldName);
+      case 'auto':
+      default:
+        return this.validateInt64Auto(value, fieldName);
+    }
+  }
+
+  /**
+   * Validate int64 as string (preserves full precision)
+   */
+  private validateInt64AsString(
+    value: any,
+    fieldName: string
+  ): { value: any; size: number } {
+    if (typeof value === 'string') {
+      // Validate string format
+      if (!/^-?\d+$/.test(value)) {
+        throw new Error(
+          `Invalid int64 string format for field '${fieldName}': ${value}`
+        );
+      }
+
+      // Check range for int64 (-2^63 to 2^63-1)
+      const bigIntValue = BigInt(value);
+      if (
+        bigIntValue < BigInt('-9223372036854775808') ||
+        bigIntValue > BigInt('9223372036854775807')
+      ) {
+        throw new Error(
+          `Int64 value out of range for field '${fieldName}': ${value}`
+        );
+      }
+
+      return { value, size: 8 };
+    }
+
+    // Convert other types to string
+    if (typeof value === 'bigint') {
+      return { value: value.toString(), size: 8 };
+    }
+
+    if (Long.isLong && Long.isLong(value)) {
+      return { value: value.toString(), size: 8 };
+    }
+
+    if (typeof value === 'number' && Number.isInteger(value)) {
+      if (value < Number.MIN_SAFE_INTEGER || value > Number.MAX_SAFE_INTEGER) {
+        throw new Error(
+          `Int64 field '${fieldName}' value ${value} is outside safe integer range. Use string strategy for values beyond ±2^53-1`
+        );
+      }
+      return { value: value.toString(), size: 8 };
+    }
+
+    throw new Error(
+      `Invalid int64 value for field '${fieldName}'. Expected string, BigInt, Long object, or safe integer`
+    );
+  }
+
+  /**
+   * Common validation for int64 range checking
+   */
+  private validateInt64Range(value: bigint, fieldName: string): void {
+    if (
+      value < BigInt('-9223372036854775808') ||
+      value > BigInt('9223372036854775807')
+    ) {
+      throw new Error(
+        `Int64 value out of range for field '${fieldName}': ${value}`
+      );
+    }
+  }
+
+  /**
+   * Common validation for safe integer range checking
+   */
+  private validateSafeIntegerRange(value: number, fieldName: string): void {
+    if (value < Number.MIN_SAFE_INTEGER || value > Number.MAX_SAFE_INTEGER) {
+      throw new Error(
+        `Int64 field '${fieldName}' value ${value} is outside safe integer range. Use string or bigint strategy for values beyond ±2^53-1`
+      );
+    }
+  }
+
+  /**
+   * Convert various types to BigInt with validation
+   */
+  private convertToBigInt(value: any, fieldName: string): bigint {
+    if (typeof value === 'bigint') {
+      return value;
+    }
+
+    if (Long.isLong && Long.isLong(value)) {
+      return BigInt(value.toString());
+    }
+
+    if (typeof value === 'string') {
+      if (!/^-?\d+$/.test(value)) {
+        throw new Error(
+          `Invalid int64 string format for field '${fieldName}': ${value}`
+        );
+      }
+      return BigInt(value);
+    }
+
+    if (typeof value === 'number' && Number.isInteger(value)) {
+      this.validateSafeIntegerRange(value, fieldName);
+      return BigInt(value);
+    }
+
+    throw new Error(
+      `Invalid int64 value for field '${fieldName}'. Expected BigInt, Long object, string, or safe integer`
+    );
+  }
+
+  /**
+   * Convert various types to number with validation
+   */
+  private convertToNumber(value: any, fieldName: string): number {
+    if (typeof value === 'number' && Number.isInteger(value)) {
+      this.validateSafeIntegerRange(value, fieldName);
+      return value;
+    }
+
+    if (typeof value === 'bigint') {
+      if (
+        value >= BigInt(Number.MIN_SAFE_INTEGER) &&
+        value <= BigInt(Number.MAX_SAFE_INTEGER)
+      ) {
+        return Number(value);
+      }
+      throw new Error(
+        `BigInt value ${value} is outside safe integer range for number strategy`
+      );
+    }
+
+    if (Long.isLong && Long.isLong(value)) {
+      const longValue = value.toNumber();
+      this.validateSafeIntegerRange(longValue, fieldName);
+      return longValue;
+    }
+
+    if (typeof value === 'string' && /^-?\d+$/.test(value)) {
+      const numValue = Number(value);
+      this.validateSafeIntegerRange(numValue, fieldName);
+      return numValue;
+    }
+
+    throw new Error(
+      `Invalid int64 value for field '${fieldName}'. Expected number, BigInt, Long object, or valid integer string`
+    );
+  }
+
+  /**
+   * Validate int64 as number (only safe integers)
+   */
+  private validateInt64AsNumber(
+    value: any,
+    fieldName: string
+  ): { value: any; size: number } {
+    const numValue = this.convertToNumber(value, fieldName);
+    // Convert to string for JSON output
+    return { value: numValue.toString(), size: 8 };
+  }
+
+  /**
+   * Validate int64 as BigInt (preserves full precision)
+   */
+  private validateInt64AsBigInt(
+    value: any,
+    fieldName: string
+  ): { value: any; size: number } {
+    const bigIntValue = this.convertToBigInt(value, fieldName);
+    this.validateInt64Range(bigIntValue, fieldName);
+    // Convert to string for JSON output
+    return { value: bigIntValue.toString(), size: 8 };
+  }
+
+  /**
+   * Auto-validate int64 (smart detection)
+   */
+  private validateInt64Auto(
+    value: any,
+    fieldName: string
+  ): { value: any; size: number } {
+    // Always convert to string for JSON output
+    if (typeof value === 'bigint') {
+      if (
+        value < BigInt('-9223372036854775808') ||
+        value > BigInt('9223372036854775807')
+      ) {
+        throw new Error(
+          `Int64 value out of range for field '${fieldName}': ${value}`
+        );
+      }
+      return { value: value.toString(), size: 8 };
+    }
+
+    // If it's a Long object, convert to string
+    if (Long.isLong && Long.isLong(value)) {
+      return { value: value.toString(), size: 8 };
+    }
+
+    // If it's a string, validate and keep as string for precision
+    if (typeof value === 'string') {
+      if (!/^-?\d+$/.test(value)) {
+        throw new Error(
+          `Invalid int64 string format for field '${fieldName}': ${value}`
+        );
+      }
+      const bigIntValue = BigInt(value);
+      if (
+        bigIntValue < BigInt('-9223372036854775808') ||
+        bigIntValue > BigInt('9223372036854775807')
+      ) {
+        throw new Error(
+          `Int64 value out of range for field '${fieldName}': ${value}`
+        );
+      }
+      return { value, size: 8 };
+    }
+
+    // If it's a number, convert to string
+    if (typeof value === 'number' && Number.isInteger(value)) {
+      if (value < Number.MIN_SAFE_INTEGER || value > Number.MAX_SAFE_INTEGER) {
+        // Convert to string to preserve precision
+        return { value: value.toString(), size: 8 };
+      }
+      return { value: value.toString(), size: 8 };
+    }
+
+    throw new Error(
+      `Invalid int64 value for field '${fieldName}'. Expected BigInt, Long object, string, or safe integer`
+    );
+  }
+
+  /**
+   * Validate int64 array (special handling for int64 elements)
+   */
+  private validateInt64Array(
+    value: any[],
+    fieldName: string,
+    maxCapacity: number
+  ): { value: any[]; size: number } {
+    const validatedValues: any[] = [];
+    let totalSize = 0;
+
+    for (const item of value) {
+      const validationResult = this.validateInt64Field(item, fieldName);
+
+      // All int64 values should already be strings from validateInt64Field
+      validatedValues.push(validationResult.value);
+      totalSize += validationResult.size;
+    }
+
+    return { value: validatedValues, size: totalSize };
   }
 
   /**
@@ -329,7 +581,13 @@ export abstract class BulkWriter {
         [DataType.Int8Vector]: () => Number(field.dim) || 0,
         [DataType.VarChar]: () => String(value).length,
         [DataType.JSON]: () => JSON.stringify(value).length,
-        [DataType.Array]: () => (value as any[]).length * 8,
+        [DataType.Array]: () => {
+          const elementType = field.element_type;
+          if (elementType === 'Int64') {
+            return (value as any[]).length * 8;
+          }
+          return (value as any[]).length * 8;
+        },
       };
 
       const sizeEstimator = sizeEstimators[dataType];

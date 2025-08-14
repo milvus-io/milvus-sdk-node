@@ -25,7 +25,7 @@ describe('LocalBulkWriter - Simple Tests', () => {
 
   beforeAll(async () => {
     // Create test data directory
-    testDataDir = path.join(__dirname, 'test-data');
+    testDataDir = path.join(__dirname, 'temp');
     await fs.mkdir(testDataDir, { recursive: true });
 
     milvusClient = new MilvusClient({
@@ -51,7 +51,7 @@ describe('LocalBulkWriter - Simple Tests', () => {
   afterAll(async () => {
     // Remove test data directory
     try {
-      await fs.rm(testDataDir, { recursive: true });
+      // await fs.rm(testDataDir, { recursive: true });
 
       // remove collection
       await milvusClient.dropCollection({
@@ -77,21 +77,19 @@ describe('LocalBulkWriter - Simple Tests', () => {
     });
   });
 
-  afterEach(async () => {
-    if (bulkWriter) {
-      await bulkWriter.cleanup();
-    }
-  });
-
   it('should create LocalBulkWriter with correct properties', () => {
     expect(bulkWriter).toBeDefined();
     expect(bulkWriter.uuid).toBeDefined();
-    expect(bulkWriter.dataPath).toBe(testDataDir);
+    expect(bulkWriter.dataPath).toBe(path.join(testDataDir, bulkWriter.uuid));
     expect(bulkWriter.batchFiles).toEqual([]);
   });
 
   it('should append rows and commit data', async () => {
-    const testData = generateInsertData(collectionInfo.schema.fields as any, 5);
+    const count = 500;
+    const testData = generateInsertData(
+      collectionInfo.schema.fields as any,
+      count
+    );
 
     // Append all rows
     for (const row of testData) {
@@ -111,7 +109,7 @@ describe('LocalBulkWriter - Simple Tests', () => {
       const data = JSON.parse(content);
       expect(data).toHaveProperty('rows');
       expect(Array.isArray(data.rows)).toBe(true);
-      expect(data.rows.length).toBeGreaterThan(0);
+      expect(data.rows.length).toBe(count);
     }
   });
 
@@ -130,7 +128,7 @@ describe('LocalBulkWriter - Simple Tests', () => {
 
     const testData = generateInsertData(collectionInfo.schema.fields as any, 3);
 
-    console.dir(testData, { depth: null });
+    // console.dir(testData, { depth: null });
 
     for (const row of testData) {
       jsonWriter.appendRow(row);
@@ -196,7 +194,10 @@ describe('LocalBulkWriter - Simple Tests', () => {
   });
 
   it('should handle async commit correctly', async () => {
-    const testData = generateInsertData(collectionInfo.schema.fields as any, 3);
+    const testData = generateInsertData(
+      collectionInfo.schema.fields as any,
+      5000
+    );
 
     for (const row of testData) {
       bulkWriter.appendRow(row);
@@ -209,7 +210,7 @@ describe('LocalBulkWriter - Simple Tests', () => {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     const files = bulkWriter.batchFiles;
-    expect(files.length).toBeGreaterThan(0);
+    expect(files.length).toBeGreaterThan(1);
   });
 
   it('should handle commit with callback', async () => {
@@ -233,7 +234,10 @@ describe('LocalBulkWriter - Simple Tests', () => {
   });
 
   it('should cleanup files correctly', async () => {
-    const testData = generateInsertData(collectionInfo.schema.fields as any, 3);
+    const testData = generateInsertData(
+      collectionInfo.schema.fields as any,
+      5000
+    );
 
     for (const row of testData) {
       bulkWriter.appendRow(row);
@@ -242,9 +246,9 @@ describe('LocalBulkWriter - Simple Tests', () => {
     await bulkWriter.commit();
 
     const files = bulkWriter.batchFiles;
-    expect(files.length).toBeGreaterThan(0);
+    expect(files.length).toBeGreaterThan(1);
 
-    // Verify files exist
+    // Verify files exist in original location
     for (const file of files) {
       const exists = await fs
         .access(file)
@@ -253,11 +257,10 @@ describe('LocalBulkWriter - Simple Tests', () => {
       expect(exists).toBe(true);
     }
 
-    // Cleanup - since cleanupOnExit is false, we need to manually remove files
-    // or test that cleanup does nothing when cleanupOnExit is false
+    // Cleanup - since cleanupOnExit is false, cleanup should do nothing
     await bulkWriter.cleanup();
 
-    // Since cleanupOnExit is false, files should still exist
+    // Since cleanupOnExit is false, files should still exist in original location
     for (const file of files) {
       const exists = await fs
         .access(file)
@@ -288,22 +291,48 @@ describe('LocalBulkWriter - Simple Tests', () => {
     const cleanupFiles = cleanupWriter.batchFiles;
     expect(cleanupFiles.length).toBeGreaterThan(0);
 
-    // Now cleanup should work, but it only removes empty directories, not files
+    // Get the parent directory where files will be moved
+    const parentDir = path.dirname(cleanupWriter.dataPath);
+
+    // Now cleanup should work - files will be moved to parent directory and UUID directory deleted
     await cleanupWriter.cleanup();
 
-    // The cleanup method only removes empty directories, not the actual data files
-    // So files should still exist
+    // Files should no longer exist in their original location (UUID directory)
     for (const file of cleanupFiles) {
       const exists = await fs
         .access(file)
         .then(() => true)
         .catch(() => false);
+      expect(exists).toBe(false);
+    }
+
+    // Files should exist in the parent directory
+    for (const file of cleanupFiles) {
+      const fileName = path.basename(file);
+      const parentFilePath = path.join(parentDir, fileName);
+      const exists = await fs
+        .access(parentFilePath)
+        .then(() => true)
+        .catch(() => false);
       expect(exists).toBe(true);
     }
 
+    // UUID directory should be deleted
+    const uuidDirExists = await fs
+      .access(cleanupWriter.dataPath)
+      .then(() => true)
+      .catch(() => false);
+    expect(uuidDirExists).toBe(false);
+
     // Clean up the test files manually for this test
     for (const file of cleanupFiles) {
-      await fs.unlink(file);
+      const fileName = path.basename(file);
+      const parentFilePath = path.join(parentDir, fileName);
+      try {
+        await fs.unlink(parentFilePath);
+      } catch (error) {
+        // File might already be deleted
+      }
     }
   });
 

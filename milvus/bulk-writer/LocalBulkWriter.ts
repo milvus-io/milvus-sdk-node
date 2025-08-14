@@ -29,7 +29,7 @@ export class LocalBulkWriter extends BulkWriter {
     this.localPath = localPath;
     this.writerUuid = randomUUID();
     this.cleanupOnExit = config.cleanupOnExit ?? true;
-    this.makeDirectories();
+    this.makeDirectoriesSync();
   }
 
   get uuid(): string {
@@ -52,7 +52,7 @@ export class LocalBulkWriter extends BulkWriter {
 
     // Auto-flush when buffer size exceeds chunk size
     if (this.currentBufferSize > this.currentChunkSize) {
-      this.commit({ async: true });
+      this.flushBuffer({ async: true });
     }
   }
 
@@ -62,47 +62,147 @@ export class LocalBulkWriter extends BulkWriter {
   async commit(options: CommitOptions = {}): Promise<void> {
     const { async = false, callback } = options;
 
+    // Flush any remaining data in the buffer
+    if (this.currentBufferSize > 0) {
+      await this.flushBuffer({ async, callback });
+    }
+  }
+
+  /**
+   * Internal method to flush buffer to local files.
+   */
+  private async flushBuffer(options: CommitOptions = {}): Promise<void> {
+    const { async = false, callback } = options;
+
     // Flush strategy based on async flag
     const flushStrategies = {
       async: () => {
         setImmediate(async () => {
           try {
-            await this.flush(callback);
+            await this.flushChunkedData(callback);
           } catch (error) {
             console.error('Async flush failed:', error);
           }
         });
       },
-      sync: () => this.flush(callback),
+      sync: () => this.flushChunkedData(callback),
     };
 
     // Execute appropriate flush strategy
     await flushStrategies[async ? 'async' : 'sync']();
 
-    // Reset buffer metrics
+    // Reset buffer metrics after successful flush
     this.bufferSize = 0;
     this.bufferRowCount = 0;
   }
 
   /**
-   * Clean up temporary files and directories.
+   * Flush data in chunks according to the configured chunk size.
    */
-  async cleanup(): Promise<void> {
-    if (!this.cleanupOnExit) return;
+  private async flushChunkedData(
+    callback?: (files: string[]) => void
+  ): Promise<void> {
+    if (!this.buffer || this.buffer.rowCount === 0) {
+      return;
+    }
+
+    let totalRowsProcessed = 0;
+    const allFiles: string[] = [];
+
+    // Continue flushing chunks until all data is processed
+    while (this.buffer && this.buffer.rowCount > 0) {
+      this.flushCount++;
+      const targetPath = path.join(this.localPath, this.flushCount.toString());
+
+      try {
+        // Use partial flush to respect chunk size
+        const result = await this.buffer.persistPartial(
+          targetPath,
+          this.chunkSize,
+          {
+            bufferSize: this.currentBufferSize,
+            bufferRowCount: this.currentBufferRowCount,
+          }
+        );
+
+        if (result.files.length > 0) {
+          allFiles.push(...result.files);
+          totalRowsProcessed += result.rowsProcessed;
+
+          // Remove processed rows from the buffer
+          this.buffer.removeProcessedRows(result.rowsProcessed);
+
+          // console.log(`Flushed chunk ${this.flushCount}: ${result.rowsProcessed} rows, ${result.files.length} files, remaining: ${result.remainingRows} rows`);
+
+          // If no rows were processed or no remaining rows, break to avoid infinite loop
+          if (result.rowsProcessed === 0 || result.remainingRows === 0) {
+            break;
+          }
+        } else {
+          // No files were created, break to avoid infinite loop
+          break;
+        }
+      } catch (error) {
+        console.error(`Flush chunk ${this.flushCount} failed:`, error);
+        throw error;
+      }
+    }
+
+    // Add all generated files to the local files list
+    this.localFiles.push(...allFiles);
+
+    if (callback) {
+      callback(allFiles);
+    }
+
+    // console.log(`Total flushed: ${totalRowsProcessed} rows across ${allFiles.length} files`);
+  }
+
+  /**
+   * Clean up temporary files and directories.
+   * @param force If true, ignores cleanupOnExit flag and forces cleanup
+   */
+  async cleanup(force: boolean = false): Promise<void> {
+    if (!force && !this.cleanupOnExit) return;
 
     try {
-      const uuidDir = path.join(this.localPath, this.uuid);
+      // Preserve JSON files by moving them to the parent directory before cleanup
+      const parentDir = path.dirname(this.localPath);
+
+      // Move all JSON files to parent directory to preserve them
+      for (const filePath of this.localFiles) {
+        try {
+          const fileName = path.basename(filePath);
+          const targetPath = path.join(parentDir, fileName);
+
+          // Check if source file exists before moving
+          const exists = await fs
+            .access(filePath)
+            .then(() => true)
+            .catch(() => false);
+          if (exists) {
+            await fs.rename(filePath, targetPath);
+          }
+        } catch (error) {
+          console.warn(`Failed to preserve file ${filePath}:`, error);
+        }
+      }
+
+      // Clear the localFiles array reference
+      this.localFiles = [];
+
+      // Clean up UUID directory (which is currently this.localPath)
+      const uuidDir = this.localPath;
       const exists = await fs
         .access(uuidDir)
         .then(() => true)
         .catch(() => false);
 
       if (exists) {
-        const files = await fs.readdir(uuidDir);
-        if (files.length === 0) {
-          await fs.rm(uuidDir, { recursive: true });
-        }
+        await fs.rm(uuidDir, { recursive: true, force: true });
       }
+
+      // The parent directory now contains the preserved JSON files for inspection
     } catch (error) {
       console.warn('Cleanup failed:', error);
     }
@@ -111,17 +211,14 @@ export class LocalBulkWriter extends BulkWriter {
   /**
    * Create necessary directories for data storage.
    */
-  private async makeDirectories(): Promise<void> {
-    await fs.mkdir(this.localPath, { recursive: true });
-
-    const uuidDir = path.join(this.localPath, this.uuid);
-    await fs.mkdir(uuidDir, { recursive: true });
-
+  private makeDirectoriesSync() {
+    const uuidDir = path.join(this.localPath, this.writerUuid);
     this.localPath = uuidDir;
   }
 
   /**
-   * Flush current buffer to local files.
+   * Legacy flush method - kept for backward compatibility but not used in new implementation.
+   * @deprecated Use flushChunkedData instead
    */
   private async flush(callback?: (files: string[]) => void): Promise<void> {
     this.flushCount++;
@@ -134,6 +231,8 @@ export class LocalBulkWriter extends BulkWriter {
           bufferSize: this.currentBufferSize,
           bufferRowCount: this.currentBufferRowCount,
         });
+
+        console.log('fileList', fileList);
 
         this.localFiles.push(...fileList);
 

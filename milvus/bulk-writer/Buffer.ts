@@ -116,6 +116,54 @@ export class Buffer {
     }
   }
 
+  /**
+   * Persist a portion of the buffer up to a specified size limit.
+   * This enables proper chunking by writing only a subset of rows.
+   */
+  async persistPartial(
+    localPath: string,
+    maxSizeBytes: number,
+    opts: { bufferSize?: number; bufferRowCount?: number } = {}
+  ): Promise<{
+    files: string[];
+    rowsProcessed: number;
+    remainingRows: number;
+  }> {
+    // Ensure all columns have equal length
+    let rowCount = -1;
+    for (const k of Object.keys(this.columns)) {
+      const len = this.columns[k].length;
+      if (rowCount < 0) rowCount = len;
+      else if (rowCount !== len) {
+        throw new Error(
+          `Column ${k} row count ${len} doesn't equal to the first column row count ${rowCount}`
+        );
+      }
+    }
+
+    if (rowCount === 0) {
+      return { files: [], rowsProcessed: 0, remainingRows: 0 };
+    }
+
+    switch (this.fileType) {
+      case BulkFileType.JSON:
+        return this.persistPartialJSONRows(localPath, maxSizeBytes);
+      default:
+        throw new Error(`Unsupported file type: ${this.fileType}`);
+    }
+  }
+
+  /**
+   * Remove processed rows from the buffer after partial flush.
+   */
+  removeProcessedRows(count: number): void {
+    if (count <= 0) return;
+
+    for (const k of Object.keys(this.columns)) {
+      this.columns[k] = this.columns[k].slice(count);
+    }
+  }
+
   private async persistJSONRows(localPath: string): Promise<string[]> {
     const rows: Record<string, any>[] = [];
     const keys = Object.keys(this.columns);
@@ -126,7 +174,7 @@ export class Buffer {
       const row: Record<string, any> = {};
       for (const k of keys) {
         const value = this.columns[k][rowIndex];
-        row[k] = this.serializeValue(value);
+        row[k] = this.serializeValue(value, k);
       }
       rows.push(row);
     }
@@ -139,17 +187,99 @@ export class Buffer {
     return [filePath];
   }
 
+  private async persistPartialJSONRows(
+    localPath: string,
+    maxSizeBytes: number
+  ): Promise<{
+    files: string[];
+    rowsProcessed: number;
+    remainingRows: number;
+  }> {
+    const keys = Object.keys(this.columns);
+    if (keys.length === 0) {
+      return { files: [], rowsProcessed: 0, remainingRows: 0 };
+    }
+
+    const totalRowCount = this.columns[keys[0]].length;
+    let rowsProcessed = 0;
+    let currentSize = 0;
+    const rows: Record<string, any>[] = [];
+
+    // Process rows until we reach the size limit
+    for (let rowIndex = 0; rowIndex < totalRowCount; rowIndex++) {
+      const row: Record<string, any> = {};
+      let rowSize = 0;
+
+      for (const k of keys) {
+        const value = this.columns[k][rowIndex];
+        const serializedValue = this.serializeValue(value, k);
+        row[k] = serializedValue;
+        rowSize += JSON.stringify(serializedValue).length;
+      }
+
+      // Check if adding this row would exceed the size limit
+      if (currentSize + rowSize > maxSizeBytes && rowsProcessed > 0) {
+        break;
+      }
+
+      rows.push(row);
+      currentSize += rowSize;
+      rowsProcessed++;
+    }
+
+    if (rowsProcessed === 0) {
+      return { files: [], rowsProcessed: 0, remainingRows: totalRowCount };
+    }
+
+    const filePath = `${localPath}.json`;
+    const dir = path.dirname(filePath);
+    await fs.mkdir(dir, { recursive: true });
+
+    await fs.writeFile(filePath, JSON.stringify({ rows }, null, 2), 'utf-8');
+
+    const remainingRows = totalRowCount - rowsProcessed;
+    return {
+      files: [filePath],
+      rowsProcessed,
+      remainingRows,
+    };
+  }
+
   /**
    * Serialize values to ensure proper handling of special types
    * Handles BigInt and Long objects for int64 fields
    */
-  private serializeValue(value: any): any {
-    // BigInt -> string
+  private serializeValue(value: any, fieldName?: string): any {
+    // If we have field information and it's an int64 field, always convert to string
+    if (fieldName && this.fields[fieldName]) {
+      const field = this.fields[fieldName];
+      if (field.dataType === DataType.Int64) {
+        // Always convert int64 fields to string for JSON output
+        if (typeof value === 'bigint') {
+          return value.toString();
+        }
+        if (Long.isLong(value)) {
+          return value.toString();
+        }
+        // If it's already a string, return as is
+        if (typeof value === 'string') {
+          return value;
+        }
+        // If it's a number, convert to string
+        if (typeof value === 'number') {
+          return value.toString();
+        }
+        return value;
+      }
+    }
+
+    // For non-int64 fields, keep the existing behavior
+    // BigInt -> string (for other field types)
     if (typeof value === 'bigint') {
       return value.toString();
     }
 
-    // Long -> string
+    // Long -> string (for other field types)
     if (Long.isLong(value)) {
       return value.toString();
     }

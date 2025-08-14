@@ -5,3 +5,4 @@ coverage
 .DS_Store
 yarn-error.log
 .idea
+temp

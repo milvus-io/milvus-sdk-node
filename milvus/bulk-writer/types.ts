@@ -17,6 +17,10 @@ export interface BulkWriterOptions {
     strictValidation?: boolean;
     /** Skip invalid rows instead of throwing errors */
     skipInvalidRows?: boolean;
+    /** Clean up temporary files on exit (default: true) */
+    cleanupOnExit?: boolean;
+    /** Int64 handling strategy (default: 'auto') */
+    int64Strategy?: 'auto' | 'string' | 'number' | 'bigint';
   };
 }
 
@@ -26,15 +30,6 @@ export interface BulkWriterOptions {
 export interface LocalBulkWriterOptions extends BulkWriterOptions {
   /** Local file system path for data storage */
   localPath: string;
-  /** Configuration specific to local storage */
-  config?: {
-    /** Enable strict validation mode */
-    strictValidation?: boolean;
-    /** Skip invalid rows instead of throwing errors */
-    skipInvalidRows?: boolean;
-    /** Clean up temporary files on exit (default: true) */
-    cleanupOnExit?: boolean;
-  };
 }
 
 /**
