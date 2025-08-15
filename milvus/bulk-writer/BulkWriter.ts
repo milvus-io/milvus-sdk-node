@@ -4,6 +4,9 @@ import {
   validateFloatVector,
   validateBinaryVector,
   validateInt8Vector,
+  validateSparseFloatVector,
+  validateFloat16Vector,
+  validateBFloat16Vector,
   validateVarchar,
   validateJSON,
   validateArray,
@@ -18,12 +21,7 @@ import {
 import { Buffer } from './Buffer';
 import { BulkWriterOptions, CommitOptions } from './types';
 import { DataType } from '../const';
-import {
-  sparseToBytes,
-  f32ArrayToF16Bytes,
-  f32ArrayToBf16Bytes,
-} from '../utils/Bytes';
-import { SparseFloatVector } from '../types/Data';
+import { sparseToBytes } from '../utils/Bytes';
 
 /**
  * Base class for bulk data writing operations.
@@ -224,124 +222,33 @@ export abstract class BulkWriter {
 
       [DataType.BinaryVector]: () => {
         const dim = Number(field.dim) || 0;
-
-        // Check if value is already bytes (Uint8Array or Buffer) or array
-        if (value instanceof Uint8Array || (value && typeof value === 'object' && value.constructor && value.constructor.name === 'Buffer')) {
-          // Value is already in bytes format, validate length and convert to array
-          const byteLen = Math.ceil(dim / 8);
-          if (value.length !== byteLen) {
-            throw new Error(
-              `Invalid BinaryVector bytes: expected length ${byteLen}, got ${value.length}`
-            );
-          }
-          // Convert to array to maintain consistency with existing behavior
-          const arrayValue = Array.from(value);
-          return { value: arrayValue, size: arrayValue.length };
-        } else {
-          // Value is an array, validate and convert
-          const validatedVector = validateBinaryVector(value, dim);
-          // Return a copy to avoid reference issues
-          return { value: [...validatedVector], size: Math.ceil(dim / 8) };
-        }
+        const validatedVector = validateBinaryVector(value, dim);
+        // Return a copy to avoid reference issues
+        return { value: [...validatedVector], size: Math.ceil(dim / 8) };
       },
 
       [DataType.Int8Vector]: () => {
         const dim = Number(field.dim) || 0;
-
-        // Check if value is already bytes (Int8Array) or array (number[])
-        if (value instanceof Int8Array) {
-          // Value is already in bytes format
-          if (value.length !== dim) {
-            throw new Error(
-              `Invalid Int8Vector bytes: expected length ${dim}, got ${value.length}`
-            );
-          }
-          return { value: value, size: value.length };
-        } else {
-          // Value is an array, validate and convert
-          const validatedVector = validateInt8Vector(value, dim);
-          // Return a copy to avoid reference issues
-          return { value: [...validatedVector], size: dim };
-        }
+        const validatedVector = validateInt8Vector(value, dim);
+        // Return a copy to avoid reference issues
+        return { value: [...validatedVector], size: dim };
       },
 
       [DataType.Float16Vector]: () => {
         const dim = Number(field.dim) || 0;
-
-        // Check if value is already bytes (Uint8Array) or array (number[])
-        if (value instanceof Uint8Array) {
-          // Value is already in bytes format
-          if (value.length !== dim * 2) {
-            // 2 bytes per dimension for f16
-            throw new Error(
-              `Invalid Float16Vector bytes: expected length ${dim * 2}, got ${
-                value.length
-              }`
-            );
-          }
-          return { value: value, size: value.length };
-        } else {
-          // Value is an array, validate and convert to bytes
-          const validatedVector = validateFloatVector(value, dim);
-          const f16Bytes = f32ArrayToF16Bytes(validatedVector);
-          return { value: f16Bytes, size: f16Bytes.length };
-        }
+        const validationResult = validateFloat16Vector(value, dim);
+        return { value: validationResult.value, size: validationResult.size };
       },
 
       [DataType.BFloat16Vector]: () => {
         const dim = Number(field.dim) || 0;
-
-        // Check if value is already bytes (Uint8Array) or array (number[])
-        if (value instanceof Uint8Array) {
-          // Value is already in bytes format
-          if (value.length !== dim * 2) {
-            // 2 bytes per dimension for bf16
-            throw new Error(
-              `Invalid BFloat16Vector bytes: expected length ${dim * 2}, got ${
-                value.length
-              }`
-            );
-          }
-          return { value: value, size: value.length };
-        } else {
-          // Value is an array, validate and convert to bytes
-          const validatedVector = validateFloatVector(value, dim);
-          const bf16Bytes = f32ArrayToBf16Bytes(validatedVector);
-          return { value: bf16Bytes, size: bf16Bytes.length };
-        }
+        const validationResult = validateBFloat16Vector(value, dim);
+        return { value: validationResult.value, size: validationResult.size };
       },
 
       [DataType.SparseFloatVector]: () => {
-        // For sparse vectors, we don't need dim validation
-        // Validate that sparse vector is in the correct object format with numeric keys
-        const validatedVector = value;
-
-        // Validate sparse vector format
-        if (typeof validatedVector !== 'object' || validatedVector === null) {
-          throw new Error(
-            `Invalid sparse vector format: expected object, got ${typeof validatedVector}`
-          );
-        }
-
-        // Check if it's an object with numeric string keys and number values
-        const sparseObject = validatedVector as Record<string, any>;
-        for (const [key, val] of Object.entries(sparseObject)) {
-          // Check if key is a valid numeric string
-          if (!/^\d+$/.test(key)) {
-            throw new Error(
-              `Invalid sparse vector key: expected numeric string, got '${key}'`
-            );
-          }
-
-          // Check if value is a valid number
-          if (typeof val !== 'number' || isNaN(val)) {
-            throw new Error(
-              `Invalid sparse vector value at key '${key}': expected number, got ${typeof val}`
-            );
-          }
-        }
-
-        const bytes = sparseToBytes(validatedVector as SparseFloatVector);
+        const validatedVector = validateSparseFloatVector(value);
+        const bytes = sparseToBytes(validatedVector);
         // Return a copy to avoid reference issues
         return { value: { ...validatedVector }, size: bytes.length };
       },
@@ -462,6 +369,15 @@ export abstract class BulkWriter {
         [DataType.FloatVector]: () => (Number(field.dim) || 0) * 4,
         [DataType.BinaryVector]: () => Math.ceil((Number(field.dim) || 0) / 8),
         [DataType.Int8Vector]: () => Number(field.dim) || 0,
+        [DataType.Float16Vector]: () => (Number(field.dim) || 0) * 2,
+        [DataType.BFloat16Vector]: () => (Number(field.dim) || 0) * 2,
+        [DataType.SparseFloatVector]: () => {
+          // Estimate sparse vector size based on number of non-zero elements
+          if (typeof value === 'object' && value !== null) {
+            return Object.keys(value).length * 12; // Rough estimate: 4 bytes for index + 8 bytes for value
+          }
+          return 0;
+        },
         [DataType.VarChar]: () => String(value).length,
         [DataType.JSON]: () => JSON.stringify(value).length,
         [DataType.Array]: () => {
@@ -469,6 +385,7 @@ export abstract class BulkWriter {
           if (elementType === 'Int64') {
             return (value as any[]).length * 8;
           }
+          // Default array element size estimation
           return (value as any[]).length * 8;
         },
       };
@@ -478,8 +395,13 @@ export abstract class BulkWriter {
         size += sizeEstimator();
       } else {
         // Fallback to type size constants
-        const typeName = DataType[dataType];
-        size += TYPE_SIZE[typeName] || 8;
+        const typeSize = TYPE_SIZE[dataType];
+        if (typeSize !== undefined) {
+          size += typeSize;
+        } else {
+          // Default fallback size for unknown types
+          size += 8;
+        }
       }
     }
 

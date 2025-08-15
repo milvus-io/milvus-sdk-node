@@ -147,7 +147,7 @@ describe('Binary Vector Handling in BulkWriter', () => {
           binary_vector: 'invalid' as any,
         });
       }).toThrow(
-        /Invalid binary vector: expected Uint8Array, Buffer, or array, got string/
+        /Invalid binary vector base64 string: Invalid binary vector bytes: expected length 1, got 5/
       );
 
       expect(() => {
@@ -156,7 +156,7 @@ describe('Binary Vector Handling in BulkWriter', () => {
           binary_vector: 123 as any,
         });
       }).toThrow(
-        /Invalid binary vector: expected Uint8Array, Buffer, or array, got number/
+        /Invalid binary vector: expected Uint8Array, Buffer, base64 string, or array, got number/
       );
 
       expect(() => {
@@ -165,7 +165,7 @@ describe('Binary Vector Handling in BulkWriter', () => {
           binary_vector: {} as any,
         });
       }).toThrow(
-        /Invalid binary vector: expected Uint8Array, Buffer, or array, got object/
+        /Invalid binary vector: expected Uint8Array, Buffer, base64 string, or array, got object/
       );
     });
 
@@ -322,6 +322,28 @@ describe('Binary Vector Handling in BulkWriter', () => {
         });
       }).toThrow(/Invalid binary vector: expected array with length=2/);
     });
+
+    it('should handle 16-bit binary vector with base64 input correctly', async () => {
+      // Base64 encoding of [255, 255] (16 bits, all set to 1)
+      const base64String = '//8='; // Base64 for [255, 255]
+
+      bulkWriter.appendRow({
+        id: 1,
+        binary_vector: base64String,
+      });
+
+      await bulkWriter.commit();
+
+      const files = bulkWriter.batchFiles;
+      expect(files.length).toBeGreaterThan(0);
+
+      const filePath = files[0];
+      const content = await fs.readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+
+      expect(data.rows).toHaveLength(1);
+      expect(data.rows[0].binary_vector).toEqual([255, 255]);
+    });
   });
 
   describe('Binary Vector Bytes Input', () => {
@@ -383,6 +405,75 @@ describe('Binary Vector Handling in BulkWriter', () => {
       expect(data.rows[0].binary_vector).toEqual([170]);
     });
 
+    it('should handle base64-encoded string input correctly', async () => {
+      // Base64 encoding of [255] (11111111 in binary)
+      const base64String = '/w=='; // Base64 for 255
+
+      bulkWriter.appendRow({
+        id: 1,
+        binary_vector: base64String,
+      });
+
+      await bulkWriter.commit();
+
+      const files = bulkWriter.batchFiles;
+      expect(files.length).toBeGreaterThan(0);
+
+      const filePath = files[0];
+      const content = await fs.readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+
+      expect(data.rows).toHaveLength(1);
+      expect(data.rows[0].binary_vector).toEqual([255]);
+    });
+
+    it('should handle base64-encoded string with alternating bits correctly', async () => {
+      // Base64 encoding of [170] (10101010 in binary)
+      const base64String = 'qg=='; // Base64 for 170
+
+      bulkWriter.appendRow({
+        id: 1,
+        binary_vector: base64String,
+      });
+
+      await bulkWriter.commit();
+
+      const files = bulkWriter.batchFiles;
+      expect(files.length).toBeGreaterThan(0);
+
+      const filePath = files[0];
+      const content = await fs.readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+
+      expect(data.rows).toHaveLength(1);
+      expect(data.rows[0].binary_vector).toEqual([170]);
+    });
+
+    it('should reject base64 string with wrong length', async () => {
+      // Base64 encoding of [255, 255] (2 bytes, expected 1)
+      const base64String = '//8='; // Base64 for [255, 255]
+
+      expect(() => {
+        bulkWriter.appendRow({
+          id: 1,
+          binary_vector: base64String,
+        });
+      }).toThrow(/Invalid binary vector bytes: expected length 1, got 2/);
+    });
+
+    it('should reject invalid base64 format', async () => {
+      const invalidBase64 = 'invalid-base64!@#';
+
+      expect(() => {
+        bulkWriter.appendRow({
+          id: 1,
+          binary_vector: invalidBase64,
+        });
+      }).toThrow(
+        /Invalid binary vector: expected Uint8Array, Buffer, base64 string, or array, got string/
+      );
+    });
+
     it('should reject bytes input with wrong length', async () => {
       const binaryBytes = new Uint8Array([255, 255]); // 2 bytes, expected 1
 
@@ -391,7 +482,7 @@ describe('Binary Vector Handling in BulkWriter', () => {
           id: 1,
           binary_vector: binaryBytes,
         });
-      }).toThrow(/Invalid BinaryVector bytes: expected length 1, got 2/);
+      }).toThrow('Invalid binary vector bytes: expected length 1, got 2');
     });
   });
 
