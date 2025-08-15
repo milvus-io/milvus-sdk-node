@@ -23,27 +23,83 @@ export function validateFloatVector(x: unknown, dim: number): number[] {
 export function validateBinaryVector(x: unknown, dim: number): number[] {
   // Binary vector is stored as bytes where 8 dim == 1 byte
   const byteLen = Math.ceil(dim / 8);
-  if (!Array.isArray(x) || x.length !== byteLen) {
-    throw new Error(
-      `Invalid binary vector: expected array with length=${byteLen}`
-    );
-  }
 
-  const result: number[] = [];
-  for (let i = 0; i < x.length; i++) {
-    const v = x[i];
-    if (
-      !Number.isInteger(v as number) ||
-      (v as number) < 0 ||
-      (v as number) > 255
-    ) {
+  // Handle bytes input (Uint8Array or Buffer)
+  if (x instanceof Uint8Array) {
+    if (x.length !== byteLen) {
       throw new Error(
-        `Invalid binary vector element at ${i}: expected integer 0-255, got ${v}`
+        `Invalid binary vector bytes: expected length ${byteLen}, got ${x.length}`
       );
     }
-    result.push(v as number);
+    return Array.from(x);
   }
-  return result;
+  
+  if (x && typeof x === 'object' && x.constructor && x.constructor.name === 'Buffer') {
+    const buffer = x as any;
+    if (buffer.length !== byteLen) {
+      throw new Error(
+        `Invalid binary vector bytes: expected length ${byteLen}, got ${buffer.length}`
+      );
+    }
+    return Array.from(buffer);
+  }
+
+  // Handle bit array input (e.g., [1, 0, 1, 1, 0, 0, 1, 0])
+  if (Array.isArray(x)) {
+    // Check if it's a bit array (all values are 0 or 1) AND length matches dimension
+    const isBitArray = x.length === dim && x.every(v => v === 0 || v === 1);
+    
+    if (isBitArray) {
+      // Convert bit array to bytes using packBits
+      return packBits(x);
+    } else {
+      // Traditional byte array validation
+      if (x.length !== byteLen) {
+        throw new Error(
+          `Invalid binary vector: expected array with length=${byteLen}`
+        );
+      }
+
+      const result: number[] = [];
+      for (let i = 0; i < x.length; i++) {
+        const v = x[i];
+        if (
+          !Number.isInteger(v as number) ||
+          (v as number) < 0 ||
+          (v as number) > 255
+        ) {
+          throw new Error(
+            `Invalid binary vector element at ${i}: expected integer 0-255, got ${v}`
+          );
+        }
+        result.push(v as number);
+      }
+      return result;
+    }
+  }
+
+  throw new Error(
+    `Invalid binary vector: expected Uint8Array, Buffer, or array, got ${typeof x}`
+  );
+}
+
+/**
+ * Converts a bit array to bytes using packBits algorithm
+ * @param bits - Array of bits (0 or 1)
+ * @returns Array of bytes
+ */
+function packBits(bits: number[]): number[] {
+  const bytes: number[] = [];
+  for (let i = 0; i < bits.length; i += 8) {
+    let byte = 0;
+    for (let j = 0; j < 8 && i + j < bits.length; j++) {
+      if (bits[i + j]) {
+        byte |= (1 << (7 - j)); // Set bit from left to right
+      }
+    }
+    bytes.push(byte);
+  }
+  return bytes;
 }
 
 export function validateInt8Vector(x: unknown, dim: number): number[] {

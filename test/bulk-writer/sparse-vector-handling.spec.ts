@@ -6,7 +6,8 @@ import { DataType } from '../../milvus/const';
 import { BulkFileType } from '../../milvus/bulk-writer/constants';
 
 describe('Sparse Vector Handling in BulkWriter', () => {
-  let tempDir: string = path.join(__dirname, 'temp');
+  let tempDir: string;
+  let test_data_folder = 'sparse-vector-handling';
 
   const schema: CollectionSchema = {
     name: 'test_sparse_vector_collection',
@@ -34,14 +35,21 @@ describe('Sparse Vector Handling in BulkWriter', () => {
 
   // delete the temp directory after all tests
   afterAll(async () => {
-    await fs.rm(path.join(__dirname, 'temp'), { recursive: true, force: true });
+    await fs.rm(path.join(__dirname, test_data_folder), {
+      recursive: true,
+      force: true,
+    });
   });
 
   describe('Sparse Vector Object Format', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, 'temp/sparse_vector_test_object');
+      tempDir = path.join(
+        __dirname,
+        test_data_folder,
+        'sparse_vector_test_object'
+      );
       await fs.mkdir(tempDir, { recursive: true });
       bulkWriter = new LocalBulkWriter({
         schema,
@@ -167,7 +175,11 @@ describe('Sparse Vector Handling in BulkWriter', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, 'temp/sparse_vector_test_size');
+      tempDir = path.join(
+        __dirname,
+        test_data_folder,
+        'sparse_vector_test_size'
+      );
       await fs.mkdir(tempDir, { recursive: true });
       bulkWriter = new LocalBulkWriter({
         schema,
@@ -198,7 +210,11 @@ describe('Sparse Vector Handling in BulkWriter', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, 'temp/sparse_vector_test_validation');
+      tempDir = path.join(
+        __dirname,
+        test_data_folder,
+        'sparse_vector_test_validation'
+      );
       await fs.mkdir(tempDir, { recursive: true });
       bulkWriter = new LocalBulkWriter({
         schema,

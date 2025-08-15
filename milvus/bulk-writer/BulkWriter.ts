@@ -18,7 +18,11 @@ import {
 import { Buffer } from './Buffer';
 import { BulkWriterOptions, CommitOptions } from './types';
 import { DataType } from '../const';
-import { sparseToBytes } from '../utils/Bytes';
+import {
+  sparseToBytes,
+  f32ArrayToF16Bytes,
+  f32ArrayToBf16Bytes,
+} from '../utils/Bytes';
 import { SparseFloatVector } from '../types/Data';
 
 /**
@@ -188,22 +192,8 @@ export abstract class BulkWriter {
         fieldName
       );
 
-      // For vector fields and other complex types, always ensure we have a proper copy
-      // to avoid reference issues and ensure data integrity
-      if (
-        this.isVectorField(field.dataType) ||
-        (typeof validationResult.value === 'object' &&
-          validationResult.value !== null)
-      ) {
-        // Special handling for Long objects to preserve type information
-        if (Int64Validator.isLong(validationResult.value)) {
-          row[fieldName] = validationResult.value;
-        } else {
-          row[fieldName] = validationResult.value;
-        }
-      } else {
-        row[fieldName] = validationResult.value;
-      }
+      // The validateField method handles any necessary copying/transformation
+      row[fieldName] = validationResult.value;
 
       rowSize += validationResult.size;
     }
@@ -228,31 +218,97 @@ export abstract class BulkWriter {
       [DataType.FloatVector]: () => {
         const dim = Number(field.dim) || 0;
         const validatedVector = validateFloatVector(value, dim);
-        return { value: validatedVector, size: dim * 4 };
+        // Return a copy to avoid reference issues
+        return { value: [...validatedVector], size: dim * 4 };
       },
 
       [DataType.BinaryVector]: () => {
         const dim = Number(field.dim) || 0;
-        const validatedVector = validateBinaryVector(value, dim);
-        return { value: validatedVector, size: Math.ceil(dim / 8) };
+
+        // Check if value is already bytes (Uint8Array or Buffer) or array
+        if (value instanceof Uint8Array || (value && typeof value === 'object' && value.constructor && value.constructor.name === 'Buffer')) {
+          // Value is already in bytes format, validate length and convert to array
+          const byteLen = Math.ceil(dim / 8);
+          if (value.length !== byteLen) {
+            throw new Error(
+              `Invalid BinaryVector bytes: expected length ${byteLen}, got ${value.length}`
+            );
+          }
+          // Convert to array to maintain consistency with existing behavior
+          const arrayValue = Array.from(value);
+          return { value: arrayValue, size: arrayValue.length };
+        } else {
+          // Value is an array, validate and convert
+          const validatedVector = validateBinaryVector(value, dim);
+          // Return a copy to avoid reference issues
+          return { value: [...validatedVector], size: Math.ceil(dim / 8) };
+        }
       },
 
       [DataType.Int8Vector]: () => {
         const dim = Number(field.dim) || 0;
-        const validatedVector = validateInt8Vector(value, dim);
-        return { value: validatedVector, size: dim };
+
+        // Check if value is already bytes (Int8Array) or array (number[])
+        if (value instanceof Int8Array) {
+          // Value is already in bytes format
+          if (value.length !== dim) {
+            throw new Error(
+              `Invalid Int8Vector bytes: expected length ${dim}, got ${value.length}`
+            );
+          }
+          return { value: value, size: value.length };
+        } else {
+          // Value is an array, validate and convert
+          const validatedVector = validateInt8Vector(value, dim);
+          // Return a copy to avoid reference issues
+          return { value: [...validatedVector], size: dim };
+        }
       },
 
       [DataType.Float16Vector]: () => {
         const dim = Number(field.dim) || 0;
-        const validatedVector = validateFloatVector(value, dim);
-        return { value: validatedVector, size: dim * 2 };
+
+        // Check if value is already bytes (Uint8Array) or array (number[])
+        if (value instanceof Uint8Array) {
+          // Value is already in bytes format
+          if (value.length !== dim * 2) {
+            // 2 bytes per dimension for f16
+            throw new Error(
+              `Invalid Float16Vector bytes: expected length ${dim * 2}, got ${
+                value.length
+              }`
+            );
+          }
+          return { value: value, size: value.length };
+        } else {
+          // Value is an array, validate and convert to bytes
+          const validatedVector = validateFloatVector(value, dim);
+          const f16Bytes = f32ArrayToF16Bytes(validatedVector);
+          return { value: f16Bytes, size: f16Bytes.length };
+        }
       },
 
       [DataType.BFloat16Vector]: () => {
         const dim = Number(field.dim) || 0;
-        const validatedVector = validateFloatVector(value, dim);
-        return { value: validatedVector, size: dim * 2 };
+
+        // Check if value is already bytes (Uint8Array) or array (number[])
+        if (value instanceof Uint8Array) {
+          // Value is already in bytes format
+          if (value.length !== dim * 2) {
+            // 2 bytes per dimension for bf16
+            throw new Error(
+              `Invalid BFloat16Vector bytes: expected length ${dim * 2}, got ${
+                value.length
+              }`
+            );
+          }
+          return { value: value, size: value.length };
+        } else {
+          // Value is an array, validate and convert to bytes
+          const validatedVector = validateFloatVector(value, dim);
+          const bf16Bytes = f32ArrayToBf16Bytes(validatedVector);
+          return { value: bf16Bytes, size: bf16Bytes.length };
+        }
       },
 
       [DataType.SparseFloatVector]: () => {
@@ -286,7 +342,8 @@ export abstract class BulkWriter {
         }
 
         const bytes = sparseToBytes(validatedVector as SparseFloatVector);
-        return { value: validatedVector, size: bytes.length };
+        // Return a copy to avoid reference issues
+        return { value: { ...validatedVector }, size: bytes.length };
       },
 
       // Complex types
@@ -300,7 +357,11 @@ export abstract class BulkWriter {
         if (!validateJSON(value)) {
           throw new Error(`Invalid JSON value for field '${fieldName}'`);
         }
-        return { value, size: JSON.stringify(value).length };
+        // Return a copy to avoid reference issues
+        return {
+          value: JSON.parse(JSON.stringify(value)),
+          size: JSON.stringify(value).length,
+        };
       },
 
       [DataType.Array]: () => {
@@ -321,7 +382,8 @@ export abstract class BulkWriter {
           return validator.validateInt64Array(value, fieldName, maxCapacity);
         }
 
-        return { value, size: (value as any[]).length * 8 };
+        // Return a copy to avoid reference issues
+        return { value: [...value], size: (value as any[]).length * 8 };
       },
 
       // Basic scalar types
@@ -422,19 +484,5 @@ export abstract class BulkWriter {
     }
 
     return size;
-  }
-
-  /**
-   * Check if a field is a vector type
-   */
-  private isVectorField(dataType: DataType): boolean {
-    return (
-      dataType === DataType.FloatVector ||
-      dataType === DataType.BinaryVector ||
-      dataType === DataType.Int8Vector ||
-      dataType === DataType.Float16Vector ||
-      dataType === DataType.BFloat16Vector ||
-      dataType === DataType.SparseFloatVector
-    );
   }
 }

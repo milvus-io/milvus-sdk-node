@@ -8,6 +8,7 @@ import Long from 'long';
 
 describe('Int64 Array Handling in BulkWriter', () => {
   let tempDir: string;
+  let test_data_folder = 'int64-array-handling';
 
   const schema: CollectionSchema = {
     name: 'test_int64_array_collection',
@@ -37,14 +38,17 @@ describe('Int64 Array Handling in BulkWriter', () => {
 
   // delete the temp directory after all tests
   afterAll(async () => {
-    await fs.rm(path.join(__dirname, 'temp'), { recursive: true, force: true });
+    await fs.rm(path.join(__dirname, test_data_folder), {
+      recursive: true,
+      force: true,
+    });
   });
 
   describe('Auto Strategy with Int64 Arrays', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, 'temp/int64_array_test_auto');
+      tempDir = path.join(__dirname, test_data_folder, 'int64_array_test_auto');
       bulkWriter = new LocalBulkWriter({
         schema,
         localPath: tempDir,
@@ -105,7 +109,11 @@ describe('Int64 Array Handling in BulkWriter', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, 'temp/int64_array_test_string');
+      tempDir = path.join(
+        __dirname,
+        test_data_folder,
+        'int64_array_test_string'
+      );
       bulkWriter = new LocalBulkWriter({
         schema,
         localPath: tempDir,
@@ -138,7 +146,11 @@ describe('Int64 Array Handling in BulkWriter', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, 'temp/int64_array_test_number');
+      tempDir = path.join(
+        __dirname,
+        test_data_folder,
+        'int64_array_test_number'
+      );
       bulkWriter = new LocalBulkWriter({
         schema,
         localPath: tempDir,
@@ -182,7 +194,11 @@ describe('Int64 Array Handling in BulkWriter', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, 'temp/int64_array_test_bigint');
+      tempDir = path.join(
+        __dirname,
+        test_data_folder,
+        'int64_array_test_bigint'
+      );
       bulkWriter = new LocalBulkWriter({
         schema,
         localPath: tempDir,
@@ -215,7 +231,11 @@ describe('Int64 Array Handling in BulkWriter', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, 'temp/int64_array_test_errors');
+      tempDir = path.join(
+        __dirname,
+        test_data_folder,
+        'int64_array_test_errors'
+      );
       bulkWriter = new LocalBulkWriter({
         schema,
         localPath: tempDir,
