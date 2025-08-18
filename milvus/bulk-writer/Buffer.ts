@@ -247,43 +247,72 @@ export class Buffer {
 
   /**
    * Serialize values to ensure proper handling of special types
-   * Handles BigInt and Long objects for int64 fields
+   * Handles BigInt, Long objects for int64 fields, and Uint8Array for vector fields
    */
   private serializeValue(value: any, fieldName?: string): any {
-    // If we have field information and it's an int64 field, always convert to string
+    // Handle field-specific serialization first
     if (fieldName && this.fields[fieldName]) {
       const field = this.fields[fieldName];
-      if (field.dataType === DataType.Int64) {
-        // Always convert int64 fields to string for JSON output
-        if (typeof value === 'bigint') {
-          return value.toString();
-        }
-        if (Long.isLong(value)) {
-          return value.toString();
-        }
-        // If it's already a string, return as is
-        if (typeof value === 'string') {
-          return value;
-        }
-        // If it's a number, convert to string
-        if (typeof value === 'number') {
-          return value.toString();
-        }
-        return value;
+
+      switch (field.dataType) {
+        case DataType.Int64:
+          return this.serializeInt64Value(value);
+        case DataType.Float16Vector:
+        case DataType.BFloat16Vector:
+          return this.serializeVectorValue(value);
+        default:
+          break;
       }
     }
 
-    // For non-int64 fields, keep the existing behavior
-    // BigInt -> string (for other field types)
-    if (typeof value === 'bigint') {
-      return value.toString();
-    }
+    // Handle general serialization for all other cases
+    return this.serializeGeneralValue(value);
+  }
 
-    // Long -> string (for other field types)
-    if (Long.isLong(value)) {
-      return value.toString();
+  /**
+   * Serialize int64 values to string representation
+   */
+  private serializeInt64Value(value: any): string {
+    switch (typeof value) {
+      case 'bigint':
+        return value.toString();
+      case 'string':
+        return value;
+      case 'number':
+        return value.toString();
+      default:
+        if (Long.isLong(value)) {
+          return value.toString();
+        }
+        return value;
     }
+  }
 
+  /**
+   * Serialize vector values to base64 string
+   */
+  private serializeVectorValue(value: any): string | any {
+    if (value instanceof Uint8Array) {
+      return globalThis.Buffer.from(value).toString('base64');
+    }
     return value;
+  }
+
+  /**
+   * Serialize general values (non-field-specific)
+   */
+  private serializeGeneralValue(value: any): any {
+    switch (typeof value) {
+      case 'bigint':
+        return value.toString();
+      default:
+        if (Long.isLong(value)) {
+          return value.toString();
+        }
+        if (value instanceof Uint8Array) {
+          return globalThis.Buffer.from(value).toString('base64');
+        }
+        return value;
+    }
   }
 }
