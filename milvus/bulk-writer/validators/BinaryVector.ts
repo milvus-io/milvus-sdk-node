@@ -17,7 +17,10 @@ function packBits(bits: number[]): number[] {
   return bytes;
 }
 
-export function validateBinaryVector(x: unknown, dim: number): number[] {
+export function validateBinaryVector(
+  x: unknown,
+  dim: number
+): { value: number[]; size: number } {
   // Binary vector is stored as bytes where 8 dim == 1 byte
   const byteLen = Math.ceil(dim / 8);
 
@@ -28,7 +31,7 @@ export function validateBinaryVector(x: unknown, dim: number): number[] {
         `Invalid binary vector bytes: expected length ${byteLen}, got ${x.length}`
       );
     }
-    return Array.from(x);
+    return { value: Array.from(x), size: byteLen };
   }
 
   if (
@@ -43,7 +46,7 @@ export function validateBinaryVector(x: unknown, dim: number): number[] {
         `Invalid binary vector bytes: expected length ${byteLen}, got ${buffer.length}`
       );
     }
-    return Array.from(buffer);
+    return { value: Array.from(buffer), size: byteLen };
   }
 
   // Handle base64-encoded string input (e.g., "AAECAwQFBgc=")
@@ -62,7 +65,7 @@ export function validateBinaryVector(x: unknown, dim: number): number[] {
           `Invalid binary vector bytes: expected length ${byteLen}, got ${bytes.length}`
         );
       }
-      return Array.from(bytes);
+      return { value: Array.from(bytes), size: byteLen };
     } catch (error) {
       throw new Error(
         `Invalid binary vector base64 string: ${
@@ -79,7 +82,7 @@ export function validateBinaryVector(x: unknown, dim: number): number[] {
 
     if (isBitArray) {
       // Convert bit array to bytes using packBits
-      return packBits(x);
+      return { value: packBits(x), size: byteLen };
     } else {
       // Traditional byte array validation
       if (x.length !== byteLen) {
@@ -102,7 +105,7 @@ export function validateBinaryVector(x: unknown, dim: number): number[] {
         }
         result.push(v as number);
       }
-      return result;
+      return { value: result, size: byteLen };
     }
   }
 

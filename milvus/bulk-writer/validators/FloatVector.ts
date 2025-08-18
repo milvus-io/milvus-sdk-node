@@ -1,4 +1,7 @@
-export function validateFloatVector(x: unknown, dim: number): number[] {
+export function validateFloatVector(
+  x: unknown,
+  dim: number
+): { value: number[]; size: number } {
   if (!Array.isArray(x) || x.length !== dim) {
     throw new Error(`Invalid float vector: expected array with dim=${dim}`);
   }
@@ -14,5 +17,7 @@ export function validateFloatVector(x: unknown, dim: number): number[] {
     }
     result.push(v);
   }
-  return result;
+  
+  // Return unified format with value and size
+  return { value: result, size: dim * 4 };
 }

@@ -1,32 +1,35 @@
-export function validateInt8Vector(x: unknown, dim: number): number[] {
-  // Handle Int8Array input
-  if (x instanceof Int8Array) {
-    if (x.length !== dim) {
-      throw new Error(
-        `Invalid int8 vector bytes: expected length ${dim}, got ${x.length}`
-      );
-    }
-    return Array.from(x);
+export function validateInt8Vector(
+  x: unknown,
+  dim: number
+): { value: Int8Array; size: number } {
+  let arr: number[] | Int8Array;
+
+  if (x instanceof Int8Array || x instanceof Uint8Array) {
+    arr = Array.from(new Int8Array(x));
+  } else if (Array.isArray(x)) {
+    arr = x;
+  } else {
+    throw new Error(
+      `Invalid int8 vector: expected Int8Array | Uint8Array | number[]`
+    );
   }
 
-  // Handle array input
-  if (!Array.isArray(x) || x.length !== dim) {
-    throw new Error(`Invalid int8 vector: expected array with dim=${dim}`);
+  if (arr.length !== dim) {
+    throw new Error(
+      `Invalid int8 vector length: expected ${dim}, got ${arr.length}`
+    );
   }
 
-  const result: number[] = [];
-  for (let i = 0; i < x.length; i++) {
-    const v = x[i];
-    if (
-      !Number.isInteger(v as number) ||
-      (v as number) < -128 ||
-      (v as number) > 127
-    ) {
+  for (let i = 0; i < arr.length; i++) {
+    const v = arr[i];
+    if (!Number.isInteger(v) || v < -128 || v > 127) {
       throw new Error(
-        `Invalid int8 vector element at ${i}: expected integer -128 to 127, got ${v}`
+        `Invalid int8 vector element at index ${i}: expected -128..127, got ${v}`
       );
     }
-    result.push(v as number);
   }
-  return result;
+
+  // Convert to Int8Array for proper serialization and return unified format
+  const int8Array = new Int8Array(arr);
+  return { value: int8Array, size: dim };
 }

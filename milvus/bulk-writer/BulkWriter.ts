@@ -212,45 +212,34 @@ export abstract class BulkWriter {
       DataType,
       () => { value: any; size: number }
     > = {
-      // Vector types
+      // Vector types - all validators now return unified format
       [DataType.FloatVector]: () => {
         const dim = Number(field.dim) || 0;
-        const validatedVector = validateFloatVector(value, dim);
-        // Return a copy to avoid reference issues
-        return { value: [...validatedVector], size: dim * 4 };
+        return validateFloatVector(value, dim);
       },
 
       [DataType.BinaryVector]: () => {
         const dim = Number(field.dim) || 0;
-        const validatedVector = validateBinaryVector(value, dim);
-        // Return a copy to avoid reference issues
-        return { value: [...validatedVector], size: Math.ceil(dim / 8) };
+        return validateBinaryVector(value, dim);
       },
 
       [DataType.Int8Vector]: () => {
         const dim = Number(field.dim) || 0;
-        const validatedVector = validateInt8Vector(value, dim);
-        // Return a copy to avoid reference issues
-        return { value: [...validatedVector], size: dim };
+        return validateInt8Vector(value, dim);
       },
 
       [DataType.Float16Vector]: () => {
         const dim = Number(field.dim) || 0;
-        const validationResult = validateFloat16Vector(value, dim);
-        return { value: validationResult.value, size: validationResult.size };
+        return validateFloat16Vector(value, dim);
       },
 
       [DataType.BFloat16Vector]: () => {
         const dim = Number(field.dim) || 0;
-        const validationResult = validateBFloat16Vector(value, dim);
-        return { value: validationResult.value, size: validationResult.size };
+        return validateBFloat16Vector(value, dim);
       },
 
       [DataType.SparseFloatVector]: () => {
-        const validatedVector = validateSparseFloatVector(value);
-        const bytes = sparseToBytes(validatedVector);
-        // Return a copy to avoid reference issues
-        return { value: { ...validatedVector }, size: bytes.length };
+        return validateSparseFloatVector(value);
       },
 
       // Complex types

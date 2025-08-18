@@ -259,6 +259,7 @@ export class Buffer {
           return this.serializeInt64Value(value);
         case DataType.Float16Vector:
         case DataType.BFloat16Vector:
+        case DataType.Int8Vector:
           return this.serializeVectorValue(value);
         default:
           break;
@@ -292,8 +293,14 @@ export class Buffer {
    * Serialize vector values to base64 string
    */
   private serializeVectorValue(value: any): string | any {
-    if (value instanceof Uint8Array) {
-      return globalThis.Buffer.from(value).toString('base64');
+    // For vector fields, accept any TypedArray (not DataView) and serialize
+    if (ArrayBuffer.isView(value) && !(value instanceof DataView)) {
+      const typed = value as ArrayBufferView;
+      return globalThis.Buffer.from(
+        typed.buffer as ArrayBuffer,
+        typed.byteOffset,
+        typed.byteLength
+      ).toString('base64');
     }
     return value;
   }
@@ -309,8 +316,13 @@ export class Buffer {
         if (Long.isLong(value)) {
           return value.toString();
         }
-        if (value instanceof Uint8Array) {
-          return globalThis.Buffer.from(value).toString('base64');
+        if (value instanceof Uint8Array || value instanceof Int8Array) {
+          const typed = value as ArrayBufferView;
+          return globalThis.Buffer.from(
+            typed.buffer as ArrayBuffer,
+            typed.byteOffset,
+            typed.byteLength
+          ).toString('base64');
         }
         return value;
     }

@@ -36,6 +36,6 @@ export function validateBFloat16Vector(
 
   // Value is an array, validate and convert to bytes
   const validatedVector = validateFloatVector(value, dim);
-  const bf16Bytes = f32ArrayToBf16Bytes(validatedVector);
+  const bf16Bytes = f32ArrayToBf16Bytes(validatedVector.value);
   return { value: new Uint8Array(bf16Bytes), size: bf16Bytes.length };
 }
