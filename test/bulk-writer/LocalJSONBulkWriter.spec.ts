@@ -17,7 +17,7 @@ import {
 const TEST_CHUNK_SIZE = 1024 * 1024; // 1MB for testing
 const COLLECTION_NAME = GENERATE_NAME();
 
-describe('LocalBulkWriter - Simple Tests', () => {
+describe('LocalBulkWriter - JSON Tests', () => {
   let bulkWriter: LocalBulkWriter;
   let testDataDir: string;
   let milvusClient: MilvusClient;
