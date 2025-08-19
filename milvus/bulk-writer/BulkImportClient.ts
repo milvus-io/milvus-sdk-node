@@ -66,6 +66,7 @@ export class BulkImportClient extends HttpClient {
       throw new Error(`Failed to get import progress: ${response.message}`);
     }
 
+    console.dir(response, { depth: null });
     // Cast to the correct response type
     const progressResponse = response as HttpImportProgressResponseType;
     const data = progressResponse.data;

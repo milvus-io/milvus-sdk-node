@@ -84,6 +84,15 @@ export class Buffer {
   }
 
   private rawValue(x: unknown) {
+    // Handle int64/long values for dynamic fields
+    if (Long.isLong(x)) {
+      return x.toString();
+    }
+
+    if (typeof x === 'bigint') {
+      return x.toString();
+    }
+
     // Flatten typed arrays or buffers if needed in future.
     return x;
   }
