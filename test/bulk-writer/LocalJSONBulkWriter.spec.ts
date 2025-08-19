@@ -12,6 +12,7 @@ import {
   genCollectionParams,
   GENERATE_NAME,
   generateInsertData,
+  dynamicFields,
 } from '../tools';
 
 const TEST_CHUNK_SIZE = 1024 * 1024; // 1MB for testing
@@ -40,6 +41,7 @@ describe('LocalBulkWriter - JSON Tests', () => {
         dim: [4],
         vectorType: [DataType.FloatVector],
         autoID: false,
+        enableDynamic: true,
       })
     );
 
@@ -51,7 +53,7 @@ describe('LocalBulkWriter - JSON Tests', () => {
   afterAll(async () => {
     // Remove test data directory
     try {
-      await fs.rm(testDataDir, { recursive: true });
+      // await fs.rm(testDataDir, { recursive: true });
 
       // remove collection
       await milvusClient.dropCollection({
@@ -87,7 +89,7 @@ describe('LocalBulkWriter - JSON Tests', () => {
   it('should append rows and commit data', async () => {
     const count = 500;
     const testData = generateInsertData(
-      collectionInfo.schema.fields as any,
+      [...collectionInfo.schema.fields, ...dynamicFields] as any,
       count
     );
 
@@ -126,7 +128,10 @@ describe('LocalBulkWriter - JSON Tests', () => {
       },
     });
 
-    const testData = generateInsertData(collectionInfo.schema.fields as any, 3);
+    const testData = generateInsertData(
+      [...collectionInfo.schema.fields, ...dynamicFields] as any,
+      3
+    );
 
     for (const row of testData) {
       jsonWriter.appendRow(row);
@@ -154,7 +159,30 @@ describe('LocalBulkWriter - JSON Tests', () => {
         const rowData = data.rows.find(
           (r: any) => r.id === row.id || BigInt(r.id) === BigInt(row.id)
         );
-        expect(rowData).toEqual(row);
+
+        // When dynamic fields are enabled, the structure changes
+        // We need to reconstruct the expected data structure
+        const expectedRow = { ...row };
+
+        // Extract dynamic fields that should be in $meta
+        const dynamicFieldsInRow = Object.keys(row).filter(
+          key => !collectionInfo.schema.fields.some(field => field.name === key)
+        );
+
+        if (dynamicFieldsInRow.length > 0) {
+          // Remove dynamic fields from the main row
+          dynamicFieldsInRow.forEach(key => {
+            delete expectedRow[key];
+          });
+
+          // Add $meta field with dynamic values
+          expectedRow.$meta = {};
+          dynamicFieldsInRow.forEach(key => {
+            expectedRow.$meta[key] = row[key];
+          });
+        }
+
+        expect(rowData).toEqual(expectedRow);
       }
     }
 
@@ -176,7 +204,10 @@ describe('LocalBulkWriter - JSON Tests', () => {
       },
     });
 
-    const testData = generateInsertData(collectionInfo.schema.fields as any, 3);
+    const testData = generateInsertData(
+      [...collectionInfo.schema.fields, ...dynamicFields] as any,
+      3
+    );
 
     for (const row of testData) {
       csvWriter.appendRow(row);
@@ -220,7 +251,10 @@ describe('LocalBulkWriter - JSON Tests', () => {
   });
 
   it('should handle commit with callback', async () => {
-    const testData = generateInsertData(collectionInfo.schema.fields as any, 3);
+    const testData = generateInsertData(
+      [...collectionInfo.schema.fields, ...dynamicFields] as any,
+      3
+    );
     let callbackCalled = false;
     let callbackFiles: string[] = [];
 
@@ -350,7 +384,10 @@ describe('LocalBulkWriter - JSON Tests', () => {
   });
 
   it('should handle single row correctly', async () => {
-    const testData = generateInsertData(collectionInfo.schema.fields as any, 1);
+    const testData = generateInsertData(
+      [...collectionInfo.schema.fields, ...dynamicFields] as any,
+      1
+    );
 
     bulkWriter.appendRow(testData[0]);
     await bulkWriter.commit();
@@ -366,7 +403,7 @@ describe('LocalBulkWriter - JSON Tests', () => {
 
   it('should demonstrate timing difference between sync and async commit', async () => {
     const testData = generateInsertData(
-      collectionInfo.schema.fields as any,
+      [...collectionInfo.schema.fields, ...dynamicFields] as any,
       1000
     );
 
@@ -403,7 +440,7 @@ describe('LocalBulkWriter - JSON Tests', () => {
 
   it('should reset buffer metrics at correct time for sync vs async', async () => {
     const testData = generateInsertData(
-      collectionInfo.schema.fields as any,
+      [...collectionInfo.schema.fields, ...dynamicFields] as any,
       500
     );
 
