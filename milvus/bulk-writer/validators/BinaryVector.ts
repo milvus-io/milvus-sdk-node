@@ -19,8 +19,9 @@ function packBits(bits: number[]): number[] {
 
 export function validateBinaryVector(
   x: unknown,
-  dim: number
+  field: any
 ): { value: number[]; size: number } {
+  const dim = Number(field.dim) || 0;
   // Binary vector is stored as bytes where 8 dim == 1 byte
   const byteLen = Math.ceil(dim / 8);
 

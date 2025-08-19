@@ -3,8 +3,9 @@ import { validateFloatVector } from './FloatVector';
 
 export function validateFloat16Vector(
   value: unknown,
-  dim: number
+  field: any
 ): { value: Uint8Array; size: number } {
+  const dim = Number(field.dim) || 0;
   // Check if value is already a base64 string
   if (typeof value === 'string') {
     try {
@@ -35,7 +36,7 @@ export function validateFloat16Vector(
   }
 
   // Value is an array, validate and convert to bytes
-  const validatedVector = validateFloatVector(value, dim);
+  const validatedVector = validateFloatVector(value, field);
   const f16Bytes = f32ArrayToF16Bytes(validatedVector.value);
   return { value: new Uint8Array(f16Bytes), size: f16Bytes.length };
 }

@@ -77,7 +77,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data correctness by converting back and comparing
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -117,7 +117,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       const data = JSON.parse(content);
 
       expect(data.rows).toHaveLength(3);
-      
+
       // Verify data correctness for each row
       // Row 1: Basic values
       expect(typeof data.rows[0].float16_vector).toBe('string');
@@ -129,7 +129,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(decodedArray1[1]).toBeCloseTo(2.0, 3);
       expect(decodedArray1[2]).toBeCloseTo(3.0, 3);
       expect(decodedArray1[3]).toBeCloseTo(4.0, 3);
-      
+
       // Row 2: Negative values
       expect(typeof data.rows[1].float16_vector).toBe('string');
       expect(data.rows[1].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/);
@@ -140,7 +140,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(decodedArray2[1]).toBeCloseTo(-2.0, 3);
       expect(decodedArray2[2]).toBeCloseTo(-3.0, 3);
       expect(decodedArray2[3]).toBeCloseTo(-4.0, 3);
-      
+
       // Row 3: Zero values
       expect(typeof data.rows[2].float16_vector).toBe('string');
       expect(data.rows[2].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/);
@@ -327,7 +327,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data correctness
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -373,7 +373,12 @@ describe('Float16 Vector Handling in BulkWriter', () => {
 
     it('should handle Uint8Array bytes input correctly', async () => {
       const float16Array = [1.0, 2.0, 3.0, 4.0];
-      const validationResult = validateFloat16Vector(float16Array, 4);
+      const field = {
+        name: 'float16_vector',
+        dataType: 'Float16Vector',
+        dim: 4,
+      };
+      const validationResult = validateFloat16Vector(float16Array, field);
       const uint8Array = validationResult.value;
 
       bulkWriter.appendRow({
@@ -393,7 +398,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data correctness
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -406,7 +411,12 @@ describe('Float16 Vector Handling in BulkWriter', () => {
 
     it('should handle Buffer bytes input correctly', async () => {
       const float16Array = [1.0, 2.0, 3.0, 4.0];
-      const validationResult = validateFloat16Vector(float16Array, 4);
+      const field = {
+        name: 'float16_vector',
+        dataType: 'Float16Vector',
+        dim: 4,
+      };
+      const validationResult = validateFloat16Vector(float16Array, field);
       const buffer = Buffer.from(validationResult.value);
 
       bulkWriter.appendRow({
@@ -426,7 +436,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data correctness
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -439,7 +449,12 @@ describe('Float16 Vector Handling in BulkWriter', () => {
 
     it('should handle base64-encoded string input correctly', async () => {
       const float16Array = [1.0, 2.0, 3.0, 4.0];
-      const validationResult = validateFloat16Vector(float16Array, 4);
+      const field = {
+        name: 'float16_vector',
+        dataType: 'Float16Vector',
+        dim: 4,
+      };
+      const validationResult = validateFloat16Vector(float16Array, field);
       const base64String = Buffer.from(validationResult.value).toString(
         'base64'
       );
@@ -461,7 +476,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data correctness
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -475,7 +490,12 @@ describe('Float16 Vector Handling in BulkWriter', () => {
     it('should reject base64 string with wrong length', async () => {
       // Create a base64 string with wrong length (2 dimensions instead of 4)
       const float16Array = [1.0, 2.0];
-      const validationResult = validateFloat16Vector(float16Array, 2);
+      const field = {
+        name: 'float16_vector',
+        dataType: 'Float16Vector',
+        dim: 2,
+      };
+      const validationResult = validateFloat16Vector(float16Array, field);
       const base64String = Buffer.from(validationResult.value).toString(
         'base64'
       );
@@ -504,7 +524,12 @@ describe('Float16 Vector Handling in BulkWriter', () => {
     it('should reject bytes input with wrong length', async () => {
       // Create a Uint8Array with wrong length (2 dimensions instead of 4)
       const float16Array = [1.0, 2.0];
-      const validationResult = validateFloat16Vector(float16Array, 2);
+      const field = {
+        name: 'float16_vector',
+        dataType: 'Float16Vector',
+        dim: 2,
+      };
+      const validationResult = validateFloat16Vector(float16Array, field);
       const uint8Array = validationResult.value;
 
       expect(() => {
@@ -553,7 +578,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data correctness
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -583,7 +608,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data correctness
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -613,7 +638,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data correctness
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -645,7 +670,12 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       const originalArray = [1.0, 2.0, 3.0, 4.0];
 
       // Array -> bytes
-      const arrayResult = validateFloat16Vector(originalArray, 4);
+      const field = {
+        name: 'float16_vector',
+        dataType: 'Float16Vector',
+        dim: 4,
+      };
+      const arrayResult = validateFloat16Vector(originalArray, field);
 
       // Bytes -> base64
       const base64String = Buffer.from(arrayResult.value).toString('base64');
@@ -668,7 +698,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data integrity through the conversion cycle
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -682,11 +712,16 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       const originalArray = [0.1, 0.2, 0.3, 0.4];
 
       // First conversion cycle
-      const arrayResult1 = validateFloat16Vector(originalArray, 4);
+      const field = {
+        name: 'float16_vector',
+        dataType: 'Float16Vector',
+        dim: 4,
+      };
+      const arrayResult1 = validateFloat16Vector(originalArray, field);
       const base64String1 = Buffer.from(arrayResult1.value).toString('base64');
 
       // Second conversion cycle
-      const arrayResult2 = validateFloat16Vector(base64String1, 4);
+      const arrayResult2 = validateFloat16Vector(base64String1, field);
       const base64String2 = Buffer.from(arrayResult2.value).toString('base64');
 
       // Use the second base64 string in bulkWriter
@@ -707,7 +742,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]+$/); // base64 format
-      
+
       // Verify data integrity through multiple conversion cycles
       const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');
       const decodedArray = f16BytesToF32Array(new Uint8Array(decodedBytes));
@@ -784,7 +819,7 @@ describe('Float16 Vector Handling in BulkWriter', () => {
       expect(data.rows).toHaveLength(1);
       expect(typeof data.rows[0].float16_vector).toBe('string');
       expect(data.rows[0].float16_vector).toMatch(/^[A-Za-z0-9+/=]*$/); // base64 format (empty string allowed)
-      
+
       // Verify data correctness for zero dimension
       if (data.rows[0].float16_vector) {
         const decodedBytes = Buffer.from(data.rows[0].float16_vector, 'base64');

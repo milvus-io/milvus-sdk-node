@@ -14,14 +14,13 @@ import {
   validateInt8,
   validateInt16,
   validateInt32,
+  validateInt64,
   validateFloat,
   validateDouble,
-  Int64Validator,
 } from './validators';
 import { Buffer } from './Buffer';
 import { BulkWriterOptions, CommitOptions } from './types';
 import { DataType } from '../const';
-import { sparseToBytes } from '../utils/Bytes';
 
 /**
  * Base class for bulk data writing operations.
@@ -184,11 +183,7 @@ export abstract class BulkWriter {
       }
 
       // Validate and calculate size based on data type using strategy pattern
-      const validationResult = this.validateField(
-        field,
-        row[fieldName],
-        fieldName
-      );
+      const validationResult = this.validateField(field, row[fieldName]);
 
       // The validateField method handles any necessary copying/transformation
       row[fieldName] = validationResult.value;
@@ -202,8 +197,7 @@ export abstract class BulkWriter {
    */
   private validateField(
     field: FieldSchema,
-    value: any,
-    fieldName: string
+    value: any
   ): { value: any; size: number } {
     const dataType = field.dataType;
 
@@ -213,112 +207,29 @@ export abstract class BulkWriter {
       () => { value: any; size: number }
     > = {
       // Vector types - all validators now return unified format
-      [DataType.FloatVector]: () => {
-        const dim = Number(field.dim) || 0;
-        return validateFloatVector(value, dim);
-      },
-
-      [DataType.BinaryVector]: () => {
-        const dim = Number(field.dim) || 0;
-        return validateBinaryVector(value, dim);
-      },
-
-      [DataType.Int8Vector]: () => {
-        const dim = Number(field.dim) || 0;
-        return validateInt8Vector(value, dim);
-      },
-
-      [DataType.Float16Vector]: () => {
-        const dim = Number(field.dim) || 0;
-        return validateFloat16Vector(value, dim);
-      },
-
-      [DataType.BFloat16Vector]: () => {
-        const dim = Number(field.dim) || 0;
-        return validateBFloat16Vector(value, dim);
-      },
-
-      [DataType.SparseFloatVector]: () => {
-        return validateSparseFloatVector(value);
-      },
+      [DataType.FloatVector]: () => validateFloatVector(value, field),
+      [DataType.BinaryVector]: () => validateBinaryVector(value, field),
+      [DataType.Int8Vector]: () => validateInt8Vector(value, field),
+      [DataType.Float16Vector]: () => validateFloat16Vector(value, field),
+      [DataType.BFloat16Vector]: () => validateBFloat16Vector(value, field),
+      [DataType.SparseFloatVector]: () =>
+        validateSparseFloatVector(value, field),
 
       // Complex types
-      [DataType.VarChar]: () => {
-        const maxLength = Number(field.max_length) || 65535;
-        const validatedValue = validateVarchar(value, maxLength);
-        return { value: validatedValue, size: validatedValue.length };
-      },
+      [DataType.VarChar]: () => validateVarchar(value, field),
 
-      [DataType.JSON]: () => {
-        if (!validateJSON(value)) {
-          throw new Error(`Invalid JSON value for field '${fieldName}'`);
-        }
-        // Return a copy to avoid reference issues
-        return {
-          value: JSON.parse(JSON.stringify(value)),
-          size: JSON.stringify(value).length,
-        };
-      },
+      [DataType.JSON]: () => validateJSON(value, field),
 
-      [DataType.Array]: () => {
-        const maxCapacity = Number(field.max_capacity) || 1000;
-        const elementType = field.element_type;
-        if (!elementType) {
-          throw new Error(
-            `Array field '${fieldName}' must specify element_type`
-          );
-        }
-        validateArray(value, maxCapacity);
-
-        // Special handling for int64 arrays to apply int64 strategy
-        if (elementType === 'Int64') {
-          const validator = new Int64Validator(
-            this.config?.int64Strategy || 'auto'
-          );
-          return validator.validateInt64Array(value, fieldName, maxCapacity);
-        }
-
-        // Return a copy to avoid reference issues
-        return { value: [...value], size: (value as any[]).length * 8 };
-      },
+      [DataType.Array]: () => validateArray(value, field, this.config),
 
       // Basic scalar types
-      [DataType.Bool]: () => {
-        const validatedValue = validateBool(value);
-        return { value: validatedValue, size: TYPE_SIZE[DataType.Bool] };
-      },
-
-      [DataType.Int8]: () => {
-        const validatedValue = validateInt8(value);
-        return { value: validatedValue, size: TYPE_SIZE[DataType.Int8] };
-      },
-
-      [DataType.Int16]: () => {
-        const validatedValue = validateInt16(value);
-        return { value: validatedValue, size: TYPE_SIZE[DataType.Int16] };
-      },
-
-      [DataType.Int32]: () => {
-        const validatedValue = validateInt32(value);
-        return { value: validatedValue, size: TYPE_SIZE[DataType.Int32] };
-      },
-
-      [DataType.Int64]: () => {
-        const validator = new Int64Validator(
-          this.config?.int64Strategy || 'auto'
-        );
-        return validator.validateInt64Field(value, fieldName);
-      },
-
-      [DataType.Float]: () => {
-        const validatedValue = validateFloat(value);
-        return { value: validatedValue, size: TYPE_SIZE[DataType.Float] };
-      },
-
-      [DataType.Double]: () => {
-        const validatedValue = validateDouble(value);
-        return { value: validatedValue, size: TYPE_SIZE[DataType.Double] };
-      },
+      [DataType.Bool]: () => validateBool(value, field),
+      [DataType.Int8]: () => validateInt8(value, field),
+      [DataType.Int16]: () => validateInt16(value, field),
+      [DataType.Int32]: () => validateInt32(value, field),
+      [DataType.Int64]: () => validateInt64(value, field, this.config),
+      [DataType.Float]: () => validateFloat(value, field),
+      [DataType.Double]: () => validateDouble(value, field),
 
       // Handle unsupported types
       [DataType.None]: () => {
@@ -334,7 +245,7 @@ export abstract class BulkWriter {
 
     // This should never happen since we now handle all DataType values
     throw new Error(
-      `Unhandled data type: ${dataType} for field '${fieldName}'`
+      `Unhandled data type: ${dataType} for field '${field.name}'`
     );
   }
 

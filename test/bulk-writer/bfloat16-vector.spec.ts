@@ -373,7 +373,12 @@ describe('BFloat16 Vector Handling in BulkWriter', () => {
 
     it('should handle Uint8Array bytes input correctly', async () => {
       const bfloat16Array = [1.0, 2.0, 3.0, 4.0];
-      const validationResult = validateBFloat16Vector(bfloat16Array, 4);
+      const field = {
+        name: 'bfloat16_vector',
+        dataType: 'BFloat16Vector',
+        dim: 4,
+      };
+      const validationResult = validateBFloat16Vector(bfloat16Array, field);
       const uint8Array = validationResult.value;
 
       bulkWriter.appendRow({
@@ -406,7 +411,12 @@ describe('BFloat16 Vector Handling in BulkWriter', () => {
 
     it('should handle Buffer bytes input correctly', async () => {
       const bfloat16Array = [1.0, 2.0, 3.0, 4.0];
-      const validationResult = validateBFloat16Vector(bfloat16Array, 4);
+      const field = {
+        name: 'bfloat16_vector',
+        dataType: 'BFloat16Vector',
+        dim: 4,
+      };
+      const validationResult = validateBFloat16Vector(bfloat16Array, field);
       const buffer = Buffer.from(validationResult.value);
 
       bulkWriter.appendRow({
@@ -439,7 +449,12 @@ describe('BFloat16 Vector Handling in BulkWriter', () => {
 
     it('should handle base64-encoded string input correctly', async () => {
       const bfloat16Array = [1.0, 2.0, 3.0, 4.0];
-      const validationResult = validateBFloat16Vector(bfloat16Array, 4);
+      const field = {
+        name: 'bfloat16_vector',
+        dataType: 'BFloat16Vector',
+        dim: 4,
+      };
+      const validationResult = validateBFloat16Vector(bfloat16Array, field);
       const base64String = Buffer.from(validationResult.value).toString(
         'base64'
       );
@@ -475,7 +490,12 @@ describe('BFloat16 Vector Handling in BulkWriter', () => {
     it('should reject base64 string with wrong length', async () => {
       // Create a base64 string with wrong length (2 dimensions instead of 4)
       const bfloat16Array = [1.0, 2.0];
-      const validationResult = validateBFloat16Vector(bfloat16Array, 2);
+      const field = {
+        name: 'bfloat16_vector',
+        dataType: 'BFloat16Vector',
+        dim: 2,
+      };
+      const validationResult = validateBFloat16Vector(bfloat16Array, field);
       const base64String = Buffer.from(validationResult.value).toString(
         'base64'
       );
@@ -504,7 +524,12 @@ describe('BFloat16 Vector Handling in BulkWriter', () => {
     it('should reject bytes input with wrong length', async () => {
       // Create a Uint8Array with wrong length (2 dimensions instead of 4)
       const bfloat16Array = [1.0, 2.0];
-      const validationResult = validateBFloat16Vector(bfloat16Array, 2);
+      const field = {
+        name: 'bfloat16_vector',
+        dataType: 'BFloat16Vector',
+        dim: 2,
+      };
+      const validationResult = validateBFloat16Vector(bfloat16Array, field);
       const uint8Array = validationResult.value;
 
       expect(() => {
@@ -645,7 +670,12 @@ describe('BFloat16 Vector Handling in BulkWriter', () => {
       const originalArray = [1.0, 2.0, 3.0, 4.0];
 
       // Array -> bytes
-      const arrayResult = validateBFloat16Vector(originalArray, 4);
+      const field = {
+        name: 'bfloat16_vector',
+        dataType: 'BFloat16Vector',
+        dim: 4,
+      };
+      const arrayResult = validateBFloat16Vector(originalArray, field);
 
       // Bytes -> base64
       const base64String = Buffer.from(arrayResult.value).toString('base64');
@@ -682,11 +712,16 @@ describe('BFloat16 Vector Handling in BulkWriter', () => {
       const originalArray = [0.1, 0.2, 0.3, 0.4];
 
       // First conversion cycle
-      const arrayResult1 = validateBFloat16Vector(originalArray, 4);
+      const field = {
+        name: 'bfloat16_vector',
+        dataType: 'BFloat16Vector',
+        dim: 4,
+      };
+      const arrayResult1 = validateBFloat16Vector(originalArray, field);
       const base64String1 = Buffer.from(arrayResult1.value).toString('base64');
 
       // Second conversion cycle
-      const arrayResult2 = validateBFloat16Vector(base64String1, 4);
+      const arrayResult2 = validateBFloat16Vector(base64String1, field);
       const base64String2 = Buffer.from(arrayResult2.value).toString('base64');
 
       // Use the second base64 string in bulkWriter

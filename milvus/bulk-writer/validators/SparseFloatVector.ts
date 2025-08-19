@@ -2,7 +2,8 @@ import { SparseFloatVector } from '../../types/Data';
 import { sparseToBytes } from '../../utils/Bytes';
 
 export function validateSparseFloatVector(
-  x: unknown
+  x: unknown,
+  field: any
 ): { value: SparseFloatVector; size: number } {
   // Validate sparse vector format
   if (typeof x !== 'object' || x === null) {
@@ -31,7 +32,7 @@ export function validateSparseFloatVector(
 
   const validatedVector = x as SparseFloatVector;
   const bytes = sparseToBytes(validatedVector);
-  
+
   // Return unified format with value and size
   return { value: { ...validatedVector }, size: bytes.length };
 }

@@ -1,7 +1,8 @@
 export function validateFloatVector(
   x: unknown,
-  dim: number
+  field: any
 ): { value: number[]; size: number } {
+  const dim = Number(field.dim) || 0;
   if (!Array.isArray(x) || x.length !== dim) {
     throw new Error(`Invalid float vector: expected array with dim=${dim}`);
   }

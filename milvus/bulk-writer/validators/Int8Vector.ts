@@ -1,7 +1,8 @@
 export function validateInt8Vector(
   x: unknown,
-  dim: number
+  field: any
 ): { value: Int8Array; size: number } {
+  const dim = Number(field.dim) || 0;
   let arr: number[] | Int8Array;
 
   if (x instanceof Int8Array || x instanceof Uint8Array) {
