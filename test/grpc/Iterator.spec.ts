@@ -340,6 +340,36 @@ describe(`Iterator API`, () => {
     });
   });
 
+  it(`query iterator with filter should success`, async () => {
+    const iterator = await milvusClient.queryIterator({
+      collection_name: COLLECTION,
+      batchSize: 1000,
+      expr: 'id > 0',
+      output_fields: ['id'],
+    });
+
+    const results: any = [];
+    let page = 0;
+    for await (const value of iterator) {
+      results.push(...value);
+      page += 1;
+    }
+
+    expect(page).toEqual(Math.ceil(data.length / 1000));
+    expect(results.length).toEqual(data.length);
+
+    const idSet = new Set();
+    results.forEach((result: any) => {
+      idSet.add(result.id);
+    });
+    expect(idSet.size).toEqual(data.length);
+
+    results.forEach((result: any) => {
+      const item = dataMap.get(result.id.toString());
+      expect(typeof item !== 'undefined').toEqual(true);
+    });
+  });
+
   it(`query iterator with limit = -1 should success`, async () => {
     // page size
     const batchSize = 5000;
