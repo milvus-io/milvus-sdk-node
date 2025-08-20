@@ -344,7 +344,7 @@ describe(`Iterator API`, () => {
     const iterator = await milvusClient.queryIterator({
       collection_name: COLLECTION,
       batchSize: 1000,
-      expr: 'id > 0',
+      filter: 'id > 0',
       output_fields: ['id'],
     });
 
