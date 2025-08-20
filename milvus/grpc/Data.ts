@@ -715,16 +715,19 @@ export class Data extends Collection {
       collection_name: data.collection_name,
       expr: userExpr,
     });
+    // remove filter field to avoid conflict with expr in query method
+    const queryData = { ...data };
+    delete queryData.filter;
     // if limit not set, set it to count
-    if (!data.limit || data.limit === NO_LIMIT) {
-      data.limit = count.data;
+    if (!queryData.limit || queryData.limit === NO_LIMIT) {
+      queryData.limit = count.data;
     }
     // total should be the minimum of total and count
-    const total = data.limit > count.data ? count.data : data.limit;
+    const total = queryData.limit > count.data ? count.data : queryData.limit;
     const batchSize =
-      data.batchSize > DEFAULT_MAX_SEARCH_SIZE
+      queryData.batchSize > DEFAULT_MAX_SEARCH_SIZE
         ? DEFAULT_MAX_SEARCH_SIZE
-        : data.batchSize;
+        : queryData.batchSize;
 
     // local variables
     let expr = userExpr;
@@ -744,17 +747,17 @@ export class Data extends Collection {
               return { done: true, value: lastBatchRes };
             }
             // set limit for current batch
-            data.limit = currentBatchSize; // Use the current batch size
+            queryData.limit = currentBatchSize; // Use the current batch size
 
             // get current page expr
-            data.expr = getQueryIteratorExpr({
+            queryData.expr = getQueryIteratorExpr({
               expr: expr,
               pkField,
               lastPKId,
             });
 
             // search data
-            const res = await client.query(data as QueryReq);
+            const res = await client.query(queryData as QueryReq);
 
             // get last item of the data
             const lastItem = res.data[res.data.length - 1];
