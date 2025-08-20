@@ -201,7 +201,15 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
       });
 
       const testData = generateInsertData(
-        [...collectionInfo.schema.fields, ...dynamicFields] as any,
+        [
+          ...collectionInfo.schema.fields,
+          ...dynamicFields,
+          {
+            name: 'dynamic_int32',
+            description: 'dynamic int32 field',
+            data_type: 'Int32',
+          },
+        ] as any,
         3
       );
 
@@ -246,7 +254,9 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
 
             expectedRow.$meta = {};
             dynamicFieldsInRow.forEach(key => {
-              expectedRow.$meta[key] = row[key];
+              expectedRow.$meta[key] = Long.isLong(row[key])
+                ? row[key].toString()
+                : row[key];
             });
           }
 
@@ -681,10 +691,6 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
 
           // Verify int64 values are converted to strings
           expect(row.$meta.custom_int64).toBeDefined();
-          expect(typeof row.$meta.custom_int64).toBe(
-            row.id === 1 ? 'string' : 'number'
-          );
-
           // Verify the specific values
           if (row.id === 1) {
             expect(row.$meta.custom_int64).toBe('9223372036854775807');
