@@ -8,6 +8,7 @@ export * from './validators';
 export * from './Buffer';
 export * from './BulkWriter';
 export * from './LocalBulkWriter';
+export * from './RemoteBulkWriter';
 export * from './BulkImportClient';
 
 // Export types

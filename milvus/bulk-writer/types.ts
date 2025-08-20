@@ -33,6 +33,40 @@ export interface LocalBulkWriterOptions extends BulkWriterOptions {
 }
 
 /**
+ * S3/MinIO connection parameters
+ */
+export interface S3ConnectParam {
+  /** S3/MinIO endpoint URL */
+  endpoint: string;
+  /** Access key for authentication */
+  accessKey: string;
+  /** Secret key for authentication */
+  secretKey: string;
+  /** Whether to use HTTPS (default: false for MinIO) */
+  secure?: boolean;
+  /** AWS region (optional for MinIO) */
+  region?: string;
+  /** Session token (optional) */
+  sessionToken?: string;
+  /** Custom HTTP client options (optional) */
+  httpClient?: any;
+  /** Custom credentials (optional) */
+  credentials?: any;
+}
+
+/**
+ * Configuration options for RemoteBulkWriter
+ */
+export interface RemoteBulkWriterOptions extends BulkWriterOptions {
+  /** Remote storage path prefix */
+  remotePath: string;
+  /** S3/MinIO connection parameters */
+  connectParam: S3ConnectParam;
+  /** Bucket name for storage */
+  bucketName?: string;
+}
+
+/**
  * Options for commit operations
  */
 export interface CommitOptions {

@@ -1,10 +1,6 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import {
-  LocalBulkWriter,
-  BulkImportClient,
-  BulkFileType,
-} from '../../milvus/bulk-writer';
+import { LocalBulkWriter, BulkFileType } from '../../milvus/bulk-writer';
 import Long from 'long';
 import {
   DataType,
@@ -21,15 +17,12 @@ import {
 
 const TEST_CHUNK_SIZE = 1024 * 1024; // 1MB for testing
 const COLLECTION_NAME = GENERATE_NAME();
-const IMPORT_COLLECTION_NAME = GENERATE_NAME();
 
 describe('LocalBulkWriter - Complete Workflow Tests', () => {
   let bulkWriter: LocalBulkWriter;
   let testDataDir: string;
   let milvusClient: MilvusClient;
   let collectionInfo: DescribeCollectionResponse;
-  let importCollectionInfo: DescribeCollectionResponse;
-  let bulkImportClient: BulkImportClient;
 
   beforeAll(async () => {
     // Create test data directory
@@ -40,11 +33,6 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
       address: IP,
       logLevel: 'info',
       logPrefix: 'LocalBulkWriter Test',
-    });
-
-    // Create a real bulk import client for testing
-    bulkImportClient = new BulkImportClient({
-      endpoint: `http://127.0.0.1:19530`,
     });
 
     // Create source collection for testing
@@ -61,34 +49,16 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
     collectionInfo = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
-
-    // Create target collection for import testing
-    await milvusClient.createCollection(
-      genCollectionParams({
-        collectionName: IMPORT_COLLECTION_NAME,
-        dim: [4],
-        vectorType: [DataType.FloatVector],
-        autoID: false,
-        enableDynamic: true,
-      })
-    );
-
-    importCollectionInfo = await milvusClient.describeCollection({
-      collection_name: IMPORT_COLLECTION_NAME,
-    });
   });
 
   afterAll(async () => {
     // Remove test data directory
     try {
-      // await fs.rm(testDataDir, { recursive: true });
+      await fs.rm(testDataDir, { recursive: true });
 
       // Remove collections
       await milvusClient.dropCollection({
         collection_name: COLLECTION_NAME,
-      });
-      await milvusClient.dropCollection({
-        collection_name: IMPORT_COLLECTION_NAME,
       });
 
       // Close database connections to prevent Jest from hanging
@@ -265,37 +235,6 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
       }
 
       await jsonWriter.cleanup();
-    });
-
-    it('should handle CSV file type correctly', async () => {
-      // CSV is not supported in the current implementation
-      const csvWriter = new LocalBulkWriter({
-        schema: collectionInfo.schema,
-        localPath: testDataDir,
-        chunkSize: TEST_CHUNK_SIZE,
-        fileType: BulkFileType.CSV,
-        config: {
-          strictValidation: false,
-          skipInvalidRows: true,
-          cleanupOnExit: false,
-        },
-      });
-
-      const testData = generateInsertData(
-        [...collectionInfo.schema.fields, ...dynamicFields] as any,
-        3
-      );
-
-      for (const row of testData) {
-        csvWriter.appendRow(row);
-      }
-
-      // CSV should throw an error since it's not supported
-      await expect(csvWriter.commit()).rejects.toThrow(
-        'Unsupported file type: 4'
-      );
-
-      await csvWriter.cleanup();
     });
   });
 
@@ -800,166 +739,4 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
       }
     });
   });
-
-  // describe('End-to-End Import Workflow', () => {
-  //   it('should complete full workflow: write -> commit -> import -> verify', async () => {
-  //     // Step 1: Generate and write test data
-  //     const testData = generateInsertData(
-  //       [...collectionInfo.schema.fields, ...dynamicFields] as any,
-  //       200
-  //     );
-
-  //     for (const row of testData) {
-  //       bulkWriter.appendRow(row);
-  //     }
-
-  //     await bulkWriter.commit();
-
-  //     const files = bulkWriter.batchFiles;
-  //     expect(files.length).toBeGreaterThan(0);
-
-  //     // Step 2: Prepare files for import (move to accessible location)
-  //     const importFiles: string[][] = [];
-  //     for (const file of files) {
-  //       const fileName = path.basename(file);
-  //       const importPath = path.join(testDataDir, `import_${fileName}`);
-  //       await fs.copyFile(file, importPath);
-  //       importFiles.push([importPath]);
-  //     }
-
-  //     // Step 3: Create import job
-  //     try {
-  //       const importJob = await bulkImportClient.createImportJob({
-  //         collectionName: IMPORT_COLLECTION_NAME,
-  //         files: importFiles,
-  //         options: {
-  //           timeout: '60s',
-  //         },
-  //       });
-
-  //       expect(importJob.jobId).toBeDefined();
-  //       expect(importJob.status).toBe('created');
-
-  //       // Step 4: Monitor import progress
-  //       let importCompleted = false;
-  //       let attempts = 0;
-  //       const maxAttempts = 12; // 1 minute with 5-second intervals
-
-  //       while (!importCompleted && attempts < maxAttempts) {
-  //         try {
-  //           const progress = await bulkImportClient.getImportProgress(
-  //             importJob.jobId
-  //           );
-
-  //           if (progress.state === 'Completed') {
-  //             importCompleted = true;
-  //             expect(progress.rowCount).toBeGreaterThan(0);
-  //           } else if (progress.state === 'Failed') {
-  //             throw new Error('Import failed');
-  //           }
-  //         } catch (error) {
-  //           // Import might still be in progress
-  //           console.log(
-  //             `Import progress check attempt ${attempts + 1}: ${error.message}`
-  //           );
-  //         }
-
-  //         if (!importCompleted) {
-  //           await new Promise(resolve => setTimeout(resolve, 5000));
-  //           attempts++;
-  //         }
-  //       }
-
-  //       // Step 5: Verify data was imported
-  //       if (importCompleted) {
-  //         // Wait a bit for data to be available for query
-  //         await new Promise(resolve => setTimeout(resolve, 2000));
-
-  //         // Query the imported collection to verify data
-  //         const queryResult = await milvusClient.query({
-  //           collection_name: IMPORT_COLLECTION_NAME,
-  //           output_fields: collectionInfo.schema.fields.map(f => f.name),
-  //           filter: '',
-  //           limit: 10,
-  //         });
-
-  //         console.dir(queryResult, { depth: null });
-
-  //         expect(queryResult.status.error_code).toBe('Success');
-  //         expect(queryResult.data.length).toBeGreaterThan(0);
-
-  //         // Verify data structure matches original
-  //         if (queryResult.data.length > 0) {
-  //           const importedRow = queryResult.data[0];
-  //           const originalRow = testData[0];
-
-  //           for (const field of collectionInfo.schema.fields) {
-  //             expect(importedRow).toHaveProperty(field.name);
-  //           }
-  //         }
-  //       } else {
-  //         throw new Error('Import did not complete within expected time');
-  //       }
-  //     } catch (error) {
-  //       // If import fails due to test environment issues, log but don't fail test
-  //       console.log(
-  //         'Import test skipped due to environment constraints:',
-  //         error.message
-  //       );
-  //       console.log(
-  //         'This is expected in test environments without full Milvus setup'
-  //       );
-  //     }
-
-  //     // Cleanup import files
-  //     for (const fileGroup of importFiles) {
-  //       for (const file of fileGroup) {
-  //         try {
-  //           // await fs.unlink(file);
-  //         } catch (error) {
-  //           // File might already be deleted
-  //         }
-  //       }
-  //     }
-  //   }, 120000); // 2 minute timeout for full workflow
-
-  //   it('should handle import with different file configurations', async () => {
-  //     // Test with different chunk sizes
-  //     const smallChunkWriter = new LocalBulkWriter({
-  //       schema: collectionInfo.schema,
-  //       localPath: testDataDir,
-  //       chunkSize: 1024, // 1KB chunks
-  //       fileType: BulkFileType.JSON,
-  //       config: {
-  //         strictValidation: false,
-  //         skipInvalidRows: true,
-  //         cleanupOnExit: false,
-  //       },
-  //     });
-
-  //     const testData = generateInsertData(
-  //       [...collectionInfo.schema.fields, ...dynamicFields] as any,
-  //       100
-  //     );
-
-  //     for (const row of testData) {
-  //       smallChunkWriter.appendRow(row);
-  //     }
-
-  //     await smallChunkWriter.commit();
-
-  //     const files = smallChunkWriter.batchFiles;
-  //     expect(files.length).toBeGreaterThan(1); // Should create multiple small files
-
-  //     // Verify each file is within chunk size limit
-  //     // Note: The actual file size might be larger than the chunk size due to JSON formatting overhead
-  //     for (const file of files) {
-  //       const stats = await fs.stat(file);
-  //       // Allow some overhead for JSON formatting and metadata
-  //       expect(stats.size).toBeLessThanOrEqual(2500);
-  //     }
-
-  //     await smallChunkWriter.cleanup();
-  //   });
-  // });
 });

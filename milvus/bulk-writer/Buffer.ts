@@ -126,40 +126,181 @@ export class Buffer {
   }
 
   /**
-   * Persist a portion of the buffer up to a specified size limit.
-   * This enables proper chunking by writing only a subset of rows.
+   * Persist data to files with size limit, supporting both local and remote paths.
+   * @param targetPath Target path (can be local file path or remote key)
+   * @param maxSizeBytes Maximum size in bytes for each file
+   * @param options Additional options
+   * @returns Object containing file paths, rows processed, and remaining rows
    */
   async persistPartial(
-    localPath: string,
+    targetPath: string,
     maxSizeBytes: number,
-    opts: { bufferSize?: number; bufferRowCount?: number } = {}
+    options?: {
+      bufferSize?: number;
+      bufferRowCount?: number;
+    }
   ): Promise<{
     files: string[];
     rowsProcessed: number;
     remainingRows: number;
   }> {
-    // Ensure all columns have equal length
-    let rowCount = -1;
-    for (const k of Object.keys(this.columns)) {
-      const len = this.columns[k].length;
-      if (rowCount < 0) rowCount = len;
-      else if (rowCount !== len) {
-        throw new Error(
-          `Column ${k} row count ${len} doesn't equal to the first column row count ${rowCount}`
-        );
-      }
+    // Check if this is a remote path (starts with s3:// or contains no file extension)
+    if (targetPath.startsWith('s3://') || !targetPath.includes('.')) {
+      return this.persistPartialToRemote(targetPath, maxSizeBytes, options);
+    } else {
+      return this.persistPartialToLocal(targetPath, maxSizeBytes, options);
     }
+  }
 
-    if (rowCount === 0) {
+  /**
+   * Persist data to local files with size limit.
+   * @param localPath Local file path
+   * @param maxSizeBytes Maximum size in bytes for each file
+   * @param options Additional options
+   * @returns Object containing file paths, rows processed, and remaining rows
+   */
+  private async persistPartialToLocal(
+    localPath: string,
+    maxSizeBytes: number,
+    options?: {
+      bufferSize?: number;
+      bufferRowCount?: number;
+    }
+  ): Promise<{
+    files: string[];
+    rowsProcessed: number;
+    remainingRows: number;
+  }> {
+    const keys = Object.keys(this.columns);
+    if (keys.length === 0) {
       return { files: [], rowsProcessed: 0, remainingRows: 0 };
     }
 
-    switch (this.fileType) {
-      case BulkFileType.JSON:
-        return this.persistPartialJSONRows(localPath, maxSizeBytes);
-      default:
-        throw new Error(`Unsupported file type: ${this.fileType}`);
+    const totalRowCount = this.columns[keys[0]].length;
+    let rowsProcessed = 0;
+    let currentSize = 0;
+    const rows: Record<string, any>[] = [];
+
+    // Process rows until we reach the size limit
+    for (let rowIndex = 0; rowIndex < totalRowCount; rowIndex++) {
+      const row: Record<string, any> = {};
+      let rowSize = 0;
+
+      for (const k of keys) {
+        const value = this.columns[k][rowIndex];
+        const serializedValue = this.serializeValue(value, k);
+        row[k] = serializedValue;
+        rowSize += JSON.stringify(serializedValue).length;
+      }
+
+      // Check if adding this row would exceed the size limit
+      if (currentSize + rowSize > maxSizeBytes && rowsProcessed > 0) {
+        break;
+      }
+
+      rows.push(row);
+      currentSize += rowSize;
+      rowsProcessed++;
     }
+
+    if (rowsProcessed === 0) {
+      return { files: [], rowsProcessed: 0, remainingRows: totalRowCount };
+    }
+
+    const filePath = `${localPath}.json`;
+    const dir = path.dirname(filePath);
+    await fs.mkdir(dir, { recursive: true });
+
+    await fs.writeFile(filePath, JSON.stringify({ rows }, null, 2), 'utf-8');
+
+    const remainingRows = totalRowCount - rowsProcessed;
+    return {
+      files: [filePath],
+      rowsProcessed,
+      remainingRows,
+    };
+  }
+
+  /**
+   * Persist data to remote storage with size limit.
+   * @param remoteKey Remote storage key
+   * @param maxSizeBytes Maximum size in bytes for each file
+   * @param options Additional options
+   * @returns Object containing file paths, rows processed, and remaining rows
+   */
+  private async persistPartialToRemote(
+    remoteKey: string,
+    maxSizeBytes: number,
+    options?: {
+      bufferSize?: number;
+      bufferRowCount?: number;
+    }
+  ): Promise<{
+    files: string[];
+    rowsProcessed: number;
+    remainingRows: number;
+  }> {
+    const keys = Object.keys(this.columns);
+    if (keys.length === 0) {
+      return { files: [], rowsProcessed: 0, remainingRows: 0 };
+    }
+
+    const totalRowCount = this.columns[keys[0]].length;
+    let rowsProcessed = 0;
+    let currentSize = 0;
+    const rows: Record<string, any>[] = [];
+
+    // Process rows until we reach the size limit
+    for (let rowIndex = 0; rowIndex < totalRowCount; rowIndex++) {
+      const row: Record<string, any> = {};
+      let rowSize = 0;
+
+      for (const k of keys) {
+        const value = this.columns[k][rowIndex];
+        const serializedValue = this.serializeValue(value, k);
+        row[k] = serializedValue;
+        rowSize += JSON.stringify(serializedValue).length;
+      }
+
+      // Check if adding this row would exceed the size limit
+      if (currentSize + rowSize > maxSizeBytes && rowsProcessed > 0) {
+        break;
+      }
+
+      rows.push(row);
+      currentSize += rowSize;
+      rowsProcessed++;
+    }
+
+    if (rowsProcessed === 0) {
+      return { files: [], rowsProcessed: 0, remainingRows: totalRowCount };
+    }
+
+    // For remote storage, we create a temporary local file that will be uploaded
+    // The file path should be unique to avoid conflicts
+    const tempFileName = `${remoteKey.replace(
+      /[^a-zA-Z0-9]/g,
+      '_'
+    )}_${Date.now()}.json`;
+    const tempFilePath = path.join(require('os').tmpdir(), tempFileName);
+
+    // Ensure temp directory exists
+    const tempDir = path.dirname(tempFilePath);
+    await fs.mkdir(tempDir, { recursive: true });
+
+    // Write data to temporary file
+    await fs.writeFile(
+      tempFilePath,
+      JSON.stringify({ rows }, null, 2),
+      'utf-8'
+    );
+
+    const remainingRows = totalRowCount - rowsProcessed;
+    return {
+      files: [tempFilePath], // Return temp file path for upload
+      rowsProcessed,
+      remainingRows,
+    };
   }
 
   /**
