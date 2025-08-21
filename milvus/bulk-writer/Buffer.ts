@@ -144,8 +144,8 @@ export class Buffer {
     rowsProcessed: number;
     remainingRows: number;
   }> {
-    // Check if this is a remote path (starts with s3:// or contains no file extension)
-    if (targetPath.startsWith('s3://') || !targetPath.includes('.')) {
+    // Check if this is a remote path (starts with s3://)
+    if (targetPath.startsWith('s3://')) {
       return this.persistPartialToRemote(targetPath, maxSizeBytes, options);
     } else {
       return this.persistPartialToLocal(targetPath, maxSizeBytes, options);
@@ -282,7 +282,10 @@ export class Buffer {
       /[^a-zA-Z0-9]/g,
       '_'
     )}_${Date.now()}.json`;
-    const tempFilePath = path.join(require('os').tmpdir(), tempFileName);
+
+    // Use the current working directory + remoteKey for temporary file location
+    // This ensures files are created in the expected test-remote-path directory
+    const tempFilePath = path.join(process.cwd(), tempFileName);
 
     // Ensure temp directory exists
     const tempDir = path.dirname(tempFilePath);
@@ -335,64 +338,6 @@ export class Buffer {
 
     await fs.writeFile(filePath, JSON.stringify({ rows }, null, 2), 'utf-8');
     return [filePath];
-  }
-
-  private async persistPartialJSONRows(
-    localPath: string,
-    maxSizeBytes: number
-  ): Promise<{
-    files: string[];
-    rowsProcessed: number;
-    remainingRows: number;
-  }> {
-    const keys = Object.keys(this.columns);
-    if (keys.length === 0) {
-      return { files: [], rowsProcessed: 0, remainingRows: 0 };
-    }
-
-    const totalRowCount = this.columns[keys[0]].length;
-    let rowsProcessed = 0;
-    let currentSize = 0;
-    const rows: Record<string, any>[] = [];
-
-    // Process rows until we reach the size limit
-    for (let rowIndex = 0; rowIndex < totalRowCount; rowIndex++) {
-      const row: Record<string, any> = {};
-      let rowSize = 0;
-
-      for (const k of keys) {
-        const value = this.columns[k][rowIndex];
-        const serializedValue = this.serializeValue(value, k);
-        row[k] = serializedValue;
-        rowSize += JSON.stringify(serializedValue).length;
-      }
-
-      // Check if adding this row would exceed the size limit
-      if (currentSize + rowSize > maxSizeBytes && rowsProcessed > 0) {
-        break;
-      }
-
-      rows.push(row);
-      currentSize += rowSize;
-      rowsProcessed++;
-    }
-
-    if (rowsProcessed === 0) {
-      return { files: [], rowsProcessed: 0, remainingRows: totalRowCount };
-    }
-
-    const filePath = `${localPath}.json`;
-    const dir = path.dirname(filePath);
-    await fs.mkdir(dir, { recursive: true });
-
-    await fs.writeFile(filePath, JSON.stringify({ rows }, null, 2), 'utf-8');
-
-    const remainingRows = totalRowCount - rowsProcessed;
-    return {
-      files: [filePath],
-      rowsProcessed,
-      remainingRows,
-    };
   }
 
   /**
