@@ -13,22 +13,14 @@ import {
   generateInsertData,
   dynamicFields,
 } from '../tools';
-import {
-  S3Client,
-  HeadObjectCommand,
-  ListObjectsV2Command,
-  DeleteObjectCommand,
-  DeleteBucketCommand,
-  CreateBucketCommand,
-} from '@aws-sdk/client-s3';
+import { Client as MinioClient } from 'minio';
 
 const TEST_CHUNK_SIZE = 1024 * 1024; // 1MB for testing
 const COLLECTION_NAME = GENERATE_NAME();
 
 // Real MinIO connection parameters for local testing
 const MINIO_CONFIG = {
-  endpoint: 'http://localhost:9000',
-  region: 'us-east-1',
+  endpoint: 'localhost:9000',
   accessKey: 'minioadmin',
   secretKey: 'minioadmin',
 };
@@ -37,8 +29,8 @@ const TEST_BUCKET_NAME = 'test-bulk-data';
 
 // Switch to control S3 cleanup behavior
 // Set to false to keep files and bucket for manual inspection
-const CLEANUP_S3_FILES = true;
-const CLEANUP_S3_BUCKET = true;
+const CLEANUP_S3_FILES = false;
+const CLEANUP_S3_BUCKET = false;
 
 // Helper functions to reduce duplication
 const testHelpers = {
@@ -95,14 +87,12 @@ const testHelpers = {
 
   // Verify S3 files actually exist in the bucket
   verifyS3FilesExist: async (files: string[], bucketName: string) => {
-    const s3Client = new S3Client({
-      endpoint: MINIO_CONFIG.endpoint,
-      region: MINIO_CONFIG.region,
-      credentials: {
-        accessKeyId: MINIO_CONFIG.accessKey,
-        secretAccessKey: MINIO_CONFIG.secretKey,
-      },
-      forcePathStyle: true,
+    const s3Client = new MinioClient({
+      endPoint: MINIO_CONFIG.endpoint.split(':')[0],
+      port: parseInt(MINIO_CONFIG.endpoint.split(':')[1] || '9000'),
+      useSSL: false,
+      accessKey: MINIO_CONFIG.accessKey,
+      secretKey: MINIO_CONFIG.secretKey,
     });
 
     for (const fileUrl of files) {
@@ -110,12 +100,7 @@ const testHelpers = {
       const key = fileUrl.replace(`s3://${bucketName}/`, '');
 
       try {
-        await s3Client.send(
-          new HeadObjectCommand({
-            Bucket: bucketName,
-            Key: key,
-          })
-        );
+        await s3Client.statObject(bucketName, key);
         console.log(`✅ File exists in S3: ${key}`);
       } catch (error) {
         console.error(`❌ File not found in S3: ${key}`, error);
@@ -177,29 +162,23 @@ describe('RemoteBulkWriter - Integration Tests with MinIO', () => {
     await fs.mkdir(testDataDir, { recursive: true });
 
     // Create MinIO bucket for testing
-    const s3Client = new S3Client({
-      endpoint: MINIO_CONFIG.endpoint,
-      region: MINIO_CONFIG.region,
-      credentials: {
-        accessKeyId: MINIO_CONFIG.accessKey,
-        secretAccessKey: MINIO_CONFIG.secretKey,
-      },
-      forcePathStyle: true,
+    const s3Client = new MinioClient({
+      endPoint: MINIO_CONFIG.endpoint.split(':')[0],
+      port: parseInt(MINIO_CONFIG.endpoint.split(':')[1] || '9000'),
+      useSSL: false,
+      accessKey: MINIO_CONFIG.accessKey,
+      secretKey: MINIO_CONFIG.secretKey,
     });
 
     try {
       console.log(`🪣 Creating MinIO bucket: ${TEST_BUCKET_NAME}`);
-      await s3Client.send(
-        new CreateBucketCommand({
-          Bucket: TEST_BUCKET_NAME,
-        })
-      );
+      await s3Client.makeBucket(TEST_BUCKET_NAME);
       console.log(`✅ MinIO bucket created successfully: ${TEST_BUCKET_NAME}`);
     } catch (error: any) {
       // If bucket already exists, that's fine
       if (
-        error.name === 'BucketAlreadyExists' ||
-        error.name === 'BucketAlreadyOwnedByYou'
+        error.code === 'BucketAlreadyExists' ||
+        error.message?.includes('already exists')
       ) {
         console.log(`📁 MinIO bucket already exists: ${TEST_BUCKET_NAME}`);
       } else {
@@ -324,57 +303,52 @@ describe('RemoteBulkWriter - Integration Tests with MinIO', () => {
 
   // Helper function to clean up all test files and bucket
   async function cleanupAllTestFiles() {
-    const s3Client = new S3Client({
-      endpoint: MINIO_CONFIG.endpoint,
-      region: MINIO_CONFIG.region,
-      credentials: {
-        accessKeyId: MINIO_CONFIG.accessKey,
-        secretAccessKey: MINIO_CONFIG.secretKey,
-      },
-      forcePathStyle: true,
+    const s3Client = new MinioClient({
+      endPoint: MINIO_CONFIG.endpoint.split(':')[0],
+      port: parseInt(MINIO_CONFIG.endpoint.split(':')[1] || '9000'),
+      useSSL: false,
+      accessKey: MINIO_CONFIG.accessKey,
+      secretKey: MINIO_CONFIG.secretKey,
     });
 
     try {
       // List all objects in test-remote-path
-      const listCommand = new ListObjectsV2Command({
-        Bucket: TEST_BUCKET_NAME,
-        Prefix: 'test-remote-path/',
-      });
+      const objectsStream = s3Client.listObjects(
+        TEST_BUCKET_NAME,
+        'test-remote-path/',
+        true
+      );
+      const objects: any[] = [];
 
-      const listResult = await s3Client.send(listCommand);
+      // Collect all objects from the stream
+      for await (const obj of objectsStream) {
+        objects.push(obj);
+      }
 
-      if (listResult.Contents && listResult.Contents.length > 0) {
+      if (objects.length > 0) {
         if (CLEANUP_S3_FILES) {
-          console.log(
-            `🧹 Cleaning up ${listResult.Contents.length} test files...`
-          );
+          console.log(`🧹 Cleaning up ${objects.length} test files...`);
 
           // Delete all test files
-          for (const object of listResult.Contents) {
-            if (object.Key) {
+          for (const object of objects) {
+            if (object.name) {
               try {
-                await s3Client.send(
-                  new DeleteObjectCommand({
-                    Bucket: TEST_BUCKET_NAME,
-                    Key: object.Key,
-                  })
-                );
-                console.log(`🗑️  Deleted: ${object.Key}`);
-              } catch (deleteError) {
+                await s3Client.removeObject(TEST_BUCKET_NAME, object.name);
+                console.log(`🗑️  Deleted: ${object.name}`);
+              } catch (deleteError: any) {
+                // Log the error but continue with other deletions
                 console.warn(
-                  `⚠️  Failed to delete ${object.Key}:`,
-                  deleteError
+                  `⚠️  Failed to delete ${object.name}:`,
+                  deleteError.message || deleteError
                 );
               }
             }
           }
 
-          console.log(
-            `✅ Cleanup completed. Removed ${listResult.Contents.length} files.`
-          );
+          console.log(`✅ Cleanup completed. Removed ${objects.length} files.`);
         } else {
           console.log(
-            `📁 Keeping ${listResult.Contents.length} test files for manual inspection`
+            `📁 Keeping ${objects.length} test files for manual inspection`
           );
         }
       }
@@ -382,17 +356,20 @@ describe('RemoteBulkWriter - Integration Tests with MinIO', () => {
       // Delete the entire bucket
       if (CLEANUP_S3_BUCKET) {
         try {
-          await s3Client.send(
-            new DeleteBucketCommand({
-              Bucket: TEST_BUCKET_NAME,
-            })
-          );
+          await s3Client.removeBucket(TEST_BUCKET_NAME);
           console.log(`🗑️  Deleted bucket: ${TEST_BUCKET_NAME}`);
-        } catch (deleteBucketError) {
-          console.warn(
-            `⚠️  Failed to delete bucket ${TEST_BUCKET_NAME}:`,
-            deleteBucketError
-          );
+        } catch (deleteBucketError: any) {
+          // MinIO might not allow deleting non-empty buckets
+          if (deleteBucketError.code === 'BucketNotEmpty') {
+            console.log(
+              `📁 Bucket ${TEST_BUCKET_NAME} is not empty, skipping deletion`
+            );
+          } else {
+            console.warn(
+              `⚠️  Failed to delete bucket ${TEST_BUCKET_NAME}:`,
+              deleteBucketError
+            );
+          }
         }
       } else {
         console.log(
@@ -415,29 +392,31 @@ describe('RemoteBulkWriter - Integration Tests with MinIO', () => {
     it('should test MinIO connection', async () => {
       console.log('🔌 Testing MinIO connection...');
 
-      const s3Client = new S3Client({
-        endpoint: MINIO_CONFIG.endpoint,
-        region: MINIO_CONFIG.region,
-        credentials: {
-          accessKeyId: MINIO_CONFIG.accessKey,
-          secretAccessKey: MINIO_CONFIG.secretKey,
-        },
-        forcePathStyle: true,
+      const s3Client = new MinioClient({
+        endPoint: MINIO_CONFIG.endpoint.split(':')[0],
+        port: parseInt(MINIO_CONFIG.endpoint.split(':')[1] || '9000'),
+        useSSL: false,
+        accessKey: MINIO_CONFIG.accessKey,
+        secretKey: MINIO_CONFIG.secretKey,
       });
 
       try {
         // Test if we can list objects in the bucket
-        const listCommand = new ListObjectsV2Command({
-          Bucket: TEST_BUCKET_NAME,
-          MaxKeys: 1,
-        });
+        const objectsStream = s3Client.listObjects(
+          TEST_BUCKET_NAME,
+          'test-remote-path/',
+          true
+        );
+        const objects: any[] = [];
 
-        const result = await s3Client.send(listCommand);
+        // Collect all objects from the stream
+        for await (const obj of objectsStream) {
+          objects.push(obj);
+        }
+
         console.log('✅ MinIO connection successful');
         console.log(`📁 Bucket ${TEST_BUCKET_NAME} exists and is accessible`);
-        console.log(
-          `📊 Current objects in bucket: ${result.Contents?.length || 0}`
-        );
+        console.log(`📊 Current objects in bucket: ${objects.length || 0}`);
       } catch (error) {
         console.error('❌ MinIO connection failed:', error);
         throw error;

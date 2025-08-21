@@ -6,14 +6,7 @@ import {
   CommitOptions,
   S3ConnectParam,
 } from './types';
-import {
-  S3Client,
-  PutObjectCommand,
-  HeadBucketCommand,
-  CreateBucketCommand,
-  DeleteObjectCommand,
-  ListObjectsV2Command,
-} from '@aws-sdk/client-s3';
+import { Client as MinioClient } from 'minio';
 import { promises as fs } from 'fs';
 
 /**
@@ -26,7 +19,7 @@ export class RemoteBulkWriter extends BulkWriter {
   private flushCount = 0;
   private remoteFiles: string[] = [];
   private cleanupOnExit: boolean;
-  private s3Client: any;
+  private minioClient!: MinioClient;
   private bucketName: string;
   private connectParam: S3ConnectParam;
 
@@ -48,8 +41,8 @@ export class RemoteBulkWriter extends BulkWriter {
     this.bucketName = bucketName;
     this.connectParam = connectParam;
 
-    // Initialize S3 client
-    this.initializeS3Client();
+    // Initialize MinIO client
+    this.initializeMinioClient();
   }
 
   get uuid(): string {
@@ -65,28 +58,60 @@ export class RemoteBulkWriter extends BulkWriter {
   }
 
   /**
-   * Initialize S3/MinIO client
+   * Initialize MinIO client
    */
-  private initializeS3Client(): void {
+  private initializeMinioClient(): void {
     try {
-      this.s3Client = new S3Client({
-        endpoint: this.connectParam.endpoint,
+      // Parse endpoint to extract host and port
+      const { hostname, port, protocol } = this.parseEndpoint(
+        this.connectParam.endpoint
+      );
+
+      this.minioClient = new MinioClient({
+        endPoint: hostname,
+        port: port || this.getDefaultPort(protocol),
+        useSSL: protocol === 'https:',
+        accessKey: this.connectParam.accessKey,
+        secretKey: this.connectParam.secretKey,
+        sessionToken: this.connectParam.sessionToken,
         region: this.connectParam.region || 'us-east-1',
-        credentials: {
-          accessKeyId: this.connectParam.accessKey,
-          secretAccessKey: this.connectParam.secretKey,
-          sessionToken: this.connectParam.sessionToken,
-        },
-        forcePathStyle: true, // Required for MinIO
       });
 
-      console.log('S3/MinIO client initialized successfully');
+      console.log('MinIO client initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize S3 client:', error);
+      console.error('Failed to initialize MinIO client:', error);
       throw new Error(
-        'S3 client initialization failed. Please install @aws-sdk/client-s3 package.'
+        'MinIO client initialization failed. Please check your connection parameters.'
       );
     }
+  }
+
+  /**
+   * Parse endpoint URL to extract components
+   */
+  private parseEndpoint(endpoint: string): {
+    hostname: string;
+    port?: number;
+    protocol: string;
+  } {
+    // If endpoint doesn't have protocol, add http:// for parsing
+    const urlString = endpoint.includes('://')
+      ? endpoint
+      : `http://${endpoint}`;
+    const url = new URL(urlString);
+
+    return {
+      hostname: url.hostname,
+      port: url.port ? parseInt(url.port, 10) : undefined,
+      protocol: url.protocol,
+    };
+  }
+
+  /**
+   * Get default port based on protocol
+   */
+  private getDefaultPort(protocol: string): number {
+    return protocol === 'https:' ? 443 : 80;
   }
 
   /**
@@ -172,8 +197,8 @@ export class RemoteBulkWriter extends BulkWriter {
         );
 
         if (result.files.length > 0) {
-          // Upload files to S3/MinIO
-          const uploadedFiles = await this.uploadFilesToS3(
+          // Upload files to MinIO
+          const uploadedFiles = await this.uploadFilesToMinio(
             result.files,
             remoteKey
           );
@@ -206,9 +231,9 @@ export class RemoteBulkWriter extends BulkWriter {
   }
 
   /**
-   * Upload files to S3/MinIO
+   * Upload files to MinIO
    */
-  private async uploadFilesToS3(
+  private async uploadFilesToMinio(
     localFiles: string[],
     remoteKey: string
   ): Promise<string[]> {
@@ -222,15 +247,16 @@ export class RemoteBulkWriter extends BulkWriter {
         // Read file content
         const fileContent = await fs.readFile(localFile, 'utf-8');
 
-        // Upload to S3/MinIO
-        const uploadCommand = new PutObjectCommand({
-          Bucket: this.bucketName,
-          Key: remoteKey,
-          Body: fileContent,
-          ContentType: 'application/json',
-        });
-
-        await this.s3Client.send(uploadCommand);
+        // Upload to MinIO
+        await this.minioClient.putObject(
+          this.bucketName,
+          remoteKey,
+          fileContent,
+          fileContent.length,
+          {
+            'Content-Type': 'application/json',
+          }
+        );
 
         // Add the remote path to uploaded files
         const remotePath = `s3://${this.bucketName}/${remoteKey}`;
@@ -242,7 +268,7 @@ export class RemoteBulkWriter extends BulkWriter {
 
       return uploadedFiles;
     } catch (error) {
-      console.error('Failed to upload files to S3/MinIO:', error);
+      console.error('Failed to upload files to MinIO:', error);
       throw error;
     }
   }
@@ -252,24 +278,14 @@ export class RemoteBulkWriter extends BulkWriter {
    */
   private async ensureBucketExists(): Promise<void> {
     try {
-      try {
-        // Check if bucket exists
-        await this.s3Client.send(
-          new HeadBucketCommand({ Bucket: this.bucketName })
+      const bucketExists = await this.minioClient.bucketExists(this.bucketName);
+      if (!bucketExists) {
+        // Bucket doesn't exist, create it
+        await this.minioClient.makeBucket(
+          this.bucketName,
+          this.connectParam.region || 'us-east-1'
         );
-      } catch (error: any) {
-        if (
-          error.name === 'NotFound' ||
-          error.$metadata?.httpStatusCode === 404
-        ) {
-          // Bucket doesn't exist, create it
-          await this.s3Client.send(
-            new CreateBucketCommand({ Bucket: this.bucketName })
-          );
-          console.log(`Bucket '${this.bucketName}' created successfully`);
-        } else {
-          throw error;
-        }
+        console.log(`Bucket '${this.bucketName}' created successfully`);
       }
     } catch (error) {
       console.error('Failed to ensure bucket exists:', error);
@@ -285,27 +301,28 @@ export class RemoteBulkWriter extends BulkWriter {
     if (!force && !this.cleanupOnExit) return;
 
     try {
-      if (this.s3Client) {
+      if (this.minioClient) {
         // List all objects in the writer's directory
-        const listCommand = new ListObjectsV2Command({
-          Bucket: this.bucketName,
-          Prefix: `${this.remotePath}/${this.writerUuid}/`,
-        });
+        const objectsStream = this.minioClient.listObjects(
+          this.bucketName,
+          `${this.remotePath}/${this.writerUuid}/`,
+          true
+        );
 
-        const listResult = await this.s3Client.send(listCommand);
+        const objectsToDelete: string[] = [];
 
-        if (listResult.Contents && listResult.Contents.length > 0) {
+        // Collect all objects to delete
+        for await (const obj of objectsStream) {
+          objectsToDelete.push(obj.name);
+        }
+
+        if (objectsToDelete.length > 0) {
           // Delete all objects in the writer's directory
-          const deletePromises = listResult.Contents.map((obj: any) => {
-            const deleteCommand = new DeleteObjectCommand({
-              Bucket: this.bucketName,
-              Key: obj.Key,
-            });
-            return this.s3Client.send(deleteCommand);
-          });
-
-          await Promise.all(deletePromises);
-          console.log(`Cleaned up ${listResult.Contents.length} remote files`);
+          await this.minioClient.removeObjects(
+            this.bucketName,
+            objectsToDelete
+          );
+          console.log(`Cleaned up ${objectsToDelete.length} remote files`);
         }
       }
 
