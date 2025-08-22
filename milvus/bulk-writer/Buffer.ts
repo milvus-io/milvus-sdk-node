@@ -4,6 +4,7 @@ import { CollectionSchema, FieldSchema } from '../types/Collection';
 import { DataType } from '..';
 import { BulkFileType, DYNAMIC_FIELD_NAME } from './constants';
 import Long from 'long';
+import { validateInt64Field } from './validators/Int64';
 
 /**
  * In-memory columnar buffer aligned with collection schema.
@@ -153,6 +154,33 @@ export class Buffer {
   }
 
   /**
+   * Helper: custom replacer for JSON.stringify to handle int64 special format
+   */
+  private static int64Replacer(_key: string, value: any) {
+    if (
+      value &&
+      typeof value === 'object' &&
+      value.type === 'int64' &&
+      typeof value.value === 'string'
+    ) {
+      // Return a special marker object for post-processing
+      return { __INT64__: value.value };
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return value;
+  }
+
+  /**
+   * Helper: post-process JSON string to replace {"__INT64__":"123"} with 123 (no quotes)
+   */
+  private static replaceInt64Markers(json: string): string {
+    // Replace all occurrences of {"__INT64__":"number"} with the number (no quotes)
+    return json.replace(/\{\s*"__INT64__"\s*:\s*"(-?\d+)"\s*\}/g, '$1');
+  }
+
+  /**
    * Persist data to local files with size limit.
    * @param localPath Local file path
    * @param maxSizeBytes Maximum size in bytes for each file
@@ -190,7 +218,7 @@ export class Buffer {
         const value = this.columns[k][rowIndex];
         const serializedValue = this.serializeValue(value, k);
         row[k] = serializedValue;
-        rowSize += JSON.stringify(serializedValue).length;
+        rowSize += JSON.stringify(serializedValue, Buffer.int64Replacer).length;
       }
 
       // Check if adding this row would exceed the size limit
@@ -211,7 +239,10 @@ export class Buffer {
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
 
-    await fs.writeFile(filePath, JSON.stringify({ rows }, null, 2), 'utf-8');
+    // Use custom replacer and post-process to handle int64
+    let json = JSON.stringify({ rows }, Buffer.int64Replacer, 2);
+    json = Buffer.replaceInt64Markers(json);
+    await fs.writeFile(filePath, json, 'utf-8');
 
     const remainingRows = totalRowCount - rowsProcessed;
     return {
@@ -259,7 +290,7 @@ export class Buffer {
         const value = this.columns[k][rowIndex];
         const serializedValue = this.serializeValue(value, k);
         row[k] = serializedValue;
-        rowSize += JSON.stringify(serializedValue).length;
+        rowSize += JSON.stringify(serializedValue, Buffer.int64Replacer).length;
       }
 
       // Check if adding this row would exceed the size limit
@@ -292,11 +323,9 @@ export class Buffer {
     await fs.mkdir(tempDir, { recursive: true });
 
     // Write data to temporary file
-    await fs.writeFile(
-      tempFilePath,
-      JSON.stringify({ rows }, null, 2),
-      'utf-8'
-    );
+    let json = JSON.stringify({ rows }, Buffer.int64Replacer, 2);
+    json = Buffer.replaceInt64Markers(json);
+    await fs.writeFile(tempFilePath, json, 'utf-8');
 
     const remainingRows = totalRowCount - rowsProcessed;
     return {
@@ -336,7 +365,10 @@ export class Buffer {
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
 
-    await fs.writeFile(filePath, JSON.stringify({ rows }, null, 2), 'utf-8');
+    // Use custom replacer and post-process to handle int64
+    let json = JSON.stringify({ rows }, Buffer.int64Replacer, 2);
+    json = Buffer.replaceInt64Markers(json);
+    await fs.writeFile(filePath, json, 'utf-8');
     return [filePath];
   }
 
@@ -351,7 +383,8 @@ export class Buffer {
 
       switch (field.dataType) {
         case DataType.Int64:
-          return this.serializeInt64Value(value);
+          // Use pure function validator
+          return validateInt64Field(value, fieldName).value;
         case DataType.Float16Vector:
         case DataType.BFloat16Vector:
         case DataType.Int8Vector:
@@ -363,25 +396,6 @@ export class Buffer {
 
     // Handle general serialization for all other cases
     return this.serializeGeneralValue(value);
-  }
-
-  /**
-   * Serialize int64 values to string representation
-   */
-  private serializeInt64Value(value: any): string {
-    switch (typeof value) {
-      case 'bigint':
-        return value.toString();
-      case 'string':
-        return value;
-      case 'number':
-        return value.toString();
-      default:
-        if (Long.isLong(value)) {
-          return value.toString();
-        }
-        return value;
-    }
   }
 
   /**
@@ -404,12 +418,20 @@ export class Buffer {
    * Serialize general values (non-field-specific)
    */
   private serializeGeneralValue(value: any): any {
+    if (
+      value &&
+      typeof value === 'object' &&
+      value.type === 'int64' &&
+      typeof value.value === 'string'
+    ) {
+      return { type: 'int64', value: value.value };
+    }
     switch (typeof value) {
       case 'bigint':
-        return value.toString();
+        return { type: 'int64', value: value.toString() };
       default:
         if (Long.isLong(value)) {
-          return value.toString();
+          return { type: 'int64', value: value.toString() };
         }
         if (value instanceof Uint8Array || value instanceof Int8Array) {
           const typed = value as ArrayBufferView;

@@ -1,10 +1,7 @@
-import { Int64Validator } from './Int64';
+import { validateInt64Field, validateInt64Array } from './Int64';
 
 export class ArrayValidator {
-  private int64Validator: Int64Validator;
-
-  constructor(int64Strategy: 'auto' | 'string' | 'number' | 'bigint' = 'auto') {
-    this.int64Validator = new Int64Validator(int64Strategy);
+  constructor() {
   }
 
   /**
@@ -13,7 +10,7 @@ export class ArrayValidator {
   validateArrayField(
     value: any,
     field: any,
-    config?: { int64Strategy?: 'auto' | 'string' | 'number' | 'bigint' }
+    config?: any
   ): { value: any[]; size: number } {
     if (!Array.isArray(value)) {
       throw new Error(`Field '${field.name}' must be an array`);
@@ -32,11 +29,9 @@ export class ArrayValidator {
       );
     }
 
-    // Special handling for int64 arrays to apply int64 strategy
+    // Special handling for int64 arrays
     if (elementType === 'Int64') {
-      const strategy = config?.int64Strategy || 'auto';
-      const validator = new Int64Validator(strategy);
-      return validator.validateInt64Array(value, field.name, maxCapacity);
+      return validateInt64Array(value, field.name, maxCapacity);
     }
 
     // For other element types, return a copy to avoid reference issues

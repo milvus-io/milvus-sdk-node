@@ -6,6 +6,31 @@ import { DataType } from '../../milvus/const';
 import { BulkFileType } from '../../milvus/bulk-writer/constants';
 import Long from 'long';
 
+function extractInt64ArrayFieldsFromJsonRows(
+  jsonStr: string,
+  fieldNames: string[]
+): string[][] {
+  const rowsMatch = jsonStr.match(/"rows"\s*:\s*\[(.*)\]/s);
+  if (!rowsMatch) throw new Error('rows array not found in json');
+  const rowsStr = rowsMatch[1];
+  const rowRegex = /\{[^{}]*\}/g;
+  const rowMatches = rowsStr.match(rowRegex) || [];
+  return rowMatches.map(rowObjStr => {
+    const field = fieldNames[0];
+    const fieldRegex = new RegExp(`"${field}"\\s*:\\s*(\\[[^\\]]*\\])`);
+    const m = rowObjStr.match(fieldRegex);
+    if (!m) return [];
+    const arrStr = m[1].trim();
+    const numRegex = /"(-?\d+)"|-?\d+/g;
+    const matches: string[] = [];
+    let match;
+    while ((match = numRegex.exec(arrStr)) !== null) {
+      matches.push(match[1] || match[0]);
+    }
+    return matches;
+  });
+}
+
 describe('Int64 Array Handling in BulkWriter', () => {
   let tempDir: string;
   let test_data_folder = 'int64-array-handling';
@@ -44,16 +69,15 @@ describe('Int64 Array Handling in BulkWriter', () => {
     });
   });
 
-  describe('Auto Strategy with Int64 Arrays', () => {
+  describe('Int64 Array Handling', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, test_data_folder, 'int64_array_test_auto');
+      tempDir = path.join(__dirname, test_data_folder, 'int64_array_test');
       bulkWriter = new LocalBulkWriter({
         schema,
         localPath: tempDir,
         fileType: BulkFileType.JSON,
-        config: { int64Strategy: 'auto' },
       });
     });
 
@@ -75,14 +99,12 @@ describe('Int64 Array Handling in BulkWriter', () => {
 
       const filePath = files[0];
       const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(2);
-      expect(data.rows[0].int64_array).toEqual(['123', '456', '789', '101112']);
-      expect(data.rows[1].int64_array).toEqual([
-        '9007199254740992',
-        '9223372036854775807',
+      const rows = extractInt64ArrayFieldsFromJsonRows(content, [
+        'int64_array',
       ]);
+      expect(rows.length).toBe(2);
+      expect(rows[0]).toEqual(['123', '456', '789', '101112']);
+      expect(rows[1]).toEqual(['9007199254740992', '9223372036854775807']);
     });
 
     it('should handle empty int64 arrays', async () => {
@@ -98,149 +120,11 @@ describe('Int64 Array Handling in BulkWriter', () => {
 
       const filePath = files[0];
       const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      expect(data.rows[0].int64_array).toEqual([]);
-    });
-  });
-
-  describe('String Strategy with Int64 Arrays', () => {
-    let bulkWriter: LocalBulkWriter;
-
-    beforeEach(async () => {
-      tempDir = path.join(
-        __dirname,
-        test_data_folder,
-        'int64_array_test_string'
-      );
-      bulkWriter = new LocalBulkWriter({
-        schema,
-        localPath: tempDir,
-        fileType: BulkFileType.JSON,
-        config: { int64Strategy: 'string' },
-      });
-    });
-
-    it('should always output strings for int64 array elements', async () => {
-      bulkWriter.appendRow({
-        id: 1,
-        int64_array: [123, BigInt(456), new Long(789, 0, false)],
-      });
-
-      await bulkWriter.commit();
-
-      const files = bulkWriter.batchFiles;
-      expect(files.length).toBeGreaterThan(0);
-
-      const filePath = files[0];
-      const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      expect(data.rows[0].int64_array).toEqual(['123', '456', '789']);
-    });
-  });
-
-  describe('Number Strategy with Int64 Arrays', () => {
-    let bulkWriter: LocalBulkWriter;
-
-    beforeEach(async () => {
-      tempDir = path.join(
-        __dirname,
-        test_data_folder,
-        'int64_array_test_number'
-      );
-      bulkWriter = new LocalBulkWriter({
-        schema,
-        localPath: tempDir,
-        fileType: BulkFileType.JSON,
-        config: { int64Strategy: 'number' },
-      });
-    });
-
-    it('should only accept safe integers in int64 arrays', async () => {
-      bulkWriter.appendRow({
-        id: 1,
-        int64_array: [123, 456, 789],
-      });
-
-      await bulkWriter.commit();
-
-      const files = bulkWriter.batchFiles;
-      expect(files.length).toBeGreaterThan(0);
-
-      const filePath = files[0];
-      const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      expect(data.rows[0].int64_array).toEqual(['123', '456', '789']);
-    });
-
-    it('should reject unsafe integers in int64 arrays', () => {
-      const unsafeInt = 9007199254740992; // Beyond Number.MAX_SAFE_INTEGER
-
-      expect(() => {
-        bulkWriter.appendRow({
-          id: 1,
-          int64_array: [123, unsafeInt, 456],
-        });
-      }).toThrow(/outside safe integer range/);
-    });
-  });
-
-  describe('BigInt Strategy with Int64 Arrays', () => {
-    let bulkWriter: LocalBulkWriter;
-
-    beforeEach(async () => {
-      tempDir = path.join(
-        __dirname,
-        test_data_folder,
-        'int64_array_test_bigint'
-      );
-      bulkWriter = new LocalBulkWriter({
-        schema,
-        localPath: tempDir,
-        fileType: BulkFileType.JSON,
-        config: { int64Strategy: 'bigint' },
-      });
-    });
-
-    it('should always output BigInt for int64 array elements', async () => {
-      bulkWriter.appendRow({
-        id: 1,
-        int64_array: [123, '456', new Long(789, 0, false)],
-      });
-
-      await bulkWriter.commit();
-
-      const files = bulkWriter.batchFiles;
-      expect(files.length).toBeGreaterThan(0);
-
-      const filePath = files[0];
-      const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      expect(data.rows[0].int64_array).toEqual(['123', '456', '789']);
-    });
-  });
-
-  describe('Error Handling for Int64 Arrays', () => {
-    let bulkWriter: LocalBulkWriter;
-
-    beforeEach(async () => {
-      tempDir = path.join(
-        __dirname,
-        test_data_folder,
-        'int64_array_test_errors'
-      );
-      bulkWriter = new LocalBulkWriter({
-        schema,
-        localPath: tempDir,
-        fileType: BulkFileType.JSON,
-      });
+      const rows = extractInt64ArrayFieldsFromJsonRows(content, [
+        'int64_array',
+      ]);
+      expect(rows.length).toBe(1);
+      expect(rows[0]).toEqual([]);
     });
 
     it('should reject invalid int64 values in arrays', () => {

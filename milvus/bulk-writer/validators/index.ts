@@ -7,7 +7,7 @@ export * from './Float16Vector';
 export * from './BFloat16Vector';
 export * from './Array';
 
-import { Int64Validator } from './Int64';
+import { validateInt64Field, validateInt64Array } from './Int64';
 
 export function validateVarchar(
   x: unknown,
@@ -42,8 +42,7 @@ export function validateJSON(
 
 export function validateArray(
   x: unknown,
-  field: any,
-  config?: { int64Strategy?: 'auto' | 'string' | 'number' | 'bigint' }
+  field: any
 ): { value: any[]; size: number } {
   if (!Array.isArray(x)) {
     throw new Error(`Field '${field.name}' must be an array`);
@@ -62,11 +61,9 @@ export function validateArray(
     );
   }
 
-  // Special handling for int64 arrays to apply int64 strategy
+  // Special handling for int64 arrays
   if (elementType === 'Int64') {
-    const strategy = config?.int64Strategy || 'auto';
-    const validator = new Int64Validator(strategy);
-    return validator.validateInt64Array(x, field.name, maxCapacity);
+    return validateInt64Array(x, field.name, maxCapacity);
   }
 
   // For other element types, return a copy to avoid reference issues
@@ -130,12 +127,9 @@ export function validateInt32(
 
 export function validateInt64(
   x: unknown,
-  field: any,
-  config?: { int64Strategy?: 'auto' | 'string' | 'number' | 'bigint' }
+  field: any
 ): { value: any; size: number } {
-  const strategy = config?.int64Strategy || 'auto';
-  const validator = new Int64Validator(strategy);
-  return validator.validateInt64Field(x, field.name);
+  return validateInt64Field(x, field.name);
 }
 
 export function validateFloat(

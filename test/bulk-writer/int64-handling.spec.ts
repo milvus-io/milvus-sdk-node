@@ -6,6 +6,24 @@ import { DataType } from '../../milvus/const';
 import { BulkFileType } from '../../milvus/bulk-writer/constants';
 import Long from 'long';
 
+function extractInt64FieldsFromJsonRows(
+  jsonStr: string,
+  fieldNames: string[]
+): string[][] {
+  const rowsMatch = jsonStr.match(/"rows"\s*:\s*\[(.*)\]/s);
+  if (!rowsMatch) throw new Error('rows array not found in json');
+  const rowsStr = rowsMatch[1];
+  const rowRegex = /\{[^{}]*\}/g;
+  const rowMatches = rowsStr.match(rowRegex) || [];
+  return rowMatches.map(rowObjStr => {
+    return fieldNames.map(field => {
+      const fieldRegex = new RegExp(`"${field}"\s*:\s*([^,}\n]+)`);
+      const m = rowObjStr.match(fieldRegex);
+      return m ? m[1].trim().replace(/^"(.*)"$/, '$1') : '';
+    });
+  });
+}
+
 describe('Int64 Handling in BulkWriter', () => {
   let tempDir: string;
   let test_data_folder = 'int64-handling';
@@ -42,16 +60,15 @@ describe('Int64 Handling in BulkWriter', () => {
     });
   });
 
-  describe('Auto Strategy (Default)', () => {
+  describe('Int64 Handling', () => {
     let bulkWriter: LocalBulkWriter;
 
     beforeEach(async () => {
-      tempDir = path.join(__dirname, test_data_folder, 'int64_test_auto');
+      tempDir = path.join(__dirname, test_data_folder, 'int64_test');
       bulkWriter = new LocalBulkWriter({
         schema,
         localPath: tempDir,
         fileType: BulkFileType.JSON,
-        config: { int64Strategy: 'auto' },
       });
     });
 
@@ -76,14 +93,12 @@ describe('Int64 Handling in BulkWriter', () => {
 
       const filePath = files[0];
       const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(2);
-      // Now int64 fields should be strings, not numbers
-      expect(data.rows[0].id).toBe('1');
-      expect(data.rows[0].value).toBe('9223372036854775807');
-      expect(data.rows[1].id).toBe('2');
-      expect(data.rows[1].value).toBe('-9223372036854775808');
+      const rows = extractInt64FieldsFromJsonRows(content, ['id', 'value']);
+      expect(rows.length).toBe(2);
+      expect(rows[0][0]).toBe('1');
+      expect(rows[0][1]).toBe('9223372036854775807');
+      expect(rows[1][0]).toBe('2');
+      expect(rows[1][1]).toBe('-9223372036854775808');
     });
 
     it('should handle Long objects correctly', async () => {
@@ -102,12 +117,10 @@ describe('Int64 Handling in BulkWriter', () => {
 
       const filePath = files[0];
       const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      // Now int64 fields should be strings, not numbers
-      expect(data.rows[0].id).toBe('1234567890');
-      expect(data.rows[0].value).toBe('1234567890');
+      const rows = extractInt64FieldsFromJsonRows(content, ['id', 'value']);
+      expect(rows.length).toBe(1);
+      expect(rows[0][0]).toBe('1234567890');
+      expect(rows[0][1]).toBe('1234567890');
     });
 
     it('should handle safe integer values correctly', async () => {
@@ -126,11 +139,10 @@ describe('Int64 Handling in BulkWriter', () => {
 
       const filePath = files[0];
       const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      expect(data.rows[0].id).toBe('9007199254740991');
-      expect(data.rows[0].value).toBe('-9007199254740991');
+      const rows = extractInt64FieldsFromJsonRows(content, ['id', 'value']);
+      expect(rows.length).toBe(1);
+      expect(rows[0][0]).toBe('9007199254740991');
+      expect(rows[0][1]).toBe('-9007199254740991');
     });
 
     it('should convert unsafe integers to strings automatically', async () => {
@@ -148,12 +160,10 @@ describe('Int64 Handling in BulkWriter', () => {
 
       const filePath = files[0];
       const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      // Now int64 fields should be strings, not numbers
-      expect(data.rows[0].id).toBe('9007199254740992');
-      expect(data.rows[0].value).toBe('1');
+      const rows = extractInt64FieldsFromJsonRows(content, ['id', 'value']);
+      expect(rows.length).toBe(1);
+      expect(rows[0][0]).toBe('9007199254740992');
+      expect(rows[0][1]).toBe('1');
     });
 
     it('should handle string values correctly', async () => {
@@ -169,12 +179,10 @@ describe('Int64 Handling in BulkWriter', () => {
 
       const filePath = files[0];
       const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      // Now int64 fields should be strings, not numbers
-      expect(data.rows[0].id).toBe('1234567890123456789');
-      expect(data.rows[0].value).toBe('-987654321098765432');
+      const rows = extractInt64FieldsFromJsonRows(content, ['id', 'value']);
+      expect(rows.length).toBe(1);
+      expect(rows[0][0]).toBe('1234567890123456789');
+      expect(rows[0][1]).toBe('-987654321098765432');
     });
 
     it('should reject invalid int64 values', () => {
@@ -191,193 +199,6 @@ describe('Int64 Handling in BulkWriter', () => {
           value: 1,
         });
       }).toThrow(/Invalid int64 value/);
-    });
-  });
-
-  describe('String Strategy', () => {
-    let bulkWriter: LocalBulkWriter;
-
-    beforeEach(async () => {
-      tempDir = path.join(
-        __dirname,
-        test_data_folder,
-        'temp_int64_test_string'
-      );
-      bulkWriter = new LocalBulkWriter({
-        schema,
-        localPath: tempDir,
-        fileType: BulkFileType.JSON,
-        config: { int64Strategy: 'string' },
-      });
-    });
-
-    it('should always output strings for int64 fields', async () => {
-      bulkWriter.appendRow({
-        id: 123,
-        value: BigInt('9223372036854775807'),
-      });
-
-      bulkWriter.appendRow({
-        id: new Long(456, 0, false),
-        value: '789',
-      });
-
-      await bulkWriter.commit();
-
-      const files = bulkWriter.batchFiles;
-      expect(files.length).toBeGreaterThan(0);
-
-      const filePath = files[0];
-      const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(2);
-      // Now int64 fields should be strings, not numbers
-      expect(data.rows[0].id).toBe('123');
-      expect(data.rows[0].value).toBe('9223372036854775807');
-      expect(data.rows[1].id).toBe('456');
-      expect(data.rows[1].value).toBe('789');
-    });
-
-    it('should reject unsafe integers in string strategy', () => {
-      const unsafeInt = 9007199254740992; // Beyond Number.MAX_SAFE_INTEGER
-
-      expect(() => {
-        bulkWriter.appendRow({
-          id: unsafeInt,
-          value: 1,
-        });
-      }).toThrow(/outside safe integer range/);
-    });
-  });
-
-  describe('Number Strategy', () => {
-    let bulkWriter: LocalBulkWriter;
-
-    beforeEach(async () => {
-      tempDir = path.join(
-        __dirname,
-        test_data_folder,
-        'temp_int64_test_number'
-      );
-      bulkWriter = new LocalBulkWriter({
-        schema,
-        localPath: tempDir,
-        fileType: BulkFileType.JSON,
-        config: { int64Strategy: 'number' },
-      });
-    });
-
-    it('should only accept safe integers', async () => {
-      bulkWriter.appendRow({
-        id: 123,
-        value: 456,
-      });
-
-      await bulkWriter.commit();
-
-      const files = bulkWriter.batchFiles;
-      expect(files.length).toBeGreaterThan(0);
-
-      const filePath = files[0];
-      const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      expect(data.rows[0].id).toBe('123');
-      expect(data.rows[0].value).toBe('456');
-    });
-
-    it('should reject unsafe integers in number strategy', () => {
-      const unsafeInt = 9007199254740992; // Beyond Number.MAX_SAFE_INTEGER
-
-      expect(() => {
-        bulkWriter.appendRow({
-          id: unsafeInt,
-          value: 1,
-        });
-      }).toThrow(/outside safe integer range/);
-    });
-
-    it('should reject BigInt values beyond safe range', () => {
-      const bigIntValue = BigInt('9223372036854775807'); // Beyond safe range
-
-      expect(() => {
-        bulkWriter.appendRow({
-          id: bigIntValue,
-          value: 1,
-        });
-      }).toThrow(/outside safe integer range for number strategy/);
-    });
-  });
-
-  describe('BigInt Strategy', () => {
-    let bulkWriter: LocalBulkWriter;
-
-    beforeEach(async () => {
-      tempDir = path.join(
-        __dirname,
-        test_data_folder,
-        'temp_int64_test_bigint'
-      );
-      bulkWriter = new LocalBulkWriter({
-        schema,
-        localPath: tempDir,
-        fileType: BulkFileType.JSON,
-        config: { int64Strategy: 'bigint' },
-      });
-    });
-
-    it('should always output BigInt for int64 fields', async () => {
-      bulkWriter.appendRow({
-        id: 123,
-        value: '456',
-      });
-
-      bulkWriter.appendRow({
-        id: new Long(789, 0, false),
-        value: BigInt('9223372036854775807'),
-      });
-
-      await bulkWriter.commit();
-
-      const files = bulkWriter.batchFiles;
-      expect(files.length).toBeGreaterThan(0);
-
-      const filePath = files[0];
-      const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(2);
-      // Now int64 fields should be strings, not numbers
-      expect(data.rows[0].id).toBe('123');
-      expect(data.rows[0].value).toBe('456');
-      expect(data.rows[1].id).toBe('789');
-      expect(data.rows[1].value).toBe('9223372036854775807');
-    });
-
-    it('should reject unsafe integers in bigint strategy', () => {
-      const unsafeInt = 9007199254740992; // Beyond Number.MAX_SAFE_INTEGER
-
-      expect(() => {
-        bulkWriter.appendRow({
-          id: unsafeInt,
-          value: 1,
-        });
-      }).toThrow(/outside safe integer range/);
-    });
-  });
-
-  describe('Edge Cases and Error Handling', () => {
-    let bulkWriter: LocalBulkWriter;
-
-    beforeEach(async () => {
-      tempDir = path.join(__dirname, test_data_folder, 'temp_int64_test_edge');
-      bulkWriter = new LocalBulkWriter({
-        schema,
-        localPath: tempDir,
-        fileType: BulkFileType.JSON,
-      });
     });
 
     it('should handle int64 range boundaries correctly', async () => {
@@ -396,12 +217,10 @@ describe('Int64 Handling in BulkWriter', () => {
 
       const filePath = files[0];
       const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(1);
-      // Now int64 fields should be strings, not numbers
-      expect(data.rows[0].id).toBe('9223372036854775807');
-      expect(data.rows[0].value).toBe('-9223372036854775808');
+      const rows = extractInt64FieldsFromJsonRows(content, ['id', 'value']);
+      expect(rows.length).toBe(1);
+      expect(rows[0][0]).toBe('9223372036854775807');
+      expect(rows[0][1]).toBe('-9223372036854775808');
     });
 
     it('should reject values beyond int64 range', () => {
@@ -441,14 +260,12 @@ describe('Int64 Handling in BulkWriter', () => {
 
       const filePath = files[0];
       const content = await fs.readFile(filePath, 'utf-8');
-      const data = JSON.parse(content);
-
-      expect(data.rows).toHaveLength(2);
-      // Now int64 fields should be strings, not numbers
-      expect(data.rows[0].id).toBe('0');
-      expect(data.rows[0].value).toBe('0');
-      expect(data.rows[1].id).toBe('0');
-      expect(data.rows[1].value).toBe('0');
+      const rows = extractInt64FieldsFromJsonRows(content, ['id', 'value']);
+      expect(rows.length).toBe(2);
+      expect(rows[0][0]).toBe('0');
+      expect(rows[0][1]).toBe('0');
+      expect(rows[1][0]).toBe('0');
+      expect(rows[1][1]).toBe('0');
     });
   });
 });

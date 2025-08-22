@@ -48,7 +48,6 @@ export abstract class BulkWriter {
     this.chunkSize = chunkSize;
     this.fileType = fileType;
     this.config = {
-      int64Strategy: 'auto',
       ...config,
     };
 
@@ -220,14 +219,14 @@ export abstract class BulkWriter {
 
       [DataType.JSON]: () => validateJSON(value, field),
 
-      [DataType.Array]: () => validateArray(value, field, this.config),
+      [DataType.Array]: () => validateArray(value, field),
 
       // Basic scalar types
       [DataType.Bool]: () => validateBool(value, field),
       [DataType.Int8]: () => validateInt8(value, field),
       [DataType.Int16]: () => validateInt16(value, field),
       [DataType.Int32]: () => validateInt32(value, field),
-      [DataType.Int64]: () => validateInt64(value, field, this.config),
+      [DataType.Int64]: () => validateInt64(value, field),
       [DataType.Float]: () => validateFloat(value, field),
       [DataType.Double]: () => validateDouble(value, field),
 

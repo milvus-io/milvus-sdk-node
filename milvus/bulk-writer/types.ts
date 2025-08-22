@@ -19,8 +19,6 @@ export interface BulkWriterOptions {
     skipInvalidRows?: boolean;
     /** Clean up temporary files on exit (default: true) */
     cleanupOnExit?: boolean;
-    /** Int64 handling strategy (default: 'auto') */
-    int64Strategy?: 'auto' | 'string' | 'number' | 'bigint';
   };
 }
 
