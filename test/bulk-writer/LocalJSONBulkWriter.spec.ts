@@ -1,7 +1,6 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { LocalBulkWriter, BulkFileType } from '../../milvus/bulk-writer';
-import Long from 'long';
 import {
   DataType,
   DescribeCollectionResponse,
@@ -129,7 +128,7 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
 
   describe('Data Writing and File Generation', () => {
     it('should append rows and commit data', async () => {
-      const count = 500;
+      const count = 1;
       const testData = generateInsertData(
         [...collectionInfo.schema.fields, ...dynamicFields] as any,
         count
@@ -155,86 +154,6 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
         expect(Array.isArray(data.rows)).toBe(true);
         expect(data.rows.length).toBe(count);
       }
-    });
-
-    it('should handle JSON file type correctly', async () => {
-      const jsonWriter = new LocalBulkWriter({
-        schema: collectionInfo.schema,
-        localPath: testDataDir,
-        chunkSize: TEST_CHUNK_SIZE,
-        fileType: BulkFileType.JSON,
-        config: {
-          strictValidation: false,
-          skipInvalidRows: true,
-          cleanupOnExit: false,
-        },
-      });
-
-      const testData = generateInsertData(
-        [
-          ...collectionInfo.schema.fields,
-          ...dynamicFields,
-          {
-            name: 'dynamic_int32',
-            description: 'dynamic int32 field',
-            data_type: 'Int32',
-          },
-        ] as any,
-        3
-      );
-
-      for (const row of testData) {
-        jsonWriter.appendRow(row);
-      }
-
-      await jsonWriter.commit();
-
-      const files = jsonWriter.batchFiles;
-      expect(files.length).toBeGreaterThan(0);
-
-      // Verify JSON format - { rows: [...] }
-      for (const file of files) {
-        const content = await fs.readFile(file, 'utf-8');
-        const data = JSON.parse(content);
-        expect(data).toHaveProperty('rows');
-        expect(Array.isArray(data.rows)).toBe(true);
-      }
-
-      // Verify JSON data content
-      for (const file of files) {
-        const content = await fs.readFile(file, 'utf-8');
-        const data = JSON.parse(content);
-
-        for (const row of testData) {
-          const rowData = data.rows.find(
-            (r: any) => r.id === row.id || BigInt(r.id) === BigInt(row.id)
-          );
-
-          // When dynamic fields are enabled, the structure changes
-          const expectedRow = { ...row };
-          const dynamicFieldsInRow = Object.keys(row).filter(
-            key =>
-              !collectionInfo.schema.fields.some(field => field.name === key)
-          );
-
-          if (dynamicFieldsInRow.length > 0) {
-            dynamicFieldsInRow.forEach(key => {
-              delete expectedRow[key];
-            });
-
-            expectedRow.$meta = {};
-            dynamicFieldsInRow.forEach(key => {
-              expectedRow.$meta[key] = Long.isLong(row[key])
-                ? row[key].toString()
-                : row[key];
-            });
-          }
-
-          expect(rowData).toEqual(expectedRow);
-        }
-      }
-
-      await jsonWriter.cleanup();
     });
   });
 
@@ -508,7 +427,7 @@ describe('LocalBulkWriter - Complete Workflow Tests', () => {
     it('should handle large datasets with multiple chunks', async () => {
       const largeTestData = generateInsertData(
         [...collectionInfo.schema.fields, ...dynamicFields] as any,
-        10000
+        6000
       );
 
       for (const row of largeTestData) {

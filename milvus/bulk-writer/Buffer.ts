@@ -182,6 +182,66 @@ export class Buffer {
   }
 
   /**
+   * Common logic for processing rows up to a size limit
+   */
+  private processRowsUpToSizeLimit(maxSizeBytes: number): {
+    rows: Record<string, any>[];
+    rowsProcessed: number;
+    remainingRows: number;
+  } {
+    const keys = Object.keys(this.columns);
+    if (keys.length === 0) {
+      return { rows: [], rowsProcessed: 0, remainingRows: 0 };
+    }
+
+    const totalRowCount = this.columns[keys[0]].length;
+    let rowsProcessed = 0;
+    let currentSize = 0;
+    const rows: Record<string, any>[] = [];
+
+    for (let rowIndex = 0; rowIndex < totalRowCount; rowIndex++) {
+      const row: Record<string, any> = {};
+      let rowSize = 0;
+
+      for (const k of keys) {
+        const value = this.columns[k][rowIndex];
+        const serializedValue = this.serializeValue(value, k);
+        row[k] = serializedValue;
+        rowSize += JSON.stringify(serializedValue, Buffer.int64Replacer).length;
+      }
+
+      if (currentSize + rowSize > maxSizeBytes && rowsProcessed > 0) {
+        break;
+      }
+
+      rows.push(row);
+      currentSize += rowSize;
+      rowsProcessed++;
+    }
+
+    return {
+      rows,
+      rowsProcessed,
+      remainingRows: totalRowCount - rowsProcessed,
+    };
+  }
+
+  /**
+   * Common logic for writing JSON data to file
+   */
+  private async writeJSONToFile(
+    filePath: string,
+    rows: Record<string, any>[]
+  ): Promise<void> {
+    const dir = path.dirname(filePath);
+    await fs.mkdir(dir, { recursive: true });
+
+    let json = JSON.stringify({ rows }, Buffer.int64Replacer, 2);
+    json = Buffer.replaceInt64Markers(json);
+    await fs.writeFile(filePath, json, 'utf-8');
+  }
+
+  /**
    * Persist data to local files with size limit.
    * @param localPath Local file path
    * @param maxSizeBytes Maximum size in bytes for each file
@@ -200,52 +260,16 @@ export class Buffer {
     rowsProcessed: number;
     remainingRows: number;
   }> {
-    const keys = Object.keys(this.columns);
-    if (keys.length === 0) {
-      return { files: [], rowsProcessed: 0, remainingRows: 0 };
-    }
-
-    const totalRowCount = this.columns[keys[0]].length;
-    let rowsProcessed = 0;
-    let currentSize = 0;
-    const rows: Record<string, any>[] = [];
-
-    // Process rows until we reach the size limit
-    for (let rowIndex = 0; rowIndex < totalRowCount; rowIndex++) {
-      const row: Record<string, any> = {};
-      let rowSize = 0;
-
-      for (const k of keys) {
-        const value = this.columns[k][rowIndex];
-        const serializedValue = this.serializeValue(value, k);
-        row[k] = serializedValue;
-        rowSize += JSON.stringify(serializedValue, Buffer.int64Replacer).length;
-      }
-
-      // Check if adding this row would exceed the size limit
-      if (currentSize + rowSize > maxSizeBytes && rowsProcessed > 0) {
-        break;
-      }
-
-      rows.push(row);
-      currentSize += rowSize;
-      rowsProcessed++;
-    }
+    const { rows, rowsProcessed, remainingRows } =
+      this.processRowsUpToSizeLimit(maxSizeBytes);
 
     if (rowsProcessed === 0) {
-      return { files: [], rowsProcessed: 0, remainingRows: totalRowCount };
+      return { files: [], rowsProcessed: 0, remainingRows };
     }
 
     const filePath = `${localPath}.json`;
-    const dir = path.dirname(filePath);
-    await fs.mkdir(dir, { recursive: true });
+    await this.writeJSONToFile(filePath, rows);
 
-    // Use custom replacer and post-process to handle int64
-    let json = JSON.stringify({ rows }, Buffer.int64Replacer, 2);
-    json = Buffer.replaceInt64Markers(json);
-    await fs.writeFile(filePath, json, 'utf-8');
-
-    const remainingRows = totalRowCount - rowsProcessed;
     return {
       files: [filePath],
       rowsProcessed,
@@ -272,40 +296,11 @@ export class Buffer {
     rowsProcessed: number;
     remainingRows: number;
   }> {
-    const keys = Object.keys(this.columns);
-    if (keys.length === 0) {
-      return { files: [], rowsProcessed: 0, remainingRows: 0 };
-    }
-
-    const totalRowCount = this.columns[keys[0]].length;
-    let rowsProcessed = 0;
-    let currentSize = 0;
-    const rows: Record<string, any>[] = [];
-
-    // Process rows until we reach the size limit
-    for (let rowIndex = 0; rowIndex < totalRowCount; rowIndex++) {
-      const row: Record<string, any> = {};
-      let rowSize = 0;
-
-      for (const k of keys) {
-        const value = this.columns[k][rowIndex];
-        const serializedValue = this.serializeValue(value, k);
-        row[k] = serializedValue;
-        rowSize += JSON.stringify(serializedValue, Buffer.int64Replacer).length;
-      }
-
-      // Check if adding this row would exceed the size limit
-      if (currentSize + rowSize > maxSizeBytes && rowsProcessed > 0) {
-        break;
-      }
-
-      rows.push(row);
-      currentSize += rowSize;
-      rowsProcessed++;
-    }
+    const { rows, rowsProcessed, remainingRows } =
+      this.processRowsUpToSizeLimit(maxSizeBytes);
 
     if (rowsProcessed === 0) {
-      return { files: [], rowsProcessed: 0, remainingRows: totalRowCount };
+      return { files: [], rowsProcessed: 0, remainingRows };
     }
 
     // For remote storage, we create a temporary local file that will be uploaded
@@ -319,16 +314,8 @@ export class Buffer {
     // This ensures files are created in the expected test-remote-path directory
     const tempFilePath = path.join(process.cwd(), tempFileName);
 
-    // Ensure temp directory exists
-    const tempDir = path.dirname(tempFilePath);
-    await fs.mkdir(tempDir, { recursive: true });
+    await this.writeJSONToFile(tempFilePath, rows);
 
-    // Write data to temporary file
-    let json = JSON.stringify({ rows }, Buffer.int64Replacer, 2);
-    json = Buffer.replaceInt64Markers(json);
-    await fs.writeFile(tempFilePath, json, 'utf-8');
-
-    const remainingRows = totalRowCount - rowsProcessed;
     return {
       files: [tempFilePath], // Return temp file path for upload
       rowsProcessed,
@@ -363,13 +350,7 @@ export class Buffer {
     }
 
     const filePath = `${localPath}.json`;
-    const dir = path.dirname(filePath);
-    await fs.mkdir(dir, { recursive: true });
-
-    // Use custom replacer and post-process to handle int64
-    let json = JSON.stringify({ rows }, Buffer.int64Replacer, 2);
-    json = Buffer.replaceInt64Markers(json);
-    await fs.writeFile(filePath, json, 'utf-8');
+    await this.writeJSONToFile(filePath, rows);
     return [filePath];
   }
 

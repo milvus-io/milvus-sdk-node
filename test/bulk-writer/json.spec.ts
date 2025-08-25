@@ -31,6 +31,7 @@ describe('Dynamic Field Int64 Handling (End-to-End)', () => {
         is_primary_key: false,
         autoID: false,
         is_function_output: false,
+        nullable: true, // Allow null values for JSON field
       } as FieldSchema,
       // Note: Dynamic field will handle all other extra fields
     ],
@@ -210,5 +211,422 @@ describe('Dynamic Field Int64 Handling (End-to-End)', () => {
     expect(content).toMatch(/"count":\s*100/);
     expect(content).toMatch(/"count":\s*200/);
     expect(content).toMatch(/"extra":\s*999999999999999999/);
+  });
+
+  it('should handle null values in JSON fields and dynamic fields', async () => {
+    tempDir = path.join(__dirname, test_data_folder, 'null_values_test');
+    const bulkWriter = new LocalBulkWriter({
+      schema,
+      localPath: tempDir,
+      fileType: BulkFileType.JSON,
+    });
+
+    const rowData = {
+      id: 1,
+      json_field: {
+        null_value: null,
+        nested_null: {
+          deep_null: null,
+          regular_value: 'test',
+        },
+        array_with_nulls: [null, 'value', null, 42],
+        mixed_nulls: {
+          null_field: null,
+          int64_field: BigInt('123456789'),
+          string_field: 'hello',
+        },
+      },
+      [DYNAMIC_FIELD_NAME]: {
+        top_level_null: null,
+        object_with_nulls: {
+          field1: null,
+          field2: 'not null',
+          field3: null,
+        },
+        array_nulls: [null, null, 'last'],
+        null_in_middle: [1, null, 3],
+      },
+    };
+
+    bulkWriter.appendRow(rowData);
+    await bulkWriter.commit();
+
+    const files = bulkWriter.batchFiles;
+    expect(files.length).toBe(1);
+    const filePath = files[0];
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+
+    expect(data.rows.length).toBe(1);
+    const row = data.rows[0];
+
+    // Verify null values are preserved in JSON field
+    expect(row.json_field.null_value).toBeNull();
+    expect(row.json_field.nested_null.deep_null).toBeNull();
+    expect(row.json_field.nested_null.regular_value).toBe('test');
+    expect(row.json_field.array_with_nulls).toEqual([null, 'value', null, 42]);
+    expect(row.json_field.mixed_nulls.null_field).toBeNull();
+    expect(row.json_field.mixed_nulls.int64_field).toBe(123456789);
+    expect(row.json_field.mixed_nulls.string_field).toBe('hello');
+
+    // Verify null values are preserved in dynamic field
+    expect(row[DYNAMIC_FIELD_NAME].top_level_null).toBeNull();
+    expect(row[DYNAMIC_FIELD_NAME].object_with_nulls.field1).toBeNull();
+    expect(row[DYNAMIC_FIELD_NAME].object_with_nulls.field2).toBe('not null');
+    expect(row[DYNAMIC_FIELD_NAME].object_with_nulls.field3).toBeNull();
+    expect(row[DYNAMIC_FIELD_NAME].array_nulls).toEqual([null, null, 'last']);
+    expect(row[DYNAMIC_FIELD_NAME].null_in_middle).toEqual([1, null, 3]);
+
+    // Verify raw JSON contains null values
+    expect(content).toMatch(/"null_value":\s*null/);
+    expect(content).toMatch(/"deep_null":\s*null/);
+    expect(content).toMatch(/"top_level_null":\s*null/);
+    expect(content).toMatch(/"field1":\s*null/);
+  });
+
+  it('should handle empty objects and arrays', async () => {
+    tempDir = path.join(__dirname, test_data_folder, 'empty_objects_test');
+    const bulkWriter = new LocalBulkWriter({
+      schema,
+      localPath: tempDir,
+      fileType: BulkFileType.JSON,
+    });
+
+    const rowData = {
+      id: 1,
+      json_field: {
+        empty_object: {},
+        empty_array: [],
+        nested_empty: {
+          empty_nested_object: {},
+          empty_nested_array: [],
+          mixed: {
+            empty: {},
+            with_values: {
+              int64_val: BigInt('987654321'),
+              string_val: 'test',
+            },
+          },
+        },
+        mixed_empty: {
+          populated: 'value',
+          empty: {},
+        },
+      },
+      [DYNAMIC_FIELD_NAME]: {
+        dynamic_empty: {},
+        dynamic_empty_array: [],
+        dynamic_mixed: {
+          empty_part: {},
+          filled_part: {
+            count: Long.fromString('555'),
+            name: 'dynamic',
+          },
+        },
+      },
+    };
+
+    bulkWriter.appendRow(rowData);
+    await bulkWriter.commit();
+
+    const files = bulkWriter.batchFiles;
+    expect(files.length).toBe(1);
+    const filePath = files[0];
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+
+    expect(data.rows.length).toBe(1);
+    const row = data.rows[0];
+
+    // Verify empty objects and arrays are preserved
+    expect(row.json_field.empty_object).toEqual({});
+    expect(row.json_field.empty_array).toEqual([]);
+    expect(row.json_field.nested_empty.empty_nested_object).toEqual({});
+    expect(row.json_field.nested_empty.empty_nested_array).toEqual([]);
+    expect(row.json_field.nested_empty.mixed.empty).toEqual({});
+    expect(row.json_field.nested_empty.mixed.with_values.int64_val).toBe(
+      987654321
+    );
+    expect(row.json_field.nested_empty.mixed.with_values.string_val).toBe(
+      'test'
+    );
+    expect(row.json_field.mixed_empty.populated).toBe('value');
+    expect(row.json_field.mixed_empty.empty).toEqual({});
+
+    // Verify dynamic field empty objects and arrays
+    expect(row[DYNAMIC_FIELD_NAME].dynamic_empty).toEqual({});
+    expect(row[DYNAMIC_FIELD_NAME].dynamic_empty_array).toEqual([]);
+    expect(row[DYNAMIC_FIELD_NAME].dynamic_mixed.empty_part).toEqual({});
+    expect(row[DYNAMIC_FIELD_NAME].dynamic_mixed.filled_part.count).toBe(555);
+    expect(row[DYNAMIC_FIELD_NAME].dynamic_mixed.filled_part.name).toBe(
+      'dynamic'
+    );
+
+    // Verify raw JSON contains empty structures
+    expect(content).toMatch(/"empty_object":\s*\{\}/);
+    expect(content).toMatch(/"empty_array":\s*\[\]/);
+    expect(content).toMatch(/"dynamic_empty":\s*\{\}/);
+    expect(content).toMatch(/"dynamic_empty_array":\s*\[\]/);
+  });
+
+  it('should handle null as top-level JSON field value', async () => {
+    tempDir = path.join(__dirname, test_data_folder, 'top_level_null_test');
+    const bulkWriter = new LocalBulkWriter({
+      schema,
+      localPath: tempDir,
+      fileType: BulkFileType.JSON,
+    });
+
+    const rowData = {
+      id: 1,
+      json_field: null, // Top-level null
+      [DYNAMIC_FIELD_NAME]: {
+        regular_field: 'value',
+        null_field: null,
+      },
+    };
+
+    bulkWriter.appendRow(rowData);
+    await bulkWriter.commit();
+
+    const files = bulkWriter.batchFiles;
+    expect(files.length).toBe(1);
+    const filePath = files[0];
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+
+    expect(data.rows.length).toBe(1);
+    const row = data.rows[0];
+
+    // Verify top-level null is preserved
+    expect(row.json_field).toBeNull();
+    expect(row[DYNAMIC_FIELD_NAME].regular_field).toBe('value');
+    expect(row[DYNAMIC_FIELD_NAME].null_field).toBeNull();
+
+    // Verify raw JSON contains null
+    expect(content).toMatch(/"json_field":\s*null/);
+  });
+
+  it('should handle complex nested structures with nulls and empty objects', async () => {
+    tempDir = path.join(__dirname, test_data_folder, 'complex_nested_test');
+    const bulkWriter = new LocalBulkWriter({
+      schema,
+      localPath: tempDir,
+      fileType: BulkFileType.JSON,
+    });
+
+    const rowData = {
+      id: 1,
+      json_field: {
+        level1: {
+          level2: {
+            level3: {
+              null_value: null,
+              empty_object: {},
+              empty_array: [],
+              int64_value: BigInt('1234567890123456789'),
+              string_value: 'deep nested',
+            },
+            level2_null: null,
+            level2_empty: {},
+          },
+          level1_array: [
+            null,
+            {},
+            [],
+            BigInt('999999999999999999'),
+            'array item',
+            {
+              nested_in_array: null,
+              nested_object: {
+                final_value: Long.fromString('888'),
+              },
+            },
+          ],
+        },
+      },
+      [DYNAMIC_FIELD_NAME]: {
+        dynamic_nested: {
+          null_at_depth: {
+            deeper: {
+              deepest: null,
+            },
+          },
+          empty_structures: {
+            empty_obj: {},
+            empty_arr: [],
+          },
+          mixed_content: {
+            null_val: null,
+            int64_val: Long.fromString('777'),
+            string_val: 'mixed',
+            empty_obj: {},
+          },
+        },
+      },
+    };
+
+    bulkWriter.appendRow(rowData);
+    await bulkWriter.commit();
+
+    const files = bulkWriter.batchFiles;
+    expect(files.length).toBe(1);
+    const filePath = files[0];
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+
+    expect(data.rows.length).toBe(1);
+    const row = data.rows[0];
+
+    // Verify complex nested structure
+    expect(row.json_field.level1.level2.level3.null_value).toBeNull();
+    expect(row.json_field.level1.level2.level3.empty_object).toEqual({});
+    expect(row.json_field.level1.level2.level3.empty_array).toEqual([]);
+    expect(row.json_field.level1.level2.level3.int64_value).toBe(
+      1234567890123456789
+    );
+    expect(row.json_field.level1.level2.level3.string_value).toBe(
+      'deep nested'
+    );
+    expect(row.json_field.level1.level2.level2_null).toBeNull();
+    expect(row.json_field.level1.level2.level2_empty).toEqual({});
+
+    // Verify array with mixed content
+    expect(row.json_field.level1.level1_array[0]).toBeNull();
+    expect(row.json_field.level1.level1_array[1]).toEqual({});
+    expect(row.json_field.level1.level1_array[2]).toEqual([]);
+    expect(row.json_field.level1.level1_array[3]).toBe(999999999999999999);
+    expect(row.json_field.level1.level1_array[4]).toBe('array item');
+    expect(row.json_field.level1.level1_array[5].nested_in_array).toBeNull();
+    expect(
+      row.json_field.level1.level1_array[5].nested_object.final_value
+    ).toBe(888);
+
+    // Verify dynamic field complex structure
+    expect(
+      row[DYNAMIC_FIELD_NAME].dynamic_nested.null_at_depth.deeper.deepest
+    ).toBeNull();
+    expect(
+      row[DYNAMIC_FIELD_NAME].dynamic_nested.empty_structures.empty_obj
+    ).toEqual({});
+    expect(
+      row[DYNAMIC_FIELD_NAME].dynamic_nested.empty_structures.empty_arr
+    ).toEqual([]);
+    expect(
+      row[DYNAMIC_FIELD_NAME].dynamic_nested.mixed_content.null_val
+    ).toBeNull();
+    expect(row[DYNAMIC_FIELD_NAME].dynamic_nested.mixed_content.int64_val).toBe(
+      777
+    );
+    expect(
+      row[DYNAMIC_FIELD_NAME].dynamic_nested.mixed_content.string_val
+    ).toBe('mixed');
+    expect(
+      row[DYNAMIC_FIELD_NAME].dynamic_nested.mixed_content.empty_obj
+    ).toEqual({});
+
+    // Verify raw JSON contains all the expected structures
+    expect(content).toMatch(/"null_value":\s*null/);
+    expect(content).toMatch(/"empty_object":\s*\{\}/);
+    expect(content).toMatch(/"empty_array":\s*\[\]/);
+    expect(content).toMatch(/"deepest":\s*null/);
+    expect(content).toMatch(/"empty_obj":\s*\{\}/);
+    expect(content).toMatch(/"empty_arr":\s*\[\]/);
+  });
+
+  it('should handle edge cases and special values', async () => {
+    tempDir = path.join(__dirname, test_data_folder, 'edge_cases_test');
+    const bulkWriter = new LocalBulkWriter({
+      schema,
+      localPath: tempDir,
+      fileType: BulkFileType.JSON,
+    });
+
+    const rowData = {
+      id: 1,
+      json_field: {
+        empty_string: '',
+        zero_number: 0,
+        negative_zero: -0,
+        infinity: Infinity,
+        negative_infinity: -Infinity,
+        nan: NaN,
+        boolean_true: true,
+        boolean_false: false,
+        undefined_placeholder: null, // JSON doesn't support undefined, so we use null
+        very_large_number: 9007199254740993, // Beyond JS safe integer (MAX_SAFE_INTEGER + 2)
+        very_small_number: -9007199254740993, // Beyond JS safe integer (MIN_SAFE_INTEGER - 2)
+      },
+      [DYNAMIC_FIELD_NAME]: {
+        edge_strings: ['', '   ', '\n', '\t', '\\', '"', '\\"'],
+        edge_numbers: [0, -0, 1e-10, 1e10, -1e10],
+        edge_booleans: [true, false],
+        mixed_edge: {
+          empty: '',
+          space: ' ',
+          tab: '\t',
+          newline: '\n',
+          backslash: '\\',
+          quote: '"',
+          escaped_quote: '\\"',
+        },
+      },
+    };
+
+    bulkWriter.appendRow(rowData);
+    await bulkWriter.commit();
+
+    const files = bulkWriter.batchFiles;
+    expect(files.length).toBe(1);
+    const filePath = files[0];
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+
+    expect(data.rows.length).toBe(1);
+    const row = data.rows[0];
+
+    // Verify edge case values are handled correctly
+    expect(row.json_field.empty_string).toBe('');
+    expect(row.json_field.zero_number).toBe(0);
+    expect(row.json_field.negative_zero).toBe(0); // JSON doesn't distinguish -0 from 0
+    expect(row.json_field.infinity).toBe(null); // JSON doesn't support Infinity, becomes null
+    expect(row.json_field.negative_infinity).toBe(null); // JSON doesn't support -Infinity, becomes null
+    expect(row.json_field.nan).toBe(null); // JSON doesn't support NaN, becomes null
+    expect(row.json_field.boolean_true).toBe(true);
+    expect(row.json_field.boolean_false).toBe(false);
+    expect(row.json_field.undefined_placeholder).toBeNull();
+
+    // Very large/small numbers should be number
+    expect(typeof row.json_field.very_large_number).toBe('number');
+    expect(typeof row.json_field.very_small_number).toBe('number');
+
+    // Verify dynamic field edge cases
+    expect(row[DYNAMIC_FIELD_NAME].edge_strings).toEqual([
+      '',
+      '   ',
+      '\n',
+      '\t',
+      '\\',
+      '"',
+      '\\"',
+    ]);
+    expect(row[DYNAMIC_FIELD_NAME].edge_numbers).toEqual([
+      0, 0, 1e-10, 1e10, -1e10,
+    ]); // -0 becomes 0
+    expect(row[DYNAMIC_FIELD_NAME].edge_booleans).toEqual([true, false]);
+    expect(row[DYNAMIC_FIELD_NAME].mixed_edge.empty).toBe('');
+    expect(row[DYNAMIC_FIELD_NAME].mixed_edge.space).toBe(' ');
+    expect(row[DYNAMIC_FIELD_NAME].mixed_edge.tab).toBe('\t');
+    expect(row[DYNAMIC_FIELD_NAME].mixed_edge.newline).toBe('\n');
+    expect(row[DYNAMIC_FIELD_NAME].mixed_edge.backslash).toBe('\\');
+    expect(row[DYNAMIC_FIELD_NAME].mixed_edge.quote).toBe('"');
+    expect(row[DYNAMIC_FIELD_NAME].mixed_edge.escaped_quote).toBe('\\"');
+
+    // Verify raw JSON contains the expected values
+    expect(content).toMatch(/"empty_string":\s*""/);
+    expect(content).toMatch(/"zero_number":\s*0/);
+    expect(content).toMatch(/"boolean_true":\s*true/);
+    expect(content).toMatch(/"boolean_false":\s*false/);
+    expect(content).toMatch(/"undefined_placeholder":\s*null/);
   });
 });
