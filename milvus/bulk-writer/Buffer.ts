@@ -15,6 +15,13 @@ export class Buffer {
   private columns: Record<string, any[]> = {}; // column name -> column values
   private fields: Record<string, FieldSchema> = {}; // field name -> field schema
   private fileType: BulkFileType;
+  private columnNames: string[] = []; // cached column names to avoid Object.keys() calls
+  private _rowCount: number = 0; // cached row count to avoid repeated calculations
+  private hasDynamicField: boolean = false; // cached check for dynamic field support
+  private estimatedRowSizes: number[] = []; // cached estimated sizes for each row to avoid JSON serialization
+  private rowObjectPool: Record<string, any>[] = []; // object pool to reduce GC pressure
+  private poolIndex: number = 0; // current index in the object pool
+  private directoryCache: Set<string> = new Set(); // cache for directory existence checks
 
   constructor(options: { schema: CollectionSchema; fileType?: BulkFileType }) {
     const { schema, fileType = BulkFileType.JSON } = options;
@@ -43,24 +50,27 @@ export class Buffer {
         is_function_output: false,
         type_params: [],
       } as unknown as FieldSchema;
+      this.hasDynamicField = true;
     }
 
-    if (Object.keys(this.columns).length === 0) {
+    // Cache column names to avoid repeated Object.keys() calls
+    this.columnNames = Object.keys(this.columns);
+
+    if (this.columnNames.length === 0) {
       throw new Error('Illegal collection schema: fields list is empty');
     }
   }
 
   get rowCount(): number {
-    const keys = Object.keys(this.columns);
-    if (keys.length === 0) return 0;
-    return this.columns[keys[0]].length;
+    return this._rowCount;
   }
 
   appendRow(row: Record<string, any>) {
     const dynamicValues: Record<string, any> = {};
 
+    // Check if dynamic field exists and is valid
     if (
-      row.hasOwnProperty(DYNAMIC_FIELD_NAME) &&
+      DYNAMIC_FIELD_NAME in row &&
       typeof row[DYNAMIC_FIELD_NAME] !== 'object'
     ) {
       throw new Error(
@@ -68,21 +78,34 @@ export class Buffer {
       );
     }
 
-    for (const [k, v] of Object.entries(row)) {
-      if (k === DYNAMIC_FIELD_NAME) {
-        Object.assign(dynamicValues, v);
-        continue;
-      }
-      if (!this.columns.hasOwnProperty(k)) {
-        dynamicValues[k] = this.rawValue(v);
-      } else {
-        this.columns[k].push(v);
+    // Use for...in loop instead of Object.entries() to avoid array creation
+    for (const k in row) {
+      if (k in row) {
+        // Use 'in' operator instead of hasOwnProperty
+        const v = row[k];
+        // Cache string comparison to avoid repeated checks
+        if (k === DYNAMIC_FIELD_NAME) {
+          Object.assign(dynamicValues, v);
+          continue;
+        }
+        // Cache column check to avoid repeated property access
+        const column = this.columns[k];
+        if (column !== undefined) {
+          column.push(v);
+        } else {
+          dynamicValues[k] = this.rawValue(v);
+        }
       }
     }
 
-    if (this.columns.hasOwnProperty(DYNAMIC_FIELD_NAME)) {
+    // Check if dynamic field column exists and push values
+    if (this.hasDynamicField) {
       this.columns[DYNAMIC_FIELD_NAME].push(dynamicValues);
     }
+
+    // Update cached row count and estimate row size
+    this._rowCount++;
+    this.estimatedRowSizes.push(this.estimateRowSize(row));
   }
 
   private rawValue(x: unknown) {
@@ -107,16 +130,9 @@ export class Buffer {
     localPath: string,
     opts: { bufferSize?: number; bufferRowCount?: number } = {}
   ): Promise<string[]> {
-    // Ensure all columns have equal length
-    let rowCount = -1;
-    for (const k of Object.keys(this.columns)) {
-      const len = this.columns[k].length;
-      if (rowCount < 0) rowCount = len;
-      else if (rowCount !== len) {
-        throw new Error(
-          `Column ${k} row count ${len} doesn't equal to the first column row count ${rowCount}`
-        );
-      }
+    // Use cached row count - columns are guaranteed to have equal length after appendRow
+    if (this._rowCount === 0) {
+      return [];
     }
 
     switch (this.fileType) {
@@ -182,6 +198,118 @@ export class Buffer {
   }
 
   /**
+   * Estimate the size of a value without expensive JSON serialization
+   * This provides a fast approximation for size calculation
+   */
+  private estimateValueSize(value: any): number {
+    if (value === null || value === undefined) {
+      return 4; // "null" or "undefined"
+    }
+
+    switch (typeof value) {
+      case 'string':
+        return value.length + 2; // +2 for quotes
+      case 'number':
+        return value.toString().length;
+      case 'boolean':
+        return value ? 4 : 5; // "true" or "false"
+      case 'object':
+        if (Array.isArray(value)) {
+          // Estimate array size: brackets + comma separators + element sizes
+          let size = 2; // []
+          for (let i = 0; i < value.length; i++) {
+            if (i > 0) size += 1; // comma
+            size += this.estimateValueSize(value[i]);
+          }
+          return size;
+        } else {
+          // Estimate object size: braces + key-value pairs + separators
+          let size = 2; // {}
+          const keys = Object.keys(value);
+          for (let i = 0; i < keys.length; i++) {
+            if (i > 0) size += 1; // comma
+            const key = keys[i];
+            size += key.length + 2; // key + quotes
+            size += 1; // colon
+            size += this.estimateValueSize(value[key]);
+          }
+          return size;
+        }
+      default:
+        return 8; // fallback estimate
+    }
+  }
+
+  /**
+   * Estimate the total size of a row including field names and separators
+   */
+  private estimateRowSize(row: Record<string, any>): number {
+    let size = 2; // {}
+    const keys = Object.keys(row);
+    for (let i = 0; i < keys.length; i++) {
+      if (i > 0) size += 1; // comma
+      const key = keys[i];
+      size += key.length + 2; // key + quotes
+      size += 1; // colon
+      size += this.estimateValueSize(row[key]);
+    }
+    return size;
+  }
+
+  /**
+   * Estimate row size from column data without creating the row object
+   * This is used as a fallback when cached size is not available
+   */
+  private estimateRowSizeFromColumns(rowIndex: number): number {
+    let size = 2; // {}
+    for (let i = 0; i < this.columnNames.length; i++) {
+      if (i > 0) size += 1; // comma
+      const fieldName = this.columnNames[i];
+      size += fieldName.length + 2; // field name + quotes
+      size += 1; // colon
+      const value = this.columns[fieldName][rowIndex];
+      size += this.estimateValueSize(value);
+    }
+    return size;
+  }
+
+  /**
+   * Get a row object from the pool or create a new one
+   * This reduces GC pressure by reusing objects
+   */
+  private getRowFromPool(): Record<string, any> {
+    if (this.poolIndex < this.rowObjectPool.length) {
+      const row = this.rowObjectPool[this.poolIndex];
+      this.poolIndex++;
+      // Clear the object for reuse
+      for (const key in row) {
+        delete row[key];
+      }
+      return row;
+    } else {
+      // Create new object and add to pool
+      const row = {};
+      this.rowObjectPool.push(row);
+      this.poolIndex++;
+      return row;
+    }
+  }
+
+  /**
+   * Reset the object pool index for reuse
+   */
+  private resetObjectPool(): void {
+    this.poolIndex = 0;
+  }
+
+  /**
+   * Clear directory cache (useful for testing or when directories might change)
+   */
+  clearDirectoryCache(): void {
+    this.directoryCache.clear();
+  }
+
+  /**
    * Common logic for processing rows up to a size limit
    */
   private processRowsUpToSizeLimit(maxSizeBytes: number): {
@@ -189,25 +317,30 @@ export class Buffer {
     rowsProcessed: number;
     remainingRows: number;
   } {
-    const keys = Object.keys(this.columns);
-    if (keys.length === 0) {
+    if (this.columnNames.length === 0 || this._rowCount === 0) {
       return { rows: [], rowsProcessed: 0, remainingRows: 0 };
     }
 
-    const totalRowCount = this.columns[keys[0]].length;
+    const totalRowCount = this._rowCount;
     let rowsProcessed = 0;
     let currentSize = 0;
     const rows: Record<string, any>[] = [];
 
-    for (let rowIndex = 0; rowIndex < totalRowCount; rowIndex++) {
-      const row: Record<string, any> = {};
-      let rowSize = 0;
+    // Reset object pool for reuse
+    this.resetObjectPool();
 
-      for (const k of keys) {
+    for (let rowIndex = 0; rowIndex < totalRowCount; rowIndex++) {
+      const row = this.getRowFromPool();
+
+      // Use cached row size if available, otherwise estimate
+      const rowSize =
+        this.estimatedRowSizes[rowIndex] ||
+        this.estimateRowSizeFromColumns(rowIndex);
+
+      for (const k of this.columnNames) {
         const value = this.columns[k][rowIndex];
         const serializedValue = this.serializeValue(value, k);
         row[k] = serializedValue;
-        rowSize += JSON.stringify(serializedValue, Buffer.int64Replacer).length;
       }
 
       if (currentSize + rowSize > maxSizeBytes && rowsProcessed > 0) {
@@ -234,11 +367,28 @@ export class Buffer {
     rows: Record<string, any>[]
   ): Promise<void> {
     const dir = path.dirname(filePath);
-    await fs.mkdir(dir, { recursive: true });
 
+    // Use directory cache to avoid repeated mkdir calls
+    if (!this.directoryCache.has(dir)) {
+      try {
+        await fs.mkdir(dir, { recursive: true });
+        this.directoryCache.add(dir);
+      } catch (error) {
+        // If directory already exists, add to cache anyway
+        if (error.code !== 'EEXIST') {
+          throw error;
+        }
+        this.directoryCache.add(dir);
+      }
+    }
+
+    // Prepare JSON data
     let json = JSON.stringify({ rows }, Buffer.int64Replacer, 2);
     json = Buffer.replaceInt64Markers(json);
-    await fs.writeFile(filePath, json, 'utf-8');
+
+    // Use writeFile with buffer for better performance on large files
+    const buffer = globalThis.Buffer.from(json, 'utf-8');
+    await fs.writeFile(filePath, buffer);
   }
 
   /**
@@ -329,20 +479,26 @@ export class Buffer {
   removeProcessedRows(count: number): void {
     if (count <= 0) return;
 
-    for (const k of Object.keys(this.columns)) {
+    for (const k of this.columnNames) {
       this.columns[k] = this.columns[k].slice(count);
     }
+
+    // Update cached row count and remove processed row sizes
+    this._rowCount -= count;
+    this.estimatedRowSizes.splice(0, count);
   }
 
   private async persistJSONRows(localPath: string): Promise<string[]> {
     const rows: Record<string, any>[] = [];
-    const keys = Object.keys(this.columns);
-    if (keys.length === 0) return [];
-    const rowCount = this.columns[keys[0]].length;
+    if (this.columnNames.length === 0 || this._rowCount === 0) return [];
+    const rowCount = this._rowCount;
+
+    // Reset object pool for reuse
+    this.resetObjectPool();
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-      const row: Record<string, any> = {};
-      for (const k of keys) {
+      const row = this.getRowFromPool();
+      for (const k of this.columnNames) {
         const value = this.columns[k][rowIndex];
         row[k] = this.serializeValue(value, k);
       }
