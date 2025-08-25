@@ -6,6 +6,7 @@ export * from './SparseFloatVector';
 export * from './Float16Vector';
 export * from './BFloat16Vector';
 export * from './Array';
+export * from './JSON';
 
 import { validateInt64Field, validateInt64Array } from './Int64';
 
@@ -18,26 +19,6 @@ export function validateVarchar(
     throw new Error(`Invalid varchar: expected string length <= ${maxLength}`);
   }
   return { value: x, size: x.length };
-}
-
-export function validateJSON(
-  x: unknown,
-  field: any
-): { value: any; size: number } {
-  if (
-    !(
-      typeof x === 'string' ||
-      Array.isArray(x) ||
-      (!!x && typeof x === 'object')
-    )
-  ) {
-    throw new Error(`Invalid JSON value for field '${field.name}'`);
-  }
-  // Return a copy to avoid reference issues
-  return {
-    value: JSON.parse(JSON.stringify(x)),
-    size: JSON.stringify(x).length,
-  };
 }
 
 export function validateArray(

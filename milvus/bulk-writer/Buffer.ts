@@ -5,6 +5,7 @@ import { DataType } from '..';
 import { BulkFileType, DYNAMIC_FIELD_NAME } from './constants';
 import Long from 'long';
 import { validateInt64Field } from './validators/Int64';
+import { validateJSON } from './validators/JSON';
 
 /**
  * In-memory columnar buffer aligned with collection schema.
@@ -380,7 +381,13 @@ export class Buffer {
     // Handle field-specific serialization first
     if (fieldName && this.fields[fieldName]) {
       const field = this.fields[fieldName];
-
+      // Always treat DYNAMIC_FIELD_NAME as JSON
+      if (
+        fieldName === DYNAMIC_FIELD_NAME ||
+        field.dataType === DataType.JSON
+      ) {
+        return validateJSON(value, field).value;
+      }
       switch (field.dataType) {
         case DataType.Int64:
           // Use pure function validator
@@ -393,7 +400,6 @@ export class Buffer {
           break;
       }
     }
-
     // Handle general serialization for all other cases
     return this.serializeGeneralValue(value);
   }
