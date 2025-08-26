@@ -15,6 +15,7 @@ export class LocalBulkWriter extends BulkWriter {
   private flushCount = 0;
   private localFiles: string[] = [];
   private cleanupOnExit: boolean;
+  private isAsyncFlushing = false; // Prevent concurrent async flushes
 
   constructor(options: LocalBulkWriterOptions) {
     const {
@@ -50,8 +51,11 @@ export class LocalBulkWriter extends BulkWriter {
   appendRow(row: Record<string, any>): void {
     super.appendRow(row);
 
-    // Auto-flush when buffer size exceeds chunk size
-    if (this.currentBufferSize > this.currentChunkSize) {
+    // Auto-flush when buffer size exceeds chunk size, but only if not already flushing
+    if (
+      this.currentBufferSize > this.currentChunkSize &&
+      !this.isAsyncFlushing
+    ) {
       this.flushBuffer({ async: true });
     }
   }
@@ -64,6 +68,7 @@ export class LocalBulkWriter extends BulkWriter {
 
     // Flush any remaining data in the buffer
     if (this.currentBufferSize > 0) {
+      // console.log('Flushing buffer', this.currentBufferSize);
       await this.flushBuffer({ async, callback });
     }
   }
@@ -75,6 +80,13 @@ export class LocalBulkWriter extends BulkWriter {
     const { async = false, callback } = options;
 
     if (async) {
+      // Prevent concurrent async flushes
+      if (this.isAsyncFlushing) {
+        return;
+      }
+
+      this.isAsyncFlushing = true;
+
       // Fire and forget - don't await, return immediately
       setImmediate(async () => {
         try {
@@ -83,7 +95,9 @@ export class LocalBulkWriter extends BulkWriter {
           this.bufferSize = 0;
           this.bufferRowCount = 0;
         } catch (error) {
-          console.error('Async flush failed:', error);
+          // console.error('Async flush failed:', error);
+        } finally {
+          this.isAsyncFlushing = false;
         }
       });
       return; // Return immediately for async mode
@@ -125,6 +139,8 @@ export class LocalBulkWriter extends BulkWriter {
           }
         );
 
+        // console.log(`Chunk ${this.flushCount}: files=${result.files.length}, rowsProcessed=${result.rowsProcessed}, remainingRows=${result.remainingRows}, bufferRows=${this.buffer.rowCount}`);
+
         if (result.files.length > 0) {
           allFiles.push(...result.files);
           totalRowsProcessed += result.rowsProcessed;
@@ -132,14 +148,14 @@ export class LocalBulkWriter extends BulkWriter {
           // Remove processed rows from the buffer
           this.buffer.removeProcessedRows(result.rowsProcessed);
 
-          // console.log(`Flushed chunk ${this.flushCount}: ${result.rowsProcessed} rows, ${result.files.length} files, remaining: ${result.remainingRows} rows`);
-
-          // If no rows were processed or no remaining rows, break to avoid infinite loop
-          if (result.rowsProcessed === 0 || result.remainingRows === 0) {
+          // If no rows were processed, break to avoid infinite loop
+          if (result.rowsProcessed === 0) {
+            console.log(`Breaking loop: rowsProcessed=${result.rowsProcessed}`);
             break;
           }
         } else {
           // No files were created, break to avoid infinite loop
+          // console.log(`Breaking loop: no files created`);
           break;
         }
       } catch (error) {
@@ -184,7 +200,7 @@ export class LocalBulkWriter extends BulkWriter {
             await fs.rename(filePath, targetPath);
           }
         } catch (error) {
-          console.warn(`Failed to preserve file ${filePath}:`, error);
+          // console.warn(`Failed to preserve file ${filePath}:`, error);
         }
       }
 
