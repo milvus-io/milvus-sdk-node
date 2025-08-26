@@ -1,5 +1,5 @@
 import { CollectionSchema, FieldSchema } from '../types/Collection';
-import { BulkFileType, TYPE_SIZE } from './constants';
+import { BulkFileType, TYPE_SIZE, DYNAMIC_FIELD_NAME } from './constants';
 import {
   validateFloatVector,
   validateBinaryVector,
@@ -59,6 +59,28 @@ export abstract class BulkWriter {
       throw new Error('Primary field is required');
     }
 
+    // Add dynamic field to schema if enabled
+    if (this.schema.enable_dynamic_field) {
+      this.schema.fields.push({
+        name: DYNAMIC_FIELD_NAME,
+        description: '',
+        data_type: 'JSON',
+        dataType: DataType.JSON,
+        index_params: [],
+        fieldID: -1,
+        is_primary_key: false,
+        autoID: false,
+        state: '',
+        is_function_output: false,
+        is_dynamic: true,
+        nullable: true,
+        default_value: undefined,
+        element_type: undefined,
+        dim: undefined,
+        type_params: [],
+      } as FieldSchema);
+    }
+
     this.newBuffer();
   }
 
@@ -83,11 +105,14 @@ export abstract class BulkWriter {
    * Validates data against schema before buffering.
    */
   appendRow(row: Record<string, any>): void {
-    this.verifyRow(row);
+    // Pre-process dynamic fields before validation
+    const processedRow = this.preprocessDynamicFields(row);
+
+    this.verifyRow(processedRow);
 
     if (this.buffer) {
-      this.buffer.appendRow(row);
-      this.bufferSize += this.estimateRowSize(row);
+      this.buffer.appendRow(processedRow);
+      this.bufferSize += this.estimateRowSize(processedRow);
       this.bufferRowCount++;
       this.totalRowCount++;
     }
@@ -102,6 +127,52 @@ export abstract class BulkWriter {
    * Get the data path where files are stored.
    */
   abstract get dataPath(): string;
+
+  /**
+   * Pre-process dynamic fields in the row data.
+   * Collects unknown fields into the dynamic field structure.
+   */
+  private preprocessDynamicFields(
+    row: Record<string, any>
+  ): Record<string, any> {
+    if (!this.schema.enable_dynamic_field) {
+      return row;
+    }
+
+    const processedRow: Record<string, any> = {};
+    const dynamicValues: Record<string, any> = {};
+
+    // Process each field in the row
+    for (const key in row) {
+      if (key in row) {
+        const value = row[key];
+
+        // Check if this is a known schema field
+        const isKnownField = this.schema.fields.some(
+          field => field.name === key && field.name !== DYNAMIC_FIELD_NAME
+        );
+
+        if (isKnownField) {
+          processedRow[key] = value;
+        } else if (key === DYNAMIC_FIELD_NAME) {
+          // If the field is already $meta, merge its contents with dynamic values
+          if (typeof value === 'object' && value !== null) {
+            Object.assign(dynamicValues, value);
+          }
+        } else {
+          // This is a dynamic field, add to dynamic values
+          dynamicValues[key] = value;
+        }
+      }
+    }
+
+    // Add dynamic field if there are any dynamic values
+    if (Object.keys(dynamicValues).length > 0) {
+      processedRow[DYNAMIC_FIELD_NAME] = dynamicValues;
+    }
+
+    return processedRow;
+  }
 
   /**
    * Create a new buffer instance.
@@ -122,7 +193,10 @@ export abstract class BulkWriter {
 
     let rowSize = 0;
 
-    for (const field of this.schema.fields) {
+    // Use schema fields directly since dynamic field is already added
+    const fieldsToValidate = this.schema.fields;
+
+    for (const field of fieldsToValidate) {
       if (field.is_primary_key && field.autoID) {
         if (row.hasOwnProperty(field.name)) {
           throw new Error(

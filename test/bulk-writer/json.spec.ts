@@ -84,6 +84,18 @@ describe('Dynamic Field Int64 Handling (End-to-End)', () => {
         },
         array_with_int64: [BigInt(1), Long.fromString('2'), '3', 4],
       },
+      dynmaic_int64: BigInt('9223372036854775807'),
+      dynmaic_long: Long.fromString('1234567890'),
+      dynmaic_string: '123',
+      dynmaic_unsafe_number: 9007199254740992, // Beyond JS safe integer
+      dynmaic_negative_bigint: BigInt('-9223372036854775808'),
+      dynmaic_regular_string: 'not-a-number',
+      dynmaic_float_val: 3.14,
+      dynmaic_nested_obj: {
+        dynmaic_nested_bigint: BigInt('123456789'),
+        dynmaic_nested_long: Long.fromString('987654321'),
+      },
+      dynmaic_array_with_int64: [BigInt(1), Long.fromString('2'), '3', 4],
     };
 
     bulkWriter.appendRow(rowData);
@@ -136,6 +148,20 @@ describe('Dynamic Field Int64 Handling (End-to-End)', () => {
     // BigInt(1) -> int64 -> 1, Long.fromString('2') -> int64 -> 2, '3' -> string, 4 -> number
     expect(dynamicField.array_with_int64).toEqual([1, 2, '3', 4]);
 
+    // Dynamic field int64 values
+    expect(dynamicField.dynmaic_int64).toBe(9223372036854775807);
+    expect(dynamicField.dynmaic_long).toBe(1234567890);
+    expect(dynamicField.dynmaic_string).toBe('123');
+    expect(dynamicField.dynmaic_unsafe_number).toBe(9007199254740992);
+    expect(dynamicField.dynmaic_negative_bigint).toBe(-9223372036854775808);
+    expect(dynamicField.dynmaic_regular_string).toBe('not-a-number');
+    expect(dynamicField.dynmaic_float_val).toBe(3.14);
+    expect(dynamicField.dynmaic_nested_obj.dynmaic_nested_bigint).toBe(
+      123456789
+    );
+    expect(dynamicField.dynmaic_nested_obj.dynmaic_nested_long).toBe(987654321);
+    expect(dynamicField.dynmaic_array_with_int64).toEqual([1, 2, '3', 4]);
+
     // Verify the raw JSON string contains int64 values without quotes
     // This confirms the Buffer.int64Replacer + replaceInt64Markers worked correctly
 
@@ -149,6 +175,23 @@ describe('Dynamic Field Int64 Handling (End-to-End)', () => {
     expect(content).toMatch(/"json_bigint":\s*1234567890123456789/);
     expect(content).toMatch(/"json_long":\s*9876543210/);
     expect(content).toMatch(/"json_deep_bigint":\s*555555555555555555/);
+
+    // Dynamic field int64 values
+    expect(content).toMatch(/"dynmaic_int64":\s*9223372036854775807/);
+    expect(content).toMatch(/"dynmaic_long":\s*1234567890/);
+    expect(content).toMatch(/"dynmaic_string":\s*"123"/);
+    expect(content).toMatch(/"dynmaic_unsafe_number":\s*9007199254740992/);
+    expect(content).toMatch(
+      /"dynmaic_negative_bigint":\s*-9223372036854775808/
+    );
+    expect(content).toMatch(/"dynmaic_regular_string":\s*"not-a-number"/);
+    expect(content).toMatch(/"dynmaic_float_val":\s*3.14/);
+    expect(content).toMatch(
+      /"dynmaic_nested_obj":\s*\{\s*"dynmaic_nested_bigint":\s*123456789,\s*"dynmaic_nested_long":\s*987654321\s*\}/
+    );
+    expect(content).toMatch(
+      /"dynmaic_array_with_int64"\s*:\s*\[\s*1\s*,\s*2\s*,\s*"3"\s*,\s*4\s*\]/
+    );
   });
 
   it('should handle multiple rows with dynamic field int64 values', async () => {

@@ -2,10 +2,8 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { CollectionSchema, FieldSchema } from '../types/Collection';
 import { DataType } from '..';
-import { BulkFileType, DYNAMIC_FIELD_NAME } from './constants';
+import { BulkFileType } from './constants';
 import Long from 'long';
-import { validateInt64Field } from './validators/Int64';
-import { validateJSON } from './validators/JSON';
 
 /**
  * In-memory columnar buffer aligned with collection schema.
@@ -17,7 +15,6 @@ export class Buffer {
   private fileType: BulkFileType;
   private columnNames: string[] = []; // cached column names to avoid Object.keys() calls
   private _rowCount: number = 0; // cached row count to avoid repeated calculations
-  private hasDynamicField: boolean = false; // cached check for dynamic field support
   private estimatedRowSizes: number[] = []; // cached estimated sizes for each row to avoid JSON serialization
   private rowObjectPool: Record<string, any>[] = []; // object pool to reduce GC pressure
   private poolIndex: number = 0; // current index in the object pool
@@ -34,25 +31,6 @@ export class Buffer {
       this.fields[f.name] = f as FieldSchema;
     }
 
-    // dynamic field support
-    if (schema.enable_dynamic_field) {
-      this.columns[DYNAMIC_FIELD_NAME] = [];
-      this.fields[DYNAMIC_FIELD_NAME] = {
-        name: DYNAMIC_FIELD_NAME,
-        description: '',
-        data_type: 'JSON',
-        dataType: DataType.JSON,
-        index_params: [],
-        fieldID: '0',
-        is_primary_key: false,
-        autoID: false,
-        state: '',
-        is_function_output: false,
-        type_params: [],
-      } as unknown as FieldSchema;
-      this.hasDynamicField = true;
-    }
-
     // Cache column names to avoid repeated Object.keys() calls
     this.columnNames = Object.keys(this.columns);
 
@@ -66,60 +44,21 @@ export class Buffer {
   }
 
   appendRow(row: Record<string, any>) {
-    const dynamicValues: Record<string, any> = {};
+    // Process each field in the row
+    for (const key in row) {
+      if (key in row) {
+        const value = row[key];
+        const column = this.columns[key];
 
-    // Check if dynamic field exists and is valid
-    if (
-      DYNAMIC_FIELD_NAME in row &&
-      typeof row[DYNAMIC_FIELD_NAME] !== 'object'
-    ) {
-      throw new Error(
-        `Dynamic field '${DYNAMIC_FIELD_NAME}' value should be JSON format`
-      );
-    }
-
-    // Use for...in loop instead of Object.entries() to avoid array creation
-    for (const k in row) {
-      if (k in row) {
-        // Use 'in' operator instead of hasOwnProperty
-        const v = row[k];
-        // Cache string comparison to avoid repeated checks
-        if (k === DYNAMIC_FIELD_NAME) {
-          Object.assign(dynamicValues, v);
-          continue;
-        }
-        // Cache column check to avoid repeated property access
-        const column = this.columns[k];
         if (column !== undefined) {
-          column.push(v);
-        } else {
-          dynamicValues[k] = this.rawValue(v);
+          column.push(value);
         }
       }
-    }
-
-    // Check if dynamic field column exists and push values
-    if (this.hasDynamicField) {
-      this.columns[DYNAMIC_FIELD_NAME].push(dynamicValues);
     }
 
     // Update cached row count and estimate row size
     this._rowCount++;
     this.estimatedRowSizes.push(this.estimateRowSize(row));
-  }
-
-  private rawValue(x: unknown) {
-    // Handle int64/long values for dynamic fields
-    if (Long.isLong(x)) {
-      return x.toString();
-    }
-
-    if (typeof x === 'bigint') {
-      return x.toString();
-    }
-
-    // Flatten typed arrays or buffers if needed in future.
-    return x;
   }
 
   /**
@@ -518,17 +457,8 @@ export class Buffer {
     // Handle field-specific serialization first
     if (fieldName && this.fields[fieldName]) {
       const field = this.fields[fieldName];
-      // Always treat DYNAMIC_FIELD_NAME as JSON
-      if (
-        fieldName === DYNAMIC_FIELD_NAME ||
-        field.dataType === DataType.JSON
-      ) {
-        return validateJSON(value, field).value;
-      }
+
       switch (field.dataType) {
-        case DataType.Int64:
-          // Use pure function validator
-          return validateInt64Field(value, fieldName).value;
         case DataType.Float16Vector:
         case DataType.BFloat16Vector:
         case DataType.Int8Vector:
