@@ -289,6 +289,8 @@ export enum DataType {
   Int8Vector = 105,
 
   ArrayOfVector = 106,
+
+  ArrayOfStruct = 107,
 }
 
 export enum FunctionType {
@@ -328,6 +330,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   SparseFloatVector: 104,
   Int8Vector: 105,
   ArrayOfVector: 106,
+  ArrayOfStruct: 107,
 };
 
 // data type string enum

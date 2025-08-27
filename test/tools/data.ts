@@ -298,6 +298,11 @@ export const genArrayOfVector: DataGenerator = params => {
   }
 };
 
+export const genArrayOfStruct: DataGenerator = params => {
+  // TODO: implement genArrayOfStruct
+  return {}
+};
+
 export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.None]: genNone,
   [DataType.Bool]: genBool,
@@ -317,6 +322,7 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.SparseFloatVector]: genSparseVector,
   [DataType.Int8Vector]: genInt8Vector,
   [DataType.ArrayOfVector]: genArrayOfVector,
+  [DataType.ArrayOfStruct]: genArrayOfStruct,
 };
 
 /**

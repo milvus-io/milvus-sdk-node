@@ -337,6 +337,26 @@ describe('utils/format', () => {
           data_type: DataType.SparseFloatVector,
           description: 'sparse field',
         },
+        {
+          name: 'struct',
+          data_type: DataType.ArrayOfStruct,
+          description: 'struct field',
+          max_capacity: 100,
+          fields: [
+            {
+              name: 'arrayOfVector',
+              data_type: DataType.ArrayOfVector,
+              element_type: DataType.FloatVector,
+              dim: 128,
+            },
+            {
+              name: 'varchar',
+              data_type: DataType.Array,
+              element_type: DataType.VarChar,
+              max_length: 100,
+            },
+          ],
+        },
       ],
       functions: [
         {
@@ -419,6 +439,44 @@ describe('utils/format', () => {
           isClusteringKey: false,
         },
       ],
+      struct_array_fields: [
+        {
+          name: 'struct',
+          description: 'struct field',
+          fields: [
+            {
+              typeParams: [
+                { key: 'dim', value: '128' },
+                { key: 'max_capacity', value: '100' },
+              ],
+              indexParams: [],
+              name: 'arrayOfVector',
+              data_type: 106,
+              dataType: 106,
+              isPrimaryKey: false,
+              isPartitionKey: false,
+              isFunctionOutput: false,
+              isClusteringKey: false,
+            },
+            {
+              typeParams: [
+                { key: 'max_length', value: '100' },
+                { key: 'max_capacity', value: '100' },
+              ],
+              indexParams: [],
+              name: 'varchar',
+              data_type: 22,
+              dataType: 22,
+              isPrimaryKey: false,
+              isPartitionKey: false,
+              isFunctionOutput: false,
+              isClusteringKey: false,
+              elementType: 21,
+              element_type: 21,
+            },
+          ],
+        },
+      ],
       functions: [
         {
           inputFieldNames: ['testField1'],
@@ -438,6 +496,7 @@ describe('utils/format', () => {
       functionSchemaType,
     });
 
+    console.dir(payload, { depth: null });
     expect(payload).toEqual(expectedResult);
   });
 

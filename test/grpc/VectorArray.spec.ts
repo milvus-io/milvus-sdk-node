@@ -12,7 +12,10 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({
+  address: '10.102.7.222:19530',
+  logLevel: 'debug',
+});
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
@@ -23,11 +26,26 @@ const p = {
   collectionName: COLLECTION_NAME,
   fields: [
     {
-      name: 'vectorArray',
-      description: 'vectorArray field',
-      data_type: DataType.ArrayOfVector,
-      element_type: DataType.FloatVector,
-      dim: 128,
+      name: 'struct',
+      description: 'struct array field',
+      data_type: DataType.ArrayOfStruct,
+      max_capacity: 100,
+      fields: [
+        {
+          name: 'arrayOfVector',
+          description: 'float vector array field',
+          data_type: DataType.ArrayOfVector,
+          element_type: DataType.FloatVector,
+          dim: 128,
+        },
+        {
+          name: 'varchar',
+          description: 'varchar array field',
+          data_type: DataType.Array,
+          element_type: DataType.VarChar,
+          max_length: 100,
+        },
+      ],
     },
   ],
 };
@@ -54,6 +72,8 @@ describe(`Vector array API testing`, () => {
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
     });
+
+    console.dir(describe, { depth: null });
 
     const vectorArrayFields = describe.schema.fields.filter(
       (field: any) => field.data_type === 'ArrayOfVector'

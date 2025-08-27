@@ -356,13 +356,30 @@ export const formatCollectionSchema = (
     name: collection_name,
     description: description || '',
     enableDynamicField: !!enableDynamicField || !!enable_dynamic_field,
-    fields: fields.map(field =>
-      formatFieldSchema(field, schemaTypes, {
-        partition_key_field,
-        functionOutputFields,
-        clustring_key_field,
-      })
-    ),
+    fields: fields
+      .filter(f => f.data_type !== DataType.ArrayOfStruct)
+      .map(field =>
+        formatFieldSchema(field, schemaTypes, {
+          partition_key_field,
+          functionOutputFields,
+          clustring_key_field,
+        })
+      ),
+    struct_array_fields: fields
+      .filter(f => f.data_type === DataType.ArrayOfStruct)
+      .map(field => ({
+        name: field.name,
+        description: field.description,
+        fields: field.fields!.map(f => {
+          // use the max_capacity of the struct array field
+          f.max_capacity = field.max_capacity;
+          return formatFieldSchema(f, schemaTypes, {
+            partition_key_field,
+            functionOutputFields,
+            clustring_key_field,
+          });
+        }),
+      })),
     ...payload,
   };
 

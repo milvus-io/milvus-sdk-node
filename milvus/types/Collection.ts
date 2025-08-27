@@ -84,6 +84,7 @@ export type FieldType = {
   autoID?: boolean;
   default_value?: number | string;
   nullable?: boolean;
+  fields?: FieldType[];
 } & Partial<Record<TypeParamKey, TypeParam>>;
 
 export interface ShowCollectionsReq extends GrpcTimeOut {
