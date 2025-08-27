@@ -287,6 +287,8 @@ export enum DataType {
   BFloat16Vector = 103,
   SparseFloatVector = 104,
   Int8Vector = 105,
+
+  ArrayOfVector = 106,
 }
 
 export enum FunctionType {
@@ -325,6 +327,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   BFloat16Vector: 103,
   SparseFloatVector: 104,
   Int8Vector: 105,
+  ArrayOfVector: 106,
 };
 
 // data type string enum
@@ -342,6 +345,11 @@ export enum DataTypeStringEnum {
   JSON = 'JSON',
   BinaryVector = 'BinaryVector',
   FloatVector = 'FloatVector',
+  Float16Vector = 'Float16Vector',
+  BFloat16Vector = 'BFloat16Vector',
+  SparseFloatVector = 'SparseFloatVector',
+  Int8Vector = 'Int8Vector',
+  ArrayOfVector = 'ArrayOfVector',
 }
 
 // RBAC: operate user role type

@@ -241,6 +241,7 @@ export const isVectorType = (type: DataType) => {
     type === DataType.Float16Vector ||
     type === DataType.BFloat16Vector ||
     type === DataType.SparseFloatVector ||
-    type === DataType.Int8Vector
+    type === DataType.Int8Vector ||
+    type === DataType.ArrayOfVector
   );
 };

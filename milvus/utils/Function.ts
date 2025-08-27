@@ -117,6 +117,9 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.Int8Vector:
       dataKey = 'int8_vector';
       break;
+    case DataType.ArrayOfVector:
+      dataKey = 'vector_array';
+      break;
     case DataType.Double:
       dataKey = 'double_data';
       break;

@@ -106,7 +106,7 @@ export const genJSON: DataGenerator = () => {
           string_key: 'apple',
           int: 1,
           float: 1.1,
-        }
+        },
       }
     : {};
 };
@@ -277,6 +277,27 @@ export const genFloat16: DataGenerator = params => {
   return float32Array;
 };
 
+export const genArrayOfVector: DataGenerator = params => {
+  const element_type = params!.element_type;
+
+  switch (element_type) {
+    case DataType.FloatVector:
+      return genFloatVector(params);
+    case DataType.Float16Vector:
+      return genFloat16(params);
+    case DataType.BFloat16Vector:
+      return genFloat16(params);
+    case DataType.SparseFloatVector:
+      return genSparseVector(params);
+    case DataType.Int8Vector:
+      return genInt8Vector(params);
+    case DataType.BinaryVector:
+      return genBinaryVector(params);
+    default:
+      throw new Error(`Unsupported element type: ${element_type}`);
+  }
+};
+
 export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.None]: genNone,
   [DataType.Bool]: genBool,
@@ -295,6 +316,7 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.BFloat16Vector]: genFloat16,
   [DataType.SparseFloatVector]: genSparseVector,
   [DataType.Int8Vector]: genInt8Vector,
+  [DataType.ArrayOfVector]: genArrayOfVector,
 };
 
 /**

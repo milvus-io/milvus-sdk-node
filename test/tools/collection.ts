@@ -41,7 +41,7 @@ export const dynamicFields = [
  */
 export const genCollectionParams = (data: {
   collectionName: string;
-  dim: number[] | string[];
+  dim?: number[] | string[];
   vectorType?: DataType[];
   autoID?: boolean;
   fields?: any[];
