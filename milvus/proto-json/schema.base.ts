@@ -30,6 +30,7 @@ export default {
                     "JSON": 23,
                     "Geometry": 24,
                     "Text": 25,
+                    "Timestamptz": 26,
                     "BinaryVector": 100,
                     "FloatVector": 101,
                     "Float16Vector": 102,
@@ -347,6 +348,24 @@ export default {
                     }
                   }
                 },
+                "TimestamptzArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 1
+                    }
+                  }
+                },
+                "GeometryWktArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
                 "ValueField": {
                   "oneofs": {
                     "data": {
@@ -357,7 +376,8 @@ export default {
                         "floatData",
                         "doubleData",
                         "stringData",
-                        "bytesData"
+                        "bytesData",
+                        "timestamptzData"
                       ]
                     }
                   },
@@ -389,6 +409,10 @@ export default {
                     "bytesData": {
                       "type": "bytes",
                       "id": 7
+                    },
+                    "timestamptzData": {
+                      "type": "int64",
+                      "id": 8
                     }
                   }
                 },
@@ -405,7 +429,9 @@ export default {
                         "bytesData",
                         "arrayData",
                         "jsonData",
-                        "geometryData"
+                        "geometryData",
+                        "timestamptzData",
+                        "geometryWktData"
                       ]
                     }
                   },
@@ -449,6 +475,14 @@ export default {
                     "geometryData": {
                       "type": "GeometryArray",
                       "id": 10
+                    },
+                    "timestamptzData": {
+                      "type": "TimestamptzArray",
+                      "id": 11
+                    },
+                    "geometryWktData": {
+                      "type": "GeometryWktArray",
+                      "id": 12
                     }
                   }
                 },
@@ -995,7 +1029,13 @@ export default {
                     "SparseFloatVector": 104,
                     "Int8Vector": 105,
                     "Int64": 5,
-                    "VarChar": 21
+                    "VarChar": 21,
+                    "EmbListBinaryVector": 300,
+                    "EmbListFloatVector": 301,
+                    "EmbListFloat16Vector": 302,
+                    "EmbListBFloat16Vector": 303,
+                    "EmbListSparseFloatVector": 304,
+                    "EmbListInt8Vector": 305
                   }
                 },
                 "PlaceholderValue": {
@@ -1339,7 +1379,10 @@ export default {
                     "PrivilegeGroupCollectionAdmin": 68,
                     "PrivilegeGetImportProgress": 69,
                     "PrivilegeListImport": 70,
-                    "PrivilegeAddCollectionField": 71
+                    "PrivilegeAddCollectionField": 71,
+                    "PrivilegeAddFileResource": 72,
+                    "PrivilegeRemoveFileResource": 73,
+                    "PrivilegeListFileResources": 74
                   }
                 },
                 "PrivilegeExt": {
@@ -1474,6 +1517,11 @@ export default {
                   "values": {
                     "HIGH": 0,
                     "LOW": 1
+                  }
+                },
+                "FileResourceType": {
+                  "values": {
+                    "ANALYZER_DICTIONARY": 0
                   }
                 }
               }
