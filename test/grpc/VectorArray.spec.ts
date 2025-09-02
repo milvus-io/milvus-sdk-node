@@ -13,7 +13,7 @@ import {
 } from '../tools';
 
 const milvusClient = new MilvusClient({
-  address: '10.102.7.222:19530',
+  address: '10.102.9.74:19530',
   logLevel: 'debug',
 });
 const COLLECTION_NAME = GENERATE_NAME();
