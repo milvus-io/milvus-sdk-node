@@ -9,6 +9,7 @@ import {
   GetQuerySegmentInfoReq,
   GePersistentSegmentInfoReq,
   InsertReq,
+  UpsertReq,
   LoadBalanceReq,
   ImportReq,
   ListImportTasksReq,
@@ -73,7 +74,7 @@ export class Data extends Collection {
   /**
    * Upsert data into Milvus, view _insert for detail
    */
-  async upsert(data: InsertReq): Promise<MutationResult> {
+  async upsert(data: UpsertReq): Promise<MutationResult> {
     return this._insert(data, true);
   }
 
@@ -114,7 +115,7 @@ export class Data extends Collection {
    * ```
    */
   private async _insert(
-    data: InsertReq,
+    data: InsertReq | UpsertReq,
     upsert: boolean = false
   ): Promise<MutationResult> {
     checkCollectionName(data);
