@@ -40,6 +40,10 @@ export default {
                       "requestType": "DescribeCollectionRequest",
                       "responseType": "DescribeCollectionResponse"
                     },
+                    "BatchDescribeCollection": {
+                      "requestType": "BatchDescribeCollectionRequest",
+                      "responseType": "BatchDescribeCollectionResponse"
+                    },
                     "GetCollectionStatistics": {
                       "requestType": "GetCollectionStatisticsRequest",
                       "responseType": "GetCollectionStatisticsResponse"
@@ -415,6 +419,60 @@ export default {
                     "RunAnalyzer": {
                       "requestType": "RunAnalyzerRequest",
                       "responseType": "RunAnalyzerResponse"
+                    },
+                    "AddFileResource": {
+                      "requestType": "AddFileResourceRequest",
+                      "responseType": "common.Status"
+                    },
+                    "RemoveFileResource": {
+                      "requestType": "RemoveFileResourceRequest",
+                      "responseType": "common.Status"
+                    },
+                    "ListFileResources": {
+                      "requestType": "ListFileResourcesRequest",
+                      "responseType": "ListFileResourcesResponse"
+                    },
+                    "AddUserTags": {
+                      "requestType": "AddUserTagsRequest",
+                      "responseType": "common.Status"
+                    },
+                    "DeleteUserTags": {
+                      "requestType": "DeleteUserTagsRequest",
+                      "responseType": "common.Status"
+                    },
+                    "GetUserTags": {
+                      "requestType": "GetUserTagsRequest",
+                      "responseType": "GetUserTagsResponse"
+                    },
+                    "ListUsersWithTag": {
+                      "requestType": "ListUsersWithTagRequest",
+                      "responseType": "ListUsersWithTagResponse"
+                    },
+                    "CreateRowPolicy": {
+                      "requestType": "CreateRowPolicyRequest",
+                      "responseType": "common.Status"
+                    },
+                    "DropRowPolicy": {
+                      "requestType": "DropRowPolicyRequest",
+                      "responseType": "common.Status"
+                    },
+                    "ListRowPolicies": {
+                      "requestType": "ListRowPoliciesRequest",
+                      "responseType": "ListRowPoliciesResponse"
+                    },
+                    "UpdateReplicateConfiguration": {
+                      "requestType": "UpdateReplicateConfigurationRequest",
+                      "responseType": "common.Status"
+                    },
+                    "GetReplicateInfo": {
+                      "requestType": "GetReplicateInfoRequest",
+                      "responseType": "GetReplicateInfoResponse"
+                    },
+                    "CreateReplicateStream": {
+                      "requestType": "ReplicateRequest",
+                      "requestStream": true,
+                      "responseType": "ReplicateResponse",
+                      "responseStream": true
                     }
                   }
                 },
@@ -863,6 +921,42 @@ export default {
                     }
                   }
                 },
+                "BatchDescribeCollectionRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeDescribeCollection",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "dbName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collectionName": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collectionID": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 3
+                    }
+                  }
+                },
+                "BatchDescribeCollectionResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "responses": {
+                      "rule": "repeated",
+                      "type": "DescribeCollectionResponse",
+                      "id": 2
+                    }
+                  }
+                },
                 "LoadCollectionRequest": {
                   "options": {
                     "(common.privilege_ext_obj).object_type": "Collection",
@@ -1084,6 +1178,11 @@ export default {
                       "rule": "repeated",
                       "type": "bool",
                       "id": 7
+                    },
+                    "shardsNum": {
+                      "rule": "repeated",
+                      "type": "int32",
+                      "id": 8
                     }
                   }
                 },
@@ -1705,6 +1804,13 @@ export default {
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeInsert",
                     "(common.privilege_ext_obj).object_name_index": 3
                   },
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -1739,6 +1845,13 @@ export default {
                     "schemaTimestamp": {
                       "type": "uint64",
                       "id": 8
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 9,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -1777,6 +1890,13 @@ export default {
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeUpsert",
                     "(common.privilege_ext_obj).object_name_index": 3
                   },
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -1811,6 +1931,17 @@ export default {
                     "schemaTimestamp": {
                       "type": "uint64",
                       "id": 8
+                    },
+                    "partialUpdate": {
+                      "type": "bool",
+                      "id": 9
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 10,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -1900,6 +2031,13 @@ export default {
                   }
                 },
                 "SubSearchRequest": {
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
+                  },
                   "fields": {
                     "dsl": {
                       "type": "string",
@@ -1926,6 +2064,13 @@ export default {
                       "keyType": "string",
                       "type": "schema.TemplateValue",
                       "id": 6
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 7,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -1934,6 +2079,13 @@ export default {
                     "(common.privilege_ext_obj).object_type": "Collection",
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeSearch",
                     "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
                   },
                   "fields": {
                     "base": {
@@ -2016,6 +2168,13 @@ export default {
                     "functionScore": {
                       "type": "schema.FunctionScore",
                       "id": 19
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 20,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -2063,6 +2222,13 @@ export default {
                     "(common.privilege_ext_obj).object_type": "Collection",
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeSearch",
                     "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
                   },
                   "fields": {
                     "base": {
@@ -2120,6 +2286,13 @@ export default {
                     "functionScore": {
                       "type": "schema.FunctionScore",
                       "id": 13
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 14,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -2188,6 +2361,13 @@ export default {
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeQuery",
                     "(common.privilege_ext_obj).object_name_index": 3
                   },
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -2244,6 +2424,13 @@ export default {
                       "keyType": "string",
                       "type": "schema.TemplateValue",
                       "id": 13
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 14,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -2445,6 +2632,10 @@ export default {
                     "isSorted": {
                       "type": "bool",
                       "id": 7
+                    },
+                    "storageVersion": {
+                      "type": "int64",
+                      "id": 8
                     }
                   }
                 },
@@ -2530,6 +2721,10 @@ export default {
                     "isSorted": {
                       "type": "bool",
                       "id": 12
+                    },
+                    "storageVersion": {
+                      "type": "int64",
+                      "id": 13
                     }
                   }
                 },
@@ -4571,6 +4766,434 @@ export default {
                       "id": 2
                     }
                   }
+                },
+                "FileResourceInfo": {
+                  "fields": {
+                    "id": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "path": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "type": {
+                      "type": "common.FileResourceType",
+                      "id": 4
+                    }
+                  }
+                },
+                "AddFileResourceRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeAddFileResource",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "path": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "type": {
+                      "type": "common.FileResourceType",
+                      "id": 4
+                    }
+                  }
+                },
+                "RemoveFileResourceRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeRemoveFileResource",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "ListFileResourcesRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeListFileResources",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    }
+                  }
+                },
+                "ListFileResourcesResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "resources": {
+                      "rule": "repeated",
+                      "type": "FileResourceInfo",
+                      "id": 2
+                    }
+                  }
+                },
+                "RowPolicyAction": {
+                  "values": {
+                    "Query": 0,
+                    "Search": 1,
+                    "Insert": 2,
+                    "Delete": 3,
+                    "Upsert": 4
+                  }
+                },
+                "AddUserTagsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "User",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeUpdateUser",
+                    "(common.privilege_ext_obj).object_name_index": 2
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "userName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "tags": {
+                      "keyType": "string",
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "DeleteUserTagsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "User",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeUpdateUser",
+                    "(common.privilege_ext_obj).object_name_index": 2
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "userName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "tagKeys": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "GetUserTagsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "User",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeSelectUser",
+                    "(common.privilege_ext_obj).object_name_index": 2
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "userName": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "GetUserTagsResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "tags": {
+                      "keyType": "string",
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "ListUsersWithTagRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "User",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeSelectUser",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "tagKey": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "tagValue": {
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "ListUsersWithTagResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "userNames": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "CreateRowPolicyRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateOwnership",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "dbName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collectionName": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "policyName": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "actions": {
+                      "rule": "repeated",
+                      "type": "RowPolicyAction",
+                      "id": 5
+                    },
+                    "roles": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 6
+                    },
+                    "usingExpr": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "checkExpr": {
+                      "type": "string",
+                      "id": 8
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 9
+                    }
+                  }
+                },
+                "DropRowPolicyRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeDropOwnership",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "dbName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collectionName": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "policyName": {
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "ListRowPoliciesRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeSelectOwnership",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "dbName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collectionName": {
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "RowPolicy": {
+                  "fields": {
+                    "policyName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "actions": {
+                      "rule": "repeated",
+                      "type": "RowPolicyAction",
+                      "id": 2
+                    },
+                    "roles": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 3
+                    },
+                    "usingExpr": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "checkExpr": {
+                      "type": "string",
+                      "id": 5
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 6
+                    },
+                    "createdAt": {
+                      "type": "int64",
+                      "id": 7
+                    }
+                  }
+                },
+                "ListRowPoliciesResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "policies": {
+                      "rule": "repeated",
+                      "type": "RowPolicy",
+                      "id": 2
+                    },
+                    "dbName": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collectionName": {
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "UpdateReplicateConfigurationRequest": {
+                  "fields": {
+                    "replicateConfiguration": {
+                      "type": "common.ReplicateConfiguration",
+                      "id": 1
+                    }
+                  }
+                },
+                "GetReplicateInfoRequest": {
+                  "fields": {
+                    "sourceClusterId": {
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
+                "GetReplicateInfoResponse": {
+                  "fields": {
+                    "checkpoints": {
+                      "rule": "repeated",
+                      "type": "common.ReplicateCheckpoint",
+                      "id": 1
+                    }
+                  }
+                },
+                "ReplicateMessage": {
+                  "fields": {
+                    "sourceClusterId": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "message": {
+                      "type": "common.ImmutableMessage",
+                      "id": 2
+                    }
+                  }
+                },
+                "ReplicateRequest": {
+                  "oneofs": {
+                    "request": {
+                      "oneof": [
+                        "replicateMessage"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "replicateMessage": {
+                      "type": "ReplicateMessage",
+                      "id": 1
+                    }
+                  }
+                },
+                "ReplicateConfirmedMessageInfo": {
+                  "fields": {
+                    "confirmedTimeTick": {
+                      "type": "uint64",
+                      "id": 1
+                    }
+                  }
+                },
+                "ReplicateResponse": {
+                  "oneofs": {
+                    "response": {
+                      "oneof": [
+                        "replicateConfirmedMessageInfo"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "replicateConfirmedMessageInfo": {
+                      "type": "ReplicateConfirmedMessageInfo",
+                      "id": 1
+                    }
+                  }
                 }
               }
             },
@@ -4759,7 +5382,13 @@ export default {
                     "SparseFloatVector": 104,
                     "Int8Vector": 105,
                     "Int64": 5,
-                    "VarChar": 21
+                    "VarChar": 21,
+                    "EmbListBinaryVector": 300,
+                    "EmbListFloatVector": 301,
+                    "EmbListFloat16Vector": 302,
+                    "EmbListBFloat16Vector": 303,
+                    "EmbListSparseFloatVector": 304,
+                    "EmbListInt8Vector": 305
                   }
                 },
                 "PlaceholderValue": {
@@ -5103,7 +5732,10 @@ export default {
                     "PrivilegeGroupCollectionAdmin": 68,
                     "PrivilegeGetImportProgress": 69,
                     "PrivilegeListImport": 70,
-                    "PrivilegeAddCollectionField": 71
+                    "PrivilegeAddCollectionField": 71,
+                    "PrivilegeAddFileResource": 72,
+                    "PrivilegeRemoveFileResource": 73,
+                    "PrivilegeListFileResources": 74
                   }
                 },
                 "PrivilegeExt": {
@@ -5239,6 +5871,125 @@ export default {
                     "HIGH": 0,
                     "LOW": 1
                   }
+                },
+                "FileResourceType": {
+                  "values": {
+                    "ANALYZER_DICTIONARY": 0
+                  }
+                },
+                "WALName": {
+                  "values": {
+                    "Unknown": 0,
+                    "RocksMQ": 1,
+                    "Pulsar": 2,
+                    "Kafka": 3,
+                    "WoodPecker": 4,
+                    "Test": 999
+                  }
+                },
+                "ReplicateConfiguration": {
+                  "fields": {
+                    "clusters": {
+                      "rule": "repeated",
+                      "type": "MilvusCluster",
+                      "id": 1
+                    },
+                    "crossClusterTopology": {
+                      "rule": "repeated",
+                      "type": "CrossClusterTopology",
+                      "id": 2
+                    }
+                  }
+                },
+                "ConnectionParam": {
+                  "fields": {
+                    "uri": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "token": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "MilvusCluster": {
+                  "fields": {
+                    "clusterId": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "connectionParam": {
+                      "type": "ConnectionParam",
+                      "id": 2
+                    },
+                    "pchannels": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "CrossClusterTopology": {
+                  "fields": {
+                    "sourceClusterId": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "targetClusterId": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "MessageID": {
+                  "fields": {
+                    "id": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "WALName": {
+                      "type": "common.WALName",
+                      "id": 2
+                    }
+                  }
+                },
+                "ImmutableMessage": {
+                  "fields": {
+                    "id": {
+                      "type": "MessageID",
+                      "id": 1
+                    },
+                    "payload": {
+                      "type": "bytes",
+                      "id": 2
+                    },
+                    "properties": {
+                      "keyType": "string",
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "ReplicateCheckpoint": {
+                  "fields": {
+                    "clusterId": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "pchannel": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "messageId": {
+                      "type": "common.MessageID",
+                      "id": 3
+                    },
+                    "timeTick": {
+                      "type": "uint64",
+                      "id": 4
+                    }
+                  }
                 }
               }
             },
@@ -5331,6 +6082,7 @@ export default {
                     "JSON": 23,
                     "Geometry": 24,
                     "Text": 25,
+                    "Timestamptz": 26,
                     "BinaryVector": 100,
                     "FloatVector": 101,
                     "Float16Vector": 102,
@@ -5648,6 +6400,24 @@ export default {
                     }
                   }
                 },
+                "TimestamptzArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 1
+                    }
+                  }
+                },
+                "GeometryWktArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
                 "ValueField": {
                   "oneofs": {
                     "data": {
@@ -5658,7 +6428,8 @@ export default {
                         "floatData",
                         "doubleData",
                         "stringData",
-                        "bytesData"
+                        "bytesData",
+                        "timestamptzData"
                       ]
                     }
                   },
@@ -5690,6 +6461,10 @@ export default {
                     "bytesData": {
                       "type": "bytes",
                       "id": 7
+                    },
+                    "timestamptzData": {
+                      "type": "int64",
+                      "id": 8
                     }
                   }
                 },
@@ -5706,7 +6481,9 @@ export default {
                         "bytesData",
                         "arrayData",
                         "jsonData",
-                        "geometryData"
+                        "geometryData",
+                        "timestamptzData",
+                        "geometryWktData"
                       ]
                     }
                   },
@@ -5750,6 +6527,14 @@ export default {
                     "geometryData": {
                       "type": "GeometryArray",
                       "id": 10
+                    },
+                    "timestamptzData": {
+                      "type": "TimestamptzArray",
+                      "id": 11
+                    },
+                    "geometryWktData": {
+                      "type": "GeometryWktArray",
+                      "id": 12
                     }
                   }
                 },
@@ -6222,6 +7007,13 @@ export default {
                   }
                 },
                 "InsertRequest": {
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -6286,6 +7078,13 @@ export default {
                     "version": {
                       "type": "InsertDataVersion",
                       "id": 15
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 16,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },

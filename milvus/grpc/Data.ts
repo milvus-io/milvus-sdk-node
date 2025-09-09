@@ -234,6 +234,10 @@ export class Data extends Collection {
       schema_timestamp:
         collectionInfo.update_timestamp_str ||
         (collectionInfo.update_timestamp as string | number | undefined),
+      // Ensure partial_update is passed for upsert operations
+      ...(upsert && (data as UpsertReq).partial_update
+        ? { partial_update: true }
+        : {}),
     };
     /* istanbul ignore next if */
     if (data.skip_check_schema) {
