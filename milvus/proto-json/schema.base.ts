@@ -38,7 +38,8 @@ export default {
                     "SparseFloatVector": 104,
                     "Int8Vector": 105,
                     "ArrayOfVector": 106,
-                    "ArrayOfStruct": 200
+                    "ArrayOfStruct": 200,
+                    "Struct": 201
                   }
                 },
                 "FunctionType": {
