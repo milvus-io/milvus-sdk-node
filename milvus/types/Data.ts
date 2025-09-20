@@ -133,6 +133,9 @@ interface FieldsDataInsertReq extends BaseInsertReq {
 
 // Union type to enforce mutual exclusivity
 export type InsertReq = DataInsertReq | FieldsDataInsertReq;
+export type UpsertReq = (DataInsertReq | FieldsDataInsertReq) & {
+  partial_update?: boolean;
+};
 
 interface BaseDeleteReq extends collectionNameReq {
   partition_name?: string; // partition name

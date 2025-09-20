@@ -4,6 +4,7 @@ import {
   ErrorCode,
   InsertReq,
   ERROR_REASONS,
+  UpsertReq,
 } from '../../milvus';
 import {
   IP,
@@ -14,7 +15,10 @@ import {
   dynamicFields,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP });
+const milvusClient = new MilvusClient({
+  address: IP,
+  logLevel: 'info',
+});
 const COLLECTION_NAME = GENERATE_NAME();
 const BINARY_COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME_AUTO_ID = GENERATE_NAME();
@@ -260,14 +264,61 @@ describe(`Upsert API`, () => {
         double: 1.12,
         float: 1.3,
       },
+      {
+        [VECTOR_FIELD_NAME]: [1, 2, 3, 4],
+        id: 2,
+        bool: false,
+        int: 1,
+        double: 1.12,
+        float: 1.3,
+      },
     ];
-    const params: InsertReq = {
+    const params: UpsertReq = {
       collection_name: MORE_SCALAR_COLLECTION_NAME,
       fields_data: dataset,
     };
 
     const res = await milvusClient.upsert(params);
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // create index
+    await milvusClient.createIndex({
+      collection_name: MORE_SCALAR_COLLECTION_NAME,
+      field_name: VECTOR_FIELD_NAME,
+      extra_params: {
+        index_type: 'AUTOINDEX',
+        metric_type: 'L2',
+      },
+    });
+    await milvusClient.loadCollectionSync({
+      collection_name: MORE_SCALAR_COLLECTION_NAME,
+    });
+
+    const partial_dataset = [
+      {
+        id: 1,
+        int: 2,
+      },
+      {
+        id: 2,
+        int: 3,
+      },
+    ];
+
+    const partial_params: UpsertReq = {
+      collection_name: MORE_SCALAR_COLLECTION_NAME,
+      fields_data: partial_dataset,
+      partial_update: true,
+    };
+
+    const partial_res = await milvusClient.upsert(partial_params);
+    console.dir(partial_res, { depth: null });
+    expect(partial_res.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const query = await milvusClient.query({
+      collection_name: MORE_SCALAR_COLLECTION_NAME,
+      expr: 'id = 1 or id = 2',
+    });
   });
 
   it(`Upsert Data throw type error`, async () => {
