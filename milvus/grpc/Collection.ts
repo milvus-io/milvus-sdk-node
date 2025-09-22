@@ -172,6 +172,8 @@ export class Collection extends Database {
     // Create the collectionParams object from the payload.
     const collectionSchema = schemaTypes.collectionSchemaType.create(payload);
 
+    console.dir(collectionSchema, { depth: null });
+
     // Encode the collectionParams object to bytes.
     const schemaBytes = schemaTypes.collectionSchemaType
       .encode(collectionSchema)

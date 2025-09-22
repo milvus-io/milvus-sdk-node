@@ -706,6 +706,30 @@ describe('utils/format', () => {
     expect(buildFieldData(row, field as _Field)).toEqual(25);
   });
 
+  it('should return undefined if the field is nullable and the value is null', () => {
+    const row = { name: 'John', age: null };
+    const field = { type: 'Int', name: 'age', nullable: true };
+    expect(buildFieldData(row, field as _Field)).toEqual(undefined);
+  });
+
+  it('should return undefined if the field is nullable and the value is undefined', () => {
+    const row = { name: 'John', age: undefined };
+    const field = { type: 'Int', name: 'age', nullable: true };
+    expect(buildFieldData(row, field as _Field)).toEqual(undefined);
+  });
+
+  it('should format timestamptz correctly', () => {
+    const row = { name: 'John', age: '2025-09-20 08:08:08+08' };
+    const field = { type: 'Timestamptz', name: 'age' };
+    expect(buildFieldData(row, field as _Field)).toEqual(1758326888000);
+
+    const row2 = { name: 'John', age: new Date('2025-09-20 08:08:08+08') };
+    expect(buildFieldData(row2, field as _Field)).toEqual(1758326888000);
+
+    const row3 = { name: 'John', age: 1758326888000 };
+    expect(buildFieldData(row3, field as _Field)).toEqual(1758326888000);
+  });
+
   it('should format search results correctly', () => {
     const searchPromise: any = {
       results: {

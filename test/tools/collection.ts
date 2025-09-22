@@ -3,6 +3,7 @@ import {
   MAX_LENGTH,
   DEFAULT_NUM_VALUE,
   DEFAULT_STRING_VALUE,
+  DEFAULT_TIME_VALUE,
 } from './const';
 import {
   DataType,
@@ -163,6 +164,20 @@ export const genCollectionParams = (data: {
         max_capacity: maxCapacity || MAX_CAPACITY,
         max_length: MAX_LENGTH,
       },
+      {
+        name: 'timestamptz',
+        description: 'timestamptz field',
+        data_type: DataType.Timestamptz,
+        nullable: true,
+        default_value: DEFAULT_TIME_VALUE,
+      },
+      // {
+      //   name: 'timestamptzArray',
+      //   description: 'timestamptz array field',
+      //   data_type: DataType.Array,
+      //   element_type: DataType.Timestamptz,
+      //   max_capacity: maxCapacity || MAX_CAPACITY,
+      // },
       ...fields,
     ],
     enable_dynamic_field: !!enableDynamic,

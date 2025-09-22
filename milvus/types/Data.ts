@@ -51,6 +51,7 @@ export type Int64 = number;
 export type Float = number;
 export type Double = number;
 export type VarChar = string;
+export type Timestamptz = Date | string | number;
 export type JSON = {
   [key: string]: any;
 };
@@ -74,6 +75,7 @@ export type FieldData =
   | Double
   | VarChar
   | JSON
+  | Timestamptz
   | Array
   | VectorTypes
   | null

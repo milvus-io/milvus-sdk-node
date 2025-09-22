@@ -48,6 +48,7 @@ import {
   TypeParam,
   keyValueObj,
   FunctionObject,
+  Timestamptz,
 } from '../';
 
 /**
@@ -424,6 +425,11 @@ export const formatFieldSchema = (
   if (typeof field.default_value !== 'undefined') {
     const dataKey = getDataKey(createObj.dataType, true);
 
+    // format timestamptz to timestamp
+    if (createObj.dataType === DataType.Timestamptz) {
+      field.default_value = new Date(field.default_value).getTime();
+    }
+
     createObj.defaultValue = {
       [dataKey]: field.default_value,
     };
@@ -678,8 +684,13 @@ export const buildFieldData = (
   field: _Field,
   transformers?: InsertTransformers
 ): FieldData => {
-  const { type, elementType, name } = field;
+  const { type, elementType, name, nullable } = field;
   const isFloat32 = Array.isArray(rowData[name]);
+
+  // Return undefined if field is nullable and value is null
+  if (nullable && rowData[name] === null) {
+    return undefined;
+  }
 
   switch (DataTypeMap[type]) {
     case DataType.BinaryVector:
@@ -702,6 +713,12 @@ export const buildFieldData = (
       return rowData[name]
         ? Buffer.from(JSON.stringify(rowData[name] || {}))
         : Buffer.alloc(0);
+    case DataType.Timestamptz:
+      const d =
+        rowData[name] instanceof Date
+          ? rowData[name]
+          : new Date(rowData[name] as Timestamptz);
+      return (d as Date).getTime();
     case DataType.Array:
       const elementField = { ...field, type: elementType! };
       return rowData[name] === null

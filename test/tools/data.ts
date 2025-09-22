@@ -106,7 +106,7 @@ export const genJSON: DataGenerator = () => {
           string_key: 'apple',
           int: 1,
           float: 1.1,
-        }
+        },
       }
     : {};
 };
@@ -277,6 +277,24 @@ export const genFloat16: DataGenerator = params => {
   return float32Array;
 };
 
+// generate random timestamptz, before now,
+// example: 2025-09-20 14:30:00+08(system timezone)
+export const genTimestamptz: DataGenerator = () => {
+  // now - random days
+  const randomTime = new Date(
+    new Date().getTime() - Math.floor(Math.random() * 1000 * 60 * 60 * 24)
+  );
+  const year = randomTime.getFullYear();
+  const month = randomTime.getMonth() + 1;
+  const day = randomTime.getDate();
+  const hour = randomTime.getHours();
+  const minute = randomTime.getMinutes();
+  const second = randomTime.getSeconds();
+  const timezone = randomTime.getTimezoneOffset();
+
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}+${timezone}`;
+};
+
 export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.None]: genNone,
   [DataType.Bool]: genBool,
@@ -289,6 +307,7 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.VarChar]: genVarChar,
   [DataType.Array]: genArray,
   [DataType.JSON]: genJSON,
+  [DataType.Timestamptz]: genTimestamptz,
   [DataType.BinaryVector]: genBinaryVector,
   [DataType.FloatVector]: genFloatVector,
   [DataType.Float16Vector]: genFloat16,

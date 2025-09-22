@@ -143,6 +143,9 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.JSON:
       dataKey = 'json_data';
       break;
+    case DataType.Timestamptz:
+      dataKey = 'timestamptz_data';
+      break;
     case DataType.None:
       dataKey = 'none';
       break;

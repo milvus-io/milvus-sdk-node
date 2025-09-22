@@ -5,7 +5,6 @@ import {
   IndexType,
   MetricType,
   f32ArrayToF16Bytes,
-  f16BytesToF32Array,
 } from '../../milvus';
 import {
   IP,
@@ -14,7 +13,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
