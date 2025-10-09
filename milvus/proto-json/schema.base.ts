@@ -302,6 +302,15 @@ export default {
                     }
                   }
                 },
+                "GeometryWktArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
                 "ValueField": {
                   "oneofs": {
                     "data": {
@@ -360,7 +369,8 @@ export default {
                         "bytesData",
                         "arrayData",
                         "jsonData",
-                        "geometryData"
+                        "geometryData",
+                        "geometryWktData"
                       ]
                     }
                   },
@@ -404,6 +414,10 @@ export default {
                     "geometryData": {
                       "type": "GeometryArray",
                       "id": 10
+                    },
+                    "geometryWktData": {
+                      "type": "GeometryWktArray",
+                      "id": 12
                     }
                   }
                 },
