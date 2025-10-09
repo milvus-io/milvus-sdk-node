@@ -51,6 +51,7 @@ export type VarChar = string;
 export type JSON = {
   [key: string]: any;
 };
+export type Geometry = string;
 export type Array =
   | Int8[]
   | Int16[]
@@ -71,6 +72,7 @@ export type FieldData =
   | Double
   | VarChar
   | JSON
+  | Geometry
   | Array
   | VectorTypes
   | null
@@ -104,8 +106,8 @@ export interface CountReq extends collectionNameReq {
 // we need to provide custom data transformer for these types
 // milvus only accept bytes(buffer) for these types
 export type InsertTransformers = {
-  [DataType.BFloat16Vector]?: (bf16: BFloat16Vector) => Buffer;
-  [DataType.Float16Vector]?: (f16: Float16Vector) => Buffer;
+  [DataType.BFloat16Vector]?: (bf16: BFloat16Vector) => Uint8Array;
+  [DataType.Float16Vector]?: (f16: Float16Vector) => Uint8Array;
 };
 
 // Base properties shared by both variants

@@ -152,6 +152,7 @@ export enum IndexType {
   INVERTED = 'INVERTED',
   // 2.5
   BITMAP = 'BITMAP',
+  RTREE = 'RTREE',
 }
 
 // MsgType
@@ -275,6 +276,7 @@ export enum DataType {
   VarChar = 21, // variable-length strings with a specified maximum length
   Array = 22,
   JSON = 23,
+  Geometry = 24,
 
   BinaryVector = 100,
   FloatVector = 101,
@@ -310,6 +312,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   VarChar: 21,
   Array: 22,
   JSON: 23,
+  Geometry: 24,
   BinaryVector: 100,
   FloatVector: 101,
   Float16Vector: 102,
@@ -330,8 +333,12 @@ export enum DataTypeStringEnum {
   VarChar = 'VarChar',
   Array = 'Array',
   JSON = 'JSON',
+  Geometry = 'Geometry',
   BinaryVector = 'BinaryVector',
   FloatVector = 'FloatVector',
+  Float16Vector = 'Float16Vector',
+  BFloat16Vector = 'BFloat16Vector',
+  SparseFloatVector = 'SparseFloatVector',
 }
 
 // RBAC: operate user role type

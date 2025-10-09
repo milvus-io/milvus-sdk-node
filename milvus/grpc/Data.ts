@@ -275,7 +275,7 @@ export class Data extends Collection {
         case DataType.Float16Vector:
           keyValue = {
             dim: field.dim,
-            [dataKey]: Buffer.concat(field.data as Buffer[]),
+            [dataKey]: Buffer.concat(field.data as Uint8Array[]),
           };
           break;
         case DataType.BinaryVector:

@@ -105,7 +105,7 @@ export const genJSON: DataGenerator = () => {
           string_key: 'apple',
           int: 1,
           float: 1.1,
-        }
+        },
       }
     : {};
 };
@@ -257,6 +257,25 @@ export const genFloat16: DataGenerator = params => {
   return float32Array;
 };
 
+// generate random WKT geometry string with realistic coordinates
+export const genGeometry: DataGenerator = () => {
+  // Realistic coordinate ranges for major cities/regions
+  const regions = [
+    { minLon: -74.0, maxLon: -73.7, minLat: 40.5, maxLat: 40.9 }, // New York
+    { minLon: -0.5, maxLon: 0.3, minLat: 51.3, maxLat: 51.7 }, // London
+    { minLon: 2.2, maxLon: 2.5, minLat: 48.8, maxLat: 49.0 }, // Paris
+    { minLon: 139.6, maxLon: 139.9, minLat: 35.5, maxLat: 35.8 }, // Tokyo
+    { minLon: 121.4, maxLon: 121.6, minLat: 31.1, maxLat: 31.4 }, // Shanghai
+    { minLon: -122.5, maxLon: -122.3, minLat: 37.7, maxLat: 37.9 }, // San Francisco
+  ];
+
+  const region = regions[Math.floor(Math.random() * regions.length)];
+  const lon = region.minLon + Math.random() * (region.maxLon - region.minLon);
+  const lat = region.minLat + Math.random() * (region.maxLat - region.minLat);
+
+  return `POINT (${lon.toFixed(6)} ${lat.toFixed(6)})`;
+};
+
 export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.None]: genNone,
   [DataType.Bool]: genBool,
@@ -269,6 +288,7 @@ export const dataGenMap: { [key in DataType]: DataGenerator } = {
   [DataType.VarChar]: genVarChar,
   [DataType.Array]: genArray,
   [DataType.JSON]: genJSON,
+  [DataType.Geometry]: genGeometry,
   [DataType.BinaryVector]: genBinaryVector,
   [DataType.FloatVector]: genFloatVector,
   [DataType.Float16Vector]: genFloat16,

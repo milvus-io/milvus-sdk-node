@@ -4,11 +4,7 @@ import {
   DEFAULT_NUM_VALUE,
   DEFAULT_STRING_VALUE,
 } from './const';
-import {
-  DataType,
-  ConsistencyLevelEnum,
-  FunctionObject,
-} from '../../milvus';
+import { DataType, ConsistencyLevelEnum, FunctionObject } from '../../milvus';
 import { GENERATE_VECTOR_NAME } from './';
 
 export const dynamicFields = [
@@ -162,6 +158,12 @@ export const genCollectionParams = (data: {
         element_type: DataType.VarChar,
         max_capacity: maxCapacity || MAX_CAPACITY,
         max_length: MAX_LENGTH,
+      },
+      {
+        name: 'geometry',
+        description: 'geometry field',
+        data_type: DataType.Geometry,
+        nullable: false,
       },
       ...fields,
     ],
