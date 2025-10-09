@@ -2574,6 +2574,19 @@ export default {
                     }
                   }
                 },
+                "FlushAllTarget": {
+                  "fields": {
+                    "dbName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collectionNames": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
                 "FlushAllRequest": {
                   "options": {
                     "(common.privilege_ext_obj).object_type": "Global",
@@ -2587,7 +2600,15 @@ export default {
                     },
                     "dbName": {
                       "type": "string",
-                      "id": 2
+                      "id": 2,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "flushTargets": {
+                      "rule": "repeated",
+                      "type": "FlushAllTarget",
+                      "id": 3
                     }
                   }
                 },
@@ -2600,6 +2621,53 @@ export default {
                     "flushAllTs": {
                       "type": "uint64",
                       "id": 2
+                    },
+                    "flushResults": {
+                      "rule": "repeated",
+                      "type": "FlushAllResult",
+                      "id": 3
+                    }
+                  }
+                },
+                "FlushAllResult": {
+                  "fields": {
+                    "dbName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collectionResults": {
+                      "rule": "repeated",
+                      "type": "FlushCollectionResult",
+                      "id": 2
+                    }
+                  }
+                },
+                "FlushCollectionResult": {
+                  "fields": {
+                    "collectionName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "segmentIds": {
+                      "type": "schema.LongArray",
+                      "id": 2
+                    },
+                    "flushSegmentIds": {
+                      "type": "schema.LongArray",
+                      "id": 3
+                    },
+                    "sealTime": {
+                      "type": "int64",
+                      "id": 4
+                    },
+                    "flushTs": {
+                      "type": "uint64",
+                      "id": 5
+                    },
+                    "channelCps": {
+                      "keyType": "string",
+                      "type": "msg.MsgPosition",
+                      "id": 6
                     }
                   }
                 },
@@ -2931,6 +2999,10 @@ export default {
                       "rule": "repeated",
                       "type": "int64",
                       "id": 8
+                    },
+                    "l0Compaction": {
+                      "type": "bool",
+                      "id": 9
                     }
                   }
                 },
@@ -3074,7 +3146,15 @@ export default {
                     },
                     "dbName": {
                       "type": "string",
-                      "id": 3
+                      "id": 3,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "flushTargets": {
+                      "rule": "repeated",
+                      "type": "FlushAllTarget",
+                      "id": 4
                     }
                   }
                 },
@@ -3085,6 +3165,24 @@ export default {
                       "id": 1
                     },
                     "flushed": {
+                      "type": "bool",
+                      "id": 2
+                    },
+                    "flushStates": {
+                      "rule": "repeated",
+                      "type": "FlushAllState",
+                      "id": 3
+                    }
+                  }
+                },
+                "FlushAllState": {
+                  "fields": {
+                    "dbName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collectionFlushStates": {
+                      "keyType": "string",
                       "type": "bool",
                       "id": 2
                     }
@@ -6090,7 +6188,8 @@ export default {
                     "SparseFloatVector": 104,
                     "Int8Vector": 105,
                     "ArrayOfVector": 106,
-                    "ArrayOfStruct": 200
+                    "ArrayOfStruct": 200,
+                    "Struct": 201
                   }
                 },
                 "FunctionType": {
@@ -7194,11 +7293,17 @@ export default {
                     },
                     "partitionID": {
                       "type": "int64",
-                      "id": 7
+                      "id": 7,
+                      "options": {
+                        "deprecated": true
+                      }
                     },
                     "schema": {
                       "type": "bytes",
-                      "id": 8
+                      "id": 8,
+                      "options": {
+                        "deprecated": true
+                      }
                     },
                     "virtualChannelNames": {
                       "rule": "repeated",
@@ -7214,6 +7319,15 @@ export default {
                       "rule": "repeated",
                       "type": "int64",
                       "id": 11
+                    },
+                    "partitionNames": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 12
+                    },
+                    "collectionSchema": {
+                      "type": "schema.CollectionSchema",
+                      "id": 13
                     }
                   }
                 },

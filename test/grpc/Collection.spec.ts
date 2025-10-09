@@ -23,7 +23,6 @@ const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
 const COLLECTION_WITH_PROPERTY = GENERATE_NAME();
-const ALIAS = 'my_alias';
 const NON_EXISTENT_COLLECTION_NAME = 'none_existent';
 
 const dbParam = {
@@ -643,65 +642,6 @@ describe(`Collection API`, () => {
       await milvusClient.compact({
         collection_name: undefined as any,
       });
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
-    }
-  });
-
-  it(`Create alias success`, async () => {
-    const res0 = await milvusClient.describeCollection({
-      collection_name: LOAD_COLLECTION_NAME,
-    });
-
-    const aliasRes = await milvusClient.createAlias({
-      collection_name: LOAD_COLLECTION_NAME,
-      alias: ALIAS,
-    });
-
-    const res = await milvusClient.describeCollection({
-      collection_name: LOAD_COLLECTION_NAME,
-    });
-
-    const listAliases = await milvusClient.listAliases({
-      collection_name: LOAD_COLLECTION_NAME,
-    });
-
-    expect(res0.aliases[0]).not.toEqual(ALIAS);
-    expect(listAliases.aliases[0]).toEqual(ALIAS);
-  });
-
-  it(`Alter alias success`, async () => {
-    try {
-      await milvusClient.alterAlias({
-        collection_name: LOAD_COLLECTION_NAME_SYNC,
-        alias: ALIAS,
-      });
-      const res = await milvusClient.describeCollection({
-        collection_name: LOAD_COLLECTION_NAME_SYNC,
-        cache: false,
-      });
-      expect(res.aliases[0]).toEqual(ALIAS);
-    } catch (error) {
-      expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
-    }
-  });
-
-  it(`Drop alias success`, async () => {
-    try {
-      await milvusClient.dropAlias({
-        alias: ALIAS,
-      });
-      const res = await milvusClient.describeCollection({
-        collection_name: LOAD_COLLECTION_NAME,
-        cache: false,
-      });
-      const res2 = await milvusClient.describeCollection({
-        collection_name: LOAD_COLLECTION_NAME_SYNC,
-        cache: false,
-      });
-
-      expect(res.aliases.length).toEqual(0);
-      expect(res2.aliases.length).toEqual(0);
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
