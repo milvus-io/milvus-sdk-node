@@ -136,9 +136,13 @@ describe(`Database API`, () => {
       collection_name: COLLECTION_NAME2,
       db_name: DB_NAME2,
     });
-    expect(describeCollectionAfterAlter.properties).toEqual([
-      { key: 'collection.segment.rowLimit', value: '10000' },
-    ]);
+    expect(describeCollectionAfterAlter.properties).toEqual(
+      expect.arrayContaining([
+        { key: 'collection.segment.rowLimit', value: '10000' },
+        { key: 'collection.timezone', value: 'UTC' },
+      ])
+    );
+    expect(describeCollectionAfterAlter.properties).toHaveLength(2);
 
     // drop collection properties
     const dropCollectionProperties =
@@ -153,7 +157,9 @@ describe(`Database API`, () => {
       collection_name: COLLECTION_NAME2,
       db_name: DB_NAME2,
     });
-    expect(describeCollectionAfterDrop.properties).toEqual([]);
+    expect(describeCollectionAfterDrop.properties).toEqual([
+      { key: 'collection.timezone', value: 'UTC' },
+    ]);
 
     // show collections
     const showCollections = await milvusClient.showCollections({
