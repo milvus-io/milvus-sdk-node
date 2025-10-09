@@ -6,7 +6,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: '10.102.6.249:19530', logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
@@ -102,9 +102,33 @@ describe(`Geometry API testing`, () => {
       output_fields: ['id', 'geometry'],
     });
 
-    // verify the query result
-    expect(query.data[0].geometry).toEqual(data[0].geometry);
-    expect(query.data[1].geometry).toEqual(data[1].geometry);
+    // verify the query result - parse coordinates and compare with tolerance
+    const parseGeometry = (geomStr: string) => {
+      const match = geomStr.match(/POINT \(([\d.-]+) ([\d.-]+)\)/);
+      if (match) {
+        return {
+          x: parseFloat(match[1]),
+          y: parseFloat(match[2])
+        };
+      }
+      return null;
+    };
+
+    const expected0 = parseGeometry(data[0].geometry);
+    const received0 = parseGeometry(query.data[0].geometry);
+    const expected1 = parseGeometry(data[1].geometry);
+    const received1 = parseGeometry(query.data[1].geometry);
+
+    expect(expected0).not.toBeNull();
+    expect(received0).not.toBeNull();
+    expect(expected1).not.toBeNull();
+    expect(received1).not.toBeNull();
+
+    // Compare with tolerance for floating point precision (5 decimal places)
+    expect(received0!.x).toBeCloseTo(expected0!.x, 5);
+    expect(received0!.y).toBeCloseTo(expected0!.y, 5);
+    expect(received1!.x).toBeCloseTo(expected1!.x, 5);
+    expect(received1!.y).toBeCloseTo(expected1!.y, 5);
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
