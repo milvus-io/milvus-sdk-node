@@ -51,6 +51,7 @@ export type VarChar = string;
 export type JSON = {
   [key: string]: any;
 };
+export type Geometry = string;
 export type Array =
   | Int8[]
   | Int16[]
@@ -71,6 +72,7 @@ export type FieldData =
   | Double
   | VarChar
   | JSON
+  | Geometry
   | Array
   | VectorTypes
   | null
