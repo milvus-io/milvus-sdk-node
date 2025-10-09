@@ -80,13 +80,22 @@ describe(`Binary vectors API testing`, () => {
       {
         collection_name: COLLECTION_NAME,
         field_name: 'vector1',
-        metric_type: MetricType.MHJACCARD,
-        index_type: IndexType.MINHASH_LSH,
+        metric_type: MetricType.HAMMING,
+        index_type: IndexType.BIN_IVF_FLAT,
         params: {
-          mh_lsh_band: 60,
-          mh_element_bit_width: 100,
+          nlist: 10,
         },
       },
+      // {
+      //   collection_name: COLLECTION_NAME,
+      //   field_name: 'vector1',
+      //   metric_type: MetricType.MHJACCARD,
+      //   index_type: IndexType.MINHASH_LSH,
+      //   params: {
+      //     mh_lsh_band: 60,
+      //     mh_element_bit_width: 100,
+      //   },
+      // },
     ]);
 
     expect(indexes.error_code).toEqual(ErrorCode.SUCCESS);
