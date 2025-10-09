@@ -43,11 +43,11 @@ export const f32ArrayToBinaryBytes = (array: BinaryVector) => {
  * Converts a float16 vector into bytes format.
  *
  * @param {Float16Vector} array - The float16 vector(f32 format) to convert.
- * @returns {Buffer} Bytes representing the float16 vector.
+ * @returns {Uint8Array} Bytes representing the float16 vector.
  */
 export const f32ArrayToF16Bytes = (array: Float16Vector) => {
   const float16Bytes = new Float16Array(array);
-  return Buffer.from(float16Bytes.buffer);
+  return Buffer.from(float16Bytes.buffer) as Uint8Array;
 };
 
 /**
@@ -67,7 +67,7 @@ export const f16BytesToF32Array = (f16Bytes: Uint8Array) => {
 /**
  *  Convert float32 array to BFloat16 bytes, not a real conversion, just take the last 2 bytes of float32.
  * @param {BFloat16Vector} array - The float32 array to convert.
- * @returns {Buffer} The BFloat16 bytes.
+ * @returns {Uint8Array} The BFloat16 bytes.
  */
 export const f32ArrayToBf16Bytes = (array: BFloat16Vector) => {
   const totalBytesNeeded = array.length * 2; // 2 bytes per float32
@@ -85,7 +85,7 @@ export const f32ArrayToBf16Bytes = (array: BFloat16Vector) => {
     byteIndex += 2;
   });
 
-  return Buffer.from(bfloatView);
+  return Buffer.from(bfloatView) as Uint8Array;
 };
 
 /**

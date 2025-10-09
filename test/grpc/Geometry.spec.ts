@@ -1,12 +1,4 @@
-import {
-  MilvusClient,
-  ErrorCode,
-  DataType,
-  IndexType,
-  MetricType,
-  f32ArrayToF16Bytes,
-  f16BytesToF32Array,
-} from '../../milvus';
+import { MilvusClient, ErrorCode, IndexType, MetricType } from '../../milvus';
 import {
   IP,
   genCollectionParams,
@@ -14,16 +6,15 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'debug' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
-  db_name: 'float_vector_16',
+  db_name: 'Geometry',
 };
 
 const p = {
   collectionName: COLLECTION_NAME,
-  vectorType: [DataType.Float16Vector],
   dim: [128],
 };
 const collectionParams = genCollectionParams(p);
@@ -31,7 +22,7 @@ const data = generateInsertData(collectionParams.fields, 2);
 
 // console.log('data to insert', data);
 
-describe(`Float16 vector API testing`, () => {
+describe(`Geometry API testing`, () => {
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
@@ -42,7 +33,7 @@ describe(`Float16 vector API testing`, () => {
     await milvusClient.dropDatabase(dbParam);
   });
 
-  it(`Create collection with float16 vectors should be successful`, async () => {
+  it(`Create collection with geometry vectors should be successful`, async () => {
     const create = await milvusClient.createCollection(collectionParams);
     expect(create.error_code).toEqual(ErrorCode.SUCCESS);
 
@@ -50,15 +41,17 @@ describe(`Float16 vector API testing`, () => {
       collection_name: COLLECTION_NAME,
     });
 
-    const floatVector16Fields = describe.schema.fields.filter(
-      (field: any) => field.data_type === 'Float16Vector'
+    // console.dir(describe, { depth: null });
+
+    const geometryFields = describe.schema.fields.filter(
+      (field: any) => field.data_type === 'Geometry'
     );
-    expect(floatVector16Fields.length).toBe(1);
+    expect(geometryFields.length).toBe(1);
 
     // console.dir(describe.schema, { depth: null });
   });
 
-  it(`insert float16 vector data should be successful`, async () => {
+  it(`insert geometry should be successful`, async () => {
     const insert = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data,
@@ -78,6 +71,11 @@ describe(`Float16 vector API testing`, () => {
         metric_type: MetricType.L2,
         index_type: IndexType.AUTOINDEX,
       },
+      {
+        collection_name: COLLECTION_NAME,
+        field_name: 'geometry',
+        index_type: IndexType.RTREE,
+      },
     ]);
 
     expect(indexes.error_code).toEqual(ErrorCode.SUCCESS);
@@ -91,7 +89,7 @@ describe(`Float16 vector API testing`, () => {
     expect(load.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`query float16 vector should be successful`, async () => {
+  it(`query geometry should be successful`, async () => {
     const count = await milvusClient.count({
       collection_name: COLLECTION_NAME,
     });
@@ -101,20 +99,17 @@ describe(`Float16 vector API testing`, () => {
     const query = await milvusClient.query({
       collection_name: COLLECTION_NAME,
       filter: 'id > 0',
-      output_fields: ['vector', 'id'],
+      output_fields: ['id', 'geometry'],
     });
 
     // verify the query result
-    data.forEach((obj, index) => {
-      obj.vector.forEach((v: number, i: number) => {
-        expect(v).toBeCloseTo(query.data[index].vector[i], 3);
-      });
-    });
+    expect(query.data[0].geometry).toEqual(data[0].geometry);
+    expect(query.data[1].geometry).toEqual(data[1].geometry);
 
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
-  it(`search with float16 vector should be successful`, async () => {
+  it(`search output fields with geometry should be successful`, async () => {
     const search = await milvusClient.search({
       data: data[0].vector,
       collection_name: COLLECTION_NAME,
@@ -128,12 +123,9 @@ describe(`Float16 vector API testing`, () => {
     expect(search.results.length).toBeGreaterThan(0);
   });
 
-  it(`search with float16 vector and nq > 0 should be successful`, async () => {
+  it(`search with geometry vector and nq > 0 should be successful`, async () => {
     const search = await milvusClient.search({
-      data: [
-        f32ArrayToF16Bytes(data[0].vector),
-        f32ArrayToF16Bytes(data[1].vector),
-      ],
+      data: [data[0].vector, data[1].vector],
       collection_name: COLLECTION_NAME,
       output_fields: ['id', 'vector'],
       limit: 5,
