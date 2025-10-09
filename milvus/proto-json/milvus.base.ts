@@ -2346,6 +2346,19 @@ export default {
                     }
                   }
                 },
+                "FlushAllTarget": {
+                  "fields": {
+                    "dbName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collectionNames": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
                 "FlushAllRequest": {
                   "options": {
                     "(common.privilege_ext_obj).object_type": "Global",
@@ -2359,7 +2372,15 @@ export default {
                     },
                     "dbName": {
                       "type": "string",
-                      "id": 2
+                      "id": 2,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "flushTargets": {
+                      "rule": "repeated",
+                      "type": "FlushAllTarget",
+                      "id": 3
                     }
                   }
                 },
@@ -2372,6 +2393,53 @@ export default {
                     "flushAllTs": {
                       "type": "uint64",
                       "id": 2
+                    },
+                    "flushResults": {
+                      "rule": "repeated",
+                      "type": "FlushAllResult",
+                      "id": 3
+                    }
+                  }
+                },
+                "FlushAllResult": {
+                  "fields": {
+                    "dbName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collectionResults": {
+                      "rule": "repeated",
+                      "type": "FlushCollectionResult",
+                      "id": 2
+                    }
+                  }
+                },
+                "FlushCollectionResult": {
+                  "fields": {
+                    "collectionName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "segmentIds": {
+                      "type": "schema.LongArray",
+                      "id": 2
+                    },
+                    "flushSegmentIds": {
+                      "type": "schema.LongArray",
+                      "id": 3
+                    },
+                    "sealTime": {
+                      "type": "int64",
+                      "id": 4
+                    },
+                    "flushTs": {
+                      "type": "uint64",
+                      "id": 5
+                    },
+                    "channelCps": {
+                      "keyType": "string",
+                      "type": "msg.MsgPosition",
+                      "id": 6
                     }
                   }
                 },
@@ -2838,7 +2906,15 @@ export default {
                     },
                     "dbName": {
                       "type": "string",
-                      "id": 3
+                      "id": 3,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "flushTargets": {
+                      "rule": "repeated",
+                      "type": "FlushAllTarget",
+                      "id": 4
                     }
                   }
                 },
@@ -2849,6 +2925,24 @@ export default {
                       "id": 1
                     },
                     "flushed": {
+                      "type": "bool",
+                      "id": 2
+                    },
+                    "flushStates": {
+                      "rule": "repeated",
+                      "type": "FlushAllState",
+                      "id": 3
+                    }
+                  }
+                },
+                "FlushAllState": {
+                  "fields": {
+                    "dbName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collectionFlushStates": {
+                      "keyType": "string",
                       "type": "bool",
                       "id": 2
                     }
@@ -5557,6 +5651,15 @@ export default {
                     }
                   }
                 },
+                "GeometryWktArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
                 "ValueField": {
                   "oneofs": {
                     "data": {
@@ -5615,7 +5718,8 @@ export default {
                         "bytesData",
                         "arrayData",
                         "jsonData",
-                        "geometryData"
+                        "geometryData",
+                        "geometryWktData"
                       ]
                     }
                   },
@@ -5659,6 +5763,10 @@ export default {
                     "geometryData": {
                       "type": "GeometryArray",
                       "id": 10
+                    },
+                    "geometryWktData": {
+                      "type": "GeometryWktArray",
+                      "id": 12
                     }
                   }
                 },

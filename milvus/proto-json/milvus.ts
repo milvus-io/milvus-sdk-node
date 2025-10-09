@@ -2346,6 +2346,19 @@ export default {
                     }
                   }
                 },
+                "FlushAllTarget": {
+                  "fields": {
+                    "db_name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collection_names": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
                 "FlushAllRequest": {
                   "options": {
                     "(common.privilege_ext_obj).object_type": "Global",
@@ -2359,7 +2372,15 @@ export default {
                     },
                     "db_name": {
                       "type": "string",
-                      "id": 2
+                      "id": 2,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "flush_targets": {
+                      "rule": "repeated",
+                      "type": "FlushAllTarget",
+                      "id": 3
                     }
                   }
                 },
@@ -2372,6 +2393,53 @@ export default {
                     "flush_all_ts": {
                       "type": "uint64",
                       "id": 2
+                    },
+                    "flush_results": {
+                      "rule": "repeated",
+                      "type": "FlushAllResult",
+                      "id": 3
+                    }
+                  }
+                },
+                "FlushAllResult": {
+                  "fields": {
+                    "db_name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collection_results": {
+                      "rule": "repeated",
+                      "type": "FlushCollectionResult",
+                      "id": 2
+                    }
+                  }
+                },
+                "FlushCollectionResult": {
+                  "fields": {
+                    "collection_name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "segment_ids": {
+                      "type": "schema.LongArray",
+                      "id": 2
+                    },
+                    "flush_segment_ids": {
+                      "type": "schema.LongArray",
+                      "id": 3
+                    },
+                    "seal_time": {
+                      "type": "int64",
+                      "id": 4
+                    },
+                    "flush_ts": {
+                      "type": "uint64",
+                      "id": 5
+                    },
+                    "channel_cps": {
+                      "keyType": "string",
+                      "type": "msg.MsgPosition",
+                      "id": 6
                     }
                   }
                 },
@@ -2838,7 +2906,15 @@ export default {
                     },
                     "db_name": {
                       "type": "string",
-                      "id": 3
+                      "id": 3,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "flush_targets": {
+                      "rule": "repeated",
+                      "type": "FlushAllTarget",
+                      "id": 4
                     }
                   }
                 },
@@ -2849,6 +2925,24 @@ export default {
                       "id": 1
                     },
                     "flushed": {
+                      "type": "bool",
+                      "id": 2
+                    },
+                    "flush_states": {
+                      "rule": "repeated",
+                      "type": "FlushAllState",
+                      "id": 3
+                    }
+                  }
+                },
+                "FlushAllState": {
+                  "fields": {
+                    "db_name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "collection_flush_states": {
+                      "keyType": "string",
                       "type": "bool",
                       "id": 2
                     }
@@ -5557,6 +5651,15 @@ export default {
                     }
                   }
                 },
+                "GeometryWktArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
                 "ValueField": {
                   "oneofs": {
                     "data": {
@@ -5615,7 +5718,8 @@ export default {
                         "bytes_data",
                         "array_data",
                         "json_data",
-                        "geometry_data"
+                        "geometry_data",
+                        "geometry_wkt_data"
                       ]
                     }
                   },
@@ -5659,6 +5763,10 @@ export default {
                     "geometry_data": {
                       "type": "GeometryArray",
                       "id": 10
+                    },
+                    "geometry_wkt_data": {
+                      "type": "GeometryWktArray",
+                      "id": 12
                     }
                   }
                 },
