@@ -48,7 +48,7 @@ export const f32ArrayToBinaryBytes = (array: BinaryVector) => {
  */
 export const f32ArrayToF16Bytes = (array: Float16Vector) => {
   const float16Bytes = new Float16Array(array);
-  return Buffer.from(float16Bytes.buffer);
+  return Buffer.from(float16Bytes.buffer) as Uint8Array;
 };
 
 /**
@@ -86,7 +86,7 @@ export const f32ArrayToBf16Bytes = (array: BFloat16Vector) => {
     byteIndex += 2;
   });
 
-  return Buffer.from(bfloatView);
+  return Buffer.from(bfloatView) as Uint8Array;
 };
 
 /**
@@ -255,7 +255,7 @@ export const f32ArrayToInt8Bytes = (array: Int8Vector) => {
 export const int8VectorRowsToBytes = (data: Int8Vector[]): Buffer => {
   const result: Uint8Array[] = [];
   for (const row of data) {
-    result.push(f32ArrayToInt8Bytes(row));
+    result.push(f32ArrayToInt8Bytes(row) as Uint8Array);
   }
   return Buffer.concat(result);
 };
