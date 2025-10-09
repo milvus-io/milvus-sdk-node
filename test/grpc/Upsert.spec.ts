@@ -312,13 +312,14 @@ describe(`Upsert API`, () => {
     };
 
     const partial_res = await milvusClient.upsert(partial_params);
-    console.dir(partial_res, { depth: null });
     expect(partial_res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
     const query = await milvusClient.query({
       collection_name: MORE_SCALAR_COLLECTION_NAME,
-      expr: 'id = 1 or id = 2',
+      expr: 'id == 1 or id == 2',
     });
+    expect(query.data[0].int).toEqual(2);
+    expect(query.data[1].int).toEqual(3);
   });
 
   it(`Upsert Data throw type error`, async () => {
