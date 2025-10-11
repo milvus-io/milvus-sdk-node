@@ -518,8 +518,19 @@ export const formatDescribedCol = (
     }
     // recursively format nested fields for struct types
     if (field.fields && field.fields.length > 0) {
-      field.fields.forEach((nestedField: any) => {
-        formatField(nestedField);
+      field.dataType = DataType.Array;
+      field.data_type = 'Array';
+      field.elementType = DataType.Struct;
+      field.element_type = 'Struct';
+
+      field.fields.forEach((childField: any) => {
+        childField.data_type = childField.element_type;
+        delete childField.element_type;
+        // delete max_capacity in type_params array
+        childField.type_params = childField.type_params.filter(
+          (keyValuePair: any) => keyValuePair.key !== 'max_capacity'
+        );
+        formatField(childField);
       });
     }
   };

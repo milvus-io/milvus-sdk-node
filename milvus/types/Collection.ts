@@ -68,6 +68,7 @@ export type FieldSchema = {
   is_clustering_key?: boolean;
   nullable?: boolean;
   is_function_output: boolean;
+  fields?: FieldSchema[];
 } & Partial<Record<TypeParamKey, TypeParam>>;
 
 // create collection

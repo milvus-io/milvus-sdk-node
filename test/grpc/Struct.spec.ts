@@ -54,7 +54,26 @@ const collectionParams = {
       description: 'struct array field',
       data_type: DataType.Array,
       element_type: DataType.Struct,
-      max_capacity: 100,
+      max_capacity: 4,
+      fields: [
+        {
+          name: 'int64_of_struct0',
+          description: 'int64 field',
+          data_type: DataType.Int64,
+        },
+        {
+          name: 'bool_of_struct0',
+          description: 'bool field',
+          data_type: DataType.Bool,
+        },
+      ],
+    },
+    {
+      name: 'array_of_vector_struct',
+      description: 'struct array field',
+      data_type: DataType.Array,
+      element_type: DataType.Struct,
+      max_capacity: 4,
       fields: [
         {
           name: 'float_vector_of_struct',
@@ -129,9 +148,53 @@ describe(`Struct API testing`, () => {
 
     console.dir(describe, { depth: null });
 
-    // const vectorArrayFields = describe.schema.fields.filter(
-    //   (field: any) => field.data_type === 'ArrayOfVector'
-    // );
+    // check schema length
+    expect(describe.schema.fields.length).toEqual(
+      collectionParams.fields.length
+    );
+
+    // check struct array field
+    const structArrayFields = describe.schema.fields.filter(
+      (field: any) =>
+        field.data_type === 'Array' && field.element_type === 'Struct'
+    );
+
+    expect(structArrayFields.length).toEqual(2);
+
+    expect(structArrayFields[0]).toBeDefined();
+    expect(structArrayFields[0]!.dataType).toEqual(DataType.Array);
+    expect(structArrayFields[0]!.element_type).toEqual('Struct');
+    expect(structArrayFields[0]!.fields!.length).toEqual(
+      collectionParams.fields[4].fields!.length
+    );
+    expect(structArrayFields[0]!.fields![0].dataType).toEqual(DataType.Int64);
+    expect(structArrayFields[0]!.fields![1].dataType).toEqual(DataType.Bool);
+
+    expect(structArrayFields[1]).toBeDefined();
+    expect(structArrayFields[1]!.dataType).toEqual(DataType.Array);
+    expect(structArrayFields[1]!.element_type).toEqual('Struct');
+    expect(structArrayFields[1]!.fields!.length).toEqual(
+      collectionParams.fields[5].fields!.length
+    );
+    expect(structArrayFields[1]!.fields![0].dataType).toEqual(
+      DataType.FloatVector
+    );
+    expect(structArrayFields[1]!.fields![0].dim).toEqual('4');
+    expect(structArrayFields[1]!.fields![1].dataType).toEqual(
+      DataType.Float16Vector
+    );
+    expect(structArrayFields[1]!.fields![1].dim).toEqual('4');
+    expect(structArrayFields[1]!.fields![2].dataType).toEqual(
+      DataType.Int8Vector
+    );
+    expect(structArrayFields[1]!.fields![2].dim).toEqual('4');
+    expect(structArrayFields[1]!.fields![3].dataType).toEqual(DataType.Int64);
+    expect(structArrayFields[1]!.fields![4].dataType).toEqual(DataType.Bool);
+    expect(structArrayFields[1]!.fields![5].dataType).toEqual(DataType.Float);
+    expect(structArrayFields[1]!.fields![6].dataType).toEqual(DataType.Double);
+    expect(structArrayFields[1]!.fields![7].dataType).toEqual(DataType.VarChar);
+    expect(structArrayFields[1]!.fields![7].max_length).toEqual('4');
+
     // expect(vectorArrayFields.length).toBe(1);
 
     // console.dir(describe.schema, { depth: null });
