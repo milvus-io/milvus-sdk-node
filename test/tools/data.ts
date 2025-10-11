@@ -12,13 +12,14 @@ interface DataGenerator {
   (param?: {
     dim?: number;
     fixedString?: boolean;
-    element_type?: DataType;
+    element_type?: DataType | keyof typeof DataType;
     max_length?: number;
     max_capacity?: number;
     is_partition_key?: boolean;
     index?: number;
     sparseType?: string;
     int8VectorType?: 'array' | 'typed_array';
+    fields?: FieldType[];
   }): FieldData;
 }
 
@@ -296,26 +297,82 @@ export const genGeometry: DataGenerator = () => {
   return `POINT (${lon.toFixed(6)} ${lat.toFixed(6)})`;
 };
 
-export const dataGenMap: { [key in DataType]: DataGenerator } = {
-  [DataType.None]: genNone,
-  [DataType.Bool]: genBool,
-  [DataType.Int8]: genInt,
-  [DataType.Int16]: genInt16,
-  [DataType.Int32]: genInt,
-  [DataType.Int64]: genInt64,
-  [DataType.Float]: genFloat,
-  [DataType.Double]: genFloat,
-  [DataType.VarChar]: genVarChar,
-  [DataType.Array]: genArray,
-  [DataType.JSON]: genJSON,
-  [DataType.Geometry]: genGeometry,
-  [DataType.BinaryVector]: genBinaryVector,
-  [DataType.FloatVector]: genFloatVector,
-  [DataType.Float16Vector]: genFloat16,
-  [DataType.BFloat16Vector]: genFloat16,
-  [DataType.SparseFloatVector]: genSparseVector,
-  [DataType.Int8Vector]: genInt8Vector,
+export const genStruct: DataGenerator = params => {
+  const { fields } = params!;
+  return fields!.map(field => {
+    const genDataParams = {
+      dim: Number(field.dim || (field.type_params && field.type_params.dim)),
+      element_type: field.element_type,
+      max_length: Number(
+        field.max_length || (field.type_params && field.type_params.max_length)
+      ),
+      max_capacity: Number(
+        field.max_capacity ||
+          (field.type_params && field.type_params.max_capacity)
+      ),
+      is_partition_key: field.is_partition_key,
+      sparseType: params?.sparseType,
+    };
+    return dataGenMap[field.data_type](genDataParams);
+  });
 };
+
+export const genArrayOfVector: DataGenerator = params => {
+  const { element_type, max_capacity = 0 } = params!;
+  return Array.from({ length: max_capacity! }, () =>
+    dataGenMap[element_type!](params)
+  );
+};
+
+export const genArrayOfStruct: DataGenerator = params => {
+  const { element_type, max_capacity = 0 } = params!;
+  return Array.from({ length: max_capacity! }, () =>
+    dataGenMap[element_type!](params)
+  );
+};
+
+// Helper function to create data generator map with both enum and string keys
+const createDataGenMap = () => {
+  const map: { [key in DataType | keyof typeof DataType]: DataGenerator } =
+    {} as any;
+
+  // Define the mapping once
+  const generators = {
+    [DataType.None]: genNone,
+    [DataType.Bool]: genBool,
+    [DataType.Int8]: genInt,
+    [DataType.Int16]: genInt16,
+    [DataType.Int32]: genInt,
+    [DataType.Int64]: genInt64,
+    [DataType.Float]: genFloat,
+    [DataType.Double]: genFloat,
+    [DataType.VarChar]: genVarChar,
+    [DataType.Array]: genArray,
+    [DataType.JSON]: genJSON,
+    [DataType.Geometry]: genGeometry,
+    [DataType.BinaryVector]: genBinaryVector,
+    [DataType.FloatVector]: genFloatVector,
+    [DataType.SparseFloatVector]: genSparseVector,
+    [DataType.Float16Vector]: genFloat16,
+    [DataType.BFloat16Vector]: genFloat16,
+    [DataType.Int8Vector]: genInt8Vector,
+    [DataType.ArrayOfVector]: genArrayOfVector,
+    [DataType.ArrayOfStruct]: genArrayOfStruct,
+    [DataType.Struct]: genStruct,
+  };
+
+  // Auto-generate both enum and string keys
+  Object.entries(generators).forEach(([key, generator]) => {
+    const enumKey = Number(key) as DataType;
+    const stringKey = DataType[enumKey] as keyof typeof DataType;
+    map[enumKey] = generator;
+    map[stringKey] = generator;
+  });
+
+  return map;
+};
+
+export const dataGenMap = createDataGenMap();
 
 /**
  * Generates random data for inserting into a collection

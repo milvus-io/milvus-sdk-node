@@ -5,9 +5,9 @@ import {
   FieldSchema,
   DataTypeStringEnum,
   DEFAULT_MIN_INT64,
-  SearchResultData,
   SparseFloatVector,
   FieldData,
+  FieldType,
 } from '../';
 import { Pool } from 'generic-pool';
 
@@ -74,7 +74,7 @@ export const buildDefaultSchema = (data: {
   id_type: DataType.Int64 | DataType.VarChar;
   vector_field_name: string;
   auto_id: boolean;
-}) => {
+}): FieldType[] => {
   return [
     {
       name: data.primary_field_name,

@@ -66,6 +66,7 @@ export class BaseClient {
     collectionSchema: 'milvus.proto.schema.CollectionSchema',
     fieldSchema: 'milvus.proto.schema.FieldSchema',
     functionSchema: 'milvus.proto.schema.FunctionSchema',
+    structArrayFieldSchema: 'milvus.proto.schema.StructArrayFieldSchema',
   };
 
   /**

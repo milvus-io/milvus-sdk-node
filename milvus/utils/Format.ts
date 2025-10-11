@@ -334,6 +334,7 @@ export const formatCollectionSchema = (
 
   let payload = {} as any;
 
+  // extract function output fields
   const functionOutputFields: string[] = [];
 
   // if functions is set, parse its params to key-value pairs, and delete inputs and outputs
@@ -352,21 +353,71 @@ export const formatCollectionSchema = (
     });
   }
 
+  // extract struct array fields and others
+  const [structArrayFields, fieldsWithoutStructArray] = fields.reduce<
+    [FieldType[], FieldType[]]
+  >(
+    (acc, field) => {
+      if (
+        field.data_type === DataType.Array &&
+        field.element_type === DataType.Struct
+      ) {
+        acc[0].push(field);
+      } else {
+        acc[1].push(field);
+      }
+      return acc;
+    },
+    [[], []]
+  );
+
+  // format the payload
   payload = {
     name: collection_name,
     description: description || '',
     enableDynamicField: !!enableDynamicField || !!enable_dynamic_field,
-    fields: fields.map(field =>
+    fields: fieldsWithoutStructArray.map(field =>
       formatFieldSchema(field, schemaTypes, {
         partition_key_field,
         functionOutputFields,
         clustring_key_field,
       })
     ),
+    structArrayFields: structArrayFields.map(field =>
+      formatStructArrayFieldSchema(field, schemaTypes)
+    ),
     ...payload,
   };
 
   return payload;
+};
+
+/**
+ * Formats a struct array field schema by converting its properties to the appropriate types and adding additional properties.
+ *
+ * @param {FieldType} field - The field to format.
+ * @param {Record<string, Type>} schemaTypes - The schema types to use for formatting.
+ * @returns {Object} The formatted struct array field schema.
+ */
+export const formatStructArrayFieldSchema = (
+  field: FieldType,
+  schemaTypes: Record<string, Type>
+) => {
+  return schemaTypes.structArrayFieldSchemaType.create({
+    name: field.name,
+    description: field.description,
+    fields: field.fields!.map((f: FieldType) => {
+      // convert the field to array field, and set the max capacity
+      f.element_type = f.data_type;
+      f.data_type = isVectorType(convertToDataType(f.data_type as DataType)!)
+        ? DataType.ArrayOfVector
+        : DataType.Array;
+      f.max_capacity = field.max_capacity;
+
+      // format schema
+      return formatFieldSchema(f, schemaTypes);
+    }),
+  });
 };
 
 /**
@@ -416,7 +467,10 @@ export const formatFieldSchema = (
   };
 
   // if element type exist and
-  if (dataType === DataType.Array && typeof element_type !== 'undefined') {
+  if (
+    (dataType === DataType.Array || dataType === DataType.ArrayOfVector) &&
+    typeof element_type !== 'undefined'
+  ) {
     createObj.elementType = convertToDataType(element_type);
     createObj.element_type = element_type; // compatibility with old version
   }
@@ -443,20 +497,35 @@ export const formatDescribedCol = (
 ): DescribeCollectionResponse => {
   // clone object
   const newData = cloneObj<DescribeCollectionResponse>(data);
+  // merge fields and struct_array_fields
+  newData.schema.fields = [
+    ...newData.schema.fields,
+    ...newData.schema.struct_array_fields,
+  ];
   // add a dataType property which indicate datatype number
-  newData.schema?.fields?.forEach(f => {
-    f.dataType = DataTypeMap[f.data_type];
+  const formatField = (field: any) => {
+    field.dataType = DataTypeMap[field.data_type];
     // if default_value is set, parse it to the correct format
-    if (f.default_value) {
-      const defaultValue = f.default_value as any;
-      f.default_value = defaultValue[defaultValue.data];
+    if (field.default_value) {
+      const defaultValue = field.default_value as any;
+      field.default_value = defaultValue[defaultValue.data];
     }
     // extract type params(key value pair = {key: 'xxx', value: any}), and assign it to the field object(key)
-    if (f.type_params && f.type_params.length > 0) {
-      f.type_params.forEach(keyValuePair => {
-        f[keyValuePair.key] = keyValuePair.value;
+    if (field.type_params && field.type_params.length > 0) {
+      field.type_params.forEach((keyValuePair: any) => {
+        field[keyValuePair.key] = keyValuePair.value;
       });
     }
+    // recursively format nested fields for struct types
+    if (field.fields && field.fields.length > 0) {
+      field.fields.forEach((nestedField: any) => {
+        formatField(nestedField);
+      });
+    }
+  };
+
+  newData.schema?.fields?.forEach(f => {
+    formatField(f);
   });
 
   return newData;

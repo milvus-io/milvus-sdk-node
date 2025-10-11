@@ -55,6 +55,20 @@ export type JSON = {
   [key: string]: any;
 };
 export type Geometry = string;
+export type Struct = {
+  [key: string]:
+    | Bool
+    | Int8
+    | Int16
+    | Int32
+    | Int64
+    | Float
+    | Double
+    | VarChar
+    | JSON
+    | Geometry
+    | VectorTypes;
+};
 export type Array =
   | Int8[]
   | Int16[]
@@ -62,7 +76,8 @@ export type Array =
   | Int64[]
   | Float[]
   | Double[]
-  | VarChar[];
+  | VarChar[]
+  | Struct[];
 
 // Represents the possible data types for a field(cell)
 export type FieldData =

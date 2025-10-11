@@ -163,6 +163,9 @@ export class Collection extends Database {
       functionSchemaType: this.schemaProto.lookupType(
         this.protoInternalPath.functionSchema
       ),
+      structArrayFieldSchemaType: this.schemaProto.lookupType(
+        this.protoInternalPath.structArrayFieldSchema
+      ),
     };
 
     // Create the payload object with the collection_name, description, and fields.
