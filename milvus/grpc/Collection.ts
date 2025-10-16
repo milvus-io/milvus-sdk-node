@@ -182,7 +182,7 @@ export class Collection extends Database {
 
     // Get the consistency level value from the ConsistencyLevelEnum object.
     const level =
-      ConsistencyLevelEnum[consistency_level] ?? ConsistencyLevelEnum.Bounded;
+      ConsistencyLevelEnum[consistency_level as keyof typeof ConsistencyLevelEnum] ?? ConsistencyLevelEnum.Bounded;
 
     // build the request object
     const req: any = {

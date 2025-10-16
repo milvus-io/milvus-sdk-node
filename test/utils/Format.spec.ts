@@ -419,6 +419,7 @@ describe('utils/format', () => {
           isClusteringKey: false,
         },
       ],
+      structArrayFields: [],
       functions: [
         {
           inputFieldNames: ['testField1'],
@@ -531,6 +532,7 @@ describe('utils/format', () => {
         enable_dynamic_field: false,
         autoID: false,
         functions: [],
+        struct_array_fields: [],
       },
       shards_num: 1,
       start_positions: [],
@@ -592,6 +594,7 @@ describe('utils/format', () => {
           name: 'key1',
           type: 'VarChar',
           data: [{ key1: 'value1' }],
+          fieldMap: new Map(),
         } as _Field,
       ],
     ]);
@@ -612,6 +615,7 @@ describe('utils/format', () => {
           name: 'key1',
           type: 'VarChar',
           data: [{ key1: 'value1' }],
+          fieldMap: new Map(),
         } as _Field,
       ],
       [
@@ -620,6 +624,7 @@ describe('utils/format', () => {
           name: 'key2',
           type: 'VarChar',
           data: [{ key2: null }],
+          fieldMap: new Map(),
         } as _Field,
       ],
     ]);
@@ -641,6 +646,7 @@ describe('utils/format', () => {
           name: 'key1',
           type: 'VarChar',
           data: [{ key1: 'value1' }],
+          fieldMap: new Map(),
         } as _Field,
       ],
     ]);
@@ -704,6 +710,49 @@ describe('utils/format', () => {
     const row = { name: 'John', age: 25 };
     const field = { type: 'Int', name: 'age' };
     expect(buildFieldData(row, field as _Field)).toEqual(25);
+  });
+
+  it('should return the value of the field for struct types', () => {
+    const row = {
+      struct: { age: 3, vector: [1, 2, 3] },
+    };
+
+    const field = {
+      type: 'Array',
+      elementType: 'Struct',
+      name: 'struct',
+      fieldMap: new Map([
+        [
+          'age',
+          {
+            type: 'Int',
+            name: 'age',
+            data: [],
+            fieldMap: new Map(),
+            nullable: false,
+            default_value: undefined,
+          },
+        ],
+        [
+          'vector',
+          {
+            type: 'FloatVector',
+            name: 'vector',
+            data: [],
+            fieldMap: new Map(),
+            nullable: false,
+            default_value: undefined,
+          },
+        ],
+      ]),
+      data: [],
+      nullable: false,
+      default_value: undefined,
+    };
+
+    const res = buildFieldData(row, field as _Field);
+
+    console.dir(res, { depth: null });
   });
 
   it('should format search results correctly', () => {

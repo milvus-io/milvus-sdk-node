@@ -103,12 +103,13 @@ export interface RowData {
 
 export interface _Field {
   name: string;
-  type: keyof typeof DataType;
-  elementType?: keyof typeof DataType;
+  type: DataType;
+  elementType?: DataType;
   data: FieldData[];
   dim?: number;
   nullable?: boolean;
   default_value?: FieldData;
+  fieldMap: Map<string, _Field>; // for struct field
 }
 
 export interface FlushReq extends GrpcTimeOut {

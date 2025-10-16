@@ -122,8 +122,10 @@ export enum MetricType {
   // MHJACCARD
   MHJACCARD = 'MHJACCARD',
   // Struct
+  MAX_SIM="MAX_SIM",
   MAX_SIM_COSINE = 'MAX_SIM_COSINE',
   MAX_SIM_IP = 'MAX_SIM_IP',
+  MAX_SIM_L2 = 'MAX_SIM_L2',
   DTW_COSINE = 'DTW_COSINE',
   DTW_IP = 'DTW_IP',
 }
@@ -163,9 +165,6 @@ export enum IndexType {
   IVF_RABITQ = 'IVF_RABITQ',
   MINHASH_LSH = 'MINHASH_LSH',
   RTREE = 'RTREE',
-  EMB_LIST_HNSW = 'EMB_LIST_HNSW',
-  EMB_LIST_IVF_FLAT = 'EMB_LIST_IVF_FLAT',
-  EMB_LIST_DISKANN = 'EMB_LIST_DISKANN',
 }
 
 // MsgType
@@ -298,8 +297,6 @@ export enum DataType {
   SparseFloatVector = 104,
   Int8Vector = 105,
 
-  ArrayOfVector = 106,
-  ArrayOfStruct = 200,
   Struct = 201,
 }
 
@@ -340,8 +337,6 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   BFloat16Vector: 103,
   SparseFloatVector: 104,
   Int8Vector: 105,
-  ArrayOfVector: 106,
-  ArrayOfStruct: 200,
   Struct: 201,
 };
 
@@ -365,8 +360,6 @@ export enum DataTypeStringEnum {
   BFloat16Vector = 'BFloat16Vector',
   SparseFloatVector = 'SparseFloatVector',
   Int8Vector = 'Int8Vector',
-  ArrayOfVector = 'ArrayOfVector',
-  ArrayOfStruct = 'ArrayOfStruct',
   Struct = 'Struct',
 }
 

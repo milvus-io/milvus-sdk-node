@@ -109,12 +109,7 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   collection_name: string; // required, collection name
   shards_num?: number; // optional, shards number, default is 1
   description?: string; // optional, description of the collection
-  consistency_level?:
-    | 'Strong'
-    | 'Session'
-    | 'Bounded'
-    | 'Eventually'
-    | 'Customized'; // optional,consistency level, default is 'Bounded'
+  consistency_level?: string; // optional,consistency level, default is 'Bounded'
   num_partitions?: number; // optional, partitions number, default is 1
   partition_key_field?: string; // optional, partition key field
   clustring_key_field?: string; // optional, clustring key field

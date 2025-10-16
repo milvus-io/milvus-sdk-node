@@ -67,6 +67,8 @@ import {
   NO_LIMIT,
   DescribeCollectionReq,
   formatExprValues,
+  isVectorType,
+  convertToDataType,
 } from '../';
 import { Collection } from './Collection';
 
@@ -152,18 +154,44 @@ export class Data extends Collection {
         if (v.is_function_output) {
           functionOutputFields.push(v.name); // ignore function field
         } else if (insertable) {
-          acc.push([
-            v.name,
-            {
-              name: v.name,
-              type: v.data_type, // milvus return string here
-              elementType: v.element_type,
-              dim: Number(v.dim),
-              data: [], // values container
-              nullable: v.nullable,
-              default_value: v.default_value,
-            },
-          ]);
+          const field: _Field = {
+            name: v.name,
+            type: convertToDataType(v.data_type), // milvus return string here
+            elementType: convertToDataType(v.element_type!),
+            dim: Number(v.dim),
+            data: [], // values container
+            nullable: v.nullable,
+            default_value: v.default_value,
+            fieldMap: new Map(),
+          };
+
+          // Check if this is a struct field (Array with element_type = 'Struct')
+          if (
+            convertToDataType(v.data_type) === DataType.Array &&
+            convertToDataType(v.element_type!) === DataType.Struct &&
+            v.fields
+          ) {
+            // build struct field map
+            field.fieldMap = new Map(
+              v.fields.map(field => [
+                field.name,
+                {
+                  name: field.name,
+                  type: isVectorType(convertToDataType(field.data_type))
+                    ? (106 as DataType)
+                    : DataType.Array,
+                  elementType: convertToDataType(field.data_type),
+                  dim: Number(field.dim),
+                  data: [],
+                  nullable: field.nullable,
+                  default_value: field.default_value,
+                  fieldMap: new Map(),
+                },
+              ])
+            );
+          }
+
+          acc.push([v.name, field]);
         }
         return acc;
       }, [] as [string, _Field][])
@@ -174,10 +202,11 @@ export class Data extends Collection {
     if (isDynamic) {
       fieldMap.set(DEFAULT_DYNAMIC_FIELD, {
         name: DEFAULT_DYNAMIC_FIELD,
-        type: 'JSON',
-        elementType: 'None',
+        type: DataType.JSON,
+        elementType: DataType.None,
         data: [], // value container
         nullable: false,
+        fieldMap: new Map(),
       });
     }
 
@@ -204,14 +233,14 @@ export class Data extends Collection {
           );
         }
         if (
-          DataTypeMap[field.type] === DataType.BinaryVector &&
+          field.type === DataType.BinaryVector &&
           (rowData[name] as BinaryVector).length !== field.dim! / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
         // build field data
-        switch (DataTypeMap[field.type]) {
+        switch (field.type) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
             field.data = field.data.concat(buildFieldData(rowData, field));
@@ -220,7 +249,8 @@ export class Data extends Collection {
             field.data[rowIndex] = buildFieldData(
               rowData,
               field,
-              data.transformers
+              data.transformers,
+              rowIndex
             );
             break;
         }
@@ -245,103 +275,135 @@ export class Data extends Collection {
       delete params.schema_timestamp; // This completely removes the property
     }
 
-    // transform data from map to array, milvus grpc params
-    params.fields_data = Array.from(fieldMap.values()).map(field => {
-      // milvus return string for field type, so we define the DataTypeMap to the value we need.
-      // but if milvus change the string, may cause we cant find value.
-      const type = DataTypeMap[field.type];
-      const key = VectorDataTypes.includes(type) ? 'vectors' : 'scalars';
-      const dataKey = getDataKey(type);
-      const elementType = DataTypeMap[field.elementType!];
-      const elementTypeKey = getDataKey(elementType);
+    // build column data, row based data to column based data
+    const buildColumnData = (fields: Map<string, _Field>): any[] =>
+      Array.from(fields.values()).map(field => {
+        // 106 is ArrayOfVector, only internal data type
+        let key = [...VectorDataTypes, 106 as DataType].includes(field.type)
+          ? 'vectors'
+          : 'scalars';
+        if (field.elementType === DataType.Struct) {
+          key = 'struct_arrays';
+        }
 
-      // check if need valid data
-      const needValidData =
-        key !== 'vectors' &&
-        (field.nullable === true ||
-          (typeof field.default_value !== 'undefined' &&
-            field.default_value !== null));
+        const dataKey = getDataKey(field.type);
+        const elementTypeKey = getDataKey(field.elementType!);
 
-      // get valid data
-      const valid_data = needValidData
-        ? getValidDataArray(field.data, data.fields_data?.length!)
-        : [];
+        // check if need valid data
+        const needValidData =
+          key !== 'vectors' &&
+          (field.nullable === true ||
+            (typeof field.default_value !== 'undefined' &&
+              field.default_value !== null));
 
-      // build key value
-      let keyValue;
-      switch (type) {
-        case DataType.FloatVector:
-          keyValue = {
-            dim: field.dim,
-            [dataKey]: {
-              data: field.data,
-            },
-          };
-          break;
-        case DataType.BFloat16Vector:
-        case DataType.Float16Vector:
-          keyValue = {
-            dim: field.dim,
-            [dataKey]: Buffer.concat(field.data as Uint8Array[]),
-          };
-          break;
-        case DataType.BinaryVector:
-          keyValue = {
-            dim: field.dim,
-            [dataKey]: f32ArrayToBinaryBytes(field.data as BinaryVector),
-          };
-          break;
-        case DataType.SparseFloatVector:
-          const dim = getSparseDim(field.data as SparseFloatVector[]);
-          keyValue = {
-            dim,
-            [dataKey]: {
+        // get valid data
+        const valid_data = needValidData
+          ? getValidDataArray(field.data, data.fields_data?.length!)
+          : [];
+
+        // build key value
+        let keyValue;
+        switch (field.type) {
+          case DataType.FloatVector:
+            keyValue = {
+              dim: field.dim,
+              [dataKey]: {
+                data: field.data,
+              },
+            };
+            break;
+          case DataType.BFloat16Vector:
+          case DataType.Float16Vector:
+            keyValue = {
+              dim: field.dim,
+              [dataKey]: Buffer.concat(field.data as Uint8Array[]),
+            };
+            break;
+          case DataType.BinaryVector:
+            keyValue = {
+              dim: field.dim,
+              [dataKey]: f32ArrayToBinaryBytes(field.data as BinaryVector),
+            };
+            break;
+          case DataType.SparseFloatVector:
+            const dim = getSparseDim(field.data as SparseFloatVector[]);
+            keyValue = {
               dim,
-              contents: sparseRowsToBytes(field.data as SparseFloatVector[]),
-            },
-          };
-          break;
-        case DataType.Int8Vector:
-          keyValue = {
-            dim: field.dim,
-            [dataKey]: int8VectorRowsToBytes(field.data as Int8Vector[]),
-          };
-          break;
+              [dataKey]: {
+                dim,
+                contents: sparseRowsToBytes(field.data as SparseFloatVector[]),
+              },
+            };
+            break;
+          case DataType.Int8Vector:
+            keyValue = {
+              dim: field.dim,
+              [dataKey]: int8VectorRowsToBytes(field.data as Int8Vector[]),
+            };
+            break;
 
-        case DataType.Array:
-          keyValue = {
-            [dataKey]: {
-              data: field.data
-                .filter(v => v !== undefined)
-                .map(d => {
+          // ArrayOfVector
+          case 106 as DataType:
+            keyValue = {
+              [dataKey]: {
+                dim: field.dim,
+                data: field.data.map(d => {
                   return {
+                    dim: field.dim,
                     [elementTypeKey]: {
-                      type: elementType,
+                      type: field.elementType,
                       data: d,
                     },
                   };
                 }),
-              element_type: elementType,
-            },
-          };
-          break;
-        default:
-          keyValue = {
-            [dataKey]: {
-              data: field.data.filter(v => v !== undefined),
-            },
-          };
-          break;
-      }
+                element_type: field.elementType,
+              },
+            };
+            break;
 
-      return {
-        type,
-        field_name: field.name,
-        is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
-        [key]: keyValue,
-        valid_data: valid_data,
-      };
-    });
+          case DataType.Array:
+            if (field.elementType === DataType.Struct) {
+              // For struct arrays, recursively build column data for struct fields
+              keyValue = {
+                fields: buildColumnData(field.fieldMap),
+              };
+            } else {
+              keyValue = {
+                [dataKey]: {
+                  data: field.data
+                    .filter(v => v !== undefined)
+                    .map(d => {
+                      return {
+                        [elementTypeKey]: {
+                          type: field.elementType,
+                          data: d,
+                        },
+                      };
+                    }),
+                  element_type: field.elementType,
+                },
+              };
+            }
+            break;
+          default:
+            keyValue = {
+              [dataKey]: {
+                data: field.data.filter(v => v !== undefined),
+              },
+            };
+            break;
+        }
+
+        return {
+          type: field.type,
+          field_name: field.name,
+          is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
+          [key]: keyValue,
+          valid_data: valid_data,
+        };
+      });
+
+    params.fields_data = buildColumnData(fieldMap);
 
     // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
@@ -349,6 +411,7 @@ export class Data extends Collection {
     try {
       delete params.data;
     } catch (e) {}
+
     // execute Insert
     let promise = await promisify(
       this.channelPool,
