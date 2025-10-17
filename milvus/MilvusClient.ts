@@ -159,7 +159,13 @@ export class MilvusClient extends GRPCClient {
     } = data as CreateColReq;
 
     // prepare result
-    let result: ResStatus = { error_code: '', reason: '' };
+    let result: ResStatus = {
+      error_code: '',
+      reason: '',
+      extra_info: {},
+      retriable: false,
+      detail: '',
+    };
 
     // check if the collection is existing
     const exist = await this.hasCollection({ collection_name });

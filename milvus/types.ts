@@ -1,4 +1,3 @@
-// @deprecated
 export * from './types/Database';
 export * from './types/Collection';
 export * from './types/Data';
@@ -11,3 +10,7 @@ export * from './types/Resource';
 export * from './types/Client';
 export * from './types/HighLevel';
 export * from './types/Http';
+export * from './types/Segments';
+export * from './types/Insert';
+export * from './types/Search';
+export * from './types/DataTypes';

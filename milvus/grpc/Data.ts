@@ -17,7 +17,6 @@ import {
   FlushResult,
   GetFlushStateResponse,
   GetMetricsResponse,
-  GetQuerySegmentInfoResponse,
   GePersistentSegmentInfoResponse,
   buildSearchRequest,
   formatSearchResult,
@@ -69,6 +68,7 @@ import {
   formatExprValues,
   isVectorType,
   convertToDataType,
+  GetQuerySegmentInfoResponse,
 } from '../';
 import { Collection } from './Collection';
 

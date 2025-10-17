@@ -182,7 +182,9 @@ export class Collection extends Database {
 
     // Get the consistency level value from the ConsistencyLevelEnum object.
     const level =
-      ConsistencyLevelEnum[consistency_level as keyof typeof ConsistencyLevelEnum] ?? ConsistencyLevelEnum.Bounded;
+      ConsistencyLevelEnum[
+        consistency_level as keyof typeof ConsistencyLevelEnum
+      ] ?? ConsistencyLevelEnum.Bounded;
 
     // build the request object
     const req: any = {
@@ -308,7 +310,14 @@ export class Collection extends Database {
       }
     }
 
-    return { error_code: ErrorCode.SUCCESS, reason: '', code: 0 };
+    return {
+      error_code: ErrorCode.SUCCESS,
+      reason: '',
+      code: 0,
+      extra_info: {},
+      retriable: false,
+      detail: '',
+    };
   }
 
   /**
@@ -333,7 +342,14 @@ export class Collection extends Database {
     checkCollectionName(data);
 
     let response = {
-      status: { error_code: 'Success', reason: '', code: 0 },
+      status: {
+        error_code: 'Success',
+        reason: '',
+        code: 0,
+        extra_info: {},
+        retriable: false,
+        detail: '',
+      },
       value: true,
     };
 

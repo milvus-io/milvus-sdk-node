@@ -12,3 +12,7 @@ export * from './Client';
 export * from './MilvusIndex';
 export * from './HighLevel';
 export * from './Http';
+export * from './Segments';
+export * from './Insert';
+export * from './Search';
+export * from './DataTypes';
