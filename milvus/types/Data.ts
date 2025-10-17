@@ -103,8 +103,8 @@ export interface RowData {
 
 export interface _Field {
   name: string;
-  type: DataType | keyof typeof DataType;
-  elementType?: DataType | keyof typeof DataType;
+  type: DataType;
+  elementType?: DataType;
   data: FieldData[];
   dim?: number;
   nullable?: boolean;

@@ -36,7 +36,7 @@ describe('utils/Data', () => {
         'key1',
         {
           name: 'key1',
-          type: 'VarChar',
+          type: DataType.VarChar,
           data: [{ key1: 'value1' }],
           fieldMap: new Map(),
         } as _Field,
@@ -57,7 +57,7 @@ describe('utils/Data', () => {
         'key1',
         {
           name: 'key1',
-          type: 'VarChar',
+          type: DataType.VarChar,
           data: [{ key1: 'value1' }],
           fieldMap: new Map(),
         } as _Field,
@@ -66,7 +66,7 @@ describe('utils/Data', () => {
         'key2',
         {
           name: 'key2',
-          type: 'VarChar',
+          type: DataType.VarChar,
           data: [{ key2: null }],
           fieldMap: new Map(),
         } as _Field,
@@ -88,7 +88,7 @@ describe('utils/Data', () => {
         'key1',
         {
           name: 'key1',
-          type: 'VarChar',
+          type: DataType.VarChar,
           data: [{ key1: 'value1' }],
           fieldMap: new Map(),
         } as _Field,

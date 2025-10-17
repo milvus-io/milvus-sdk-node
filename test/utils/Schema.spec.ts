@@ -8,7 +8,6 @@ import {
   convertToDataType,
   DataType,
   formatCollectionSchema,
-  DescribeCollectionResponse,
   formatDescribedCol,
   CreateCollectionReq,
 } from '../../milvus';
