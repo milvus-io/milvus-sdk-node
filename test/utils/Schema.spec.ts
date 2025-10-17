@@ -310,114 +310,315 @@ describe('utils/Schema', () => {
   });
 
   it('adds a dataType property to each field object in the schema', () => {
-    const response: DescribeCollectionResponse = {
-      virtual_channel_names: [
-        'by-dev-rootcoord-dml_4_441190990484912096v0',
-        'by-dev-rootcoord-dml_5_441190990484912096v1',
-      ],
-      physical_channel_names: [
-        'by-dev-rootcoord-dml_4',
-        'by-dev-rootcoord-dml_5',
-      ],
-      properties: [],
+    const response: any = {
+      virtual_channel_names: ['by-dev-rootcoord-dml_14_461525722618459440v0'],
+      physical_channel_names: ['by-dev-rootcoord-dml_14'],
       aliases: [],
-      status: { error_code: 'Success', reason: '' },
+      start_positions: [],
+      properties: [{ key: 'collection.timezone', value: 'UTC' }],
+      status: {
+        extra_info: {},
+        error_code: 'Success',
+        reason: '',
+        code: 0,
+        retriable: false,
+        detail: '',
+      },
       schema: {
         fields: [
           {
-            fieldID: '1',
-            type_params: [{ key: 'dim', value: '128' }],
-            index_params: [],
-            name: 'vector',
-            is_primary_key: false,
-            description: 'vector field',
-            data_type: 'FloatVector',
-            dataType: 101,
-            autoID: false,
-            state: 'created',
-            is_dynamic: false,
-            is_clustering_key: false,
-            is_function_output: false,
-            nullable: false,
-            default_value: { long_data: 123, data: 'long_data' } as any,
-            is_partition_key: false,
-          },
-          {
-            fieldID: '2',
             type_params: [],
             index_params: [],
+            fieldID: '100',
             name: 'id',
             is_primary_key: true,
-            description: '',
+            description: 'id field',
             data_type: 'Int64',
-            dataType: 5,
             autoID: true,
-            state: 'created',
-            default_value: { string_data: 'd', data: 'string_data' } as any,
+            state: 'FieldCreated',
+            element_type: 'None',
+            default_value: null,
             is_dynamic: false,
-            is_clustering_key: false,
-            is_function_output: false,
-            nullable: false,
             is_partition_key: false,
+            is_clustering_key: false,
+            nullable: false,
+            is_function_output: false,
           },
           {
-            fieldID: '3',
-            type_params: [
-              { key: 'enable_match', value: 'true' },
-              { key: 'enable_analyzer', value: 'true' },
-              { key: 'dim', value: '3' },
-              { key: 'analyzer_params', value: '{}' },
-              { key: 'max_capacity', value: '23' },
-            ],
+            type_params: [{ key: 'dim', value: '4' }],
             index_params: [],
+            fieldID: '101',
             name: 'vector',
             is_primary_key: false,
             description: 'vector field',
             data_type: 'FloatVector',
-            dataType: 101,
             autoID: false,
-            state: 'created',
+            state: 'FieldCreated',
+            element_type: 'None',
+            default_value: null,
             is_dynamic: false,
-            is_clustering_key: false,
-            is_function_output: false,
-            nullable: false,
-            default_value: { bool_data: false, data: 'bool_data' } as any,
             is_partition_key: false,
+            is_clustering_key: false,
+            nullable: false,
+            is_function_output: false,
+          },
+          {
+            type_params: [{ key: 'max_length', value: '10' }],
+            index_params: [],
+            fieldID: '102',
+            name: 'varChar',
+            is_primary_key: false,
+            description: 'varChar field',
+            data_type: 'VarChar',
+            autoID: false,
+            state: 'FieldCreated',
+            element_type: 'None',
+            default_value: null,
+            is_dynamic: false,
+            is_partition_key: false,
+            is_clustering_key: false,
+            nullable: false,
+            is_function_output: false,
+          },
+          {
+            type_params: [
+              { key: 'max_length', value: '10' },
+              { key: 'max_capacity', value: '4' },
+            ],
+            index_params: [],
+            fieldID: '103',
+            name: 'array_of_varchar',
+            is_primary_key: false,
+            description: 'array of varchar field',
+            data_type: 'Array',
+            autoID: false,
+            state: 'FieldCreated',
+            element_type: 'VarChar',
+            default_value: null,
+            is_dynamic: false,
+            is_partition_key: false,
+            is_clustering_key: false,
+            nullable: false,
+            is_function_output: false,
           },
         ],
-        name: 'collection_v8mt0v7x',
-        description: '',
-        enable_dynamic_field: false,
-        autoID: false,
+        properties: [{ key: 'collection.timezone', value: 'UTC' }],
         functions: [],
-        struct_array_fields: [],
+        struct_array_fields: [
+          {
+            fields: [
+              {
+                type_params: [{ key: 'max_capacity', value: '2' }],
+                index_params: [],
+                fieldID: '105',
+                name: 'int32_of_struct0',
+                is_primary_key: false,
+                description: 'int32 field',
+                data_type: 'Array',
+                autoID: false,
+                state: 'FieldCreated',
+                element_type: 'Int32',
+                default_value: null,
+                is_dynamic: false,
+                is_partition_key: false,
+                is_clustering_key: false,
+                nullable: false,
+                is_function_output: false,
+              },
+              {
+                type_params: [{ key: 'max_capacity', value: '2' }],
+                index_params: [],
+                fieldID: '106',
+                name: 'bool_of_struct0',
+                is_primary_key: false,
+                description: 'bool field',
+                data_type: 'Array',
+                autoID: false,
+                state: 'FieldCreated',
+                element_type: 'Bool',
+                default_value: null,
+                is_dynamic: false,
+                is_partition_key: false,
+                is_clustering_key: false,
+                nullable: false,
+                is_function_output: false,
+              },
+            ],
+            fieldID: '104',
+            name: 'array_of_struct',
+            description: 'struct array field',
+          },
+          {
+            fields: [
+              {
+                type_params: [
+                  { key: 'dim', value: '4' },
+                  { key: 'max_capacity', value: '2' },
+                ],
+                index_params: [],
+                fieldID: '108',
+                name: 'float_vector_of_struct',
+                is_primary_key: false,
+                description: 'float vector array field',
+                data_type: 'ArrayOfVector',
+                autoID: false,
+                state: 'FieldCreated',
+                element_type: 'FloatVector',
+                default_value: null,
+                is_dynamic: false,
+                is_partition_key: false,
+                is_clustering_key: false,
+                nullable: false,
+                is_function_output: false,
+              },
+              {
+                type_params: [{ key: 'max_capacity', value: '2' }],
+                index_params: [],
+                fieldID: '109',
+                name: 'bool_of_struct',
+                is_primary_key: false,
+                description: 'bool field',
+                data_type: 'Array',
+                autoID: false,
+                state: 'FieldCreated',
+                element_type: 'Bool',
+                default_value: null,
+                is_dynamic: false,
+                is_partition_key: false,
+                is_clustering_key: false,
+                nullable: false,
+                is_function_output: false,
+              },
+            ],
+            fieldID: '107',
+            name: 'array_of_vector_struct',
+            description: 'struct array field',
+          },
+        ],
+        name: 'collection_qaw552nb',
+        description: '',
+        autoID: false,
+        enable_dynamic_field: false,
+        dbName: '',
       },
+      collectionID: '461525722618459440',
+      created_timestamp: '461552250467909636',
+      created_utc_timestamp: '1760682107803',
       shards_num: 1,
-      start_positions: [],
-      collectionID: '441190990484912096',
-      created_timestamp: '441323423932350466',
-      created_utc_timestamp: '1683515258531',
-      consistency_level: 'Bounded',
-      num_partitions: '0',
-      collection_name: 'test',
-      db_name: '',
-      functions: [],
-      update_timestamp: 0,
-      update_timestamp_str: '0',
+      consistency_level: 'Strong',
+      collection_name: 'collection_qaw552nb',
+      db_name: 'struct_DB',
+      num_partitions: '1',
+      db_id: '0',
+      request_time: '0',
+      update_timestamp: 461552250467909636,
+      update_timestamp_str: '461552250467909636',
     };
 
     const formatted = formatDescribedCol(response);
 
-    expect(formatted.schema.fields[0].dataType).toBe(101);
-    expect(formatted.schema.fields[0].dim).toBe('128');
-    expect(formatted.schema.fields[0].default_value).toBe(123);
-    expect(formatted.schema.fields[1].dataType).toBe(5);
-    expect(formatted.schema.fields[1].default_value).toBe('d');
-    expect(formatted.schema.fields[2].default_value).toBe(false);
-    expect(formatted.schema.fields[2].enable_match).toBe('true');
-    expect(formatted.schema.fields[2].enable_analyzer).toBe('true');
-    expect(formatted.schema.fields[2].dim).toBe('3');
-    expect(formatted.schema.fields[2].analyzer_params).toBe('{}');
-    expect(formatted.schema.fields[2].max_capacity).toBe('23');
+    // Test that dataType property is added to each field
+    expect(formatted.schema.fields[0]).toHaveProperty('dataType', 5); // Int64
+    expect(formatted.schema.fields[1]).toHaveProperty('dataType', 101); // FloatVector
+    expect(formatted.schema.fields[2]).toHaveProperty('dataType', 21); // VarChar
+    expect(formatted.schema.fields[3]).toHaveProperty('dataType', 22); // Array
+
+    // Test that struct_array_fields are merged into fields
+    expect(formatted.schema.fields).toHaveLength(6); // 4 original + 2 struct_array_fields
+    expect(formatted.schema.fields[4]).toHaveProperty(
+      'name',
+      'array_of_struct'
+    );
+    expect(formatted.schema.fields[5]).toHaveProperty(
+      'name',
+      'array_of_vector_struct'
+    );
+
+    // Test that type_params are extracted and assigned to field properties
+    expect(formatted.schema.fields[1]).toHaveProperty('dim', '4');
+    expect(formatted.schema.fields[2]).toHaveProperty('max_length', '10');
+    expect(formatted.schema.fields[3]).toHaveProperty('max_length', '10');
+    expect(formatted.schema.fields[3]).toHaveProperty('max_capacity', '4');
+
+    // Test struct field processing
+    expect(formatted.schema.fields[4]).toHaveProperty('dataType', 22); // Array
+    expect(formatted.schema.fields[4]).toHaveProperty('data_type', 'Array');
+    expect(formatted.schema.fields[4]).toHaveProperty('elementType', 201); // Struct
+    expect(formatted.schema.fields[4]).toHaveProperty('element_type', 'Struct');
+
+    // Test nested field processing in struct
+    const structField = formatted.schema.fields[4];
+    expect(structField.fields).toBeDefined();
+    expect(structField.fields).toHaveLength(2);
+    expect(structField.fields![0]).toHaveProperty('dataType', 4); // Int32
+    expect(structField.fields![0]).toHaveProperty('data_type', 'Int32');
+    // max_capacity is filtered out from struct field type_params
+    expect(structField.fields![0].type_params).toHaveLength(0);
+    expect(structField.fields![1]).toHaveProperty('dataType', 1); // Bool
+    expect(structField.fields![1]).toHaveProperty('data_type', 'Bool');
+    expect(structField.fields![1].type_params).toHaveLength(0);
+
+    // Test vector struct field processing
+    const vectorStructField = formatted.schema.fields[5];
+    expect(vectorStructField.fields).toBeDefined();
+    expect(vectorStructField.fields).toHaveLength(2);
+    expect(vectorStructField.fields![0]).toHaveProperty('dataType', 101); // FloatVector
+    expect(vectorStructField.fields![0]).toHaveProperty(
+      'data_type',
+      'FloatVector'
+    );
+    expect(vectorStructField.fields![0]).toHaveProperty('dim', '4');
+    // max_capacity is filtered out from struct field type_params, but dim remains
+    expect(vectorStructField.fields![0].type_params).toHaveLength(1);
+    expect(vectorStructField.fields![0].type_params[0]).toEqual({
+      key: 'dim',
+      value: '4',
+    });
+
+    // Test field categorization
+    expect(formatted).toHaveProperty('anns_fields');
+    expect(formatted).toHaveProperty('scalar_fields');
+    expect(formatted).toHaveProperty('function_fields');
+
+    // Test vector fields are in anns_fields
+    expect(formatted.anns_fields).toHaveProperty('vector');
+    expect(formatted.anns_fields.vector).toHaveProperty('dataType', 101);
+
+    // Test struct vector fields are in anns_fields with proper naming
+    const structVectorKey = 'array_of_vector_struct[float_vector_of_struct]';
+    expect(structVectorKey in formatted.anns_fields).toBe(true);
+    expect(formatted.anns_fields[structVectorKey]).toHaveProperty(
+      'dataType',
+      101
+    );
+
+    // Test scalar fields
+    expect('id' in formatted.scalar_fields).toBe(true);
+    expect('varChar' in formatted.scalar_fields).toBe(true);
+    expect('array_of_varchar' in formatted.scalar_fields).toBe(true);
+    expect('array_of_struct[int32_of_struct0]' in formatted.scalar_fields).toBe(
+      true
+    );
+    expect('array_of_struct[bool_of_struct0]' in formatted.scalar_fields).toBe(
+      true
+    );
+    expect(
+      'array_of_vector_struct[bool_of_struct]' in formatted.scalar_fields
+    ).toBe(true);
+
+    // Test function fields (should be empty in this case)
+    expect(Object.keys(formatted.function_fields)).toHaveLength(0);
+
+    // Test that original response structure is preserved
+    expect(formatted).toHaveProperty('collection_name', 'collection_qaw552nb');
+    expect(formatted).toHaveProperty('collectionID', '461525722618459440');
+    expect(formatted).toHaveProperty('schema');
+    expect(formatted.schema).toHaveProperty('name', 'collection_qaw552nb');
+    expect(formatted.schema).toHaveProperty('properties');
+    expect(formatted.schema).toHaveProperty('functions');
+
+    // Test that struct_array_fields is still present in schema
+    expect(formatted.schema).toHaveProperty('struct_array_fields');
+    expect(formatted.schema.struct_array_fields).toHaveLength(2);
   });
 });

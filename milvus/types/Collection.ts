@@ -61,7 +61,7 @@ export type FieldSchema = {
   autoID: boolean;
   state: string;
   element_type?: keyof typeof DataType;
-  default_value?: number | string;
+  default_value?: number | string | null;
   dataType: DataType;
   is_partition_key?: boolean;
   is_dynamic?: boolean;
@@ -238,6 +238,10 @@ export interface DescribeCollectionResponse extends TimeStamp {
   functions: FunctionObject[];
   update_timestamp_str: string;
   update_timestamp: number;
+  // formatted fiels
+  anns_fields: Record<string, FieldSchema>;
+  scalar_fields: Record<string, FieldSchema>;
+  function_fields: Record<string, FieldSchema>;
 }
 
 export interface GetCompactionPlansResponse extends resStatusResponse {

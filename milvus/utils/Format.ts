@@ -5,6 +5,8 @@ import {
   DataTypeMap,
   DataType,
   DescribeCollectionResponse,
+  FieldSchema,
+  isVectorType,
 } from '../';
 
 /**
@@ -251,9 +253,39 @@ export const formatDescribedCol = (
     }
   };
 
-  newData.schema?.fields?.forEach(f => {
+  const anns_fields: Record<string, FieldSchema> = {};
+  const scalar_fields: Record<string, FieldSchema> = {};
+  const function_fields: Record<string, FieldSchema> = {};
+
+  newData.schema?.fields?.forEach((f: any) => {
     formatField(f);
+    // loop through every fields and struct fields
+    // check if the field is the vector field
+    if (isVectorType(f.dataType)) {
+      anns_fields[f.name] = f;
+    } else if (
+      f.dataType === DataType.Array &&
+      f.elementType === DataType.Struct
+    ) {
+      f.fields.forEach((childField: any) => {
+        if (isVectorType(childField.dataType)) {
+          anns_fields[`${f.name}[${childField.name}]`] = childField;
+        } else {
+          scalar_fields[`${f.name}[${childField.name}]`] = childField;
+        }
+      });
+    } else {
+      scalar_fields[f.name] = f;
+    }
+
+    if (f.isFunctionOutput) {
+      function_fields[f.name] = f;
+    }
   });
+
+  newData.anns_fields = anns_fields;
+  newData.scalar_fields = scalar_fields;
+  newData.function_fields = function_fields;
 
   return newData;
 };
