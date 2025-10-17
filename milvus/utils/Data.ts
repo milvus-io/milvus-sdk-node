@@ -380,6 +380,8 @@ export const buildFieldData = (
             }
           });
         });
+        // Return the original data for Array of Struct
+        return rowData[name];
       } else {
         // Regular array field
         return rowData[name] === null

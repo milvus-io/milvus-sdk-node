@@ -286,7 +286,7 @@ describe(`Struct API testing`, () => {
     });
   });
 
-  it(`search with vector array should be successful`, async () => {
+  it(`search with vector should be successful`, async () => {
     const search = await milvusClient.search({
       data: data[0].vector,
       collection_name: COLLECTION_NAME,
@@ -335,5 +335,41 @@ describe(`Struct API testing`, () => {
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toEqual(2);
+  });
+
+  it(`search with emblist should be successful`, async () => {
+    const emblist = [data[0].vector, data[1].vector];
+    const search = await milvusClient.search({
+      data: emblist,
+      collection_name: COLLECTION_NAME,
+      anns_field: 'array_of_vector_struct[float_vector_of_struct]',
+      output_fields: [
+        'id',
+        'vector',
+        'array_of_struct',
+        'array_of_vector_struct',
+      ],
+      limit: 5,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // expect(search.results.length).toBeGreaterThan(0);
+    // // expect fields exist
+    // search.results.forEach((result: any) => {
+    //   expect(result.array_of_struct).toBeDefined();
+    //   expect(result.array_of_vector_struct).toBeDefined();
+    // });
+    // search.results.forEach((result: any) => {
+    //   result.array_of_struct.forEach((struct: any) => {
+    //     expect(struct.int32_of_struct0).toBeDefined();
+    //     expect(struct.bool_of_struct0).toBeDefined();
+    //   });
+    // });
+    // search.results.forEach((result: any) => {
+    //   result.array_of_vector_struct.forEach((vector: any) => {
+    //     expect(vector.float_vector_of_struct).toBeDefined();
+    //     expect(vector.bool_of_struct).toBeDefined();
+    //   });
+    // });
   });
 });
