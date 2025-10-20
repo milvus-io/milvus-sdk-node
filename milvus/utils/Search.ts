@@ -4,7 +4,6 @@ import {
   KeyValuePair,
   DataType,
   DescribeCollectionResponse,
-  _Field,
   SearchReq,
   SearchSimpleReq,
   VectorTypes,

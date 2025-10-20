@@ -1,7 +1,6 @@
 import { Type } from 'protobufjs';
 import {
   FieldType,
-  _Field,
   TypeParamKey,
   TypeParam,
   cloneObj,

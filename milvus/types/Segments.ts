@@ -14,6 +14,10 @@ export interface FlushResult extends resStatusResponse {
   coll_segIDs: any; // collection segment id array
 }
 
+export interface GetFlushStateResponse extends resStatusResponse {
+  flushed: boolean;
+}
+
 export interface QuerySegmentInfo {
   segmentID: number;
   collectionID: number;

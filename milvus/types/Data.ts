@@ -44,10 +44,6 @@ export interface CalcDistanceReq extends GrpcTimeOut {
   params: { key: string; value: string }[];
 }
 
-export interface GetFlushStateResponse extends resStatusResponse {
-  flushed: boolean;
-}
-
 export interface GetMetricsResponse extends resStatusResponse {
   response: any;
   component_name: string; // metrics from which component
