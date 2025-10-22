@@ -2,35 +2,32 @@ import { Root } from 'protobufjs';
 import {
   ERROR_REASONS,
   KeyValuePair,
-  DataType,
   DescribeCollectionResponse,
   SearchReq,
   SearchSimpleReq,
-  VectorTypes,
   SearchParam,
-  HybridSearchSingleReq,
   HybridSearchReq,
   DEFAULT_TOPK,
   DslType,
   SearchRes,
   DEFAULT_DYNAMIC_FIELD,
   ConsistencyLevelEnum,
-  isVectorType,
   RANKER_TYPE,
   RerankerObj,
   buildPlaceholderGroupBytes,
   getSparseFloatVectorType,
   OutputTransformers,
-  SparseVectorArray,
   SearchDataType,
   FieldSchema,
-  SearchMultipleDataType,
   keyValueObj,
   FunctionObject,
   buildFieldDataMap,
   cloneObj,
   parseToKeyValue,
   formatNumberPrecision,
+  SparseFloatVector,
+  PlaceholderType,
+  SearchEmbList,
 } from '../';
 
 /**
@@ -39,7 +36,7 @@ import {
  * @returns The search parameters in key-value format.
  */
 export const buildSearchParams = (
-  data: SearchSimpleReq | (HybridSearchSingleReq & HybridSearchReq),
+  data: Omit<SearchSimpleReq, 'collection_name'>,
   anns_field: string
 ) => {
   // create search params
@@ -217,74 +214,59 @@ export const buildSearchRequest = (
   // output fields(reference fields)
   const default_output_fields: string[] = ['*'];
 
-  // Iterate through collection fields, create search request
-  for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
-    const field = collectionInfo.schema.fields[i];
-    const { name, dataType } = field;
+  // build user search requests
+  const userRequests = isHybridSearch
+    ? searchHybridReq.data.map(d => ({
+        ...params,
+        ...d,
+      }))
+    : [
+        {
+          ...searchSimpleReq,
+          data:
+            searchReq.vectors || searchSimpleReq.vector || searchSimpleReq.data, // data or vector or vectors
+          anns_field:
+            searchSimpleReq.anns_field ||
+            Object.keys(collectionInfo.anns_fields || {})[0],
+        },
+      ];
 
-    // if field  type is vector, build the request
-    if (isVectorType(dataType)) {
-      let req: SearchSimpleReq | (HybridSearchReq & HybridSearchSingleReq) =
-        params as SearchSimpleReq;
+  for (const userRequest of userRequests) {
+    const { data, anns_field } = userRequest;
+    const annsField = collectionInfo.anns_fields[anns_field];
 
-      if (isHybridSearch) {
-        const singleReq = searchHybridReq.data.find(d => d.anns_field === name);
-        // if it is hybrid search and no request target is not found, skip
-        if (!singleReq) {
-          continue;
-        }
-        // merge single request with hybrid request
-        req = Object.assign(cloneObj(params), singleReq);
-      } else {
-        // if it is not hybrid search, and we have built one request
-        // or user has specified an anns_field to search and is not matching
-        //  skip
-        const skip =
-          requests.length === 1 ||
-          (typeof req.anns_field !== 'undefined' && req.anns_field !== name);
-        if (skip) {
-          continue;
-        }
-      }
-
-      // get search data
-      let searchData: SearchDataType | SearchMultipleDataType = isHybridSearch
-        ? req.data!
-        : searchReq.vectors ||
-          searchSimpleReq.vectors ||
-          searchSimpleReq.vector ||
-          searchSimpleReq.data;
-
-      // format searching data
-      searchData = formatSearchData(searchData, field);
-
-      // create search request
-      const request: FormatedSearchRequest = {
-        collection_name: req.collection_name,
-        partition_names: req.partition_names || [],
-        output_fields: req.output_fields || default_output_fields,
-        nq: searchReq.nq || searchData.length,
-        dsl: req.expr || searchReq.expr || searchSimpleReq.filter || '', // expr
-        dsl_type: DslType.BoolExprV1,
-        placeholder_group: buildPlaceholderGroupBytes(
-          milvusProto,
-          searchData as VectorTypes[],
-          field
-        ),
-        search_params: parseToKeyValue(
-          searchReq.search_params || buildSearchParams(req, name)
-        ),
-        consistency_level:
-          req.consistency_level || (collectionInfo.consistency_level as any),
-      };
-
-      // if exprValues is set, add it to the request(inner)
-      if (req.exprValues) {
-        request.expr_template_values = formatExprValues(req.exprValues);
-      }
-
-      requests.push(request);
+    if (!annsField) {
+      throw new Error(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
     }
+
+    // get search data
+    const searchData = formatSearchData(data, annsField);
+
+    const request: FormatedSearchRequest = {
+      collection_name: params.collection_name,
+      partition_names: params.partition_names || [],
+      output_fields: params.output_fields || default_output_fields,
+      nq: searchReq.nq || searchData.length,
+      dsl: userRequest.expr || searchReq.expr || searchSimpleReq.filter || '', // expr, inner expr or outer expr
+      dsl_type: DslType.BoolExprV1,
+      placeholder_group: buildPlaceholderGroupBytes(
+        milvusProto,
+        searchData,
+        annsField
+      ),
+      search_params: parseToKeyValue(
+        searchReq.search_params || buildSearchParams(userRequest, anns_field)
+      ),
+      consistency_level:
+        params.consistency_level || (collectionInfo.consistency_level as any),
+    };
+
+    // if exprValues is set, add it to the request(inner)
+    if (userRequest.exprValues) {
+      request.expr_template_values = formatExprValues(userRequest.exprValues);
+    }
+
+    requests.push(request);
   }
 
   /**
@@ -297,11 +279,6 @@ export const buildSearchRequest = (
     searchReq.search_params?.round_decimal ??
     (searchSimpleReq.params?.round_decimal as number) ??
     -1;
-
-  // if no anns_field found in search request, throw error
-  if (requests.length === 0) {
-    throw new Error(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
-  }
 
   return {
     isHybridSearch: isHybridSearch,
@@ -331,11 +308,11 @@ export const buildSearchRequest = (
             ],
           },
         }
-      : ({
+      : {
           ...requests[0],
           ...createFunctionScore(hasRerankFunction, searchHybridReq),
-        } as FormatedSearchRequest),
-    // if round_decimal is set, add it to the return object
+        },
+    // need for parsing the search results
     ...(round_decimal !== -1 ? { round_decimal } : {}),
     nq: requests[0].nq,
   };
@@ -432,37 +409,67 @@ export const formatSearchResult = (
 /**
  * Formats the search vector to match a specific data type.
  * @param {SearchDataType[]} searchVector - The search vector or array of vectors to be formatted.
- * @param {DataType} dataType - The specified data type.
- * @returns {VectorTypes[]} The formatted search vector or array of vectors.
+ * @param {FieldSchema} field - The field schema.
+ * @returns {[SearchDataType] | SearchDataType[]} The formatted search vector or array of vectors.
  */
 export const formatSearchData = (
-  searchData: SearchDataType | SearchMultipleDataType,
+  searchData: SearchDataType | SearchDataType[],
   field: FieldSchema
-): SearchMultipleDataType => {
-  const { dataType, is_function_output } = field;
+): [SearchDataType] | SearchDataType[] => {
+  const { is_function_output, _placeholderType } = field as any;
 
   if (is_function_output) {
-    return (
-      Array.isArray(searchData) ? searchData : [searchData]
-    ) as SearchMultipleDataType;
+    return Array.isArray(searchData)
+      ? (searchData as [SearchDataType])
+      : [searchData];
   }
 
-  switch (dataType) {
-    case DataType.FloatVector:
-    case DataType.BinaryVector:
-    case DataType.Float16Vector:
-    case DataType.BFloat16Vector:
-    case DataType.Int8Vector:
+  switch (_placeholderType) {
+    case PlaceholderType.EmbListFloatVector:
+      /*
+        const emblist1 = [[1,2,3,4],[5,6,7,8]]
+        const emblist2 = [[5,6,7,8],[9,10,11,12]]
+        const searchData = [emblist1, emblist2] = [
+          [
+            [1,2,3,4],
+            [5,6,7,8]
+          ],
+
+          [
+            [5,6,7,8],
+            [9,10,11,12]
+          ]
+        ]
+      */
+      const isMultiEmbeddingList =
+        Array.isArray(searchData) &&
+        Array.isArray((searchData as any)[0]) &&
+        Array.isArray((searchData as any)[0][0]);
+
+      if (isMultiEmbeddingList) {
+        return (searchData as SearchEmbList[]).map(v => v.flat()) as [
+          SearchDataType
+        ];
+      } else {
+        return [(searchData as SearchEmbList).flat() as SearchDataType];
+      }
+    case PlaceholderType.FloatVector:
+    case PlaceholderType.BinaryVector:
+    case PlaceholderType.Float16Vector:
+    case PlaceholderType.BFloat16Vector:
+    case PlaceholderType.Int8Vector:
       if (!Array.isArray(searchData)) {
-        return [searchData] as VectorTypes[];
+        // for bytes
+        return [searchData];
       }
-    case DataType.SparseFloatVector:
-      const type = getSparseFloatVectorType(searchData as SparseVectorArray);
+    case PlaceholderType.SparseFloatVector:
+      const type = getSparseFloatVectorType(searchData as SparseFloatVector);
       if (type !== 'unknown') {
-        return [searchData] as VectorTypes[];
+        return [searchData as SearchDataType];
       }
+
     default:
-      return searchData as VectorTypes[];
+      return searchData as [SearchDataType];
   }
 };
 

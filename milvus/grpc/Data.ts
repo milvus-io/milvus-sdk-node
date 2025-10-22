@@ -69,6 +69,7 @@ import {
   isVectorType,
   convertToDataType,
   GetQuerySegmentInfoResponse,
+  SearchDataType,
 } from '../';
 import { Collection } from './Collection';
 
@@ -548,34 +549,71 @@ export class Data extends Collection {
   /**
    * Perform vector similarity search in a Milvus collection.
    *
-   * @param {SearchReq | SearchSimpleReq} data - The request parameters.
-   * @param {string} data.collection_name - The name of the collection.
-   * @param {Number[]} data.vector - Original vector to search with.
-   * @param {string[]} [data.partition_names] - Array of partition names (optional).
-   * @param {number} [data.topk] - Topk (optional).
-   * @param {number} [data.limit] - Alias for topk (optional).
-   * @param {number} [data.offset] - Offset (optional).
-   * @param {string} [data.filter] - Scalar field filter expression (optional).
-   * @param {string[]} [data.output_fields] - Support scalar field (optional).
-   * @param {object} [data.params] - Search params (optional).
-   * @param {OutputTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
-   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   * @param {SearchReq | SearchSimpleReq | HybridSearchReq} params - The request parameters.
+   * @param {string} params.collection_name - The name of the collection.
+   * @param {string} [params.db_name] - The name of the database (optional).
    *
-   * @returns {Promise<SearchResults>} The result of the operation.
+   * For SearchSimpleReq:
+   * @param {SearchDataType | SearchDataType[]} params.data - Vector or text to search.
+   * @param {SearchDataType | SearchDataType[]} [params.vector] - Alias for data (optional).
+   * @param {string[]} [params.partition_names] - Array of partition names (optional).
+   * @param {string} [params.anns_field] - Vector field name, required for multi-vector collections (optional).
+   * @param {string[]} [params.output_fields] - Fields to return (optional).
+   * @param {number} [params.limit] - Number of results to return (optional).
+   * @param {number} [params.topk] - Alias for limit (optional).
+   * @param {number} [params.offset] - Number of results to skip (optional).
+   * @param {string} [params.filter] - Filter expression (optional).
+   * @param {string} [params.expr] - Alias for filter (optional).
+   * @param {keyValueObj} [params.exprValues] - Template values for filter expression (optional).
+   * @param {keyValueObj} [params.params] - Extra search parameters (optional).
+   * @param {string} [params.metric_type] - Distance metric type (optional).
+   * @param {ConsistencyLevelEnum} [params.consistency_level] - Consistency level (optional).
+   * @param {boolean} [params.ignore_growing] - Whether to ignore growing segments (optional).
+   * @param {string} [params.group_by_field] - Field to group results by (optional).
+   * @param {number} [params.group_size] - Size of each group (optional).
+   * @param {boolean} [params.strict_group_size] - Whether to enforce strict group size (optional).
+   * @param {string} [params.hints] - Hints to improve search performance (optional).
+   * @param {number} [params.round_decimal] - Number of decimal places to round scores (optional).
+   * @param {OutputTransformers} [params.transformers] - Custom data transformers for bf16/f16 vectors (optional).
+   * @param {RerankerObj | FunctionObject} [params.rerank] - Reranker configuration (optional).
+   * @param {number} [params.nq] - Number of query vectors (optional).
+   *
+   * For HybridSearchReq:
+   * @param {HybridSearchSingleReq[]} params.data - Array of search requests.
+   * @param {keyValueObj} [params.params] - Search parameters (optional).
+   * @param {RerankerObj | FunctionObject} [params.rerank] - Reranker configuration (optional).
+   * @param {string[]} [params.partition_names] - Array of partition names (optional).
+   * @param {string[]} [params.output_fields] - Fields to return (optional).
+   * @param {ConsistencyLevelEnum} [params.consistency_level] - Consistency level (optional).
+   * @param {boolean} [params.ignore_growing] - Whether to ignore growing segments (optional).
+   * @param {string} [params.group_by_field] - Field to group results by (optional).
+   * @param {number} [params.group_size] - Size of each group (optional).
+   * @param {boolean} [params.strict_group_size] - Whether to enforce strict group size (optional).
+   * @param {string} [params.hints] - Hints to improve search performance (optional).
+   * @param {number} [params.round_decimal] - Number of decimal places to round scores (optional).
+   * @param {OutputTransformers} [params.transformers] - Custom data transformers (optional).
+   * @param {number} [params.nq] - Number of query vectors (optional).
+   *
+   * @param {number} [params.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<SearchResults<T>>} The result of the operation.
    * @returns {string} status.error_code - The error code of the operation.
    * @returns {string} status.reason - The reason for the error, if any.
-   * @returns {{score:number,id:string, [outputfield]: value}[]} results - Array of search results.
+   * @returns {DetermineResultsType<T>} results - Array of search results, type depends on input parameters.
+   * @returns {number[]} recalls - The recalls of the search operation.
    * @returns {number} session_ts - The timestamp of the search session.
    * @returns {string} collection_name - The name of the collection.
-   * @returns {number} all_search_count - The total number of search operations.
-   * @returns {string[]} recalls - The recalls of the search operation.
+   * @returns {number} [all_search_count] - The total number of search operations (optional).
+   * @returns {Record<string, any>} [search_iterator_v2_results] - Search iterator v2 results (optional).
+   * @returns {string} [_search_iterator_v2_results] - Search iterator v2 results as string (optional).
    *
    * @example
    * ```
    *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
    *  const searchResults = await milvusClient.search({
    *    collection_name: 'my_collection',
-   *    vector: [1, 2, 3, 4],
+   *    data: [1, 2, 3, 4],
+   *    limit: 10
    *  });
    * ```
    */

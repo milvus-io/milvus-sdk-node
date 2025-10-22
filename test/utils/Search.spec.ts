@@ -2,7 +2,6 @@ import path from 'path';
 import protobuf from 'protobufjs';
 import {
   ERROR_REASONS,
-  convertToDataType,
   SearchSimpleReq,
   DataType,
   formatSearchResult,
@@ -76,6 +75,14 @@ describe('utils/Search', () => {
             index_params: [],
           },
         ],
+      },
+      anns_fields: {
+        vector: {
+          data_type: 'FloatVector',
+          dataType: 101,
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
       },
     } as any;
 
@@ -201,6 +208,20 @@ describe('utils/Search', () => {
           },
         ],
       },
+      anns_fields: {
+        sparse: {
+          data_type: 'SparseFloatVector',
+          type_params: [{ key: 'dim', value: '3' }],
+          dataType: 102,
+          index_params: [],
+        },
+        vector: {
+          data_type: 'FloatVector',
+          type_params: [{ key: 'dim', value: '3' }],
+          dataType: 101,
+          index_params: [],
+        },
+      },
     } as any;
 
     const result = buildSearchRequest(
@@ -213,6 +234,7 @@ describe('utils/Search', () => {
     expect(result.request.collection_name).toEqual('test');
     expect(result.request.output_fields).toEqual(['*']);
     expect(result.request.consistency_level).toEqual('Session');
+    expect(result.nq).toEqual(1);
     expect((result.request as any).dsl).toEqual('id > {value}');
     expect((result.request as any).expr_template_values).toEqual(
       formatExprValues({ value: 1 })
@@ -392,6 +414,20 @@ describe('utils/Search', () => {
           },
         ],
       },
+      anns_fields: {
+        vector: {
+          data_type: 'FloatVector',
+          type_params: [{ key: 'dim', value: '3' }],
+          dataType: 101,
+          index_params: [],
+        },
+        vector1: {
+          data_type: 'FloatVector',
+          type_params: [{ key: 'dim', value: '3' }],
+          dataType: 101,
+          index_params: [],
+        },
+      },
     } as any;
 
     const searchRequest = buildSearchRequest(
@@ -518,6 +554,18 @@ describe('utils/Search', () => {
             index_params: [],
           },
         ],
+      },
+      anns_fields: {
+        vector: {
+          data_type: 'FloatVector',
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
+        vector1: {
+          data_type: 'FloatVector',
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
       },
     } as any;
 

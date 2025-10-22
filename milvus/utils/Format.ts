@@ -7,6 +7,7 @@ import {
   DescribeCollectionResponse,
   FieldSchema,
   isVectorType,
+  PlaceholderType,
 } from '../';
 
 /**
@@ -218,11 +219,52 @@ export const formatDescribedCol = (
   // merge fields and struct_array_fields
   newData.schema.fields = [
     ...newData.schema.fields,
-    ...newData.schema.struct_array_fields,
+    ...(newData.schema.struct_array_fields || []),
   ];
   // add a dataType property which indicate datatype number
-  const formatField = (field: any) => {
+  const formatField = (field: any, isEmbList: boolean = false) => {
     field.dataType = DataTypeMap[field.data_type];
+    // used for search type
+    switch (field.dataType) {
+      case DataType.FloatVector:
+        field._placeholderType = isEmbList
+          ? PlaceholderType.EmbListFloatVector
+          : PlaceholderType.FloatVector;
+        break;
+      case DataType.BinaryVector:
+        field._placeholderType = isEmbList
+          ? PlaceholderType.EmbListBinaryVector
+          : PlaceholderType.BinaryVector;
+        break;
+      case DataType.BFloat16Vector:
+        field._placeholderType = isEmbList
+          ? PlaceholderType.EmbListBFloat16Vector
+          : PlaceholderType.BFloat16Vector;
+        break;
+      case DataType.Float16Vector:
+        field._placeholderType = isEmbList
+          ? PlaceholderType.EmbListFloat16Vector
+          : PlaceholderType.Float16Vector;
+        break;
+      case DataType.Int8Vector:
+        field._placeholderType = isEmbList
+          ? PlaceholderType.EmbListInt8Vector
+          : PlaceholderType.Int8Vector;
+        break;
+      case DataType.SparseFloatVector:
+        if (field.is_function_output) {
+          field._placeholderType = PlaceholderType.VarChar;
+          break;
+        }
+        field._placeholderType = isEmbList
+          ? PlaceholderType.EmbListSparseFloatVector
+          : PlaceholderType.SparseFloatVector;
+        break;
+      default:
+        field._placeholderType = field.dataType;
+        break;
+    }
+
     // if default_value is set, parse it to the correct format
     if (field.default_value) {
       const defaultValue = field.default_value as any;
@@ -244,11 +286,12 @@ export const formatDescribedCol = (
       field.fields.forEach((childField: any) => {
         childField.data_type = childField.element_type;
         delete childField.element_type;
+
         // delete max_capacity in type_params array
         childField.type_params = childField.type_params.filter(
           (keyValuePair: any) => keyValuePair.key !== 'max_capacity'
         );
-        formatField(childField);
+        formatField(childField, true);
       });
     }
   };

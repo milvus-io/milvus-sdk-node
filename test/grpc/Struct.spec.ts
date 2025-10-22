@@ -9,7 +9,7 @@ import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
 const milvusClient = new MilvusClient({
   address: IP,
-  logLevel: 'debug',
+  logLevel: 'info',
 });
 const COLLECTION_NAME = GENERATE_NAME();
 
@@ -83,6 +83,12 @@ const collectionParams = {
           dim: 4,
         },
         // {
+        //   name: 'binary_vector_of_struct',
+        //   description: 'binary vector array field',
+        //   data_type: DataType.BinaryVector,
+        //   dim: 8,
+        // },
+        // {
         //   name: 'float16_vector_of_struct',
         //   description: 'float vector array field',
         //   data_type: DataType.Float16Vector,
@@ -146,7 +152,7 @@ describe(`Struct API testing`, () => {
       collection_name: COLLECTION_NAME,
     });
 
-    console.dir(describe, { depth: null });
+    // console.dir(describe, { depth: null });
 
     // check schema length
     expect(describe.schema.fields.length).toEqual(
@@ -320,7 +326,7 @@ describe(`Struct API testing`, () => {
     });
   });
 
-  it(`search with vector array with nq > 1 should be successful`, async () => {
+  it(`search with normal vector field with nq > 1 should be successful`, async () => {
     const search = await milvusClient.search({
       data: [data[0].vector, data[1].vector],
       collection_name: COLLECTION_NAME,
@@ -338,9 +344,13 @@ describe(`Struct API testing`, () => {
   });
 
   it(`search with emblist should be successful`, async () => {
-    const emblist = [data[0].vector, data[1].vector];
+    const emblist1 = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+    ];
+
     const search = await milvusClient.search({
-      data: emblist,
+      data: emblist1,
       collection_name: COLLECTION_NAME,
       anns_field: 'array_of_vector_struct[float_vector_of_struct]',
       output_fields: [
@@ -353,23 +363,40 @@ describe(`Struct API testing`, () => {
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
-    // expect(search.results.length).toBeGreaterThan(0);
-    // // expect fields exist
-    // search.results.forEach((result: any) => {
-    //   expect(result.array_of_struct).toBeDefined();
-    //   expect(result.array_of_vector_struct).toBeDefined();
-    // });
-    // search.results.forEach((result: any) => {
-    //   result.array_of_struct.forEach((struct: any) => {
-    //     expect(struct.int32_of_struct0).toBeDefined();
-    //     expect(struct.bool_of_struct0).toBeDefined();
-    //   });
-    // });
-    // search.results.forEach((result: any) => {
-    //   result.array_of_vector_struct.forEach((vector: any) => {
-    //     expect(vector.float_vector_of_struct).toBeDefined();
-    //     expect(vector.bool_of_struct).toBeDefined();
-    //   });
-    // });
+
+    // console.dir(search, { depth: null });
+
+    expect(search.results.length).toEqual(5);
+  });
+
+  it(`search with emblist nq > 1 should be successful`, async () => {
+    const emblist1 = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+    ];
+
+    const emblist2 = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+    ];
+
+    const search = await milvusClient.search({
+      data: [emblist1, emblist2],
+      collection_name: COLLECTION_NAME,
+      anns_field: 'array_of_vector_struct[float_vector_of_struct]',
+      output_fields: [
+        'id',
+        'vector',
+        'array_of_struct',
+        'array_of_vector_struct',
+      ],
+      limit: 5,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // console.dir(search, { depth: null });
+
+    expect(search.results.length).toEqual(2);
   });
 });

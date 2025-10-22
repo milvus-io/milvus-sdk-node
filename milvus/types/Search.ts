@@ -29,6 +29,11 @@ export interface SearchParam {
   [key: string]: any; // extra search parameters
 }
 
+export type SearchText = string;
+export type SearchEmbList = VectorTypes[];
+export type SearchVector = VectorTypes;
+export type SearchDataType = SearchVector | SearchText | SearchEmbList;
+
 // old search api parameter type, deprecated
 export interface SearchReq extends collectionNameReq {
   anns_field?: string; // your vector field name
@@ -36,7 +41,7 @@ export interface SearchReq extends collectionNameReq {
   expr?: string; // filter expression
   exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   search_params: SearchParam; // search parameters
-  vectors: VectorTypes[] | [VectorTypes]; // vectors to search
+  vectors: SearchDataType | SearchDataType[]; // vectors to search
   output_fields?: string[]; // fields to return
   travel_timestamp?: string; // time travel
   vector_type: DataType.BinaryVector | DataType.FloatVector; // vector field type
@@ -45,18 +50,12 @@ export interface SearchReq extends collectionNameReq {
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 }
 
-export type SearchTextType = string | string[] | [string];
-export type SearchVectorType = VectorTypes | VectorTypes[] | [VectorTypes];
-export type SearchDataType = SearchVectorType | SearchTextType;
-export type SearchMultipleDataType = VectorTypes[] | SearchTextType[];
-
 // simplified search api parameter type
 export interface SearchSimpleReq extends collectionNameReq {
   partition_names?: string[]; // partition names
   anns_field?: string; // your vector field name，required if you are searching on multiple vector fields collection
-  data?: SearchDataType; // vector or text to search
-  vector?: VectorTypes; // alias for data, deprecated
-  vectors?: VectorTypes[] | [VectorTypes]; // alias for data, deprecated
+  data: SearchDataType | SearchDataType[]; // vector or text to search
+  vector?: SearchDataType | SearchDataType[];
   output_fields?: string[];
   limit?: number; // how many results you want
   topk?: number; // limit alias
@@ -75,6 +74,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   round_decimal?: number; // round decimal
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
   rerank?: RerankerObj | FunctionObject; // reranker
+  nq?: number; // number of query vectors
 }
 
 export type HybridSearchSingleReq = Pick<
