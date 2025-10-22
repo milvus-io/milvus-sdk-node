@@ -7,7 +7,6 @@ import {
   formatSearchResult,
   _Field,
   formatSearchData,
-  FieldSchema,
   buildSearchRequest,
   formatExprValues,
   FunctionType,
@@ -193,6 +192,7 @@ describe('utils/Search', () => {
             name: 'sparse',
             fieldID: '3',
             dataType: 102,
+            _placeholderType: 102,
             is_primary_key: false,
             description: 'sparse field',
           },
@@ -200,6 +200,7 @@ describe('utils/Search', () => {
             name: 'vector',
             fieldID: '2',
             dataType: 101,
+            _placeholderType: 101,
             is_primary_key: false,
             description: 'vector field',
             data_type: 'FloatVector',
@@ -213,12 +214,14 @@ describe('utils/Search', () => {
           data_type: 'SparseFloatVector',
           type_params: [{ key: 'dim', value: '3' }],
           dataType: 102,
+          _placeholderType: 102,
           index_params: [],
         },
         vector: {
           data_type: 'FloatVector',
           type_params: [{ key: 'dim', value: '3' }],
           dataType: 101,
+          _placeholderType: 101,
           index_params: [],
         },
       },
@@ -396,6 +399,7 @@ describe('utils/Search', () => {
             name: 'vector',
             fieldID: '2',
             dataType: 101,
+            _placeholderType: 101,
             is_primary_key: false,
             description: 'vector field',
             data_type: 'FloatVector',
@@ -406,6 +410,7 @@ describe('utils/Search', () => {
             name: 'vector1',
             fieldID: '2',
             dataType: 101,
+            _placeholderType: 101,
             is_primary_key: false,
             description: 'vector field2',
             data_type: 'FloatVector',
@@ -419,12 +424,14 @@ describe('utils/Search', () => {
           data_type: 'FloatVector',
           type_params: [{ key: 'dim', value: '3' }],
           dataType: 101,
+          _placeholderType: 101,
           index_params: [],
         },
         vector1: {
           data_type: 'FloatVector',
           type_params: [{ key: 'dim', value: '3' }],
           dataType: 101,
+          _placeholderType: 101,
           index_params: [],
         },
       },
@@ -537,6 +544,7 @@ describe('utils/Search', () => {
             name: 'vector',
             fieldID: '2',
             dataType: 101,
+            _placeholderType: 101,
             is_primary_key: false,
             description: 'vector field',
             data_type: 'FloatVector',
@@ -547,6 +555,7 @@ describe('utils/Search', () => {
             name: 'vector1',
             fieldID: '2',
             dataType: 101,
+            _placeholderType: 101,
             is_primary_key: false,
             description: 'vector field2',
             data_type: 'FloatVector',
@@ -560,9 +569,11 @@ describe('utils/Search', () => {
           data_type: 'FloatVector',
           type_params: [{ key: 'dim', value: '3' }],
           index_params: [],
+          _placeholderType: 101,
         },
         vector1: {
           data_type: 'FloatVector',
+          _placeholderType: 101,
           type_params: [{ key: 'dim', value: '3' }],
           index_params: [],
         },
@@ -974,8 +985,8 @@ describe('utils/Search', () => {
     // float vector
     const floatVector = [1, 2, 3];
     const formattedVector = formatSearchData(floatVector, {
-      dataType: DataType.FloatVector,
-    } as FieldSchema);
+      _placeholderType: DataType.FloatVector,
+    } as any);
     expect(formattedVector).toEqual([floatVector]);
 
     const floatVectors = [
@@ -984,17 +995,17 @@ describe('utils/Search', () => {
     ];
     expect(
       formatSearchData(floatVectors, {
-        dataType: DataType.FloatVector,
-      } as FieldSchema)
+        _placeholderType: DataType.FloatVector,
+      } as any)
     ).toEqual(floatVectors);
 
     // varchar
     const varcharVector = 'hello world';
     expect(
       formatSearchData(varcharVector, {
-        dataType: DataType.SparseFloatVector,
+        _placeholderType: DataType.SparseFloatVector,
         is_function_output: true,
-      } as FieldSchema)
+      } as any)
     ).toEqual([varcharVector]);
   });
 
@@ -1005,8 +1016,8 @@ describe('utils/Search', () => {
       { index: 3, value: 4 },
     ];
     const formattedSparseCooVector = formatSearchData(sparseCooVector, {
-      dataType: DataType.SparseFloatVector,
-    } as FieldSchema);
+      _placeholderType: DataType.SparseFloatVector,
+    } as any);
     expect(formattedSparseCooVector).toEqual([sparseCooVector]);
 
     // sparse csr vector
@@ -1015,8 +1026,8 @@ describe('utils/Search', () => {
       values: [2, 4],
     };
     const formattedSparseCsrVector = formatSearchData(sparseCsrVector, {
-      dataType: DataType.SparseFloatVector,
-    } as FieldSchema);
+      _placeholderType: DataType.SparseFloatVector,
+    } as any);
     expect(formattedSparseCsrVector).toEqual([sparseCsrVector]);
 
     const sparseCsrVectors = [
@@ -1030,15 +1041,15 @@ describe('utils/Search', () => {
       },
     ];
     const formattedSparseCsrVectors = formatSearchData(sparseCsrVectors, {
-      dataType: DataType.SparseFloatVector,
-    } as FieldSchema);
+      _placeholderType: DataType.SparseFloatVector,
+    } as any);
     expect(formattedSparseCsrVectors).toEqual(sparseCsrVectors);
 
     // sparse array vector
     const sparseArrayVector = [0.1, 0.2, 0.3];
     const formattedSparseArrayVector = formatSearchData(sparseArrayVector, {
-      dataType: DataType.SparseFloatVector,
-    } as FieldSchema);
+      _placeholderType: DataType.SparseFloatVector,
+    } as any);
     expect(formattedSparseArrayVector).toEqual([sparseArrayVector]);
 
     const sparseArrayVectors = [
@@ -1046,15 +1057,15 @@ describe('utils/Search', () => {
       [0.4, 0.5, 0.6],
     ];
     const formattedSparseArrayVectors = formatSearchData(sparseArrayVectors, {
-      dataType: DataType.SparseFloatVector,
-    } as FieldSchema);
+      _placeholderType: DataType.SparseFloatVector,
+    } as any);
     expect(formattedSparseArrayVectors).toEqual(sparseArrayVectors);
 
     // sparse dict vector
     const sparseDictVector = { 1: 2, 3: 4 };
     const formattedSparseDictVector = formatSearchData(sparseDictVector, {
-      dataType: DataType.SparseFloatVector,
-    } as FieldSchema);
+      _placeholderType: DataType.SparseFloatVector,
+    } as any);
     expect(formattedSparseDictVector).toEqual([sparseDictVector]);
 
     const sparseDictVectors = [
@@ -1062,8 +1073,8 @@ describe('utils/Search', () => {
       { 1: 2, 3: 4 },
     ];
     const formattedSparseDictVectors = formatSearchData(sparseDictVectors, {
-      dataType: DataType.SparseFloatVector,
-    } as FieldSchema);
+      _placeholderType: DataType.SparseFloatVector,
+    } as any);
     expect(formattedSparseDictVectors).toEqual(sparseDictVectors);
   });
 });

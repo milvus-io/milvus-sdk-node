@@ -519,7 +519,7 @@ describe('utils/Schema', () => {
     // Test that dataType property is added to each field
     expect(formatted.schema.fields[0]).toHaveProperty('dataType', 5); // Int64
     expect(formatted.schema.fields[1]).toHaveProperty('dataType', 101); // FloatVector
-    expect(formatted.schema.fields[1]).toHaveProperty('placeholderType', 101); // EmbListFloatVector
+    expect(formatted.schema.fields[1]).toHaveProperty('_placeholderType', 101); // EmbListFloatVector
     expect(formatted.schema.fields[2]).toHaveProperty('dataType', 21); // VarChar
     expect(formatted.schema.fields[3]).toHaveProperty('dataType', 22); // Array
 
@@ -534,7 +534,7 @@ describe('utils/Schema', () => {
       'array_of_vector_struct'
     );
     expect(formatted.schema.fields[5].fields![0]).toHaveProperty(
-      'placeholderType',
+      '_placeholderType',
       301
     ); // EmbListFloatVector
 
