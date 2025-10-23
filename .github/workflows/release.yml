@@ -3,9 +3,10 @@ name: Publish package to npm
 on:
   release:
     types: [released, prereleased]
+  workflow_dispatch:
 
 permissions:
-  id-token: write  # Required for OIDC
+  id-token: write # Required for OIDC
   contents: read
 
 jobs:
@@ -13,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -40,8 +42,16 @@ jobs:
 
       - name: Publish to npm
         run: |
-          if [ "${{ github.event.release.prerelease }}" = "true" ]; then
-            npm publish --tag next
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "🔍 Testing npm authentication (workflow_dispatch is always dry-run)..."
+            npm publish --dry-run
+            echo "✅ Authentication successful! Trusted publishing is working."
           else
-            npm publish --tag latest
+            echo "📦 Publishing to npm..."
+            if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+              npm publish --tag next
+            else
+              npm publish --tag latest
+            fi
+            echo "✅ Published successfully!"
           fi
