@@ -5,7 +5,6 @@ import {
   IndexType,
   MetricType,
   f32ArrayToF16Bytes,
-  f16BytesToF32Array,
 } from '../../milvus';
 import {
   IP,

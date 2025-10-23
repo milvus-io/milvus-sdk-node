@@ -61,13 +61,14 @@ export type FieldSchema = {
   autoID: boolean;
   state: string;
   element_type?: keyof typeof DataType;
-  default_value?: number | string;
+  default_value?: number | string | null;
   dataType: DataType;
   is_partition_key?: boolean;
   is_dynamic?: boolean;
   is_clustering_key?: boolean;
   nullable?: boolean;
   is_function_output: boolean;
+  fields?: FieldSchema[];
 } & Partial<Record<TypeParamKey, TypeParam>>;
 
 // create collection
@@ -84,6 +85,7 @@ export type FieldType = {
   autoID?: boolean;
   default_value?: number | string;
   nullable?: boolean;
+  fields?: FieldType[];
 } & Partial<Record<TypeParamKey, TypeParam>>;
 
 export interface ShowCollectionsReq extends GrpcTimeOut {
@@ -107,12 +109,7 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   collection_name: string; // required, collection name
   shards_num?: number; // optional, shards number, default is 1
   description?: string; // optional, description of the collection
-  consistency_level?:
-    | 'Strong'
-    | 'Session'
-    | 'Bounded'
-    | 'Eventually'
-    | 'Customized'; // optional,consistency level, default is 'Bounded'
+  consistency_level?: string; // optional,consistency level, default is 'Bounded'
   num_partitions?: number; // optional, partitions number, default is 1
   partition_key_field?: string; // optional, partition key field
   clustring_key_field?: string; // optional, clustring key field
@@ -219,6 +216,7 @@ export interface CollectionSchema {
   autoID: boolean;
   fields: FieldSchema[];
   functions: FunctionObject[];
+  struct_array_fields: FieldSchema[];
 }
 
 export interface DescribeCollectionResponse extends TimeStamp {
@@ -240,6 +238,10 @@ export interface DescribeCollectionResponse extends TimeStamp {
   functions: FunctionObject[];
   update_timestamp_str: string;
   update_timestamp: number;
+  // formatted fiels
+  anns_fields: Record<string, FieldSchema>;
+  scalar_fields: Record<string, FieldSchema>;
+  function_fields: Record<string, FieldSchema>;
 }
 
 export interface GetCompactionPlansResponse extends resStatusResponse {

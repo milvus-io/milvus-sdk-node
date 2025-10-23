@@ -40,9 +40,12 @@ export type PrivilegesTypes =
   | string;
 
 export interface ResStatus {
+  extra_info: Record<string, any>;
   error_code: string | number;
   reason: string;
   code?: number;
+  retriable: boolean;
+  detail: string;
 }
 
 export interface resStatusResponse {

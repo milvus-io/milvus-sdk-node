@@ -9,16 +9,18 @@ import { MAX_LENGTH, P_KEY_VALUES } from './const';
 import Long from 'long';
 
 interface DataGenerator {
-  (param?: {
+  (param: {
     dim?: number;
     fixedString?: boolean;
-    element_type?: DataType;
+    element_type?: DataType | keyof typeof DataType;
     max_length?: number;
     max_capacity?: number;
     is_partition_key?: boolean;
     index?: number;
     sparseType?: string;
     int8VectorType?: 'array' | 'typed_array';
+    field?: FieldType;
+    disableEmptyArray?: boolean;
   }): FieldData;
 }
 
@@ -31,7 +33,7 @@ interface DataGenerator {
  * @returns {string} The generated string.
  */
 export const genVarChar: DataGenerator = params => {
-  const { max_length = MAX_LENGTH, is_partition_key = false, index } = params!;
+  const { max_length = MAX_LENGTH, is_partition_key = false, index } = params;
 
   const chance = Math.random();
   if (chance < 0.2) {
@@ -67,7 +69,7 @@ export const genVarChar: DataGenerator = params => {
  * @returns {number[]} The generated float vector.
  */
 export const genFloatVector: DataGenerator = params => {
-  const dim = params!.dim;
+  const dim = params.dim;
   return [...Array(Number(dim))].map(() => Math.random());
 };
 
@@ -100,8 +102,8 @@ export const genJSON: DataGenerator = () => {
   return Math.random() > 0.4
     ? {
         string: genVarChar({ max_length: 4 }),
-        float: genFloat(),
-        number: genInt(),
+        float: genFloat({}),
+        number: genInt({}),
         static: {
           string_key: 'apple',
           int: 1,
@@ -125,33 +127,13 @@ export const genInt16: DataGenerator = () => {
  * @returns {number[]} The generated binary vector.
  */
 export const genBinaryVector: DataGenerator = params => {
-  const dim = params!.dim;
+  const dim = params.dim;
   const numBytes = Math.ceil(dim! / 8);
   const vector: number[] = [];
   for (let i = 0; i < numBytes; i++) {
     vector.push(Math.floor(Math.random() * 256));
   }
   return vector;
-};
-
-/**
- * Generates an array of random data based on the specified element type and maximum capacity.
- * @param {Object} params - The parameters for generating the array.
- * @param {DataType} params.element_type - The data type of the elements in the array.
- * @param {number} [params.max_capacity=0] - The maximum capacity of the array.
- * @returns {FieldData[]} The generated array of data.
- */
-export const genArray: DataGenerator = params => {
-  const { element_type, max_capacity = 0 } = params!;
-
-  // half chance to generate empty array
-  if (Math.random() > 0.5) {
-    return [];
-  }
-
-  return Array.from({ length: max_capacity! }, () => {
-    return dataGenMap[element_type!](params);
-  });
 };
 
 export const genNone: DataGenerator = () => 'none';
@@ -166,8 +148,8 @@ export const genInt64: DataGenerator = () => {
 // generate random sparse vector
 // for example {2: 0.5, 3: 0.3, 4: 0.2}
 export const genSparseVector: DataGenerator = params => {
-  const dim = params!.dim || 24;
-  const sparseType = params!.sparseType || 'object';
+  const dim = params.dim || 24;
+  const sparseType = params.sparseType || 'object';
   const nonZeroCount = Math.floor(Math.random() * dim!) || 4;
 
   switch (sparseType) {
@@ -251,9 +233,9 @@ export const genSparseVector: DataGenerator = params => {
 };
 
 export const genInt8Vector: DataGenerator = params => {
-  const dim = params!.dim;
+  const dim = params.dim;
 
-  if (params!.int8VectorType === 'array') {
+  if (params.int8VectorType === 'array') {
     const int8Array: number[] = [];
     for (let i = 0; i < dim!; i++) {
       int8Array[i] = Math.floor(Math.random() * 256) - 128; // Generate random int8 value (-128 to 127)
@@ -296,26 +278,97 @@ export const genGeometry: DataGenerator = () => {
   return `POINT (${lon.toFixed(6)} ${lat.toFixed(6)})`;
 };
 
-export const dataGenMap: { [key in DataType]: DataGenerator } = {
-  [DataType.None]: genNone,
-  [DataType.Bool]: genBool,
-  [DataType.Int8]: genInt,
-  [DataType.Int16]: genInt16,
-  [DataType.Int32]: genInt,
-  [DataType.Int64]: genInt64,
-  [DataType.Float]: genFloat,
-  [DataType.Double]: genFloat,
-  [DataType.VarChar]: genVarChar,
-  [DataType.Array]: genArray,
-  [DataType.JSON]: genJSON,
-  [DataType.Geometry]: genGeometry,
-  [DataType.BinaryVector]: genBinaryVector,
-  [DataType.FloatVector]: genFloatVector,
-  [DataType.Float16Vector]: genFloat16,
-  [DataType.BFloat16Vector]: genFloat16,
-  [DataType.SparseFloatVector]: genSparseVector,
-  [DataType.Int8Vector]: genInt8Vector,
+/**
+ * Generates an array of random data based on the specified element type and maximum capacity.
+ * @param {Object} params - The parameters for generating the array.
+ * @param {DataType} params.element_type - The data type of the elements in the array.
+ * @param {number} [params.max_capacity=0] - The maximum capacity of the array.
+ * @returns {FieldData[]} The generated array of data.
+ */
+export const genArray: DataGenerator = params => {
+  const { element_type, max_capacity = 0, disableEmptyArray = false } = params;
+
+  // half chance to generate empty array
+  if (
+    Math.random() > 0.5 &&
+    element_type !== DataType.Struct &&
+    !disableEmptyArray
+  ) {
+    return [];
+  }
+
+  return Array.from({ length: max_capacity! }, () => {
+    return dataGenMap[element_type!](params);
+  });
 };
+
+export const genStruct: DataGenerator = params => {
+  const { fields, max_capacity } = params.field!;
+  const struct: { [key: string]: any } = {};
+
+  fields!.forEach(field => {
+    const genDataParams = {
+      dim: Number(field.dim || (field.type_params && field.type_params.dim)),
+      element_type: field.data_type,
+      max_length: Number(
+        field.max_length || (field.type_params && field.type_params.max_length)
+      ),
+      max_capacity: Number(
+        max_capacity ||
+          field.max_capacity ||
+          (field.type_params && field.type_params.max_capacity)
+      ),
+      is_partition_key: field.is_partition_key,
+      sparseType: params?.sparseType,
+      disableEmptyArray: true,
+    };
+
+    struct[field.name] = dataGenMap[field.data_type](genDataParams);
+  });
+
+  return struct;
+};
+
+// Helper function to create data generator map with both enum and string keys
+const createDataGenMap = () => {
+  const map: { [key in DataType | keyof typeof DataType]: DataGenerator } =
+    {} as any;
+
+  // Define the mapping once
+  const generators = {
+    [DataType.None]: genNone,
+    [DataType.Bool]: genBool,
+    [DataType.Int8]: genInt,
+    [DataType.Int16]: genInt16,
+    [DataType.Int32]: genInt,
+    [DataType.Int64]: genInt64,
+    [DataType.Float]: genFloat,
+    [DataType.Double]: genFloat,
+    [DataType.VarChar]: genVarChar,
+    [DataType.Array]: genArray,
+    [DataType.JSON]: genJSON,
+    [DataType.Geometry]: genGeometry,
+    [DataType.BinaryVector]: genBinaryVector,
+    [DataType.FloatVector]: genFloatVector,
+    [DataType.SparseFloatVector]: genSparseVector,
+    [DataType.Float16Vector]: genFloat16,
+    [DataType.BFloat16Vector]: genFloat16,
+    [DataType.Int8Vector]: genInt8Vector,
+    [DataType.Struct]: genStruct,
+  };
+
+  // Auto-generate both enum and string keys
+  Object.entries(generators).forEach(([key, generator]) => {
+    const enumKey = Number(key) as DataType;
+    const stringKey = DataType[enumKey] as keyof typeof DataType;
+    map[enumKey] = generator;
+    map[stringKey] = generator;
+  });
+
+  return map;
+};
+
+export const dataGenMap = createDataGenMap();
 
 /**
  * Generates random data for inserting into a collection
@@ -372,6 +425,7 @@ export const generateInsertData = (
         index: count,
         is_partition_key: field.is_partition_key,
         sparseType: options && options.sparseType,
+        field: field,
       };
 
       // Generate data

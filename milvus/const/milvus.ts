@@ -121,6 +121,13 @@ export enum MetricType {
   BM25 = 'BM25',
   // MHJACCARD
   MHJACCARD = 'MHJACCARD',
+  // Struct
+  MAX_SIM = 'MAX_SIM',
+  MAX_SIM_COSINE = 'MAX_SIM_COSINE',
+  MAX_SIM_IP = 'MAX_SIM_IP',
+  MAX_SIM_L2 = 'MAX_SIM_L2',
+  DTW_COSINE = 'DTW_COSINE',
+  DTW_IP = 'DTW_IP',
 }
 
 // Index types
@@ -289,6 +296,26 @@ export enum DataType {
   BFloat16Vector = 103,
   SparseFloatVector = 104,
   Int8Vector = 105,
+
+  Struct = 201,
+}
+
+export enum PlaceholderType {
+  None = 0,
+  BinaryVector = 100,
+  FloatVector = 101,
+  Float16Vector = 102,
+  BFloat16Vector = 103,
+  SparseFloatVector = 104,
+  Int8Vector = 105,
+  Int64 = 5,
+  VarChar = 21,
+  EmbListBinaryVector = 300,
+  EmbListFloatVector = 301,
+  EmbListFloat16Vector = 302,
+  EmbListBFloat16Vector = 303,
+  EmbListSparseFloatVector = 304,
+  EmbListInt8Vector = 305,
 }
 
 export enum FunctionType {
@@ -328,6 +355,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   BFloat16Vector: 103,
   SparseFloatVector: 104,
   Int8Vector: 105,
+  Struct: 201,
 };
 
 // data type string enum
@@ -350,6 +378,7 @@ export enum DataTypeStringEnum {
   BFloat16Vector = 'BFloat16Vector',
   SparseFloatVector = 'SparseFloatVector',
   Int8Vector = 'Int8Vector',
+  Struct = 'Struct',
 }
 
 // RBAC: operate user role type

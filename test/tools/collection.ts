@@ -4,7 +4,7 @@ import {
   DEFAULT_NUM_VALUE,
   DEFAULT_STRING_VALUE,
 } from './const';
-import { DataType, ConsistencyLevelEnum, FunctionObject } from '../../milvus';
+import { DataType, ConsistencyLevelEnum, FunctionObject, FieldType } from '../../milvus';
 import { GENERATE_VECTOR_NAME } from './';
 
 export const dynamicFields = [
@@ -37,10 +37,10 @@ export const dynamicFields = [
  */
 export const genCollectionParams = (data: {
   collectionName: string;
-  dim: number[] | string[];
+  dim?: number[] | string[];
   vectorType?: DataType[];
   autoID?: boolean;
-  fields?: any[];
+  fields?: FieldType[];
   partitionKeyEnabled?: boolean;
   clusterKeyEnabled?: boolean;
   numPartitions?: number;

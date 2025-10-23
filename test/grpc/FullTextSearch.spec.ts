@@ -131,7 +131,7 @@ describe(`FulltextSearch API`, () => {
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION,
     });
-    console.dir(describe, { depth: null });
+    // console.dir(describe, { depth: null });
     // expect the 'sparse' field to be created
     expect(describe.schema.fields.length).toEqual(
       createCollectionParams.fields.length

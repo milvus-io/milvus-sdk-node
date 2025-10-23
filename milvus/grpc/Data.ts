@@ -17,7 +17,6 @@ import {
   FlushResult,
   GetFlushStateResponse,
   GetMetricsResponse,
-  GetQuerySegmentInfoResponse,
   GePersistentSegmentInfoResponse,
   buildSearchRequest,
   formatSearchResult,
@@ -67,6 +66,10 @@ import {
   NO_LIMIT,
   DescribeCollectionReq,
   formatExprValues,
+  isVectorType,
+  convertToDataType,
+  GetQuerySegmentInfoResponse,
+  SearchDataType,
 } from '../';
 import { Collection } from './Collection';
 
@@ -152,18 +155,44 @@ export class Data extends Collection {
         if (v.is_function_output) {
           functionOutputFields.push(v.name); // ignore function field
         } else if (insertable) {
-          acc.push([
-            v.name,
-            {
-              name: v.name,
-              type: v.data_type, // milvus return string here
-              elementType: v.element_type,
-              dim: Number(v.dim),
-              data: [], // values container
-              nullable: v.nullable,
-              default_value: v.default_value,
-            },
-          ]);
+          const field: _Field = {
+            name: v.name,
+            type: convertToDataType(v.data_type), // milvus return string here
+            elementType: convertToDataType(v.element_type!),
+            dim: Number(v.dim),
+            data: [], // values container
+            nullable: v.nullable,
+            default_value: v.default_value,
+            fieldMap: new Map(),
+          };
+
+          // Check if this is a struct field (Array with element_type = 'Struct')
+          if (
+            convertToDataType(v.data_type) === DataType.Array &&
+            convertToDataType(v.element_type!) === DataType.Struct &&
+            v.fields
+          ) {
+            // build struct field map
+            field.fieldMap = new Map(
+              v.fields.map(field => [
+                field.name,
+                {
+                  name: field.name,
+                  type: isVectorType(convertToDataType(field.data_type))
+                    ? (106 as DataType)
+                    : DataType.Array,
+                  elementType: convertToDataType(field.data_type),
+                  dim: Number(field.dim),
+                  data: [],
+                  nullable: field.nullable,
+                  default_value: field.default_value,
+                  fieldMap: new Map(),
+                },
+              ])
+            );
+          }
+
+          acc.push([v.name, field]);
         }
         return acc;
       }, [] as [string, _Field][])
@@ -174,10 +203,11 @@ export class Data extends Collection {
     if (isDynamic) {
       fieldMap.set(DEFAULT_DYNAMIC_FIELD, {
         name: DEFAULT_DYNAMIC_FIELD,
-        type: 'JSON',
-        elementType: 'None',
+        type: DataType.JSON,
+        elementType: DataType.None,
         data: [], // value container
         nullable: false,
+        fieldMap: new Map(),
       });
     }
 
@@ -204,14 +234,14 @@ export class Data extends Collection {
           );
         }
         if (
-          DataTypeMap[field.type] === DataType.BinaryVector &&
+          field.type === DataType.BinaryVector &&
           (rowData[name] as BinaryVector).length !== field.dim! / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
         // build field data
-        switch (DataTypeMap[field.type]) {
+        switch (field.type) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
             field.data = field.data.concat(buildFieldData(rowData, field));
@@ -220,7 +250,8 @@ export class Data extends Collection {
             field.data[rowIndex] = buildFieldData(
               rowData,
               field,
-              data.transformers
+              data.transformers,
+              rowIndex
             );
             break;
         }
@@ -245,103 +276,135 @@ export class Data extends Collection {
       delete params.schema_timestamp; // This completely removes the property
     }
 
-    // transform data from map to array, milvus grpc params
-    params.fields_data = Array.from(fieldMap.values()).map(field => {
-      // milvus return string for field type, so we define the DataTypeMap to the value we need.
-      // but if milvus change the string, may cause we cant find value.
-      const type = DataTypeMap[field.type];
-      const key = VectorDataTypes.includes(type) ? 'vectors' : 'scalars';
-      const dataKey = getDataKey(type);
-      const elementType = DataTypeMap[field.elementType!];
-      const elementTypeKey = getDataKey(elementType);
+    // build column data, row based data to column based data
+    const buildColumnData = (fields: Map<string, _Field>): any[] =>
+      Array.from(fields.values()).map(field => {
+        // 106 is ArrayOfVector, only internal data type
+        let key = [...VectorDataTypes, 106 as DataType].includes(field.type)
+          ? 'vectors'
+          : 'scalars';
+        if (field.elementType === DataType.Struct) {
+          key = 'struct_arrays';
+        }
 
-      // check if need valid data
-      const needValidData =
-        key !== 'vectors' &&
-        (field.nullable === true ||
-          (typeof field.default_value !== 'undefined' &&
-            field.default_value !== null));
+        const dataKey = getDataKey(field.type);
+        const elementTypeKey = getDataKey(field.elementType!);
 
-      // get valid data
-      const valid_data = needValidData
-        ? getValidDataArray(field.data, data.fields_data?.length!)
-        : [];
+        // check if need valid data
+        const needValidData =
+          key !== 'vectors' &&
+          (field.nullable === true ||
+            (typeof field.default_value !== 'undefined' &&
+              field.default_value !== null));
 
-      // build key value
-      let keyValue;
-      switch (type) {
-        case DataType.FloatVector:
-          keyValue = {
-            dim: field.dim,
-            [dataKey]: {
-              data: field.data,
-            },
-          };
-          break;
-        case DataType.BFloat16Vector:
-        case DataType.Float16Vector:
-          keyValue = {
-            dim: field.dim,
-            [dataKey]: Buffer.concat(field.data as Uint8Array[]),
-          };
-          break;
-        case DataType.BinaryVector:
-          keyValue = {
-            dim: field.dim,
-            [dataKey]: f32ArrayToBinaryBytes(field.data as BinaryVector),
-          };
-          break;
-        case DataType.SparseFloatVector:
-          const dim = getSparseDim(field.data as SparseFloatVector[]);
-          keyValue = {
-            dim,
-            [dataKey]: {
+        // get valid data
+        const valid_data = needValidData
+          ? getValidDataArray(field.data, data.fields_data?.length!)
+          : [];
+
+        // build key value
+        let keyValue;
+        switch (field.type) {
+          case DataType.FloatVector:
+            keyValue = {
+              dim: field.dim,
+              [dataKey]: {
+                data: field.data,
+              },
+            };
+            break;
+          case DataType.BFloat16Vector:
+          case DataType.Float16Vector:
+            keyValue = {
+              dim: field.dim,
+              [dataKey]: Buffer.concat(field.data as Uint8Array[]),
+            };
+            break;
+          case DataType.BinaryVector:
+            keyValue = {
+              dim: field.dim,
+              [dataKey]: f32ArrayToBinaryBytes(field.data as BinaryVector),
+            };
+            break;
+          case DataType.SparseFloatVector:
+            const dim = getSparseDim(field.data as SparseFloatVector[]);
+            keyValue = {
               dim,
-              contents: sparseRowsToBytes(field.data as SparseFloatVector[]),
-            },
-          };
-          break;
-        case DataType.Int8Vector:
-          keyValue = {
-            dim: field.dim,
-            [dataKey]: int8VectorRowsToBytes(field.data as Int8Vector[]),
-          };
-          break;
+              [dataKey]: {
+                dim,
+                contents: sparseRowsToBytes(field.data as SparseFloatVector[]),
+              },
+            };
+            break;
+          case DataType.Int8Vector:
+            keyValue = {
+              dim: field.dim,
+              [dataKey]: int8VectorRowsToBytes(field.data as Int8Vector[]),
+            };
+            break;
 
-        case DataType.Array:
-          keyValue = {
-            [dataKey]: {
-              data: field.data
-                .filter(v => v !== undefined)
-                .map(d => {
+          // ArrayOfVector
+          case 106 as DataType:
+            keyValue = {
+              [dataKey]: {
+                dim: field.dim,
+                data: field.data.map(d => {
                   return {
+                    dim: field.dim,
                     [elementTypeKey]: {
-                      type: elementType,
+                      type: field.elementType,
                       data: d,
                     },
                   };
                 }),
-              element_type: elementType,
-            },
-          };
-          break;
-        default:
-          keyValue = {
-            [dataKey]: {
-              data: field.data.filter(v => v !== undefined),
-            },
-          };
-          break;
-      }
+                element_type: field.elementType,
+              },
+            };
+            break;
 
-      return {
-        type,
-        field_name: field.name,
-        is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
-        [key]: keyValue,
-        valid_data: valid_data,
-      };
-    });
+          case DataType.Array:
+            if (field.elementType === DataType.Struct) {
+              // For struct arrays, recursively build column data for struct fields
+              keyValue = {
+                fields: buildColumnData(field.fieldMap),
+              };
+            } else {
+              keyValue = {
+                [dataKey]: {
+                  data: field.data
+                    .filter(v => v !== undefined)
+                    .map(d => {
+                      return {
+                        [elementTypeKey]: {
+                          type: field.elementType,
+                          data: d,
+                        },
+                      };
+                    }),
+                  element_type: field.elementType,
+                },
+              };
+            }
+            break;
+          default:
+            keyValue = {
+              [dataKey]: {
+                data: field.data.filter(v => v !== undefined),
+              },
+            };
+            break;
+        }
+
+        return {
+          type: field.type,
+          field_name: field.name,
+          is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
+          [key]: keyValue,
+          valid_data: valid_data,
+        };
+      });
+
+    params.fields_data = buildColumnData(fieldMap);
 
     // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
@@ -349,6 +412,7 @@ export class Data extends Collection {
     try {
       delete params.data;
     } catch (e) {}
+
     // execute Insert
     let promise = await promisify(
       this.channelPool,
@@ -485,34 +549,71 @@ export class Data extends Collection {
   /**
    * Perform vector similarity search in a Milvus collection.
    *
-   * @param {SearchReq | SearchSimpleReq} data - The request parameters.
-   * @param {string} data.collection_name - The name of the collection.
-   * @param {Number[]} data.vector - Original vector to search with.
-   * @param {string[]} [data.partition_names] - Array of partition names (optional).
-   * @param {number} [data.topk] - Topk (optional).
-   * @param {number} [data.limit] - Alias for topk (optional).
-   * @param {number} [data.offset] - Offset (optional).
-   * @param {string} [data.filter] - Scalar field filter expression (optional).
-   * @param {string[]} [data.output_fields] - Support scalar field (optional).
-   * @param {object} [data.params] - Search params (optional).
-   * @param {OutputTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
-   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   * @param {SearchReq | SearchSimpleReq | HybridSearchReq} params - The request parameters.
+   * @param {string} params.collection_name - The name of the collection.
+   * @param {string} [params.db_name] - The name of the database (optional).
    *
-   * @returns {Promise<SearchResults>} The result of the operation.
+   * For SearchSimpleReq:
+   * @param {SearchDataType | SearchDataType[]} params.data - Vector or text to search.
+   * @param {SearchDataType | SearchDataType[]} [params.vector] - Alias for data (optional).
+   * @param {string[]} [params.partition_names] - Array of partition names (optional).
+   * @param {string} [params.anns_field] - Vector field name, required for multi-vector collections (optional).
+   * @param {string[]} [params.output_fields] - Fields to return (optional).
+   * @param {number} [params.limit] - Number of results to return (optional).
+   * @param {number} [params.topk] - Alias for limit (optional).
+   * @param {number} [params.offset] - Number of results to skip (optional).
+   * @param {string} [params.filter] - Filter expression (optional).
+   * @param {string} [params.expr] - Alias for filter (optional).
+   * @param {keyValueObj} [params.exprValues] - Template values for filter expression (optional).
+   * @param {keyValueObj} [params.params] - Extra search parameters (optional).
+   * @param {string} [params.metric_type] - Distance metric type (optional).
+   * @param {ConsistencyLevelEnum} [params.consistency_level] - Consistency level (optional).
+   * @param {boolean} [params.ignore_growing] - Whether to ignore growing segments (optional).
+   * @param {string} [params.group_by_field] - Field to group results by (optional).
+   * @param {number} [params.group_size] - Size of each group (optional).
+   * @param {boolean} [params.strict_group_size] - Whether to enforce strict group size (optional).
+   * @param {string} [params.hints] - Hints to improve search performance (optional).
+   * @param {number} [params.round_decimal] - Number of decimal places to round scores (optional).
+   * @param {OutputTransformers} [params.transformers] - Custom data transformers for bf16/f16 vectors (optional).
+   * @param {RerankerObj | FunctionObject} [params.rerank] - Reranker configuration (optional).
+   * @param {number} [params.nq] - Number of query vectors (optional).
+   *
+   * For HybridSearchReq:
+   * @param {HybridSearchSingleReq[]} params.data - Array of search requests.
+   * @param {keyValueObj} [params.params] - Search parameters (optional).
+   * @param {RerankerObj | FunctionObject} [params.rerank] - Reranker configuration (optional).
+   * @param {string[]} [params.partition_names] - Array of partition names (optional).
+   * @param {string[]} [params.output_fields] - Fields to return (optional).
+   * @param {ConsistencyLevelEnum} [params.consistency_level] - Consistency level (optional).
+   * @param {boolean} [params.ignore_growing] - Whether to ignore growing segments (optional).
+   * @param {string} [params.group_by_field] - Field to group results by (optional).
+   * @param {number} [params.group_size] - Size of each group (optional).
+   * @param {boolean} [params.strict_group_size] - Whether to enforce strict group size (optional).
+   * @param {string} [params.hints] - Hints to improve search performance (optional).
+   * @param {number} [params.round_decimal] - Number of decimal places to round scores (optional).
+   * @param {OutputTransformers} [params.transformers] - Custom data transformers (optional).
+   * @param {number} [params.nq] - Number of query vectors (optional).
+   *
+   * @param {number} [params.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<SearchResults<T>>} The result of the operation.
    * @returns {string} status.error_code - The error code of the operation.
    * @returns {string} status.reason - The reason for the error, if any.
-   * @returns {{score:number,id:string, [outputfield]: value}[]} results - Array of search results.
+   * @returns {DetermineResultsType<T>} results - Array of search results, type depends on input parameters.
+   * @returns {number[]} recalls - The recalls of the search operation.
    * @returns {number} session_ts - The timestamp of the search session.
    * @returns {string} collection_name - The name of the collection.
-   * @returns {number} all_search_count - The total number of search operations.
-   * @returns {string[]} recalls - The recalls of the search operation.
+   * @returns {number} [all_search_count] - The total number of search operations (optional).
+   * @returns {Record<string, any>} [search_iterator_v2_results] - Search iterator v2 results (optional).
+   * @returns {string} [_search_iterator_v2_results] - Search iterator v2 results as string (optional).
    *
    * @example
    * ```
    *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
    *  const searchResults = await milvusClient.search({
    *    collection_name: 'my_collection',
-   *    vector: [1, 2, 3, 4],
+   *    data: [1, 2, 3, 4],
+   *    limit: 10
    *  });
    * ```
    */

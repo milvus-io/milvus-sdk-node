@@ -5,9 +5,9 @@ import {
   FieldSchema,
   DataTypeStringEnum,
   DEFAULT_MIN_INT64,
-  SearchResultData,
   SparseFloatVector,
   FieldData,
+  FieldType,
 } from '../';
 import { Pool } from 'generic-pool';
 
@@ -65,97 +65,6 @@ export const findKeyValue = (obj: KeyValuePair[], key: string) =>
 
 export const sleep = (time: number) => {
   return new Promise(resolve => setTimeout(resolve, time));
-};
-
-// build default schema
-export const buildDefaultSchema = (data: {
-  dimension: number;
-  primary_field_name: string;
-  id_type: DataType.Int64 | DataType.VarChar;
-  vector_field_name: string;
-  auto_id: boolean;
-}) => {
-  return [
-    {
-      name: data.primary_field_name,
-      data_type: data.id_type,
-      is_primary_key: true,
-      autoID: data.auto_id,
-    },
-    {
-      name: data.vector_field_name,
-      data_type: DataType.FloatVector,
-      dim: data.dimension,
-    },
-  ];
-};
-
-function convertToCamelCase(str: string) {
-  return str.replace(/_(.)/g, function (match, letter) {
-    return letter.toUpperCase();
-  });
-}
-
-export const getDataKey = (type: DataType, camelCase: boolean = false) => {
-  let dataKey = '';
-  switch (type) {
-    case DataType.FloatVector:
-      dataKey = 'float_vector';
-      break;
-    case DataType.Float16Vector:
-      dataKey = 'float16_vector';
-      break;
-    case DataType.BFloat16Vector:
-      dataKey = 'bfloat16_vector';
-      break;
-    case DataType.BinaryVector:
-      dataKey = 'binary_vector';
-      break;
-    case DataType.SparseFloatVector:
-      dataKey = 'sparse_float_vector';
-      break;
-    case DataType.Int8Vector:
-      dataKey = 'int8_vector';
-      break;
-    case DataType.Double:
-      dataKey = 'double_data';
-      break;
-    case DataType.Float:
-      dataKey = 'float_data';
-      break;
-    case DataType.Int64:
-      dataKey = 'long_data';
-      break;
-    case DataType.Int32:
-    case DataType.Int16:
-    case DataType.Int8:
-      dataKey = 'int_data';
-      break;
-    case DataType.Bool:
-      dataKey = 'bool_data';
-      break;
-    case DataType.VarChar:
-      dataKey = 'string_data';
-      break;
-    case DataType.Array:
-      dataKey = 'array_data';
-      break;
-    case DataType.JSON:
-      dataKey = 'json_data';
-      break;
-    case DataType.Geometry:
-      dataKey = 'geometry_wkt_data';
-      break;
-    case DataType.None:
-      dataKey = 'none';
-      break;
-
-    default:
-      throw new Error(
-        `${ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE} "${type}."`
-      );
-  }
-  return camelCase ? convertToCamelCase(dataKey) : dataKey;
 };
 
 /**

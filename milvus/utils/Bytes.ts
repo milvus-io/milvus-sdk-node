@@ -5,14 +5,14 @@ import {
   BinaryVector,
   SparseFloatVector,
   Int8Vector,
-  DataType,
-  SearchMultipleDataType,
   Float16Vector,
   SparseVectorCSR,
   SparseVectorCOO,
   BFloat16Vector,
   SparseVectorArray,
   FieldSchema,
+  PlaceholderType,
+  SearchDataType,
 } from '..';
 
 /**
@@ -283,17 +283,17 @@ export const bytesToSparseRow = (bufferData: Buffer): SparseFloatVector => {
  * This function builds a placeholder group in bytes format for Milvus.
  *
  * @param {Root} milvusProto - The root object of the Milvus protocol.
- * @param {SearchMultipleDataType[]} data - An array of search vectors.
+ * @param {[SearchDataType] | SearchDataType[]} data - An array of search vectors.
  * @param {DataType} vectorDataType - The data type of the vectors.
  *
  * @returns {Uint8Array} The placeholder group in bytes format.
  */
 export const buildPlaceholderGroupBytes = (
   milvusProto: Root,
-  data: SearchMultipleDataType,
+  data: [SearchDataType] | SearchDataType[],
   field: FieldSchema
 ) => {
-  const { dataType, is_function_output } = field;
+  const { is_function_output, _placeholderType } = field as any;
   // create placeholder_group value
   let bytes;
 
@@ -302,31 +302,36 @@ export const buildPlaceholderGroupBytes = (
     bytes = data.map(d => new TextEncoder().encode(String(d)));
   } else {
     // parse vectors to bytes
-    switch (dataType) {
-      case DataType.FloatVector:
+    switch (_placeholderType) {
+      case PlaceholderType.FloatVector:
+      case PlaceholderType.EmbListFloatVector:
         bytes = data.map(v => f32ArrayToF32Bytes(v as FloatVector));
         break;
-      case DataType.BinaryVector:
+
+      case PlaceholderType.BinaryVector:
         bytes = data.map(v => f32ArrayToBinaryBytes(v as BinaryVector));
         break;
-      case DataType.BFloat16Vector:
+
+      case PlaceholderType.BFloat16Vector:
         bytes = data.map(v =>
           Array.isArray(v) ? f32ArrayToBf16Bytes(v as BFloat16Vector) : v
         );
         break;
-      case DataType.Float16Vector:
+
+      case PlaceholderType.Float16Vector:
         bytes = data.map(v =>
           Array.isArray(v) ? f32ArrayToF16Bytes(v as Float16Vector) : v
         );
         break;
-      case DataType.Int8Vector:
+
+      case PlaceholderType.Int8Vector:
         bytes = data.map(v =>
           Array.isArray(v) ? f32ArrayToInt8Bytes(v as Int8Vector) : v
         );
         break;
-      case DataType.SparseFloatVector:
-        bytes = data.map(v => sparseToBytes(v as SparseFloatVector));
 
+      case PlaceholderType.SparseFloatVector:
+        bytes = data.map(v => sparseToBytes(v as SparseFloatVector));
         break;
     }
   }
@@ -341,7 +346,7 @@ export const buildPlaceholderGroupBytes = (
       placeholders: [
         {
           tag: '$0',
-          type: is_function_output ? DataType.VarChar : dataType,
+          type: _placeholderType,
           values: bytes,
         },
       ],

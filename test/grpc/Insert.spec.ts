@@ -272,7 +272,7 @@ describe(`Insert API`, () => {
       expect('a').toEqual('b');
     } catch (error) {
       expect(error.message).toContain(
-        ERROR_REASONS.INSERT_CHECK_WRONG_DATA_TYPE
+        ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT
       );
     } finally {
       fakeClient.closeConnection();
