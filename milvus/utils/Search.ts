@@ -408,9 +408,10 @@ export const formatSearchResult = (
 
 /**
  * Formats the search vector to match a specific data type.
+ * It should be an array, if the search data is a single vector, return a single array, if the search data is a array of vectors, return the array
  * @param {SearchDataType[]} searchVector - The search vector or array of vectors to be formatted.
  * @param {FieldSchema} field - The field schema.
- * @returns {[SearchDataType] | SearchDataType[]} The formatted search vector or array of vectors.
+ * @returns {[SearchDataType] | SearchDataType[]}
  */
 export const formatSearchData = (
   searchData: SearchDataType | SearchDataType[],
@@ -426,21 +427,6 @@ export const formatSearchData = (
 
   switch (_placeholderType) {
     case PlaceholderType.EmbListFloatVector:
-      /*
-        const emblist1 = [[1,2,3,4],[5,6,7,8]]
-        const emblist2 = [[5,6,7,8],[9,10,11,12]]
-        const searchData = [emblist1, emblist2] = [
-          [
-            [1,2,3,4],
-            [5,6,7,8]
-          ],
-
-          [
-            [5,6,7,8],
-            [9,10,11,12]
-          ]
-        ]
-      */
       const isMultiEmbeddingList =
         Array.isArray(searchData) &&
         Array.isArray((searchData as any)[0]) &&

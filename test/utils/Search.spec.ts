@@ -11,6 +11,7 @@ import {
   formatExprValues,
   FunctionType,
   buildSearchParams,
+  PlaceholderType,
 } from '../../milvus';
 describe('utils/Search', () => {
   it('should build single search request correctly', () => {
@@ -1076,5 +1077,42 @@ describe('utils/Search', () => {
       _placeholderType: DataType.SparseFloatVector,
     } as any);
     expect(formattedSparseDictVectors).toEqual(sparseDictVectors);
+  });
+
+  it('should format embedding list vectors correctly', () => {
+    const embeddingListVectors = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+    ];
+    const formattedEmbeddingListVectors = formatSearchData(
+      embeddingListVectors,
+      {
+        _placeholderType: PlaceholderType.EmbListFloatVector,
+      } as any
+    );
+
+    expect(formattedEmbeddingListVectors).toEqual([[1, 2, 3, 4, 5, 6, 7, 8]]);
+
+    const multiEmbeddingListVectors = [
+      [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+      ],
+      [
+        [9, 10, 11, 12],
+        [13, 14, 15, 16],
+      ],
+    ];
+    const formattedMultiEmbeddingListVectors = formatSearchData(
+      multiEmbeddingListVectors,
+      {
+        _placeholderType: PlaceholderType.EmbListFloatVector,
+      } as any
+    );
+
+    expect(formattedMultiEmbeddingListVectors).toEqual([
+      [1, 2, 3, 4, 5, 6, 7, 8],
+      [9, 10, 11, 12, 13, 14, 15, 16],
+    ]);
   });
 });
