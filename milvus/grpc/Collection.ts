@@ -613,6 +613,11 @@ export class Collection extends Database {
       data.timeout || this.timeout
     );
 
+    // check if collection exists before formatting
+    if (promise.status.error_code !== ErrorCode.SUCCESS) {
+      return promise;
+    }
+
     const results = formatDescribedCol(promise);
 
     // update cache
