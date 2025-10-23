@@ -175,15 +175,15 @@ export type OutputTransformers = {
 };
 
 export type DetermineResultsType<T extends Record<string, any>> =
-  T['vectors'] extends [VectorTypes]
+  T['vectors'] extends [SearchDataType]
     ? SearchResultData[]
-    : T['vectors'] extends VectorTypes[]
+    : T['vectors'] extends SearchDataType[]
     ? SearchResultData[][]
-    : T['vector'] extends VectorTypes
+    : T['vector'] extends SearchDataType
     ? SearchResultData[]
-    : T['data'] extends [any]
+    : T['data'] extends SearchDataType
     ? SearchResultData[]
-    : T['data'] extends VectorTypes[] | string[]
+    : T['data'] extends SearchDataType[]
     ? SearchResultData[][]
     : SearchResultData[];
 

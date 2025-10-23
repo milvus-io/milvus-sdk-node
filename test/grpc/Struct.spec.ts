@@ -399,4 +399,26 @@ describe(`Struct API testing`, () => {
 
     expect(search.results.length).toEqual(2);
   });
+
+  it(`hybrid search with vector and emblist should be successful`, async () => {
+    const emblist1 = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+    ];
+
+    const search = await milvusClient.hybridSearch({
+      collection_name: COLLECTION_NAME,
+      data: [
+        { data: [1, 2, 3, 4], anns_field: 'vector' },
+        {
+          data: emblist1,
+          anns_field: 'array_of_vector_struct[float_vector_of_struct]',
+        },
+      ],
+      limit: 5,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(5);
+  });
 });
