@@ -68,6 +68,24 @@ describe('utils/format', () => {
     ]);
   });
 
+  it(`should serialize complex data types (objects/arrays) to JSON strings when valueToString is true`, () => {
+    const testValue = { 
+      simple: 'string',
+      number: 42,
+      object: { nested: 'value', count: 5 },
+      array: [1, 2, 3],
+      nullValue: null
+    };
+    const res = parseToKeyValue(testValue, true);
+    expect(res).toMatchObject([
+      { key: 'simple', value: 'string' },
+      { key: 'number', value: '42' },
+      { key: 'object', value: '{"nested":"value","count":5}' },
+      { key: 'array', value: '[1,2,3]' },
+      { key: 'nullValue', value: 'null' },
+    ]);
+  });
+
   it(`should convert [{key:"row_count",value:4}] to {row_count:4}`, () => {
     const testValue = 3.1231241241234124124;
     const res = formatNumberPrecision(testValue, 3);

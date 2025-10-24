@@ -17,10 +17,11 @@ import {
   buildPlaceholderGroupBytes,
   getSparseFloatVectorType,
   OutputTransformers,
-  SearchDataType,
+  SearchData,
   FieldSchema,
   keyValueObj,
   FunctionObject,
+  FunctionScore,
   buildFieldDataMap,
   cloneObj,
   parseToKeyValue,
@@ -29,6 +30,21 @@ import {
   PlaceholderType,
   SearchEmbList,
 } from '../';
+
+/**
+ * Type guard to check if an object is a FunctionScore
+ * @param obj - The object to check
+ * @returns True if the object is a FunctionScore
+ */
+const isFunctionScore = (obj: any): obj is FunctionScore => {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    Array.isArray(obj.functions) &&
+    typeof obj.params === 'object' &&
+    obj.params !== null
+  );
+};
 
 /**
  * Builds search parameters based on the provided data.
@@ -135,31 +151,46 @@ type FormatedSearchRequest = {
  * @param schemaTypes - Schema types for creating function objects
  * @returns Function score object or empty object
  */
-const createFunctionScore = (
-  hasRerankFunction: boolean,
-  searchHybridReq: HybridSearchReq
+export const createFunctionScore = (
+  rerank?: RerankerObj | FunctionObject | FunctionScore
 ) => {
-  if (!hasRerankFunction) {
+  if (!rerank) {
     return {};
   }
 
-  return {
-    function_score: {
-      functions: [searchHybridReq.rerank as FunctionObject].map(
-        (func: FunctionObject) => {
-          const { input_field_names, output_field_names, ...rest } = func;
-          const result = {
-            ...rest,
-            input_field_names: input_field_names || [],
-            output_field_names: output_field_names || [],
-            params: parseToKeyValue(func.params, true),
-          };
-          return result;
-        }
-      ),
-      params: [],
-    },
-  };
+  if (isFunctionScore(rerank)) {
+    const functionScore = rerank as FunctionScore;
+    return {
+      function_score: {
+        functions: functionScore.functions.map(func => ({
+          ...func,
+          input_field_names: func.input_field_names || [],
+          output_field_names: func.output_field_names || [],
+          params: parseToKeyValue(func.params, true),
+        })),
+        params: parseToKeyValue(functionScore.params, true),
+      },
+    };
+  }
+
+  if (typeof rerank === 'object' && 'type' in rerank) {
+    const functionObject = rerank as FunctionObject;
+    return {
+      function_score: {
+        functions: [
+          {
+            ...functionObject,
+            input_field_names: functionObject.input_field_names || [],
+            output_field_names: functionObject.output_field_names || [],
+            params: parseToKeyValue(functionObject.params, true),
+          },
+        ],
+        params: [],
+      },
+    };
+  }
+
+  return {};
 };
 
 /**
@@ -194,11 +225,6 @@ export const buildSearchRequest = (
   const searchHybridReq = params as HybridSearchReq;
   const searchSimpleReq = params as SearchSimpleReq;
   const searchSimpleOrHybridReq = params as SearchSimpleReq | HybridSearchReq;
-  const hasRerankFunction = !!(
-    searchSimpleOrHybridReq.rerank &&
-    typeof searchSimpleOrHybridReq.rerank === 'object' &&
-    'type' in searchSimpleOrHybridReq.rerank
-  );
 
   // Initialize requests array
   const requests: FormatedSearchRequest[] = [];
@@ -280,6 +306,15 @@ export const buildSearchRequest = (
     (searchSimpleReq.params?.round_decimal as number) ??
     -1;
 
+  // get rerank
+  const rerank = searchSimpleOrHybridReq.rerank;
+  const hasRerankFunction = !!(
+    rerank &&
+    typeof rerank === 'object' &&
+    'type' in rerank
+  );
+  const hasFunctionScore = isFunctionScore(rerank);
+
   return {
     isHybridSearch: isHybridSearch,
     request: isHybridSearch
@@ -291,12 +326,12 @@ export const buildSearchRequest = (
           consistency_level: requests[0]?.consistency_level,
 
           // if ranker is set and it is a hybrid search, add it to the request
-          ...createFunctionScore(hasRerankFunction, searchHybridReq),
+          ...createFunctionScore(rerank),
 
           // if ranker is not exist, use RRFRanker ranker
           ...{
             rank_params: [
-              ...(!hasRerankFunction
+              ...(!hasRerankFunction && !hasFunctionScore
                 ? parseToKeyValue(convertRerankParams(RRFRanker()))
                 : []),
               { key: 'round_decimal', value: round_decimal },
@@ -305,12 +340,16 @@ export const buildSearchRequest = (
                 value:
                   searchSimpleReq.limit ?? searchSimpleReq.topk ?? DEFAULT_TOPK,
               },
+              {
+                key: 'offset',
+                value: searchSimpleReq.offset ?? 0,
+              },
             ],
           },
         }
       : {
           ...requests[0],
-          ...createFunctionScore(hasRerankFunction, searchHybridReq),
+          ...createFunctionScore(rerank),
         },
     // need for parsing the search results
     ...(round_decimal !== -1 ? { round_decimal } : {}),
@@ -338,7 +377,7 @@ export const formatSearchResult = (
   const { round_decimal } = options;
   // build final results array
   const results: any[] = [];
-  const { topks, scores, fields_data, ids } = searchRes.results;
+  const { topks, scores, fields_data } = searchRes.results;
   // build fields data map
   const fieldsDataMap = buildFieldDataMap(fields_data, options.transformers);
   // build output name array
@@ -409,19 +448,19 @@ export const formatSearchResult = (
 /**
  * Formats the search vector to match a specific data type.
  * It should be an array, if the search data is a single vector, return a single array, if the search data is a array of vectors, return the array
- * @param {SearchDataType[]} searchVector - The search vector or array of vectors to be formatted.
+ * @param {SearchData[]} searchVector - The search vector or array of vectors to be formatted.
  * @param {FieldSchema} field - The field schema.
- * @returns {[SearchDataType] | SearchDataType[]}
+ * @returns {[SearchData] | SearchData[]}
  */
 export const formatSearchData = (
-  searchData: SearchDataType | SearchDataType[],
+  searchData: SearchData | SearchData[],
   field: FieldSchema
-): [SearchDataType] | SearchDataType[] => {
+): [SearchData] | SearchData[] => {
   const { is_function_output, _placeholderType } = field as any;
 
   if (is_function_output) {
     return Array.isArray(searchData)
-      ? (searchData as [SearchDataType])
+      ? (searchData as [SearchData])
       : [searchData];
   }
 
@@ -434,10 +473,10 @@ export const formatSearchData = (
 
       if (isMultiEmbeddingList) {
         return (searchData as SearchEmbList[]).map(v => v.flat()) as [
-          SearchDataType
+          SearchData
         ];
       } else {
-        return [(searchData as SearchEmbList).flat() as SearchDataType];
+        return [(searchData as SearchEmbList).flat() as SearchData];
       }
     case PlaceholderType.FloatVector:
     case PlaceholderType.BinaryVector:
@@ -451,11 +490,11 @@ export const formatSearchData = (
     case PlaceholderType.SparseFloatVector:
       const type = getSparseFloatVectorType(searchData as SparseFloatVector);
       if (type !== 'unknown') {
-        return [searchData as SearchDataType];
+        return [searchData as SearchData];
       }
 
     default:
-      return searchData as [SearchDataType];
+      return searchData as [SearchData];
   }
 };
 

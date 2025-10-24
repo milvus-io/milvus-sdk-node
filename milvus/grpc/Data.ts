@@ -69,7 +69,7 @@ import {
   isVectorType,
   convertToDataType,
   GetQuerySegmentInfoResponse,
-  SearchDataType,
+  SearchData,
 } from '../';
 import { Collection } from './Collection';
 
@@ -554,8 +554,8 @@ export class Data extends Collection {
    * @param {string} [params.db_name] - The name of the database (optional).
    *
    * For SearchSimpleReq:
-   * @param {SearchDataType | SearchDataType[]} params.data - Vector or text to search.
-   * @param {SearchDataType | SearchDataType[]} [params.vector] - Alias for data (optional).
+   * @param {SearchData | SearchData[]} params.data - Vector or text to search.
+   * @param {SearchData | SearchData[]} [params.vector] - Alias for data (optional).
    * @param {string[]} [params.partition_names] - Array of partition names (optional).
    * @param {string} [params.anns_field] - Vector field name, required for multi-vector collections (optional).
    * @param {string[]} [params.output_fields] - Fields to return (optional).

@@ -38,13 +38,20 @@ export const parseToKeyValue = (
   valueToString?: boolean
 ): KeyValuePair[] => {
   return data
-    ? Object.keys(data).reduce(
-        (pre: any[], cur: string) => [
-          ...pre,
-          { key: cur, value: valueToString ? String(data[cur]) : data[cur] },
-        ],
-        []
-      )
+    ? Object.keys(data).reduce((pre: any[], cur: string) => {
+        let value = data[cur];
+
+        if (valueToString) {
+          // Handle complex data types like objects and arrays
+          if (value && typeof value === 'object') {
+            value = JSON.stringify(value);
+          } else {
+            value = String(value);
+          }
+        }
+
+        return [...pre, { key: cur, value }];
+      }, [])
     : [];
 };
 

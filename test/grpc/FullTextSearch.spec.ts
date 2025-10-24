@@ -322,6 +322,82 @@ describe(`FulltextSearch API`, () => {
     expect(search.results.length).toEqual(1);
   });
 
+  it(`search with a single boost rerank function should success`, async () => {
+    const ranker = {
+      name: 'boost',
+      input_field_names: [],
+      type: FunctionType.RERANK,
+      params: {
+        reranker: 'boost',
+        filter: "doctype == 'abstract'",
+        random_score: {
+          seed: 126,
+          field: 'id',
+        },
+        weight: 0.5,
+      },
+    };
+
+    const search = await milvusClient.search({
+      collection_name: COLLECTION,
+      limit: 1,
+      data: 'apple',
+      anns_field: 'sparse',
+      output_fields: ['*'],
+      params: { drop_ratio_search: 0.6 },
+      consistency_level: ConsistencyLevelEnum.Strong,
+      rerank: ranker,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Search with multiple boost rerank functions should success`, async () => {
+    const fix_weight_ranker = {
+      name: 'boost',
+      input_field_names: [],
+      type: FunctionType.RERANK,
+      params: {
+        reranker: 'boost',
+        weight: 0.8,
+      },
+    };
+
+    const random_weight_ranker = {
+      name: 'boost',
+      input_field_names: [],
+      type: FunctionType.RERANK,
+      params: {
+        reranker: 'boost',
+        random_score: {
+          seed: 126,
+        },
+        weight: 0.4,
+      },
+    };
+
+    const ranker = {
+      functions: [fix_weight_ranker, random_weight_ranker],
+      params: {
+        boost_mode: 'Multiply',
+        function_mode: 'Sum',
+      },
+    };
+
+    const search = await milvusClient.search({
+      collection_name: COLLECTION,
+      limit: 1,
+      data: 'apple',
+      anns_field: 'sparse',
+      output_fields: ['*'],
+      params: { drop_ratio_search: 0.6 },
+      consistency_level: ConsistencyLevelEnum.Strong,
+      rerank: ranker,
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
   it(`hybrid search with rerank function should success`, async () => {
     const search = await milvusClient.search({
       collection_name: COLLECTION,

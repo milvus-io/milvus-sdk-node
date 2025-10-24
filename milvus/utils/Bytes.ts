@@ -12,7 +12,7 @@ import {
   SparseVectorArray,
   FieldSchema,
   PlaceholderType,
-  SearchDataType,
+  SearchData,
 } from '..';
 
 /**
@@ -283,14 +283,14 @@ export const bytesToSparseRow = (bufferData: Buffer): SparseFloatVector => {
  * This function builds a placeholder group in bytes format for Milvus.
  *
  * @param {Root} milvusProto - The root object of the Milvus protocol.
- * @param {[SearchDataType] | SearchDataType[]} data - An array of search vectors.
+ * @param {[SearchData] | SearchData[]} data - An array of search vectors.
  * @param {DataType} vectorDataType - The data type of the vectors.
  *
  * @returns {Uint8Array} The placeholder group in bytes format.
  */
 export const buildPlaceholderGroupBytes = (
   milvusProto: Root,
-  data: [SearchDataType] | SearchDataType[],
+  data: [SearchData] | SearchData[],
   field: FieldSchema
 ) => {
   const { is_function_output, _placeholderType } = field as any;
