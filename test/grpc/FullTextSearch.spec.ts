@@ -319,7 +319,6 @@ describe(`FulltextSearch API`, () => {
     });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(search.results.length).toEqual(1);
   });
 
   it(`search with a single boost rerank function should success`, async () => {

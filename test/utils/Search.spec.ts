@@ -334,6 +334,7 @@ describe('utils/Search', () => {
     expect(result2.request.rank_params).toEqual([
       { key: 'round_decimal', value: -1 },
       { key: 'limit', value: 1 },
+      { key: 'offset', value: 0 },
     ]);
   });
 
