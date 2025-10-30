@@ -152,8 +152,7 @@ describe(`Struct API testing`, () => {
       collection_name: COLLECTION_NAME,
     });
 
-    // console.dir(describe, { depth: null });
-
+    console.dir(describe, { depth: null });
     // check schema length
     expect(describe.schema.fields.length).toEqual(
       collectionParams.fields.length
@@ -170,6 +169,7 @@ describe(`Struct API testing`, () => {
     expect(structArrayFields[0]).toBeDefined();
     expect(structArrayFields[0]!.dataType).toEqual(DataType.Array);
     expect(structArrayFields[0]!.element_type).toEqual('Struct');
+    expect(structArrayFields[0].max_capacity).toEqual('2');
     expect(structArrayFields[0]!.fields!.length).toEqual(
       collectionParams.fields[4].fields!.length
     );
