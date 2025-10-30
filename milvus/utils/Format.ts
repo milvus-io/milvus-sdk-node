@@ -294,11 +294,28 @@ export const formatDescribedCol = (
         childField.data_type = childField.element_type;
         delete childField.element_type;
 
+        formatField(childField, true);
+
+        // copy field type_params's max_capacity value to the parent field's type_params
+        field.type_params = field.type_params || [];
+        // if parent field's type_params already has max_capacity, don't add it again
+        if (
+          !field.type_params.find(
+            (keyValuePair: any) => keyValuePair.key === 'max_capacity'
+          )
+        ) {
+          field.type_params.push({
+            key: 'max_capacity',
+            value: childField.max_capacity,
+          });
+        }
+
+        field.max_capacity = childField.max_capacity;
+
         // delete max_capacity in type_params array
         childField.type_params = childField.type_params.filter(
           (keyValuePair: any) => keyValuePair.key !== 'max_capacity'
         );
-        formatField(childField, true);
       });
     }
   };
