@@ -308,6 +308,11 @@ export const buildSearchRequest = (
 
   // get rerank
   const rerank = searchSimpleOrHybridReq.rerank;
+  const isRerankerObj = !!(
+    rerank &&
+    typeof rerank === 'object' &&
+    'strategy' in rerank
+  );
   const hasRerankFunction = !!(
     rerank &&
     typeof rerank === 'object' &&
@@ -331,7 +336,9 @@ export const buildSearchRequest = (
           // if ranker is not exist, use RRFRanker ranker
           ...{
             rank_params: [
-              ...(!hasRerankFunction && !hasFunctionScore
+              ...(isRerankerObj
+                ? parseToKeyValue(convertRerankParams(rerank as RerankerObj))
+                : !hasRerankFunction && !hasFunctionScore
                 ? parseToKeyValue(convertRerankParams(RRFRanker()))
                 : []),
               { key: 'round_decimal', value: round_decimal },
