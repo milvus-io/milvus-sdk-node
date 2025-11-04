@@ -230,6 +230,194 @@ describe('utils/validate', () => {
     ];
     expect(checkCollectionFields(fields)).toBe(true);
   });
+
+  it('should return true if vector field is in struct sub-field', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 128,
+          },
+          {
+            name: 'other_field',
+            data_type: DataType.Int32,
+          },
+        ],
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should return true if vector field is in array of struct sub-field', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'array_of_struct',
+        data_type: DataType.Array,
+        element_type: DataType.Struct,
+        max_capacity: 10,
+        fields: [
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 128,
+          },
+          {
+            name: 'other_field',
+            data_type: DataType.Int32,
+          },
+        ],
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should throw error if vector field in struct sub-field is missing dimension', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+          },
+        ],
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM
+    );
+  });
+
+  it('should throw error if varchar field in struct sub-field is missing max_length', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 128,
+          },
+          {
+            name: 'varchar_field',
+            data_type: DataType.VarChar,
+          },
+        ],
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAX_LENGTH
+    );
+  });
+
+  it('should return true if vector field is in nested struct sub-field', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'nested_struct',
+            data_type: DataType.Struct,
+            fields: [
+              {
+                name: 'vector',
+                data_type: DataType.FloatVector,
+                dim: 128,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should return true if multiple vector fields exist in struct sub-fields', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'vector1',
+            data_type: DataType.FloatVector,
+            dim: 128,
+          },
+          {
+            name: 'vector2',
+            data_type: DataType.BinaryVector,
+            dim: 16,
+          },
+        ],
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should throw error if no vector field exists in struct sub-fields', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'int_field',
+            data_type: DataType.Int32,
+          },
+          {
+            name: 'string_field',
+            data_type: DataType.VarChar,
+            max_length: 100,
+          },
+        ],
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST
+    );
+  });
   it(`should return true for a bigint input`, () => {
     expect(checkTimeParam(BigInt(123))).toBe(true);
   });

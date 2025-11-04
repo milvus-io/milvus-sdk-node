@@ -14,18 +14,19 @@ import {
 import { status as grpcStatus } from '@grpc/grpc-js';
 
 /**
- * when create collection, field must contain 2 Fields.
- * Type is int64 or varchar and primary_key = true
- * Type is one of float_vector and binary_vector
- * Will check fields
- * @param fields
+ * Recursively check fields including struct sub-fields
+ * @param fields - Fields to check
+ * @param result - Accumulator object to track validation state
  */
-export const checkCollectionFields = (fields: FieldType[]) => {
+const checkFieldsRecursive = (
+  fields: FieldType[],
+  result: {
+    hasPrimaryKey: boolean;
+    hasVectorField: boolean;
+    partitionKeyCount: number;
+  }
+) => {
   const int64VarCharTypes = [DataType.Int64, DataType.VarChar];
-
-  let hasPrimaryKey = false;
-  let hasVectorField = false;
-  let partitionKeyCount = 0;
 
   fields.forEach(field => {
     if (!field.hasOwnProperty('data_type')) {
@@ -34,11 +35,14 @@ export const checkCollectionFields = (fields: FieldType[]) => {
 
     // get data type
     const dataType = convertToDataType(field.data_type);
+    const elementType = field.element_type
+      ? convertToDataType(field.element_type)
+      : null;
     const isPrimaryKey = field.is_primary_key;
     const isPartitionKey = field.is_partition_key;
 
     if (isPrimaryKey && int64VarCharTypes.includes(dataType!)) {
-      hasPrimaryKey = true;
+      result.hasPrimaryKey = true;
     }
 
     // if partition key is set, it should be set on int64 or varchar and non-primary key field
@@ -50,7 +54,7 @@ export const checkCollectionFields = (fields: FieldType[]) => {
 
     // if this is the partition key field, check the limit
     if (isPartitionKey) {
-      partitionKeyCount++;
+      result.partitionKeyCount++;
     }
 
     // if this is the vector field, check dimension
@@ -66,7 +70,7 @@ export const checkCollectionFields = (fields: FieldType[]) => {
         throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM);
       }
 
-      hasVectorField = true;
+      result.hasVectorField = true;
     }
 
     // if this is a varchar field, check max_length
@@ -76,19 +80,45 @@ export const checkCollectionFields = (fields: FieldType[]) => {
         throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAX_LENGTH);
       }
     }
+
+    // Check if this is a struct field or array of struct, and recursively check sub-fields
+    const isStruct = dataType === DataType.Struct;
+    const isArrayOfStruct =
+      dataType === DataType.Array && elementType === DataType.Struct;
+
+    if ((isStruct || isArrayOfStruct) && field.fields) {
+      checkFieldsRecursive(field.fields, result);
+    }
   });
+};
+
+/**
+ * when create collection, field must contain 2 Fields.
+ * Type is int64 or varchar and primary_key = true
+ * Type is one of float_vector and binary_vector
+ * Will check fields
+ * @param fields
+ */
+export const checkCollectionFields = (fields: FieldType[]) => {
+  const result = {
+    hasPrimaryKey: false,
+    hasVectorField: false,
+    partitionKeyCount: 0,
+  };
+
+  checkFieldsRecursive(fields, result);
 
   // if no primary key field is found, throw error
-  if (!hasPrimaryKey) {
+  if (!result.hasPrimaryKey) {
     throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY);
   }
 
   // if no vector field is found, throw error
-  if (!hasVectorField) {
+  if (!result.hasVectorField) {
     throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST);
   }
 
-  if (partitionKeyCount > MAX_PARTITION_KEY_FIELD_COUNT) {
+  if (result.partitionKeyCount > MAX_PARTITION_KEY_FIELD_COUNT) {
     throw new Error(ERROR_REASONS.PARTITION_KEY_FIELD_MAXED_OUT);
   }
 
