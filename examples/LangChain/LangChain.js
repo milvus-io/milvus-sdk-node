@@ -1,54 +1,81 @@
-import { Milvus } from 'langchain/vectorstores/milvus';
-import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+import { Milvus } from '@langchain/community/vectorstores/milvus';
+import { Embeddings } from '@langchain/core/embeddings';
 
-const address = `localhot:19530`; // or your zilliz cloud endpoint
-const ssl = false; // set it to true if you are using zilliz cloud
-const token = 'username:passowrd or apikey'; // your zilliz cloud apikey or username:password
-
-const openAIApiKey = ``;
-const collectionName = 'books';
-
-// text sample from Godel, Escher, Bach
-const vectorStore = await Milvus.fromTexts(
-  [
-    'Tortoise: Labyrinth? Labyrinth? Could it Are we in the notorious Little\
-            Harmonic Labyrinth of the dreaded Majotaur?',
-    'Achilles: Yiikes! What is that?',
-    'Tortoise: They say-although I person never believed it myself-that an I\
-            Majotaur has created a tiny labyrinth sits in a pit in the middle of\
-            it, waiting innocent victims to get lost in its fears complexity.\
-            Then, when they wander and dazed into the center, he laughs and\
-            laughs at them-so hard, that he laughs them to death!',
-    'Achilles: Oh, no!',
-    "Tortoise: But it's only a myth. Courage, Achilles.",
-  ],
-  [{ id: 2 }, { id: 1 }, { id: 3 }, { id: 4 }, { id: 5 }],
-  new OpenAIEmbeddings({
-    openAIApiKey,
-  }),
-  {
-    collectionName,
-    vectorField: 'vectors',
-    clientConfig: {
-      address,
-      ssl,
-      token,
-    },
+// Mock Embeddings class that generates fixed-dimension vectors without calling OpenAI API
+class MockEmbeddings extends Embeddings {
+  constructor(dimension = 1536) {
+    super();
+    this.dimension = dimension;
   }
-);
 
-const response = await vectorStore.similaritySearch('scared', 2);
+  // Generate a simple hash-based embedding from text
+  _generateEmbedding(text) {
+    const hash = this._simpleHash(text);
+    const vector = new Array(this.dimension).fill(0);
 
-console.log('response', response);
-/*
-response [
-  Document {
-    pageContent: 'Achilles: Oh, no!',
-    metadata: { id: 442006163964035500 }
-  },
-  Document {
-    pageContent: 'Achilles: Yiikes! What is that?',
-    metadata: { id: 442006163964035460 }
+    // Use hash to seed random-like values for each dimension
+    for (let i = 0; i < this.dimension; i++) {
+      const seed = (hash + i) % 1000;
+      vector[i] = (seed / 1000) * 2 - 1; // Normalize to [-1, 1]
+    }
+
+    // Normalize the vector
+    const magnitude = Math.sqrt(
+      vector.reduce((sum, val) => sum + val * val, 0)
+    );
+    return vector.map(val => val / magnitude);
   }
-]
-*/
+
+  _simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
+  }
+
+  async embedDocuments(texts) {
+    return texts.map(text => this._generateEmbedding(text));
+  }
+
+  async embedQuery(text) {
+    return this._generateEmbedding(text);
+  }
+}
+
+// Use MockEmbeddings instead of OpenAIEmbeddings (no API key needed)
+const embeddings = new MockEmbeddings(1536); // 1536 is the dimension for text-embedding-3-small
+
+// Option 1: Auto-create collection using fromTexts (recommended)
+// This will automatically create the collection if it doesn't exist
+async function createVectorStoreWithAutoCreate() {
+  const vectorStore = await Milvus.fromTexts(
+    ['Sample text 1', 'Sample text 2'],
+    [{ id: 1 }, { id: 2 }],
+    embeddings,
+    {
+      url: 'your url',
+      collectionName: 'books',
+      textField: 'text',
+      vectorField: 'vector',
+      indexCreateOptions: {
+        index_type: 'HNSW',
+        metric_type: 'COSINE',
+      },
+      clientConfig: {
+        token: 'your-token',
+      },
+    }
+  );
+  return vectorStore;
+}
+
+// Example usage
+async function main() {
+  // Use Option 1 to auto-create collection
+  const vs = await createVectorStoreWithAutoCreate();
+}
+
+main().catch(console.error);
