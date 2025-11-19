@@ -3,8 +3,14 @@ import {
   MAX_LENGTH,
   DEFAULT_NUM_VALUE,
   DEFAULT_STRING_VALUE,
+  DEFAULT_TIMESTAMPTZ_VALUE,
 } from './const';
-import { DataType, ConsistencyLevelEnum, FunctionObject, FieldType } from '../../milvus';
+import {
+  DataType,
+  ConsistencyLevelEnum,
+  FunctionObject,
+  FieldType,
+} from '../../milvus';
 import { GENERATE_VECTOR_NAME } from './';
 
 export const dynamicFields = [
@@ -164,6 +170,13 @@ export const genCollectionParams = (data: {
         description: 'geometry field',
         data_type: DataType.Geometry,
         nullable: false,
+      },
+      {
+        name: 'timestamptz',
+        description: 'timestamptz field',
+        data_type: DataType.Timestamptz,
+        nullable: false,
+        default_value: DEFAULT_TIMESTAMPTZ_VALUE,
       },
       ...fields,
     ],

@@ -278,6 +278,14 @@ export const genGeometry: DataGenerator = () => {
   return `POINT (${lon.toFixed(6)} ${lat.toFixed(6)})`;
 };
 
+// generate random timestamptz, before now,
+// example: 2025-01-02T00:00:00+08:00(Shanghai time)
+export const genTimestamptz: DataGenerator = () => {
+  return new Date(
+    new Date().getTime() - Math.floor(Math.random() * 1000 * 60 * 60 * 24)
+  ).toISOString();
+};
+
 /**
  * Generates an array of random data based on the specified element type and maximum capacity.
  * @param {Object} params - The parameters for generating the array.
@@ -348,6 +356,7 @@ const createDataGenMap = () => {
     [DataType.Array]: genArray,
     [DataType.JSON]: genJSON,
     [DataType.Geometry]: genGeometry,
+    [DataType.Timestamptz]: genTimestamptz,
     [DataType.BinaryVector]: genBinaryVector,
     [DataType.FloatVector]: genFloatVector,
     [DataType.SparseFloatVector]: genSparseVector,

@@ -289,6 +289,7 @@ export enum DataType {
   Array = 22,
   JSON = 23,
   Geometry = 24,
+  Timestamptz = 26,
 
   BinaryVector = 100,
   FloatVector = 101,
@@ -349,6 +350,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   Array: 22,
   JSON: 23,
   Geometry: 24,
+  Timestamptz: 26,
   BinaryVector: 100,
   FloatVector: 101,
   Float16Vector: 102,
@@ -372,6 +374,7 @@ export enum DataTypeStringEnum {
   Array = 'Array',
   JSON = 'JSON',
   Geometry = 'Geometry',
+  Timestamptz = 'Timestamptz',
   BinaryVector = 'BinaryVector',
   FloatVector = 'FloatVector',
   Float16Vector = 'Float16Vector',

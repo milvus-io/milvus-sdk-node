@@ -38,6 +38,7 @@ export type JSON = {
   [key: string]: any;
 };
 export type Geometry = string;
+export type Timestamptz = string;
 export type Struct = {
   [key: string]:
     | Bool
@@ -50,6 +51,7 @@ export type Struct = {
     | VarChar
     | JSON
     | Geometry
+    | Timestamptz
     | VectorTypes;
 };
 export type Array =
@@ -60,4 +62,5 @@ export type Array =
   | Float[]
   | Double[]
   | VarChar[]
+  | Timestamptz[]
   | Struct[];
