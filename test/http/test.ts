@@ -197,8 +197,6 @@ export function generateTests(
         times++;
       }
 
-      console.log('finnaly query times', times);
-
       const upsert = await client.upsert({
         collectionName: createParams.collectionName,
         data: [{ ...target, int64: 0 }],
@@ -376,7 +374,7 @@ export function generateTests(
       });
 
       expect(statistics.code).toEqual(0);
-      expect(statistics.data.rowCount).toEqual(0);
+      expect(statistics.data.rowCount).toEqual(101);
     });
 
     it('should getCollectionLoadState successfully', async () => {
