@@ -152,7 +152,7 @@ describe(`Struct API testing`, () => {
       collection_name: COLLECTION_NAME,
     });
 
-    console.dir(describe, { depth: null });
+    // console.dir(describe, { depth: null });
     // check schema length
     expect(describe.schema.fields.length).toEqual(
       collectionParams.fields.length

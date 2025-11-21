@@ -139,7 +139,7 @@ describe(`Database API`, () => {
     expect(describeCollectionAfterAlter.properties).toEqual(
       expect.arrayContaining([
         { key: 'collection.segment.rowLimit', value: '10000' },
-        { key: 'collection.timezone', value: 'UTC' },
+        { key: 'timezone', value: 'UTC' },
       ])
     );
     expect(describeCollectionAfterAlter.properties).toHaveLength(2);
@@ -158,7 +158,7 @@ describe(`Database API`, () => {
       db_name: DB_NAME2,
     });
     expect(describeCollectionAfterDrop.properties).toEqual([
-      { key: 'collection.timezone', value: 'UTC' },
+      { key: 'timezone', value: 'UTC' },
     ]);
 
     // show collections

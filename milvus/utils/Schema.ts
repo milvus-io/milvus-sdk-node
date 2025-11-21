@@ -94,6 +94,9 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.Geometry:
       dataKey = 'geometry_wkt_data';
       break;
+    case DataType.Timestamptz:
+      dataKey = 'timestamptz_data';
+      break;
     case 106 as DataType: // Internal: ArrayOfVector
       dataKey = 'vector_array';
       break;
@@ -230,6 +233,25 @@ export const formatFieldSchema = (
 
   if (typeof field.default_value !== 'undefined') {
     const dataKey = getDataKey(createObj.dataType, true);
+
+    // Convert TIMESTAMPTZ default value to UTC microseconds (int64)
+    // Milvus stores TIMESTAMPTZ default values internally as int64 (UTC microsecond)
+    // Users can pass either a string (RFC3339 format) or a number (microseconds)
+    if (createObj.dataType === DataType.Timestamptz) {
+      if (typeof field.default_value === 'string') {
+        // Convert RFC3339 string to UTC microseconds
+        const date = new Date(field.default_value);
+        field.default_value = (date.getTime() * 1000).toString();
+      } else if (typeof field.default_value === 'number') {
+        // If already a number, assume it's microseconds (or milliseconds if < 1e12)
+        // Convert to microseconds if it looks like milliseconds (< year 2286)
+        const value =
+          field.default_value < 1e12
+            ? field.default_value * 1000
+            : field.default_value;
+        field.default_value = Math.floor(value).toString();
+      }
+    }
 
     createObj.defaultValue = {
       [dataKey]: field.default_value,

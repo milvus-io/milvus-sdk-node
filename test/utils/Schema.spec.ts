@@ -308,6 +308,91 @@ describe('utils/Schema', () => {
     expect(payload).toEqual(expectedResult);
   });
 
+  it('converts TIMESTAMPTZ default_value correctly', () => {
+    const schemaProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/schema.proto'
+    );
+    const schemaProto = protobuf.loadSync(schemaProtoPath);
+
+    const fieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
+
+    // Test case 1: RFC3339 string format
+    const rfc3339Date = '2024-01-15T10:30:00Z';
+    const expectedMicrosecondsFromString = (
+      new Date(rfc3339Date).getTime() * 1000
+    ).toString();
+
+    const data1 = {
+      collection_name: 'testCollection1',
+      fields: [
+        {
+          name: 'timestamp1',
+          data_type: DataType.Timestamptz,
+          default_value: rfc3339Date,
+        },
+      ],
+    } as CreateCollectionReq;
+
+    const payload1 = formatCollectionSchema(data1, {
+      fieldSchemaType,
+    });
+
+    expect(payload1.fields[0].defaultValue).toEqual({
+      timestamptzData: expectedMicrosecondsFromString,
+    });
+
+    // Test case 2: Number format (milliseconds, < 1e12)
+    const milliseconds = 946684800000; // Jan 1, 2000 00:00:00 UTC in milliseconds
+    const expectedMicrosecondsFromMs = Math.floor(
+      milliseconds * 1000
+    ).toString();
+
+    const data2 = {
+      collection_name: 'testCollection2',
+      fields: [
+        {
+          name: 'timestamp2',
+          data_type: DataType.Timestamptz,
+          default_value: milliseconds,
+        },
+      ],
+    } as CreateCollectionReq;
+
+    const payload2 = formatCollectionSchema(data2, {
+      fieldSchemaType,
+    });
+
+    expect(payload2.fields[0].defaultValue).toEqual({
+      timestamptzData: expectedMicrosecondsFromMs,
+    });
+
+    // Test case 3: Number format (microseconds, >= 1e12)
+    const microseconds = 1705315800000000; // Jan 15, 2024 10:30:00 UTC in microseconds
+    const expectedMicrosecondsFromUs = Math.floor(microseconds).toString();
+
+    const data3 = {
+      collection_name: 'testCollection3',
+      fields: [
+        {
+          name: 'timestamp3',
+          data_type: DataType.Timestamptz,
+          default_value: microseconds,
+        },
+      ],
+    } as CreateCollectionReq;
+
+    const payload3 = formatCollectionSchema(data3, {
+      fieldSchemaType,
+    });
+
+    expect(payload3.fields[0].defaultValue).toEqual({
+      timestamptzData: expectedMicrosecondsFromUs,
+    });
+  });
+
   it('adds a dataType property to each field object in the schema', () => {
     const response: any = {
       virtual_channel_names: ['by-dev-rootcoord-dml_14_461525722618459440v0'],

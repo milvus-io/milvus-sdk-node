@@ -277,8 +277,13 @@ export class Data extends Collection {
     }
 
     // build column data, row based data to column based data
-    const buildColumnData = (fields: Map<string, _Field>): any[] =>
-      Array.from(fields.values()).map(field => {
+    const buildColumnData = (fields: Map<string, _Field>): any[] => {
+      const getDataKeyWithTimestamptz = (type: DataType | undefined): string => {
+        if (!type) return 'string_data';
+        return type === DataType.Timestamptz ? 'string_data' : getDataKey(type);
+      };
+
+      return Array.from(fields.values()).map(field => {
         // 106 is ArrayOfVector, only internal data type
         let key = [...VectorDataTypes, 106 as DataType].includes(field.type)
           ? 'vectors'
@@ -287,8 +292,8 @@ export class Data extends Collection {
           key = 'struct_arrays';
         }
 
-        const dataKey = getDataKey(field.type);
-        const elementTypeKey = getDataKey(field.elementType!);
+        const dataKey = getDataKeyWithTimestamptz(field.type);
+        const elementTypeKey = getDataKeyWithTimestamptz(field.elementType);
 
         // check if need valid data
         const needValidData =
@@ -403,6 +408,7 @@ export class Data extends Collection {
           valid_data: valid_data,
         };
       });
+    };
 
     params.fields_data = buildColumnData(fieldMap);
 
