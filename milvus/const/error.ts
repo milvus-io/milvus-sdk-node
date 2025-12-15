@@ -61,6 +61,8 @@ export const ERROR_REASONS = {
   PARTITION_KEY_FIELD_MAXED_OUT: `Only ${MAX_PARTITION_KEY_FIELD_COUNT} field supports partition key. `,
   IDS_REQUIRED: 'The `ids` is missing or empty.',
   NO_ANNS_FEILD_FOUND_IN_SEARCH: 'Target anns field not found, please check your search parameters.',
+  ADD_VECTOR_FIELD_MUST_BE_NULLABLE:
+    'Vector fields must be nullable when added to an existing collection. Please set `nullable: true` in the field definition.',
 };
 
 export enum ErrorCode {
