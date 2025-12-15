@@ -61,6 +61,7 @@ import {
   AddCollectionFieldReq,
   AddCollectionFieldsReq,
   formatFieldSchema,
+  convertToDataType,
 } from '../';
 
 /**
@@ -239,6 +240,12 @@ export class Collection extends Database {
    * ```
    */
   async addCollectionField(data: AddCollectionFieldReq): Promise<ResStatus> {
+    // Check if adding a vector field - vector fields must be nullable when added to existing collection
+    const fieldDataType = convertToDataType(data.field.data_type);
+    if (isVectorType(fieldDataType) && data.field.nullable !== true) {
+      throw new Error(ERROR_REASONS.ADD_VECTOR_FIELD_MUST_BE_NULLABLE);
+    }
+
     // Get the CollectionSchemaType and FieldSchemaType from the schemaProto object.
     const schemaTypes = {
       fieldSchemaType: this.schemaProto.lookupType(
