@@ -119,12 +119,9 @@ export class HttpBaseClient {
 
   /**
    * Handles HTTP response and throws HttpError if response is not ok.
-   * @private
+   * @internal
    */
-  private async _handleResponse<T>(
-    response: Response,
-    url: string
-  ): Promise<T> {
+  async _handleResponse<T>(response: Response, url: string): Promise<T> {
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
       const message = `HTTP ${response.status} ${response.statusText}: ${url}${
