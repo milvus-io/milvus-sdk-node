@@ -1,5 +1,6 @@
 import {
   HttpClient,
+  HttpError,
   DEFAULT_METRIC_TYPE,
   DEFAULT_VECTOR_FIELD,
   HttpClientConfig,
@@ -123,7 +124,7 @@ export function generateTests(
         await invalidClient.listCollections({ dbName: config.database });
         fail('Expected error to be thrown');
       } catch (error: any) {
-        expect(error).toBeInstanceOf(Error);
+        expect(error).toBeInstanceOf(HttpError);
         expect(error.status).toBe(404);
         expect(error.statusText).toBeDefined();
         expect(error.url).toBeDefined();

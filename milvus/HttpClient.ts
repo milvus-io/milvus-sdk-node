@@ -16,6 +16,23 @@ import {
 } from '../milvus/const';
 
 /**
+ * HttpError is a custom error class for HTTP-related errors.
+ * It extends the standard Error class and includes HTTP status information.
+ */
+export class HttpError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public statusText: string,
+    public url: string
+  ) {
+    super(message);
+    this.name = 'HttpError';
+    Object.setPrototypeOf(this, HttpError.prototype);
+  }
+}
+
+/**
  * HttpBaseClient is a base class for making HTTP requests to a Milvus server.
  * It provides basic functionality for making GET and POST requests, and handles
  * configuration, headers, and timeouts.
@@ -100,6 +117,24 @@ export class HttpBaseClient {
     return this.config.fetch ?? fetch;
   }
 
+  /**
+   * Handles HTTP response and throws HttpError if response is not ok.
+   * @private
+   */
+  private async _handleResponse<T>(
+    response: Response,
+    url: string
+  ): Promise<T> {
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      const message = `HTTP ${response.status} ${response.statusText}: ${url}${
+        errorText ? ` - ${errorText}` : ''
+      }`;
+      throw new HttpError(message, response.status, response.statusText, url);
+    }
+    return response.json() as T;
+  }
+
   // POST API
   async POST<T>(
     url: string,
@@ -126,20 +161,7 @@ export class HttpBaseClient {
         signal: abortController.signal,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
-        const error = new Error(
-          `HTTP ${response.status} ${response.statusText}: ${fullUrl}${
-            errorText ? ` - ${errorText}` : ''
-          }`
-        );
-        (error as any).status = response.status;
-        (error as any).statusText = response.statusText;
-        (error as any).url = fullUrl;
-        return Promise.reject(error);
-      }
-
-      return response.json() as T;
+      return this._handleResponse<T>(response, fullUrl);
     } catch (error) {
       if (error.name === 'AbortError') {
         console.warn(`post ${url} request was timeout`);
@@ -179,20 +201,7 @@ export class HttpBaseClient {
         signal: abortController.signal,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
-        const error = new Error(
-          `HTTP ${response.status} ${response.statusText}: ${fullUrl}${
-            errorText ? ` - ${errorText}` : ''
-          }`
-        );
-        (error as any).status = response.status;
-        (error as any).statusText = response.statusText;
-        (error as any).url = fullUrl;
-        return Promise.reject(error);
-      }
-
-      return response.json() as T;
+      return this._handleResponse<T>(response, fullUrl);
     } catch (error) {
       if (error.name === 'AbortError') {
         console.warn(`milvus http client: request was timeout`);
