@@ -16,6 +16,23 @@ import {
 } from '../milvus/const';
 
 /**
+ * HttpError is a custom error class for HTTP-related errors.
+ * It extends the standard Error class and includes HTTP status information.
+ */
+export class HttpError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public statusText: string,
+    public url: string
+  ) {
+    super(message);
+    this.name = 'HttpError';
+    Object.setPrototypeOf(this, HttpError.prototype);
+  }
+}
+
+/**
  * HttpBaseClient is a base class for making HTTP requests to a Milvus server.
  * It provides basic functionality for making GET and POST requests, and handles
  * configuration, headers, and timeouts.
@@ -100,37 +117,57 @@ export class HttpBaseClient {
     return this.config.fetch ?? fetch;
   }
 
+  /**
+   * Handles HTTP response and throws HttpError if response is not ok.
+   * @internal
+   */
+  async _handleResponse<T>(response: Response, url: string): Promise<T> {
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      const message = `HTTP ${response.status} ${response.statusText}: ${url}${
+        errorText ? ` - ${errorText}` : ''
+      }`;
+      throw new HttpError(message, response.status, response.statusText, url);
+    }
+    return response.json() as T;
+  }
+
   // POST API
   async POST<T>(
     url: string,
     data: Record<string, any> = {},
     options?: FetchOptions
   ): Promise<T> {
+    let id: ReturnType<typeof setTimeout> | undefined;
     try {
       // timeout controller
       const timeout = options?.timeout ?? this.timeout;
       const abortController = options?.abortController ?? new AbortController();
-      const id = setTimeout(() => abortController.abort(), timeout);
+      id = setTimeout(() => abortController.abort(), timeout);
 
       // assign database
       if (data) {
         data.dbName = data.dbName ?? this.database;
       }
 
-      const response = await this.fetch(`${this.baseURL}${url}`, {
+      const fullUrl = `${this.baseURL}${url}`;
+      const response = await this.fetch(fullUrl, {
         method: 'post',
         headers: this.headers,
         body: JSON.stringify(data),
         signal: abortController.signal,
       });
 
-      clearTimeout(id);
-      return response.json() as T;
+      return this._handleResponse<T>(response, fullUrl);
     } catch (error) {
       if (error.name === 'AbortError') {
         console.warn(`post ${url} request was timeout`);
       }
-      return Promise.reject(error);
+      throw error;
+    } finally {
+      if (id !== undefined) {
+        clearTimeout(id);
+      }
     }
   }
 
@@ -140,11 +177,12 @@ export class HttpBaseClient {
     params: Record<string, any> = {},
     options?: FetchOptions
   ): Promise<T> {
+    let id: ReturnType<typeof setTimeout> | undefined;
     try {
       // timeout controller
       const timeout = options?.timeout ?? this.timeout;
       const abortController = options?.abortController ?? new AbortController();
-      const id = setTimeout(() => abortController.abort(), timeout);
+      id = setTimeout(() => abortController.abort(), timeout);
 
       // assign database
       if (params) {
@@ -152,24 +190,24 @@ export class HttpBaseClient {
       }
 
       const queryParams = new URLSearchParams(params);
+      const fullUrl = `${this.baseURL}${url}?${queryParams}`;
 
-      const response = await this.fetch(
-        `${this.baseURL}${url}?${queryParams}`,
-        {
-          method: 'get',
-          headers: this.headers,
-          signal: abortController.signal,
-        }
-      );
+      const response = await this.fetch(fullUrl, {
+        method: 'get',
+        headers: this.headers,
+        signal: abortController.signal,
+      });
 
-      clearTimeout(id);
-
-      return response.json() as T;
+      return this._handleResponse<T>(response, fullUrl);
     } catch (error) {
       if (error.name === 'AbortError') {
         console.warn(`milvus http client: request was timeout`);
       }
-      return Promise.reject(error);
+      throw error;
+    } finally {
+      if (id !== undefined) {
+        clearTimeout(id);
+      }
     }
   }
 }
