@@ -141,7 +141,7 @@ export class HttpBaseClient {
     data: Record<string, any> = {},
     options?: FetchOptions
   ): Promise<T> {
-    let id: NodeJS.Timeout | undefined;
+    let id: ReturnType<typeof setTimeout> | undefined;
     try {
       // timeout controller
       const timeout = options?.timeout ?? this.timeout;
@@ -166,7 +166,7 @@ export class HttpBaseClient {
       if (error.name === 'AbortError') {
         console.warn(`post ${url} request was timeout`);
       }
-      return Promise.reject(error);
+      throw error;
     } finally {
       if (id !== undefined) {
         clearTimeout(id);
@@ -180,7 +180,7 @@ export class HttpBaseClient {
     params: Record<string, any> = {},
     options?: FetchOptions
   ): Promise<T> {
-    let id: NodeJS.Timeout | undefined;
+    let id: ReturnType<typeof setTimeout> | undefined;
     try {
       // timeout controller
       const timeout = options?.timeout ?? this.timeout;
@@ -206,7 +206,7 @@ export class HttpBaseClient {
       if (error.name === 'AbortError') {
         console.warn(`milvus http client: request was timeout`);
       }
-      return Promise.reject(error);
+      throw error;
     } finally {
       if (id !== undefined) {
         clearTimeout(id);

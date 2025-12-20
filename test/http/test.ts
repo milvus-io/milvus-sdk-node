@@ -136,7 +136,7 @@ export function generateTests(
 
     it('should throw error with proper structure when endpoint is invalid', async () => {
       const invalidClient = new HttpClient({
-        endpoint: 'http://127.0.0.1:99999',
+        endpoint: 'http://127.0.0.1:59999',
         database: config.database,
       });
 
