@@ -106,31 +106,49 @@ export class HttpBaseClient {
     data: Record<string, any> = {},
     options?: FetchOptions
   ): Promise<T> {
+    let id: NodeJS.Timeout | undefined;
     try {
       // timeout controller
       const timeout = options?.timeout ?? this.timeout;
       const abortController = options?.abortController ?? new AbortController();
-      const id = setTimeout(() => abortController.abort(), timeout);
+      id = setTimeout(() => abortController.abort(), timeout);
 
       // assign database
       if (data) {
         data.dbName = data.dbName ?? this.database;
       }
 
-      const response = await this.fetch(`${this.baseURL}${url}`, {
+      const fullUrl = `${this.baseURL}${url}`;
+      const response = await this.fetch(fullUrl, {
         method: 'post',
         headers: this.headers,
         body: JSON.stringify(data),
         signal: abortController.signal,
       });
 
-      clearTimeout(id);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        const error = new Error(
+          `HTTP ${response.status} ${response.statusText}: ${fullUrl}${
+            errorText ? ` - ${errorText}` : ''
+          }`
+        );
+        (error as any).status = response.status;
+        (error as any).statusText = response.statusText;
+        (error as any).url = fullUrl;
+        return Promise.reject(error);
+      }
+
       return response.json() as T;
     } catch (error) {
       if (error.name === 'AbortError') {
         console.warn(`post ${url} request was timeout`);
       }
       return Promise.reject(error);
+    } finally {
+      if (id !== undefined) {
+        clearTimeout(id);
+      }
     }
   }
 
@@ -140,11 +158,12 @@ export class HttpBaseClient {
     params: Record<string, any> = {},
     options?: FetchOptions
   ): Promise<T> {
+    let id: NodeJS.Timeout | undefined;
     try {
       // timeout controller
       const timeout = options?.timeout ?? this.timeout;
       const abortController = options?.abortController ?? new AbortController();
-      const id = setTimeout(() => abortController.abort(), timeout);
+      id = setTimeout(() => abortController.abort(), timeout);
 
       // assign database
       if (params) {
@@ -152,17 +171,26 @@ export class HttpBaseClient {
       }
 
       const queryParams = new URLSearchParams(params);
+      const fullUrl = `${this.baseURL}${url}?${queryParams}`;
 
-      const response = await this.fetch(
-        `${this.baseURL}${url}?${queryParams}`,
-        {
-          method: 'get',
-          headers: this.headers,
-          signal: abortController.signal,
-        }
-      );
+      const response = await this.fetch(fullUrl, {
+        method: 'get',
+        headers: this.headers,
+        signal: abortController.signal,
+      });
 
-      clearTimeout(id);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        const error = new Error(
+          `HTTP ${response.status} ${response.statusText}: ${fullUrl}${
+            errorText ? ` - ${errorText}` : ''
+          }`
+        );
+        (error as any).status = response.status;
+        (error as any).statusText = response.statusText;
+        (error as any).url = fullUrl;
+        return Promise.reject(error);
+      }
 
       return response.json() as T;
     } catch (error) {
@@ -170,6 +198,10 @@ export class HttpBaseClient {
         console.warn(`milvus http client: request was timeout`);
       }
       return Promise.reject(error);
+    } finally {
+      if (id !== undefined) {
+        clearTimeout(id);
+      }
     }
   }
 }

@@ -113,6 +113,48 @@ export function generateTests(
     // Create an instance of HttpBaseClient with the mock configuration
     const client = new HttpClient(config);
 
+    it('should throw 404 error when endpoint path is incorrect', async () => {
+      const invalidClient = new HttpClient({
+        baseURL: `${config.endpoint}/v1/nonexistent`,
+        database: config.database,
+      });
+
+      try {
+        await invalidClient.listCollections({ dbName: config.database });
+        fail('Expected error to be thrown');
+      } catch (error: any) {
+        expect(error).toBeInstanceOf(Error);
+        expect(error.status).toBe(404);
+        expect(error.statusText).toBeDefined();
+        expect(error.url).toBeDefined();
+        expect(error.message).toContain('HTTP');
+        expect(error.message).toContain('404');
+        expect(error.message).toContain(error.url);
+      }
+    });
+
+    it('should throw error with proper structure when endpoint is invalid', async () => {
+      const invalidClient = new HttpClient({
+        endpoint: 'http://127.0.0.1:99999',
+        database: config.database,
+      });
+
+      try {
+        await invalidClient.listCollections({ dbName: config.database });
+        fail('Expected error to be thrown');
+      } catch (error: any) {
+        expect(error).toBeDefined();
+        expect(error.message || error.toString()).toBeDefined();
+        if (error.status !== undefined) {
+          expect(error.status).toBeGreaterThanOrEqual(400);
+          expect(error.statusText).toBeDefined();
+          expect(error.url).toBeDefined();
+          expect(error.message).toContain('HTTP');
+          expect(error.message).toContain(error.status.toString());
+        }
+      }
+    });
+
     it('should create collection successfully', async () => {
       const create = await client.createCollection(createParams);
 
