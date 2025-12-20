@@ -70,6 +70,7 @@ import {
   convertToDataType,
   GetQuerySegmentInfoResponse,
   SearchData,
+  FloatVector,
 } from '../';
 import { Collection } from './Collection';
 
@@ -244,7 +245,7 @@ export class Data extends Collection {
         switch (field.type) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
-            field.data = field.data.concat(buildFieldData(rowData, field));
+            field.data.push(...buildFieldData(rowData, field) as FloatVector | BinaryVector);
             break;
           default:
             field.data[rowIndex] = buildFieldData(
