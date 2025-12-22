@@ -3,13 +3,11 @@
 import { useState, useEffect } from 'react';
 import { CreateTaskDialog } from '@/components/create-task-dialog';
 import { TaskList } from '@/components/task-list';
-import { Button } from '@/components/ui/button';
 import type { InsertionTask } from '@/types/task';
 
 export default function Home() {
   const [tasks, setTasks] = useState<InsertionTask[]>([]);
   const [loading, setLoading] = useState(true);
-  const [executing, setExecuting] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -32,95 +30,45 @@ export default function Home() {
     }
   };
 
-  const executeTasks = async () => {
-    setExecuting(true);
-    try {
-      const res = await fetch('/api/cron/tasks');
-      const data = await res.json();
-      console.log('Cron execution result:', data);
-
-      if (data.results) {
-        const inserted = data.results.filter(
-          (r: any) => r.action === 'inserted' || r.action === 'completed'
-        );
-        const failed = data.results.filter((r: any) => r.action === 'failed');
-        const skipped = data.results.filter((r: any) => r.action === 'skipped');
-
-        console.log(
-          `Executed: ${inserted.length} inserted, ${failed.length} failed, ${skipped.length} skipped`
-        );
-
-        if (failed.length > 0) {
-          console.error('Failed tasks:', JSON.stringify(failed, null, 2));
-          failed.forEach((f: any) => {
-            console.error(`Task ${f.taskId} failed:`, f.error || f);
-          });
-        }
-
-        if (inserted.length > 0) {
-          console.log('Successfully executed tasks:', inserted);
-        }
-      }
-
-      await fetchTasks();
-    } catch (error) {
-      console.error('Failed to execute tasks:', error);
-      alert('Failed to execute tasks. Check console for details.');
-    } finally {
-      setExecuting(false);
-    }
-  };
 
   useEffect(() => {
+    const initCollection = async () => {
+      try {
+        await fetch('/api/milvus/init-collection', { method: 'POST' });
+      } catch (error) {
+        console.error('Failed to initialize collection:', error);
+      }
+    };
+
+    initCollection();
     fetchTasks();
-    const fetchInterval = setInterval(fetchTasks, 5000);
+    const fetchInterval = setInterval(fetchTasks, 10000);
     return () => clearInterval(fetchInterval);
   }, []);
 
-  // Auto-execute tasks every 60 seconds in development
-  // In production, Vercel Cron Jobs handle this automatically
   useEffect(() => {
-    // Check if we're in development (local) or production (Vercel)
-    // Vercel sets VERCEL_ENV to 'production', 'preview', or 'development'
-    // In local dev, window.location.hostname is usually 'localhost' or '127.0.0.1'
-    const isDevelopment =
-      typeof window !== 'undefined' &&
-      (window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname.includes('localhost'));
-
-    if (!isDevelopment) {
-      // In production, Vercel Cron Jobs handle task execution
-      console.log(
-        'Running in production - Vercel Cron Jobs will handle task execution'
-      );
-      return;
-    }
-
-    // Only run auto-execution in development
-    console.log(
-      'Running in development - auto-executing tasks every 60 seconds'
-    );
+    console.log('Browser session cron started - will run while page is open');
     const executeInterval = setInterval(async () => {
-      // Check if there are any running tasks
-      const res = await fetch('/api/tasks');
-      const data = await res.json();
-      const runningTasks = (data.tasks || []).filter(
-        (t: any) => t.status === 'running'
-      );
+      try {
+        const res = await fetch('/api/tasks');
+        const data = await res.json();
+        const runningTasks = (data.tasks || []).filter(
+          (t: any) => t.status === 'running'
+        );
 
-      if (runningTasks.length > 0) {
-        console.log(`Auto-executing ${runningTasks.length} running task(s)...`);
-        try {
+        if (runningTasks.length > 0) {
           await fetch('/api/cron/tasks');
           await fetchTasks();
-        } catch (error) {
-          console.error('Auto-execution failed:', error);
         }
+      } catch (error) {
+        console.error('Auto-execution failed:', error);
       }
-    }, 60000); // 60 seconds
+    }, 5000);
 
-    return () => clearInterval(executeInterval);
+    return () => {
+      console.log('Browser session cron stopped - page closed');
+      clearInterval(executeInterval);
+    };
   }, []);
 
   return (
@@ -133,9 +81,6 @@ export default function Home() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={executeTasks} disabled={executing}>
-            {executing ? 'Executing...' : 'Execute Tasks'}
-          </Button>
           <CreateTaskDialog onTaskCreated={fetchTasks} />
         </div>
       </div>

@@ -25,6 +25,7 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [collectionName, setCollectionName] = useState('');
+  const [collectionError, setCollectionError] = useState<string>('');
   const [insertType, setInsertType] = useState<'once' | 'interval'>('once');
   const [intervalSeconds, setIntervalSeconds] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
@@ -60,10 +61,12 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!collectionName) {
-      alert('Please select a collection');
+    if (!collectionName || collectionName.trim() === '') {
+      setCollectionError('Please select a collection');
       return;
     }
+
+    setCollectionError('');
 
     if (endTime) {
       const selectedDate = new Date(endTime);
@@ -83,8 +86,8 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
         ? parseInt(intervalSeconds, 10)
         : null;
 
-      if (parsedInterval !== null && parsedInterval < 60) {
-        alert('Interval must be at least 60 seconds');
+      if (parsedInterval !== null && parsedInterval < 1) {
+        alert('Interval must be at least 1 second');
         return;
       }
 
@@ -121,6 +124,7 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
 
   const resetForm = () => {
     setCollectionName('');
+    setCollectionError('');
     setInsertType('once');
     setIntervalSeconds('');
     setEndTime('');
@@ -142,10 +146,20 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <CollectionSelector
-              value={collectionName}
-              onValueChange={setCollectionName}
-            />
+            <div className="space-y-2">
+              <CollectionSelector
+                value={collectionName}
+                onValueChange={(value) => {
+                  setCollectionName(value);
+                  if (value) {
+                    setCollectionError('');
+                  }
+                }}
+              />
+              {collectionError && (
+                <p className="text-sm text-destructive">{collectionError}</p>
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label>Insert Type</Label>
@@ -190,13 +204,13 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
                   <Input
                     id="interval"
                     type="number"
-                    min="60"
+                    min="1"
                     placeholder="60"
                     value={intervalSeconds}
                     onChange={(e) => setIntervalSeconds(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Minimum interval is 60 seconds (Vercel Cron limitation)
+                    Minimum interval is 1 second
                   </p>
                 </div>
 
@@ -220,7 +234,7 @@ export function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !collectionName}>
               {loading ? 'Creating...' : 'Create'}
             </Button>
           </DialogFooter>

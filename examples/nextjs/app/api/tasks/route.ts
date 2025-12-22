@@ -41,9 +41,9 @@ export async function POST(request: Request) {
     }
 
     if (intervalSeconds !== null) {
-      if (typeof intervalSeconds !== 'number' || intervalSeconds < 60) {
+      if (typeof intervalSeconds !== 'number' || intervalSeconds < 1) {
         return NextResponse.json(
-          { error: 'Interval must be at least 60 seconds' },
+          { error: 'Interval must be at least 1 second' },
           { status: 400 }
         );
       }

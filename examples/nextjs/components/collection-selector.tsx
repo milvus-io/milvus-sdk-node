@@ -56,7 +56,9 @@ export function CollectionSelector({
 
   return (
     <div className="space-y-2">
-      <Label>Collection</Label>
+      <Label>
+        Collection <span className="text-destructive">*</span>
+      </Label>
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger>
           <SelectValue placeholder="Select a collection" />

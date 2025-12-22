@@ -3,19 +3,12 @@ import { getTasks, updateTask } from '@/lib/kv';
 import { insertData } from '@/lib/milvus-insert';
 
 export async function GET(request: Request) {
-  // Vercel Cron Jobs automatically add authorization header
-  // For local testing, you can skip this check or set CRON_SECRET
+  // Browser session-level cron - no authorization required
+  // The cron runs while the page is open and stops when closed
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
-  const isManualExecution = !authHeader || !cronSecret || authHeader !== `Bearer ${cronSecret}`;
-  
-  if (
-    cronSecret &&
-    authHeader &&
-    authHeader !== `Bearer ${cronSecret}`
-  ) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const isManualExecution =
+    authHeader && cronSecret && authHeader === `Bearer ${cronSecret}`;
 
   try {
     const tasks = await getTasks();
