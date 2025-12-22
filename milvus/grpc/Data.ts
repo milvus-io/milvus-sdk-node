@@ -309,7 +309,7 @@ export class Data extends Collection {
           (field.nullable === true ||
             (typeof field.default_value !== 'undefined' &&
               field.default_value !== null)) &&
-          params.partial_update !== true;
+          !('partial_update' in data && data.partial_update === true);
 
         // get valid data
         const valid_data = needValidData
