@@ -140,6 +140,7 @@ describe(`Upsert API`, () => {
           name: 'double',
           data_type: DataType.Double,
           description: '',
+          nullable: true,
         },
         {
           name: 'float',
@@ -318,6 +319,7 @@ describe(`Upsert API`, () => {
       collection_name: MORE_SCALAR_COLLECTION_NAME,
       expr: 'id == 1 or id == 2',
     });
+    console.dir(query.data, { depth: null });
     expect(query.data[0].int).toEqual(2);
     expect(query.data[1].int).toEqual(3);
   });
