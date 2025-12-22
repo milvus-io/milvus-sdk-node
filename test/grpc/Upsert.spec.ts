@@ -140,6 +140,7 @@ describe(`Upsert API`, () => {
           name: 'double',
           data_type: DataType.Double,
           description: '',
+          nullable: true,
         },
         {
           name: 'float',
@@ -320,6 +321,8 @@ describe(`Upsert API`, () => {
     });
     expect(query.data[0].int).toEqual(2);
     expect(query.data[1].int).toEqual(3);
+    expect(query.data[0].double).toEqual(1.12);
+    expect(query.data[1].double).toEqual(1.12);
   });
 
   it(`Upsert Data throw type error`, async () => {

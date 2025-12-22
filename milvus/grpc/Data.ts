@@ -245,7 +245,9 @@ export class Data extends Collection {
         switch (field.type) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
-            field.data.push(...buildFieldData(rowData, field) as FloatVector | BinaryVector);
+            field.data.push(
+              ...(buildFieldData(rowData, field) as FloatVector | BinaryVector)
+            );
             break;
           default:
             field.data[rowIndex] = buildFieldData(
@@ -279,7 +281,9 @@ export class Data extends Collection {
 
     // build column data, row based data to column based data
     const buildColumnData = (fields: Map<string, _Field>): any[] => {
-      const getDataKeyWithTimestamptz = (type: DataType | undefined): string => {
+      const getDataKeyWithTimestamptz = (
+        type: DataType | undefined
+      ): string => {
         if (!type) return 'string_data';
         return type === DataType.Timestamptz ? 'string_data' : getDataKey(type);
       };
@@ -297,11 +301,15 @@ export class Data extends Collection {
         const elementTypeKey = getDataKeyWithTimestamptz(field.elementType);
 
         // check if need valid data
+        // vector field doesn't support nullable
+        // nullable field should be validated if partial_update is not true
+        // default value should be validated if partial_update is not true
         const needValidData =
           key !== 'vectors' &&
           (field.nullable === true ||
             (typeof field.default_value !== 'undefined' &&
-              field.default_value !== null));
+              field.default_value !== null)) &&
+          !('partial_update' in data && data.partial_update === true);
 
         // get valid data
         const valid_data = needValidData
