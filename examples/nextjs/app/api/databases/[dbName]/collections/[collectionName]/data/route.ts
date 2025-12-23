@@ -58,9 +58,8 @@ export async function GET(
     // result.data is already the array of records
     const data = Array.isArray(result.data) ? result.data : [];
     
-    // Total count - might need to query separately or use array length
-    // For now, use array length as total (might not be accurate for pagination)
-    const total = result.count || result.total || result.num_entities || data.length;
+    // Total count - use array length as total (might not be accurate for pagination)
+    const total = data.length;
 
     return NextResponse.json({ data, total, limit, offset });
   } catch (error: any) {

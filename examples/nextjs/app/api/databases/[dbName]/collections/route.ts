@@ -44,7 +44,7 @@ export async function GET(
     const result = await client.listCollections({ dbName });
     
     // Zilliz Cloud API returns { code: 0, data: [...] }
-    const collections = result.data || result.collection_names || [];
+    const collections = result.data || [];
 
     return NextResponse.json({ collections });
   } catch (error: any) {
