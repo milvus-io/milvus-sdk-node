@@ -1,70 +1,38 @@
-# Next.js with Milvus Node SDK - Insertion Task Manager
+# Next.js with Milvus Node SDK - Zilliz Cloud Management
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) and integrated with [Milvus Node SDK](https://github.com/milvus-io/milvus-sdk-node). It provides a task-based interface for managing Milvus data insertion tasks.
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) and integrated with [Milvus Node SDK](https://github.com/milvus-io/milvus-sdk-node). It provides a web interface for managing Zilliz Cloud databases and collections using the HttpClient API.
+
+## Features
+
+- **Authentication**: Connect to Zilliz Cloud using endpoint address and API token
+- **Database Management**: List and browse databases
+- **Collection Management**: View collections within each database
+- **Collection Details**: 
+  - Schema view: Display collection schema with field information
+  - Data view: Browse collection data with pagination
 
 ## Installation
 
 Install dependencies:
 
 ```bash
-npm install
-# or
 yarn install
 ```
 
-## Environment Variables
-
-Create a `.env.local` file in the root directory with the following variables:
-
-```bash
-# Upstash Redis Configuration (Required)
-KV_REST_API_URL=https://your-database.upstash.io
-KV_REST_API_TOKEN=your_token_here
-
-# Milvus Configuration
-MILVUS_ADDRESS=127.0.0.1:19530
-MILVUS_TOKEN=
-
-# Cron Secret (optional, for local testing)
-CRON_SECRET=your_secret_key
-```
-
-### Getting Upstash Redis Credentials
-
-1. Go to [Upstash Console](https://console.upstash.com/)
-2. Find your database (e.g., `upstash-kv-teal-umbrella`)
-3. Copy the `REST API URL` and `REST API TOKEN`
-4. Add them to your `.env.local` file as `KV_REST_API_URL` and `KV_REST_API_TOKEN`
-
-**Important**: For Vercel deployment, add these environment variables in the Vercel Dashboard under Project Settings → Environment Variables.
-
 ## Configuration
 
-Update `next.config.js`, Server-side bundling ignores @zilliz/milvus2-sdk-node.
-
-Fixed the issue of "Unable to load service: milvus.proto.milvus.MilvusService"
+The `next.config.js` is configured to handle server-side bundling of `@zilliz/milvus2-sdk-node`:
 
 ```javascript
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['@zilliz/milvus2-sdk-node'],
-    outputFileTracingIncludes: {
-      // When deploying to Vercel, the following configuration is required
-      '/api/**/*': ['node_modules/@zilliz/milvus2-sdk-node/dist/proto/**/*'],
-    },
+  serverExternalPackages: ["@zilliz/milvus2-sdk-node"],
+  outputFileTracingIncludes: {
+    "/api/**/*": ["node_modules/@zilliz/milvus2-sdk-node/dist/proto/**/*"],
   },
 };
 
 module.exports = nextConfig;
-```
-
-### monorepo
-
-you can try this tip:
-
-```javascript
-config.externals.push('@zilliz/milvus2-sdk-node');
 ```
 
 ## Usage
@@ -74,33 +42,40 @@ config.externals.push('@zilliz/milvus2-sdk-node');
 Run the development server:
 
 ```bash
-npm run dev
-# or
 yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### Features
+### Application Flow
 
-- **Task Management**: Create, start, stop, and delete insertion tasks
-- **Scheduling Options**:
-  - One-time insertion
-  - Interval-based insertion (with optional end time)
-- **Server-side Execution**: Tasks run via Vercel Cron Jobs (every minute)
-- **Real-time Updates**: Task status and statistics update automatically
+1. **Login**: Enter your Zilliz Cloud endpoint and API token
+2. **Database List**: View all available databases
+3. **Collection List**: Select a database to view its collections
+4. **Collection Detail**: Click on a collection to view:
+   - **Schema Tab**: Collection schema with field details
+   - **Data Tab**: Collection data with pagination
 
 ### API Endpoints
 
-**Task Management:**
-- `GET /api/tasks` - List all tasks
-- `POST /api/tasks` - Create a new task
-- `PUT /api/tasks` - Update a task
-- `DELETE /api/tasks?id={taskId}` - Delete a task
-- `GET /api/cron/tasks` - Cron job endpoint (executes every minute)
+**Authentication:**
+- `POST /api/auth/connect` - Connect to Zilliz Cloud (requires `address` and `token`)
 
-**Milvus Collections:**
-- `GET /api/milvus/collections` - List Milvus collections
+**Databases:**
+- `GET /api/databases` - List all databases
+
+**Collections:**
+- `GET /api/databases/[dbName]/collections` - List collections in a database
+- `GET /api/databases/[dbName]/collections/[collectionName]/schema` - Get collection schema
+- `GET /api/databases/[dbName]/collections/[collectionName]/data` - Get collection data (supports `limit` and `offset` query params)
+
+## Architecture
+
+- **Frontend**: Next.js App Router with React Server Components and Client Components
+- **UI Components**: shadcn/ui components (Card, Table, Tabs, etc.)
+- **Backend**: Next.js API Routes using Milvus Node SDK HttpClient
+- **Authentication**: Cookie-based session management
+- **Client Management**: Server-side HttpClient cache using Map
 
 ## Deployment
 
@@ -108,7 +83,6 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 1. Push your code to a Git repository
 2. Import the project in [Vercel Dashboard](https://vercel.com/dashboard)
-3. Add environment variables in Project Settings
-4. Deploy
+3. Deploy
 
-The Cron Job will automatically run every minute on Vercel deployments.
+No environment variables are required - users authenticate through the login page.
