@@ -42,11 +42,9 @@ export async function GET(
     }
 
     const result = await client.listCollections({ dbName });
-    console.log('Collections API result:', JSON.stringify(result, null, 2));
     
     // Zilliz Cloud API returns { code: 0, data: [...] }
     const collections = result.data || result.collection_names || [];
-    console.log('Extracted collections:', collections);
 
     return NextResponse.json({ collections });
   } catch (error: any) {

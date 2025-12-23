@@ -1,9 +1,2 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/tasks",
-      "schedule": "* * * * *"
-    }
-  ]
-}
+{}
 

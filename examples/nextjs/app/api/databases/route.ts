@@ -42,8 +42,6 @@ export async function GET(request: NextRequest) {
     const endpoint = client.config.endpoint || '';
     const authToken = client.config.token || '';
 
-    console.log('Fetching databases from:', endpoint);
-
     const response = await fetch(`${endpoint}/v2/vectordb/databases/list`, {
       method: 'POST',
       headers: {
@@ -62,7 +60,6 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('Database list response:', JSON.stringify(data, null, 2));
     
     // Zilliz Cloud API returns { code: 0, data: [...] }
     let databases = data.data || data.db_names || data.databases || [];
@@ -72,8 +69,6 @@ export async function GET(request: NextRequest) {
     const otherDbs = databases.filter((db: string) => db !== 'default').sort();
     
     databases = defaultDb ? [defaultDb, ...otherDbs] : otherDbs;
-
-    console.log('Final databases list:', databases);
 
     return NextResponse.json({ databases });
   } catch (error: any) {

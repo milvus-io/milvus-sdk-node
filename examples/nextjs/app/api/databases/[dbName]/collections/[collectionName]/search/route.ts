@@ -96,8 +96,6 @@ export async function POST(
       }
     }
 
-    console.log('Search request payload:', JSON.stringify(searchPayload, null, 2));
-
     const response = await fetch(`${endpoint}/v2/vectordb/entities/search`, {
       method: 'POST',
       headers: {
@@ -117,7 +115,6 @@ export async function POST(
     }
 
     const result = await response.json();
-    console.log('Search API result:', JSON.stringify(result, null, 2));
 
     // Zilliz Cloud API returns { code: 0, data: [...] }
     const searchResults = result.data || [];

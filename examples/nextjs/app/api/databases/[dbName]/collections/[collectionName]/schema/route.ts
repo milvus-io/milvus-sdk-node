@@ -48,8 +48,6 @@ export async function GET(
       dbName,
     });
     
-    console.log('Schema API result:', JSON.stringify(result, null, 2));
-    
     // Zilliz Cloud API returns { code: 0, data: {...} }
     const schema = result.data || result;
 

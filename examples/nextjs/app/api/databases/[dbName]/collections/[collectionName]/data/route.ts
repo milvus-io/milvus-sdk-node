@@ -54,8 +54,6 @@ export async function GET(
       outputFields: ['*'],
     });
     
-    console.log('Data API result:', JSON.stringify(result, null, 2));
-    
     // Zilliz Cloud API returns { code: 0, data: [...] }
     // result.data is already the array of records
     const data = Array.isArray(result.data) ? result.data : [];
@@ -63,13 +61,6 @@ export async function GET(
     // Total count - might need to query separately or use array length
     // For now, use array length as total (might not be accurate for pagination)
     const total = result.count || result.total || result.num_entities || data.length;
-    
-    console.log('Extracted data length:', data.length);
-    console.log('Total:', total);
-    if (data.length > 0) {
-      console.log('First record keys:', Object.keys(data[0]));
-      console.log('First record sample:', JSON.stringify(data[0], null, 2).substring(0, 500));
-    }
 
     return NextResponse.json({ data, total, limit, offset });
   } catch (error: any) {
