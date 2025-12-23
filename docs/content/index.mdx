@@ -1,0 +1,31 @@
+# Getting Started
+
+Welcome to the Milvus Node.js SDK documentation.
+
+## Installation
+
+You can install the Milvus Node.js SDK using npm or yarn:
+
+```bash
+npm install @zilliz/milvus2-sdk-node
+# or
+yarn add @zilliz/milvus2-sdk-node
+```
+
+## Quick Start
+
+```javascript
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+await client.connectPromise;
+```
+
+## Next Steps
+
+- Read the [Getting Started Guide](./getting-started)
+- Explore the API reference
+- Check out the examples
