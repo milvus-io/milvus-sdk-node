@@ -235,24 +235,33 @@ export class Data extends Collection {
         }
         if (
           field.type === DataType.BinaryVector &&
+          rowData[name] !== null &&
+          rowData[name] !== undefined &&
           (rowData[name] as BinaryVector).length !== field.dim! / 8
         ) {
           throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
         }
 
         // build field data
+        const fieldValue = buildFieldData(
+          rowData,
+          field,
+          data.transformers,
+          rowIndex
+        );
         switch (field.type) {
           case DataType.BinaryVector:
           case DataType.FloatVector:
-            field.data = field.data.concat(buildFieldData(rowData, field));
+            // For nullable vectors, track the value at rowIndex
+            // For non-nullable, concat directly
+            if (field.nullable) {
+              field.data[rowIndex] = fieldValue;
+            } else {
+              field.data = field.data.concat(fieldValue);
+            }
             break;
           default:
-            field.data[rowIndex] = buildFieldData(
-              rowData,
-              field,
-              data.transformers,
-              rowIndex
-            );
+            field.data[rowIndex] = fieldValue;
             break;
         }
       });
@@ -295,12 +304,10 @@ export class Data extends Collection {
         const dataKey = getDataKeyWithTimestamptz(field.type);
         const elementTypeKey = getDataKeyWithTimestamptz(field.elementType);
 
-        // check if need valid data
         const needValidData =
-          key !== 'vectors' &&
-          (field.nullable === true ||
-            (typeof field.default_value !== 'undefined' &&
-              field.default_value !== null));
+          field.nullable === true ||
+          (typeof field.default_value !== 'undefined' &&
+            field.default_value !== null);
 
         // get valid data
         const valid_data = needValidData
@@ -311,40 +318,59 @@ export class Data extends Collection {
         let keyValue;
         switch (field.type) {
           case DataType.FloatVector:
+            const floatVecData = field.nullable
+              ? (field.data as any[])
+                  .filter(v => v !== null && v !== undefined)
+                  .flat()
+              : field.data;
             keyValue = {
               dim: field.dim,
               [dataKey]: {
-                data: field.data,
+                data: floatVecData,
               },
             };
             break;
           case DataType.BFloat16Vector:
           case DataType.Float16Vector:
+            const f16Data = field.nullable
+              ? (field.data as any[]).filter(v => v !== null && v !== undefined)
+              : field.data;
             keyValue = {
               dim: field.dim,
-              [dataKey]: Buffer.concat(field.data as Uint8Array[]),
+              [dataKey]: Buffer.concat(f16Data as Uint8Array[]),
             };
             break;
           case DataType.BinaryVector:
+            const binaryData = field.nullable
+              ? (field.data as any[])
+                  .filter(v => v !== null && v !== undefined)
+                  .flat()
+              : field.data;
             keyValue = {
               dim: field.dim,
-              [dataKey]: f32ArrayToBinaryBytes(field.data as BinaryVector),
+              [dataKey]: f32ArrayToBinaryBytes(binaryData as BinaryVector),
             };
             break;
           case DataType.SparseFloatVector:
-            const dim = getSparseDim(field.data as SparseFloatVector[]);
+            const sparseData = field.nullable
+              ? (field.data as any[]).filter(v => v !== null && v !== undefined)
+              : field.data;
+            const dim = getSparseDim(sparseData as SparseFloatVector[]);
             keyValue = {
               dim,
               [dataKey]: {
                 dim,
-                contents: sparseRowsToBytes(field.data as SparseFloatVector[]),
+                contents: sparseRowsToBytes(sparseData as SparseFloatVector[]),
               },
             };
             break;
           case DataType.Int8Vector:
+            const int8Data = field.nullable
+              ? (field.data as any[]).filter(v => v !== null && v !== undefined)
+              : field.data;
             keyValue = {
               dim: field.dim,
-              [dataKey]: int8VectorRowsToBytes(field.data as Int8Vector[]),
+              [dataKey]: int8VectorRowsToBytes(int8Data as Int8Vector[]),
             };
             break;
 

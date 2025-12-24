@@ -56,6 +56,39 @@ export const buildDynamicRow = (
 };
 
 /**
+ * Applies valid_data to field data for nullable vectors.
+ * For nullable vectors, valid_data indicates which logical positions have valid data,
+ * and the actual data only contains valid values (sparse storage).
+ * This function expands the sparse data to include nulls at invalid positions.
+ *
+ * @param field_data - The sparse vector data (only valid values)
+ * @param valid_data - Array of booleans indicating which positions are valid
+ * @returns Expanded data with nulls at invalid positions
+ */
+const applyValidDataToVectors = (
+  field_data: any[],
+  valid_data: boolean[]
+): any[] => {
+  if (!valid_data || valid_data.length === 0) {
+    return field_data;
+  }
+
+  const result: any[] = [];
+  let physicalIndex = 0;
+
+  for (let logicalIndex = 0; logicalIndex < valid_data.length; logicalIndex++) {
+    if (valid_data[logicalIndex]) {
+      result.push(field_data[physicalIndex]);
+      physicalIndex++;
+    } else {
+      result.push(null);
+    }
+  }
+
+  return result;
+};
+
+/**
  * Processes vector data from gRPC response format
  * @param item - The vector field item from gRPC response
  * @param transformers - Optional transformers for data conversion
@@ -158,6 +191,10 @@ export const processVectorData = (
       break;
     default:
       break;
+  }
+
+  if (item.valid_data && item.valid_data.length > 0) {
+    field_data = applyValidDataToVectors(field_data, item.valid_data);
   }
 
   return field_data;
