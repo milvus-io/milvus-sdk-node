@@ -17,7 +17,7 @@ import {
 
 const milvusClient = new MilvusClient({
   address: IP,
-  logLevel: 'info',
+  logLevel: 'debug',
 });
 const COLLECTION_NAME = GENERATE_NAME();
 const BINARY_COLLECTION_NAME = GENERATE_NAME();

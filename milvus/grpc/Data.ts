@@ -279,6 +279,9 @@ export class Data extends Collection {
       delete params.schema_timestamp; // This completely removes the property
     }
 
+    const isPartialUpdate =
+      'partial_update' in data && data.partial_update === true;
+
     // build column data, row based data to column based data
     const buildColumnData = (fields: Map<string, _Field>): any[] => {
       const getDataKeyWithTimestamptz = (
@@ -302,14 +305,14 @@ export class Data extends Collection {
 
         // check if need valid data
         // vector field doesn't support nullable
-        // nullable field should be validated if partial_update is not true
+        // nullable field should always have valid_data array (format is unified)
         // default value should be validated if partial_update is not true
         const needValidData =
           key !== 'vectors' &&
           (field.nullable === true ||
-            (typeof field.default_value !== 'undefined' &&
-              field.default_value !== null)) &&
-          !('partial_update' in data && data.partial_update === true);
+            (!isPartialUpdate &&
+              typeof field.default_value !== 'undefined' &&
+              field.default_value !== null));
 
         // get valid data
         const valid_data = needValidData
@@ -419,7 +422,22 @@ export class Data extends Collection {
       });
     };
 
-    params.fields_data = buildColumnData(fieldMap);
+    // params.fields_data = buildColumnData(fieldMap).filter(f => {
+    //   if (isPartialUpdate) {
+    //     console.log(f, data.fields_data);
+    //     // find valid field 
+    //     const validField = data.fields_data[0].find(f => f.field_name === f.field_name);
+    //     // ignore fields not exists in the original data
+    //     const originalField = data.fields_data[0].find(
+    //       f => f.field_name === f.field_name
+    //     );
+    //     if (!originalField) {
+    //       return false;
+    //     }
+    //     return true;
+    //   }
+    //   return true;
+    // });
 
     // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
