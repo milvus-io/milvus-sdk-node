@@ -318,8 +318,7 @@ export class Data extends Collection {
         const needValidData =
           key !== 'vectors' &&
           (field.nullable === true ||
-            (!isPartialUpdate &&
-              typeof field.default_value !== 'undefined' &&
+            (typeof field.default_value !== 'undefined' &&
               field.default_value !== null));
 
         // get valid data
