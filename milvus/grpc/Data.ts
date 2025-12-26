@@ -212,6 +212,11 @@ export class Data extends Collection {
       });
     }
 
+    // Track which fields are present in the original row data for partial updates
+    const isPartialUpdate =
+      'partial_update' in data && data.partial_update === true;
+    const originalRowKeys = new Set<string>();
+
     // Loop through each row and set the corresponding field values in the Map.
     data.fields_data.forEach((rowData, rowIndex) => {
       // if support dynamic field, all field not in the schema would be grouped to a dynamic field
@@ -226,6 +231,12 @@ export class Data extends Collection {
 
       // get each fieldname from the row object
       const fieldNames = Object.keys(rowData);
+
+      // Track field names for partial update filtering
+      if (isPartialUpdate) {
+        fieldNames.forEach(originalRowKeys.add, originalRowKeys);
+      }
+
       // go through each fieldname and encode or format data
       fieldNames.forEach(name => {
         const field = fieldMap.get(name);
@@ -278,9 +289,6 @@ export class Data extends Collection {
       // if skip_check_schema is true, we need to remove the schema_timestamp from the params
       delete params.schema_timestamp; // This completely removes the property
     }
-
-    const isPartialUpdate =
-      'partial_update' in data && data.partial_update === true;
 
     // build column data, row based data to column based data
     const buildColumnData = (fields: Map<string, _Field>): any[] => {
@@ -422,22 +430,17 @@ export class Data extends Collection {
       });
     };
 
-    // params.fields_data = buildColumnData(fieldMap).filter(f => {
-    //   if (isPartialUpdate) {
-    //     console.log(f, data.fields_data);
-    //     // find valid field 
-    //     const validField = data.fields_data[0].find(f => f.field_name === f.field_name);
-    //     // ignore fields not exists in the original data
-    //     const originalField = data.fields_data[0].find(
-    //       f => f.field_name === f.field_name
-    //     );
-    //     if (!originalField) {
-    //       return false;
-    //     }
-    //     return true;
-    //   }
-    //   return true;
-    // });
+    params.fields_data = buildColumnData(fieldMap).filter(f => {
+      // For partial updates, only include fields that were present in the original data.
+      // Always include DEFAULT_DYNAMIC_FIELD to preserve dynamic field updates.
+      if (isPartialUpdate) {
+        return (
+          originalRowKeys.has(f.field_name) ||
+          f.field_name === DEFAULT_DYNAMIC_FIELD
+        );
+      }
+      return true;
+    });
 
     // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
