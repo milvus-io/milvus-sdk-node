@@ -76,20 +76,19 @@
     uuid "^10.0.0"
     zod "^3.25.76 || ^4"
 
-"@langchain/core@^1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@langchain/core/-/core-1.0.5.tgz#1e20ecce80fa4d0b979ea05b24b879b8357d8092"
-  integrity sha512-9Hy/b9+j+mm0Bhnm8xD9B0KpBYTidroLrDHdbrHoMC2DqXoY2umvi1M3M/9D744qsMSaIMP0ZwFcy5YbqI/dGw==
+"@langchain/core@^1.1.8":
+  version "1.1.8"
+  resolved "https://registry.yarnpkg.com/@langchain/core/-/core-1.1.8.tgz#d6fc8f0ea944c71af1dfb0a960647c2d9e9ae50f"
+  integrity sha512-kIUidOgc0ZdyXo4Ahn9Zas+OayqOfk4ZoKPi7XaDipNSWSApc2+QK5BVcjvwtzxstsNOrmXJiJWEN6WPF/MvAw==
   dependencies:
     "@cfworker/json-schema" "^4.0.2"
     ansi-styles "^5.0.0"
     camelcase "6"
     decamelize "1.2.0"
     js-tiktoken "^1.0.12"
-    langsmith "^0.3.64"
+    langsmith ">=0.4.0 <1.0.0"
     mustache "^4.2.0"
     p-queue "^6.6.2"
-    p-retry "4"
     uuid "^10.0.0"
     zod "^3.25.76 || ^4"
 
@@ -466,6 +465,18 @@ langchain@^1.0.4:
     langsmith "~0.3.74"
     uuid "^10.0.0"
     zod "^3.25.76 || ^4"
+
+"langsmith@>=0.4.0 <1.0.0":
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/langsmith/-/langsmith-0.4.2.tgz#4f9ce6db01846d64c0f0eb895ab755662a6c0dc0"
+  integrity sha512-BvBeFgSmR9esl8x5wsiDlALiHKKPybw2wE2Hh6x1tgSZki46H9c9KI9/06LARbPhyyDu/TZU7exfg6fnhdj1Qg==
+  dependencies:
+    "@types/uuid" "^10.0.0"
+    chalk "^4.1.2"
+    console-table-printer "^2.12.1"
+    p-queue "^6.6.2"
+    semver "^7.6.3"
+    uuid "^10.0.0"
 
 langsmith@^0.3.64, langsmith@~0.3.74:
   version "0.3.79"
