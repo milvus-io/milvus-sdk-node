@@ -212,6 +212,11 @@ export class Data extends Collection {
       });
     }
 
+    // Track which fields are present in the original row data for partial updates
+    const isPartialUpdate =
+      'partial_update' in data && data.partial_update === true;
+    const originalRowKeys = new Set<string>();
+
     // Loop through each row and set the corresponding field values in the Map.
     data.fields_data.forEach((rowData, rowIndex) => {
       // if support dynamic field, all field not in the schema would be grouped to a dynamic field
@@ -226,6 +231,12 @@ export class Data extends Collection {
 
       // get each fieldname from the row object
       const fieldNames = Object.keys(rowData);
+
+      // Track field names for partial update filtering
+      if (isPartialUpdate) {
+        fieldNames.forEach(originalRowKeys.add, originalRowKeys);
+      }
+
       // go through each fieldname and encode or format data
       fieldNames.forEach(name => {
         const field = fieldMap.get(name);
@@ -302,14 +313,14 @@ export class Data extends Collection {
 
         // check if need valid data
         // vector field doesn't support nullable
-        // nullable field should be validated if partial_update is not true
+        // nullable field should always have valid_data array (format is unified)
         // default value should be validated if partial_update is not true
         const needValidData =
           key !== 'vectors' &&
           (field.nullable === true ||
-            (typeof field.default_value !== 'undefined' &&
-              field.default_value !== null)) &&
-          !('partial_update' in data && data.partial_update === true);
+            (!isPartialUpdate &&
+              typeof field.default_value !== 'undefined' &&
+              field.default_value !== null));
 
         // get valid data
         const valid_data = needValidData
@@ -419,7 +430,17 @@ export class Data extends Collection {
       });
     };
 
-    params.fields_data = buildColumnData(fieldMap);
+    params.fields_data = buildColumnData(fieldMap).filter(f => {
+      // For partial updates, only include fields that were present in the original data.
+      // Always include DEFAULT_DYNAMIC_FIELD to preserve dynamic field updates.
+      if (isPartialUpdate) {
+        return (
+          originalRowKeys.has(f.field_name) ||
+          f.field_name === DEFAULT_DYNAMIC_FIELD
+        );
+      }
+      return true;
+    });
 
     // if timeout is not defined, set timeout to 0
     const timeout = typeof data.timeout === 'undefined' ? 0 : data.timeout;
