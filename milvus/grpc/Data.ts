@@ -314,7 +314,6 @@ export class Data extends Collection {
         // check if need valid data
         // vector field doesn't support nullable
         // nullable field should always have valid_data array (format is unified)
-        // default value should be validated if partial_update is not true
         const needValidData =
           key !== 'vectors' &&
           (field.nullable === true ||
