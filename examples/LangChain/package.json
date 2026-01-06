@@ -2,9 +2,9 @@
   "type": "module",
   "dependencies": {
     "@langchain/community": "^1.0.3",
-    "@langchain/core": "^1.0.5",
+    "@langchain/core": "^1.1.8",
     "@langchain/openai": "^1.0.0",
     "@zilliz/milvus2-sdk-node": "^2.4.3",
-    "langchain": "^1.0.4"
+    "langchain": "^1.2.3"
   }
 }
