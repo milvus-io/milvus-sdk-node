@@ -1,0 +1,294 @@
+# Client Configuration
+
+The Milvus client can be configured with various options to suit your needs. This guide covers all available configuration options.
+
+## Basic Configuration
+
+The simplest configuration requires only the Milvus server address:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+```
+
+## Configuration Options
+
+### Address and Endpoints
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530', // Required: Milvus server address
+});
+```
+
+### Authentication
+
+#### Username and Password
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  username: 'root',
+  password: 'Milvus',
+});
+```
+
+#### Token (for Zilliz Cloud)
+
+```javascript
+const client = new MilvusClient({
+  address: 'your-endpoint.zillizcloud.com:443',
+  token: 'your-api-key', // Can be 'username:password' or API key
+});
+```
+
+### SSL/TLS Configuration
+
+Enable SSL/TLS encryption:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  ssl: true,
+  tls: {
+    rootCertPath: '/path/to/ca.pem',
+    serverName: 'milvus.example.com',
+  },
+});
+```
+
+Full TLS options:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  ssl: true,
+  tls: {
+    // Certificate Authority PEM file path
+    rootCertPath: '/path/to/ca.pem',
+    // Or certificate buffer
+    rootCert: Buffer.from('...'),
+    
+    // Private key path (for client authentication)
+    privateKeyPath: '/path/to/key.pem',
+    // Or private key buffer
+    privateKey: Buffer.from('...'),
+    
+    // Certificate chain path
+    certChainPath: '/path/to/cert.pem',
+    // Or certificate buffer
+    certChain: Buffer.from('...'),
+    
+    // Server name for SNI
+    serverName: 'milvus.example.com',
+    
+    // Skip certificate verification (not recommended for production)
+    skipCertCheck: false,
+    
+    // Additional verify options
+    verifyOptions: {},
+  },
+});
+```
+
+### Timeout Settings
+
+Configure request timeouts:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  timeout: 30000, // 30 seconds in milliseconds
+});
+```
+
+### Retry Configuration
+
+Configure retry behavior:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  maxRetries: 3, // Maximum number of retries
+  retryDelay: 1000, // Delay between retries in milliseconds
+});
+```
+
+### Database Selection
+
+Specify which database to use:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  database: 'my_database',
+});
+```
+
+### Logging Configuration
+
+Configure logging levels:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  logLevel: 'debug', // 'error', 'warn', 'info', 'debug'
+  logPrefix: 'milvus-client', // Prefix for log messages
+});
+```
+
+### Connection Pooling
+
+Configure connection pool options:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  pool: {
+    min: 2, // Minimum pool size
+    max: 10, // Maximum pool size
+    idleTimeoutMillis: 30000, // Idle timeout
+  },
+});
+```
+
+### gRPC Channel Options
+
+Advanced gRPC channel configuration:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  channelOptions: {
+    'grpc.keepalive_time_ms': 30000,
+    'grpc.keepalive_timeout_ms': 5000,
+    'grpc.keepalive_permit_without_calls': true,
+    'grpc.http2.max_pings_without_data': 0,
+    'grpc.http2.min_time_between_pings_ms': 10000,
+    'grpc.http2.min_ping_interval_without_data_ms': 300000,
+  },
+});
+```
+
+## Environment-Specific Configuration
+
+### Development
+
+```javascript
+const client = new MilvusClient({
+  address: process.env.MILVUS_ADDRESS || 'localhost:19530',
+  logLevel: 'debug',
+});
+```
+
+### Production
+
+```javascript
+const client = new MilvusClient({
+  address: process.env.MILVUS_ADDRESS,
+  username: process.env.MILVUS_USERNAME,
+  password: process.env.MILVUS_PASSWORD,
+  ssl: true,
+  tls: {
+    rootCertPath: process.env.MILVUS_CA_CERT,
+  },
+  timeout: 60000,
+  maxRetries: 5,
+  logLevel: 'warn',
+});
+```
+
+## Zilliz Cloud Configuration
+
+For Zilliz Cloud, use the endpoint and API key:
+
+```javascript
+const client = new MilvusClient({
+  address: 'your-endpoint.zillizcloud.com:443',
+  token: 'your-api-key',
+  ssl: true,
+});
+```
+
+## Complete Configuration Example
+
+```javascript
+const client = new MilvusClient({
+  // Required
+  address: 'localhost:19530',
+  
+  // Authentication (choose one)
+  username: 'root',
+  password: 'Milvus',
+  // OR
+  token: 'api-key',
+  
+  // SSL/TLS
+  ssl: true,
+  tls: {
+    rootCertPath: '/path/to/ca.pem',
+    serverName: 'milvus.example.com',
+  },
+  
+  // Timeouts and retries
+  timeout: 30000,
+  maxRetries: 3,
+  retryDelay: 1000,
+  
+  // Database
+  database: 'default',
+  
+  // Logging
+  logLevel: 'info',
+  logPrefix: 'milvus',
+  
+  // Connection pooling
+  pool: {
+    min: 2,
+    max: 10,
+  },
+});
+```
+
+## Configuration Interface
+
+The `ClientConfig` interface includes:
+
+```typescript
+interface ClientConfig {
+  address: string; // Required
+  token?: string;
+  ssl?: boolean;
+  username?: string;
+  password?: string;
+  channelOptions?: ChannelOptions;
+  timeout?: number | string;
+  maxRetries?: number;
+  retryDelay?: number;
+  database?: string;
+  logLevel?: string;
+  logPrefix?: string;
+  tls?: {
+    rootCertPath?: string;
+    rootCert?: Buffer;
+    privateKeyPath?: string;
+    privateKey?: Buffer;
+    certChainPath?: string;
+    certChain?: Buffer;
+    verifyOptions?: Record<string, any>;
+    serverName?: string;
+    skipCertCheck?: boolean;
+  };
+  pool?: Options;
+  loaderOptions?: LoaderOption;
+  trace?: boolean;
+}
+```
+
+## Next Steps
+
+- Learn about [Data Types & Schemas](./data-types-schemas)
+- Explore [Collection Management](./collection-management)
+- Check out [Best Practices](./best-practices) for production configurations
+

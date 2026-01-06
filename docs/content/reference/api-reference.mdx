@@ -1,0 +1,412 @@
+# API Reference
+
+Complete API reference for the Milvus Node.js SDK.
+
+## MilvusClient
+
+Main client class for interacting with Milvus.
+
+### Constructor
+
+```typescript
+new MilvusClient(config: ClientConfig | string, ssl?: boolean, username?: string, password?: string, channelOptions?: ChannelOptions)
+```
+
+### Static Properties
+
+#### sdkInfo
+
+Get SDK version information:
+
+```typescript
+MilvusClient.sdkInfo
+// Returns: { version: string, recommendMilvus: string }
+```
+
+## Collection Operations
+
+### createCollection
+
+Create a new collection.
+
+```typescript
+createCollection(data: CreateCollectionReq): Promise<ResStatus>
+```
+
+**Parameters**:
+- `collection_name`: Collection name
+- `fields`: Array of field schemas
+- `consistency_level?`: Consistency level
+- `properties?`: Collection properties
+
+### hasCollection
+
+Check if collection exists.
+
+```typescript
+hasCollection(data: HasCollectionReq): Promise<BoolResponse>
+```
+
+### showCollections
+
+List all collections.
+
+```typescript
+showCollections(data?: ShowCollectionsReq): Promise<ShowCollectionsResponse>
+```
+
+### describeCollection
+
+Get collection information.
+
+```typescript
+describeCollection(data: DescribeCollectionReq): Promise<DescribeCollectionResponse>
+```
+
+### alterCollectionProperties
+
+Modify collection properties.
+
+```typescript
+alterCollectionProperties(data: AlterCollectionReq): Promise<ResStatus>
+```
+
+### dropCollection
+
+Delete a collection.
+
+```typescript
+dropCollection(data: DropCollectionReq): Promise<ResStatus>
+```
+
+### loadCollection
+
+Load collection into memory.
+
+```typescript
+loadCollection(data: LoadCollectionReq): Promise<ResStatus>
+```
+
+### loadCollectionSync
+
+Load collection synchronously.
+
+```typescript
+loadCollectionSync(data: LoadCollectionReq): Promise<ResStatus>
+```
+
+### releaseCollection
+
+Release collection from memory.
+
+```typescript
+releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus>
+```
+
+## Data Operations
+
+### insert
+
+Insert data into collection.
+
+```typescript
+insert(data: InsertReq): Promise<MutationResult>
+```
+
+**Parameters**:
+- `collection_name`: Collection name
+- `data`: Array of data objects
+- `partition_name?`: Partition name
+
+### upsert
+
+Upsert data (insert or update).
+
+```typescript
+upsert(data: UpsertReq): Promise<MutationResult>
+```
+
+### query
+
+Query entities by filter.
+
+```typescript
+query(data: QueryReq): Promise<QueryResults>
+```
+
+**Parameters**:
+- `collection_name`: Collection name
+- `expr`: Filter expression
+- `output_fields`: Fields to return
+- `limit?`: Result limit
+- `offset?`: Result offset
+
+### search
+
+Search similar vectors.
+
+```typescript
+search(data: SearchReq): Promise<SearchResults>
+```
+
+**Parameters**:
+- `collection_name`: Collection name
+- `data`: Array of search vectors
+- `limit`: Number of results
+- `expr?`: Filter expression
+- `output_fields?`: Fields to return
+- `params?`: Search parameters
+
+### delete
+
+Delete entities.
+
+```typescript
+delete(data: DeleteReq): Promise<MutationResult>
+```
+
+**Parameters**:
+- `collection_name`: Collection name
+- `ids?`: Array of IDs
+- `filter?`: Filter expression
+- `expr?`: Filter expression
+
+### count
+
+Count entities matching filter.
+
+```typescript
+count(data: CountReq): Promise<CountResult>
+```
+
+## Index Operations
+
+### createIndex
+
+Create an index.
+
+```typescript
+createIndex(data: CreateIndexReq): Promise<ResStatus>
+```
+
+**Parameters**:
+- `collection_name`: Collection name
+- `field_name`: Field name
+- `index_type`: Index type
+- `metric_type`: Metric type
+- `params?`: Index parameters
+
+### describeIndex
+
+Get index information.
+
+```typescript
+describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse>
+```
+
+### dropIndex
+
+Delete an index.
+
+```typescript
+dropIndex(data: DropIndexReq): Promise<ResStatus>
+```
+
+### getIndexState
+
+Get index build state.
+
+```typescript
+getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse>
+```
+
+## Partition Operations
+
+### createPartition
+
+Create a partition.
+
+```typescript
+createPartition(data: CreatePartitionReq): Promise<ResStatus>
+```
+
+### listPartitions
+
+List partitions.
+
+```typescript
+listPartitions(data: ListPartitionsReq): Promise<ListPartitionsResponse>
+```
+
+### dropPartition
+
+Delete a partition.
+
+```typescript
+dropPartition(data: DropPartitionReq): Promise<ResStatus>
+```
+
+## Database Operations
+
+### createDatabase
+
+Create a database.
+
+```typescript
+createDatabase(data: CreateDatabaseRequest): Promise<ResStatus>
+```
+
+### listDatabases
+
+List all databases.
+
+```typescript
+listDatabases(data?: ListDatabasesRequest): Promise<ListDatabasesResponse>
+```
+
+### dropDatabase
+
+Delete a database.
+
+```typescript
+dropDatabase(data: DropDatabasesRequest): Promise<ResStatus>
+```
+
+## User & Role Operations
+
+### createUser
+
+Create a user.
+
+```typescript
+createUser(data: CreateUserReq): Promise<ResStatus>
+```
+
+### updateUser
+
+Update user password.
+
+```typescript
+updateUser(data: UpdateUserReq): Promise<ResStatus>
+```
+
+### deleteUser
+
+Delete a user.
+
+```typescript
+deleteUser(data: DeleteUserReq): Promise<ResStatus>
+```
+
+### createRole
+
+Create a role.
+
+```typescript
+createRole(data: CreateRoleReq): Promise<ResStatus>
+```
+
+### grantPrivilege
+
+Grant privilege to role.
+
+```typescript
+grantPrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus>
+```
+
+## Data Types
+
+### DataType Enum
+
+```typescript
+enum DataType {
+  None = 0,
+  Bool = 1,
+  Int8 = 2,
+  Int16 = 3,
+  Int32 = 4,
+  Int64 = 5,
+  Float = 10,
+  Double = 11,
+  String = 20,
+  VarChar = 21,
+  BinaryVector = 100,
+  FloatVector = 101,
+  Float16Vector = 102,
+  BFloat16Vector = 103,
+  SparseFloatVector = 104,
+  Int8Vector = 105,
+  JSON = 106,
+  Array = 107,
+  Struct = 108,
+  Geometry = 109,
+  Timestamptz = 110,
+}
+```
+
+## Error Codes
+
+### ErrorCode Enum
+
+```typescript
+enum ErrorCode {
+  SUCCESS = 'Success',
+  IndexNotExist = 'IndexNotExist',
+  UnexpectedError = 'UnexpectedError',
+  EmptyCollection = 'EmptyCollection',
+  UpsertAutoIDTrue = 'UpsertAutoIDTrue',
+  CollectionNotExists = 'CollectionNotExists',
+  IllegalArgument = 'IllegalArgument',
+  RateLimit = 'RateLimit',
+  SchemaMismatch = 'SchemaMismatch',
+}
+```
+
+## Response Types
+
+### ResStatus
+
+```typescript
+interface ResStatus {
+  error_code: string;
+  reason?: string;
+}
+```
+
+### MutationResult
+
+```typescript
+interface MutationResult {
+  IDs: number[] | string[];
+  insert_cnt: number;
+  delete_cnt: number;
+  upsert_cnt: number;
+  timestamp: string;
+  status: ResStatus;
+}
+```
+
+### QueryResults
+
+```typescript
+interface QueryResults {
+  data: RowData[];
+  status: ResStatus;
+}
+```
+
+### SearchResults
+
+```typescript
+interface SearchResults {
+  results: SearchResult[];
+  status: ResStatus;
+}
+```
+
+## Next Steps
+
+- Explore [Examples & Tutorials](./examples-tutorials)
+- Check [Best Practices](./best-practices)
+- Read [Troubleshooting](./troubleshooting)
+

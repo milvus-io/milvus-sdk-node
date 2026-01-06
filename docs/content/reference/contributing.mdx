@@ -1,0 +1,241 @@
+# Contributing
+
+Thank you for your interest in contributing to the Milvus Node.js SDK!
+
+## Development Setup
+
+### Prerequisites
+
+- Node.js 18+
+- Yarn package manager
+- Git
+
+### Clone Repository
+
+```bash
+git clone https://github.com/milvus-io/milvus-sdk-node.git
+cd milvus-sdk-node
+```
+
+### Install Dependencies
+
+```bash
+yarn install
+```
+
+### Fetch Milvus Proto
+
+```bash
+# Initialize submodules (first time)
+git submodule init
+
+# Update submodules
+git submodule update --remote
+```
+
+### Build
+
+```bash
+yarn build
+```
+
+## Testing
+
+### Run Tests
+
+```bash
+# Run all tests
+yarn test
+
+# Run specific test file
+yarn test -- test/Collection.spec.ts
+
+# Run with coverage
+yarn coverage
+```
+
+### Test Structure
+
+Tests are located in the `test/` directory:
+- `test/grpc/`: gRPC client tests
+- `test/http/`: HTTP client tests
+- `test/utils/`: Utility tests
+
+## Code Style
+
+### TypeScript
+
+- Use TypeScript strict mode
+- Follow existing code style
+- Use meaningful variable names
+- Add JSDoc comments for public APIs
+
+### Formatting
+
+Code is automatically formatted. Ensure your editor uses the project's formatting settings.
+
+### Linting
+
+```bash
+# Check linting
+yarn lint
+```
+
+## Adding Features
+
+### 1. Create Feature Branch
+
+```bash
+git checkout -b feature/your-feature-name
+```
+
+### 2. Implement Feature
+
+- Add code in appropriate directory
+- Write tests for your feature
+- Update documentation if needed
+
+### 3. Test Your Changes
+
+```bash
+yarn test
+yarn build
+```
+
+### 4. Commit Changes
+
+Follow conventional commit format:
+
+```
+feat: add new feature
+fix: fix bug
+docs: update documentation
+test: add tests
+```
+
+### 5. Push and Create PR
+
+```bash
+git push origin feature/your-feature-name
+```
+
+Then create a pull request on GitHub.
+
+## Pull Request Process
+
+### Before Submitting
+
+1. **Update Tests**: Ensure all tests pass
+2. **Update Documentation**: Add/update docs for new features
+3. **Check Linting**: Fix any linting errors
+4. **Review Changes**: Review your own changes
+
+### PR Requirements
+
+- Clear description of changes
+- Reference to related issues
+- Tests for new features
+- Documentation updates
+
+### Review Process
+
+- Maintainers will review your PR
+- Address any feedback
+- Once approved, your PR will be merged
+
+## Code Structure
+
+### Directory Structure
+
+```
+milvus-sdk-node/
+├── milvus/           # Main SDK code
+│   ├── grpc/        # gRPC client
+│   ├── http/        # HTTP client
+│   ├── types/       # TypeScript types
+│   └── utils/       # Utilities
+├── test/            # Tests
+├── examples/        # Examples
+└── docs/           # Documentation
+```
+
+### Key Files
+
+- `milvus/MilvusClient.ts`: Main client class
+- `milvus/grpc/`: gRPC implementation
+- `milvus/http/`: HTTP implementation
+- `milvus/types/`: TypeScript type definitions
+
+## Testing Guidelines
+
+### Write Tests
+
+- Test happy paths
+- Test error cases
+- Test edge cases
+- Mock external dependencies
+
+### Test Example
+
+```typescript
+describe('createCollection', () => {
+  it('should create collection successfully', async () => {
+    const result = await client.createCollection({
+      collection_name: 'test_collection',
+      fields: schema,
+    });
+    
+    expect(result.error_code).toBe('Success');
+  });
+});
+```
+
+## Documentation
+
+### Update Documentation
+
+When adding features:
+1. Update relevant documentation files
+2. Add code examples
+3. Update API reference if needed
+
+### Documentation Structure
+
+- `docs/content/`: Documentation source files
+- Use MDX format
+- Include code examples
+
+## Reporting Issues
+
+### Bug Reports
+
+Include:
+- SDK version
+- Node.js version
+- Steps to reproduce
+- Expected vs actual behavior
+- Error messages/logs
+
+### Feature Requests
+
+Include:
+- Use case description
+- Proposed solution
+- Benefits
+
+## Code of Conduct
+
+Please follow the [Code of Conduct](https://github.com/milvus-io/milvus-sdk-node/blob/main/CODE_OF_CONDUCT.md).
+
+## Getting Help
+
+- [GitHub Issues](https://github.com/milvus-io/milvus-sdk-node/issues)
+- [Discussions](https://github.com/milvus-io/milvus-sdk-node/discussions)
+- [Milvus Community](https://milvus.io/community)
+
+## Next Steps
+
+- Read [Best Practices](./best-practices)
+- Check [API Reference](./api-reference)
+- Explore [Examples & Tutorials](./examples-tutorials)
+

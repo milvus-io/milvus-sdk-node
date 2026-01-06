@@ -1,0 +1,229 @@
+# Data Operations - Delete
+
+This guide covers deleting data from Milvus collections.
+
+## Delete by IDs
+
+Delete entities by their primary key IDs:
+
+```javascript
+await client.delete({
+  collection_name: 'my_collection',
+  ids: [1, 2, 3, 4, 5],
+});
+```
+
+### Delete with String IDs
+
+For VarChar primary keys:
+
+```javascript
+await client.delete({
+  collection_name: 'my_collection',
+  ids: ['id1', 'id2', 'id3'],
+});
+```
+
+## Delete by Filter Expression
+
+Delete entities matching a filter expression:
+
+```javascript
+await client.delete({
+  collection_name: 'my_collection',
+  filter: 'age < 18',
+});
+```
+
+Or using `expr`:
+
+```javascript
+await client.delete({
+  collection_name: 'my_collection',
+  expr: 'age < 18 AND category == "old"',
+});
+```
+
+## Delete Entities (Advanced)
+
+Use `deleteEntities` for more control:
+
+```javascript
+await client.deleteEntities({
+  collection_name: 'my_collection',
+  expr: 'age < 18',
+});
+```
+
+## Delete Response
+
+Delete operations return mutation results:
+
+```javascript
+const result = await client.delete({
+  collection_name: 'my_collection',
+  ids: [1, 2, 3],
+});
+
+console.log('Delete count:', result.delete_cnt);
+console.log('IDs:', result.IDs);
+console.log('Timestamp:', result.timestamp);
+```
+
+## Delete from Specific Partition
+
+Delete entities from a specific partition:
+
+```javascript
+await client.delete({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+  ids: [1, 2, 3],
+});
+```
+
+## Filter Expressions for Delete
+
+Use the same filter expression syntax as queries:
+
+### Comparison Operators
+
+```javascript
+'age > 25'
+'age >= 25'
+'age < 25'
+'age <= 25'
+'age == 25'
+'age != 25'
+```
+
+### Logical Operators
+
+```javascript
+'age > 25 AND category == "tech"'
+'age > 25 OR age < 18'
+'NOT (age > 25)'
+```
+
+### In Operator
+
+```javascript
+'id in [1, 2, 3, 4, 5]'
+'category in ["old", "deprecated"]'
+```
+
+### String Operations
+
+```javascript
+'text like "%deprecated%"'
+```
+
+## Batch Deletion
+
+Delete large numbers of entities efficiently:
+
+```javascript
+// Delete by IDs in batches
+const idsToDelete = [/* large array of IDs */];
+const batchSize = 1000;
+
+for (let i = 0; i < idsToDelete.length; i += batchSize) {
+  const batch = idsToDelete.slice(i, i + batchSize);
+  await client.delete({
+    collection_name: 'my_collection',
+    ids: batch,
+  });
+}
+```
+
+## Flush After Delete
+
+Flush to ensure deletions are persisted:
+
+```javascript
+await client.delete({
+  collection_name: 'my_collection',
+  ids: [1, 2, 3],
+});
+
+// Flush to persist deletions
+await client.flush({
+  collection_names: ['my_collection'],
+});
+```
+
+## Error Handling
+
+Handle deletion errors:
+
+```javascript
+try {
+  await client.delete({
+    collection_name: 'my_collection',
+    ids: [1, 2, 3],
+  });
+} catch (error) {
+  if (error.message.includes('CollectionNotExists')) {
+    console.error('Collection does not exist');
+  } else if (error.message.includes('IllegalArgument')) {
+    console.error('Invalid delete parameters');
+  } else {
+    console.error('Delete failed:', error);
+  }
+}
+```
+
+## Delete Best Practices
+
+1. **Use filters for bulk deletion**: Use filter expressions for deleting many entities
+2. **Use IDs for specific deletion**: Use IDs when deleting specific entities
+3. **Flush after deletion**: Always flush after deletions to ensure persistence
+4. **Batch operations**: Delete in batches for large deletions
+5. **Verify before delete**: Query first to verify what will be deleted
+6. **Use transactions**: Consider using transactions for related deletions
+
+## Complete Example
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+await client.connectPromise;
+
+// Delete by IDs
+const deleteResult = await client.delete({
+  collection_name: 'my_collection',
+  ids: [1, 2, 3],
+});
+
+console.log('Deleted:', deleteResult.delete_cnt);
+
+// Delete by filter
+await client.delete({
+  collection_name: 'my_collection',
+  expr: 'age < 18',
+});
+
+// Flush to persist
+await client.flush({
+  collection_names: ['my_collection'],
+});
+
+// Verify deletion
+const count = await client.count({
+  collection_name: 'my_collection',
+  expr: 'age < 18',
+});
+
+console.log('Remaining entities:', count.data);
+```
+
+## Next Steps
+
+- Learn about [Data Management](./data-management)
+- Explore [Query Operations](./data-operations-query)
+- Check out [Best Practices](./best-practices)
+

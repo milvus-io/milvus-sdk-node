@@ -1,0 +1,494 @@
+# HTTP Client
+
+The Milvus SDK provides both gRPC and HTTP clients. This guide covers the HTTP client and when to use it.
+
+## HttpClient vs MilvusClient
+
+- **MilvusClient**: Uses gRPC protocol (default, recommended)
+- **HttpClient**: Uses HTTP/REST protocol
+
+## When to Use HTTP Client
+
+Use HTTP client when:
+- You need HTTP/REST compatibility
+- Working behind firewalls that block gRPC
+- Integrating with systems that prefer HTTP
+- **Using serverless environments** (Vercel, Cloudflare Workers, AWS Lambda, etc.) - **Highly recommended**
+
+## Creating HTTP Client
+
+```javascript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+const client = new HttpClient({
+  baseURL: 'http://localhost:19530',
+  token: 'your-token', // Optional
+});
+```
+
+## Using HTTP Client in Serverless Environments
+
+### Why HTTP Client for Serverless?
+
+**gRPC limitations in serverless platforms:**
+
+1. **Connection persistence**: gRPC relies on long-lived TCP connections, but serverless functions are stateless and short-lived. Each invocation may run in a different container/environment, making connection reuse impossible.
+
+2. **Cold starts**: Serverless functions start from scratch on each cold start. gRPC connection establishment overhead adds significant latency to cold starts.
+
+3. **Network restrictions**: Many serverless platforms (especially Cloudflare Workers) don't support raw TCP connections required by gRPC. They only support HTTP/HTTPS protocols.
+
+4. **Timeout constraints**: Serverless platforms have strict execution time limits. gRPC's connection setup and keep-alive mechanisms can consume valuable execution time.
+
+5. **Resource constraints**: Serverless environments have limited resources. gRPC's connection pooling and multiplexing overhead can be problematic in constrained environments.
+
+**HTTP Client advantages:**
+
+- **Stateless**: Each request is independent, perfect for serverless functions
+- **Universal support**: HTTP/HTTPS is supported by all serverless platforms
+- **No connection overhead**: No need to maintain persistent connections
+- **Better cold start performance**: Faster initialization without connection setup
+- **Simpler error handling**: Standard HTTP status codes and error responses
+
+### Vercel Example
+
+```javascript
+// api/search.js (Vercel Serverless Function)
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT, // e.g., 'https://your-instance.zillizcloud.com'
+      token: process.env.MILVUS_TOKEN,
+      timeout: 10000, // Adjust based on Vercel's timeout limits
+    });
+  }
+  return client;
+}
+
+export default async function handler(req, res) {
+  try {
+    const milvusClient = getClient();
+    
+    const results = await milvusClient.search({
+      collection_name: 'my_collection',
+      vector: req.body.vector,
+      limit: 10,
+    });
+
+    res.status(200).json({ results });
+  } catch (error) {
+    console.error('Milvus error:', error);
+    res.status(500).json({ error: error.message });
+  }
+}
+```
+
+**Vercel configuration (`vercel.json`):**
+
+```json
+{
+  "functions": {
+    "api/search.js": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "MILVUS_ENDPOINT": "https://your-instance.zillizcloud.com",
+    "MILVUS_TOKEN": "your-token"
+  }
+}
+```
+
+### Cloudflare Workers Example
+
+```javascript
+// worker.js (Cloudflare Worker)
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+export default {
+  async fetch(request, env) {
+    // Cloudflare Workers only support HTTP/HTTPS, not raw TCP
+    // HTTP Client is the only option here
+    const client = new HttpClient({
+      baseURL: env.MILVUS_ENDPOINT,
+      token: env.MILVUS_TOKEN,
+      timeout: 10000, // Cloudflare Workers have 30s timeout for free tier
+    });
+
+    try {
+      const body = await request.json();
+      
+      const results = await client.search({
+        collection_name: 'my_collection',
+        vector: body.vector,
+        limit: 10,
+      });
+
+      return new Response(JSON.stringify({ results }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+  },
+};
+```
+
+**Cloudflare Workers configuration (`wrangler.toml`):**
+
+```toml
+name = "milvus-worker"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+MILVUS_ENDPOINT = "https://your-instance.zillizcloud.com"
+MILVUS_TOKEN = "your-token"
+```
+
+### AWS Lambda Example
+
+```javascript
+// lambda.js (AWS Lambda)
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 25000, // Leave buffer for Lambda timeout
+    });
+  }
+  return client;
+}
+
+export const handler = async (event) => {
+  try {
+    const milvusClient = getClient();
+    
+    const results = await milvusClient.search({
+      collection_name: 'my_collection',
+      vector: event.vector,
+      limit: 10,
+    });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ results }),
+    };
+  } catch (error) {
+    console.error('Milvus error:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message }),
+    };
+  }
+};
+```
+
+### Serverless Best Practices
+
+1. **Client reuse**: Reuse the client instance within the same execution context (using module-level variable or singleton pattern)
+
+2. **Timeout configuration**: Set appropriate timeouts based on your platform's limits:
+   - Vercel: 10s (Hobby), 60s (Pro)
+   - Cloudflare Workers: 30s (free), 30s-15min (paid)
+   - AWS Lambda: Up to 15 minutes
+
+3. **Error handling**: Always wrap operations in try-catch blocks and return appropriate HTTP responses
+
+4. **Environment variables**: Store credentials securely using platform-specific secret management
+
+5. **Connection pooling**: Not needed with HTTP client - each request is independent
+
+6. **Cold start optimization**: HTTP client initializes faster than gRPC client, reducing cold start impact
+
+## Collection Operations
+
+### Create Collection
+
+```javascript
+await client.createCollection({
+  collection_name: 'my_collection',
+  dimension: 128,
+  metric_type: 'L2',
+});
+```
+
+### List Collections
+
+```javascript
+const collections = await client.listCollections({
+  db_name: 'default',
+});
+
+console.log('Collections:', collections);
+```
+
+### Describe Collection
+
+```javascript
+const info = await client.describeCollection({
+  collection_name: 'my_collection',
+});
+
+console.log('Collection info:', info);
+```
+
+### Drop Collection
+
+```javascript
+await client.dropCollection({
+  collection_name: 'my_collection',
+});
+```
+
+## Vector Operations
+
+### Insert Vectors
+
+```javascript
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      id: 1,
+      vector: [0.1, 0.2, 0.3, 0.4],
+    },
+  ],
+});
+```
+
+### Search Vectors
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  vector: [0.1, 0.2, 0.3, 0.4],
+  limit: 10,
+});
+```
+
+### Query Vectors
+
+```javascript
+const results = await client.query({
+  collection_name: 'my_collection',
+  filter: 'age > 25',
+  output_fields: ['id', 'vector'],
+});
+```
+
+### Delete Vectors
+
+```javascript
+await client.delete({
+  collection_name: 'my_collection',
+  ids: [1, 2, 3],
+});
+```
+
+## Index Operations
+
+### Create Index
+
+```javascript
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+});
+```
+
+### Describe Index
+
+```javascript
+const index = await client.describeIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+});
+
+console.log('Index info:', index);
+```
+
+### List Indexes
+
+```javascript
+const indexes = await client.listIndexes({
+  collection_name: 'my_collection',
+});
+
+console.log('Indexes:', indexes);
+```
+
+### Drop Index
+
+```javascript
+await client.dropIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+});
+```
+
+## Partition Operations
+
+### Create Partition
+
+```javascript
+await client.createPartition({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+});
+```
+
+### List Partitions
+
+```javascript
+const partitions = await client.listPartitions({
+  collection_name: 'my_collection',
+});
+
+console.log('Partitions:', partitions);
+```
+
+### Drop Partition
+
+```javascript
+await client.dropPartition({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+});
+```
+
+## Alias Operations
+
+### Create Alias
+
+```javascript
+await client.createAlias({
+  collection_name: 'my_collection',
+  alias: 'my_alias',
+});
+```
+
+### List Aliases
+
+```javascript
+const aliases = await client.listAliases({
+  collection_name: 'my_collection',
+});
+
+console.log('Aliases:', aliases);
+```
+
+### Drop Alias
+
+```javascript
+await client.dropAlias({
+  alias: 'my_alias',
+});
+```
+
+## Import Operations
+
+### Import Data
+
+```javascript
+const result = await client.import({
+  collection_name: 'my_collection',
+  files: ['/path/to/data.json'],
+});
+
+console.log('Import task:', result);
+```
+
+## User Operations
+
+### Create User
+
+```javascript
+await client.createUser({
+  username: 'newuser',
+  password: 'password',
+});
+```
+
+### List Users
+
+```javascript
+const users = await client.listUsers();
+
+console.log('Users:', users);
+```
+
+## Role Operations
+
+### Create Role
+
+```javascript
+await client.createRole({
+  roleName: 'admin',
+});
+```
+
+### List Roles
+
+```javascript
+const roles = await client.listRoles();
+
+console.log('Roles:', roles);
+```
+
+## HTTP Client Configuration
+
+```javascript
+const client = new HttpClient({
+  baseURL: 'http://localhost:19530',
+  token: 'your-token',
+  timeout: 30000,
+  headers: {
+    'Custom-Header': 'value',
+  },
+});
+```
+
+## Error Handling
+
+HTTP client errors follow the same pattern as gRPC client:
+
+```javascript
+try {
+  await client.createCollection({ /* ... */ });
+} catch (error) {
+  console.error('Error:', error.message);
+  console.error('Status:', error.status);
+}
+```
+
+## Best Practices
+
+1. **Choose the right client**: Use gRPC for better performance, HTTP for compatibility
+2. **Error handling**: Always handle errors appropriately
+3. **Timeout configuration**: Set appropriate timeouts
+4. **Authentication**: Use tokens for secure connections
+
+## Next Steps
+
+- Learn about [MilvusClient](./getting-started) (gRPC client)
+- Explore [Best Practices](./best-practices)
+- Check out [Examples & Tutorials](./examples-tutorials)
+

@@ -3,6 +3,7 @@ import { Head, Search } from 'nextra/components';
 import { getPageMap } from 'nextra/page-map';
 import themeConfig from '../theme.config.jsx';
 import CodeBlockEnhancer from '../components/CodeBlockEnhancer.jsx';
+import NavbarLinks from '../components/NavbarLinks.jsx';
 import 'nextra-theme-docs/style.css';
 import '../styles/custom.css';
 
@@ -34,6 +35,20 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <Head>
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-HLMZXDSQYF"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-HLMZXDSQYF');
+            `,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -47,7 +62,9 @@ export default async function RootLayout({ children }) {
             <Navbar
               logo={themeConfig.logo}
               projectLink={themeConfig.project?.link}
-            />
+            >
+              <NavbarLinks />
+            </Navbar>
           }
           pageMap={pageMap}
           docsRepositoryBase={themeConfig.docsRepositoryBase}

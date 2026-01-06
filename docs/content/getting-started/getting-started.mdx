@@ -1,0 +1,182 @@
+# Getting Started
+
+This guide will help you get started with the Milvus Node.js SDK. You'll learn how to install the SDK, connect to Milvus, and perform basic operations.
+
+## Installation
+
+Install the SDK using npm or yarn:
+
+```bash
+npm install @zilliz/milvus2-sdk-node
+# or
+yarn add @zilliz/milvus2-sdk-node
+```
+
+## Basic Connection
+
+Create a new client instance and connect to your Milvus server:
+
+```javascript
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+// Wait for connection to be established
+await client.connectPromise;
+
+console.log('Connected to Milvus!');
+```
+
+## Connection with Authentication
+
+If your Milvus instance requires authentication:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  username: 'root',
+  password: 'Milvus',
+});
+
+await client.connectPromise;
+```
+
+## Connection with Token (Zilliz Cloud)
+
+For Zilliz Cloud, you can use a token:
+
+```javascript
+const client = new MilvusClient({
+  address: 'your-endpoint.zillizcloud.com:443',
+  token: 'your-api-key',
+});
+
+await client.connectPromise;
+```
+
+## Your First Collection
+
+Let's create a collection, insert some data, and perform a search:
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+await client.connectPromise;
+
+// Define collection schema
+const collectionName = 'hello_milvus';
+const schema = [
+  {
+    name: 'id',
+    data_type: DataType.Int64,
+    is_primary_key: true,
+    autoID: true,
+  },
+  {
+    name: 'vector',
+    data_type: DataType.FloatVector,
+    dim: 128,
+  },
+  {
+    name: 'text',
+    data_type: DataType.VarChar,
+    max_length: 256,
+  },
+];
+
+// Create collection
+await client.createCollection({
+  collection_name: collectionName,
+  fields: schema,
+});
+
+console.log('Collection created!');
+
+// Insert data
+const data = [
+  {
+    vector: Array.from({ length: 128 }, () => Math.random()),
+    text: 'Hello Milvus',
+  },
+  {
+    vector: Array.from({ length: 128 }, () => Math.random()),
+    text: 'Vector database',
+  },
+];
+
+await client.insert({
+  collection_name: collectionName,
+  data,
+});
+
+console.log('Data inserted!');
+
+// Create index
+await client.createIndex({
+  collection_name: collectionName,
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+});
+
+// Load collection
+await client.loadCollectionSync({
+  collection_name: collectionName,
+});
+
+// Search
+const searchResults = await client.search({
+  collection_name: collectionName,
+  data: [Array.from({ length: 128 }, () => Math.random())],
+  limit: 5,
+  output_fields: ['text'],
+});
+
+console.log('Search results:', searchResults);
+```
+
+## Connection Lifecycle
+
+### Connecting
+
+The SDK automatically connects when you create a new `MilvusClient` instance. You can wait for the connection using:
+
+```javascript
+await client.connectPromise;
+```
+
+### Disconnecting
+
+To properly close the connection:
+
+```javascript
+await client.closeConnection();
+```
+
+## Error Handling
+
+Always wrap your operations in try-catch blocks:
+
+```javascript
+try {
+  await client.createCollection({
+    collection_name: 'my_collection',
+    fields: schema,
+  });
+} catch (error) {
+  console.error('Error creating collection:', error);
+}
+```
+
+## Next Steps
+
+- Learn about [Client Configuration](./client-configuration)
+- Understand [Data Types & Schemas](./data-types-schemas)
+- Explore [Collection Management](./collection-management)
+- Check out [Examples & Tutorials](./examples-tutorials)

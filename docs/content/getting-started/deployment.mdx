@@ -1,0 +1,267 @@
+# Deployment Guide
+
+This guide provides an overview of deploying applications using the Milvus Node.js SDK to various platforms.
+
+## Choosing the Right Client
+
+The Milvus SDK provides two clients:
+
+- **MilvusClient** (gRPC): Default client, best for traditional server deployments
+- **HttpClient**: Recommended for serverless platforms
+
+### When to Use HTTP Client
+
+Use `HttpClient` when deploying to:
+- **Serverless platforms** (Vercel, AWS Lambda, Cloudflare Workers)
+- **Edge computing** environments
+- **Firewall-restricted** environments
+- **HTTP-only** infrastructures
+
+### When to Use gRPC Client
+
+Use `MilvusClient` (gRPC) for:
+- **Traditional servers** (Node.js, Express, NestJS)
+- **Long-lived connections**
+- **Maximum performance** requirements
+- **Dedicated infrastructure**
+
+## Serverless Platforms
+
+### Vercel
+
+Deploy to Vercel serverless functions with minimal configuration.
+
+**Quick Start:**
+
+```javascript
+// api/search.js
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 10000,
+    });
+  }
+  return client;
+}
+
+export default async function handler(req, res) {
+  const milvusClient = getClient();
+  const results = await milvusClient.search({
+    collection_name: 'my_collection',
+    data: req.body.vectors,
+    limit: 10,
+  });
+  res.status(200).json({ results });
+}
+```
+
+**Learn more:** [Vercel Deployment Guide](../advanced/vercel)
+
+### Cloudflare Workers
+
+Deploy to Cloudflare Workers for edge computing.
+
+**Quick Start:**
+
+```javascript
+// worker.js
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+export default {
+  async fetch(request, env) {
+    const client = new HttpClient({
+      baseURL: env.MILVUS_ENDPOINT,
+      token: env.MILVUS_TOKEN,
+      timeout: 25000,
+    });
+
+    const results = await client.search({
+      collection_name: 'my_collection',
+      data: [/* vectors */],
+      limit: 10,
+    });
+
+    return new Response(JSON.stringify({ results }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  },
+};
+```
+
+**Learn more:** [Cloudflare Workers Deployment Guide](../advanced/cloudflare)
+
+### AWS Lambda
+
+Deploy to AWS Lambda for scalable serverless functions.
+
+**Quick Start:**
+
+```javascript
+// index.js
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 25000,
+    });
+  }
+  return client;
+}
+
+export const handler = async (event) => {
+  const milvusClient = getClient();
+  const results = await milvusClient.search({
+    collection_name: 'my_collection',
+    data: JSON.parse(event.body).vectors,
+    limit: 10,
+  });
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ results }),
+  };
+};
+```
+
+**Learn more:** [AWS Lambda Deployment Guide](../advanced/aws-lambda)
+
+## Traditional Server Deployment
+
+### Node.js/Express
+
+For traditional Node.js servers, you can use either client:
+
+```javascript
+// Using gRPC Client (Recommended)
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  token: 'your-token',
+});
+
+await client.connectPromise;
+
+// Using HTTP Client
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+const client = new HttpClient({
+  baseURL: 'http://localhost:19530',
+  token: 'your-token',
+});
+```
+
+### Docker
+
+Deploy in Docker containers:
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["node", "index.js"]
+```
+
+## Environment Variables
+
+Always use environment variables for sensitive configuration:
+
+```bash
+# .env
+MILVUS_ENDPOINT=https://your-instance.zillizcloud.com
+MILVUS_TOKEN=your-api-token
+```
+
+```javascript
+const client = new HttpClient({
+  baseURL: process.env.MILVUS_ENDPOINT,
+  token: process.env.MILVUS_TOKEN,
+});
+```
+
+## Platform Comparison
+
+| Platform | Client Type | Timeout Limit | Best For |
+|----------|-------------|---------------|----------|
+| Vercel | HTTP | 10s (Hobby), 60s (Pro) | Next.js apps, static sites |
+| Cloudflare Workers | HTTP | 30s (free), 15min (paid) | Edge computing, global distribution |
+| AWS Lambda | HTTP | Up to 15 minutes | Enterprise serverless |
+| Traditional Server | gRPC or HTTP | No limit | Long-lived applications |
+
+## Common Patterns
+
+### Client Reuse
+
+Reuse client instances to improve performance:
+
+```javascript
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+    });
+  }
+  return client;
+}
+```
+
+### Error Handling
+
+Always handle errors appropriately:
+
+```javascript
+try {
+  const results = await client.search({ /* ... */ });
+  return { success: true, results };
+} catch (error) {
+  console.error('Milvus error:', error);
+  return {
+    success: false,
+    error: error.message,
+    status: error.status || 500,
+  };
+}
+```
+
+### Timeout Configuration
+
+Set timeouts based on platform limits:
+
+```javascript
+const client = new HttpClient({
+  baseURL: process.env.MILVUS_ENDPOINT,
+  token: process.env.MILVUS_TOKEN,
+  timeout: 10000, // Adjust based on platform
+});
+```
+
+## Next Steps
+
+- **Vercel**: [Detailed Vercel Deployment Guide](../advanced/vercel)
+- **Cloudflare**: [Cloudflare Workers Guide](../advanced/cloudflare)
+- **AWS Lambda**: [AWS Lambda Guide](../advanced/aws-lambda)
+- **HTTP Client**: [HTTP Client Documentation](../advanced/http-client)
+- **Best Practices**: [Best Practices Guide](../advanced/best-practices)
+

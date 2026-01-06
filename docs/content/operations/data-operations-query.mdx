@@ -1,0 +1,401 @@
+# Data Operations - Query & Search
+
+This guide covers querying and searching data in Milvus collections.
+
+## Query Operations
+
+Query retrieves entities based on filter expressions.
+
+### Basic Query
+
+Query entities with a filter expression:
+
+```javascript
+const results = await client.query({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+  output_fields: ['id', 'vector', 'text'],
+});
+```
+
+### Query by IDs
+
+Query specific entities by their IDs:
+
+```javascript
+const results = await client.query({
+  collection_name: 'my_collection',
+  ids: [1, 2, 3, 4, 5],
+  output_fields: ['id', 'vector', 'text'],
+});
+```
+
+### Query with Limit and Offset
+
+```javascript
+const results = await client.query({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+  output_fields: ['id', 'text'],
+  limit: 10,
+  offset: 0,
+});
+```
+
+### Query Specific Partitions
+
+```javascript
+const results = await client.query({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+  partition_names: ['partition_1', 'partition_2'],
+  output_fields: ['id', 'text'],
+});
+```
+
+### Query Iterator
+
+Iterate through large result sets:
+
+```javascript
+const iterator = await client.queryIterator({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+  output_fields: ['id', 'text'],
+  batch_size: 100,
+});
+
+while (true) {
+  const batch = await iterator.next();
+  if (batch.done) break;
+  
+  console.log('Batch:', batch.value);
+}
+```
+
+## Get Operation
+
+Get entities by IDs (simpler than query):
+
+```javascript
+const results = await client.get({
+  collection_name: 'my_collection',
+  ids: [1, 2, 3],
+  output_fields: ['id', 'vector', 'text'],
+});
+```
+
+## Count Operation
+
+Count entities matching a filter:
+
+```javascript
+const result = await client.count({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+});
+
+console.log('Count:', result.data);
+```
+
+## Search Operations
+
+Search finds similar vectors using distance metrics.
+
+### Basic Search
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]], // Search vector
+  limit: 10,
+  output_fields: ['id', 'text'],
+});
+```
+
+### Search Multiple Vectors
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [
+    [0.1, 0.2, 0.3, 0.4],
+    [0.5, 0.6, 0.7, 0.8],
+  ],
+  limit: 10,
+  output_fields: ['id', 'text'],
+});
+```
+
+### Search with Filter
+
+Combine vector search with scalar filters:
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  expr: 'age > 25 AND category == "tech"',
+  limit: 10,
+  output_fields: ['id', 'text', 'age'],
+});
+```
+
+### Search Parameters
+
+Configure search parameters for different index types:
+
+```javascript
+// For IVF indexes
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  params: {
+    nprobe: 64, // Number of clusters to search
+  },
+  limit: 10,
+});
+
+// For HNSW indexes
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  params: {
+    ef: 100, // Search width
+  },
+  limit: 10,
+});
+```
+
+### Search Specific Partitions
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  partition_names: ['partition_1'],
+  limit: 10,
+});
+```
+
+### Search Iterator
+
+Iterate through large search results:
+
+```javascript
+const iterator = await client.searchIterator({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  expr: 'age > 25',
+  limit: 1000,
+  batch_size: 100,
+});
+
+while (true) {
+  const batch = await iterator.next();
+  if (batch.done) break;
+  
+  console.log('Batch:', batch.value);
+}
+```
+
+### Hybrid Search
+
+Search with multiple vector fields:
+
+```javascript
+const results = await client.hybridSearch({
+  collection_name: 'my_collection',
+  reqs: [
+    {
+      data: [[0.1, 0.2, 0.3, 0.4]],
+      anns_field: 'text_vector',
+      param: { nprobe: 64 },
+      limit: 10,
+    },
+    {
+      data: [[0.5, 0.6, 0.7, 0.8]],
+      anns_field: 'image_vector',
+      param: { nprobe: 64 },
+      limit: 10,
+    },
+  ],
+  ranker: 'rrf', // Reciprocal Rank Fusion
+  limit: 10,
+  output_fields: ['id', 'text'],
+});
+```
+
+## Filter Expressions
+
+Filter expressions use Milvus expression syntax:
+
+### Comparison Operators
+
+```javascript
+'age > 25'
+'age >= 25'
+'age < 25'
+'age <= 25'
+'age == 25'
+'age != 25'
+```
+
+### Logical Operators
+
+```javascript
+'age > 25 AND category == "tech"'
+'age > 25 OR age < 18'
+'NOT (age > 25)'
+```
+
+### In Operator
+
+```javascript
+'id in [1, 2, 3, 4, 5]'
+'category in ["tech", "science"]'
+```
+
+### String Operations
+
+```javascript
+'text like "milvus%"'
+'text like "%database%"'
+```
+
+### JSON Field Access
+
+```javascript
+'metadata.category == "tech"'
+'metadata.tags[0] == "ai"'
+```
+
+## Search Results
+
+Search results include:
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  limit: 10,
+});
+
+results.results.forEach(result => {
+  console.log('ID:', result.id);
+  console.log('Distance:', result.distance);
+  console.log('Score:', result.score);
+  console.log('Entity:', result.entity);
+});
+```
+
+## Output Fields
+
+Specify which fields to return:
+
+```javascript
+// Return specific fields
+output_fields: ['id', 'text', 'age']
+
+// Return all fields
+output_fields: ['*']
+
+// Return vector fields
+output_fields: ['id', 'vector']
+```
+
+## Performance Optimization
+
+### Search Parameters Tuning
+
+**IVF indexes:**
+- `nprobe`: Higher values improve recall but slower (typical: 16-256)
+
+**HNSW indexes:**
+- `ef`: Higher values improve recall but slower (typical: 50-200)
+
+### Batch Search
+
+Search multiple vectors efficiently:
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [
+    [/* vector 1 */],
+    [/* vector 2 */],
+    [/* vector 3 */],
+  ],
+  limit: 10,
+});
+```
+
+### Pre-load Collections
+
+Load collections before searching:
+
+```javascript
+await client.loadCollectionSync({
+  collection_name: 'my_collection',
+});
+
+// Now search
+const results = await client.search({ /* ... */ });
+```
+
+## Best Practices
+
+1. **Use appropriate limits**: Set reasonable limits to avoid large result sets
+2. **Filter before search**: Use filter expressions to narrow down results
+3. **Tune search parameters**: Adjust nprobe/ef based on your recall/performance needs
+4. **Use iterators**: For large result sets, use query/search iterators
+5. **Load collections**: Always load collections before searching
+6. **Batch operations**: Search multiple vectors in one call when possible
+
+## Complete Example
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+await client.connectPromise;
+
+// Load collection
+await client.loadCollectionSync({
+  collection_name: 'my_collection',
+});
+
+// Query
+const queryResults = await client.query({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+  output_fields: ['id', 'text', 'age'],
+  limit: 10,
+});
+
+console.log('Query results:', queryResults.data);
+
+// Search
+const searchResults = await client.search({
+  collection_name: 'my_collection',
+  data: [Array.from({ length: 128 }, () => Math.random())],
+  expr: 'age > 25',
+  limit: 10,
+  output_fields: ['id', 'text'],
+  params: {
+    nprobe: 64,
+  },
+});
+
+console.log('Search results:', searchResults.results);
+```
+
+## Next Steps
+
+- Learn about [Delete Operations](./data-operations-delete)
+- Explore [Data Management](./data-management)
+- Check out [Best Practices](./best-practices)
+

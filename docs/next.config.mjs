@@ -9,7 +9,7 @@ const withNextra = nextra({});
 
 export default withNextra({
   basePath: '/milvus-sdk-node',
-  output: 'export',
+  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
   images: {
     unoptimized: true,
   },

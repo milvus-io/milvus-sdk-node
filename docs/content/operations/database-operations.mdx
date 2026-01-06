@@ -1,0 +1,125 @@
+# Database Operations
+
+Milvus supports multiple databases, allowing you to organize collections into logical groups. This guide covers all database operations.
+
+## Creating a Database
+
+Create a new database:
+
+```javascript
+await client.createDatabase({
+  db_name: 'my_database',
+});
+```
+
+## Listing Databases
+
+List all databases:
+
+```javascript
+const result = await client.listDatabases();
+
+console.log('Databases:', result.db_names);
+// Output: ['default', 'my_database']
+```
+
+## Describing a Database
+
+Get detailed information about a database:
+
+```javascript
+const result = await client.describeDatabase({
+  db_name: 'my_database',
+});
+
+console.log('Database info:', result);
+```
+
+## Altering a Database
+
+Modify database properties:
+
+```javascript
+await client.alterDatabase({
+  db_name: 'my_database',
+  properties: {
+    'database.property': 'value',
+  },
+});
+```
+
+## Dropping Database Properties
+
+Remove specific properties from a database:
+
+```javascript
+await client.dropDatabaseProperties({
+  db_name: 'my_database',
+  property_names: ['database.property'],
+});
+```
+
+## Dropping a Database
+
+Delete a database (all collections in the database will be deleted):
+
+```javascript
+await client.dropDatabase({
+  db_name: 'my_database',
+});
+```
+
+## Multi-Database Usage Patterns
+
+### Switching Between Databases
+
+When creating a client, specify the database:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  database: 'my_database', // Set default database
+});
+```
+
+### Working with Multiple Databases
+
+Create separate clients for different databases:
+
+```javascript
+const db1Client = new MilvusClient({
+  address: 'localhost:19530',
+  database: 'database1',
+});
+
+const db2Client = new MilvusClient({
+  address: 'localhost:19530',
+  database: 'database2',
+});
+
+// Use db1Client for database1 operations
+await db1Client.createCollection({ /* ... */ });
+
+// Use db2Client for database2 operations
+await db2Client.createCollection({ /* ... */ });
+```
+
+### Database Isolation
+
+Each database is isolated:
+- Collections in different databases are completely separate
+- Operations on one database don't affect others
+- Users and roles can have different permissions per database
+
+## Best Practices
+
+1. **Use databases for logical separation**: Organize collections by application, environment, or team
+2. **Default database**: The `default` database is created automatically
+3. **Database naming**: Use descriptive names that reflect the purpose
+4. **Permissions**: Configure user permissions at the database level for security
+
+## Next Steps
+
+- Learn about [Collection Management](./collection-management)
+- Explore [User & Role Management](./user-role-management)
+

@@ -1,0 +1,386 @@
+# Best Practices
+
+This guide covers best practices for using the Milvus Node.js SDK in production environments.
+
+## Connection Management
+
+### Reuse Client Instances
+
+Create one client instance and reuse it:
+
+```javascript
+// Good: Create once, reuse
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+// Use the same client throughout your application
+```
+
+### Proper Cleanup
+
+Close connections when done:
+
+```javascript
+// At application shutdown
+await client.closeConnection();
+```
+
+### Connection Pooling
+
+Configure appropriate pool sizes:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  pool: {
+    min: 2,
+    max: 10, // Adjust based on your workload
+  },
+});
+```
+
+## Error Handling Strategies
+
+### Comprehensive Error Handling
+
+```javascript
+try {
+  await client.createCollection({ /* ... */ });
+} catch (error) {
+  if (error.error_code === 'CollectionNotExists') {
+    // Handle specific error
+  } else {
+    // Handle generic error
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+### Retry Logic
+
+Configure automatic retries:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  maxRetries: 3,
+  retryDelay: 1000,
+});
+```
+
+## Performance Optimization
+
+### Batch Operations
+
+Insert data in batches:
+
+```javascript
+const batchSize = 1000;
+for (let i = 0; i < data.length; i += batchSize) {
+  const batch = data.slice(i, i + batchSize);
+  await client.insert({
+    collection_name: 'my_collection',
+    data: batch,
+  });
+}
+```
+
+### Load Collections Before Search
+
+Always load collections before searching:
+
+```javascript
+await client.loadCollectionSync({
+  collection_name: 'my_collection',
+});
+
+// Now search
+const results = await client.search({ /* ... */ });
+```
+
+### Use Appropriate Index Types
+
+Choose indexes based on your use case:
+
+```javascript
+// Small dataset: FLAT
+// Medium dataset: HNSW
+// Large dataset: IVF_PQ
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'HNSW', // Choose based on dataset size
+  metric_type: 'L2',
+});
+```
+
+### Tune Search Parameters
+
+Optimize search parameters:
+
+```javascript
+// For IVF indexes
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [/* vector */],
+  params: {
+    nprobe: 64, // Adjust based on recall/performance needs
+  },
+  limit: 10,
+});
+```
+
+## Data Modeling Best Practices
+
+### Schema Design
+
+Design schemas carefully:
+
+```javascript
+// Good: Clear field names, appropriate types
+const schema = [
+  {
+    name: 'id',
+    data_type: DataType.Int64,
+    is_primary_key: true,
+    autoID: true,
+  },
+  {
+    name: 'embedding',
+    data_type: DataType.FloatVector,
+    dim: 128,
+  },
+  {
+    name: 'metadata',
+    data_type: DataType.JSON, // Use JSON for flexible data
+  },
+];
+```
+
+### Use AutoID
+
+Let Milvus generate IDs unless you have specific requirements:
+
+```javascript
+{
+  name: 'id',
+  data_type: DataType.Int64,
+  is_primary_key: true,
+  autoID: true, // Recommended
+}
+```
+
+### Appropriate Field Types
+
+Choose appropriate data types:
+
+```javascript
+// Use Int64 for IDs
+// Use FloatVector for embeddings
+// Use VarChar for text (with appropriate max_length)
+// Use JSON for flexible metadata
+```
+
+## Index Selection Guidelines
+
+### Index Type Selection
+
+- **FLAT**: < 1M vectors, exact search
+- **HNSW**: 1M - 10M vectors, high recall
+- **IVF_FLAT**: Balanced performance
+- **IVF_SQ8**: Memory-efficient
+- **IVF_PQ**: > 10M vectors, most memory-efficient
+
+### Metric Type Selection
+
+- **L2**: Most common, for embeddings trained with L2
+- **IP**: For embeddings trained with inner product
+- **COSINE**: For normalized embeddings
+- **HAMMING/JACCARD**: For binary vectors
+
+## Query Optimization
+
+### Use Filters
+
+Apply filters to narrow results:
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [/* vector */],
+  expr: 'category == "tech" AND age > 25', // Filter before search
+  limit: 10,
+});
+```
+
+### Limit Result Sets
+
+Set appropriate limits:
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [/* vector */],
+  limit: 10, // Don't request more than needed
+});
+```
+
+### Use Iterators for Large Results
+
+Use iterators for large result sets:
+
+```javascript
+const iterator = await client.queryIterator({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+  batch_size: 100,
+});
+```
+
+## Memory Management
+
+### Release Collections
+
+Release collections when not in use:
+
+```javascript
+await client.releaseCollection({
+  collection_name: 'my_collection',
+});
+```
+
+### Monitor Memory Usage
+
+Check collection loading status:
+
+```javascript
+const state = await client.getLoadState({
+  collection_name: 'my_collection',
+});
+
+console.log('Load state:', state.state);
+```
+
+## Production Deployment Considerations
+
+### Environment Configuration
+
+Use environment variables:
+
+```javascript
+const client = new MilvusClient({
+  address: process.env.MILVUS_ADDRESS,
+  username: process.env.MILVUS_USERNAME,
+  password: process.env.MILVUS_PASSWORD,
+  ssl: process.env.NODE_ENV === 'production',
+});
+```
+
+### Logging Configuration
+
+Use appropriate log levels:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  logLevel: process.env.NODE_ENV === 'production' ? 'warn' : 'debug',
+});
+```
+
+### SSL/TLS Configuration
+
+Enable SSL in production:
+
+```javascript
+const client = new MilvusClient({
+  address: 'milvus.example.com:443',
+  ssl: true,
+  tls: {
+    rootCertPath: '/path/to/ca.pem',
+    serverName: 'milvus.example.com',
+  },
+});
+```
+
+### Health Checks
+
+Implement health checks:
+
+```javascript
+async function healthCheck() {
+  try {
+    await client.listCollections();
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+```
+
+## Monitoring and Observability
+
+### Metrics Collection
+
+Collect and monitor metrics:
+
+```javascript
+const metrics = await client.getMetric({
+  request: {
+    metric_type: 'system_info',
+  },
+});
+```
+
+### Error Tracking
+
+Track errors appropriately:
+
+```javascript
+try {
+  await client.search({ /* ... */ });
+} catch (error) {
+  // Log to your error tracking service
+  errorTracker.captureException(error);
+}
+```
+
+## Security Best Practices
+
+### Authentication
+
+Always use authentication:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  username: 'root',
+  password: 'securepassword',
+});
+```
+
+### RBAC
+
+Use role-based access control:
+
+```javascript
+// Create roles with minimal privileges
+await client.createRole({
+  roleName: 'readonly',
+});
+
+// Grant only necessary privileges
+await client.grantPrivilege({
+  roleName: 'readonly',
+  object: 'Collection',
+  objectName: '*',
+  privilegeName: 'DescribeCollection',
+});
+```
+
+## Next Steps
+
+- Explore [Examples & Tutorials](./examples-tutorials)
+- Check out [Troubleshooting](./troubleshooting)
+- Review [API Reference](./api-reference)
+

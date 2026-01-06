@@ -1,0 +1,321 @@
+# Advanced Features
+
+This guide covers advanced features including connection pooling, retry mechanisms, error handling, logging, and iterator patterns.
+
+## Connection Pooling
+
+The SDK uses connection pooling to manage gRPC connections efficiently.
+
+### Configuration
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  pool: {
+    min: 2,              // Minimum pool size
+    max: 10,             // Maximum pool size
+    idleTimeoutMillis: 30000, // Idle timeout
+  },
+});
+```
+
+### Benefits
+
+- **Efficiency**: Reuses connections instead of creating new ones
+- **Performance**: Reduces connection overhead
+- **Resource management**: Limits concurrent connections
+
+## Retry Mechanisms
+
+Configure automatic retries for failed operations.
+
+### Configuration
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  maxRetries: 3,        // Maximum retry attempts
+  retryDelay: 1000,     // Delay between retries (ms)
+});
+```
+
+### Retry Behavior
+
+The SDK automatically retries on:
+- Network errors
+- Transient server errors
+- Timeout errors
+
+## Error Handling
+
+### Error Types
+
+```javascript
+import { ErrorCode } from '@zilliz/milvus2-sdk-node';
+
+try {
+  await client.createCollection({ /* ... */ });
+} catch (error) {
+  switch (error.error_code) {
+    case ErrorCode.CollectionNotExists:
+      console.error('Collection does not exist');
+      break;
+    case ErrorCode.IllegalArgument:
+      console.error('Invalid argument');
+      break;
+    case ErrorCode.UnexpectedError:
+      console.error('Unexpected error');
+      break;
+    default:
+      console.error('Error:', error);
+  }
+}
+```
+
+### Common Error Codes
+
+- `Success`: Operation succeeded
+- `CollectionNotExists`: Collection not found
+- `IllegalArgument`: Invalid parameter
+- `IndexNotExist`: Index not found
+- `UnexpectedError`: Unexpected server error
+- `RateLimit`: Rate limit exceeded
+- `SchemaMismatch`: Schema mismatch
+
+### Error Response Structure
+
+```javascript
+{
+  error_code: 'CollectionNotExists',
+  reason: 'Collection my_collection does not exist',
+  // ... other fields
+}
+```
+
+## Logging and Debugging
+
+### Log Levels
+
+Configure logging levels:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  logLevel: 'debug', // 'error', 'warn', 'info', 'debug'
+  logPrefix: 'milvus-client',
+});
+```
+
+### Log Levels
+
+- **error**: Only error messages
+- **warn**: Warnings and errors
+- **info**: Informational messages, warnings, and errors
+- **debug**: All messages including debug information
+
+### Debugging
+
+Enable trace for detailed debugging:
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  trace: true,
+});
+```
+
+## Iterator Patterns
+
+### Query Iterator
+
+Iterate through large query results:
+
+```javascript
+const iterator = await client.queryIterator({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+  output_fields: ['id', 'text'],
+  batch_size: 100,
+});
+
+while (true) {
+  const batch = await iterator.next();
+  if (batch.done) break;
+  
+  console.log('Batch:', batch.value);
+}
+```
+
+### Search Iterator
+
+Iterate through large search results:
+
+```javascript
+const iterator = await client.searchIterator({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  limit: 10000,
+  batch_size: 100,
+});
+
+while (true) {
+  const batch = await iterator.next();
+  if (batch.done) break;
+  
+  console.log('Batch:', batch.value);
+}
+```
+
+## Sparse Vectors
+
+Work with sparse vector data:
+
+```javascript
+// Array format
+const sparseVector = [1.0, undefined, undefined, 2.5, undefined];
+
+// Dictionary format
+const sparseVector = { '0': 1.0, '3': 2.5 };
+
+// CSR format
+const sparseVector = {
+  indices: [0, 3],
+  values: [1.0, 2.5],
+};
+
+// COO format
+const sparseVector = [
+  { index: 0, value: 1.0 },
+  { index: 3, value: 2.5 },
+];
+
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      sparse_vector: sparseVector,
+    },
+  ],
+});
+```
+
+## Binary Vectors
+
+Work with binary vector data:
+
+```javascript
+// Binary vector: length must be dim / 8
+const binaryVector = [1, 0, 1, 0, 1, 0, 1, 0]; // For dim=64
+
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      binary_vector: binaryVector,
+    },
+  ],
+});
+```
+
+## Float16/BFloat16 Vectors
+
+Use transformers for Float16 and BFloat16 vectors:
+
+```javascript
+import { f32ArrayToF16Bytes } from '@zilliz/milvus2-sdk-node';
+
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      vector: [0.1, 0.2, 0.3, 0.4], // f32 array
+    },
+  ],
+  transformers: {
+    vector: (data) => f32ArrayToF16Bytes(data),
+  },
+});
+```
+
+## Dynamic Fields
+
+Enable dynamic fields for flexible schemas:
+
+```javascript
+// Create collection with dynamic fields
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'vector',
+      data_type: DataType.FloatVector,
+      dim: 128,
+    },
+  ],
+  enable_dynamic_field: true,
+});
+
+// Insert data with dynamic fields
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      vector: [/* ... */],
+      dynamic_field_1: 'value1', // Automatically added
+      dynamic_field_2: 123,      // Automatically added
+    },
+  ],
+});
+```
+
+## Performance Monitoring
+
+### Get Metrics
+
+Get system metrics:
+
+```javascript
+const metrics = await client.getMetric({
+  request: {
+    metric_type: 'system_info',
+  },
+});
+
+console.log('Metrics:', metrics);
+```
+
+## Replica Management
+
+### Get Replicas
+
+Get replica information:
+
+```javascript
+const replicas = await client.getReplicas({
+  collection_name: 'my_collection',
+});
+
+console.log('Replicas:', replicas.replicas);
+```
+
+## Best Practices
+
+1. **Connection pooling**: Configure appropriate pool sizes
+2. **Retry configuration**: Set reasonable retry limits
+3. **Error handling**: Always handle errors appropriately
+4. **Logging**: Use appropriate log levels for your environment
+5. **Iterators**: Use iterators for large result sets
+6. **Monitoring**: Monitor metrics for performance optimization
+
+## Next Steps
+
+- Learn about [Best Practices](./best-practices)
+- Explore [HTTP Client](./http-client)
+- Check out [Examples & Tutorials](./examples-tutorials)
+

@@ -1,0 +1,438 @@
+# Collection Management
+
+Collections are the primary data structure in Milvus, similar to tables in traditional databases. This guide covers all collection management operations.
+
+## Creating Collections
+
+### Basic Collection Creation
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const schema = [
+  {
+    name: 'id',
+    data_type: DataType.Int64,
+    is_primary_key: true,
+    autoID: true,
+  },
+  {
+    name: 'vector',
+    data_type: DataType.FloatVector,
+    dim: 128,
+  },
+];
+
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: schema,
+});
+```
+
+### Collection with Consistency Level
+
+```javascript
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: schema,
+  consistency_level: 'Bounded', // 'Strong', 'Session', 'Bounded', 'Eventually'
+});
+```
+
+### Collection with Properties
+
+```javascript
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: schema,
+  properties: {
+    'collection.ttl.seconds': 3600, // TTL in seconds
+  },
+});
+```
+
+### Collection with Partition Configuration
+
+```javascript
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: schema,
+  num_partitions: 8, // Number of partitions
+});
+```
+
+## Checking Collection Existence
+
+Check if a collection exists:
+
+```javascript
+const exists = await client.hasCollection({
+  collection_name: 'my_collection',
+});
+
+console.log('Collection exists:', exists.value);
+```
+
+## Listing Collections
+
+List all collections:
+
+```javascript
+const result = await client.showCollections();
+
+console.log('Collections:', result.collection_names);
+// Output: ['collection1', 'collection2', 'my_collection']
+```
+
+List collections with details:
+
+```javascript
+const result = await client.showCollections({
+  type: ShowCollectionsType.All, // 'All' or 'InMemory'
+});
+
+result.data.forEach(collection => {
+  console.log(`Collection: ${collection.name}`);
+  console.log(`ID: ${collection.id}`);
+  console.log(`Loaded: ${collection.loadedPercentage}%`);
+});
+```
+
+## Describing Collections
+
+Get detailed information about a collection:
+
+```javascript
+const result = await client.describeCollection({
+  collection_name: 'my_collection',
+});
+
+console.log('Schema:', result.schema);
+console.log('Collection ID:', result.collectionID);
+console.log('Consistency Level:', result.consistency_level);
+```
+
+## Modifying Collections
+
+### Alter Collection Properties
+
+Modify collection properties:
+
+```javascript
+await client.alterCollectionProperties({
+  collection_name: 'my_collection',
+  properties: {
+    'collection.ttl.seconds': 7200,
+  },
+});
+```
+
+### Rename Collection
+
+Rename a collection:
+
+```javascript
+await client.renameCollection({
+  collection_name: 'old_name',
+  new_collection_name: 'new_name',
+});
+```
+
+### Drop Collection Properties
+
+Remove specific properties:
+
+```javascript
+await client.dropCollectionProperties({
+  collection_name: 'my_collection',
+  property_names: ['collection.ttl.seconds'],
+});
+```
+
+## Dynamic Schema
+
+### Adding Fields to Existing Collection
+
+Add a single field:
+
+```javascript
+await client.addCollectionField({
+  collection_name: 'my_collection',
+  field: {
+    name: 'new_field',
+    data_type: DataType.Int64,
+    description: 'A new field',
+  },
+});
+```
+
+Add multiple fields:
+
+```javascript
+await client.addCollectionFields({
+  collection_name: 'my_collection',
+  fields: [
+    {
+      name: 'field1',
+      data_type: DataType.Int64,
+    },
+    {
+      name: 'field2',
+      data_type: DataType.VarChar,
+      max_length: 256,
+    },
+  ],
+});
+```
+
+### Alter Field Properties
+
+Modify field properties:
+
+```javascript
+await client.alterCollectionFieldProperties({
+  collection_name: 'my_collection',
+  field_name: 'my_field',
+  properties: {
+    'field.max_length': 512,
+  },
+});
+```
+
+## Collection Statistics
+
+Get collection statistics:
+
+```javascript
+const stats = await client.getCollectionStatistics({
+  collection_name: 'my_collection',
+});
+
+console.log('Row count:', stats.row_count);
+console.log('Statistics:', stats.stats);
+```
+
+## Collection Loading
+
+### Load Collection
+
+Load a collection into memory for search:
+
+```javascript
+// Synchronous load (waits until loaded)
+await client.loadCollectionSync({
+  collection_name: 'my_collection',
+});
+
+// Asynchronous load (returns immediately)
+await client.loadCollectionAsync({
+  collection_name: 'my_collection',
+});
+```
+
+### Check Loading Progress
+
+```javascript
+const progress = await client.getLoadingProgress({
+  collection_name: 'my_collection',
+});
+
+console.log('Loading progress:', progress.progress);
+```
+
+### Check Load State
+
+```javascript
+const state = await client.getLoadState({
+  collection_name: 'my_collection',
+});
+
+console.log('Load state:', state.state); // 'LoadStateNotExist', 'LoadStateNotLoad', 'LoadStateLoading', 'LoadStateLoaded'
+```
+
+### Refresh Load
+
+Refresh the loaded collection:
+
+```javascript
+await client.refreshLoad({
+  collection_name: 'my_collection',
+});
+```
+
+### Release Collection
+
+Release a collection from memory:
+
+```javascript
+await client.releaseCollection({
+  collection_name: 'my_collection',
+});
+```
+
+## Collection Aliases
+
+### Create Alias
+
+Create an alias for a collection:
+
+```javascript
+await client.createAlias({
+  collection_name: 'my_collection',
+  alias: 'my_alias',
+});
+```
+
+### Describe Alias
+
+Get information about an alias:
+
+```javascript
+const result = await client.describeAlias({
+  alias: 'my_alias',
+});
+
+console.log('Collection name:', result.collection);
+console.log('Alias:', result.alias);
+```
+
+### List Aliases
+
+List all aliases for a collection:
+
+```javascript
+const result = await client.listAliases({
+  collection_name: 'my_collection',
+});
+
+console.log('Aliases:', result.aliases);
+```
+
+### Alter Alias
+
+Change which collection an alias points to:
+
+```javascript
+await client.alterAlias({
+  collection_name: 'new_collection',
+  alias: 'my_alias',
+});
+```
+
+### Drop Alias
+
+Remove an alias:
+
+```javascript
+await client.dropAlias({
+  alias: 'my_alias',
+});
+```
+
+## Collection Compaction
+
+### Compact Collection
+
+Trigger compaction:
+
+```javascript
+const result = await client.compact({
+  collection_name: 'my_collection',
+});
+
+console.log('Compaction ID:', result.compactionID);
+```
+
+### Get Compaction State
+
+Check compaction status:
+
+```javascript
+const state = await client.getCompactionState({
+  compactionID: 12345,
+});
+
+console.log('State:', state.state);
+```
+
+### Get Compaction Plans
+
+Get detailed compaction plans:
+
+```javascript
+const plans = await client.getCompactionStateWithPlans({
+  compactionID: 12345,
+});
+
+console.log('Plans:', plans.mergeInfos);
+```
+
+## Collection Replicas
+
+Get replica information:
+
+```javascript
+const replicas = await client.getReplicas({
+  collection_name: 'my_collection',
+});
+
+console.log('Replicas:', replicas.replicas);
+```
+
+## Primary Key Information
+
+### Get Primary Key Field Name
+
+```javascript
+const pkField = await client.getPkFieldName({
+  collection_name: 'my_collection',
+});
+
+console.log('Primary key field:', pkField);
+```
+
+### Get Primary Key Field Type
+
+```javascript
+const pkType = await client.getPkFieldType({
+  collection_name: 'my_collection',
+});
+
+console.log('Primary key type:', pkType);
+```
+
+### Get Primary Key Field Schema
+
+```javascript
+const pkFieldSchema = await client.getPkField({
+  collection_name: 'my_collection',
+});
+
+console.log('Primary key schema:', pkFieldSchema);
+```
+
+## Dropping Collections
+
+Drop a collection (this permanently deletes all data):
+
+```javascript
+await client.dropCollection({
+  collection_name: 'my_collection',
+});
+```
+
+## Best Practices
+
+1. **Naming**: Use descriptive collection names
+2. **Schema Design**: Plan your schema carefully before creating collections
+3. **Loading**: Load collections before performing searches
+4. **Aliases**: Use aliases for easier collection management and zero-downtime updates
+5. **Compaction**: Regularly compact collections to optimize performance
+6. **Release**: Release collections from memory when not in use to free resources
+
+## Next Steps
+
+- Learn about [Partition Management](./partition-management)
+- Explore [Index Management](./index-management)
+- Check out [Data Operations](./data-operations-insert)
+

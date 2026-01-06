@@ -1,0 +1,175 @@
+# Partition Management
+
+Partitions allow you to organize data within a collection for better performance and management. This guide covers all partition operations.
+
+## Creating Partitions
+
+Create a new partition:
+
+```javascript
+await client.createPartition({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+});
+```
+
+## Checking Partition Existence
+
+Check if a partition exists:
+
+```javascript
+const exists = await client.hasPartition({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+});
+
+console.log('Partition exists:', exists.value);
+```
+
+## Listing Partitions
+
+List all partitions in a collection:
+
+```javascript
+const result = await client.listPartitions({
+  collection_name: 'my_collection',
+});
+
+console.log('Partitions:', result.partition_names);
+// Output: ['_default', 'partition_1', 'partition_2']
+```
+
+## Partition Statistics
+
+Get statistics for a partition:
+
+```javascript
+const stats = await client.getPartitionStatistics({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+});
+
+console.log('Row count:', stats.row_count);
+console.log('Statistics:', stats.stats);
+```
+
+## Partition Loading
+
+### Load Partitions
+
+Load partitions into memory:
+
+```javascript
+// Asynchronous load
+await client.loadPartitions({
+  collection_name: 'my_collection',
+  partition_names: ['partition_1', 'partition_2'],
+});
+
+// Synchronous load (waits until loaded)
+await client.loadPartitionsSync({
+  collection_name: 'my_collection',
+  partition_names: ['partition_1', 'partition_2'],
+});
+```
+
+### Release Partitions
+
+Release partitions from memory:
+
+```javascript
+await client.releasePartitions({
+  collection_name: 'my_collection',
+  partition_names: ['partition_1', 'partition_2'],
+});
+```
+
+## Dropping Partitions
+
+Drop a partition (this permanently deletes all data in the partition):
+
+```javascript
+await client.dropPartition({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+});
+```
+
+## Working with Partitions
+
+### Inserting Data into Partitions
+
+Insert data into a specific partition:
+
+```javascript
+await client.insert({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+  data: [
+    {
+      vector: [/* ... */],
+      text: 'data for partition 1',
+    },
+  ],
+});
+```
+
+### Querying Partitions
+
+Query data from specific partitions:
+
+```javascript
+const results = await client.query({
+  collection_name: 'my_collection',
+  expr: 'id > 100',
+  partition_names: ['partition_1'],
+  output_fields: ['vector', 'text'],
+});
+```
+
+### Searching Partitions
+
+Search within specific partitions:
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [/* vector */],
+  partition_names: ['partition_1', 'partition_2'],
+  limit: 10,
+});
+```
+
+## Default Partition
+
+Every collection has a default partition named `_default`. Data inserted without specifying a partition goes to the default partition:
+
+```javascript
+// Data goes to _default partition
+await client.insert({
+  collection_name: 'my_collection',
+  data: [/* ... */],
+});
+
+// Explicitly specify partition
+await client.insert({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+  data: [/* ... */],
+});
+```
+
+## Partition Best Practices
+
+1. **Use partitions for data organization**: Organize data by time, category, or region
+2. **Load only needed partitions**: Load only the partitions you need to query
+3. **Partition naming**: Use descriptive names that reflect the partition's purpose
+4. **Default partition**: Use the default partition for general data
+5. **Partition size**: Keep partitions at reasonable sizes for optimal performance
+
+## Next Steps
+
+- Learn about [Collection Management](./collection-management)
+- Explore [Data Operations](./data-operations-insert)
+- Check out [Best Practices](./best-practices)
+

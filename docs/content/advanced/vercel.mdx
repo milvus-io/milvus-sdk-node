@@ -1,0 +1,388 @@
+# Deploying to Vercel
+
+This guide covers deploying the Milvus Node.js SDK to Vercel serverless functions using the HTTP client.
+
+## Why HTTP Client for Vercel?
+
+While Vercel supports both gRPC and HTTP, the HTTP client is recommended for serverless functions because:
+
+- **Better cold start performance**: No connection setup overhead
+- **Stateless design**: Perfect for serverless functions
+- **Simpler error handling**: Standard HTTP status codes
+- **Universal compatibility**: Works with all Vercel deployment types
+
+## Prerequisites
+
+- A Vercel account
+- Vercel CLI installed: `npm install -g vercel`
+- A Milvus instance (self-hosted or Zilliz Cloud)
+
+## Installation
+
+Install the SDK in your project:
+
+```bash
+npm install @zilliz/milvus2-sdk-node
+# or
+yarn add @zilliz/milvus2-sdk-node
+```
+
+## Basic Setup
+
+### 1. Create API Route
+
+Create `api/search.js` (or `pages/api/search.js` for Next.js Pages Router):
+
+```javascript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 10000, // Vercel Hobby: 10s, Pro: 60s
+    });
+  }
+  return client;
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const milvusClient = getClient();
+
+    const { collection_name, vector, limit = 10, output_fields = [] } =
+      req.body;
+
+    if (!collection_name || !vector) {
+      return res.status(400).json({
+        error: 'Missing required fields: collection_name and vector',
+      });
+    }
+
+    const results = await milvusClient.search({
+      collection_name,
+      data: Array.isArray(vector[0]) ? vector : [vector],
+      limit,
+      output_fields,
+    });
+
+    res.status(200).json({ results });
+  } catch (error) {
+    console.error('Milvus error:', error);
+    res.status(error.status || 500).json({
+      error: error.message,
+      status: error.status || 500,
+    });
+  }
+}
+```
+
+### 2. Configure Vercel
+
+Create `vercel.json`:
+
+```json
+{
+  "functions": {
+    "api/search.js": {
+      "maxDuration": 30
+    },
+    "api/insert.js": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "MILVUS_ENDPOINT": "https://your-instance.zillizcloud.com",
+    "MILVUS_TOKEN": "your-token"
+  }
+}
+```
+
+### 3. Set Environment Variables
+
+For production, set environment variables in Vercel dashboard:
+
+1. Go to your project settings
+2. Navigate to "Environment Variables"
+3. Add:
+   - `MILVUS_ENDPOINT`: Your Milvus endpoint URL
+   - `MILVUS_TOKEN`: Your Milvus API token
+
+Or use Vercel CLI:
+
+```bash
+vercel env add MILVUS_ENDPOINT
+vercel env add MILVUS_TOKEN
+```
+
+## Next.js App Router Example
+
+For Next.js 13+ App Router, create `app/api/search/route.js`:
+
+```javascript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+import { NextResponse } from 'next/server';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 10000,
+    });
+  }
+  return client;
+}
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const { collection_name, vector, limit = 10, output_fields = [] } = body;
+
+    if (!collection_name || !vector) {
+      return NextResponse.json(
+        { error: 'Missing required fields: collection_name and vector' },
+        { status: 400 }
+      );
+    }
+
+    const milvusClient = getClient();
+
+    const results = await milvusClient.search({
+      collection_name,
+      data: Array.isArray(vector[0]) ? vector : [vector],
+      limit,
+      output_fields,
+    });
+
+    return NextResponse.json({ results });
+  } catch (error) {
+    console.error('Milvus error:', error);
+    return NextResponse.json(
+      { error: error.message, status: error.status || 500 },
+      { status: error.status || 500 }
+    );
+  }
+}
+```
+
+## Complete Example: Multiple Endpoints
+
+Create multiple API routes for different operations:
+
+### `api/search.js`
+
+```javascript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 10000,
+    });
+  }
+  return client;
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const milvusClient = getClient();
+    const { collection_name, vectors, limit = 10, output_fields = [] } =
+      req.body;
+
+    const results = await milvusClient.search({
+      collection_name,
+      data: vectors,
+      limit,
+      output_fields,
+    });
+
+    res.status(200).json({ results });
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
+  }
+}
+```
+
+### `api/insert.js`
+
+```javascript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 10000,
+    });
+  }
+  return client;
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const milvusClient = getClient();
+    const { collection_name, data } = req.body;
+
+    const result = await milvusClient.insert({
+      collection_name,
+      data,
+    });
+
+    res.status(200).json({ result });
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
+  }
+}
+```
+
+### `api/query.js`
+
+```javascript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 10000,
+    });
+  }
+  return client;
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const milvusClient = getClient();
+    const { collection_name, filter, output_fields = [] } = req.body;
+
+    const results = await milvusClient.query({
+      collection_name,
+      filter,
+      output_fields,
+    });
+
+    res.status(200).json({ results });
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
+  }
+}
+```
+
+## Deployment
+
+### Deploy to Vercel
+
+```bash
+# Login to Vercel
+vercel login
+
+# Deploy
+vercel
+
+# Deploy to production
+vercel --prod
+```
+
+### Test Locally
+
+```bash
+# Start development server
+vercel dev
+
+# Test with curl
+curl -X POST http://localhost:3000/api/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "collection_name": "my_collection",
+    "vectors": [[0.1, 0.2, 0.3]],
+    "limit": 5
+  }'
+```
+
+## Timeout Limits
+
+- **Hobby (Free)**: 10 seconds
+- **Pro**: 60 seconds
+- **Enterprise**: Up to 5 minutes (configurable)
+
+Configure in `vercel.json`:
+
+```json
+{
+  "functions": {
+    "api/search.js": {
+      "maxDuration": 30
+    }
+  }
+}
+```
+
+## Best Practices
+
+1. **Client reuse**: Reuse client instances using module-level variables
+2. **Set appropriate timeouts**: Account for Vercel's execution limits
+3. **Error handling**: Always wrap operations in try-catch blocks
+4. **Environment variables**: Use Vercel's environment variable management
+5. **CORS**: Configure CORS if calling from browser
+6. **Monitoring**: Use Vercel Analytics to track function performance
+7. **Cold starts**: HTTP client reduces cold start impact compared to gRPC
+
+## Troubleshooting
+
+### Error: "Function execution timeout"
+
+**Solution**: 
+- Reduce timeout value in HttpClient configuration
+- Optimize your Milvus queries
+- Upgrade to Pro plan for longer execution times
+
+### Error: "Module not found"
+
+**Solution**: Ensure `@zilliz/milvus2-sdk-node` is installed and listed in `package.json`.
+
+### Error: "Environment variable not found"
+
+**Solution**: 
+- Set environment variables in Vercel dashboard
+- Or use `vercel env add` command
+- Ensure variables are set for correct environments (development, preview, production)
+
+## Next Steps
+
+- Learn about [Cloudflare Workers Deployment](./cloudflare)
+- Explore [AWS Lambda Deployment](./aws-lambda)
+- Check out [HTTP Client Guide](./http-client)
+- Read [Best Practices](./best-practices)
+

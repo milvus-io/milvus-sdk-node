@@ -1,0 +1,341 @@
+# Troubleshooting
+
+This guide helps you troubleshoot common issues when using the Milvus Node.js SDK.
+
+## Common Errors and Solutions
+
+### CollectionNotExists
+
+**Error**: `Collection my_collection does not exist`
+
+**Solutions**:
+- Check collection name spelling
+- List collections to verify: `await client.showCollections()`
+- Ensure you're using the correct database
+
+### IllegalArgument
+
+**Error**: `Invalid argument`
+
+**Solutions**:
+- Check parameter types and values
+- Verify schema matches collection definition
+- Ensure required fields are provided
+
+### Connection Errors
+
+**Error**: `Connection refused` or `ECONNREFUSED`
+
+**Solutions**:
+- Verify Milvus server is running
+- Check address and port: `localhost:19530`
+- Check firewall settings
+- Verify network connectivity
+
+### Authentication Errors
+
+**Error**: `Authentication failed`
+
+**Solutions**:
+- Verify username and password
+- Check token validity (for Zilliz Cloud)
+- Ensure user has necessary permissions
+
+### Schema Mismatch
+
+**Error**: `Schema mismatch`
+
+**Solutions**:
+- Verify field names match schema
+- Check data types match field definitions
+- Ensure vector dimensions are correct
+
+## Connection Issues
+
+### Cannot Connect to Milvus
+
+**Symptoms**: Connection timeout or refused
+
+**Solutions**:
+
+1. **Check Milvus Status**:
+```bash
+# Check if Milvus is running
+docker ps | grep milvus
+```
+
+2. **Verify Address**:
+```javascript
+// Ensure address is correct
+const client = new MilvusClient({
+  address: 'localhost:19530', // Check host and port
+});
+```
+
+3. **Check Network**:
+```javascript
+// Test connectivity
+try {
+  await client.connectPromise;
+  console.log('Connected successfully');
+} catch (error) {
+  console.error('Connection failed:', error);
+}
+```
+
+### SSL/TLS Connection Issues
+
+**Symptoms**: SSL handshake errors
+
+**Solutions**:
+
+1. **Verify Certificate**:
+```javascript
+const client = new MilvusClient({
+  address: 'milvus.example.com:443',
+  ssl: true,
+  tls: {
+    rootCertPath: '/path/to/ca.pem', // Verify path
+    serverName: 'milvus.example.com',
+  },
+});
+```
+
+2. **Skip Certificate Check** (development only):
+```javascript
+const client = new MilvusClient({
+  address: 'milvus.example.com:443',
+  ssl: true,
+  tls: {
+    skipCertCheck: true, // Not recommended for production
+  },
+});
+```
+
+## Performance Issues
+
+### Slow Search Performance
+
+**Symptoms**: Search operations are slow
+
+**Solutions**:
+
+1. **Check Index**:
+```javascript
+const index = await client.describeIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+});
+
+console.log('Index type:', index.index_type);
+```
+
+2. **Tune Search Parameters**:
+```javascript
+// Increase nprobe for better recall (slower)
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [/* vector */],
+  params: {
+    nprobe: 128, // Increase from default
+  },
+  limit: 10,
+});
+```
+
+3. **Ensure Collection is Loaded**:
+```javascript
+const state = await client.getLoadState({
+  collection_name: 'my_collection',
+});
+
+if (state.state !== 'LoadStateLoaded') {
+  await client.loadCollectionSync({
+    collection_name: 'my_collection',
+  });
+}
+```
+
+### High Memory Usage
+
+**Symptoms**: High memory consumption
+
+**Solutions**:
+
+1. **Release Unused Collections**:
+```javascript
+await client.releaseCollection({
+  collection_name: 'unused_collection',
+});
+```
+
+2. **Use Memory-Efficient Indexes**:
+```javascript
+// Use IVF_SQ8 or IVF_PQ instead of HNSW
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'IVF_SQ8', // More memory-efficient
+  metric_type: 'L2',
+});
+```
+
+## Data Consistency Issues
+
+### Data Not Appearing After Insert
+
+**Symptoms**: Inserted data not found in queries
+
+**Solutions**:
+
+1. **Flush After Insert**:
+```javascript
+await client.insert({
+  collection_name: 'my_collection',
+  data: [/* ... */],
+});
+
+// Flush to persist data
+await client.flush({
+  collection_names: ['my_collection'],
+});
+```
+
+2. **Check Collection State**:
+```javascript
+const state = await client.getLoadState({
+  collection_name: 'my_collection',
+});
+
+console.log('Load state:', state.state);
+```
+
+### Inconsistent Query Results
+
+**Symptoms**: Query results vary between calls
+
+**Solutions**:
+
+1. **Check Consistency Level**:
+```javascript
+const info = await client.describeCollection({
+  collection_name: 'my_collection',
+});
+
+console.log('Consistency level:', info.consistency_level);
+```
+
+2. **Use Strong Consistency**:
+```javascript
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: schema,
+  consistency_level: 'Strong',
+});
+```
+
+## Debugging Tips
+
+### Enable Debug Logging
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  logLevel: 'debug', // Enable debug logging
+  logPrefix: 'milvus-client',
+});
+```
+
+### Enable Trace
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  trace: true, // Enable detailed tracing
+});
+```
+
+### Check Collection Schema
+
+```javascript
+const info = await client.describeCollection({
+  collection_name: 'my_collection',
+});
+
+console.log('Schema:', JSON.stringify(info.schema, null, 2));
+```
+
+### Verify Data Types
+
+```javascript
+// Check field types
+const info = await client.describeCollection({
+  collection_name: 'my_collection',
+});
+
+info.schema.fields.forEach(field => {
+  console.log(`${field.name}: ${field.data_type}`);
+});
+```
+
+## Log Analysis
+
+### Understanding Logs
+
+```javascript
+// Enable logging
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  logLevel: 'info',
+});
+
+// Logs will show:
+// - Connection status
+// - Request/response details
+// - Error messages
+```
+
+### Common Log Messages
+
+- **Connection established**: `Connected to Milvus`
+- **Collection created**: `Collection created successfully`
+- **Index built**: `Index build completed`
+- **Search executed**: `Search completed`
+
+## Getting Help
+
+### Check Documentation
+
+- Review [API Reference](./api-reference)
+- Check [Best Practices](./best-practices)
+- Read [Examples & Tutorials](./examples-tutorials)
+
+### Community Resources
+
+- [GitHub Issues](https://github.com/milvus-io/milvus-sdk-node/issues)
+- [Milvus Community](https://milvus.io/community)
+- [Discord](https://discord.gg/milvus)
+
+### Provide Information
+
+When reporting issues, include:
+
+1. **SDK Version**:
+```javascript
+console.log(MilvusClient.sdkInfo);
+```
+
+2. **Milvus Version**: Check your Milvus server version
+
+3. **Error Details**: Full error message and stack trace
+
+4. **Code Sample**: Minimal reproducible example
+
+5. **Environment**: Node.js version, OS, etc.
+
+## Next Steps
+
+- Review [Best Practices](./best-practices)
+- Check [API Reference](./api-reference)
+- Explore [Examples & Tutorials](./examples-tutorials)
+

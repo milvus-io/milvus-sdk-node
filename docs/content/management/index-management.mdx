@@ -1,0 +1,357 @@
+# Index Management
+
+Indexes are crucial for optimizing search performance in Milvus. This guide covers creating, managing, and optimizing indexes.
+
+## Creating Indexes
+
+### Basic Index Creation
+
+Create an index on a vector field:
+
+```javascript
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+});
+```
+
+### Index with Parameters
+
+Specify index parameters:
+
+```javascript
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+  params: {
+    M: 16,
+    efConstruction: 200,
+  },
+});
+```
+
+## Index Types
+
+### HNSW (Hierarchical Navigable Small World)
+
+Best for high-dimensional vectors and high recall:
+
+```javascript
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+  params: {
+    M: 16,           // Number of connections
+    efConstruction: 200, // Construction parameter
+  },
+});
+```
+
+### IVF_FLAT (Inverted File Flat)
+
+Good balance of speed and accuracy:
+
+```javascript
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'IVF_FLAT',
+  metric_type: 'L2',
+  params: {
+    nlist: 1024, // Number of clusters
+  },
+});
+```
+
+### IVF_SQ8 (Inverted File Scalar Quantization)
+
+Memory-efficient version of IVF_FLAT:
+
+```javascript
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'IVF_SQ8',
+  metric_type: 'L2',
+  params: {
+    nlist: 1024,
+  },
+});
+```
+
+### IVF_PQ (Inverted File Product Quantization)
+
+Most memory-efficient, good for large datasets:
+
+```javascript
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'IVF_PQ',
+  metric_type: 'L2',
+  params: {
+    nlist: 1024,
+    m: 8,    // Number of sub-vectors
+    nbits: 8, // Number of bits per sub-vector
+  },
+});
+```
+
+### FLAT
+
+Exact search, no index (for small datasets):
+
+```javascript
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'FLAT',
+  metric_type: 'L2',
+});
+```
+
+### AUTOINDEX
+
+Let Milvus choose the best index:
+
+```javascript
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'AUTOINDEX',
+  metric_type: 'L2',
+});
+```
+
+## Metric Types
+
+Choose the appropriate metric type for your use case:
+
+- **L2**: Euclidean distance (most common)
+- **IP**: Inner product
+- **COSINE**: Cosine similarity
+- **HAMMING**: Hamming distance (for binary vectors)
+- **JACCARD**: Jaccard distance (for binary vectors)
+
+```javascript
+// L2 distance
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+});
+
+// Cosine similarity
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'COSINE',
+});
+```
+
+## Index Operations
+
+### Describe Index
+
+Get index information:
+
+```javascript
+const indexInfo = await client.describeIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+});
+
+console.log('Index type:', indexInfo.index_type);
+console.log('Metric type:', indexInfo.metric_type);
+console.log('Parameters:', indexInfo.params);
+```
+
+### List Indexes
+
+List all indexes in a collection:
+
+```javascript
+const indexes = await client.listIndexes({
+  collection_name: 'my_collection',
+});
+
+console.log('Indexes:', indexes.index_descriptions);
+```
+
+### Get Index State
+
+Check if index is built:
+
+```javascript
+const state = await client.getIndexState({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+});
+
+console.log('Index state:', state.state); // 'IndexStateNone', 'IndexStateUnissued', 'IndexStateInProgress', 'IndexStateFinished', 'IndexStateFailed'
+```
+
+### Get Index Build Progress
+
+Monitor index build progress:
+
+```javascript
+const progress = await client.getIndexBuildProgress({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+});
+
+console.log('Indexed rows:', progress.indexed_rows);
+console.log('Total rows:', progress.total_rows);
+```
+
+### Alter Index Properties
+
+Modify index properties:
+
+```javascript
+await client.alterIndexProperties({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  properties: {
+    'index.params.ef': 100,
+  },
+});
+```
+
+### Drop Index Properties
+
+Remove index properties:
+
+```javascript
+await client.dropIndexProperties({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  property_names: ['index.params.ef'],
+});
+```
+
+### Drop Index
+
+Delete an index:
+
+```javascript
+await client.dropIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+});
+```
+
+## Index Best Practices
+
+### Choosing an Index Type
+
+1. **Small datasets (< 1M vectors)**: Use FLAT for exact search
+2. **Medium datasets (1M - 10M vectors)**: Use HNSW for high recall
+3. **Large datasets (> 10M vectors)**: Use IVF_PQ for memory efficiency
+4. **High-dimensional vectors**: Prefer HNSW or IVF_FLAT
+5. **Memory-constrained**: Use IVF_SQ8 or IVF_PQ
+
+### Index Parameters
+
+**HNSW Parameters:**
+- `M`: Higher values improve recall but increase memory (typical: 16-32)
+- `efConstruction`: Higher values improve index quality but slower build (typical: 100-500)
+
+**IVF Parameters:**
+- `nlist`: Number of clusters (typical: sqrt(total_vectors) to total_vectors/10)
+
+**IVF_PQ Parameters:**
+- `m`: Number of sub-vectors (typical: 8-16)
+- `nbits`: Bits per sub-vector (typical: 8)
+
+### Metric Type Selection
+
+- **L2**: Use for embeddings trained with L2 distance
+- **IP**: Use for embeddings trained with inner product
+- **COSINE**: Use for normalized embeddings
+- **HAMMING/JACCARD**: Use for binary vectors
+
+### Index Building
+
+1. **Build after insertion**: Create index after inserting data
+2. **Monitor progress**: Check build progress for large datasets
+3. **Load after indexing**: Load collection after index is built
+4. **One index per vector field**: Each vector field can have one index
+
+## Complete Example
+
+```javascript
+// Create collection
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'vector',
+      data_type: DataType.FloatVector,
+      dim: 128,
+    },
+  ],
+});
+
+// Insert data
+await client.insert({
+  collection_name: 'my_collection',
+  data: [/* ... */],
+});
+
+// Create index
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+  params: {
+    M: 16,
+    efConstruction: 200,
+  },
+});
+
+// Wait for index to be built
+let state;
+do {
+  state = await client.getIndexState({
+    collection_name: 'my_collection',
+    field_name: 'vector',
+  });
+  await new Promise(resolve => setTimeout(resolve, 1000));
+} while (state.state !== 'IndexStateFinished');
+
+// Load collection
+await client.loadCollectionSync({
+  collection_name: 'my_collection',
+});
+
+// Now you can search
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [/* vector */],
+  limit: 10,
+});
+```
+
+## Next Steps
+
+- Learn about [Data Operations](./data-operations-insert)
+- Explore [Search Operations](./data-operations-query)
+- Check out [Best Practices](./best-practices)
+

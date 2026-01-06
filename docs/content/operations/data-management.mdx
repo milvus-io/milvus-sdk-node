@@ -1,0 +1,189 @@
+# Data Management
+
+This guide covers data management operations including flushing, compaction, bulk import, and segment management.
+
+## Flush Operations
+
+Flush ensures data is persisted to disk.
+
+### Flush Collection
+
+Flush a collection asynchronously:
+
+```javascript
+const result = await client.flush({
+  collection_names: ['my_collection'],
+});
+
+console.log('Flush segment IDs:', result.coll_segIDs);
+```
+
+### Flush Synchronously
+
+Wait until flush completes:
+
+```javascript
+const result = await client.flushSync({
+  collection_names: ['my_collection'],
+});
+
+console.log('Flush completed:', result.flushed);
+```
+
+### Get Flush State
+
+Check if segments are flushed:
+
+```javascript
+const state = await client.getFlushState({
+  segmentIDs: [12345, 12346],
+});
+
+console.log('Flushed:', state.flushed);
+```
+
+## Compaction
+
+Compaction merges small segments to improve query performance.
+
+### Trigger Compaction
+
+```javascript
+const result = await client.compact({
+  collection_name: 'my_collection',
+});
+
+console.log('Compaction ID:', result.compactionID);
+```
+
+### Get Compaction State
+
+Check compaction status:
+
+```javascript
+const state = await client.getCompactionState({
+  compactionID: 12345,
+});
+
+console.log('State:', state.state);
+```
+
+### Get Compaction Plans
+
+Get detailed compaction information:
+
+```javascript
+const plans = await client.getCompactionStateWithPlans({
+  compactionID: 12345,
+});
+
+console.log('Plans:', plans.mergeInfos);
+```
+
+## Bulk Import
+
+Import data from files.
+
+### Import Data
+
+```javascript
+const result = await client.bulkInsert({
+  collection_name: 'my_collection',
+  files: [
+    '/path/to/data.json',
+    '/path/to/data2.json',
+  ],
+});
+
+console.log('Task ID:', result.tasks[0].taskID);
+```
+
+### List Import Tasks
+
+Check import task status:
+
+```javascript
+const tasks = await client.listImportTasks({
+  collection_name: 'my_collection',
+});
+
+tasks.tasks.forEach(task => {
+  console.log('Task ID:', task.taskID);
+  console.log('State:', task.state);
+  console.log('Progress:', task.progress);
+});
+```
+
+## Load Balancing
+
+Balance data across nodes:
+
+```javascript
+await client.loadBalance({
+  src_nodeID: 1,
+  dst_nodeIDs: [2, 3],
+  sealed_segmentIDs: [12345, 12346],
+});
+```
+
+## Segment Information
+
+### Get Query Segment Info
+
+Get information about query segments:
+
+```javascript
+const info = await client.getQuerySegmentInfo({
+  collection_name: 'my_collection',
+});
+
+info.infos.forEach(segment => {
+  console.log('Segment ID:', segment.segmentID);
+  console.log('State:', segment.state);
+  console.log('Size:', segment.size);
+});
+```
+
+### Get Persistent Segment Info
+
+Get information about persistent segments:
+
+```javascript
+const info = await client.getPersistentSegmentInfo({
+  collection_name: 'my_collection',
+});
+
+info.infos.forEach(segment => {
+  console.log('Segment ID:', segment.segmentID);
+  console.log('State:', segment.state);
+  console.log('Size:', segment.size);
+});
+```
+
+## Metrics
+
+Get collection metrics:
+
+```javascript
+const metrics = await client.getMetric({
+  request: {
+    metric_type: 'system_info',
+  },
+});
+
+console.log('Metrics:', metrics);
+```
+
+## Best Practices
+
+1. **Flush regularly**: Flush after bulk insertions
+2. **Monitor compaction**: Check compaction state for large collections
+3. **Use bulk import**: Use bulk import for large datasets
+4. **Balance load**: Use load balancing for distributed deployments
+5. **Monitor segments**: Check segment information for optimization
+
+## Next Steps
+
+- Learn about [Collection Management](./collection-management)
+- Explore [Best Practices](./best-practices)
+

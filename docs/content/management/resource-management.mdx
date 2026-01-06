@@ -1,0 +1,132 @@
+# Resource Management
+
+This guide covers resource group management and node/replica operations.
+
+## Resource Groups
+
+Resource groups allow you to organize and manage compute resources.
+
+### Create Resource Group
+
+Create a new resource group:
+
+```javascript
+await client.createResourceGroup({
+  resource_group: 'rg1',
+  config: {
+    requests: {
+      node_num: 2,
+    },
+    limits: {
+      node_num: 4,
+    },
+  },
+});
+```
+
+### List Resource Groups
+
+List all resource groups:
+
+```javascript
+const groups = await client.listResourceGroups();
+
+console.log('Resource groups:', groups.resource_groups);
+```
+
+### Describe Resource Group
+
+Get detailed information about a resource group:
+
+```javascript
+const info = await client.describeResourceGroup({
+  resource_group: 'rg1',
+});
+
+console.log('Resource group info:', info);
+```
+
+### Update Resource Group
+
+Update resource group configuration:
+
+```javascript
+await client.updateResourceGroup({
+  resource_group: 'rg1',
+  config: {
+    requests: {
+      node_num: 3,
+    },
+    limits: {
+      node_num: 6,
+    },
+  },
+});
+```
+
+### Drop Resource Groups
+
+Delete resource groups:
+
+```javascript
+await client.dropResourceGroups({
+  resource_groups: ['rg1', 'rg2'],
+});
+```
+
+## Node Management
+
+### Transfer Node
+
+Move a node to a different resource group:
+
+```javascript
+await client.transferNode({
+  source_resource_group: 'rg1',
+  target_resource_group: 'rg2',
+  num_node: 1,
+});
+```
+
+## Replica Management
+
+### Transfer Replica
+
+Move replicas to a different resource group:
+
+```javascript
+await client.transferReplica({
+  source_resource_group: 'rg1',
+  target_resource_group: 'rg2',
+  collection_name: 'my_collection',
+  num_replica: 1,
+});
+```
+
+## Resource Group Configuration
+
+### Configuration Structure
+
+```javascript
+{
+  requests: {
+    node_num: 2,        // Requested number of nodes
+  },
+  limits: {
+    node_num: 4,        // Maximum number of nodes
+  },
+}
+```
+
+## Best Practices
+
+1. **Organize by workload**: Create resource groups for different workloads
+2. **Set appropriate limits**: Configure limits based on available resources
+3. **Monitor usage**: Regularly check resource group usage
+4. **Balance resources**: Use transfer operations to balance load
+
+## Next Steps
+
+- Learn about [Collection Management](./collection-management)
+- Explore [Best Practices](./best-practices)
+

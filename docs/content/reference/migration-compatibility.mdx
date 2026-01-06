@@ -1,0 +1,180 @@
+# Migration & Compatibility
+
+This guide covers version compatibility, migration paths, and breaking changes.
+
+## Version Compatibility
+
+### SDK and Milvus Compatibility
+
+| Milvus version | Node SDK version | Installation                               |
+| :------------: | :--------------: | :----------------------------------------- |
+|    v2.6.0+     |    **latest**    | `yarn add @zilliz/milvus2-sdk-node@latest` |
+|    v2.5.0+     |      v2.5.0      | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
+|    v2.4.0+     |      v2.4.9      | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
+|    v2.3.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+|    v2.2.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+
+### Node.js Compatibility
+
+- **Minimum**: Node.js 18+
+- **Recommended**: Node.js 20+ (LTS)
+
+## Checking Versions
+
+### Check SDK Version
+
+```javascript
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
+
+console.log('SDK Version:', MilvusClient.sdkInfo.version);
+console.log('Recommended Milvus:', MilvusClient.sdkInfo.recommendMilvus);
+```
+
+### Check Milvus Version
+
+```javascript
+// Use Milvus API to check server version
+const info = await client.getMetric({
+  request: {
+    metric_type: 'system_info',
+  },
+});
+```
+
+## Migration Guides
+
+### Upgrading SDK Version
+
+1. **Check Compatibility**:
+   - Verify your Milvus version supports the new SDK version
+   - Review breaking changes in release notes
+
+2. **Update Package**:
+```bash
+yarn add @zilliz/milvus2-sdk-node@latest
+# or specific version
+yarn add @zilliz/milvus2-sdk-node@2.6.9
+```
+
+3. **Test Thoroughly**:
+   - Test all critical operations
+   - Verify data integrity
+   - Check performance
+
+### Upgrading Milvus Version
+
+1. **Backup Data**: Always backup before upgrading
+
+2. **Check SDK Compatibility**: Ensure SDK version supports new Milvus version
+
+3. **Update Milvus**: Follow Milvus upgrade guide
+
+4. **Update SDK**: Update SDK to compatible version
+
+5. **Test**: Verify all operations work correctly
+
+## Breaking Changes
+
+### Version 2.6.x
+
+- Enhanced type safety
+- Improved error handling
+- New index types support
+
+### Version 2.5.x
+
+- Updated connection pooling
+- Improved retry mechanisms
+- Enhanced logging
+
+### Version 2.4.x
+
+- Schema validation improvements
+- Better error messages
+- Performance optimizations
+
+## Compatibility Matrix
+
+### Feature Compatibility
+
+| Feature | Milvus 2.2 | Milvus 2.3 | Milvus 2.4 | Milvus 2.5 | Milvus 2.6 |
+|---------|------------|------------|------------|------------|------------|
+| Basic CRUD | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Index Types | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Dynamic Schema | ✅ | ✅ | ✅ | ✅ | ✅ |
+| RBAC v2 | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Sparse Vectors | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Float16/BFloat16 | ❌ | ❌ | ❌ | ✅ | ✅ |
+
+## Upgrade Paths
+
+### From v2.3.x to v2.6.x
+
+1. Update SDK:
+```bash
+yarn add @zilliz/milvus2-sdk-node@latest
+```
+
+2. Update code (if needed):
+   - Review API changes
+   - Update deprecated methods
+   - Test thoroughly
+
+### From v2.4.x to v2.6.x
+
+1. Update SDK:
+```bash
+yarn add @zilliz/milvus2-sdk-node@latest
+```
+
+2. Test new features:
+   - Try new index types
+   - Test performance improvements
+
+## Deprecated Features
+
+### Deprecated Methods
+
+Some methods may be deprecated in newer versions:
+
+```javascript
+// Old method (deprecated)
+client.alterCollection({ /* ... */ });
+
+// New method
+client.alterCollectionProperties({ /* ... */ });
+```
+
+### Migration Steps
+
+1. Check deprecation warnings
+2. Update to new methods
+3. Test functionality
+4. Remove old code
+
+## Best Practices for Migration
+
+1. **Test in Development**: Always test upgrades in development first
+
+2. **Gradual Rollout**: Roll out upgrades gradually in production
+
+3. **Monitor**: Monitor for errors after upgrade
+
+4. **Rollback Plan**: Have a rollback plan ready
+
+5. **Documentation**: Keep track of changes and configurations
+
+## Getting Help
+
+If you encounter issues during migration:
+
+1. Check [Troubleshooting](./troubleshooting)
+2. Review [GitHub Issues](https://github.com/milvus-io/milvus-sdk-node/issues)
+3. Consult [Milvus Documentation](https://milvus.io/docs)
+
+## Next Steps
+
+- Review [Best Practices](./best-practices)
+- Check [API Reference](./api-reference)
+- Explore [Examples & Tutorials](./examples-tutorials)
+

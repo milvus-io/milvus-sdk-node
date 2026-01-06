@@ -1,0 +1,484 @@
+# Examples & Tutorials
+
+This guide provides comprehensive examples and tutorials for common use cases.
+
+## Basic CRUD Operations
+
+### Complete Example
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+await client.connectPromise;
+
+// Create collection
+const schema = [
+  {
+    name: 'id',
+    data_type: DataType.Int64,
+    is_primary_key: true,
+    autoID: true,
+  },
+  {
+    name: 'vector',
+    data_type: DataType.FloatVector,
+    dim: 128,
+  },
+  {
+    name: 'text',
+    data_type: DataType.VarChar,
+    max_length: 256,
+  },
+];
+
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: schema,
+});
+
+// Insert data
+const insertResult = await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      vector: Array.from({ length: 128 }, () => Math.random()),
+      text: 'Hello Milvus',
+    },
+    {
+      vector: Array.from({ length: 128 }, () => Math.random()),
+      text: 'Vector database',
+    },
+  ],
+});
+
+console.log('Inserted IDs:', insertResult.IDs);
+
+// Create index
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+});
+
+// Load collection
+await client.loadCollectionSync({
+  collection_name: 'my_collection',
+});
+
+// Search
+const searchResults = await client.search({
+  collection_name: 'my_collection',
+  data: [Array.from({ length: 128 }, () => Math.random())],
+  limit: 5,
+  output_fields: ['text'],
+});
+
+console.log('Search results:', searchResults.results);
+
+// Query
+const queryResults = await client.query({
+  collection_name: 'my_collection',
+  expr: 'text == "Hello Milvus"',
+  output_fields: ['id', 'text'],
+});
+
+console.log('Query results:', queryResults.data);
+
+// Delete
+await client.delete({
+  collection_name: 'my_collection',
+  ids: [insertResult.IDs[0]],
+});
+
+// Drop collection
+await client.dropCollection({
+  collection_name: 'my_collection',
+});
+```
+
+## Vector Similarity Search
+
+### Image Search Example
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+await client.connectPromise;
+
+// Create collection for image embeddings
+await client.createCollection({
+  collection_name: 'image_collection',
+  fields: [
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'image_embedding',
+      data_type: DataType.FloatVector,
+      dim: 512,
+    },
+    {
+      name: 'image_url',
+      data_type: DataType.VarChar,
+      max_length: 512,
+    },
+  ],
+});
+
+// Insert image embeddings
+await client.insert({
+  collection_name: 'image_collection',
+  data: [
+    {
+      image_embedding: Array.from({ length: 512 }, () => Math.random()),
+      image_url: 'https://example.com/image1.jpg',
+    },
+    // ... more images
+  ],
+});
+
+// Create index
+await client.createIndex({
+  collection_name: 'image_collection',
+  field_name: 'image_embedding',
+  index_type: 'HNSW',
+  metric_type: 'COSINE',
+});
+
+// Load and search
+await client.loadCollectionSync({
+  collection_name: 'image_collection',
+});
+
+const queryEmbedding = Array.from({ length: 512 }, () => Math.random());
+
+const results = await client.search({
+  collection_name: 'image_collection',
+  data: [queryEmbedding],
+  limit: 10,
+  output_fields: ['image_url'],
+});
+
+console.log('Similar images:', results.results);
+```
+
+## Hybrid Search
+
+### Multi-Vector Search
+
+```javascript
+// Create collection with multiple vector fields
+await client.createCollection({
+  collection_name: 'hybrid_collection',
+  fields: [
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'text_vector',
+      data_type: DataType.FloatVector,
+      dim: 768,
+    },
+    {
+      name: 'image_vector',
+      data_type: DataType.FloatVector,
+      dim: 512,
+    },
+  ],
+});
+
+// Create indexes for both vectors
+await client.createIndex({
+  collection_name: 'hybrid_collection',
+  field_name: 'text_vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+});
+
+await client.createIndex({
+  collection_name: 'hybrid_collection',
+  field_name: 'image_vector',
+  index_type: 'HNSW',
+  metric_type: 'L2',
+});
+
+// Load collection
+await client.loadCollectionSync({
+  collection_name: 'hybrid_collection',
+});
+
+// Hybrid search
+const results = await client.hybridSearch({
+  collection_name: 'hybrid_collection',
+  reqs: [
+    {
+      data: [Array.from({ length: 768 }, () => Math.random())],
+      anns_field: 'text_vector',
+      param: { nprobe: 64 },
+      limit: 10,
+    },
+    {
+      data: [Array.from({ length: 512 }, () => Math.random())],
+      anns_field: 'image_vector',
+      param: { nprobe: 64 },
+      limit: 10,
+    },
+  ],
+  ranker: 'rrf',
+  limit: 10,
+});
+```
+
+## Dynamic Schema Usage
+
+### Flexible Schema Example
+
+```javascript
+// Create collection with dynamic fields enabled
+await client.createCollection({
+  collection_name: 'dynamic_collection',
+  fields: [
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'vector',
+      data_type: DataType.FloatVector,
+      dim: 128,
+    },
+  ],
+  enable_dynamic_field: true,
+});
+
+// Insert data with dynamic fields
+await client.insert({
+  collection_name: 'dynamic_collection',
+  data: [
+    {
+      vector: Array.from({ length: 128 }, () => Math.random()),
+      category: 'tech',        // Dynamic field
+      tags: ['ai', 'ml'],      // Dynamic field
+      metadata: {               // Dynamic field
+        author: 'John Doe',
+        date: '2024-01-01',
+      },
+    },
+  ],
+});
+```
+
+## Partition Key Usage
+
+### Time-Based Partitioning
+
+```javascript
+// Create collection with partition key
+await client.createCollection({
+  collection_name: 'time_partitioned',
+  fields: [
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'vector',
+      data_type: DataType.FloatVector,
+      dim: 128,
+    },
+    {
+      name: 'timestamp',
+      data_type: DataType.Int64,
+      is_partition_key: true, // Partition key
+    },
+  ],
+});
+
+// Insert data (automatically partitioned by timestamp)
+await client.insert({
+  collection_name: 'time_partitioned',
+  data: [
+    {
+      vector: Array.from({ length: 128 }, () => Math.random()),
+      timestamp: Date.now(),
+    },
+  ],
+});
+```
+
+## Multi-Database Setup
+
+### Database Management Example
+
+```javascript
+// Create database
+await client.createDatabase({
+  db_name: 'production_db',
+});
+
+// Create client for specific database
+const prodClient = new MilvusClient({
+  address: 'localhost:19530',
+  database: 'production_db',
+});
+
+// Create collection in production database
+await prodClient.createCollection({
+  collection_name: 'prod_collection',
+  fields: [/* ... */],
+});
+
+// List databases
+const databases = await client.listDatabases();
+console.log('Databases:', databases.db_names);
+```
+
+## Authentication Examples
+
+### Basic Authentication
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  username: 'root',
+  password: 'Milvus',
+});
+
+await client.connectPromise;
+```
+
+### Token Authentication (Zilliz Cloud)
+
+```javascript
+const client = new MilvusClient({
+  address: 'your-endpoint.zillizcloud.com:443',
+  token: 'your-api-key',
+  ssl: true,
+});
+
+await client.connectPromise;
+```
+
+## Next.js Integration
+
+### API Route Example
+
+```javascript
+// app/api/search/route.ts
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: process.env.MILVUS_ADDRESS,
+  token: process.env.MILVUS_TOKEN,
+});
+
+export async function POST(request) {
+  const { vector } = await request.json();
+
+  const results = await client.search({
+    collection_name: 'my_collection',
+    data: [vector],
+    limit: 10,
+  });
+
+  return Response.json({ results });
+}
+```
+
+## LangChain Integration
+
+### LangChain.js Example
+
+```javascript
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
+import { Milvus } from '@langchain/community/vectorstores/milvus';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+const vectorStore = await Milvus.fromDocuments(
+  documents,
+  embeddings,
+  {
+    client,
+    collectionName: 'langchain_collection',
+  }
+);
+
+const results = await vectorStore.similaritySearch('query', 5);
+```
+
+## Cloud Deployment
+
+### Zilliz Cloud Example
+
+```javascript
+const client = new MilvusClient({
+  address: 'your-endpoint.zillizcloud.com:443',
+  token: 'your-api-key',
+  ssl: true,
+  timeout: 60000,
+  maxRetries: 5,
+});
+
+await client.connectPromise;
+
+// Use client as normal
+await client.createCollection({ /* ... */ });
+```
+
+## Error Handling Pattern
+
+### Comprehensive Error Handling
+
+```javascript
+async function safeOperation(operation) {
+  try {
+    return await operation();
+  } catch (error) {
+    if (error.error_code === 'CollectionNotExists') {
+      console.error('Collection does not exist');
+    } else if (error.error_code === 'IllegalArgument') {
+      console.error('Invalid argument:', error.reason);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+    throw error;
+  }
+}
+
+// Usage
+await safeOperation(() =>
+  client.createCollection({
+    collection_name: 'my_collection',
+    fields: schema,
+  })
+);
+```
+
+## Next Steps
+
+- Explore [Best Practices](./best-practices)
+- Check out [API Reference](./api-reference)
+- Read [Troubleshooting](./troubleshooting)
+

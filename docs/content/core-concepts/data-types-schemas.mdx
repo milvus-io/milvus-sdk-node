@@ -1,0 +1,373 @@
+# Data Types & Schemas
+
+Milvus supports various data types for storing different kinds of data. Understanding these types is essential for designing effective schemas.
+
+## Supported Data Types
+
+### Scalar Types
+
+#### Integer Types
+
+- **Int8**: 8-bit signed integer (-128 to 127)
+- **Int16**: 16-bit signed integer (-32,768 to 32,767)
+- **Int32**: 32-bit signed integer
+- **Int64**: 64-bit signed integer
+
+```javascript
+import { DataType } from '@zilliz/milvus2-sdk-node';
+
+{
+  name: 'age',
+  data_type: DataType.Int64,
+}
+```
+
+#### Floating Point Types
+
+- **Float**: 32-bit floating point number
+- **Double**: 64-bit floating point number
+
+```javascript
+{
+  name: 'score',
+  data_type: DataType.Float,
+}
+```
+
+#### Boolean Type
+
+- **Bool**: Boolean value (true/false)
+
+```javascript
+{
+  name: 'is_active',
+  data_type: DataType.Bool,
+}
+```
+
+#### String Types
+
+- **VarChar**: Variable-length string (requires `max_length`)
+
+```javascript
+{
+  name: 'title',
+  data_type: DataType.VarChar,
+  max_length: 256,
+}
+```
+
+#### JSON Type
+
+- **JSON**: JSON object
+
+```javascript
+{
+  name: 'metadata',
+  data_type: DataType.JSON,
+}
+```
+
+#### Special Types
+
+- **Geometry**: Geometric data
+- **Timestamptz**: Timestamp with timezone
+
+### Vector Types
+
+#### FloatVector
+
+Dense float vector (most common):
+
+```javascript
+{
+  name: 'embedding',
+  data_type: DataType.FloatVector,
+  dim: 128, // Required: dimension of the vector
+}
+```
+
+#### BinaryVector
+
+Binary vector (for binary embeddings):
+
+```javascript
+{
+  name: 'binary_embedding',
+  data_type: DataType.BinaryVector,
+  dim: 128, // Must be multiple of 8
+}
+```
+
+#### SparseFloatVector
+
+Sparse float vector (for sparse embeddings):
+
+```javascript
+{
+  name: 'sparse_embedding',
+  data_type: DataType.SparseFloatVector,
+}
+```
+
+Sparse vectors can be represented in multiple formats:
+
+```javascript
+// Array format (with undefined for zeros)
+[1.0, undefined, undefined, 2.5, undefined]
+
+// Dictionary format
+{ '0': 1.0, '3': 2.5 }
+
+// CSR format
+{
+  indices: [0, 3],
+  values: [1.0, 2.5]
+}
+
+// COO format
+[
+  { index: 0, value: 1.0 },
+  { index: 3, value: 2.5 }
+]
+```
+
+#### Float16Vector
+
+16-bit float vector:
+
+```javascript
+{
+  name: 'f16_embedding',
+  data_type: DataType.Float16Vector,
+  dim: 128,
+}
+```
+
+#### BFloat16Vector
+
+BFloat16 vector:
+
+```javascript
+{
+  name: 'bf16_embedding',
+  data_type: DataType.BFloat16Vector,
+  dim: 128,
+}
+```
+
+#### Int8Vector
+
+8-bit integer vector:
+
+```javascript
+{
+  name: 'int8_embedding',
+  data_type: DataType.Int8Vector,
+  dim: 128,
+}
+```
+
+### Complex Types
+
+#### Array
+
+Array of scalar values:
+
+```javascript
+{
+  name: 'tags',
+  data_type: DataType.Array,
+  element_type: DataType.VarChar,
+  max_capacity: 100,
+}
+```
+
+#### Struct
+
+Nested structure:
+
+```javascript
+{
+  name: 'user_info',
+  data_type: DataType.Struct,
+  element_type: {
+    name: 'name',
+    data_type: DataType.VarChar,
+    max_length: 100,
+  },
+}
+```
+
+## Field Schema Definition
+
+Each field in a collection schema must include:
+
+```javascript
+{
+  name: 'field_name',           // Required: field name
+  data_type: DataType.Int64,    // Required: data type
+  description: 'Field description', // Optional
+  is_primary_key: false,        // Optional: primary key flag
+  autoID: false,                // Optional: auto-generate IDs
+  max_length: 256,              // Required for VarChar
+  dim: 128,                     // Required for vector types
+}
+```
+
+### Primary Key Fields
+
+Every collection must have exactly one primary key field:
+
+```javascript
+{
+  name: 'id',
+  data_type: DataType.Int64,
+  is_primary_key: true,
+  autoID: true, // Let Milvus generate IDs automatically
+}
+```
+
+Or with manual IDs:
+
+```javascript
+{
+  name: 'user_id',
+  data_type: DataType.Int64,
+  is_primary_key: true,
+  autoID: false, // You provide IDs
+}
+```
+
+## Collection Schema Creation
+
+### Basic Schema
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const schema = [
+  {
+    name: 'id',
+    data_type: DataType.Int64,
+    is_primary_key: true,
+    autoID: true,
+  },
+  {
+    name: 'vector',
+    data_type: DataType.FloatVector,
+    dim: 128,
+  },
+  {
+    name: 'text',
+    data_type: DataType.VarChar,
+    max_length: 256,
+  },
+];
+
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: schema,
+});
+```
+
+### Schema with Multiple Vector Fields
+
+```javascript
+const schema = [
+  {
+    name: 'id',
+    data_type: DataType.Int64,
+    is_primary_key: true,
+    autoID: true,
+  },
+  {
+    name: 'text_vector',
+    data_type: DataType.FloatVector,
+    dim: 768,
+  },
+  {
+    name: 'image_vector',
+    data_type: DataType.FloatVector,
+    dim: 512,
+  },
+  {
+    name: 'metadata',
+    data_type: DataType.JSON,
+  },
+];
+```
+
+### Schema with Consistency Level
+
+```javascript
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: schema,
+  consistency_level: 'Bounded', // 'Strong', 'Session', 'Bounded', 'Eventually'
+});
+```
+
+## Dynamic Schema
+
+Enable dynamic schema to add fields without redefining the schema:
+
+```javascript
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'vector',
+      data_type: DataType.FloatVector,
+      dim: 128,
+    },
+  ],
+  enable_dynamic_field: true, // Enable dynamic fields
+});
+```
+
+With dynamic schema enabled, you can insert data with additional fields:
+
+```javascript
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      vector: [/* ... */],
+      dynamic_field_1: 'value1', // Automatically added
+      dynamic_field_2: 123,      // Automatically added
+    },
+  ],
+});
+```
+
+## Schema Validation
+
+The SDK validates schemas before creating collections. Common validation errors:
+
+- Missing primary key field
+- Multiple primary key fields
+- Missing dimension for vector fields
+- Missing max_length for VarChar fields
+- Invalid dimension for BinaryVector (must be multiple of 8)
+
+## Schema Best Practices
+
+1. **Choose appropriate data types**: Use Int64 for IDs, FloatVector for embeddings
+2. **Set reasonable max_length**: For VarChar fields, set max_length based on expected content
+3. **Use autoID**: Let Milvus generate IDs unless you have specific requirements
+4. **Enable dynamic schema**: For flexible schemas that may change over time
+5. **Document fields**: Use descriptions to document field purposes
+
+## Next Steps
+
+- Learn about [Collection Management](./collection-management)
+- Explore [Data Operations](./data-operations-insert)
+- Check out [Best Practices](./best-practices)
+

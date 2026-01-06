@@ -1,16 +1,44 @@
-# Getting Started
+# Milvus Node.js SDK Documentation
 
-Welcome to the Milvus Node.js SDK documentation.
+Welcome to the official documentation for the Milvus Node.js SDK. This SDK provides a powerful and easy-to-use interface for interacting with Milvus, a cloud-native vector database designed for scalable similarity search and AI applications.
 
-## Installation
+## What is Milvus?
 
-You can install the Milvus Node.js SDK using npm or yarn:
+Milvus is an open-source vector database built to power embedding similarity search and AI applications. It provides:
 
-```bash
-npm install @zilliz/milvus2-sdk-node
-# or
-yarn add @zilliz/milvus2-sdk-node
-```
+- **Scalability**: Handle billions of vectors with ease
+- **Performance**: Optimized for fast similarity search
+- **Flexibility**: Support for multiple vector types and data types
+- **Cloud-native**: Built for modern cloud architectures
+
+## SDK Features
+
+The Milvus Node.js SDK offers:
+
+- **Full API Coverage**: Complete access to all Milvus features
+- **TypeScript Support**: Full type definitions for better development experience
+- **Connection Pooling**: Efficient connection management
+- **Error Handling**: Comprehensive error handling and retry mechanisms
+- **HTTP & gRPC Support**: Choose the protocol that fits your needs
+- **Production Ready**: Battle-tested in production environments
+
+## Version Compatibility
+
+The following table shows the recommended `@zilliz/milvus2-sdk-node` versions for different Milvus versions:
+
+| Milvus version | Node SDK version | Installation                               |
+| :------------: | :--------------: | :----------------------------------------- |
+|    v2.6.0+     |    **latest**    | `yarn add @zilliz/milvus2-sdk-node@latest` |
+|    v2.5.0+     |      v2.5.0      | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
+|    v2.4.0+     |      v2.4.9      | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
+|    v2.3.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+|    v2.2.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+
+## Prerequisites
+
+- **Node.js**: Version 18 or higher
+- **Milvus**: A running Milvus instance (standalone or cluster)
+- **Package Manager**: npm or yarn
 
 ## Quick Start
 
@@ -22,10 +50,55 @@ const client = new MilvusClient({
 });
 
 await client.connectPromise;
+
+console.log('Connected to Milvus!');
 ```
+
+## Documentation Structure
+
+### Getting Started
+- **[Getting Started](./getting-started/getting-started)**: Installation and basic usage
+- **[Examples & Tutorials](./getting-started/examples-tutorials)**: Code examples and tutorials
+
+### Core Concepts
+- **[Client Configuration](./core-concepts/client-configuration)**: Connection and configuration options
+- **[Data Types & Schemas](./core-concepts/data-types-schemas)**: Understanding data types and schema definition
+
+### Data Operations
+- **[Database Operations](./operations/database-operations)**: Database-level operations
+- **[Insert & Update](./operations/data-operations-insert)**: Inserting and updating data
+- **[Query & Search](./operations/data-operations-query)**: Querying and searching vectors
+- **[Delete](./operations/data-operations-delete)**: Deleting data
+- **[Data Management](./operations/data-management)**: Data management operations
+
+### Management
+- **[Collection Management](./management/collection-management)**: Creating and managing collections
+- **[Partition Management](./management/partition-management)**: Managing partitions
+- **[Index Management](./management/index-management)**: Creating and managing indexes
+- **[User & Role Management](./management/user-role-management)**: Managing users and roles
+- **[Resource Management](./management/resource-management)**: Resource management
+
+### Advanced
+- **[Advanced Features](./advanced/advanced-features)**: Connection pooling, retries, and more
+- **[HTTP Client](./advanced/http-client)**: Using HTTP client for serverless environments
+- **[Best Practices](./advanced/best-practices)**: Production-ready patterns and optimizations
+
+### Reference
+- **[API Reference](./reference/api-reference)**: Complete API documentation
+- **[Troubleshooting](./reference/troubleshooting)**: Common issues and solutions
+- **[Migration & Compatibility](./reference/migration-compatibility)**: Version migration guides
+- **[Contributing](./reference/contributing)**: How to contribute to the SDK
+- **[Additional Resources](./reference/additional-resources)**: Additional learning resources
 
 ## Next Steps
 
-- Read the [Getting Started Guide](./getting-started)
-- Explore the API reference
-- Check out the examples
+- Read the [Getting Started Guide](./getting-started/getting-started)
+- Explore [Examples & Tutorials](./getting-started/examples-tutorials)
+- Check out the [API Reference](./reference/api-reference)
+
+## Resources
+
+- [Milvus Official Website](https://milvus.io/)
+- [GitHub Repository](https://github.com/milvus-io/milvus-sdk-node)
+- [Milvus Documentation](https://milvus.io/docs)
+- [Attu - GUI for Milvus](https://github.com/zilliztech/attu)

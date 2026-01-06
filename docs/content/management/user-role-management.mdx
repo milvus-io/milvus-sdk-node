@@ -1,0 +1,365 @@
+# User & Role Management
+
+This guide covers user and role management, including authentication, authorization, and RBAC operations.
+
+## User Operations
+
+### Create User
+
+Create a new user:
+
+```javascript
+await client.createUser({
+  username: 'newuser',
+  password: 'securepassword',
+});
+```
+
+### Update User
+
+Update user password:
+
+```javascript
+await client.updateUser({
+  username: 'newuser',
+  password: 'newpassword',
+});
+```
+
+### Delete User
+
+Delete a user:
+
+```javascript
+await client.deleteUser({
+  username: 'newuser',
+});
+```
+
+### List Users
+
+List all users:
+
+```javascript
+const result = await client.listUsers();
+
+console.log('Users:', result.usernames);
+```
+
+### Describe User
+
+Get user information:
+
+```javascript
+const user = await client.describeUser({
+  username: 'newuser',
+});
+
+console.log('User info:', user);
+```
+
+## Role Operations
+
+### Create Role
+
+Create a new role:
+
+```javascript
+await client.createRole({
+  roleName: 'admin',
+});
+```
+
+### Drop Role
+
+Delete a role:
+
+```javascript
+await client.dropRole({
+  roleName: 'admin',
+});
+```
+
+### List Roles
+
+List all roles:
+
+```javascript
+const result = await client.listRoles();
+
+console.log('Roles:', result.results);
+```
+
+### Describe Role
+
+Get role information:
+
+```javascript
+const role = await client.describeRole({
+  roleName: 'admin',
+});
+
+console.log('Role info:', role);
+```
+
+### Has Role
+
+Check if a role exists:
+
+```javascript
+const hasRole = await client.hasRole({
+  roleName: 'admin',
+});
+
+console.log('Role exists:', hasRole.hasRole);
+```
+
+## User-Role Relationships
+
+### Add User to Role
+
+Assign a user to a role:
+
+```javascript
+await client.addUserToRole({
+  username: 'newuser',
+  roleName: 'admin',
+});
+```
+
+### Remove User from Role
+
+Remove a user from a role:
+
+```javascript
+await client.removeUserFromRole({
+  username: 'newuser',
+  roleName: 'admin',
+});
+```
+
+## Privilege Management
+
+### Grant Privilege
+
+Grant privileges to a role:
+
+```javascript
+await client.grantPrivilege({
+  roleName: 'admin',
+  object: 'Collection',
+  objectName: 'my_collection',
+  privilegeName: 'Load',
+});
+```
+
+### Revoke Privilege
+
+Revoke privileges from a role:
+
+```javascript
+await client.revokePrivilege({
+  roleName: 'admin',
+  object: 'Collection',
+  objectName: 'my_collection',
+  privilegeName: 'Load',
+});
+```
+
+### Select Grant
+
+Get granted privileges:
+
+```javascript
+const grants = await client.selectGrant({
+  roleName: 'admin',
+  object: 'Collection',
+  objectName: 'my_collection',
+});
+
+console.log('Grants:', grants.entities);
+```
+
+### List Grants
+
+List all grants for a role:
+
+```javascript
+const grants = await client.listGrants({
+  roleName: 'admin',
+});
+
+console.log('Grants:', grants.entities);
+```
+
+## Privilege Groups
+
+### Create Privilege Group
+
+Create a privilege group:
+
+```javascript
+await client.createPrivilegeGroup({
+  groupName: 'readonly_group',
+});
+```
+
+### Drop Privilege Group
+
+Delete a privilege group:
+
+```javascript
+await client.dropPrivilegeGroup({
+  groupName: 'readonly_group',
+});
+```
+
+### List Privilege Groups
+
+List all privilege groups:
+
+```javascript
+const groups = await client.listPrivilegeGroups();
+
+console.log('Groups:', groups.group_names);
+```
+
+### Add Privileges to Group
+
+Add privileges to a group:
+
+```javascript
+await client.addPrivilegesToGroup({
+  groupName: 'readonly_group',
+  privileges: [
+    {
+      object: 'Collection',
+      objectName: '*',
+      privilegeName: 'DescribeCollection',
+    },
+  ],
+});
+```
+
+### Remove Privileges from Group
+
+Remove privileges from a group:
+
+```javascript
+await client.removePrivilegesFromGroup({
+  groupName: 'readonly_group',
+  privileges: [
+    {
+      object: 'Collection',
+      objectName: '*',
+      privilegeName: 'DescribeCollection',
+    },
+  ],
+});
+```
+
+## RBAC v2
+
+### Grant Privilege v2
+
+Grant privileges using RBAC v2:
+
+```javascript
+await client.grantPrivilegeV2({
+  roleName: 'admin',
+  privileges: [
+    {
+      object: 'Collection',
+      objectName: '*',
+      privilegeName: 'Load',
+    },
+  ],
+});
+```
+
+### Revoke Privilege v2
+
+Revoke privileges using RBAC v2:
+
+```javascript
+await client.revokePrivilegeV2({
+  roleName: 'admin',
+  privileges: [
+    {
+      object: 'Collection',
+      objectName: '*',
+      privilegeName: 'Load',
+    },
+  ],
+});
+```
+
+### Backup RBAC
+
+Backup RBAC configuration:
+
+```javascript
+const backup = await client.backupRBAC();
+
+console.log('Backup:', backup);
+```
+
+### Restore RBAC
+
+Restore RBAC configuration:
+
+```javascript
+await client.restoreRBAC({
+  backup: backupData,
+});
+```
+
+## Drop All Roles
+
+Drop all roles (use with caution):
+
+```javascript
+const results = await client.dropAllRoles();
+
+console.log('Dropped roles:', results);
+```
+
+## Privilege Objects
+
+Supported privilege objects:
+- `Collection`
+- `Partition`
+- `Index`
+- `Database`
+- `Global`
+
+## Privilege Names
+
+Common privilege names:
+- `Create`
+- `Drop`
+- `Describe`
+- `Show`
+- `Load`
+- `Release`
+- `Insert`
+- `Delete`
+- `Update`
+- `Search`
+- `Query`
+- `Flush`
+- `Compact`
+
+## Best Practices
+
+1. **Principle of least privilege**: Grant only necessary privileges
+2. **Use roles**: Group users into roles for easier management
+3. **Regular audits**: Review user and role assignments regularly
+4. **Secure passwords**: Enforce strong password policies
+5. **Backup RBAC**: Regularly backup RBAC configuration
+
+## Next Steps
+
+- Learn about [Client Configuration](./client-configuration)
+- Explore [Best Practices](./best-practices)
+

@@ -1,0 +1,476 @@
+# Deploying to AWS Lambda
+
+This guide covers deploying the Milvus Node.js SDK to AWS Lambda using the HTTP client.
+
+## Why HTTP Client for AWS Lambda?
+
+While AWS Lambda supports both gRPC and HTTP, the HTTP client is recommended for Lambda functions because:
+
+- **Better cold start performance**: No connection setup overhead
+- **Stateless design**: Perfect for Lambda's execution model
+- **Simpler error handling**: Standard HTTP status codes
+- **Resource efficiency**: Lower memory footprint
+
+## Prerequisites
+
+- An AWS account
+- AWS CLI installed and configured
+- A Milvus instance (self-hosted or Zilliz Cloud)
+
+## Installation
+
+Install the SDK in your Lambda project:
+
+```bash
+npm install @zilliz/milvus2-sdk-node
+# or
+yarn add @zilliz/milvus2-sdk-node
+```
+
+## Basic Setup
+
+### 1. Create Lambda Function
+
+Create `index.js`:
+
+```javascript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 25000, // Leave buffer for Lambda timeout
+    });
+  }
+  return client;
+}
+
+export const handler = async (event) => {
+  try {
+    const milvusClient = getClient();
+
+    const { collection_name, vector, limit = 10, output_fields = [] } =
+      JSON.parse(event.body || '{}');
+
+    if (!collection_name || !vector) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: 'Missing required fields: collection_name and vector',
+        }),
+      };
+    }
+
+    const results = await milvusClient.search({
+      collection_name,
+      data: Array.isArray(vector[0]) ? vector : [vector],
+      limit,
+      output_fields,
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ results }),
+    };
+  } catch (error) {
+    console.error('Milvus error:', error);
+    return {
+      statusCode: error.status || 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        error: error.message,
+        status: error.status || 500,
+      }),
+    };
+  }
+};
+```
+
+### 2. Package Configuration
+
+Create `package.json`:
+
+```json
+{
+  "name": "milvus-lambda",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@zilliz/milvus2-sdk-node": "^2.0.0"
+  }
+}
+```
+
+### 3. Deploy with AWS CLI
+
+```bash
+# Install dependencies
+npm install
+
+# Create deployment package
+zip -r function.zip . -x "*.git*" "*.zip"
+
+# Create Lambda function
+aws lambda create-function \
+  --function-name milvus-search \
+  --runtime nodejs20.x \
+  --role arn:aws:iam::YOUR_ACCOUNT_ID:role/lambda-execution-role \
+  --handler index.handler \
+  --zip-file fileb://function.zip \
+  --timeout 30 \
+  --memory-size 512 \
+  --environment Variables="{
+    MILVUS_ENDPOINT=https://your-instance.zillizcloud.com,
+    MILVUS_TOKEN=your-token
+  }"
+```
+
+### 4. Update Environment Variables
+
+```bash
+aws lambda update-function-configuration \
+  --function-name milvus-search \
+  --environment Variables="{
+    MILVUS_ENDPOINT=https://your-instance.zillizcloud.com,
+    MILVUS_TOKEN=your-token
+  }"
+```
+
+## API Gateway Integration
+
+### Create API Gateway
+
+```bash
+# Create REST API
+aws apigatewayv2 create-api \
+  --name milvus-api \
+  --protocol-type HTTP \
+  --cors-configuration AllowOrigins="*",AllowMethods="GET,POST,OPTIONS",AllowHeaders="content-type"
+
+# Create integration
+aws apigatewayv2 create-integration \
+  --api-id YOUR_API_ID \
+  --integration-type AWS_PROXY \
+  --integration-uri arn:aws:lambda:REGION:ACCOUNT_ID:function:milvus-search
+
+# Create route
+aws apigatewayv2 create-route \
+  --api-id YOUR_API_ID \
+  --route-key "POST /search" \
+  --target integrations/YOUR_INTEGRATION_ID
+```
+
+## Complete Example: Multiple Operations
+
+### `index.js`
+
+```javascript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+let client;
+
+function getClient() {
+  if (!client) {
+    client = new HttpClient({
+      baseURL: process.env.MILVUS_ENDPOINT,
+      token: process.env.MILVUS_TOKEN,
+      timeout: 25000,
+    });
+  }
+  return client;
+}
+
+export const handler = async (event) => {
+  const milvusClient = getClient();
+  const { httpMethod, path, body } = event;
+  const parsedBody = body ? JSON.parse(body) : {};
+
+  try {
+    // Search endpoint
+    if (path === '/search' && httpMethod === 'POST') {
+      const { collection_name, vectors, limit = 10, output_fields = [] } =
+        parsedBody;
+
+      const results = await milvusClient.search({
+        collection_name,
+        data: vectors,
+        limit,
+        output_fields,
+      });
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({ results }),
+      };
+    }
+
+    // Insert endpoint
+    if (path === '/insert' && httpMethod === 'POST') {
+      const { collection_name, data } = parsedBody;
+
+      const result = await milvusClient.insert({
+        collection_name,
+        data,
+      });
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({ result }),
+      };
+    }
+
+    // Query endpoint
+    if (path === '/query' && httpMethod === 'POST') {
+      const { collection_name, filter, output_fields = [] } = parsedBody;
+
+      const results = await milvusClient.query({
+        collection_name,
+        filter,
+        output_fields,
+      });
+
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({ results }),
+      };
+    }
+
+    return {
+      statusCode: 404,
+      body: JSON.stringify({ error: 'Not Found' }),
+    };
+  } catch (error) {
+    console.error('Error:', error);
+    return {
+      statusCode: error.status || 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        error: error.message,
+        status: error.status || 500,
+      }),
+    };
+  }
+};
+```
+
+## Using AWS SAM
+
+### `template.yaml`
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  MilvusSearchFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Timeout: 30
+      MemorySize: 512
+      Environment:
+        Variables:
+          MILVUS_ENDPOINT: !Ref MilvusEndpoint
+          MILVUS_TOKEN: !Ref MilvusToken
+      Events:
+        SearchApi:
+          Type: Api
+          Properties:
+            Path: /search
+            Method: post
+        InsertApi:
+          Type: Api
+          Properties:
+            Path: /insert
+            Method: post
+
+Parameters:
+  MilvusEndpoint:
+    Type: String
+    Description: Milvus endpoint URL
+  MilvusToken:
+    Type: String
+    NoEcho: true
+    Description: Milvus API token
+```
+
+### Deploy with SAM
+
+```bash
+# Build
+sam build
+
+# Deploy
+sam deploy --guided
+```
+
+## Using Serverless Framework
+
+### `serverless.yml`
+
+```yaml
+service: milvus-lambda
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  timeout: 30
+  memorySize: 512
+  environment:
+    MILVUS_ENDPOINT: ${env:MILVUS_ENDPOINT}
+    MILVUS_TOKEN: ${env:MILVUS_TOKEN}
+
+functions:
+  search:
+    handler: index.handler
+    events:
+      - http:
+          path: search
+          method: post
+          cors: true
+  insert:
+    handler: index.handler
+    events:
+      - http:
+          path: insert
+          method: post
+          cors: true
+
+plugins:
+  - serverless-offline
+```
+
+### Deploy with Serverless
+
+```bash
+# Install Serverless Framework
+npm install -g serverless
+
+# Deploy
+serverless deploy
+```
+
+## Timeout Configuration
+
+AWS Lambda supports up to 15 minutes timeout. Configure appropriately:
+
+```javascript
+const client = new HttpClient({
+  baseURL: process.env.MILVUS_ENDPOINT,
+  token: process.env.MILVUS_TOKEN,
+  timeout: 25000, // Leave buffer for Lambda overhead
+});
+```
+
+Set Lambda timeout:
+
+```bash
+aws lambda update-function-configuration \
+  --function-name milvus-search \
+  --timeout 30
+```
+
+## Best Practices
+
+1. **Client reuse**: Reuse client instances using module-level variables (Lambda reuses execution context)
+2. **Set appropriate timeouts**: Account for Lambda's execution limits
+3. **Error handling**: Always wrap operations in try-catch blocks
+4. **Environment variables**: Use AWS Systems Manager Parameter Store or Secrets Manager for sensitive data
+5. **CORS**: Configure CORS if calling from browser
+6. **Monitoring**: Use CloudWatch for logging and monitoring
+7. **Cold starts**: HTTP client reduces cold start impact
+8. **Memory allocation**: Adjust memory based on your workload (more memory = more CPU)
+
+## Using AWS Secrets Manager
+
+For better security, use AWS Secrets Manager:
+
+```javascript
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+
+let client;
+let secrets;
+
+async function getSecrets() {
+  if (!secrets) {
+    const secretsClient = new SecretsManagerClient({});
+    const response = await secretsClient.send(
+      new GetSecretValueCommand({
+        SecretId: process.env.MILVUS_SECRET_NAME,
+      })
+    );
+    secrets = JSON.parse(response.SecretString);
+  }
+  return secrets;
+}
+
+async function getClient() {
+  if (!client) {
+    const { endpoint, token } = await getSecrets();
+    client = new HttpClient({
+      baseURL: endpoint,
+      token,
+      timeout: 25000,
+    });
+  }
+  return client;
+}
+```
+
+## Troubleshooting
+
+### Error: "Task timed out"
+
+**Solution**: 
+- Increase Lambda timeout
+- Optimize your Milvus queries
+- Reduce timeout value in HttpClient configuration
+
+### Error: "Out of memory"
+
+**Solution**: 
+- Increase Lambda memory allocation
+- Optimize your code
+- Reduce batch sizes
+
+### Error: "Module not found"
+
+**Solution**: Ensure `@zilliz/milvus2-sdk-node` is included in your deployment package.
+
+## Next Steps
+
+- Learn about [Cloudflare Workers Deployment](./cloudflare)
+- Explore [Vercel Deployment](./vercel)
+- Check out [HTTP Client Guide](./http-client)
+- Read [Best Practices](./best-practices)
+
