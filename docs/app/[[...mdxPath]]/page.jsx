@@ -33,8 +33,6 @@ async function getAllMdxPaths(dir, basePath = '') {
   return paths;
 }
 
-export const dynamicParams = true;
-
 export async function generateStaticParams() {
   const contentDir = join(__dirname, '../../content');
   const paths = await getAllMdxPaths(contentDir);
