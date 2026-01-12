@@ -145,12 +145,17 @@ export class Data extends Collection {
       throw collectionInfo;
     }
 
+    // get property allow_insert_auto_id
+    const allowInsertAutoId = collectionInfo.properties.find(
+      p => p.key === 'allow_insert_auto_id'
+    )?.value;
+
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     const functionOutputFields: string[] = [];
     const fieldMap = new Map<string, _Field>(
       collectionInfo.schema.fields.reduce((acc, v) => {
-        // if autoID is true, ignore the primary key field or if upsert is true
-        const insertable = !v.autoID || upsert;
+        // if autoID is true, ignore the primary key field or if upsert is true or allow_insert_auto_id is true
+        const insertable = !v.autoID || upsert || allowInsertAutoId === 'true';
 
         //  if function field is set, you need to ignore the field value in the data.
         if (v.is_function_output) {
