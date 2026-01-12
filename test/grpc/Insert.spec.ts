@@ -252,6 +252,12 @@ describe(`Insert API`, () => {
               },
             ],
           },
+          properties: [
+            {
+              key: 'allow_insert_auto_id',
+              value: 'false',
+            },
+          ],
         } as any);
       });
     };
@@ -271,9 +277,7 @@ describe(`Insert API`, () => {
       await fakeClient.insert(params);
       expect('a').toEqual('b');
     } catch (error) {
-      expect(error.message).toContain(
-        ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT
-      );
+      expect(error.message).toContain(ERROR_REASONS.FIELD_TYPE_IS_NOT_SUPPORT);
     } finally {
       fakeClient.closeConnection();
     }
@@ -495,5 +499,35 @@ describe(`Insert API`, () => {
     } catch (error) {
       expect(error.message).toEqual(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
     }
+  });
+
+  it(`Insert data on autoId field after change allow_insert_auto_id property should success`, async () => {
+    // before should throw error
+    try {
+      await milvusClient.insert({
+        collection_name: COLLECTION_NAME,
+        fields_data: [{ a: 1 }],
+      });
+      expect('a').toEqual('b');
+    } catch (error) {
+      // should throw error
+      expect(error.message).toContain('Insert fail');
+    }
+    await milvusClient.alterCollectionProperties({
+      collection_name: COLLECTION_NAME,
+      properties: {
+        allow_insert_auto_id: 'true',
+      },
+    });
+
+    const dataToInsert = generateInsertData(COLLECTION_NAME_PARAMS.fields, 2);
+    const params: InsertReq = {
+      collection_name: COLLECTION_NAME,
+      partition_name: PARTITION_NAME,
+      fields_data: dataToInsert,
+    };
+
+    const res = await milvusClient.insert(params);
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });

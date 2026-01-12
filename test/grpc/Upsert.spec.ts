@@ -377,6 +377,12 @@ describe(`Upsert API`, () => {
               },
             ],
           },
+          properties: [
+            {
+              key: 'allow_insert_auto_id',
+              value: 'false',
+            },
+          ],
         } as any);
       });
     };
