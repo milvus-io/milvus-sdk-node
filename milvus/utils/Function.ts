@@ -44,11 +44,10 @@ export async function promisify(
   if (metadata && finalRequestMetadata) {
     // Support both client_request_id and client-request-id (for compatibility)
     // Priority: client_request_id > client-request-id (JavaScript/TypeScript convention)
-    const clientRequestId =
-      finalRequestMetadata.client_request_id ||
-      finalRequestMetadata['client-request-id'];
+    const clientRequestId = getClientRequestId(finalRequestMetadata);
     if (clientRequestId) {
-      metadata.add(METADATA.CLIENT_REQUEST_ID, clientRequestId);
+      // Convert to string to prevent runtime errors if non-string value is passed
+      metadata.add(METADATA.CLIENT_REQUEST_ID, String(clientRequestId));
     }
   }
 
@@ -163,6 +162,23 @@ export const getValidDataArray = (data: FieldData[], length: number) => {
 };
 
 /**
+ * Extracts client request ID from metadata object with priority handling.
+ * Priority: client_request_id > client-request-id (JavaScript/TypeScript convention)
+ * @param metadata - Metadata object that may contain traceid
+ * @returns Client request ID as string or undefined if not found
+ */
+const getClientRequestId = (metadata?: {
+  'client-request-id'?: string;
+  client_request_id?: string;
+}): string | undefined => {
+  if (!metadata) {
+    return undefined;
+  }
+  // Priority: client_request_id > client-request-id (JavaScript/TypeScript convention)
+  return metadata.client_request_id || metadata['client-request-id'];
+};
+
+/**
  * Extracts request metadata (traceid) from request data.
  * Supports both client_request_id and client-request-id formats.
  * Priority: client_request_id > client-request-id (JavaScript/TypeScript convention)
@@ -176,9 +192,7 @@ export const extractRequestMetadata = (
       'client-request-id': string;
     }
   | undefined => {
-  // Priority: client_request_id > client-request-id (JavaScript/TypeScript convention)
-  const clientRequestId =
-    data?.client_request_id || data?.['client-request-id'];
+  const clientRequestId = getClientRequestId(data);
   return clientRequestId
     ? { 'client-request-id': String(clientRequestId) }
     : undefined;

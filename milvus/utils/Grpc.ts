@@ -261,7 +261,8 @@ export const getRetryInterceptor = ({
  * @returns Current time in milliseconds as a string.
  */
 const currentTimeMs = (): string => {
-  return String(Math.floor(Date.now()));
+  // Date.now() already returns an integer, so Math.floor() is redundant
+  return String(Date.now());
 };
 
 /**
