@@ -18,6 +18,7 @@ import {
   getRetryInterceptor,
   getMetaInterceptor,
   getTraceInterceptor,
+  getRequestMetadataInterceptor,
   ErrorCode,
   DEFAULT_DB,
   METADATA,
@@ -99,6 +100,9 @@ export class GRPCClient extends User {
 
     // interceptors
     const interceptors = [metaInterceptor];
+
+    // add request metadata interceptor (adds client-request-unixmsec)
+    interceptors.push(getRequestMetadataInterceptor());
 
     // add trace if necessary
     if (this.config.trace) {

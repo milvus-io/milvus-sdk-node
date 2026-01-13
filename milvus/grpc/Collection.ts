@@ -201,6 +201,7 @@ export class Collection extends Database {
     }
 
     // Call the promisify function to create the collection.
+    // traceid will be automatically extracted from data by promisify
     const createPromise = await promisify(
       this.channelPool,
       'CreateCollection',

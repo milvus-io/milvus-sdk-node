@@ -3,7 +3,7 @@ import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
 const milvusClient = new MilvusClient({
   address: IP,
-  logLevel: 'info',
+  logLevel: 'debug',
   logPrefix: 'Basic API',
 });
 const COLLECTION_NAME = GENERATE_NAME();
@@ -119,6 +119,26 @@ describe(`Basic API without database`, () => {
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME,
       fields: schema,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create collection with traceid should be successful`, async () => {
+    const traceId = 'test-trace-id-' + Date.now();
+    const res = await milvusClient.createCollection({
+      collection_name: COLLECTION_NAME + '_trace',
+      fields: schema,
+      client_request_id: traceId,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Create collection with traceid (alternative format) should be successful`, async () => {
+    const traceId = 'test-trace-id-alt-' + Date.now();
+    const res = await milvusClient.createCollection({
+      collection_name: COLLECTION_NAME + '_trace_alt',
+      fields: schema,
+      'client-request-id': traceId,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });

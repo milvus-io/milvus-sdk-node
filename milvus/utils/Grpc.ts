@@ -19,7 +19,7 @@ interface Carrier {
   traceparent?: string;
   tracestate?: string;
 }
-import { DEFAULT_DB } from '../const';
+import { DEFAULT_DB, METADATA } from '../const';
 import sdkInfo from '../../sdk.json';
 import milvusProtoJson from '../proto-json/milvus';
 import { INamespace } from 'protobufjs';
@@ -255,6 +255,36 @@ export const getRetryInterceptor = ({
     };
     return new InterceptingCall(nextCall(options), requester);
   };
+
+/**
+ * Returns current time in milliseconds as a string.
+ * @returns Current time in milliseconds as a string.
+ */
+const currentTimeMs = (): string => {
+  // Date.now() already returns an integer, so Math.floor() is redundant
+  return String(Date.now());
+};
+
+/**
+ * Returns a gRPC interceptor function that adds request-level metadata to outgoing requests.
+ * This interceptor automatically adds client-request-unixmsec timestamp to every request.
+ * The client-request-id should be passed via promisify's requestMetadata parameter.
+ */
+export const getRequestMetadataInterceptor = () => {
+  return function (options: any, nextCall: any) {
+    // Create a new InterceptingCall object with nextCall(options) as its first parameter.
+    return new InterceptingCall(nextCall(options), {
+      // Define the start method of the InterceptingCall object.
+      start: function (metadata, listener, next) {
+        // Always add client-request-unixmsec timestamp
+        metadata.add(METADATA.CLIENT_REQUEST_UNIXMSEC, currentTimeMs());
+
+        // Call next(metadata, listener) to continue the call with the modified metadata.
+        next(metadata, listener);
+      },
+    });
+  };
+};
 
 /**
  * Returns a gRPC interceptor function that adds trace context to outgoing requests.

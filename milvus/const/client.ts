@@ -2,6 +2,8 @@ export enum METADATA {
   DATABASE = 'dbname',
   AUTH = 'authorization',
   CLIENT_ID = 'identifier',
+  CLIENT_REQUEST_ID = 'client-request-id',
+  CLIENT_REQUEST_UNIXMSEC = 'client-request-unixmsec',
 }
 
 export enum CONNECT_STATUS {
