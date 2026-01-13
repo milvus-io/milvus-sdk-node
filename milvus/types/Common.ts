@@ -32,6 +32,8 @@ export interface StringArrayId {
 }
 export interface GrpcTimeOut {
   timeout?: number;
+  client_request_id?: string; // optional, trace id for request tracking
+  'client-request-id'?: string; // optional, trace id for request tracking (alternative format)
 }
 export type PrivilegesTypes =
   | CollectionPrivileges

@@ -200,14 +200,27 @@ describe(`Milvus client`, () => {
       address: IP,
       __SKIP_CONNECT__: true,
     });
-    expect(nonTraceClient.channelOptions.interceptors.length).toEqual(2);
+    // meta interceptor + request metadata interceptor + retry interceptor = 3
+    expect(nonTraceClient.channelOptions.interceptors.length).toEqual(3);
     const traceClient = new MilvusClient({
       address: IP,
       trace: true,
       __SKIP_CONNECT__: true,
     });
 
-    expect(traceClient.channelOptions.interceptors.length).toEqual(3);
+    // meta interceptor + request metadata interceptor + trace interceptor + retry interceptor = 4
+    expect(traceClient.channelOptions.interceptors.length).toEqual(4);
+  });
+
+  it(`should add request metadata interceptor by default`, async () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+    // Should have request metadata interceptor (adds client-request-unixmsec)
+    expect(client.channelOptions.interceptors.length).toBeGreaterThanOrEqual(
+      3
+    );
   });
 
   it(`Expect get node sdk info`, async () => {

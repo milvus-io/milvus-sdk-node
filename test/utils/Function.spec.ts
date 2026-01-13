@@ -10,7 +10,9 @@ import {
   getDataKey,
   DataType,
   getValidDataArray,
+  extractRequestMetadata,
 } from '../../milvus';
+import { Metadata } from '@grpc/grpc-js';
 
 describe('Function API testing', () => {
   let pool: any;
@@ -243,5 +245,158 @@ describe('Function API testing', () => {
     ];
     const result5 = getValidDataArray(e, length);
     expect(result5).toEqual([true, true, true, false, false]);
+  });
+
+  describe('promisify with traceid', () => {
+    it('should extract client_request_id from params automatically', async () => {
+      const traceId = 'test-trace-id-123';
+      const params = {
+        collection_name: 'test_collection',
+        client_request_id: traceId,
+      };
+
+      let capturedMetadata: Metadata | undefined;
+      client.testFunction = jest.fn((params, options, callback) => {
+        capturedMetadata = options.metadata;
+        callback(null, 'success');
+      });
+
+      await promisify(pool, 'testFunction', params, 1000);
+
+      expect(capturedMetadata).toBeDefined();
+      expect(capturedMetadata?.get('client-request-id')).toEqual([traceId]);
+    });
+
+    it('should extract client-request-id from params automatically', async () => {
+      const traceId = 'test-trace-id-456';
+      const params = {
+        collection_name: 'test_collection',
+        'client-request-id': traceId,
+      };
+
+      let capturedMetadata: Metadata | undefined;
+      client.testFunction = jest.fn((params, options, callback) => {
+        capturedMetadata = options.metadata;
+        callback(null, 'success');
+      });
+
+      await promisify(pool, 'testFunction', params, 1000);
+
+      expect(capturedMetadata).toBeDefined();
+      expect(capturedMetadata?.get('client-request-id')).toEqual([traceId]);
+    });
+
+    it('should prefer client_request_id over client-request-id when both exist', async () => {
+      const params = {
+        collection_name: 'test_collection',
+        client_request_id: 'preferred-id',
+        'client-request-id': 'alternative-id',
+      };
+
+      let capturedMetadata: Metadata | undefined;
+      client.testFunction = jest.fn((params, options, callback) => {
+        capturedMetadata = options.metadata;
+        callback(null, 'success');
+      });
+
+      await promisify(pool, 'testFunction', params, 1000);
+
+      expect(capturedMetadata).toBeDefined();
+      expect(capturedMetadata?.get('client-request-id')).toEqual([
+        'preferred-id',
+      ]);
+    });
+
+    it('should use explicit requestMetadata when provided', async () => {
+      const params = {
+        collection_name: 'test_collection',
+        client_request_id: 'params-id',
+      };
+      const explicitMetadata = {
+        'client-request-id': 'explicit-id',
+      };
+
+      let capturedMetadata: Metadata | undefined;
+      client.testFunction = jest.fn((params, options, callback) => {
+        capturedMetadata = options.metadata;
+        callback(null, 'success');
+      });
+
+      await promisify(pool, 'testFunction', params, 1000, explicitMetadata);
+
+      expect(capturedMetadata).toBeDefined();
+      expect(capturedMetadata?.get('client-request-id')).toEqual([
+        'explicit-id',
+      ]);
+    });
+
+    it('should not add metadata when no traceid is provided', async () => {
+      const params = {
+        collection_name: 'test_collection',
+      };
+
+      let capturedMetadata: Metadata | undefined;
+      client.testFunction = jest.fn((params, options, callback) => {
+        capturedMetadata = options.metadata;
+        callback(null, 'success');
+      });
+
+      await promisify(pool, 'testFunction', params, 1000);
+
+      expect(capturedMetadata).toBeUndefined();
+    });
+  });
+
+  describe('extractRequestMetadata', () => {
+    it('should extract client_request_id from data', () => {
+      const data = {
+        collection_name: 'test',
+        client_request_id: 'trace-123',
+      };
+      const result = extractRequestMetadata(data);
+      expect(result).toEqual({ 'client-request-id': 'trace-123' });
+    });
+
+    it('should extract client-request-id from data', () => {
+      const data = {
+        collection_name: 'test',
+        'client-request-id': 'trace-456',
+      };
+      const result = extractRequestMetadata(data);
+      expect(result).toEqual({ 'client-request-id': 'trace-456' });
+    });
+
+    it('should prefer client_request_id over client-request-id', () => {
+      const data = {
+        collection_name: 'test',
+        client_request_id: 'preferred',
+        'client-request-id': 'alternative',
+      };
+      const result = extractRequestMetadata(data);
+      expect(result).toEqual({ 'client-request-id': 'preferred' });
+    });
+
+    it('should return undefined when no traceid is provided', () => {
+      const data = {
+        collection_name: 'test',
+      };
+      const result = extractRequestMetadata(data);
+      expect(result).toBeUndefined();
+    });
+
+    it('should handle null and undefined values', () => {
+      expect(extractRequestMetadata(null)).toBeUndefined();
+      expect(extractRequestMetadata(undefined)).toBeUndefined();
+      expect(extractRequestMetadata({})).toBeUndefined();
+    });
+
+    it('should convert traceid to string', () => {
+      const data = {
+        collection_name: 'test',
+        client_request_id: 12345,
+      };
+      const result = extractRequestMetadata(data);
+      expect(result).toEqual({ 'client-request-id': '12345' });
+    });
   });
 });

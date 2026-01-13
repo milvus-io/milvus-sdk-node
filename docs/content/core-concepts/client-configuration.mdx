@@ -286,6 +286,34 @@ interface ClientConfig {
 }
 ```
 
+## Request Tracing
+
+All API requests support optional trace IDs for tracking and debugging:
+
+```javascript
+// Add trace ID to any request
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [...],
+  client_request_id: 'trace-id-123', // Optional trace ID
+});
+
+// Alternative format (compatible with pymilvus)
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [...],
+  'client-request-id': 'trace-id-123',
+});
+```
+
+**Features:**
+- Automatic timestamp: Every request includes `client-request-unixmsec`
+- Trace ID support: Add `client_request_id` or `client-request-id` to track requests
+- Global support: All API methods automatically support trace IDs
+- Priority: `client_request_id` takes priority over `client-request-id` (JavaScript convention)
+
+For more details, see [Request Tracing](../advanced/advanced-features#request-tracing-traceid) in Advanced Features.
+
 ## Next Steps
 
 - Learn about [Data Types & Schemas](./data-types-schemas)

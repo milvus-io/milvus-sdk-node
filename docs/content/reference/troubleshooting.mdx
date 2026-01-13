@@ -255,6 +255,28 @@ const client = new MilvusClient({
 });
 ```
 
+### Use TraceID for Request Tracking
+
+Add trace IDs to track specific requests:
+
+```javascript
+// Add trace ID to track requests
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [...],
+  client_request_id: 'debug-trace-123', // Track this specific request
+});
+
+// All operations support trace IDs
+await client.insert({
+  collection_name: 'my_collection',
+  data: [...],
+  client_request_id: 'insert-trace-456',
+});
+```
+
+This helps correlate logs and errors with specific requests. See [Request Tracing](../advanced/advanced-features#request-tracing-traceid) for more details.
+
 ### Check Collection Schema
 
 ```javascript

@@ -124,6 +124,103 @@ const client = new MilvusClient({
 });
 ```
 
+## Request Tracing (TraceID)
+
+Track and trace individual requests using trace IDs for debugging and monitoring purposes.
+
+### Overview
+
+The SDK automatically adds a timestamp (`client-request-unixmsec`) to every request. You can optionally provide a `client_request_id` (or `client-request-id`) to track specific requests across your application.
+
+### Automatic Timestamp
+
+Every request automatically includes a `client-request-unixmsec` timestamp:
+
+```javascript
+// This request will have client-request-unixmsec automatically added
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [...],
+  // Timestamp is added automatically, no configuration needed
+});
+```
+
+### Using TraceID
+
+Add a trace ID to track specific requests:
+
+```javascript
+// Recommended: use client_request_id (JavaScript/TypeScript convention)
+const traceId = `trace-${Date.now()}`;
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [...],
+  client_request_id: traceId,
+});
+
+// Alternative: use client-request-id (compatible with pymilvus)
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [...],
+  'client-request-id': traceId,
+});
+```
+
+**Note**: If both formats are provided, `client_request_id` takes priority (JavaScript/TypeScript convention).
+
+### Supported Operations
+
+All API methods that extend `GrpcTimeOut` support trace IDs:
+
+```javascript
+// Insert with trace ID
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    { id: 1, vector: [0.1, 0.2, 0.3] },
+  ],
+  client_request_id: 'insert-trace-123',
+});
+
+// Search with trace ID
+await client.search({
+  collection_name: 'my_collection',
+  vector: [0.1, 0.2, 0.3],
+  limit: 10,
+  client_request_id: 'search-trace-456',
+});
+
+// Query with trace ID
+await client.query({
+  collection_name: 'my_collection',
+  expr: 'id > 100',
+  client_request_id: 'query-trace-789',
+});
+
+// All other operations support trace IDs
+await client.createIndex({
+  collection_name: 'my_collection',
+  field_name: 'vector',
+  index_type: 'IVF_FLAT',
+  client_request_id: 'index-trace-101',
+});
+```
+
+### Use Cases
+
+1. **Request Tracking**: Track requests across distributed systems
+2. **Debugging**: Identify specific requests in logs
+3. **Performance Monitoring**: Correlate trace IDs with performance metrics
+4. **Error Investigation**: Trace errors back to specific requests
+
+### Implementation Details
+
+- Trace IDs are passed through gRPC metadata
+- Both `client_request_id` and `client-request-id` formats are supported
+- Trace IDs are automatically extracted from request parameters
+- The timestamp `client-request-unixmsec` is automatically added by the interceptor
+- No need to modify API method implementations
+
 ## Iterator Patterns
 
 ### Query Iterator
