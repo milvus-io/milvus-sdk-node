@@ -1,4 +1,5 @@
 export * from './Collection';
+export * from './Database';
 export * from './Vector';
 export * from './User';
 export * from './Role';

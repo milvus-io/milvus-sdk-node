@@ -14,6 +14,14 @@ import {
   HttpCollectionFlushResponse,
   HttpCollectionLoadStateReq,
   HttpCollectionLoadStateResponse,
+  HttpCollectionAddFieldReq,
+  HttpCollectionAddFieldResponse,
+  HttpCollectionAlterPropertiesReq,
+  HttpCollectionAlterPropertiesResponse,
+  HttpCollectionAlterFieldPropertiesReq,
+  HttpCollectionAlterFieldPropertiesResponse,
+  HttpCollectionDropPropertiesReq,
+  HttpCollectionDropPropertiesResponse,
 } from '../types';
 import {
   DEFAULT_PRIMARY_KEY_FIELD,
@@ -83,6 +91,54 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
       const url = `${this.collectionPrefix}/drop`;
 
       return await this.POST<HttpBaseResponse>(url, data, options);
+    }
+
+    async addCollectionField(
+      params: HttpCollectionAddFieldReq,
+      options?: FetchOptions
+    ): Promise<HttpCollectionAddFieldResponse> {
+      const url = `${this.collectionPrefix}/fields/add`;
+      return await this.POST<HttpCollectionAddFieldResponse>(
+        url,
+        params,
+        options
+      );
+    }
+
+    async alterCollectionProperties(
+      params: HttpCollectionAlterPropertiesReq,
+      options?: FetchOptions
+    ): Promise<HttpCollectionAlterPropertiesResponse> {
+      const url = `${this.collectionPrefix}/alter_properties`;
+      return await this.POST<HttpCollectionAlterPropertiesResponse>(
+        url,
+        params,
+        options
+      );
+    }
+
+    async alterCollectionFieldProperties(
+      params: HttpCollectionAlterFieldPropertiesReq,
+      options?: FetchOptions
+    ): Promise<HttpCollectionAlterFieldPropertiesResponse> {
+      const url = `${this.collectionPrefix}/fields/alter_properties`;
+      return await this.POST<HttpCollectionAlterFieldPropertiesResponse>(
+        url,
+        params,
+        options
+      );
+    }
+
+    async dropCollectionProperties(
+      params: HttpCollectionDropPropertiesReq,
+      options?: FetchOptions
+    ): Promise<HttpCollectionDropPropertiesResponse> {
+      const url = `${this.collectionPrefix}/drop_properties`;
+      return await this.POST<HttpCollectionDropPropertiesResponse>(
+        url,
+        params,
+        options
+      );
     }
 
     // GET list collections

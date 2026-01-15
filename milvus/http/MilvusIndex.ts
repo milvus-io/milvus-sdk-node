@@ -7,6 +7,10 @@ import {
   HttpIndexCreateReq,
   HttpIndexBaseReq,
   HttpIndexDescribeResponse,
+  HttpIndexAlterPropertiesReq,
+  HttpIndexAlterPropertiesResponse,
+  HttpIndexDropPropertiesReq,
+  HttpIndexDropPropertiesResponse,
 } from '../types';
 
 /**
@@ -43,6 +47,22 @@ export function MilvusIndex<T extends Constructor<HttpBaseClient>>(Base: T) {
     async listIndexes(params: HttpBaseReq, options?: FetchOptions) {
       const url = `${this.indexPrefix}/list`;
       return this.POST<HttpBaseResponse<string[]>>(url, params, options);
+    }
+
+    async alterIndexProperties(
+      params: HttpIndexAlterPropertiesReq,
+      options?: FetchOptions
+    ): Promise<HttpIndexAlterPropertiesResponse> {
+      const url = `${this.indexPrefix}/alter_properties`;
+      return this.POST<HttpIndexAlterPropertiesResponse>(url, params, options);
+    }
+
+    async dropIndexProperties(
+      params: HttpIndexDropPropertiesReq,
+      options?: FetchOptions
+    ): Promise<HttpIndexDropPropertiesResponse> {
+      const url = `${this.indexPrefix}/drop_properties`;
+      return this.POST<HttpIndexDropPropertiesResponse>(url, params, options);
     }
   };
 }

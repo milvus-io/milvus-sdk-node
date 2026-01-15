@@ -97,6 +97,65 @@ export function generateTests(
       },
     };
 
+    const addCollectionFieldParams = {
+      collectionName: createParams.collectionName,
+      schema: {
+        fieldName: 'new_field',
+        dataType: 'VarChar',
+        nullable: true,
+        defaultValue: 'default_value',
+        elementTypeParams: {
+          max_length: 255,
+        },
+      },
+    };
+
+    const alterCollectionPropertiesParams = {
+      collectionName: createParams.collectionName,
+      properties: {
+        'collection.ttl.seconds': 3600,
+      },
+    };
+
+    const alterCollectionFieldPropertiesParams = {
+      collectionName: createParams.collectionName,
+      fieldName: 'new_field',
+      fieldParams: {
+        max_length: 100,
+      },
+    };
+
+    const dropCollectionPropertiesParams = {
+      collectionName: createParams.collectionName,
+      propertyKeys: ['collection.ttl.seconds'],
+    };
+
+    const alterDatabasePropertiesParams = {
+      dbName: config.database ?? DEFAULT_DB,
+      properties: {
+        'database.replica.number': 1,
+      },
+    };
+
+    const dropDatabasePropertiesParams = {
+      dbName: config.database ?? DEFAULT_DB,
+      propertyKeys: ['database.replica.number'],
+    };
+
+    const alterIndexPropertiesParams = {
+      collectionName: createParams.collectionName,
+      indexName: createParams.vectorFieldName,
+      properties: {
+        'mmap.enabled': true,
+      },
+    };
+
+    const dropIndexPropertiesParams = {
+      collectionName: createParams.collectionName,
+      indexName: createParams.vectorFieldName,
+      propertyKeys: ['mmap.enabled'],
+    };
+
     const importFile = '/d1782fa1-6b65-4ff3-b05a-43a436342445/1.json';
 
     const count = 100;
@@ -169,6 +228,22 @@ export function generateTests(
       expect(createDefault.code).toEqual(0);
     });
 
+    it('should alter database properties successfully', async () => {
+      const alter = await client.alterDatabaseProperties(
+        alterDatabasePropertiesParams
+      );
+
+      expect(alter.code).toEqual(0);
+    });
+
+    it('should drop database properties successfully', async () => {
+      const drop = await client.dropDatabaseProperties(
+        dropDatabasePropertiesParams
+      );
+
+      expect(drop.code).toEqual(0);
+    });
+
     it('should describe collection successfully', async () => {
       const describe = await client.describeCollection({
         dbName: config.database,
@@ -186,6 +261,46 @@ export function generateTests(
       expect(describe.data.indexes[0].metricType).toEqual(
         createParams.metricType
       );
+    });
+
+    it('should add collection field successfully', async () => {
+      const addField = await client.addCollectionField(
+        addCollectionFieldParams
+      );
+
+      expect(addField.code).toEqual(0);
+
+      const describe = await client.describeCollection({
+        dbName: config.database,
+        collectionName: createParams.collectionName,
+      });
+
+      expect(describe.code).toEqual(0);
+      expect(describe.data.fields.length).toEqual(3);
+    });
+
+    it('should alter collection properties successfully', async () => {
+      const alter = await client.alterCollectionProperties(
+        alterCollectionPropertiesParams
+      );
+
+      expect([0, 104]).toContain(alter.code);
+    });
+
+    it('should alter collection field properties successfully', async () => {
+      const alter = await client.alterCollectionFieldProperties(
+        alterCollectionFieldPropertiesParams
+      );
+
+      expect(alter.code).toEqual(0);
+    });
+
+    it('should drop collection properties successfully', async () => {
+      const drop = await client.dropCollectionProperties(
+        dropCollectionPropertiesParams
+      );
+
+      expect(drop.code).toEqual(0);
     });
 
     it('should describe default collection successfully', async () => {
@@ -451,6 +566,20 @@ export function generateTests(
       expect(list.data[0]).toEqual(createParams.vectorFieldName);
     });
 
+    it('should alter index properties successfully', async () => {
+      const alter = await client.alterIndexProperties(
+        alterIndexPropertiesParams
+      );
+
+      expect([0, 104]).toContain(alter.code);
+    });
+
+    it('should drop index properties successfully', async () => {
+      const drop = await client.dropIndexProperties(dropIndexPropertiesParams);
+
+      expect([0, 104]).toContain(drop.code);
+    });
+
     it('should create and describe index successfully', async () => {
       await client.createCollection(createCustomSetupParams);
       const create = await client.createIndex({
@@ -490,7 +619,7 @@ export function generateTests(
     it('should describe alias successfully', async () => {
       /**
        * https://github.com/milvus-io/milvus/issues/31978
-       * TODO: Alias describe api has issue，temporarily comment
+       * TODO: Alias describe api has issue, temporarily commented out.
        */
       // const describe = await client.describeAlias({
       //   dbName: config.database ?? DEFAULT_DB,
