@@ -48,18 +48,73 @@ jobs:
           
           # Create milvus config file with OpenAI API key
           mkdir -p milvus-config
-          cat > milvus-config/milvus.yaml << EOF
-          credential:
-            apikey1:
-              apikey: ${OPENAI_API_KEY}
-          
-          function:
-            textEmbedding:
-              providers:
-                openai:
-                  credential: apikey1
-                  enable: true
-          EOF
+          wget https://raw.githubusercontent.com/milvus-io/milvus/master/configs/milvus.yaml -O milvus-config/milvus.yaml
+          awk -v key="${OPENAI_API_KEY}" '
+            BEGIN { inserted=0 }
+            /^credential:/ && inserted==0 {
+              print;
+              print "  apikey1:";
+              print "    apikey: " key;
+              inserted=1;
+              next;
+            }
+            { print }
+          ' milvus-config/milvus.yaml > milvus-config/milvus.yaml.tmp
+          mv milvus-config/milvus.yaml.tmp milvus-config/milvus.yaml
+          awk '
+            BEGIN {
+              in_openai=0;
+              openai_indent="";
+              found_cred=0;
+              found_enable=0;
+            }
+            function print_missing() {
+              if (!found_cred) {
+                print openai_indent "  credential: apikey1";
+              }
+              if (!found_enable) {
+                print openai_indent "  enable: true";
+              }
+            }
+            {
+              if ($0 ~ /^[[:space:]]*openai:[[:space:]]*$/) {
+                in_openai=1;
+                match($0, /^[[:space:]]*/);
+                openai_indent=substr($0, RSTART, RLENGTH);
+                found_cred=0;
+                found_enable=0;
+                print;
+                next;
+              }
+              if (in_openai) {
+                match($0, /^[[:space:]]*/);
+                curr_indent=substr($0, RSTART, RLENGTH);
+                if (length(curr_indent) <= length(openai_indent) && $0 !~ /^[[:space:]]*$/) {
+                  print_missing();
+                  in_openai=0;
+                  print;
+                  next;
+                }
+                if ($0 ~ /^[[:space:]]*credential:/) {
+                  print openai_indent "  credential: apikey1";
+                  found_cred=1;
+                  next;
+                }
+                if ($0 ~ /^[[:space:]]*enable:/) {
+                  print openai_indent "  enable: true";
+                  found_enable=1;
+                  next;
+                }
+              }
+              print;
+            }
+            END {
+              if (in_openai) {
+                print_missing();
+              }
+            }
+          ' milvus-config/milvus.yaml > milvus-config/milvus.yaml.tmp
+          mv milvus-config/milvus.yaml.tmp milvus-config/milvus.yaml
 
           # Use docker-compose override to mount the config file
           cat > docker-compose.override.yml << EOF
