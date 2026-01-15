@@ -40,10 +40,36 @@ jobs:
         run: echo "Milvus Version is ${{ steps.info.outputs.milvusVersion }}"
 
       - name: Run target Milvus
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
           sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ steps.info.outputs.milvusVersion }}/g" docker-compose.yml
-          docker compose up -d
+          
+          # Create milvus config file with OpenAI API key
+          mkdir -p milvus-config
+          cat > milvus-config/milvus.yaml << EOF
+          credential:
+            apikey1:
+              apikey: ${OPENAI_API_KEY}
+          
+          function:
+            textEmbedding:
+              providers:
+                openai:
+                  credential: apikey1
+                  enable: true
+          EOF
+
+          # Use docker-compose override to mount the config file
+          cat > docker-compose.override.yml << EOF
+          services:
+            milvus-standalone:
+              volumes:
+                - ./milvus-config/milvus.yaml:/milvus/configs/milvus.yaml
+          EOF
+
+          docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
       - name: update submodules
         run: |

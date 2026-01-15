@@ -231,6 +231,14 @@ export default {
                       "rule": "repeated",
                       "type": "StructArrayFieldSchema",
                       "id": 9
+                    },
+                    "version": {
+                      "type": "int32",
+                      "id": 10
+                    },
+                    "enableNamespace": {
+                      "type": "bool",
+                      "id": 15
                     }
                   }
                 },
@@ -252,6 +260,11 @@ export default {
                       "rule": "repeated",
                       "type": "FieldSchema",
                       "id": 4
+                    },
+                    "typeParams": {
+                      "rule": "repeated",
+                      "type": "common.KeyValuePair",
+                      "id": 5
                     }
                   }
                 },
@@ -722,6 +735,11 @@ export default {
                     "primaryFieldName": {
                       "type": "string",
                       "id": 13
+                    },
+                    "highlightResults": {
+                      "rule": "repeated",
+                      "type": "common.HighlightResult",
+                      "id": 14
                     }
                   }
                 },
@@ -1096,6 +1114,9 @@ export default {
                     "DescribeAlias": 113,
                     "ListAliases": 114,
                     "AlterCollectionField": 115,
+                    "AddCollectionFunction": 116,
+                    "AlterCollectionFunction": 117,
+                    "DropCollectionFunction": 118,
                     "CreatePartition": 200,
                     "DropPartition": 201,
                     "HasPartition": 202,
@@ -1126,6 +1147,7 @@ export default {
                     "FlushSegment": 406,
                     "CreateSegment": 407,
                     "Import": 408,
+                    "FlushAll": 409,
                     "Search": 500,
                     "SearchResult": 501,
                     "GetIndexState": 502,
@@ -1195,7 +1217,8 @@ export default {
                     "ListDatabases": 1803,
                     "AlterDatabase": 1804,
                     "DescribeDatabase": 1805,
-                    "AddCollectionField": 1900
+                    "AddCollectionField": 1900,
+                    "AlterWAL": 2000
                   }
                 },
                 "MsgBase": {
@@ -1383,7 +1406,8 @@ export default {
                     "PrivilegeAddCollectionField": 71,
                     "PrivilegeAddFileResource": 72,
                     "PrivilegeRemoveFileResource": 73,
-                    "PrivilegeListFileResources": 74
+                    "PrivilegeListFileResources": 74,
+                    "PrivilegeUpdateReplicateConfiguration": 78
                   }
                 },
                 "PrivilegeExt": {
@@ -1520,11 +1544,6 @@ export default {
                     "LOW": 1
                   }
                 },
-                "FileResourceType": {
-                  "values": {
-                    "ANALYZER_DICTIONARY": 0
-                  }
-                },
                 "WALName": {
                   "values": {
                     "Unknown": 0,
@@ -1636,6 +1655,52 @@ export default {
                     "timeTick": {
                       "type": "uint64",
                       "id": 4
+                    }
+                  }
+                },
+                "HighlightData": {
+                  "fields": {
+                    "fragments": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    },
+                    "scores": {
+                      "rule": "repeated",
+                      "type": "float",
+                      "id": 2
+                    }
+                  }
+                },
+                "HighlightResult": {
+                  "fields": {
+                    "fieldName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "datas": {
+                      "rule": "repeated",
+                      "type": "HighlightData",
+                      "id": 2
+                    }
+                  }
+                },
+                "HighlightType": {
+                  "values": {
+                    "Lexical": 0,
+                    "Semantic": 1
+                  }
+                },
+                "Highlighter": {
+                  "fields": {
+                    "type": {
+                      "type": "HighlightType",
+                      "id": 1
+                    },
+                    "params": {
+                      "rule": "repeated",
+                      "type": "KeyValuePair",
+                      "id": 2
                     }
                   }
                 }

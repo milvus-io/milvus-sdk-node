@@ -60,6 +60,18 @@ export default {
                       "requestType": "AlterCollectionFieldRequest",
                       "responseType": "common.Status"
                     },
+                    "AddCollectionFunction": {
+                      "requestType": "AddCollectionFunctionRequest",
+                      "responseType": "common.Status"
+                    },
+                    "AlterCollectionFunction": {
+                      "requestType": "AlterCollectionFunctionRequest",
+                      "responseType": "common.Status"
+                    },
+                    "DropCollectionFunction": {
+                      "requestType": "DropCollectionFunctionRequest",
+                      "responseType": "common.Status"
+                    },
                     "CreatePartition": {
                       "requestType": "CreatePartitionRequest",
                       "responseType": "common.Status"
@@ -1884,6 +1896,97 @@ export default {
                     }
                   }
                 },
+                "AddCollectionFunctionRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateCollection",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collectionID": {
+                      "type": "int64",
+                      "id": 4
+                    },
+                    "functionSchema": {
+                      "type": "schema.FunctionSchema",
+                      "id": 5
+                    }
+                  }
+                },
+                "AlterCollectionFunctionRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateCollection",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collectionID": {
+                      "type": "int64",
+                      "id": 4
+                    },
+                    "function_name": {
+                      "type": "string",
+                      "id": 5
+                    },
+                    "functionSchema": {
+                      "type": "schema.FunctionSchema",
+                      "id": 6
+                    }
+                  }
+                },
+                "DropCollectionFunctionRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateCollection",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collectionID": {
+                      "type": "int64",
+                      "id": 4
+                    },
+                    "function_name": {
+                      "type": "string",
+                      "id": 5
+                    }
+                  }
+                },
                 "UpsertRequest": {
                   "options": {
                     "(common.privilege_ext_obj).object_type": "Collection",
@@ -2081,6 +2184,12 @@ export default {
                     "(common.privilege_ext_obj).object_name_index": 3
                   },
                   "oneofs": {
+                    "search_input": {
+                      "oneof": [
+                        "placeholder_group",
+                        "ids"
+                      ]
+                    },
                     "_namespace": {
                       "oneof": [
                         "namespace"
@@ -2112,6 +2221,10 @@ export default {
                     "placeholder_group": {
                       "type": "bytes",
                       "id": 6
+                    },
+                    "ids": {
+                      "type": "schema.IDs",
+                      "id": 22
                     },
                     "dsl_type": {
                       "type": "common.DslType",
@@ -2153,7 +2266,10 @@ export default {
                     },
                     "search_by_primary_keys": {
                       "type": "bool",
-                      "id": 16
+                      "id": 16,
+                      "options": {
+                        "deprecated": true
+                      }
                     },
                     "sub_reqs": {
                       "rule": "repeated",
@@ -2175,6 +2291,10 @@ export default {
                       "options": {
                         "proto3_optional": true
                       }
+                    },
+                    "highlighter": {
+                      "type": "common.Highlighter",
+                      "id": 21
                     }
                   }
                 },
@@ -2608,6 +2728,26 @@ export default {
                     "flush_targets": {
                       "rule": "repeated",
                       "type": "FlushAllTarget",
+                      "id": 3,
+                      "options": {
+                        "deprecated": true
+                      }
+                    }
+                  }
+                },
+                "ClusterInfo": {
+                  "fields": {
+                    "cluster_id": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "cchannel": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "pchannels": {
+                      "rule": "repeated",
+                      "type": "string",
                       "id": 3
                     }
                   }
@@ -2620,12 +2760,27 @@ export default {
                     },
                     "flush_all_ts": {
                       "type": "uint64",
-                      "id": 2
+                      "id": 2,
+                      "options": {
+                        "deprecated": true
+                      }
                     },
                     "flush_results": {
                       "rule": "repeated",
                       "type": "FlushAllResult",
-                      "id": 3
+                      "id": 3,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "flush_all_msgs": {
+                      "keyType": "string",
+                      "type": "common.ImmutableMessage",
+                      "id": 4
+                    },
+                    "cluster_info": {
+                      "type": "ClusterInfo",
+                      "id": 5
                     }
                   }
                 },
@@ -3003,6 +3158,10 @@ export default {
                     "l0Compaction": {
                       "type": "bool",
                       "id": 9
+                    },
+                    "target_size": {
+                      "type": "int64",
+                      "id": 10
                     }
                   }
                 },
@@ -3142,7 +3301,10 @@ export default {
                     },
                     "flush_all_ts": {
                       "type": "uint64",
-                      "id": 2
+                      "id": 2,
+                      "options": {
+                        "deprecated": true
+                      }
                     },
                     "db_name": {
                       "type": "string",
@@ -3154,7 +3316,15 @@ export default {
                     "flush_targets": {
                       "rule": "repeated",
                       "type": "FlushAllTarget",
-                      "id": 4
+                      "id": 4,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "flush_all_tss": {
+                      "keyType": "string",
+                      "type": "uint64",
+                      "id": 5
                     }
                   }
                 },
@@ -3171,7 +3341,10 @@ export default {
                     "flush_states": {
                       "rule": "repeated",
                       "type": "FlushAllState",
-                      "id": 3
+                      "id": 3,
+                      "options": {
+                        "deprecated": true
+                      }
                     }
                   }
                 },
@@ -4878,10 +5051,6 @@ export default {
                     "path": {
                       "type": "string",
                       "id": 3
-                    },
-                    "type": {
-                      "type": "common.FileResourceType",
-                      "id": 4
                     }
                   }
                 },
@@ -4903,10 +5072,6 @@ export default {
                     "path": {
                       "type": "string",
                       "id": 3
-                    },
-                    "type": {
-                      "type": "common.FileResourceType",
-                      "id": 4
                     }
                   }
                 },
@@ -5219,6 +5384,11 @@ export default {
                   }
                 },
                 "UpdateReplicateConfigurationRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeUpdateReplicateConfiguration",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
                   "fields": {
                     "replicate_configuration": {
                       "type": "common.ReplicateConfiguration",
@@ -5231,13 +5401,16 @@ export default {
                     "source_cluster_id": {
                       "type": "string",
                       "id": 1
+                    },
+                    "target_pchannel": {
+                      "type": "string",
+                      "id": 2
                     }
                   }
                 },
                 "GetReplicateInfoResponse": {
                   "fields": {
-                    "checkpoints": {
-                      "rule": "repeated",
+                    "checkpoint": {
                       "type": "common.ReplicateCheckpoint",
                       "id": 1
                     }
@@ -5546,6 +5719,9 @@ export default {
                     "DescribeAlias": 113,
                     "ListAliases": 114,
                     "AlterCollectionField": 115,
+                    "AddCollectionFunction": 116,
+                    "AlterCollectionFunction": 117,
+                    "DropCollectionFunction": 118,
                     "CreatePartition": 200,
                     "DropPartition": 201,
                     "HasPartition": 202,
@@ -5576,6 +5752,7 @@ export default {
                     "FlushSegment": 406,
                     "CreateSegment": 407,
                     "Import": 408,
+                    "FlushAll": 409,
                     "Search": 500,
                     "SearchResult": 501,
                     "GetIndexState": 502,
@@ -5645,7 +5822,8 @@ export default {
                     "ListDatabases": 1803,
                     "AlterDatabase": 1804,
                     "DescribeDatabase": 1805,
-                    "AddCollectionField": 1900
+                    "AddCollectionField": 1900,
+                    "AlterWAL": 2000
                   }
                 },
                 "MsgBase": {
@@ -5833,7 +6011,8 @@ export default {
                     "PrivilegeAddCollectionField": 71,
                     "PrivilegeAddFileResource": 72,
                     "PrivilegeRemoveFileResource": 73,
-                    "PrivilegeListFileResources": 74
+                    "PrivilegeListFileResources": 74,
+                    "PrivilegeUpdateReplicateConfiguration": 78
                   }
                 },
                 "PrivilegeExt": {
@@ -5970,11 +6149,6 @@ export default {
                     "LOW": 1
                   }
                 },
-                "FileResourceType": {
-                  "values": {
-                    "ANALYZER_DICTIONARY": 0
-                  }
-                },
                 "WALName": {
                   "values": {
                     "Unknown": 0,
@@ -6086,6 +6260,52 @@ export default {
                     "time_tick": {
                       "type": "uint64",
                       "id": 4
+                    }
+                  }
+                },
+                "HighlightData": {
+                  "fields": {
+                    "fragments": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    },
+                    "scores": {
+                      "rule": "repeated",
+                      "type": "float",
+                      "id": 2
+                    }
+                  }
+                },
+                "HighlightResult": {
+                  "fields": {
+                    "field_name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "datas": {
+                      "rule": "repeated",
+                      "type": "HighlightData",
+                      "id": 2
+                    }
+                  }
+                },
+                "HighlightType": {
+                  "values": {
+                    "Lexical": 0,
+                    "Semantic": 1
+                  }
+                },
+                "Highlighter": {
+                  "fields": {
+                    "type": {
+                      "type": "HighlightType",
+                      "id": 1
+                    },
+                    "params": {
+                      "rule": "repeated",
+                      "type": "KeyValuePair",
+                      "id": 2
                     }
                   }
                 }
@@ -6381,6 +6601,14 @@ export default {
                       "rule": "repeated",
                       "type": "StructArrayFieldSchema",
                       "id": 9
+                    },
+                    "version": {
+                      "type": "int32",
+                      "id": 10
+                    },
+                    "enable_namespace": {
+                      "type": "bool",
+                      "id": 15
                     }
                   }
                 },
@@ -6402,6 +6630,11 @@ export default {
                       "rule": "repeated",
                       "type": "FieldSchema",
                       "id": 4
+                    },
+                    "type_params": {
+                      "rule": "repeated",
+                      "type": "common.KeyValuePair",
+                      "id": 5
                     }
                   }
                 },
@@ -6872,6 +7105,11 @@ export default {
                     "primary_field_name": {
                       "type": "string",
                       "id": 13
+                    },
+                    "highlight_results": {
+                      "rule": "repeated",
+                      "type": "common.HighlightResult",
+                      "id": 14
                     }
                   }
                 },
@@ -7262,6 +7500,10 @@ export default {
                     "timestamp": {
                       "type": "uint64",
                       "id": 4
+                    },
+                    "WAL_name": {
+                      "type": "common.WALName",
+                      "id": 5
                     }
                   }
                 },
