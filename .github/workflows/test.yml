@@ -64,7 +64,7 @@ jobs:
           # Use docker-compose override to mount the config file
           cat > docker-compose.override.yml << EOF
           services:
-            milvus-standalone:
+            standalone:
               volumes:
                 - ./milvus-config/milvus.yaml:/milvus/configs/milvus.yaml
           EOF
