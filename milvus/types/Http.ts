@@ -148,6 +148,12 @@ export interface HttpCollectionAlterFieldPropertiesReq extends HttpBaseReq {
 
 export interface HttpCollectionAlterFieldPropertiesResponse
   extends HttpBaseResponse {}
+
+export interface HttpCollectionDropPropertiesReq extends HttpBaseReq {
+  propertyKeys: string[];
+}
+
+export interface HttpCollectionDropPropertiesResponse extends HttpBaseResponse {}
 // list collection request
 export interface HttpCollectionListReq
   extends Omit<HttpBaseReq, 'collectionName'> {}

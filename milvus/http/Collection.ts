@@ -20,6 +20,8 @@ import {
   HttpCollectionAlterPropertiesResponse,
   HttpCollectionAlterFieldPropertiesReq,
   HttpCollectionAlterFieldPropertiesResponse,
+  HttpCollectionDropPropertiesReq,
+  HttpCollectionDropPropertiesResponse,
 } from '../types';
 import {
   DEFAULT_PRIMARY_KEY_FIELD,
@@ -121,6 +123,18 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
     ): Promise<HttpCollectionAlterFieldPropertiesResponse> {
       const url = `${this.collectionPrefix}/fields/alter_properties`;
       return await this.POST<HttpCollectionAlterFieldPropertiesResponse>(
+        url,
+        params,
+        options
+      );
+    }
+
+    async dropCollectionProperties(
+      params: HttpCollectionDropPropertiesReq,
+      options?: FetchOptions
+    ): Promise<HttpCollectionDropPropertiesResponse> {
+      const url = `${this.collectionPrefix}/drop_properties`;
+      return await this.POST<HttpCollectionDropPropertiesResponse>(
         url,
         params,
         options

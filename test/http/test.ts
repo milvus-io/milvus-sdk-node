@@ -125,6 +125,11 @@ export function generateTests(
       },
     };
 
+    const dropCollectionPropertiesParams = {
+      collectionName: createParams.collectionName,
+      propertyKeys: ['collection.ttl.seconds'],
+    };
+
     const importFile = '/d1782fa1-6b65-4ff3-b05a-43a436342445/1.json';
 
     const count = 100;
@@ -246,6 +251,14 @@ export function generateTests(
       );
 
       expect(alter.code).toEqual(0);
+    });
+
+    it('should drop collection properties successfully', async () => {
+      const drop = await client.dropCollectionProperties(
+        dropCollectionPropertiesParams
+      );
+
+      expect(drop.code).toEqual(0);
     });
 
     it('should describe default collection successfully', async () => {
