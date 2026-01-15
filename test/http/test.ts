@@ -117,6 +117,14 @@ export function generateTests(
       },
     };
 
+    const alterCollectionFieldPropertiesParams = {
+      collectionName: createParams.collectionName,
+      fieldName: 'new_field',
+      fieldParams: {
+        max_length: 100,
+      },
+    };
+
     const importFile = '/d1782fa1-6b65-4ff3-b05a-43a436342445/1.json';
 
     const count = 100;
@@ -227,6 +235,14 @@ export function generateTests(
     it('should alter collection properties successfully', async () => {
       const alter = await client.alterCollectionProperties(
         alterCollectionPropertiesParams
+      );
+
+      expect(alter.code).toEqual(0);
+    });
+
+    it('should alter collection field properties successfully', async () => {
+      const alter = await client.alterCollectionFieldProperties(
+        alterCollectionFieldPropertiesParams
       );
 
       expect(alter.code).toEqual(0);

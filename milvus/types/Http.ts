@@ -134,6 +134,20 @@ export interface HttpCollectionAlterPropertiesReq extends HttpBaseReq {
 }
 
 export interface HttpCollectionAlterPropertiesResponse extends HttpBaseResponse {}
+
+type CollectionFieldParams = {
+  max_length?: number;
+  max_capacity?: number;
+  mmap_enabled?: boolean;
+};
+
+export interface HttpCollectionAlterFieldPropertiesReq extends HttpBaseReq {
+  fieldName: string;
+  fieldParams: CollectionFieldParams;
+}
+
+export interface HttpCollectionAlterFieldPropertiesResponse
+  extends HttpBaseResponse {}
 // list collection request
 export interface HttpCollectionListReq
   extends Omit<HttpBaseReq, 'collectionName'> {}
