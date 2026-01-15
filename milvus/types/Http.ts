@@ -154,6 +154,20 @@ export interface HttpCollectionDropPropertiesReq extends HttpBaseReq {
 }
 
 export interface HttpCollectionDropPropertiesResponse extends HttpBaseResponse {}
+
+export interface HttpDatabaseAlterPropertiesReq {
+  dbName: string;
+  properties: Record<string, string | number | boolean>;
+}
+
+export interface HttpDatabaseAlterPropertiesResponse extends HttpBaseResponse {}
+
+export interface HttpDatabaseDropPropertiesReq {
+  dbName: string;
+  propertyKeys: string[];
+}
+
+export interface HttpDatabaseDropPropertiesResponse extends HttpBaseResponse {}
 // list collection request
 export interface HttpCollectionListReq
   extends Omit<HttpBaseReq, 'collectionName'> {}
@@ -347,6 +361,18 @@ export interface HttpIndexCreateReq extends HttpBaseReq {
 export interface HttpIndexBaseReq extends HttpBaseReq {
   indexName: string;
 }
+
+export interface HttpIndexAlterPropertiesReq extends HttpIndexBaseReq {
+  properties: Record<string, string | number | boolean>;
+}
+
+export interface HttpIndexAlterPropertiesResponse extends HttpBaseResponse {}
+
+export interface HttpIndexDropPropertiesReq extends HttpIndexBaseReq {
+  propertyKeys: string[];
+}
+
+export interface HttpIndexDropPropertiesResponse extends HttpBaseResponse {}
 
 type IndexDescribeType = {
   failReason: string;

@@ -1,6 +1,7 @@
 import { HttpClientConfig, FetchOptions } from './types';
 import {
   Collection,
+  Database,
   Vector,
   User,
   Role,
@@ -226,6 +227,8 @@ export class HttpBaseClient {
  */
 export class HttpClient extends User(
   Role(
-    MilvusIndex(Import(Alias(Partition(Collection(Vector(HttpBaseClient))))))
+    MilvusIndex(
+      Import(Alias(Partition(Collection(Database(Vector(HttpBaseClient))))))
+    )
   )
 ) {}

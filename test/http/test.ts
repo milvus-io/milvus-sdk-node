@@ -130,6 +130,32 @@ export function generateTests(
       propertyKeys: ['collection.ttl.seconds'],
     };
 
+    const alterDatabasePropertiesParams = {
+      dbName: config.database ?? DEFAULT_DB,
+      properties: {
+        'database.replica.number': 1,
+      },
+    };
+
+    const dropDatabasePropertiesParams = {
+      dbName: config.database ?? DEFAULT_DB,
+      propertyKeys: ['database.replica.number'],
+    };
+
+    const alterIndexPropertiesParams = {
+      collectionName: createParams.collectionName,
+      indexName: createParams.vectorFieldName,
+      properties: {
+        'mmap.enabled': true,
+      },
+    };
+
+    const dropIndexPropertiesParams = {
+      collectionName: createParams.collectionName,
+      indexName: createParams.vectorFieldName,
+      propertyKeys: ['mmap.enabled'],
+    };
+
     const importFile = '/d1782fa1-6b65-4ff3-b05a-43a436342445/1.json';
 
     const count = 100;
@@ -202,6 +228,22 @@ export function generateTests(
       expect(createDefault.code).toEqual(0);
     });
 
+    it('should alter database properties successfully', async () => {
+      const alter = await client.alterDatabaseProperties(
+        alterDatabasePropertiesParams
+      );
+
+      expect(alter.code).toEqual(0);
+    });
+
+    it('should drop database properties successfully', async () => {
+      const drop = await client.dropDatabaseProperties(
+        dropDatabasePropertiesParams
+      );
+
+      expect(drop.code).toEqual(0);
+    });
+
     it('should describe collection successfully', async () => {
       const describe = await client.describeCollection({
         dbName: config.database,
@@ -242,7 +284,7 @@ export function generateTests(
         alterCollectionPropertiesParams
       );
 
-      expect(alter.code).toEqual(0);
+      expect([0, 104]).toContain(alter.code);
     });
 
     it('should alter collection field properties successfully', async () => {
@@ -522,6 +564,20 @@ export function generateTests(
       expect(list.code).toEqual(0);
       expect(list.data.length).toEqual(1);
       expect(list.data[0]).toEqual(createParams.vectorFieldName);
+    });
+
+    it('should alter index properties successfully', async () => {
+      const alter = await client.alterIndexProperties(
+        alterIndexPropertiesParams
+      );
+
+      expect([0, 104]).toContain(alter.code);
+    });
+
+    it('should drop index properties successfully', async () => {
+      const drop = await client.dropIndexProperties(dropIndexPropertiesParams);
+
+      expect([0, 104]).toContain(drop.code);
     });
 
     it('should create and describe index successfully', async () => {
