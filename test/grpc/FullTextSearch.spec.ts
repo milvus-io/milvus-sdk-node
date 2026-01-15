@@ -5,6 +5,7 @@ import {
   MetricType,
   ConsistencyLevelEnum,
   FunctionType,
+  ERROR_REASONS,
 } from '../../milvus';
 import {
   IP,
@@ -460,6 +461,70 @@ describe(`FulltextSearch API`, () => {
         ],
       });
       await milvusClient.createCollection(collectionParams);
+    });
+
+    it(`Add collection function without schema should fail`, async () => {
+      try {
+        await milvusClient.addCollectionFunction({
+          collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Alter collection function without function name should fail`, async () => {
+      try {
+        await milvusClient.alterCollectionFunction({
+          collection_name: COLLECTION_FOR_FUNCTION_OPS,
+          function: {
+            name: 'embedding_new',
+            description: 'text embedding function altered via API',
+            type: FunctionType.TEXTEMBEDDING,
+            input_field_names: ['text'],
+            output_field_names: ['vector'],
+            params: {
+              provider: 'openai',
+              model_name: 'text-embedding-3-small',
+            },
+          },
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_NAME_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Alter collection function without schema should fail`, async () => {
+      try {
+        await milvusClient.alterCollectionFunction({
+          collection_name: COLLECTION_FOR_FUNCTION_OPS,
+          function_name: 'embedding_new',
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Drop collection function without function name should fail`, async () => {
+      try {
+        await milvusClient.dropCollectionFunction({
+          collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_NAME_IS_REQUIRED
+        );
+      }
     });
 
     it(`Add collection function should success`, async () => {
