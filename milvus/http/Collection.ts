@@ -11,6 +11,7 @@ import {
   HttpCollectionRenameReq,
   HttpCollectionHasResponse,
   HttpCollectionStatisticsResponse,
+  HttpCollectionFlushResponse,
   HttpCollectionLoadStateReq,
   HttpCollectionLoadStateResponse,
 } from '../types';
@@ -114,6 +115,11 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
         params,
         options
       );
+    }
+
+    async flushCollection(params: HttpBaseReq, options?: FetchOptions) {
+      const url = `${this.collectionPrefix}/flush`;
+      return await this.POST<HttpCollectionFlushResponse>(url, params, options);
     }
 
     async loadCollection(params: HttpBaseReq, options?: FetchOptions) {
