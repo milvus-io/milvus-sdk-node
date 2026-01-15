@@ -52,7 +52,7 @@ export function MilvusIndex<T extends Constructor<HttpBaseClient>>(Base: T) {
     async alterIndexProperties(
       params: HttpIndexAlterPropertiesReq,
       options?: FetchOptions
-    ) {
+    ): Promise<HttpIndexAlterPropertiesResponse> {
       const url = `${this.indexPrefix}/alter_properties`;
       return this.POST<HttpIndexAlterPropertiesResponse>(url, params, options);
     }
@@ -60,7 +60,7 @@ export function MilvusIndex<T extends Constructor<HttpBaseClient>>(Base: T) {
     async dropIndexProperties(
       params: HttpIndexDropPropertiesReq,
       options?: FetchOptions
-    ) {
+    ): Promise<HttpIndexDropPropertiesResponse> {
       const url = `${this.indexPrefix}/drop_properties`;
       return this.POST<HttpIndexDropPropertiesResponse>(url, params, options);
     }
