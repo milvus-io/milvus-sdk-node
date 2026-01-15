@@ -296,6 +296,25 @@ export interface DropCollectionPropertiesReq extends collectionNameReq {
   properties: string[]; // required, deleted properties, strings array
 }
 
+export interface AddCollectionFunctionReq extends collectionNameReq {
+  collection_name: string; // required, collection name
+  db_name?: string; // optional, db name
+  function: FunctionObject; // required, function schema
+}
+
+export interface AlterCollectionFunctionReq extends collectionNameReq {
+  collection_name: string; // required, collection name
+  db_name?: string; // optional, db name
+  function_name: string; // required, function name
+  function: FunctionObject; // required, function schema
+}
+
+export interface DropCollectionFunctionReq extends collectionNameReq {
+  collection_name: string; // required, collection name
+  db_name?: string; // optional, db name
+  function_name: string; // required, function name
+}
+
 export interface DescribeAliasResponse extends resStatusResponse {
   db_name: string;
   alias: string;

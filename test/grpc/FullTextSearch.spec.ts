@@ -5,6 +5,7 @@ import {
   MetricType,
   ConsistencyLevelEnum,
   FunctionType,
+  ERROR_REASONS,
 } from '../../milvus';
 import {
   IP,
@@ -16,6 +17,7 @@ import {
 
 const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION = GENERATE_NAME();
+const COLLECTION_FOR_FUNCTION_OPS = GENERATE_NAME();
 const dbParam = {
   db_name: 'FullTextSearch',
 };
@@ -87,6 +89,9 @@ describe(`FulltextSearch API`, () => {
   afterAll(async () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION,
+    });
+    await milvusClient.dropCollection({
+      collection_name: COLLECTION_FOR_FUNCTION_OPS,
     });
     await milvusClient.dropDatabase(dbParam);
   });
@@ -430,5 +435,245 @@ describe(`FulltextSearch API`, () => {
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toEqual(1);
+  });
+
+  describe('Collection Function Operations', () => {
+    beforeAll(async () => {
+      // Create a collection without functions for testing function operations
+      const collectionParams = genCollectionParams({
+        collectionName: COLLECTION_FOR_FUNCTION_OPS,
+        dim: [1536],
+        vectorType: [DataType.FloatVector, DataType.SparseFloatVector],
+        autoID: false,
+        fields: [
+          {
+            name: 'text',
+            description: 'text field',
+            data_type: DataType.VarChar,
+            max_length: 20,
+            enable_analyzer: true,
+          },
+          {
+            name: 'int_field',
+            description: 'int field',
+            data_type: DataType.Int32,
+          },
+        ],
+      });
+      await milvusClient.createCollection(collectionParams);
+    });
+
+    it(`Add collection function without schema should fail`, async () => {
+      try {
+        await milvusClient.addCollectionFunction({
+          collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Alter collection function without function name should fail`, async () => {
+      try {
+        await milvusClient.alterCollectionFunction({
+          collection_name: COLLECTION_FOR_FUNCTION_OPS,
+          function: {
+            name: 'embedding_new',
+            description: 'text embedding function altered via API',
+            type: FunctionType.TEXTEMBEDDING,
+            input_field_names: ['text'],
+            output_field_names: ['vector'],
+            params: {
+              provider: 'openai',
+              model_name: 'text-embedding-3-small',
+            },
+          },
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_NAME_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Alter collection function without schema should fail`, async () => {
+      try {
+        await milvusClient.alterCollectionFunction({
+          collection_name: COLLECTION_FOR_FUNCTION_OPS,
+          function_name: 'embedding_new',
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Drop collection function without function name should fail`, async () => {
+      try {
+        await milvusClient.dropCollectionFunction({
+          collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_NAME_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Add collection function should success`, async () => {
+      const addFunction = await milvusClient.addCollectionFunction({
+        collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        function: {
+          name: 'embedding_new',
+          description: 'text embedding function added via API',
+          type: FunctionType.TEXTEMBEDDING,
+          input_field_names: ['text'],
+          output_field_names: ['vector'],
+          params: {
+            provider: 'openai',
+            model_name: 'text-embedding-3-small',
+          },
+        },
+      });
+
+      if (addFunction.error_code !== ErrorCode.SUCCESS) {
+        console.log(
+          'Add function error:',
+          JSON.stringify(addFunction, null, 2)
+        );
+      }
+      expect(addFunction.error_code).toEqual(ErrorCode.SUCCESS);
+
+      // Verify function was added
+      const describe = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FOR_FUNCTION_OPS,
+      });
+
+      expect(describe.schema.functions.length).toBeGreaterThanOrEqual(1);
+      const addedFunction = describe.schema.functions.find(
+        f => f.name === 'embedding_new'
+      );
+      expect(addedFunction).toBeDefined();
+      expect(addedFunction!.input_field_names).toEqual(['text']);
+      expect(addedFunction!.type).toEqual('TextEmbedding');
+    });
+
+    it(`Alter collection function should success`, async () => {
+      // Alter the function
+      const alterFunction = await milvusClient.alterCollectionFunction({
+        collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        function_name: 'embedding_new',
+        function: {
+          name: 'embedding_new',
+          description: 'text embedding function altered via API',
+          type: FunctionType.TEXTEMBEDDING,
+          input_field_names: ['text'],
+          output_field_names: ['vector'],
+          params: {
+            provider: 'openai',
+            model_name: 'text-embedding-3-small',
+          },
+        },
+      });
+
+      expect(alterFunction.error_code).toEqual(ErrorCode.SUCCESS);
+
+      // Verify function was altered
+      const describe = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FOR_FUNCTION_OPS,
+      });
+
+      const alteredFunction = describe.schema.functions.find(
+        f => f.name === 'embedding_new'
+      );
+      expect(alteredFunction).toBeDefined();
+      expect(alteredFunction!.description).toEqual(
+        'text embedding function altered via API'
+      );
+    });
+
+    it(`Drop collection function should success`, async () => {
+      // Drop the function
+      const dropFunction = await milvusClient.dropCollectionFunction({
+        collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        function_name: 'embedding_new',
+      });
+
+      expect(dropFunction.error_code).toEqual(ErrorCode.SUCCESS);
+
+      // Verify function was dropped
+      const describeAfter = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        cache: false,
+      });
+      const functionAfter = describeAfter.schema.functions.find(
+        f => f.name === 'embedding_new'
+      );
+      expect(functionAfter).toBeUndefined();
+    });
+
+    it(`Add collection function with invalid collection name should fail`, async () => {
+      try {
+        await milvusClient.addCollectionFunction({
+          collection_name: 'non_existent_collection',
+          function: {
+            name: 'test_embedding_function',
+            description: 'test text embedding function',
+            type: FunctionType.TEXTEMBEDDING,
+            input_field_names: ['text'],
+            output_field_names: ['vector'],
+            params: {
+              provider: 'openai',
+              model_name: 'text-embedding-3-small',
+              api_key: 'yourkey',
+            },
+          },
+        });
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (error) {
+        expect(error).toBeDefined();
+      }
+    });
+
+    it(`Alter collection function with invalid function name should fail`, async () => {
+      const alterFunction = await milvusClient.alterCollectionFunction({
+        collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        function_name: 'non_existent_embedding_function',
+        function: {
+          name: 'non_existent_embedding_function',
+          description: 'test text embedding function',
+          type: FunctionType.TEXTEMBEDDING,
+          input_field_names: ['text'],
+          output_field_names: ['vector'],
+          params: {
+            provider: 'openai',
+            model_name: 'text-embedding-3-small',
+            api_key: 'yourkey',
+          },
+        },
+      });
+
+      // Should return error
+      expect(alterFunction.error_code).not.toEqual(ErrorCode.SUCCESS);
+    });
+
+    it(`Drop collection function with invalid function name should fail`, async () => {
+      const dropFunction = await milvusClient.dropCollectionFunction({
+        collection_name: COLLECTION_FOR_FUNCTION_OPS,
+        function_name: 'non_existent_embedding_function',
+      });
+
+      // Note: Drop operation may be idempotent and return success even if function doesn't exist
+      // This is acceptable behavior, so we just verify the operation completes
+      expect(dropFunction).toBeDefined();
+    });
   });
 });

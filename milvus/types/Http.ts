@@ -149,6 +149,8 @@ export interface HttpCollectionRenameReq extends HttpBaseReq {
 export interface HttpCollectionStatisticsResponse
   extends HttpBaseResponse<{ rowCount: number }> {}
 
+export interface HttpCollectionFlushResponse extends HttpBaseResponse {}
+
 export interface HttpCollectionLoadStateReq extends HttpBaseReq {
   partitionNames?: string;
 }

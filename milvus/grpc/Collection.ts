@@ -61,6 +61,10 @@ import {
   AddCollectionFieldReq,
   AddCollectionFieldsReq,
   formatFieldSchema,
+  formatFunctionSchema,
+  AddCollectionFunctionReq,
+  AlterCollectionFunctionReq,
+  DropCollectionFunctionReq,
 } from '../';
 
 /**
@@ -1402,5 +1406,174 @@ export class Collection extends Database {
     }
 
     return pkField;
+  }
+
+  /**
+   * Add a function to a collection.
+   *
+   * @param {AddCollectionFunctionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {FunctionObject} data.function - The function schema to be added.
+   * @param {string} [data.db_name] - The name of the database where the collection is located.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   * const resStatus = await milvusClient.addCollectionFunction({
+   *   collection_name: 'my_collection',
+   *   function: {
+   *     name: 'my_function',
+   *     description: 'A custom function',
+   *     type: FunctionType.Rerank,
+   *     input_field_names: ['field1', 'field2'],
+   *     output_field_names: ['output_field'],
+   *     params: { key: 'value' }
+   *   }
+   * });
+   * ```
+   */
+  async addCollectionFunction(
+    data: AddCollectionFunctionReq
+  ): Promise<ResStatus> {
+    checkCollectionName(data);
+
+    if (!data.function) {
+      throw new Error(ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED);
+    }
+
+    const functionSchema = formatFunctionSchema(data.function);
+
+    const req: any = {
+      collection_name: data.collection_name,
+      functionSchema: functionSchema,
+    };
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
+    return await promisify(
+      this.channelPool,
+      'AddCollectionFunction',
+      req,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Alter a function in a collection.
+   *
+   * @param {AlterCollectionFunctionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} data.function_name - The name of the function to alter.
+   * @param {FunctionObject} data.function - The updated function schema.
+   * @param {string} [data.db_name] - The name of the database where the collection is located.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   * const resStatus = await milvusClient.alterCollectionFunction({
+   *   collection_name: 'my_collection',
+   *   function_name: 'my_function',
+   *   function: {
+   *     name: 'my_function',
+   *     description: 'Updated function description',
+   *     type: FunctionType.Rerank,
+   *     input_field_names: ['field1', 'field2'],
+   *     output_field_names: ['output_field'],
+   *     params: { key: 'updated_value' }
+   *   }
+   * });
+   * ```
+   */
+  async alterCollectionFunction(
+    data: AlterCollectionFunctionReq
+  ): Promise<ResStatus> {
+    checkCollectionName(data);
+
+    if (!data.function_name) {
+      throw new Error(ERROR_REASONS.FUNCTION_NAME_IS_REQUIRED);
+    }
+
+    if (!data.function) {
+      throw new Error(ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED);
+    }
+
+    const functionSchema = formatFunctionSchema(data.function);
+
+    const req: any = {
+      collection_name: data.collection_name,
+      function_name: data.function_name,
+      functionSchema: functionSchema,
+    };
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
+    return await promisify(
+      this.channelPool,
+      'AlterCollectionFunction',
+      req,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Drop a function from a collection.
+   *
+   * @param {DropCollectionFunctionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} data.function_name - The name of the function to drop.
+   * @param {string} [data.db_name] - The name of the database where the collection is located.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   * const resStatus = await milvusClient.dropCollectionFunction({
+   *   collection_name: 'my_collection',
+   *   function_name: 'my_function'
+   * });
+   * ```
+   */
+  async dropCollectionFunction(
+    data: DropCollectionFunctionReq
+  ): Promise<ResStatus> {
+    checkCollectionName(data);
+
+    if (!data.function_name) {
+      throw new Error(ERROR_REASONS.FUNCTION_NAME_IS_REQUIRED);
+    }
+
+    const req: any = {
+      collection_name: data.collection_name,
+      function_name: data.function_name,
+    };
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
+    return await promisify(
+      this.channelPool,
+      'DropCollectionFunction',
+      req,
+      data.timeout || this.timeout
+    );
   }
 }

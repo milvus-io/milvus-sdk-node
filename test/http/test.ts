@@ -38,6 +38,7 @@ export function generateTests(
       metricType: 'L2',
       primaryFieldName: 'id',
       vectorFieldName: 'vector',
+      consistencyLevel: 'Strong',
     };
 
     const createDefaultParams = {
@@ -248,6 +249,14 @@ export function generateTests(
       expect(upsert.code).toEqual(0);
       expect(upsert.data.upsertCount).toEqual(1);
       expect(upsert.data.upsertIds).toEqual([target.id]);
+    });
+
+    it('should flush collection successfully', async () => {
+      const flush = await client.flushCollection({
+        collectionName: createParams.collectionName,
+      });
+
+      expect(flush.code).toEqual(0);
     });
 
     it('should hybrid search data successfully', async () => {

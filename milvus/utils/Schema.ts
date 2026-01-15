@@ -13,6 +13,7 @@ import {
   CreateCollectionWithSchemaReq,
   CreateCollectionWithFieldsReq,
   FunctionObject,
+  FunctionType,
 } from '../';
 
 function convertToCamelCase(str: string) {
@@ -258,6 +259,34 @@ export const formatFieldSchema = (
     };
   }
   return schemaTypes.fieldSchemaType.create(createObj);
+};
+
+/**
+ * Formats a FunctionObject into a FunctionSchema payload for gRPC.
+ * Returns a plain object with snake_case field names matching the proto definition
+ * in milvus.ts (used by @grpc/proto-loader).
+ *
+ * @param {FunctionObject} func - The function object to format.
+ * @returns {Object} The formatted function schema payload (plain object).
+ */
+export const formatFunctionSchema = (func: FunctionObject): { [k: string]: any } => {
+  const { input_field_names, output_field_names, type, ...rest } = func;
+
+  // Ensure type is a number (enum value), not a string
+  const typeValue =
+    typeof type === 'number'
+      ? type
+      : FunctionType[type as keyof typeof FunctionType] ?? type;
+
+  // Return a plain object with snake_case field names for gRPC
+  // The @grpc/proto-loader uses milvus.ts which has snake_case field names
+  return {
+    ...rest,
+    type: typeValue,
+    input_field_names: input_field_names || [],
+    output_field_names: output_field_names || [],
+    params: parseToKeyValue(func.params, true),
+  };
 };
 
 /**
