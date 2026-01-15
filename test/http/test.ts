@@ -97,6 +97,19 @@ export function generateTests(
       },
     };
 
+    const addCollectionFieldParams = {
+      collectionName: createParams.collectionName,
+      schema: {
+        fieldName: 'new_field',
+        dataType: 'VarChar',
+        nullable: true,
+        defaultValue: 'default_value',
+        elementTypeParams: {
+          max_length: 255,
+        },
+      },
+    };
+
     const importFile = '/d1782fa1-6b65-4ff3-b05a-43a436342445/1.json';
 
     const count = 100;
@@ -186,6 +199,22 @@ export function generateTests(
       expect(describe.data.indexes[0].metricType).toEqual(
         createParams.metricType
       );
+    });
+
+    it('should add collection field successfully', async () => {
+      const addField = await client.addCollectionField(
+        addCollectionFieldParams
+      );
+
+      expect(addField.code).toEqual(0);
+
+      const describe = await client.describeCollection({
+        dbName: config.database,
+        collectionName: createParams.collectionName,
+      });
+
+      expect(describe.code).toEqual(0);
+      expect(describe.data.fields.length).toEqual(3);
     });
 
     it('should describe default collection successfully', async () => {
@@ -490,7 +519,7 @@ export function generateTests(
     it('should describe alias successfully', async () => {
       /**
        * https://github.com/milvus-io/milvus/issues/31978
-       * TODO: Alias describe api has issue，temporarily comment
+       * TODO: Alias describe api has issue, temporarily commented out.
        */
       // const describe = await client.describeAlias({
       //   dbName: config.database ?? DEFAULT_DB,

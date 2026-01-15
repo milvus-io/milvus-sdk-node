@@ -105,6 +105,27 @@ export interface HttpCollectionCreateReq extends HttpBaseReq {
   indexParams?: CollectionIndexParam[]; // The parameters that apply to the index-building process.
   params?: CollectionCreateParams; // Extra parameters for the collection.
 }
+
+type CollectionAddFieldSchema = {
+  fieldName: string; // The name of the field to create in the target collection
+  dataType: string; // The data type of the field values.
+  elementDataType?: string; // The data type of the elements in an array field.
+  nullable?: boolean; // Whether the field can be null.
+  defaultValue?: string | number | boolean | null; // The default value of the field.
+  isPrimary?: boolean; // Whether the current field is the primary field.
+  isPartitionKey?: boolean; // Whether the current field serves as the partition key.
+  elementTypeParams?: {
+    max_length?: number; // Optional VarChar max length.
+    dim?: number; // Optional vector dimension.
+    max_capacity?: number; // Optional array max capacity.
+  };
+};
+
+export interface HttpCollectionAddFieldReq extends HttpBaseReq {
+  schema: CollectionAddFieldSchema;
+}
+
+export interface HttpCollectionAddFieldResponse extends HttpBaseResponse {}
 // list collection request
 export interface HttpCollectionListReq
   extends Omit<HttpBaseReq, 'collectionName'> {}

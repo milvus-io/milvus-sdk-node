@@ -14,6 +14,8 @@ import {
   HttpCollectionFlushResponse,
   HttpCollectionLoadStateReq,
   HttpCollectionLoadStateResponse,
+  HttpCollectionAddFieldReq,
+  HttpCollectionAddFieldResponse,
 } from '../types';
 import {
   DEFAULT_PRIMARY_KEY_FIELD,
@@ -83,6 +85,18 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
       const url = `${this.collectionPrefix}/drop`;
 
       return await this.POST<HttpBaseResponse>(url, data, options);
+    }
+
+    async addCollectionField(
+      params: HttpCollectionAddFieldReq,
+      options?: FetchOptions
+    ): Promise<HttpCollectionAddFieldResponse> {
+      const url = `${this.collectionPrefix}/fields/add`;
+      return await this.POST<HttpCollectionAddFieldResponse>(
+        url,
+        params,
+        options
+      );
     }
 
     // GET list collections
