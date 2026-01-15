@@ -16,6 +16,8 @@ import {
   HttpCollectionLoadStateResponse,
   HttpCollectionAddFieldReq,
   HttpCollectionAddFieldResponse,
+  HttpCollectionAlterPropertiesReq,
+  HttpCollectionAlterPropertiesResponse,
 } from '../types';
 import {
   DEFAULT_PRIMARY_KEY_FIELD,
@@ -93,6 +95,18 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
     ): Promise<HttpCollectionAddFieldResponse> {
       const url = `${this.collectionPrefix}/fields/add`;
       return await this.POST<HttpCollectionAddFieldResponse>(
+        url,
+        params,
+        options
+      );
+    }
+
+    async alterCollectionProperties(
+      params: HttpCollectionAlterPropertiesReq,
+      options?: FetchOptions
+    ): Promise<HttpCollectionAlterPropertiesResponse> {
+      const url = `${this.collectionPrefix}/alter_properties`;
+      return await this.POST<HttpCollectionAlterPropertiesResponse>(
         url,
         params,
         options

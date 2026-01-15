@@ -110,6 +110,13 @@ export function generateTests(
       },
     };
 
+    const alterCollectionPropertiesParams = {
+      collectionName: createParams.collectionName,
+      properties: {
+        'collection.ttl.seconds': 3600,
+      },
+    };
+
     const importFile = '/d1782fa1-6b65-4ff3-b05a-43a436342445/1.json';
 
     const count = 100;
@@ -215,6 +222,14 @@ export function generateTests(
 
       expect(describe.code).toEqual(0);
       expect(describe.data.fields.length).toEqual(3);
+    });
+
+    it('should alter collection properties successfully', async () => {
+      const alter = await client.alterCollectionProperties(
+        alterCollectionPropertiesParams
+      );
+
+      expect(alter.code).toEqual(0);
     });
 
     it('should describe default collection successfully', async () => {

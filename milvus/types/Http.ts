@@ -126,6 +126,14 @@ export interface HttpCollectionAddFieldReq extends HttpBaseReq {
 }
 
 export interface HttpCollectionAddFieldResponse extends HttpBaseResponse {}
+
+type CollectionProperties = Record<string, string | number | boolean>;
+
+export interface HttpCollectionAlterPropertiesReq extends HttpBaseReq {
+  properties: CollectionProperties;
+}
+
+export interface HttpCollectionAlterPropertiesResponse extends HttpBaseResponse {}
 // list collection request
 export interface HttpCollectionListReq
   extends Omit<HttpBaseReq, 'collectionName'> {}
