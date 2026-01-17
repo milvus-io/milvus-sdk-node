@@ -14,6 +14,8 @@ This document provides essential instructions for AI agents operating within the
 ### Build
 - **Full Build:** `npm run build`
   - Cleans `dist/`, compiles TypeScript with declarations, and runs `build.js`.
+- **Proto Generation:** `npm run proto:json`
+  - Updates `milvus/proto-json/` by converting `.proto` files to JSON/TS. Use this if the `proto/` submodule is updated.
 
 ### Testing (Jest)
 - **Run All Tests:** `npm test`
@@ -81,7 +83,10 @@ This document provides essential instructions for AI agents operating within the
 
 ## 5. Specific Rules
 - **No `src` folder:** Source code lives in `milvus/`.
-- **Proto Files:** Protocol buffers are in `proto/`.
+- **Proto Files:**
+  - Protocol buffers are in `proto/` (a git submodule).
+  - Run `git submodule update --init --recursive` to fetch them.
+  - If `.proto` files change, run `npm run proto:json` to regenerate the JSON definitions in `milvus/proto-json/`.
 - **Environment:** Node.js environment.
 
 ## 6. Testing Guidelines
