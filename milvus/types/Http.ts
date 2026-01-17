@@ -155,6 +155,26 @@ export interface HttpCollectionDropPropertiesReq extends HttpBaseReq {
 
 export interface HttpCollectionDropPropertiesResponse extends HttpBaseResponse {}
 
+export interface HttpDatabaseCreateReq {
+  dbName: string;
+}
+
+export interface HttpDatabaseDropReq {
+  dbName: string;
+}
+
+export interface HttpDatabaseDescribeReq {
+  dbName: string;
+}
+
+export interface HttpDatabaseDescribeResponse
+  extends HttpBaseResponse<{
+    dbName: string;
+    dbId: number;
+    createdTime: string;
+    properties: Record<string, string | number | boolean>[];
+  }> {}
+
 export interface HttpDatabaseAlterPropertiesReq {
   dbName: string;
   properties: Record<string, string | number | boolean>;
@@ -213,6 +233,25 @@ export interface HttpCollectionStatisticsResponse
   extends HttpBaseResponse<{ rowCount: number }> {}
 
 export interface HttpCollectionFlushResponse extends HttpBaseResponse {}
+
+export interface HttpCollectionCompactReq extends HttpBaseReq {}
+
+export interface HttpCollectionCompactResponse
+  extends HttpBaseResponse<{ compactionID: number }> {}
+
+export interface HttpCollectionGetCompactionStateReq extends HttpBaseReq {
+  compactionID: number;
+}
+
+export interface HttpCollectionGetCompactionStateResponse
+  extends HttpBaseResponse<{
+    state: number;
+    executingPlan: number;
+    timeoutPlan: number;
+    completedPlan: number;
+  }> {}
+
+export interface HttpCollectionRefreshLoadReq extends HttpBaseReq {}
 
 export interface HttpCollectionLoadStateReq extends HttpBaseReq {
   partitionNames?: string;

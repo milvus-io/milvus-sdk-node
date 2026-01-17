@@ -58,6 +58,10 @@ export function generateTests(
       password: 'user1234',
     };
 
+    const databaseParams = {
+      dbName: `test_http_database_${config.database}`,
+    };
+
     const roleParams = {
       roleName: `${config.database ?? DEFAULT_DB}_readOnly`,
       objectType: 'Collection',
@@ -244,6 +248,28 @@ export function generateTests(
       expect(drop.code).toEqual(0);
     });
 
+    it('should create database successfully', async () => {
+      const create = await client.createDatabase(databaseParams);
+      expect(create.code).toEqual(0);
+    });
+
+    it('should list databases successfully', async () => {
+      const list = await client.listDatabases();
+      expect(list.code).toEqual(0);
+      expect(list.data.includes(databaseParams.dbName)).toEqual(true);
+    });
+
+    it('should describe database successfully', async () => {
+      const describe = await client.describeDatabase(databaseParams);
+      expect(describe.code).toEqual(0);
+      expect(describe.data.dbName).toEqual(databaseParams.dbName);
+    });
+
+    it('should drop database successfully', async () => {
+      const drop = await client.dropDatabase(databaseParams);
+      expect(drop.code).toEqual(0);
+    });
+
     it('should describe collection successfully', async () => {
       const describe = await client.describeCollection({
         dbName: config.database,
@@ -301,6 +327,31 @@ export function generateTests(
       );
 
       expect(drop.code).toEqual(0);
+    });
+
+    it('should compact collection successfully', async () => {
+      const compact = await client.compactCollection({
+        collectionName: createParams.collectionName,
+      });
+
+      expect(compact.code).toEqual(0);
+      expect(compact.data.compactionID).toBeDefined();
+
+      const state = await client.getCompactionState({
+        collectionName: createParams.collectionName,
+        compactionID: compact.data.compactionID,
+      });
+
+      expect(state.code).toEqual(0);
+      expect(state.data.state).toBeDefined();
+    });
+
+    it('should refresh load successfully', async () => {
+      const refresh = await client.refreshLoad({
+        collectionName: createParams.collectionName,
+      });
+
+      expect(refresh.code).toEqual(0);
     });
 
     it('should describe default collection successfully', async () => {

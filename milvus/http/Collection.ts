@@ -22,6 +22,11 @@ import {
   HttpCollectionAlterFieldPropertiesResponse,
   HttpCollectionDropPropertiesReq,
   HttpCollectionDropPropertiesResponse,
+  HttpCollectionCompactReq,
+  HttpCollectionCompactResponse,
+  HttpCollectionGetCompactionStateReq,
+  HttpCollectionGetCompactionStateResponse,
+  HttpCollectionRefreshLoadReq,
 } from '../types';
 import {
   DEFAULT_PRIMARY_KEY_FIELD,
@@ -198,6 +203,38 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
         params,
         options
       );
+    }
+
+    async compactCollection(
+      params: HttpCollectionCompactReq,
+      options?: FetchOptions
+    ) {
+      const url = `${this.collectionPrefix}/compact`;
+      return await this.POST<HttpCollectionCompactResponse>(
+        url,
+        params,
+        options
+      );
+    }
+
+    async getCompactionState(
+      params: HttpCollectionGetCompactionStateReq,
+      options?: FetchOptions
+    ) {
+      const url = `${this.collectionPrefix}/get_compaction_state`;
+      return await this.POST<HttpCollectionGetCompactionStateResponse>(
+        url,
+        params,
+        options
+      );
+    }
+
+    async refreshLoad(
+      params: HttpCollectionRefreshLoadReq,
+      options?: FetchOptions
+    ) {
+      const url = `${this.collectionPrefix}/refresh_load`;
+      return await this.POST<HttpBaseResponse>(url, params, options);
     }
   };
 }
