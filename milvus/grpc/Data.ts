@@ -120,7 +120,8 @@ export class Data extends Collection {
    */
   private async _insert(
     data: InsertReq | UpsertReq,
-    upsert: boolean = false
+    upsert: boolean = false,
+    collection_cache: boolean = true
   ): Promise<MutationResult> {
     checkCollectionName(data);
     // ensure fields data available
@@ -134,7 +135,7 @@ export class Data extends Collection {
     }
     const { collection_name } = data;
 
-    const describeReq = { collection_name, cache: true };
+    const describeReq = { collection_name, cache: collection_cache };
     if (data.db_name) {
       (describeReq as any).db_name = data.db_name;
     }
@@ -461,11 +462,9 @@ export class Data extends Collection {
     );
 
     // if schema mismatch, reload collection info and redo the insert request
-    if (promise.status.error_code === ErrorCode.SchemaMismatch) {
-      // load collection info without cache
-      await this.describeCollection({ collection_name });
-      // redo the insert request
-      promise = await this._insert(data, upsert);
+    if (promise.status.error_code === ErrorCode.SchemaMismatch && collection_cache) {
+      // redo the insert request with collection cache off
+      promise = this._insert(data, upsert, false);
     }
 
     return promise;
