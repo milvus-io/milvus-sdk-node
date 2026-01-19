@@ -81,7 +81,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
 
       // if topks > 1, we need to split the results with topk
       // for example, if topks = [5,5], we need to split the res.data into 2 groups, each one with 5
-      if (res.topks.length > 1) {
+      if (res.topks && res.topks.length > 1) {
         const topks = res.topks;
         const results = res.data;
         const newResults = [];

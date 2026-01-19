@@ -351,6 +351,8 @@ export function generateTests(
         collectionName: createParams.collectionName,
       });
 
+      console.log(refresh);
+
       expect(refresh.code).toEqual(0);
     });
 
