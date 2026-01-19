@@ -329,6 +329,43 @@ describe(`Basic API without database`, () => {
     expect(addWrongFields.error_code).toEqual(ErrorCode.IllegalArgument);
   });
 
+  it(`search with ids should be successful`, async () => {
+    // 1. describe collection to get primary key and check if "autoID" is true
+    const desc = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    const pk = desc.schema.fields.find(f => f.is_primary_key);
+    expect(pk).toBeDefined();
+
+    // 2. if autoID is true, random query some ids
+    let searchIds: any[] = [];
+    if (pk?.autoID) {
+      const query = await milvusClient.query({
+        collection_name: COLLECTION_NAME,
+        expr: `${pk.name} > 0`,
+        limit: 5,
+        output_fields: [pk.name],
+      });
+      expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+      expect(query.data.length).toBeGreaterThan(0);
+      searchIds = query.data.map(d => d[pk.name]);
+    } else {
+      // if not autoID, we can just use some static ids or generate them
+      // but provided schema has autoID: true
+    }
+
+    // 3. search with ids
+    if (searchIds.length > 0) {
+      const search = await milvusClient.search({
+        collection_name: COLLECTION_NAME,
+        ids: searchIds,
+      });
+
+      expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+      expect(search.results.length).toEqual(searchIds.length);
+    }
+  });
+
   it(`release again should be successful`, async () => {
     const release = await milvusClient.releaseCollection({
       collection_name: COLLECTION_NAME,

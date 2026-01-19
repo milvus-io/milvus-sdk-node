@@ -370,7 +370,38 @@ describe(`Multiple vectors API testing`, () => {
         anns_field: 'vectorxxx',
         data: [1, 2, 3, 4, 5, 6, 7, 8],
       });
-    } catch (e) {
+    } catch (e: any) {
+      expect(e.message).toEqual(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
+    }
+  });
+
+  it(`search with ids should be successful`, async () => {
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      filter: 'id > 0',
+      limit: 5,
+      output_fields: ['id'],
+    });
+
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+    const ids = query.data.map((d: any) => d.id);
+
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      ids: ids,
+      anns_field: 'vector',
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(ids.length);
+
+    try {
+      await milvusClient.search({
+        collection_name: COLLECTION_NAME,
+        ids: ids,
+        anns_field: 'wrong_vector',
+      });
+    } catch (e: any) {
       expect(e.message).toEqual(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
     }
   });

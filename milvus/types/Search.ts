@@ -41,13 +41,14 @@ export interface SearchReq extends collectionNameReq {
   expr?: string; // filter expression
   exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   search_params: SearchParam; // search parameters
-  vectors: SearchData | SearchData[]; // vectors to search
+  vectors?: SearchData | SearchData[]; // vectors to search
   output_fields?: string[]; // fields to return
   travel_timestamp?: string; // time travel
   vector_type: DataType.BinaryVector | DataType.FloatVector; // vector field type
   nq?: number; // number of query vectors
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  ids?: number[] | string[]; // primary keys for search by IDs
 }
 
 export interface FunctionScore {
@@ -59,7 +60,7 @@ export interface FunctionScore {
 export interface SearchSimpleReq extends collectionNameReq {
   partition_names?: string[]; // partition names
   anns_field?: string; // your vector field name，required if you are searching on multiple vector fields collection
-  data: SearchData | SearchData[]; // vector or text to search
+  data?: SearchData | SearchData[]; // vector or text to search
   vector?: SearchData | SearchData[];
   output_fields?: string[];
   limit?: number; // how many results you want
@@ -80,6 +81,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
   rerank?: RerankerObj | FunctionObject | FunctionScore; // reranker
   nq?: number; // number of query vectors
+  ids?: number[] | string[]; // primary keys for search by IDs
 }
 
 export type HybridSearchSingleReq = Pick<
@@ -173,16 +175,16 @@ export type OutputTransformers = {
 
 export type DetermineResultsType<T extends Record<string, any>> =
   T['vectors'] extends [SearchData]
-    ? SearchResultData[]
-    : T['vectors'] extends SearchData[]
-    ? SearchResultData[][]
-    : T['vector'] extends SearchData
-    ? SearchResultData[]
-    : T['data'] extends SearchData
-    ? SearchResultData[]
-    : T['data'] extends SearchData[]
-    ? SearchResultData[][]
-    : SearchResultData[];
+  ? SearchResultData[]
+  : T['vectors'] extends SearchData[]
+  ? SearchResultData[][]
+  : T['vector'] extends SearchData
+  ? SearchResultData[]
+  : T['data'] extends SearchData
+  ? SearchResultData[]
+  : T['data'] extends SearchData[]
+  ? SearchResultData[][]
+  : SearchResultData[];
 
 export interface SearchResultData {
   [x: string]: any;
