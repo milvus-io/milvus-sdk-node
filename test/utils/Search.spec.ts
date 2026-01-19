@@ -4,6 +4,7 @@ import {
   ERROR_REASONS,
   SearchSimpleReq,
   DataType,
+  DEFAULT_DYNAMIC_FIELD,
   formatSearchResult,
   _Field,
   formatSearchData,
@@ -584,7 +585,7 @@ describe('utils/Search', () => {
 
     try {
       buildSearchRequest(searchParams, describeCollectionResponse, milvusProto);
-    } catch (err) {
+    } catch (err: any) {
       // console.log(err);
       expect(err.message).toEqual(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
     }
@@ -1115,5 +1116,278 @@ describe('utils/Search', () => {
       [1, 2, 3, 4, 5, 6, 7, 8],
       [9, 10, 11, 12, 13, 14, 15, 16],
     ]);
+  });
+
+  it('should throw error if ids type is not match Int64 primary key', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const searchParams = {
+      collection_name: 'test',
+      ids: ['a', 'b'], // invalid ids for Int64
+    };
+
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      schema: {
+        fields: [
+          {
+            name: 'id',
+            is_primary_key: true,
+            data_type: 'Int64',
+            dataType: DataType.Int64,
+          },
+        ],
+      },
+      anns_fields: {
+        vector: {
+          data_type: 'FloatVector',
+          dataType: 101,
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
+      },
+    } as any;
+
+    try {
+      buildSearchRequest(searchParams, describeCollectionResponse, milvusProto);
+    } catch (err: any) {
+      expect(err.message).toEqual(
+        'The type of ids should be integer/string number because the primary key field id is Int64.'
+      );
+    }
+  });
+
+  it('should throw error if ids type is not match VarChar primary key', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const searchParams = {
+      collection_name: 'test',
+      ids: [1, 2], // invalid ids for VarChar
+    };
+
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      schema: {
+        fields: [
+          {
+            name: 'id',
+            is_primary_key: true,
+            data_type: 'VarChar',
+            dataType: DataType.VarChar,
+          },
+        ],
+      },
+      anns_fields: {
+        vector: {
+          data_type: 'FloatVector',
+          dataType: 101,
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
+      },
+    } as any;
+
+    try {
+      buildSearchRequest(searchParams, describeCollectionResponse, milvusProto);
+    } catch (err: any) {
+      expect(err.message).toEqual(
+        'The type of ids should be string because the primary key field id is VarChar.'
+      );
+    }
+  });
+
+  it('should throw error if primary key type is unsupported for id search', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const searchParams = {
+      collection_name: 'test',
+      ids: [1, 2],
+    };
+
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      schema: {
+        fields: [
+          {
+            name: 'id',
+            is_primary_key: true,
+            data_type: 'Float', // Unsupported type for PK search
+            dataType: DataType.Float,
+          },
+        ],
+      },
+      anns_fields: {
+        vector: {
+          data_type: 'FloatVector',
+          dataType: 101,
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
+      },
+    } as any;
+
+    try {
+      buildSearchRequest(searchParams, describeCollectionResponse, milvusProto);
+    } catch (err: any) {
+      expect(err.message).toEqual(
+        'The primary key field id has unsupported type for ID search.'
+      );
+    }
+  });
+
+  it('should throw error if neither ids nor data is provided', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const searchParams = {
+      collection_name: 'test',
+      // No data, no ids
+    } as any;
+
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      schema: {
+        fields: [
+          {
+            name: 'id',
+            is_primary_key: true,
+            data_type: 'Int64',
+            dataType: DataType.Int64,
+          },
+        ],
+      },
+      anns_fields: {
+        vector: {
+          data_type: 'FloatVector',
+          dataType: 101,
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
+      },
+    } as any;
+
+    try {
+      buildSearchRequest(searchParams, describeCollectionResponse, milvusProto);
+    } catch (err: any) {
+      expect(err.message).toEqual('Search data is required');
+    }
+  });
+
+  it('should throw error if ids provided but primary field not found', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const searchParams = {
+      collection_name: 'test',
+      ids: [1, 2],
+    };
+
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      schema: {
+        fields: [
+          {
+            name: 'id',
+            is_primary_key: false, // No primary key
+            data_type: 'Int64',
+            dataType: DataType.Int64,
+          },
+        ],
+      },
+      anns_fields: {
+        vector: {
+          data_type: 'FloatVector',
+          dataType: 101,
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
+      },
+    } as any;
+
+    try {
+      buildSearchRequest(searchParams, describeCollectionResponse, milvusProto);
+    } catch (err: any) {
+      expect(err.message).toEqual(
+        'Primary field not found. Cannot use ids parameter without primary field.'
+      );
+    }
+  });
+
+  it('should format search result with dynamic fields correctly', () => {
+    const searchPromise: any = {
+      status: {
+        error_code: 'Success',
+        reason: '',
+      },
+      results: {
+        fields_data: [
+          {
+            type: 'Int64',
+            field_name: 'id',
+            field_id: '101',
+            is_dynamic: false,
+            scalars: {
+              long_data: {
+                data: ['1', '2'],
+              },
+              data: 'long_data',
+            },
+          },
+          {
+            type: 'JSON',
+            field_name: DEFAULT_DYNAMIC_FIELD,
+            field_id: '102',
+            is_dynamic: true,
+            scalars: {
+              json_data: {
+                data: [
+                  Buffer.from(JSON.stringify({ dynamicVal: 123 })), // Row 1: has value
+                  Buffer.alloc(0), // Row 2: null/empty -> triggers branch
+                ],
+              },
+              data: 'json_data',
+            },
+          },
+        ],
+        scores: [1.0, 0.5],
+        topks: ['2'],
+        output_fields: ['id', 'dynamicVal'], // Requesting dynamic field
+        num_queries: '1',
+        top_k: '2',
+      },
+    };
+
+    const options = {
+      round_decimal: 2,
+    };
+
+    const expectedResults = [
+      [
+        { score: 1.0, id: '1', dynamicVal: 123 },
+        { score: 0.5, id: '2', dynamicVal: undefined }, // Should be undefined
+      ],
+    ];
+
+    const results = formatSearchResult(searchPromise as any, options);
+
+    expect(results).toEqual(expectedResults);
   });
 });

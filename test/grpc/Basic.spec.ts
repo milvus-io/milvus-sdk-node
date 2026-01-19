@@ -329,6 +329,43 @@ describe(`Basic API without database`, () => {
     expect(addWrongFields.error_code).toEqual(ErrorCode.IllegalArgument);
   });
 
+  it(`search with ids should be successful`, async () => {
+    // 1. describe collection to get primary key and check if "autoID" is true
+    const desc = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    const pk = desc.schema.fields.find(f => f.is_primary_key);
+    expect(pk).toBeDefined();
+
+    // 2. if autoID is true, random query some ids
+    let searchIds: any[] = [];
+    if (pk?.autoID) {
+      const query = await milvusClient.query({
+        collection_name: COLLECTION_NAME,
+        expr: `${pk.name} > 0`,
+        limit: 5,
+        output_fields: [pk.name],
+      });
+      expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+      expect(query.data.length).toBeGreaterThan(0);
+      searchIds = query.data.map(d => d[pk.name]);
+    } else {
+      // if not autoID, we can just use some static ids or generate them
+      // but provided schema has autoID: true
+    }
+
+    // 3. search with ids
+    if (searchIds.length > 0) {
+      const search = await milvusClient.search({
+        collection_name: COLLECTION_NAME,
+        ids: searchIds,
+      });
+
+      expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+      expect(search.results.length).toEqual(searchIds.length);
+    }
+  });
+
   it(`release again should be successful`, async () => {
     const release = await milvusClient.releaseCollection({
       collection_name: COLLECTION_NAME,
@@ -342,5 +379,96 @@ describe(`Basic API without database`, () => {
       collection_name: COLLECTION_NAME,
     });
     expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+});
+
+describe('Search by String IDs API testing', () => {
+  const COLLECTION_NAME_STRING = 'BasicCollectionString';
+
+  beforeAll(async () => {
+    // Create collection with VarChar Primary Key
+    await milvusClient.createCollection({
+      collection_name: COLLECTION_NAME_STRING,
+      dimension: 4,
+      fields: [
+        {
+          name: 'vector',
+          description: 'Vector field',
+          data_type: DataType.FloatVector,
+          dim: 4,
+        },
+        {
+          name: 'id_str',
+          description: 'String ID field',
+          data_type: DataType.VarChar,
+          is_primary_key: true,
+          max_length: 64,
+          autoID: false, // Manual string IDs
+        },
+      ],
+    });
+
+    // Insert data with string IDs
+    const data = [
+      { id_str: 'id_1', vector: [1, 2, 3, 4] },
+      { id_str: 'id_2', vector: [5, 6, 7, 8] },
+      { id_str: 'id_3', vector: [1, 2, 3, 4] },
+      { id_str: 'id_4', vector: [5, 6, 7, 8] },
+    ];
+
+    await milvusClient.insert({
+      collection_name: COLLECTION_NAME_STRING,
+      data: data,
+    });
+
+    // Create index (required for load/search)
+    await milvusClient.createIndex({
+      collection_name: COLLECTION_NAME_STRING,
+      field_name: 'vector',
+      metric_type: 'L2',
+      index_type: 'IVF_FLAT',
+      params: { nlist: 1024 },
+    });
+  });
+
+  afterAll(async () => {
+    await milvusClient.dropCollection({ collection_name: COLLECTION_NAME_STRING });
+  });
+
+  it(`search with string ids should be successful`, async () => {
+    // Load collection first
+    await milvusClient.loadCollection({
+      collection_name: COLLECTION_NAME_STRING,
+    });
+
+    const searchIds = ['id_1', 'id_3'];
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME_STRING,
+      ids: searchIds,
+      output_fields: ['id_str'],
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(searchIds.length);
+
+    // Check if results match
+    // search.results is a 2D array: results[query_index][result_index]
+    // Since id_1 and id_3 have identical vectors, they both match each other with score 0.
+    // Order is not guaranteed, so we check using toContain.
+    expect(search.results[0].map((r: any) => r.id_str)).toContain('id_1');
+    expect(search.results[1].map((r: any) => r.id_str)).toContain('id_3');
+  });
+
+  it(`search with number ids should fail for VarChar PK`, async () => {
+    try {
+      await milvusClient.search({
+        collection_name: COLLECTION_NAME_STRING,
+        ids: [1, 3], // Invalid for VarChar PK
+      });
+    } catch (e: any) {
+      expect(e.message).toContain(
+        'The type of ids should be string because the primary key field id_str is VarChar.'
+      );
+    }
   });
 });

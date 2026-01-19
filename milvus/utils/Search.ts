@@ -29,6 +29,8 @@ import {
   SparseFloatVector,
   PlaceholderType,
   SearchEmbList,
+  DataType,
+  DataTypeMap,
 } from '../';
 
 /**
@@ -135,6 +137,7 @@ type FormatedSearchRequest = {
   dsl?: string;
   dsl_type?: DslType;
   placeholder_group?: Uint8Array;
+  ids?: { int_id?: { data: number[] }; str_id?: { data: string[] } };
   search_params?: KeyValuePair[];
   consistency_level: ConsistencyLevelEnum;
   expr?: string;
@@ -243,19 +246,25 @@ export const buildSearchRequest = (
   // build user search requests
   const userRequests = isHybridSearch
     ? searchHybridReq.data.map(d => ({
-        ...params,
-        ...d,
-      }))
+      ...params,
+      ...d,
+    }))
     : [
-        {
-          ...searchSimpleReq,
-          data:
-            searchReq.vectors || searchSimpleReq.vector || searchSimpleReq.data, // data or vector or vectors
-          anns_field:
-            searchSimpleReq.anns_field ||
-            Object.keys(collectionInfo.anns_fields || {})[0],
-        },
-      ];
+      {
+        ...searchSimpleReq,
+        data:
+          searchReq.vectors || searchSimpleReq.vector || searchSimpleReq.data, // data or vector or vectors
+        anns_field:
+          searchSimpleReq.anns_field ||
+          Object.keys(collectionInfo.anns_fields || {})[0],
+      },
+    ];
+
+  // get primary field type for ids
+  const pkField = collectionInfo.schema.fields.find(f => f.is_primary_key);
+  const pkDataType = pkField
+    ? pkField.dataType || DataTypeMap[pkField.data_type]
+    : undefined;
 
   for (const userRequest of userRequests) {
     const { data, anns_field } = userRequest;
@@ -265,27 +274,81 @@ export const buildSearchRequest = (
       throw new Error(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
     }
 
+    // get ids from request
+    const ids =
+      userRequest.ids || searchReq.ids || searchSimpleReq.ids || undefined;
+
+    // if ids is set, we use ids for search
+    // check if ids is valid
+    if (ids && ids.length > 0) {
+      if (!pkField) {
+        throw new Error(
+          'Primary field not found. Cannot use ids parameter without primary field.'
+        );
+      }
+
+      // validation
+      if (pkDataType === DataType.Int64) {
+        if (
+          !(ids as any[]).every(
+            (id: any) =>
+              typeof id === 'number' || (typeof id === 'string' && !isNaN(Number(id)))
+          )
+        ) {
+          throw new Error(
+            `The type of ids should be integer/string number because the primary key field ${pkField.name} is Int64.`
+          );
+        }
+      } else if (pkDataType === DataType.VarChar) {
+        if (!(ids as any[]).every((id: any) => typeof id === 'string')) {
+          throw new Error(
+            `The type of ids should be string because the primary key field ${pkField.name} is VarChar.`
+          );
+        }
+      } else {
+        throw new Error(
+          `The primary key field ${pkField.name} has unsupported type for ID search.`
+        );
+      }
+    }
+
     // get search data
-    const searchData = formatSearchData(data, annsField);
+    // if ids is set, we don't need to format search data
+    // checks check if data is valid
+    if ((!ids || ids.length === 0) && !data) {
+      throw new Error('Search data is required');
+    }
+    const searchData =
+      ids && ids.length > 0 ? [] : formatSearchData(data!, annsField);
 
     const request: FormatedSearchRequest = {
       collection_name: params.collection_name,
       partition_names: params.partition_names || [],
       output_fields: params.output_fields || default_output_fields,
-      nq: searchReq.nq || searchData.length,
+      nq: ids && ids.length > 0 ? ids.length : searchReq.nq || searchData.length,
       dsl: userRequest.expr || searchReq.expr || searchSimpleReq.filter || '', // expr, inner expr or outer expr
       dsl_type: DslType.BoolExprV1,
-      placeholder_group: buildPlaceholderGroupBytes(
-        milvusProto,
-        searchData,
-        annsField
-      ),
       search_params: parseToKeyValue(
         searchReq.search_params || buildSearchParams(userRequest, anns_field)
       ),
       consistency_level:
         params.consistency_level || (collectionInfo.consistency_level as any),
     };
+
+    if (ids && ids.length > 0) {
+      if (pkDataType === DataType.Int64) {
+        request.ids = { int_id: { data: ids as number[] } };
+      } else if (pkDataType === DataType.VarChar) {
+        request.ids = { str_id: { data: ids as string[] } };
+      }
+    } else {
+      // use placeholder_group for vector search
+      request.placeholder_group = buildPlaceholderGroupBytes(
+        milvusProto,
+        searchData,
+        annsField
+      );
+    }
 
     // if exprValues is set, add it to the request(inner)
     if (userRequest.exprValues) {
@@ -324,40 +387,40 @@ export const buildSearchRequest = (
     isHybridSearch: isHybridSearch,
     request: isHybridSearch
       ? {
-          collection_name: params.collection_name,
-          partition_names: params.partition_names,
-          requests: requests,
-          output_fields: requests[0]?.output_fields,
-          consistency_level: requests[0]?.consistency_level,
+        collection_name: params.collection_name,
+        partition_names: params.partition_names,
+        requests: requests,
+        output_fields: requests[0]?.output_fields,
+        consistency_level: requests[0]?.consistency_level,
 
-          // if ranker is set and it is a hybrid search, add it to the request
-          ...createFunctionScore(rerank),
+        // if ranker is set and it is a hybrid search, add it to the request
+        ...createFunctionScore(rerank),
 
-          // if ranker is not exist, use RRFRanker ranker
-          ...{
-            rank_params: [
-              ...(isRerankerObj
-                ? parseToKeyValue(convertRerankParams(rerank as RerankerObj))
-                : !hasRerankFunction && !hasFunctionScore
+        // if ranker is not exist, use RRFRanker ranker
+        ...{
+          rank_params: [
+            ...(isRerankerObj
+              ? parseToKeyValue(convertRerankParams(rerank as RerankerObj))
+              : !hasRerankFunction && !hasFunctionScore
                 ? parseToKeyValue(convertRerankParams(RRFRanker()))
                 : []),
-              { key: 'round_decimal', value: round_decimal },
-              {
-                key: 'limit',
-                value:
-                  searchSimpleReq.limit ?? searchSimpleReq.topk ?? DEFAULT_TOPK,
-              },
-              {
-                key: 'offset',
-                value: searchSimpleReq.offset ?? 0,
-              },
-            ],
-          },
-        }
-      : {
-          ...requests[0],
-          ...createFunctionScore(rerank),
+            { key: 'round_decimal', value: round_decimal },
+            {
+              key: 'limit',
+              value:
+                searchSimpleReq.limit ?? searchSimpleReq.topk ?? DEFAULT_TOPK,
+            },
+            {
+              key: 'offset',
+              value: searchSimpleReq.offset ?? 0,
+            },
+          ],
         },
+      }
+      : {
+        ...requests[0],
+        ...createFunctionScore(rerank),
+      },
     // need for parsing the search results
     ...(round_decimal !== -1 ? { round_decimal } : {}),
     nq: requests[0].nq,
@@ -435,8 +498,8 @@ export const formatSearchResult = (
           const value = isFixedSchema
             ? dataArray[absoluteIndex]
             : dataArray[absoluteIndex]
-            ? dataArray[absoluteIndex][field_name]
-            : undefined;
+              ? dataArray[absoluteIndex][field_name]
+              : undefined;
 
           result[field_name] = value;
         });
