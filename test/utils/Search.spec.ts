@@ -4,6 +4,7 @@ import {
   ERROR_REASONS,
   SearchSimpleReq,
   DataType,
+  DEFAULT_DYNAMIC_FIELD,
   formatSearchResult,
   _Field,
   formatSearchData,
@@ -1328,5 +1329,65 @@ describe('utils/Search', () => {
         'Primary field not found. Cannot use ids parameter without primary field.'
       );
     }
+  });
+
+  it('should format search result with dynamic fields correctly', () => {
+    const searchPromise: any = {
+      status: {
+        error_code: 'Success',
+        reason: '',
+      },
+      results: {
+        fields_data: [
+          {
+            type: 'Int64',
+            field_name: 'id',
+            field_id: '101',
+            is_dynamic: false,
+            scalars: {
+              long_data: {
+                data: ['1', '2'],
+              },
+              data: 'long_data',
+            },
+          },
+          {
+            type: 'JSON',
+            field_name: DEFAULT_DYNAMIC_FIELD,
+            field_id: '102',
+            is_dynamic: true,
+            scalars: {
+              json_data: {
+                data: [
+                  Buffer.from(JSON.stringify({ dynamicVal: 123 })), // Row 1: has value
+                  Buffer.alloc(0), // Row 2: null/empty -> triggers branch
+                ],
+              },
+              data: 'json_data',
+            },
+          },
+        ],
+        scores: [1.0, 0.5],
+        topks: ['2'],
+        output_fields: ['id', 'dynamicVal'], // Requesting dynamic field
+        num_queries: '1',
+        top_k: '2',
+      },
+    };
+
+    const options = {
+      round_decimal: 2,
+    };
+
+    const expectedResults = [
+      [
+        { score: 1.0, id: '1', dynamicVal: 123 },
+        { score: 0.5, id: '2', dynamicVal: undefined }, // Should be undefined
+      ],
+    ];
+
+    const results = formatSearchResult(searchPromise as any, options);
+
+    expect(results).toEqual(expectedResults);
   });
 });
