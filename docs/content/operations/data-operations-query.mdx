@@ -113,6 +113,24 @@ const results = await client.search({
 });
 ```
 
+### Search by ID
+
+perform a vector similarity search using the vectors associated with exact entity IDs:
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  ids: [1, 2, 3], // primary keys
+  limit: 10,
+  output_fields: ['id', 'text'],
+});
+```
+
+> [!NOTE]
+> - When `ids` are provided, the `data` parameter (dummy vectors) is not required.
+> - The provided `ids` must match the collection's Primary Key type (`Int64` or `VarChar`).
+> - For collections with multiple vector fields, explicitly specifying `anns_field` is recommended (and required to disambiguate).
+
 ### Search Multiple Vectors
 
 ```javascript
