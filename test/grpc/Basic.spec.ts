@@ -381,3 +381,94 @@ describe(`Basic API without database`, () => {
     expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
   });
 });
+
+describe('Search by String IDs API testing', () => {
+  const COLLECTION_NAME_STRING = 'BasicCollectionString';
+
+  beforeAll(async () => {
+    // Create collection with VarChar Primary Key
+    await milvusClient.createCollection({
+      collection_name: COLLECTION_NAME_STRING,
+      dimension: 4,
+      fields: [
+        {
+          name: 'vector',
+          description: 'Vector field',
+          data_type: DataType.FloatVector,
+          dim: 4,
+        },
+        {
+          name: 'id_str',
+          description: 'String ID field',
+          data_type: DataType.VarChar,
+          is_primary_key: true,
+          max_length: 64,
+          autoID: false, // Manual string IDs
+        },
+      ],
+    });
+
+    // Insert data with string IDs
+    const data = [
+      { id_str: 'id_1', vector: [1, 2, 3, 4] },
+      { id_str: 'id_2', vector: [5, 6, 7, 8] },
+      { id_str: 'id_3', vector: [1, 2, 3, 4] },
+      { id_str: 'id_4', vector: [5, 6, 7, 8] },
+    ];
+
+    await milvusClient.insert({
+      collection_name: COLLECTION_NAME_STRING,
+      data: data,
+    });
+
+    // Create index (required for load/search)
+    await milvusClient.createIndex({
+      collection_name: COLLECTION_NAME_STRING,
+      field_name: 'vector',
+      metric_type: 'L2',
+      index_type: 'IVF_FLAT',
+      params: { nlist: 1024 },
+    });
+  });
+
+  afterAll(async () => {
+    await milvusClient.dropCollection({ collection_name: COLLECTION_NAME_STRING });
+  });
+
+  it(`search with string ids should be successful`, async () => {
+    // Load collection first
+    await milvusClient.loadCollection({
+      collection_name: COLLECTION_NAME_STRING,
+    });
+
+    const searchIds = ['id_1', 'id_3'];
+    const search = await milvusClient.search({
+      collection_name: COLLECTION_NAME_STRING,
+      ids: searchIds,
+      output_fields: ['id_str'],
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toEqual(searchIds.length);
+
+    // Check if results match
+    // search.results is a 2D array: results[query_index][result_index]
+    // Since id_1 and id_3 have identical vectors, they both match each other with score 0.
+    // Order is not guaranteed, so we check using toContain.
+    expect(search.results[0].map((r: any) => r.id_str)).toContain('id_1');
+    expect(search.results[1].map((r: any) => r.id_str)).toContain('id_3');
+  });
+
+  it(`search with number ids should fail for VarChar PK`, async () => {
+    try {
+      await milvusClient.search({
+        collection_name: COLLECTION_NAME_STRING,
+        ids: [1, 3], // Invalid for VarChar PK
+      });
+    } catch (e: any) {
+      expect(e.message).toContain(
+        'The type of ids should be string because the primary key field id_str is VarChar.'
+      );
+    }
+  });
+});
