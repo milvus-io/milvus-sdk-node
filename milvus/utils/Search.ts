@@ -261,14 +261,10 @@ export const buildSearchRequest = (
     ];
 
   // get primary field type for ids
-  let pkField: FieldSchema | undefined;
-  for (let i = 0; i < collectionInfo.schema.fields.length; i++) {
-    const f = collectionInfo.schema.fields[i];
-    if (f.is_primary_key) {
-      pkField = f;
-      break;
-    }
-  }
+  const pkField = collectionInfo.schema.fields.find(f => f.is_primary_key);
+  const pkDataType = pkField
+    ? pkField.dataType || DataTypeMap[pkField.data_type]
+    : undefined;
 
   for (const userRequest of userRequests) {
     const { data, anns_field } = userRequest;
@@ -290,8 +286,6 @@ export const buildSearchRequest = (
           'Primary field not found. Cannot use ids parameter without primary field.'
         );
       }
-
-      const pkDataType = pkField.dataType || DataTypeMap[pkField.data_type];
 
       // validation
       if (pkDataType === DataType.Int64) {
@@ -342,7 +336,6 @@ export const buildSearchRequest = (
     };
 
     if (ids && ids.length > 0) {
-      const pkDataType = pkField!.dataType || DataTypeMap[pkField!.data_type];
       if (pkDataType === DataType.Int64) {
         request.ids = { int_id: { data: ids as number[] } };
       } else if (pkDataType === DataType.VarChar) {
