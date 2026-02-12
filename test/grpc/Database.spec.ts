@@ -266,6 +266,51 @@ describe(`Database API`, () => {
     });
     expect(releaseCollection.error_code).toEqual(ErrorCode.SUCCESS);
 
+    // addCollectionField with db_name
+    const addField = await milvusClient.addCollectionField({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      field: {
+        name: 'new_field_single',
+        data_type: 'VarChar',
+        max_length: 128,
+        nullable: true,
+      },
+    });
+    expect(addField.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // addCollectionFields (plural) with db_name
+    const addFields = await milvusClient.addCollectionFields({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+      fields: [
+        {
+          name: 'new_field_batch_1',
+          data_type: 'VarChar',
+          max_length: 128,
+          nullable: true,
+        },
+        {
+          name: 'new_field_batch_2',
+          data_type: 'Int64',
+          nullable: true,
+        },
+      ],
+    });
+    expect(addFields.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // verify the new fields exist in the correct database
+    const descAfterAdd = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME2,
+      db_name: DB_NAME2,
+    });
+    const fieldNames = descAfterAdd.schema.fields.map(
+      (f: { name: string }) => f.name
+    );
+    expect(fieldNames).toContain('new_field_single');
+    expect(fieldNames).toContain('new_field_batch_1');
+    expect(fieldNames).toContain('new_field_batch_2');
+
     // drop collection
     const dropCollections = await milvusClient.dropCollection({
       collection_name: COLLECTION_NAME2,
