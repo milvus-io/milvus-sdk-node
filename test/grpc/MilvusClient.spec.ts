@@ -195,6 +195,36 @@ describe(`Milvus client`, () => {
     }
   });
 
+  it(`should have default keepalive options set to 10s interval and 5s timeout`, async () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(client.channelOptions['grpc.keepalive_time_ms']).toEqual(10000);
+    expect(client.channelOptions['grpc.keepalive_timeout_ms']).toEqual(5000);
+    expect(client.channelOptions['grpc.keepalive_permit_without_calls']).toEqual(
+      1
+    );
+  });
+
+  it(`should allow overriding keepalive options via channelOptions`, async () => {
+    const client = new MilvusClient({
+      address: IP,
+      channelOptions: {
+        'grpc.keepalive_time_ms': 20000,
+        'grpc.keepalive_timeout_ms': 8000,
+      },
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(client.channelOptions['grpc.keepalive_time_ms']).toEqual(20000);
+    expect(client.channelOptions['grpc.keepalive_timeout_ms']).toEqual(8000);
+    expect(client.channelOptions['grpc.keepalive_permit_without_calls']).toEqual(
+      1
+    );
+  });
+
   it(`should add trace interceptor if enableTrace is true`, async () => {
     const nonTraceClient = new MilvusClient({
       address: IP,
