@@ -306,6 +306,7 @@ export class Collection extends Database {
     for (const field of data.fields) {
       const result = await this.addCollectionField({
         collection_name: data.collection_name,
+        db_name: data.db_name,
         field,
         timeout: data.timeout,
       });
