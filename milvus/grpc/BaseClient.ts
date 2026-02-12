@@ -126,7 +126,7 @@ export class BaseClient {
       // So SDK should support max_receive_message_length unlimited.
       'grpc.max_receive_message_length': -1, // set max_receive_message_length to unlimited
       'grpc.max_send_message_length': -1, // set max_send_message_length to unlimited
-      'grpc.keepalive_time_ms': 55 * 1000, // Send keepalive pings every 55 seconds, default is 2 hours.
+      'grpc.keepalive_time_ms': 10 * 1000, // Send keepalive pings every 10 seconds, default is 2 hours.
       'grpc.keepalive_timeout_ms': 5 * 1000, // Keepalive ping timeout after 5 seconds, default is 20 seconds.
       'grpc.keepalive_permit_without_calls': 1, // Allow keepalive pings when there are no gRPC calls.
       'grpc.enable_retries': 1, // enable retry
