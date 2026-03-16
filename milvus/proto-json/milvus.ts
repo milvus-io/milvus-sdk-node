@@ -7804,7 +7804,7 @@ export default {
                   "type": "string",
                   "id": 3
                 },
-                "publicDependency": {
+                "public_dependency": {
                   "rule": "repeated",
                   "type": "int32",
                   "id": 10,
@@ -7812,7 +7812,7 @@ export default {
                     "packed": false
                   }
                 },
-                "weakDependency": {
+                "weak_dependency": {
                   "rule": "repeated",
                   "type": "int32",
                   "id": 11,
@@ -7820,12 +7820,12 @@ export default {
                     "packed": false
                   }
                 },
-                "messageType": {
+                "message_type": {
                   "rule": "repeated",
                   "type": "DescriptorProto",
                   "id": 4
                 },
-                "enumType": {
+                "enum_type": {
                   "rule": "repeated",
                   "type": "EnumDescriptorProto",
                   "id": 5
@@ -7844,7 +7844,7 @@ export default {
                   "type": "FileOptions",
                   "id": 8
                 },
-                "sourceCodeInfo": {
+                "source_code_info": {
                   "type": "SourceCodeInfo",
                   "id": 9
                 },
@@ -7870,22 +7870,22 @@ export default {
                   "type": "FieldDescriptorProto",
                   "id": 6
                 },
-                "nestedType": {
+                "nested_type": {
                   "rule": "repeated",
                   "type": "DescriptorProto",
                   "id": 3
                 },
-                "enumType": {
+                "enum_type": {
                   "rule": "repeated",
                   "type": "EnumDescriptorProto",
                   "id": 4
                 },
-                "extensionRange": {
+                "extension_range": {
                   "rule": "repeated",
                   "type": "ExtensionRange",
                   "id": 5
                 },
-                "oneofDecl": {
+                "oneof_decl": {
                   "rule": "repeated",
                   "type": "OneofDescriptorProto",
                   "id": 8
@@ -7894,12 +7894,12 @@ export default {
                   "type": "MessageOptions",
                   "id": 7
                 },
-                "reservedRange": {
+                "reserved_range": {
                   "rule": "repeated",
                   "type": "ReservedRange",
                   "id": 9
                 },
-                "reservedName": {
+                "reserved_name": {
                   "rule": "repeated",
                   "type": "string",
                   "id": 10
@@ -7950,7 +7950,7 @@ export default {
                   "type": "Type",
                   "id": 5
                 },
-                "typeName": {
+                "type_name": {
                   "type": "string",
                   "id": 6
                 },
@@ -7958,15 +7958,15 @@ export default {
                   "type": "string",
                   "id": 2
                 },
-                "defaultValue": {
+                "default_value": {
                   "type": "string",
                   "id": 7
                 },
-                "oneofIndex": {
+                "oneof_index": {
                   "type": "int32",
                   "id": 9
                 },
-                "jsonName": {
+                "json_name": {
                   "type": "string",
                   "id": 10
                 },
@@ -8075,11 +8075,11 @@ export default {
                   "type": "string",
                   "id": 1
                 },
-                "inputType": {
+                "input_type": {
                   "type": "string",
                   "id": 2
                 },
-                "outputType": {
+                "output_type": {
                   "type": "string",
                   "id": 3
                 },
@@ -8087,11 +8087,11 @@ export default {
                   "type": "MethodOptions",
                   "id": 4
                 },
-                "clientStreaming": {
+                "client_streaming": {
                   "type": "bool",
                   "id": 5
                 },
-                "serverStreaming": {
+                "server_streaming": {
                   "type": "bool",
                   "id": 6
                 }
@@ -8099,49 +8099,49 @@ export default {
             },
             "FileOptions": {
               "fields": {
-                "javaPackage": {
+                "java_package": {
                   "type": "string",
                   "id": 1
                 },
-                "javaOuterClassname": {
+                "java_outer_classname": {
                   "type": "string",
                   "id": 8
                 },
-                "javaMultipleFiles": {
+                "java_multiple_files": {
                   "type": "bool",
                   "id": 10
                 },
-                "javaGenerateEqualsAndHash": {
+                "java_generate_equals_and_hash": {
                   "type": "bool",
                   "id": 20,
                   "options": {
                     "deprecated": true
                   }
                 },
-                "javaStringCheckUtf8": {
+                "java_string_check_utf8": {
                   "type": "bool",
                   "id": 27
                 },
-                "optimizeFor": {
+                "optimize_for": {
                   "type": "OptimizeMode",
                   "id": 9,
                   "options": {
                     "default": "SPEED"
                   }
                 },
-                "goPackage": {
+                "go_package": {
                   "type": "string",
                   "id": 11
                 },
-                "ccGenericServices": {
+                "cc_generic_services": {
                   "type": "bool",
                   "id": 16
                 },
-                "javaGenericServices": {
+                "java_generic_services": {
                   "type": "bool",
                   "id": 17
                 },
-                "pyGenericServices": {
+                "py_generic_services": {
                   "type": "bool",
                   "id": 18
                 },
@@ -8149,19 +8149,19 @@ export default {
                   "type": "bool",
                   "id": 23
                 },
-                "ccEnableArenas": {
+                "cc_enable_arenas": {
                   "type": "bool",
                   "id": 31
                 },
-                "objcClassPrefix": {
+                "objc_class_prefix": {
                   "type": "string",
                   "id": 36
                 },
-                "csharpNamespace": {
+                "csharp_namespace": {
                   "type": "string",
                   "id": 37
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8191,11 +8191,11 @@ export default {
             },
             "MessageOptions": {
               "fields": {
-                "messageSetWireFormat": {
+                "message_set_wire_format": {
                   "type": "bool",
                   "id": 1
                 },
-                "noStandardDescriptorAccessor": {
+                "no_standard_descriptor_accessor": {
                   "type": "bool",
                   "id": 2
                 },
@@ -8203,11 +8203,11 @@ export default {
                   "type": "bool",
                   "id": 3
                 },
-                "mapEntry": {
+                "map_entry": {
                   "type": "bool",
                   "id": 7
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8258,7 +8258,7 @@ export default {
                   "type": "bool",
                   "id": 10
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8295,7 +8295,7 @@ export default {
             },
             "OneofOptions": {
               "fields": {
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8310,7 +8310,7 @@ export default {
             },
             "EnumOptions": {
               "fields": {
-                "allowAlias": {
+                "allow_alias": {
                   "type": "bool",
                   "id": 2
                 },
@@ -8318,7 +8318,7 @@ export default {
                   "type": "bool",
                   "id": 3
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8337,7 +8337,7 @@ export default {
                   "type": "bool",
                   "id": 1
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8356,7 +8356,7 @@ export default {
                   "type": "bool",
                   "id": 33
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8375,7 +8375,7 @@ export default {
                   "type": "bool",
                   "id": 33
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8395,27 +8395,27 @@ export default {
                   "type": "NamePart",
                   "id": 2
                 },
-                "identifierValue": {
+                "identifier_value": {
                   "type": "string",
                   "id": 3
                 },
-                "positiveIntValue": {
+                "positive_int_value": {
                   "type": "uint64",
                   "id": 4
                 },
-                "negativeIntValue": {
+                "negative_int_value": {
                   "type": "int64",
                   "id": 5
                 },
-                "doubleValue": {
+                "double_value": {
                   "type": "double",
                   "id": 6
                 },
-                "stringValue": {
+                "string_value": {
                   "type": "bytes",
                   "id": 7
                 },
-                "aggregateValue": {
+                "aggregate_value": {
                   "type": "string",
                   "id": 8
                 }
@@ -8423,12 +8423,12 @@ export default {
               "nested": {
                 "NamePart": {
                   "fields": {
-                    "namePart": {
+                    "name_part": {
                       "rule": "required",
                       "type": "string",
                       "id": 1
                     },
-                    "isExtension": {
+                    "is_extension": {
                       "rule": "required",
                       "type": "bool",
                       "id": 2
@@ -8458,15 +8458,15 @@ export default {
                       "type": "int32",
                       "id": 2
                     },
-                    "leadingComments": {
+                    "leading_comments": {
                       "type": "string",
                       "id": 3
                     },
-                    "trailingComments": {
+                    "trailing_comments": {
                       "type": "string",
                       "id": 4
                     },
-                    "leadingDetachedComments": {
+                    "leading_detached_comments": {
                       "rule": "repeated",
                       "type": "string",
                       "id": 6
@@ -8491,7 +8491,7 @@ export default {
                       "type": "int32",
                       "id": 1
                     },
-                    "sourceFile": {
+                    "source_file": {
                       "type": "string",
                       "id": 2
                     },
