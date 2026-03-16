@@ -10,7 +10,7 @@
   "license": "Apache-2.0",
   "repository": "github:milvus-io/milvus-sdk-node",
   "scripts": {
-    "pre": "git submodule update --remote && rm -rf proto/proto/google && mkdir -p proto/proto/google/protobuf && wget https://raw.githubusercontent.com/protocolbuffers/protobuf/main/src/google/protobuf/descriptor.proto -O proto/proto/google/protobuf/descriptor.proto",
+    "pre": "git submodule update --remote && rm -rf proto/proto/google && mkdir -p proto/proto/google/protobuf && cp node_modules/protobufjs/google/protobuf/descriptor.proto proto/proto/google/protobuf/descriptor.proto",
     "build": "rm -rf dist && tsc --declaration && node build.js",
     "test": "NODE_ENV=dev jest",
     "test-cloud": "NODE_ENV=dev jest test/http --testPathIgnorePatterns=none",
