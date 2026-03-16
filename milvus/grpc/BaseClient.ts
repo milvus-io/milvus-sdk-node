@@ -16,6 +16,9 @@ import {
   ServerInfo,
   CONNECT_STATUS,
   TLS_MODE,
+  isGlobalEndpoint,
+  GlobalTopology,
+  TopologyRefresher,
 } from '../';
 import milvusProtoJson from '../proto-json/milvus.base';
 import schemaProtoJson from '../proto-json/schema.base';
@@ -46,10 +49,18 @@ export class BaseClient {
   public readonly channelOptions: ChannelOptions;
   // server info
   public serverInfo: ServerInfo = {};
-  // // The gRPC client instance.
-  // public client!: Promise<Client>;
   // The timeout for connecting to the Milvus service.
   public timeout: number = DEFAULT_CONNECT_TIMEOUT;
+
+  // Global cluster state
+  public readonly isGlobal: boolean = false;
+  public globalEndpoint: string = '';
+  public globalTopology: GlobalTopology | null = null;
+  public topologyRefresher: TopologyRefresher | null = null;
+  // Mutex flag to serialize failover reconnections
+  public isReconnecting: boolean = false;
+  // Promise that concurrent callers can await during reconnection
+  public reconnectingPromise: Promise<void> | null = null;
 
   // ChannelCredentials object used for authenticating the client on the gRPC channel.
   protected creds!: ChannelCredentials;
@@ -111,6 +122,15 @@ export class BaseClient {
     // overwrite ID if necessary
     if (config.id) {
       this.clientId = config.id;
+    }
+
+    // Detect global cluster mode
+    this.isGlobal =
+      config.isGlobal !== undefined
+        ? config.isGlobal
+        : isGlobalEndpoint(config.address);
+    if (this.isGlobal) {
+      this.globalEndpoint = config.address;
     }
 
     // Assign the configuration object.

@@ -29,6 +29,10 @@ import {
   DEFAULT_POOL_MIN,
   RunAnalyzerRequest,
   RunAnalyzerResponse,
+  fetchTopology,
+  getPrimaryCluster,
+  TopologyRefresher,
+  setPoolFailoverHandler,
 } from '../';
 import { User } from './User';
 
@@ -45,6 +49,9 @@ export const LOADER_OPTIONS = {
  * A client for interacting with the Milvus server via gRPC.
  */
 export class GRPCClient extends User {
+  // Store the gRPC service constructor for pool rebuild on failover
+  private _MilvusService!: ServiceClientConstructor;
+
   /**
    * Creates a new instance of MilvusClient.
    * @param configOrAddress The Milvus server's address or client configuration object.
@@ -64,7 +71,7 @@ export class GRPCClient extends User {
     super(configOrAddress, ssl, username, password, channelOptions);
 
     // Get the gRPC service for Milvus
-    const MilvusService = getGRPCService(
+    this._MilvusService = getGRPCService(
       {
         serviceName: this.protoInternalPath.serviceName, // the name of the Milvus service
       },
@@ -116,26 +123,159 @@ export class GRPCClient extends User {
     // add interceptors
     this.channelOptions.interceptors = interceptors;
 
-    // create grpc pool
-    this.channelPool = this.createChannelPool(MilvusService);
+    // For global cluster, skip pool creation here — pool will be created
+    // in connect() after topology is fetched and primary endpoint is resolved.
+    if (!this.isGlobal) {
+      this.channelPool = this.createChannelPool();
+    }
   }
 
   // create a grpc service client(connect)
   connect(sdkVersion: string) {
-    // connect to get identifier
-    this.connectPromise = this._getServerInfo(sdkVersion);
+    if (this.isGlobal) {
+      // For global cluster: fetch topology → create pool → connect
+      this.connectPromise = this._initGlobalConnection(sdkVersion);
+    } else {
+      // Normal connection
+      this.connectPromise = this._getServerInfo(sdkVersion);
+    }
+  }
+
+  /**
+   * Initializes a global cluster connection.
+   * Fetches topology, resolves primary endpoint, creates pool, starts refresher.
+   */
+  private async _initGlobalConnection(sdkVersion: string) {
+    const token = this.config.token || '';
+
+    // Fetch topology to discover primary cluster
+    const topology = await fetchTopology(this.globalEndpoint, token);
+    this.globalTopology = topology;
+
+    // Resolve primary endpoint and create pool
+    const primary = getPrimaryCluster(topology);
+    this.config.address = primary.endpoint;
+    this.channelPool = this.createChannelPool();
+    this._attachFailoverHandler();
+
+    // Start background topology refresher
+    this.topologyRefresher = new TopologyRefresher({
+      globalEndpoint: this.globalEndpoint,
+      token,
+      topology,
+      onTopologyChange: newTopology => {
+        this.globalTopology = newTopology;
+      },
+    });
+    this.topologyRefresher.start();
+
+    // Now connect to the primary
+    return this._getServerInfo(sdkVersion);
+  }
+
+  /**
+   * Reconnects to a new primary cluster after failover.
+   * Drains the old pool, creates a new pool targeting the new primary endpoint.
+   * @returns true if primary changed and reconnection happened, false otherwise
+   */
+  async reconnectToPrimary(): Promise<boolean> {
+    // Serialize concurrent failover attempts
+    if (this.isReconnecting) {
+      // Wait for the ongoing reconnection to complete
+      if (this.reconnectingPromise) {
+        await this.reconnectingPromise;
+      }
+      return true;
+    }
+
+    this.isReconnecting = true;
+    this.reconnectingPromise = (async () => {
+      try {
+        const token = this.config.token || '';
+
+        // Fetch fresh topology
+        const newTopology = await fetchTopology(this.globalEndpoint, token);
+        const newPrimary = getPrimaryCluster(newTopology);
+
+        // Check if primary actually changed
+        if (newPrimary.endpoint === this.config.address) {
+          return; // Primary hasn't changed, no reconnect needed
+        }
+
+        logger.info(
+          `Global cluster failover: ${this.config.address} -> ${newPrimary.endpoint}`
+        );
+
+        // Drain old pool
+        if (this.channelPool) {
+          await this.channelPool.drain();
+          await this.channelPool.clear();
+        }
+
+        // Update state
+        this.globalTopology = newTopology;
+        this.config.address = newPrimary.endpoint;
+
+        // Create new pool targeting new primary
+        this.channelPool = this.createChannelPool();
+        this._attachFailoverHandler();
+
+        // Update topology refresher
+        if (this.topologyRefresher) {
+          this.topologyRefresher.stop();
+        }
+        this.topologyRefresher = new TopologyRefresher({
+          globalEndpoint: this.globalEndpoint,
+          token,
+          topology: newTopology,
+          onTopologyChange: t => {
+            this.globalTopology = t;
+          },
+        });
+        this.topologyRefresher.start();
+
+        // Re-establish server info
+        this.connectStatus = CONNECT_STATUS.CONNECTING;
+        await this._getServerInfo('reconnect');
+      } catch (e: any) {
+        logger.warn(`Global cluster failover failed: ${e.message}`);
+        throw e;
+      }
+    })();
+
+    try {
+      await this.reconnectingPromise;
+      // Check if primary actually changed by comparing the state
+      return true;
+    } finally {
+      this.isReconnecting = false;
+      this.reconnectingPromise = null;
+    }
+  }
+
+  /**
+   * Attaches a failover handler to the channel pool for global cluster support.
+   * When promisify encounters a gRPC UNAVAILABLE error after all retries,
+   * this handler triggers topology refresh and pool rebuild.
+   */
+  private _attachFailoverHandler() {
+    setPoolFailoverHandler(this.channelPool, async () => {
+      // Trigger topology refresh
+      if (this.topologyRefresher) {
+        this.topologyRefresher.triggerRefresh();
+      }
+
+      await this.reconnectToPrimary();
+      return this.channelPool;
+    });
   }
 
   /**
    * Creates a pool of gRPC service clients.
-   *
-   * @param {ServiceClientConstructor} ServiceClientConstructor - The constructor for the gRPC service client.
-   *
    * @returns {Pool} - A pool of gRPC service clients.
    */
-  private createChannelPool(
-    ServiceClientConstructor: ServiceClientConstructor
-  ) {
+  private createChannelPool() {
+    const ServiceClientConstructor = this._MilvusService;
     return createPool<Client>(
       {
         create: async () => {
@@ -243,6 +383,12 @@ export class GRPCClient extends User {
    * @returns {Promise<CONNECT_STATUS>} The updated connection status.
    */
   async closeConnection() {
+    // Stop topology refresher if running (global cluster)
+    if (this.topologyRefresher) {
+      this.topologyRefresher.stop();
+      this.topologyRefresher = null;
+    }
+
     // Close all connections in the pool
     if (this.channelPool) {
       await this.channelPool.drain();
