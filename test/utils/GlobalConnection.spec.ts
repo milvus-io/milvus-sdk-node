@@ -2,6 +2,7 @@ import {
   MilvusClient,
   isGlobalEndpoint,
   FAILOVER_HANDLER_KEY,
+  CONNECT_STATUS,
 } from '../../milvus';
 
 /**
@@ -209,6 +210,179 @@ describe('Global connection lifecycle', () => {
     await client.closeConnection();
 
     expect(client.topologyRefresher).toBeNull();
+  });
+
+  it('should call _initGlobalConnection when connect() is called on global client', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(validTopologyResponse),
+    }) as any;
+
+    const client = new MilvusClient({
+      address: 'https://glo-xxx.global-cluster.xyz',
+      token: 'test-token',
+      __SKIP_CONNECT__: true,
+    });
+
+    // connect() should trigger the global path
+    client.connect('test-version');
+
+    // connectPromise should be set (will fail at _getServerInfo, but topology + pool are created)
+    try {
+      await client.connectPromise;
+    } catch {
+      // Expected - no real gRPC server
+    }
+
+    // Verify global init happened
+    expect(client.channelPool).toBeDefined();
+    expect(client.globalTopology).toBeTruthy();
+    expect(client.config.address).toBe('primary-host:19530');
+
+    // Clean up
+    client.topologyRefresher?.stop();
+  });
+
+  it('should reconnect when primary changes', async () => {
+    let fetchCount = 0;
+    global.fetch = jest.fn().mockImplementation(() => {
+      fetchCount++;
+      if (fetchCount <= 1) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(validTopologyResponse),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            code: 0,
+            data: {
+              version: '2',
+              clusters: [
+                { clusterId: 'c3', endpoint: 'new-primary:19530', capability: 3 },
+              ],
+            },
+          }),
+      });
+    }) as any;
+
+    const client = new MilvusClient({
+      address: 'https://glo-xxx.global-cluster.xyz',
+      token: 'test-token',
+      pool: { min: 0, max: 1 },
+      __SKIP_CONNECT__: true,
+    });
+
+    // Mock _getServerInfo BEFORE init so it doesn't hang on real gRPC
+    (client as any)._getServerInfo = jest.fn().mockResolvedValue(undefined);
+
+    await (client as any)._initGlobalConnection('test');
+
+    expect(client.config.address).toBe('primary-host:19530');
+
+    // Mock old pool drain/clear
+    const oldPool = client.channelPool;
+    oldPool.drain = jest.fn().mockResolvedValue(undefined);
+    oldPool.clear = jest.fn().mockResolvedValue(undefined);
+
+    const changed = await client.reconnectToPrimary();
+    expect(changed).toBe(true);
+    expect(client.config.address).toBe('new-primary:19530');
+
+    // Clean up
+    client.topologyRefresher?.stop();
+    if (client.channelPool) {
+      try { await client.channelPool.drain(); await client.channelPool.clear(); } catch {}
+    }
+  });
+
+  it('should return false from reconnectToPrimary when primary unchanged', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(validTopologyResponse),
+    }) as any;
+
+    const client = new MilvusClient({
+      address: 'https://glo-xxx.global-cluster.xyz',
+      token: 'test-token',
+      __SKIP_CONNECT__: true,
+    });
+
+    try {
+      await (client as any)._initGlobalConnection('test');
+    } catch {
+      // Expected
+    }
+
+    // Reconnect with same topology — primary unchanged
+    const changed = await client.reconnectToPrimary();
+    expect(changed).toBe(false);
+
+    // Clean up
+    client.topologyRefresher?.stop();
+  });
+
+  it('should clean up on failover failure', async () => {
+    let fetchCount = 0;
+    global.fetch = jest.fn().mockImplementation(() => {
+      fetchCount++;
+      if (fetchCount <= 1) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(validTopologyResponse),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            code: 0,
+            data: {
+              version: '2',
+              clusters: [
+                { clusterId: 'c3', endpoint: 'failing-host:19530', capability: 3 },
+              ],
+            },
+          }),
+      });
+    }) as any;
+
+    const client = new MilvusClient({
+      address: 'https://glo-xxx.global-cluster.xyz',
+      token: 'test-token',
+      pool: { min: 0, max: 1 },
+      __SKIP_CONNECT__: true,
+    });
+
+    // Mock _getServerInfo: succeed on init, fail on reconnect
+    let getServerInfoCallCount = 0;
+    (client as any)._getServerInfo = jest.fn().mockImplementation(() => {
+      getServerInfoCallCount++;
+      if (getServerInfoCallCount <= 1) {
+        return Promise.resolve(undefined);
+      }
+      return Promise.reject(new Error('connection failed'));
+    });
+
+    await (client as any)._initGlobalConnection('test');
+
+    // Mock old pool drain/clear
+    const oldPool = client.channelPool;
+    oldPool.drain = jest.fn().mockResolvedValue(undefined);
+    oldPool.clear = jest.fn().mockResolvedValue(undefined);
+
+    // Reconnect will fail at _getServerInfo (second call)
+    try {
+      await client.reconnectToPrimary();
+    } catch {
+      // Expected
+    }
+
+    // After failure, refresher should be cleaned up
+    expect(client.topologyRefresher).toBeNull();
+    expect(client.connectStatus).toBe(CONNECT_STATUS.SHUTDOWN);
   });
 
   it('should serialize concurrent reconnect via isReconnecting flag', async () => {

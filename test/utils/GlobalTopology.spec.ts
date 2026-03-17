@@ -291,6 +291,30 @@ describe('fetchTopology', () => {
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 
+  it('should retry on fetch timeout (AbortError)', async () => {
+    let attempts = 0;
+    global.fetch = jest.fn().mockImplementation(() => {
+      attempts++;
+      if (attempts < 3) {
+        const err = new Error('The operation was aborted');
+        err.name = 'AbortError';
+        return Promise.reject(err);
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(validResponse),
+      });
+    }) as any;
+
+    const topology = await fetchTopology(
+      'https://glo-xxx.global-cluster.xyz',
+      'token'
+    );
+
+    expect(topology.version).toBe(3);
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
   it('should retry on network errors', async () => {
     let attempts = 0;
     global.fetch = jest.fn().mockImplementation(() => {
@@ -432,6 +456,42 @@ describe('TopologyRefresher', () => {
     await flushPromises();
 
     expect(onChange).not.toHaveBeenCalled();
+    refresher.stop();
+  });
+
+  it('should survive onTopologyChange callback failure', async () => {
+    const newTopology = {
+      version: 2,
+      clusters: [
+        { clusterId: 'c2', endpoint: 'host2:19530', capability: 3 },
+      ],
+    };
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ code: 0, data: { ...newTopology, version: '2' } }),
+    }) as any;
+
+    const onChange = jest.fn().mockImplementation(() => {
+      throw new Error('callback error');
+    });
+    const refresher = new TopologyRefresher({
+      globalEndpoint: 'https://glo-xxx.global-cluster.xyz',
+      token: 'token',
+      topology: initialTopology,
+      refreshInterval: 100,
+      onTopologyChange: onChange,
+    });
+
+    refresher.start();
+    await new Promise(resolve => setTimeout(resolve, 200));
+    await flushPromises();
+
+    // Topology should still be updated despite callback failure
+    expect(refresher.getTopology().version).toBe(2);
+    expect(onChange).toHaveBeenCalled();
+
     refresher.stop();
   });
 
