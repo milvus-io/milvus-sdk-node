@@ -8,3 +8,4 @@ export * from './Format';
 export * from './Validate';
 export * from './Function';
 export * from './logger';
+export * from './GlobalTopology';

@@ -69,6 +69,11 @@ export interface ClientConfig {
 
   // enable trace
   trace?: boolean;
+
+  // Explicitly enable/disable global cluster mode.
+  // When true, the SDK fetches topology from the endpoint and routes to the primary cluster.
+  // When omitted, auto-detected from the address URI (looks for 'global-cluster').
+  isGlobal?: boolean;
 }
 
 export interface ServerInfo {
