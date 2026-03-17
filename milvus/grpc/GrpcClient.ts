@@ -51,6 +51,8 @@ export const LOADER_OPTIONS = {
 export class GRPCClient extends User {
   // Store the gRPC service constructor for pool rebuild on failover
   private _MilvusService!: ServiceClientConstructor;
+  // Store sdkVersion for reconnection
+  private _sdkVersion: string = '';
 
   /**
    * Creates a new instance of MilvusClient.
@@ -132,6 +134,7 @@ export class GRPCClient extends User {
 
   // create a grpc service client(connect)
   connect(sdkVersion: string) {
+    this._sdkVersion = sdkVersion;
     if (this.isGlobal) {
       // For global cluster: fetch topology → create pool → connect
       this.connectPromise = this._initGlobalConnection(sdkVersion);
@@ -236,9 +239,25 @@ export class GRPCClient extends User {
 
         // Re-establish server info
         this.connectStatus = CONNECT_STATUS.CONNECTING;
-        await this._getServerInfo('reconnect');
+        await this._getServerInfo(this._sdkVersion);
       } catch (e: any) {
         logger.warn(`Global cluster failover failed: ${e.message}`);
+
+        // Clean up resources created during failed failover
+        if (this.topologyRefresher) {
+          this.topologyRefresher.stop();
+          this.topologyRefresher = null;
+        }
+        if (this.channelPool) {
+          try {
+            await this.channelPool.drain();
+            await this.channelPool.clear();
+          } catch {
+            // ignore cleanup errors
+          }
+        }
+        this.connectStatus = CONNECT_STATUS.SHUTDOWN;
+
         throw e;
       }
     })();

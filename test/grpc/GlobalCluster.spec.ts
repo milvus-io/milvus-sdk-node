@@ -356,22 +356,25 @@ describe('Secondary Cluster - Read Only', () => {
   });
 
   afterAll(async () => {
-    // Clean up: drop collection from primary, close all connections
-    primaryClient = new MilvusClient({
-      address: GLOBAL_ENDPOINT,
-      token: TOKEN,
-    });
-    await primaryClient.connectPromise;
-
-    try {
-      await primaryClient.dropCollection({
-        collection_name: COLLECTION_NAME,
+    // To keep collection data for inspection, set KEEP_COLLECTION=1
+    // e.g.: KEEP_COLLECTION=1 NODE_ENV=dev npx jest test/grpc/GlobalCluster.spec.ts --forceExit
+    if (!process.env.KEEP_COLLECTION) {
+      primaryClient = new MilvusClient({
+        address: GLOBAL_ENDPOINT,
+        token: TOKEN,
       });
-    } catch {
-      // ignore
-    }
+      await primaryClient.connectPromise;
 
-    await primaryClient.closeConnection();
+      try {
+        await primaryClient.dropCollection({
+          collection_name: COLLECTION_NAME,
+        });
+      } catch {
+        // ignore
+      }
+
+      await primaryClient.closeConnection();
+    }
     if (secondaryClient) {
       await secondaryClient.closeConnection();
     }

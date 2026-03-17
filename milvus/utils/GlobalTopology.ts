@@ -127,9 +127,15 @@ export async function fetchTopology(
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(
-          `Topology request failed with status ${response.status}: ${await response.text()}`
+        const text = await response.text();
+        const err = new Error(
+          `Topology request failed with status ${response.status}: ${text}`
         );
+        // Only retry on 5xx server errors; 4xx are permanent (auth, bad request, etc.)
+        if (response.status >= 400 && response.status < 500) {
+          throw err;
+        }
+        throw Object.assign(err, { retryable: true });
       }
 
       const result = await response.json();
@@ -141,13 +147,8 @@ export async function fetchTopology(
 
       return parseTopologyResponse(result.data);
     } catch (e: any) {
-      // Don't retry API-level errors (non-retryable)
-      if (
-        e.message &&
-        !e.message.startsWith('Topology request failed') &&
-        e.name !== 'AbortError' &&
-        !e.message.includes('fetch failed')
-      ) {
+      // Only retry network errors, timeouts, and 5xx errors
+      if (!e.retryable && e.name !== 'AbortError' && !e.message?.includes('fetch failed')) {
         throw e;
       }
 

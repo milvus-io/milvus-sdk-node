@@ -207,7 +207,7 @@ describe('fetchTopology', () => {
     );
   });
 
-  it('should retry on HTTP errors', async () => {
+  it('should retry on 5xx HTTP errors', async () => {
     let attempts = 0;
     global.fetch = jest.fn().mockImplementation(() => {
       attempts++;
@@ -233,6 +233,35 @@ describe('fetchTopology', () => {
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 
+  it('should NOT retry on 4xx HTTP errors', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () => Promise.resolve('Unauthorized'),
+    }) as any;
+
+    await expect(
+      fetchTopology('https://glo-xxx.global-cluster.xyz', 'bad-token')
+    ).rejects.toThrow('Topology request failed with status 401');
+
+    // Should not retry 4xx errors
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should NOT retry on 403 Forbidden', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      text: () => Promise.resolve('Forbidden'),
+    }) as any;
+
+    await expect(
+      fetchTopology('https://glo-xxx.global-cluster.xyz', 'token')
+    ).rejects.toThrow('Topology request failed with status 403');
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('should throw on API error code without retrying', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -248,7 +277,7 @@ describe('fetchTopology', () => {
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('should throw after all retries exhausted', async () => {
+  it('should throw after all retries exhausted on 5xx', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 500,
