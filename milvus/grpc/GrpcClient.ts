@@ -151,6 +151,10 @@ export class GRPCClient extends User {
   private async _initGlobalConnection(sdkVersion: string) {
     const token = this.config.token || '';
 
+    logger.debug(
+      `\x1b[36m[Global]\x1b[0m Initializing global cluster connection to ${this.globalEndpoint}`
+    );
+
     // Fetch topology to discover primary cluster
     const topology = await fetchTopology(this.globalEndpoint, token);
     this.globalTopology = topology;
@@ -158,6 +162,11 @@ export class GRPCClient extends User {
     // Resolve primary endpoint and create pool
     const primary = getPrimaryCluster(topology);
     this.config.address = primary.endpoint;
+
+    logger.debug(
+      `\x1b[36m[Global]\x1b[0m Resolved primary: ${primary.endpoint} (cluster=${primary.clusterId}), creating channel pool`
+    );
+
     this.channelPool = this.createChannelPool();
     this._attachFailoverHandler();
 
@@ -184,7 +193,9 @@ export class GRPCClient extends User {
   async reconnectToPrimary(): Promise<boolean> {
     // Serialize concurrent failover attempts
     if (this.isReconnecting) {
-      // Wait for the ongoing reconnection to complete
+      logger.debug(
+        `\x1b[36m[Global]\x1b[0m Reconnect already in progress, waiting for completion`
+      );
       if (this.reconnectingPromise) {
         await this.reconnectingPromise;
       }
@@ -198,12 +209,19 @@ export class GRPCClient extends User {
       try {
         const token = this.config.token || '';
 
+        logger.debug(
+          `\x1b[36m[Global]\x1b[0m Attempting reconnect, fetching fresh topology`
+        );
+
         // Fetch fresh topology
         const newTopology = await fetchTopology(this.globalEndpoint, token);
         const newPrimary = getPrimaryCluster(newTopology);
 
         // Check if primary actually changed
         if (newPrimary.endpoint === this.config.address) {
+          logger.debug(
+            `\x1b[36m[Global]\x1b[0m Primary unchanged (${this.config.address}), no reconnect needed`
+          );
           this.globalTopology = newTopology;
           return; // Primary hasn't changed, no reconnect needed
         }
@@ -216,6 +234,9 @@ export class GRPCClient extends User {
 
         // Create new pool BEFORE draining old pool, so if creation fails
         // the old pool is still usable
+        logger.debug(
+          `\x1b[36m[Global]\x1b[0m Creating new channel pool for ${newPrimary.endpoint}`
+        );
         const oldPool = this.channelPool;
         this.config.address = newPrimary.endpoint;
         this.channelPool = this.createChannelPool();
@@ -223,6 +244,9 @@ export class GRPCClient extends User {
 
         // Now drain old pool (non-critical, best-effort)
         if (oldPool) {
+          logger.debug(
+            `\x1b[36m[Global]\x1b[0m Draining old channel pool`
+          );
           try {
             await oldPool.drain();
             await oldPool.clear();
@@ -406,6 +430,9 @@ export class GRPCClient extends User {
   async closeConnection() {
     // Stop topology refresher if running (global cluster)
     if (this.topologyRefresher) {
+      logger.debug(
+        `\x1b[36m[Global]\x1b[0m Stopping topology refresher on connection close`
+      );
       this.topologyRefresher.stop();
       this.topologyRefresher = null;
     }

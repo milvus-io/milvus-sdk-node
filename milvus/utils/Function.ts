@@ -7,6 +7,7 @@ import {
   FieldData,
   METADATA,
 } from '../';
+import { logger } from './logger';
 import { Pool } from 'generic-pool';
 import { Metadata, status as grpcStatus } from '@grpc/grpc-js';
 
@@ -119,8 +120,14 @@ export async function promisify(
       (pool as any)[FAILOVER_HANDLER_KEY];
 
     if (handler && isUnavailableError(error)) {
+      logger.debug(
+        `\x1b[36m[Global]\x1b[0m UNAVAILABLE error on \x1b[1m${target}\x1b[0m, triggering failover handler`
+      );
       const newPool = await handler(error);
       if (newPool) {
+        logger.debug(
+          `\x1b[36m[Global]\x1b[0m Failover complete, retrying \x1b[1m${target}\x1b[0m with new pool`
+        );
         // Retry once with the new pool (after failover)
         return await executeCall(
           newPool,

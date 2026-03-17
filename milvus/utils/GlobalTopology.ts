@@ -91,6 +91,10 @@ export async function fetchTopology(
     Authorization: `Bearer ${token}`,
   };
 
+  logger.debug(
+    `\x1b[36m[Global]\x1b[0m Fetching topology from ${url}`
+  );
+
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -115,6 +119,9 @@ export async function fetchTopology(
         );
         // Only retry on 5xx server errors; 4xx are permanent (auth, bad request, etc.)
         if (response.status >= 400 && response.status < 500) {
+          logger.debug(
+            `\x1b[36m[Global]\x1b[0m Topology fetch failed with ${response.status} (not retryable)`
+          );
           throw err;
         }
         throw Object.assign(err, { retryable: true });
@@ -124,10 +131,17 @@ export async function fetchTopology(
 
       if (result.code !== undefined && result.code !== 0) {
         // API-level error, don't retry
+        logger.debug(
+          `\x1b[36m[Global]\x1b[0m Topology API error code=${result.code}: ${result.message}`
+        );
         throw new Error(result.message || 'Unknown API error');
       }
 
-      return parseTopologyResponse(result.data);
+      const topology = parseTopologyResponse(result.data);
+      logger.debug(
+        `\x1b[36m[Global]\x1b[0m Topology fetched: version=${topology.version}, clusters=${topology.clusters.length}, primary=${topology.clusters.find(c => isPrimaryCluster(c))?.endpoint || 'none'}`
+      );
+      return topology;
     } catch (e: any) {
       // Only retry network errors, timeouts, and 5xx errors
       if (!e.retryable && e.name !== 'AbortError' && !e.message?.includes('fetch failed')) {
@@ -184,6 +198,9 @@ export class TopologyRefresher {
   /** Start the background refresh interval. */
   start(): void {
     if (this.intervalId !== null) return;
+    logger.debug(
+      `\x1b[36m[Global]\x1b[0m TopologyRefresher started, interval=${this.refreshInterval}ms`
+    );
     this.intervalId = setInterval(
       () => this.tryRefresh(),
       this.refreshInterval
@@ -199,6 +216,9 @@ export class TopologyRefresher {
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
       this.intervalId = null;
+      logger.debug(
+        `\x1b[36m[Global]\x1b[0m TopologyRefresher stopped`
+      );
     }
   }
 
@@ -214,7 +234,15 @@ export class TopologyRefresher {
 
   /** Trigger an immediate topology refresh (debounced). */
   triggerRefresh(): void {
-    if (this.refreshing) return;
+    if (this.refreshing) {
+      logger.debug(
+        `\x1b[36m[Global]\x1b[0m Topology refresh already in progress, skipping`
+      );
+      return;
+    }
+    logger.debug(
+      `\x1b[36m[Global]\x1b[0m Triggering immediate topology refresh`
+    );
     this.refreshing = true;
     this.tryRefresh().finally(() => {
       this.refreshing = false;
