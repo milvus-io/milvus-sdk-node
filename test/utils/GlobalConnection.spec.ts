@@ -211,7 +211,7 @@ describe('Global connection lifecycle', () => {
     expect(client.topologyRefresher).toBeNull();
   });
 
-  it('should serialize concurrent reconnect via _isReconnecting flag', async () => {
+  it('should serialize concurrent reconnect via isReconnecting flag', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(validTopologyResponse),
@@ -229,14 +229,17 @@ describe('Global connection lifecycle', () => {
       // Expected - no real server
     }
 
+    // Access protected fields via cast for testing
+    const c = client as any;
+
     // Verify initial state
-    expect(client.isReconnecting).toBe(false);
-    expect(client.reconnectingPromise).toBeNull();
+    expect(c.isReconnecting).toBe(false);
+    expect(c.reconnectingPromise).toBeNull();
 
     // Simulate an ongoing reconnect by setting the flag
-    client.isReconnecting = true;
+    c.isReconnecting = true;
     let resolveReconnect!: () => void;
-    client.reconnectingPromise = new Promise(resolve => {
+    c.reconnectingPromise = new Promise((resolve: any) => {
       resolveReconnect = resolve;
     });
 
@@ -245,11 +248,11 @@ describe('Global connection lifecycle', () => {
     resolveReconnect();
     const result = await waitPromise;
 
-    // Should return true (reconnect was handled)
+    // Should return true (reconnect was handled by the first caller)
     expect(result).toBe(true);
 
     // Clean up
-    client.isReconnecting = false;
+    c.isReconnecting = false;
     client.topologyRefresher?.stop();
   });
 });

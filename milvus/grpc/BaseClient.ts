@@ -33,7 +33,7 @@ interface VerifyOptions {
  * Base gRPC client, setup all configuration here
  */
 export class BaseClient {
-  // channel pool
+  // channel pool — initialized in GRPCClient constructor (regular) or _initGlobalConnection (global)
   public channelPool!: Pool<Client>;
   // Client ID
   public clientId: string = `${crypto.randomUUID()}`;
@@ -58,9 +58,9 @@ export class BaseClient {
   public globalTopology: GlobalTopology | null = null;
   public topologyRefresher: TopologyRefresher | null = null;
   // Mutex flag to serialize failover reconnections
-  public isReconnecting: boolean = false;
+  protected isReconnecting: boolean = false;
   // Promise that concurrent callers can await during reconnection
-  public reconnectingPromise: Promise<void> | null = null;
+  protected reconnectingPromise: Promise<void> | null = null;
 
   // ChannelCredentials object used for authenticating the client on the gRPC channel.
   protected creds!: ChannelCredentials;

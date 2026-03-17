@@ -7,10 +7,11 @@ import {
   isPrimaryCluster,
 } from '../../milvus';
 
-const GLOBAL_ENDPOINT =
-  'https://glo-71c7a16cc918355.global-cluster.vectordb-uat3.zillizcloud.com';
-const TOKEN =
-  'a43bb38ddda68abea3b8d97a3fe115d9c728aabe8e093346ca0dc713e23181fbc894ac6fa950dc8d9b33b8cda4b229f4078a127b';
+// Set via environment variables:
+//   GLOBAL_CLUSTER_ENDPOINT=https://glo-xxx.global-cluster.xyz
+//   GLOBAL_CLUSTER_TOKEN=your_token
+const GLOBAL_ENDPOINT = process.env.GLOBAL_CLUSTER_ENDPOINT || '';
+const TOKEN = process.env.GLOBAL_CLUSTER_TOKEN || '';
 
 const COLLECTION_NAME = `test_global_cluster_${Date.now()}`;
 const DIM = 4;
@@ -18,7 +19,10 @@ const DIM = 4;
 // Will be resolved from topology
 let SECONDARY_ENDPOINT = '';
 
-describe('Global Cluster E2E', () => {
+// Skip all tests if env vars not set
+const describeIfConfigured = GLOBAL_ENDPOINT && TOKEN ? describe : describe.skip;
+
+describeIfConfigured('Global Cluster E2E', () => {
   let client: MilvusClient;
 
   it('should fetch topology and find primary', async () => {
@@ -161,7 +165,7 @@ describe('Global Cluster E2E', () => {
   });
 });
 
-describe('Secondary Cluster - Read Only', () => {
+describeIfConfigured('Secondary Cluster - Read Only', () => {
   let secondaryClient: MilvusClient;
   let primaryClient: MilvusClient;
 

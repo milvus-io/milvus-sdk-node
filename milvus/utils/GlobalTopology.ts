@@ -1,4 +1,12 @@
 import { logger } from './logger';
+import {
+  ClusterCapability,
+  ClusterInfo,
+  GlobalTopology,
+} from '../types/GlobalCluster';
+
+// Re-export types for convenience
+export { ClusterCapability, ClusterInfo, GlobalTopology };
 
 // Identifier used in URIs to detect global cluster endpoints
 export const GLOBAL_CLUSTER_IDENTIFIER = 'global-cluster';
@@ -11,32 +19,6 @@ const REQUEST_TIMEOUT = 10000; // ms
 
 // Default refresh interval for topology refresher
 export const DEFAULT_REFRESH_INTERVAL = 300000; // 5 minutes in ms
-
-/**
- * Bitset flags for cluster capabilities.
- */
-export const ClusterCapability = {
-  READABLE: 0b01, // bit 0
-  WRITABLE: 0b10, // bit 1
-  PRIMARY: 0b11, // read + write
-} as const;
-
-/**
- * Information about a cluster in the global topology.
- */
-export interface ClusterInfo {
-  clusterId: string;
-  endpoint: string;
-  capability: number;
-}
-
-/**
- * Global cluster topology containing all clusters.
- */
-export interface GlobalTopology {
-  version: number;
-  clusters: ClusterInfo[];
-}
 
 /**
  * Check if a ClusterInfo is the primary (writable) cluster.

@@ -178,8 +178,8 @@ export class GRPCClient extends User {
 
   /**
    * Reconnects to a new primary cluster after failover.
-   * Drains the old pool, creates a new pool targeting the new primary endpoint.
-   * @returns true if primary changed and reconnection happened, false otherwise
+   * Creates a new pool for the new primary, then drains the old pool.
+   * @returns true if primary changed and reconnection happened, false if primary unchanged
    */
   async reconnectToPrimary(): Promise<boolean> {
     // Serialize concurrent failover attempts
@@ -190,6 +190,8 @@ export class GRPCClient extends User {
       }
       return true;
     }
+
+    let primaryChanged = false;
 
     this.isReconnecting = true;
     this.reconnectingPromise = (async () => {
@@ -202,26 +204,35 @@ export class GRPCClient extends User {
 
         // Check if primary actually changed
         if (newPrimary.endpoint === this.config.address) {
+          this.globalTopology = newTopology;
           return; // Primary hasn't changed, no reconnect needed
         }
+
+        primaryChanged = true;
 
         logger.info(
           `Global cluster failover: ${this.config.address} -> ${newPrimary.endpoint}`
         );
 
-        // Drain old pool
-        if (this.channelPool) {
-          await this.channelPool.drain();
-          await this.channelPool.clear();
+        // Create new pool BEFORE draining old pool, so if creation fails
+        // the old pool is still usable
+        const oldPool = this.channelPool;
+        this.config.address = newPrimary.endpoint;
+        this.channelPool = this.createChannelPool();
+        this._attachFailoverHandler();
+
+        // Now drain old pool (non-critical, best-effort)
+        if (oldPool) {
+          try {
+            await oldPool.drain();
+            await oldPool.clear();
+          } catch {
+            // ignore cleanup errors on old pool
+          }
         }
 
         // Update state
         this.globalTopology = newTopology;
-        this.config.address = newPrimary.endpoint;
-
-        // Create new pool targeting new primary
-        this.channelPool = this.createChannelPool();
-        this._attachFailoverHandler();
 
         // Update topology refresher
         if (this.topologyRefresher) {
@@ -248,14 +259,6 @@ export class GRPCClient extends User {
           this.topologyRefresher.stop();
           this.topologyRefresher = null;
         }
-        if (this.channelPool) {
-          try {
-            await this.channelPool.drain();
-            await this.channelPool.clear();
-          } catch {
-            // ignore cleanup errors
-          }
-        }
         this.connectStatus = CONNECT_STATUS.SHUTDOWN;
 
         throw e;
@@ -264,8 +267,7 @@ export class GRPCClient extends User {
 
     try {
       await this.reconnectingPromise;
-      // Check if primary actually changed by comparing the state
-      return true;
+      return primaryChanged;
     } finally {
       this.isReconnecting = false;
       this.reconnectingPromise = null;
