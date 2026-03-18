@@ -17,6 +17,7 @@ import {
   LoadBalanceReq,
   ImportReq,
   ListImportTasksReq,
+  GetImportStateReq,
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,
@@ -30,6 +31,7 @@ import {
   SearchResults,
   ImportResponse,
   ListImportTasksResponse,
+  GetImportStateResponse,
   GetMetricsRequest,
   QueryReq,
   GetReq,
@@ -1487,7 +1489,6 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  /* istanbul ignore next */
   async bulkInsert(data: ImportReq): Promise<ImportResponse> {
     if (!data || !data.collection_name) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
@@ -1533,7 +1534,6 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  /* istanbul ignore next */
   async listImportTasks(
     data: ListImportTasksReq
   ): Promise<ListImportTasksResponse> {
@@ -1547,6 +1547,43 @@ export class Data extends Collection {
         ...data,
         limit: data.limit || 0,
       },
+      data.timeout || this.timeout
+    );
+    return res;
+  }
+
+  /**
+   * Get the state of an import task.
+   *
+   * @param {GetImportStateReq} data - The request parameters.
+   * @param {number} data.task - The ID of the import task.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<GetImportStateResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {ImportState} state - The state of the import task.
+   * @returns {number} row_count - How many rows have been imported/parsed.
+   * @returns {number[]} id_list - Auto generated IDs if the primary key is autoID.
+   * @returns {KeyValuePair[]} infos - Additional information (progress, file path, failed reason, etc.).
+   * @returns {number} id - The ID of the import task.
+   * @returns {number} collection_id - The collection ID of the import task.
+   * @returns {number[]} segment_ids - Segment IDs created by the import task.
+   * @returns {number} create_ts - Timestamp when the import task was created.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   *  const res = await milvusClient.getImportState({ task: 123456 });
+   * ```
+   */
+  async getImportState(
+    data: GetImportStateReq
+  ): Promise<GetImportStateResponse> {
+    const res = await promisify(
+      this.channelPool,
+      'GetImportState',
+      data,
       data.timeout || this.timeout
     );
     return res;
