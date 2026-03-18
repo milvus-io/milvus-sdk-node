@@ -36,6 +36,8 @@ export interface ReplicaInfo {
   partition_ids: string[];
   shard_replicas: ShardReplica[];
   node_ids: string[];
+  resource_group_name: string;
+  num_outbound_node: Record<string, number>;
 }
 
 export type TypeParam = string | number | boolean | Record<string, any>;
@@ -200,6 +202,8 @@ export interface GetCompactionPlansReq extends GrpcTimeOut {
 export interface GetReplicaReq extends GrpcTimeOut {
   collectionID: number | string;
   with_shard_nodes?: boolean;
+  collection_name?: string;
+  db_name?: string;
 }
 
 export interface RenameCollectionReq extends collectionNameReq {
