@@ -1218,16 +1218,19 @@ export class Data extends Collection {
   }
 
   /**
-   * Get the flush state of specified segment IDs in Milvus.
+   * Get the flush state in Milvus. You can query by segment IDs or by collection name with flush timestamp.
    *
    * @param {GetFlushStateReq} data - The request parameters.
-   * @param {number[]} data.segmentIDs - The segment IDs.
+   * @param {number[]} [data.segmentIDs] - The segment IDs.
+   * @param {number} [data.flush_ts] - The flush timestamp.
+   * @param {string} [data.db_name] - The database name.
+   * @param {string} [data.collection_name] - The collection name.
    * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<GetFlushStateResponse>} The result of the operation.
    * @returns {string} status.error_code - The error code of the operation.
    * @returns {string} status.reason - The reason for the error, if any.
-   * @returns {boolean[]} flushed - Array indicating whether each segment is flushed or not.
+   * @returns {boolean} flushed - Whether the flush operation is completed.
    *
    * @example
    * ```
@@ -1238,7 +1241,10 @@ export class Data extends Collection {
    * ```
    */
   async getFlushState(data: GetFlushStateReq): Promise<GetFlushStateResponse> {
-    if (!data || !data.segmentIDs) {
+    if (
+      !data ||
+      (!data.segmentIDs && !data.collection_name && !data.flush_ts)
+    ) {
       throw new Error(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
     }
     const res = await promisify(
@@ -1359,6 +1365,8 @@ export class Data extends Collection {
    * @param {number} data.src_nodeID - The source query node id to balance.
    * @param {number[]} [data.dst_nodeIDs] - The destination query node ids to balance (optional).
    * @param {number[]} [data.sealed_segmentIDs] - Sealed segment ids to balance (optional).
+   * @param {string} [data.collectionName] - The collection name (optional).
+   * @param {string} [data.db_name] - The database name (optional).
    * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} The result of the operation.
