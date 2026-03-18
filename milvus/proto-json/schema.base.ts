@@ -1117,6 +1117,7 @@ export default {
                     "AddCollectionFunction": 116,
                     "AlterCollectionFunction": 117,
                     "DropCollectionFunction": 118,
+                    "TruncateCollection": 119,
                     "CreatePartition": 200,
                     "DropPartition": 201,
                     "HasPartition": 202,
@@ -1407,7 +1408,8 @@ export default {
                     "PrivilegeAddFileResource": 72,
                     "PrivilegeRemoveFileResource": 73,
                     "PrivilegeListFileResources": 74,
-                    "PrivilegeUpdateReplicateConfiguration": 78
+                    "PrivilegeUpdateReplicateConfiguration": 78,
+                    "PrivilegeGetReplicateConfiguration": 85
                   }
                 },
                 "PrivilegeExt": {
