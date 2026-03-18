@@ -33,7 +33,7 @@ export const ERROR_REASONS = {
     'The value of the `data_type` property is not supported:',
   GET_METRIC_CHECK_PARAMS: 'The `metric_type` property is missing.',
   GET_FLUSH_STATE_CHECK_PARAMS:
-    'The type of the `segmentIDs` property should be an array.',
+    'At least one of `segmentIDs`, `collection_name`, or `flush_ts` is required.',
   GET_FLUSH_ALL_STATE_CHECK_PARAMS:
     'At least one of `flush_all_ts` or `flush_all_tss` is required.',
   LOAD_BALANCE_CHECK_PARAMS: 'The `src_nodeID` property is missing.',

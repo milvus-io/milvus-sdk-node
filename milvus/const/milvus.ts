@@ -28,6 +28,8 @@ export enum SegmentState {
   Sealed,
   Flushed = 'Flushed',
   Flushing = 'Flushing',
+  Dropped = 'Dropped',
+  Importing = 'Importing',
 }
 
 // segment level enum

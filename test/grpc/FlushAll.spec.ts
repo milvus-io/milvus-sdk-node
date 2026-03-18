@@ -50,6 +50,8 @@ describe(`FlushAll API`, () => {
   it(`FlushAll should success`, async () => {
     const res = await milvusClient.flushAll();
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    // flush_all_ts is deprecated but should still be present
+    expect(res).toHaveProperty('flush_all_ts');
   });
 
   it(`FlushAll sync should success`, async () => {
@@ -75,5 +77,6 @@ describe(`FlushAll API`, () => {
       flush_all_tss: flushRes.flush_all_tss,
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(typeof res.flushed).toEqual('boolean');
   });
 });
