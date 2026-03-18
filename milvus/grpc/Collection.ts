@@ -7,6 +7,7 @@ import {
   CollectionData,
   CreateCollectionReq,
   DescribeCollectionReq,
+  BatchDescribeCollectionReq,
   DropCollectionReq,
   GetCollectionStatisticsReq,
   LoadCollectionReq,
@@ -30,6 +31,7 @@ import {
   ResStatus,
   CompactionResponse,
   DescribeCollectionResponse,
+  BatchDescribeCollectionResponse,
   GetCompactionPlansResponse,
   GetCompactionStateResponse,
   ShowCollectionsResponse,
@@ -630,6 +632,55 @@ export class Collection extends Database {
     this.collectionInfoCache.set(key, results);
 
     return results;
+  }
+
+  /**
+   * Batch describe collections. Returns schema and details for multiple collections in one call.
+   *
+   * @param {BatchDescribeCollectionReq} data - The request parameters.
+   * @param {string[]} data.collection_names - The names of the collections to describe.
+   * @param {string} [data.db_name] - The database name.
+   * @param {number[]} [data.collectionIDs] - The IDs of the collections to describe.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<BatchDescribeCollectionResponse>} The response from the server.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {DescribeCollectionResponse[]} responses - Array of describe collection responses.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   *  const res = await milvusClient.batchDescribeCollections({
+   *    collection_names: ['collection1', 'collection2'],
+   *  });
+   * ```
+   */
+  async batchDescribeCollections(
+    data: BatchDescribeCollectionReq
+  ): Promise<BatchDescribeCollectionResponse> {
+    const promise = await promisify(
+      this.channelPool,
+      'BatchDescribeCollection',
+      {
+        collection_name: data.collection_names,
+        db_name: data.db_name,
+        collectionID: data.collectionIDs || [],
+      },
+      data.timeout || this.timeout
+    );
+
+    if (
+      promise.status.error_code !== ErrorCode.SUCCESS ||
+      !promise.responses
+    ) {
+      return promise;
+    }
+
+    // format each collection response
+    promise.responses = promise.responses.map(formatDescribedCol);
+
+    return promise;
   }
 
   /**
