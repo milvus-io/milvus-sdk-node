@@ -191,7 +191,7 @@ export const genCollectionParams = (data: {
     params.functions = functions;
   }
   if (clusterKeyEnabled) {
-    params.clustring_key_field = 'int64';
+    params.clustering_key_field = 'int64';
   }
 
   return params;
