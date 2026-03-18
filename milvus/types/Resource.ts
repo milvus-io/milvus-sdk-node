@@ -10,7 +10,13 @@ type ResourceGroupConfig = {
   limits?: { node_num: number }; // limited node num in resource group, if node num is more than limits.nodeNum, it will be transfer to other resource group.
   transfer_from?: { resource_group: string }[]; // missing node should be transfer from given resource group at high priority in repeated list.
   transfer_to?: { resource_group: string }[]; // redundant node should be transfer to given resource group at high priority in repeated list.
-  node_filters?: { node_labels: KeyValuePair }; // node in resource group must match node filters
+  node_filter?: { node_labels: KeyValuePair[] }; // node in resource group must match node filters
+};
+
+type NodeInfo = {
+  node_id: number;
+  address: string;
+  hostname: string;
 };
 
 type ResourceGroup = {
@@ -21,6 +27,7 @@ type ResourceGroup = {
   num_outgoing_node: { [key: string]: number };
   num_incoming_node: { [key: string]: number };
   config?: ResourceGroupConfig;
+  nodes?: NodeInfo[];
 };
 
 interface BaseResourceGroupReq extends GrpcTimeOut {
