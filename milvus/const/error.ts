@@ -34,6 +34,8 @@ export const ERROR_REASONS = {
   GET_METRIC_CHECK_PARAMS: 'The `metric_type` property is missing.',
   GET_FLUSH_STATE_CHECK_PARAMS:
     'The type of the `segmentIDs` property should be an array.',
+  GET_FLUSH_ALL_STATE_CHECK_PARAMS:
+    'At least one of `flush_all_ts` or `flush_all_tss` is required.',
   LOAD_BALANCE_CHECK_PARAMS: 'The `src_nodeID` property is missing.',
   PARTITION_NAMES_IS_REQUIRED: 'The `partition_names` property is missing.',
   ALIAS_NAME_IS_REQUIRED: 'The `alias` property is missing.',

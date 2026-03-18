@@ -66,6 +66,25 @@ export interface DescribeSegmentIndexDataResponse extends resStatusResponse {
   index_data: any; // index data
 }
 
+export interface FlushAllReq extends GrpcTimeOut {
+  db_name?: string; // database name (deprecated)
+}
+
+export interface FlushAllResponse extends resStatusResponse {
+  flush_all_ts: number; // flush all timestamp (deprecated)
+  flush_all_tss: Record<string, number>; // flush all timestamps
+}
+
+export interface GetFlushAllStateReq extends GrpcTimeOut {
+  flush_all_ts?: number; // flush all timestamp (deprecated)
+  db_name?: string; // database name (deprecated)
+  flush_all_tss?: Record<string, number>; // flush all timestamps
+}
+
+export interface GetFlushAllStateResponse extends resStatusResponse {
+  flushed: boolean;
+}
+
 export interface GetQuerySegmentInfoReq extends GrpcTimeOut {
   collectionName: string; // its collectioName, this is not colleciton_name :<
   dbName?: string; // database name

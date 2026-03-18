@@ -5,7 +5,11 @@ import {
   ERROR_REASONS,
   DeleteEntitiesReq,
   FlushReq,
+  FlushAllReq,
+  FlushAllResponse,
   GetFlushStateReq,
+  GetFlushAllStateReq,
+  GetFlushAllStateResponse,
   GetQuerySegmentInfoReq,
   GePersistentSegmentInfoReq,
   InsertReq,
@@ -1240,6 +1244,107 @@ export class Data extends Collection {
     const res = await promisify(
       this.channelPool,
       'GetFlushState',
+      data,
+      data.timeout || this.timeout
+    );
+    return res;
+  }
+
+  /**
+   * Flushes all collections in the database. This is an asynchronous function.
+   *
+   * @param {FlushAllReq} [data] - The request parameters.
+   * @param {string} [data.db_name] - The database name (optional).
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<FlushAllResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {number} flush_all_ts - The flush all timestamp.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.flushAll();
+   * ```
+   */
+  async flushAll(data?: FlushAllReq): Promise<FlushAllResponse> {
+    const res = await promisify(
+      this.channelPool,
+      'FlushAll',
+      data || {},
+      data?.timeout || this.timeout
+    );
+    return res;
+  }
+
+  /**
+   * Flushes all collections synchronously, waiting until the flush operation is completed.
+   *
+   * @param {FlushAllReq} [data] - The request parameters.
+   * @param {string} [data.db_name] - The database name (optional).
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<GetFlushAllStateResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {boolean} flushed - Whether the flush operation is completed.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.flushAllSync();
+   * ```
+   */
+  async flushAllSync(data?: FlushAllReq): Promise<GetFlushAllStateResponse> {
+    const res = await this.flushAll(data);
+
+    let isFlushed = false;
+    let flushRes = null;
+    while (!isFlushed) {
+      flushRes = await this.getFlushAllState({
+        flush_all_ts: res.flush_all_ts,
+        flush_all_tss: res.flush_all_tss,
+        timeout: data?.timeout,
+      });
+      if (flushRes.status.error_code !== ErrorCode.SUCCESS) {
+        throw new Error(flushRes.status.reason);
+      }
+      await sleep(100);
+      isFlushed = flushRes.flushed;
+    }
+    return flushRes as GetFlushAllStateResponse;
+  }
+
+  /**
+   * Get the flush all state.
+   *
+   * @param {GetFlushAllStateReq} data - The request parameters.
+   * @param {Record<string, number>} [data.flush_all_tss] - The flush all timestamps.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<GetFlushAllStateResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {boolean} flushed - Whether the flush operation is completed.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.getFlushAllState({
+   *    flush_all_tss: { db1: 123456789 },
+   *  });
+   * ```
+   */
+  async getFlushAllState(
+    data: GetFlushAllStateReq
+  ): Promise<GetFlushAllStateResponse> {
+    if (!data || (!data.flush_all_ts && !data.flush_all_tss)) {
+      throw new Error(ERROR_REASONS.GET_FLUSH_ALL_STATE_CHECK_PARAMS);
+    }
+    const res = await promisify(
+      this.channelPool,
+      'GetFlushAllState',
       data,
       data.timeout || this.timeout
     );
