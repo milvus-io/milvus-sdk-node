@@ -951,6 +951,38 @@ export class Collection extends Database {
   drop_collection = this.dropCollection;
 
   /**
+   * Truncate a collection. This removes all data in the collection but keeps the collection schema.
+   *
+   * @param {DropCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection to truncate.
+   * @param {string} [data.db_name] - The database name.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   *  const resStatus = await milvusClient.truncateCollection({ collection_name: 'my_collection' });
+   * ```
+   */
+  async truncateCollection(
+    data: DropCollectionReq
+  ): Promise<{ status: ResStatus }> {
+    checkCollectionName(data);
+
+    const promise = await promisify(
+      this.channelPool,
+      'TruncateCollection',
+      data,
+      data.timeout || this.timeout
+    );
+    return promise;
+  }
+
+  /**
    * Create a collection alias, then you can use the alias instead of the collection_name when you perform a vector search.
    *
    * @param {CreateAliasReq} data - The request parameters.
