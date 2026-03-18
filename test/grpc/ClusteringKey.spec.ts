@@ -88,7 +88,7 @@ describe(`Clustering key API`, () => {
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME2,
       fields: schema,
-      clustring_key_field: 'varChar',
+      clustering_key_field: 'varChar',
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
 
