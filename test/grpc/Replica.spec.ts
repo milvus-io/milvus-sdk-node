@@ -53,6 +53,26 @@ describe(`Replica API`, () => {
     });
 
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.replicas.length).toBeGreaterThan(0);
+    expect(res.replicas[0]).toHaveProperty('replicaID');
+    expect(res.replicas[0]).toHaveProperty('collectionID');
+    expect(res.replicas[0]).toHaveProperty('resource_group_name');
+    expect(res.replicas[0]).toHaveProperty('num_outbound_node');
+  });
+
+  it(`Testing getReplica with collection_name and db_name`, async () => {
+    const collectionInfo = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    } as any);
+
+    const res = await milvusClient.getReplicas({
+      collectionID: collectionInfo.collectionID,
+      collection_name: COLLECTION_NAME,
+      db_name: dbParam.db_name,
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.replicas.length).toBeGreaterThan(0);
   });
 
   it(`Testing getReplica params test`, async () => {

@@ -1182,7 +1182,10 @@ export class Collection extends Database {
    * Get replicas of a collection.
    *
    * @param {GetReplicaReq} data - The request parameters.
-   * @param {number|string} data.collectionID - The ID of the collection, returned by the compact method.
+   * @param {number|string} data.collectionID - The ID of the collection.
+   * @param {boolean} [data.with_shard_nodes] - Whether to include shard nodes information.
+   * @param {string} [data.collection_name] - The name of the collection.
+   * @param {string} [data.db_name] - The name of the database.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ReplicasResponse>} The response of the operation.
@@ -1207,7 +1210,9 @@ export class Collection extends Database {
    *      shard_replicas: [Array],
    *      node_ids: [Array],
    *      replicaID: '436724291187770258',
-   *      collectionID: '436777253933154305'
+   *      collectionID: '436777253933154305',
+   *      resource_group_name: '__default_resource_group',
+   *      num_outbound_node: {}
    *    }
    *  ],
    *  status: { error_code: 'Success', reason: '' }
