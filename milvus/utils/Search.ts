@@ -31,6 +31,9 @@ import {
   SearchEmbList,
   DataType,
   DataTypeMap,
+  Highlighter,
+  HighlightData,
+  HighlightResult,
 } from '../';
 
 /**
@@ -145,6 +148,19 @@ type FormatedSearchRequest = {
   rank_params?: KeyValuePair[];
   function_score?: any;
   requests?: FormatedSearchRequest[];
+  highlighter?: { type: number; params: KeyValuePair[] };
+};
+
+/**
+ * Serializes a Highlighter object into the gRPC Highlighter message format.
+ * @param highlighter - The highlighter configuration.
+ * @returns The serialized highlighter object with type and params as KeyValuePair[].
+ */
+export const buildHighlighter = (
+  highlighter: Highlighter
+): { type: number; params: KeyValuePair[] } => {
+  const { type, ...rest } = highlighter;
+  return { type, params: parseToKeyValue(rest, true) };
 };
 
 /**
@@ -383,6 +399,12 @@ export const buildSearchRequest = (
   );
   const hasFunctionScore = isFunctionScore(rerank);
 
+  // build highlighter if provided
+  const highlighter = searchSimpleOrHybridReq.highlighter || searchReq.highlighter;
+  const highlighterParam = highlighter
+    ? { highlighter: buildHighlighter(highlighter) }
+    : {};
+
   return {
     isHybridSearch: isHybridSearch,
     request: isHybridSearch
@@ -416,10 +438,14 @@ export const buildSearchRequest = (
             },
           ],
         },
+
+        // highlighter
+        ...highlighterParam,
       }
       : {
         ...requests[0],
         ...createFunctionScore(rerank),
+        ...highlighterParam,
       },
     // need for parsing the search results
     ...(round_decimal !== -1 ? { round_decimal } : {}),
@@ -447,7 +473,7 @@ export const formatSearchResult = (
   const { round_decimal } = options;
   // build final results array
   const results: any[] = [];
-  const { topks, scores, fields_data } = searchRes.results;
+  const { topks, scores, fields_data, highlight_results } = searchRes.results;
   // build fields data map
   const fieldsDataMap = buildFieldDataMap(fields_data, options.transformers);
   // build output name array
@@ -456,6 +482,9 @@ export const formatSearchResult = (
       ? searchRes.results.output_fields
       : fields_data.map(f => f.field_name)),
   ];
+
+  // check highlight results once outside the loop
+  const hasHighlights = !!(highlight_results && highlight_results.length > 0);
 
   // fieldsDataMap.set('score', scores); TODO: fieldDataMap to support formatter
 
@@ -503,6 +532,25 @@ export const formatSearchResult = (
 
           result[field_name] = value;
         });
+
+        // attach highlight results if available
+        if (hasHighlights) {
+          const highlight: HighlightResult = {};
+          let hasAny = false;
+          for (const hr of highlight_results!) {
+            const data = hr.datas[absoluteIndex];
+            if (data) {
+              highlight[hr.field_name] = {
+                fragments: data.fragments || [],
+                scores: data.scores || [],
+              };
+              hasAny = true;
+            }
+          }
+          if (hasAny) {
+            result.highlight = highlight;
+          }
+        }
 
         queryResults.push(result);
       }

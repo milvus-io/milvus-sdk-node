@@ -14,6 +14,45 @@ import {
   Int8Vector,
 } from '../';
 
+// Highlighter types
+export enum HighlightType {
+  Lexical = 0,
+  Semantic = 1,
+}
+
+export interface LexicalHighlighter {
+  type: HighlightType.Lexical;
+  pre_tags?: string[];
+  post_tags?: string[];
+  fragment_offset?: number;
+  fragment_size?: number;
+  num_of_fragments?: number;
+  highlight_query?: { type: string; field: string; text: string }[];
+  highlight_search_text?: boolean;
+}
+
+export interface SemanticHighlighter {
+  type: HighlightType.Semantic;
+  queries: string[];
+  input_fields: string[];
+  pre_tags?: string[];
+  post_tags?: string[];
+  threshold?: number;
+  highlight_only?: boolean;
+  model_deployment_id?: string;
+  max_client_batch_size?: number;
+}
+
+export type Highlighter = LexicalHighlighter | SemanticHighlighter;
+
+// Highlight result attached to each search hit
+export interface HighlightData {
+  fragments: string[];
+  scores: number[];
+}
+
+export type HighlightResult = Record<string, HighlightData>;
+
 export interface SearchParam {
   anns_field: string; // your vector field name
   topk: string | number; // how many results you want
@@ -49,6 +88,7 @@ export interface SearchReq extends collectionNameReq {
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
   ids?: number[] | string[]; // primary keys for search by IDs
+  highlighter?: Highlighter; // highlighter for search results
 }
 
 export interface FunctionScore {
@@ -82,6 +122,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   rerank?: RerankerObj | FunctionObject | FunctionScore; // reranker
   nq?: number; // number of query vectors
   ids?: number[] | string[]; // primary keys for search by IDs
+  highlighter?: Highlighter; // highlighter for search results
 }
 
 export type HybridSearchSingleReq = Pick<
@@ -159,6 +200,10 @@ export interface SearchRes extends resStatusResponse {
     search_iterator_v2_results?: Record<string, any>;
     _search_iterator_v2_results?: string;
     all_search_count?: number;
+    highlight_results?: {
+      field_name: string;
+      datas: HighlightData[];
+    }[];
   };
   collection_name: string;
   session_ts: number;
@@ -190,6 +235,7 @@ export interface SearchResultData {
   [x: string]: any;
   score: number;
   id: string;
+  highlight?: HighlightResult;
 }
 
 export interface SearchResults<
