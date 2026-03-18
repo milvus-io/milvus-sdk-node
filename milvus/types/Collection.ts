@@ -154,6 +154,12 @@ export interface DescribeCollectionReq extends collectionNameReq {
   cache?: boolean;
 }
 
+export interface BatchDescribeCollectionReq extends GrpcTimeOut {
+  collection_names: string[]; // required, collection names to describe
+  db_name?: string; // optional, db name
+  collectionIDs?: number[]; // optional, collection IDs to describe
+}
+
 export interface GetCollectionStatisticsReq extends collectionNameReq {}
 
 export interface LoadCollectionReq extends collectionNameReq {
@@ -253,6 +259,10 @@ export interface DescribeCollectionResponse extends TimeStamp {
   anns_fields: Record<string, FieldSchema>;
   scalar_fields: Record<string, FieldSchema>;
   function_fields: Record<string, FieldSchema>;
+}
+
+export interface BatchDescribeCollectionResponse extends resStatusResponse {
+  responses: DescribeCollectionResponse[];
 }
 
 export interface GetCompactionPlansResponse extends resStatusResponse {
