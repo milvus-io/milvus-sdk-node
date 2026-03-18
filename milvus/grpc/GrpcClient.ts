@@ -478,12 +478,18 @@ export class GRPCClient extends User {
       this.channelPool,
       'RunAnalyzer',
       {
-        analyzer_params: JSON.stringify(data.analyzer_params),
+        analyzer_params: data.analyzer_params
+          ? JSON.stringify(data.analyzer_params)
+          : '',
         placeholder: (Array.isArray(data.text) ? data.text : [data.text]).map(
           d => new TextEncoder().encode(String(d))
         ),
         with_detail: data.with_detail,
         with_hash: data.with_hash,
+        db_name: data.db_name,
+        collection_name: data.collection_name,
+        field_name: data.field_name,
+        analyzer_names: data.analyzer_names,
       },
       this.timeout
     );

@@ -225,6 +225,33 @@ describe(`FulltextSearch API`, () => {
     expect(load.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`run analyzer with collection_name and field_name should success`, async () => {
+    const res = await milvusClient.runAnalyzer({
+      collection_name: COLLECTION,
+      field_name: 'text',
+      text: 'Would you like to eat an apple?',
+      with_detail: true,
+      with_hash: true,
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results.length).toEqual(1);
+    expect(res.results[0].tokens.length).toBeGreaterThan(0);
+  });
+
+  it(`run analyzer with db_name should success`, async () => {
+    const res = await milvusClient.runAnalyzer({
+      db_name: dbParam.db_name,
+      collection_name: COLLECTION,
+      field_name: 'text',
+      text: ['hello world', 'test analyzer'],
+      with_detail: true,
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results.length).toEqual(2);
+  });
+
   it(`query with function output field should success`, async () => {
     // query
     const query = await milvusClient.query({
