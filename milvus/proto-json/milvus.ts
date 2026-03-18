@@ -72,6 +72,10 @@ export default {
                       "requestType": "DropCollectionFunctionRequest",
                       "responseType": "common.Status"
                     },
+                    "TruncateCollection": {
+                      "requestType": "TruncateCollectionRequest",
+                      "responseType": "TruncateCollectionResponse"
+                    },
                     "CreatePartition": {
                       "requestType": "CreatePartitionRequest",
                       "responseType": "common.Status"
@@ -475,6 +479,10 @@ export default {
                     "UpdateReplicateConfiguration": {
                       "requestType": "UpdateReplicateConfigurationRequest",
                       "responseType": "common.Status"
+                    },
+                    "GetReplicateConfiguration": {
+                      "requestType": "GetReplicateConfigurationRequest",
+                      "responseType": "GetReplicateConfigurationResponse"
                     },
                     "GetReplicateInfo": {
                       "requestType": "GetReplicateInfoRequest",
@@ -5393,6 +5401,30 @@ export default {
                     "replicate_configuration": {
                       "type": "common.ReplicateConfiguration",
                       "id": 1
+                    },
+                    "force_promote": {
+                      "type": "bool",
+                      "id": 2
+                    }
+                  }
+                },
+                "GetReplicateConfigurationRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeGetReplicateConfiguration",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {}
+                },
+                "GetReplicateConfigurationResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "configuration": {
+                      "type": "common.ReplicateConfiguration",
+                      "id": 2
                     }
                   }
                 },
@@ -5462,6 +5494,35 @@ export default {
                   "fields": {
                     "replicate_confirmed_message_info": {
                       "type": "ReplicateConfirmedMessageInfo",
+                      "id": 1
+                    }
+                  }
+                },
+                "TruncateCollectionRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeDropCollection",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "TruncateCollectionResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
                       "id": 1
                     }
                   }
@@ -5722,6 +5783,7 @@ export default {
                     "AddCollectionFunction": 116,
                     "AlterCollectionFunction": 117,
                     "DropCollectionFunction": 118,
+                    "TruncateCollection": 119,
                     "CreatePartition": 200,
                     "DropPartition": 201,
                     "HasPartition": 202,
@@ -6012,7 +6074,8 @@ export default {
                     "PrivilegeAddFileResource": 72,
                     "PrivilegeRemoveFileResource": 73,
                     "PrivilegeListFileResources": 74,
-                    "PrivilegeUpdateReplicateConfiguration": 78
+                    "PrivilegeUpdateReplicateConfiguration": 78,
+                    "PrivilegeGetReplicateConfiguration": 85
                   }
                 },
                 "PrivilegeExt": {
@@ -7804,7 +7867,7 @@ export default {
                   "type": "string",
                   "id": 3
                 },
-                "public_dependency": {
+                "publicDependency": {
                   "rule": "repeated",
                   "type": "int32",
                   "id": 10,
@@ -7812,7 +7875,7 @@ export default {
                     "packed": false
                   }
                 },
-                "weak_dependency": {
+                "weakDependency": {
                   "rule": "repeated",
                   "type": "int32",
                   "id": 11,
@@ -7820,12 +7883,12 @@ export default {
                     "packed": false
                   }
                 },
-                "message_type": {
+                "messageType": {
                   "rule": "repeated",
                   "type": "DescriptorProto",
                   "id": 4
                 },
-                "enum_type": {
+                "enumType": {
                   "rule": "repeated",
                   "type": "EnumDescriptorProto",
                   "id": 5
@@ -7844,7 +7907,7 @@ export default {
                   "type": "FileOptions",
                   "id": 8
                 },
-                "source_code_info": {
+                "sourceCodeInfo": {
                   "type": "SourceCodeInfo",
                   "id": 9
                 },
@@ -7870,22 +7933,22 @@ export default {
                   "type": "FieldDescriptorProto",
                   "id": 6
                 },
-                "nested_type": {
+                "nestedType": {
                   "rule": "repeated",
                   "type": "DescriptorProto",
                   "id": 3
                 },
-                "enum_type": {
+                "enumType": {
                   "rule": "repeated",
                   "type": "EnumDescriptorProto",
                   "id": 4
                 },
-                "extension_range": {
+                "extensionRange": {
                   "rule": "repeated",
                   "type": "ExtensionRange",
                   "id": 5
                 },
-                "oneof_decl": {
+                "oneofDecl": {
                   "rule": "repeated",
                   "type": "OneofDescriptorProto",
                   "id": 8
@@ -7894,12 +7957,12 @@ export default {
                   "type": "MessageOptions",
                   "id": 7
                 },
-                "reserved_range": {
+                "reservedRange": {
                   "rule": "repeated",
                   "type": "ReservedRange",
                   "id": 9
                 },
-                "reserved_name": {
+                "reservedName": {
                   "rule": "repeated",
                   "type": "string",
                   "id": 10
@@ -7950,7 +8013,7 @@ export default {
                   "type": "Type",
                   "id": 5
                 },
-                "type_name": {
+                "typeName": {
                   "type": "string",
                   "id": 6
                 },
@@ -7958,15 +8021,15 @@ export default {
                   "type": "string",
                   "id": 2
                 },
-                "default_value": {
+                "defaultValue": {
                   "type": "string",
                   "id": 7
                 },
-                "oneof_index": {
+                "oneofIndex": {
                   "type": "int32",
                   "id": 9
                 },
-                "json_name": {
+                "jsonName": {
                   "type": "string",
                   "id": 10
                 },
@@ -8075,11 +8138,11 @@ export default {
                   "type": "string",
                   "id": 1
                 },
-                "input_type": {
+                "inputType": {
                   "type": "string",
                   "id": 2
                 },
-                "output_type": {
+                "outputType": {
                   "type": "string",
                   "id": 3
                 },
@@ -8087,11 +8150,11 @@ export default {
                   "type": "MethodOptions",
                   "id": 4
                 },
-                "client_streaming": {
+                "clientStreaming": {
                   "type": "bool",
                   "id": 5
                 },
-                "server_streaming": {
+                "serverStreaming": {
                   "type": "bool",
                   "id": 6
                 }
@@ -8099,49 +8162,49 @@ export default {
             },
             "FileOptions": {
               "fields": {
-                "java_package": {
+                "javaPackage": {
                   "type": "string",
                   "id": 1
                 },
-                "java_outer_classname": {
+                "javaOuterClassname": {
                   "type": "string",
                   "id": 8
                 },
-                "java_multiple_files": {
+                "javaMultipleFiles": {
                   "type": "bool",
                   "id": 10
                 },
-                "java_generate_equals_and_hash": {
+                "javaGenerateEqualsAndHash": {
                   "type": "bool",
                   "id": 20,
                   "options": {
                     "deprecated": true
                   }
                 },
-                "java_string_check_utf8": {
+                "javaStringCheckUtf8": {
                   "type": "bool",
                   "id": 27
                 },
-                "optimize_for": {
+                "optimizeFor": {
                   "type": "OptimizeMode",
                   "id": 9,
                   "options": {
                     "default": "SPEED"
                   }
                 },
-                "go_package": {
+                "goPackage": {
                   "type": "string",
                   "id": 11
                 },
-                "cc_generic_services": {
+                "ccGenericServices": {
                   "type": "bool",
                   "id": 16
                 },
-                "java_generic_services": {
+                "javaGenericServices": {
                   "type": "bool",
                   "id": 17
                 },
-                "py_generic_services": {
+                "pyGenericServices": {
                   "type": "bool",
                   "id": 18
                 },
@@ -8149,19 +8212,19 @@ export default {
                   "type": "bool",
                   "id": 23
                 },
-                "cc_enable_arenas": {
+                "ccEnableArenas": {
                   "type": "bool",
                   "id": 31
                 },
-                "objc_class_prefix": {
+                "objcClassPrefix": {
                   "type": "string",
                   "id": 36
                 },
-                "csharp_namespace": {
+                "csharpNamespace": {
                   "type": "string",
                   "id": 37
                 },
-                "uninterpreted_option": {
+                "uninterpretedOption": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8191,11 +8254,11 @@ export default {
             },
             "MessageOptions": {
               "fields": {
-                "message_set_wire_format": {
+                "messageSetWireFormat": {
                   "type": "bool",
                   "id": 1
                 },
-                "no_standard_descriptor_accessor": {
+                "noStandardDescriptorAccessor": {
                   "type": "bool",
                   "id": 2
                 },
@@ -8203,11 +8266,11 @@ export default {
                   "type": "bool",
                   "id": 3
                 },
-                "map_entry": {
+                "mapEntry": {
                   "type": "bool",
                   "id": 7
                 },
-                "uninterpreted_option": {
+                "uninterpretedOption": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8258,7 +8321,7 @@ export default {
                   "type": "bool",
                   "id": 10
                 },
-                "uninterpreted_option": {
+                "uninterpretedOption": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8295,7 +8358,7 @@ export default {
             },
             "OneofOptions": {
               "fields": {
-                "uninterpreted_option": {
+                "uninterpretedOption": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8310,7 +8373,7 @@ export default {
             },
             "EnumOptions": {
               "fields": {
-                "allow_alias": {
+                "allowAlias": {
                   "type": "bool",
                   "id": 2
                 },
@@ -8318,7 +8381,7 @@ export default {
                   "type": "bool",
                   "id": 3
                 },
-                "uninterpreted_option": {
+                "uninterpretedOption": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8337,7 +8400,7 @@ export default {
                   "type": "bool",
                   "id": 1
                 },
-                "uninterpreted_option": {
+                "uninterpretedOption": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8356,7 +8419,7 @@ export default {
                   "type": "bool",
                   "id": 33
                 },
-                "uninterpreted_option": {
+                "uninterpretedOption": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8375,7 +8438,7 @@ export default {
                   "type": "bool",
                   "id": 33
                 },
-                "uninterpreted_option": {
+                "uninterpretedOption": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8395,27 +8458,27 @@ export default {
                   "type": "NamePart",
                   "id": 2
                 },
-                "identifier_value": {
+                "identifierValue": {
                   "type": "string",
                   "id": 3
                 },
-                "positive_int_value": {
+                "positiveIntValue": {
                   "type": "uint64",
                   "id": 4
                 },
-                "negative_int_value": {
+                "negativeIntValue": {
                   "type": "int64",
                   "id": 5
                 },
-                "double_value": {
+                "doubleValue": {
                   "type": "double",
                   "id": 6
                 },
-                "string_value": {
+                "stringValue": {
                   "type": "bytes",
                   "id": 7
                 },
-                "aggregate_value": {
+                "aggregateValue": {
                   "type": "string",
                   "id": 8
                 }
@@ -8423,12 +8486,12 @@ export default {
               "nested": {
                 "NamePart": {
                   "fields": {
-                    "name_part": {
+                    "namePart": {
                       "rule": "required",
                       "type": "string",
                       "id": 1
                     },
-                    "is_extension": {
+                    "isExtension": {
                       "rule": "required",
                       "type": "bool",
                       "id": 2
@@ -8458,15 +8521,15 @@ export default {
                       "type": "int32",
                       "id": 2
                     },
-                    "leading_comments": {
+                    "leadingComments": {
                       "type": "string",
                       "id": 3
                     },
-                    "trailing_comments": {
+                    "trailingComments": {
                       "type": "string",
                       "id": 4
                     },
-                    "leading_detached_comments": {
+                    "leadingDetachedComments": {
                       "rule": "repeated",
                       "type": "string",
                       "id": 6
@@ -8491,7 +8554,7 @@ export default {
                       "type": "int32",
                       "id": 1
                     },
-                    "source_file": {
+                    "sourceFile": {
                       "type": "string",
                       "id": 2
                     },
