@@ -181,6 +181,12 @@ export interface ListAliasesReq extends collectionNameReq {}
 
 export interface CompactReq extends collectionNameReq {
   timetravel?: number | string;
+  majorCompaction?: boolean;
+  partition_id?: number | string;
+  channel?: string;
+  segment_ids?: number[];
+  l0Compaction?: boolean;
+  target_size?: number | string;
 }
 
 export interface GetCompactionStateReq extends GrpcTimeOut {
@@ -206,6 +212,7 @@ export interface BoolResponse extends resStatusResponse {
 }
 export interface CompactionResponse extends resStatusResponse {
   compactionID: string;
+  compactionPlanCount: number;
 }
 
 // type returned from milvus describe
@@ -254,6 +261,7 @@ export interface GetCompactionStateResponse extends resStatusResponse {
   executingPlanNo: string;
   timeoutPlanNo: string;
   completedPlanNo: string;
+  failedPlanNo: string;
 }
 
 export interface ShowCollectionsResponse extends TimeStampArray {
