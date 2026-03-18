@@ -3,6 +3,7 @@ import {
   DataType,
   ErrorCode,
   ImportState,
+  ERROR_REASONS,
   sleep,
 } from '../../milvus';
 import {
@@ -101,6 +102,38 @@ describe(`Import API`, () => {
       collection_name: COLLECTION_NAME,
     });
     await milvusClient.dropDatabase(dbParam);
+  });
+
+  it(`bulkInsert should throw error without collection_name`, async () => {
+    try {
+      await milvusClient.bulkInsert({} as any);
+    } catch (error) {
+      expect((error as Error).message).toEqual(
+        ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED
+      );
+    }
+  });
+
+  it(`bulkInsert should throw error without files`, async () => {
+    try {
+      await milvusClient.bulkInsert({
+        collection_name: COLLECTION_NAME,
+      } as any);
+    } catch (error) {
+      expect((error as Error).message).toEqual(
+        ERROR_REASONS.IMPORT_FILE_CHECK
+      );
+    }
+  });
+
+  it(`listImportTasks should throw error without collection_name`, async () => {
+    try {
+      await milvusClient.listImportTasks({} as any);
+    } catch (error) {
+      expect((error as Error).message).toEqual(
+        ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED
+      );
+    }
   });
 
   it(`list import tasks should be zero initially`, async () => {
