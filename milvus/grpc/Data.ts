@@ -1489,7 +1489,6 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  /* istanbul ignore next */
   async bulkInsert(data: ImportReq): Promise<ImportResponse> {
     if (!data || !data.collection_name) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
@@ -1535,7 +1534,6 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  /* istanbul ignore next */
   async listImportTasks(
     data: ListImportTasksReq
   ): Promise<ListImportTasksResponse> {
@@ -1579,7 +1577,6 @@ export class Data extends Collection {
    *  const res = await milvusClient.getImportState({ task: 123456 });
    * ```
    */
-  /* istanbul ignore next */
   async getImportState(
     data: GetImportStateReq
   ): Promise<GetImportStateResponse> {

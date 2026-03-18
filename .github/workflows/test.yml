@@ -56,6 +56,18 @@ jobs:
 
           docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
+      - name: Wait for MinIO to be ready
+        run: |
+          echo "Waiting for MinIO..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live > /dev/null 2>&1; then
+              echo "MinIO is ready"
+              break
+            fi
+            echo "Attempt $i/30..."
+            sleep 2
+          done
+
       - name: Install dependencies
         run: yarn
 
