@@ -282,6 +282,40 @@ export class Index extends Data {
   }
 
   /**
+   * Get index statistics information, including indexed row count, total row count, and index state.
+   *
+   * @param {DescribeIndexReq} data - The request parameters.
+   * @param {string} data.collection_name - The name of the collection.
+   * @param {string} [data.index_name] - The name of the index (optional).
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<DescribeIndexResponse>} The response from the server.
+   * @returns {Object} return.status - An object with properties 'error_code' and 'reason'.
+   * @returns {IndexDescription[]} return.index_descriptions - Index statistics including indexed_rows, total_rows, and state.
+   *
+   * @example
+   * ```
+   * const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   * const res = await milvusClient.getIndexStatistics({
+   *   collection_name: 'my_collection',
+   *   index_name: 'my_index',
+   * });
+   * ```
+   */
+  async getIndexStatistics(
+    data: DescribeIndexReq
+  ): Promise<DescribeIndexResponse> {
+    checkCollectionName(data);
+    const promise = await promisify(
+      this.channelPool,
+      'GetIndexStatistics',
+      data,
+      data.timeout || this.timeout
+    );
+    return promise;
+  }
+
+  /**
    * Drop an index.
    *
    * @param {Object} data - The data for dropping the index.
