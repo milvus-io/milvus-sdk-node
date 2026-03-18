@@ -46,8 +46,9 @@ export const getGRPCService = (
   const service = proto.serviceName
     .split('.')
     .reduce((a, b) => a[b], grpcObj as any);
-  // Check that the service object is valid.
-  if (service?.name !== 'ServiceClientImpl') {
+  // Check that the service object is a valid gRPC service client constructor.
+  // Avoid checking class name (e.g., 'ServiceClientImpl') as minifiers rename it.
+  if (typeof service !== 'function' || !service.service) {
     throw new Error(`Unable to load service: ${proto.serviceName}`);
   }
   // Return the service client constructor.
