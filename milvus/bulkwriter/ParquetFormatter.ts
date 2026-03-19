@@ -210,6 +210,10 @@ function normalizeForParquet(val: any, field: FieldType, dt: DataType): any {
       return val;
     }
 
+    // Struct as top-level field → JSON string (schema maps to UTF8)
+    case DataType.Struct:
+      return JSON.stringify(val);
+
     default:
       return val;
   }

@@ -534,6 +534,95 @@ describe('ParquetFormatter dynamic fields', () => {
 });
 
 // ============================================================
+// ParquetFormatter — edge cases for coverage
+// ============================================================
+
+describe('ParquetFormatter edge cases', () => {
+  it('should handle Struct field mapped to UTF8 fallback', async () => {
+    // Struct as a top-level field (not Array<Struct>) hits parquetFieldDef default
+    const { allRows } = await writeAndReadParquet(
+      {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+          { name: 'st', data_type: DataType.Struct },
+        ],
+      },
+      [
+        {
+          id: 1,
+          vec: [0.1, 0.2, 0.3, 0.4],
+          st: { key: 'value' },
+        },
+      ]
+    );
+    // Struct without Array wrapper falls back to UTF8 (JSON string)
+    expect(typeof allRows[0].st).toBe('string');
+    expect(JSON.parse(allRows[0].st)).toEqual({ key: 'value' });
+  });
+
+  it('should handle BFloat16Vector as Uint8Array', async () => {
+    const { allRows } = await writeAndReadParquet(
+      {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.BFloat16Vector, dim: 2 },
+        ],
+      },
+      [{ id: 1, vec: new Uint8Array([0, 63, 0, 64]) }]
+    );
+    const list = allRows[0].vec.list.map((x: any) => x.element);
+    expect(list).toEqual([0, 63, 0, 64]);
+  });
+
+  it('should handle Geometry and Timestamptz fields', async () => {
+    const { allRows } = await writeAndReadParquet(
+      {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+          { name: 'geo', data_type: DataType.Geometry },
+          { name: 'ts', data_type: DataType.Timestamptz },
+        ],
+      },
+      [
+        {
+          id: 1,
+          vec: [0.1, 0.2, 0.3, 0.4],
+          geo: 'POINT (120.5 31.2)',
+          ts: '2025-01-15T12:00:00+08:00',
+        },
+      ]
+    );
+    expect(allRows[0].geo).toBe('POINT (120.5 31.2)');
+    expect(allRows[0].ts).toBe('2025-01-15T12:00:00+08:00');
+  });
+
+  it('should handle multiple rows with dynamic fields varying', async () => {
+    const { allRows } = await writeAndReadParquet(
+      {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+        ],
+        enable_dynamic_field: true,
+      },
+      [
+        { id: 1, vec: [0.1, 0.2, 0.3, 0.4], color: 'red' },
+        { id: 2, vec: [0.5, 0.6, 0.7, 0.8] }, // no dynamic fields
+        { id: 3, vec: [0.9, 1.0, 1.1, 1.2], color: 'blue', score: 99 },
+      ]
+    );
+    expect(JSON.parse(allRows[0].$meta)).toEqual({ color: 'red' });
+    expect(allRows[1].$meta).toBe('{}');
+    expect(JSON.parse(allRows[2].$meta)).toEqual({
+      color: 'blue',
+      score: 99,
+    });
+  });
+});
+
+// ============================================================
 // ParquetFormatter — autoID and complex schema
 // ============================================================
 
