@@ -136,6 +136,38 @@ describe('ColumnBuffer', () => {
       text: 'hello',
     });
   });
+
+  it('should reconstruct a row with dynamic fields via getRow()', () => {
+    const buf = new ColumnBuffer({
+      fields: BASIC_SCHEMA.fields,
+      enable_dynamic_field: true,
+    });
+    buf.append({
+      id: 1,
+      vector: [0.1, 0.2, 0.3, 0.4],
+      text: 'hello',
+      color: 'red',
+    });
+    const row = buf.getRow(0);
+    expect(row.color).toBe('red');
+  });
+
+  it('should estimate Struct field size', () => {
+    const buf = new ColumnBuffer({
+      fields: [
+        { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+        {
+          name: 'st',
+          data_type: DataType.Array,
+          element_type: DataType.Struct,
+          max_capacity: 4,
+          fields: [{ name: 'val', data_type: DataType.Int32 }],
+        },
+      ],
+    });
+    const size = buf.append({ id: 1, st: [{ val: 42 }] });
+    expect(size).toBeGreaterThan(8); // Int64(8) + struct size
+  });
 });
 
 // ============================================================
@@ -506,7 +538,7 @@ describe('BulkWriter', () => {
     expect(allRows[0]).toEqual({ vector: [0.1, 0.2, 0.3, 0.4] });
   });
 
-  it('should expose totalRowCount', async () => {
+  it('should expose totalRowCount, bufferRowCount, and batchFiles', async () => {
     const writer = new BulkWriter({
       schema: WRITER_SCHEMA,
       localPath: tmpDir,
@@ -520,6 +552,8 @@ describe('BulkWriter', () => {
       });
     }
     expect(writer.totalRowCount).toBe(10);
+    expect(writer.bufferRowCount).toBeGreaterThanOrEqual(0);
+    expect(writer.batchFiles.length).toBeGreaterThan(0);
     await writer.close();
   });
 
@@ -1783,6 +1817,114 @@ describe('BulkWriter validation', () => {
         vec: [255], // dim=16 needs 2 bytes, only 1 given
       })
     ).rejects.toThrow(/dimension|bytes/i);
+  });
+
+  it('should reject non-array for FloatVector', async () => {
+    const writer = new BulkWriter({
+      schema: {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+        ],
+      },
+      localPath: tmpDir,
+    });
+    await expect(writer.append({ id: 1, vec: 'not an array' })).rejects.toThrow(
+      /FloatVector/
+    );
+  });
+
+  it('should reject non-array for BinaryVector', async () => {
+    const writer = new BulkWriter({
+      schema: {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.BinaryVector, dim: 16 },
+        ],
+      },
+      localPath: tmpDir,
+    });
+    await expect(writer.append({ id: 1, vec: 'not an array' })).rejects.toThrow(
+      /BinaryVector/
+    );
+  });
+
+  it('should reject wrong type for Float16Vector', async () => {
+    const writer = new BulkWriter({
+      schema: {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.Float16Vector, dim: 4 },
+        ],
+      },
+      localPath: tmpDir,
+    });
+    await expect(writer.append({ id: 1, vec: 'not valid' })).rejects.toThrow(
+      /Float16/
+    );
+  });
+
+  it('should reject wrong dimension for Float16Vector', async () => {
+    const writer = new BulkWriter({
+      schema: {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.Float16Vector, dim: 4 },
+        ],
+      },
+      localPath: tmpDir,
+    });
+    await expect(writer.append({ id: 1, vec: [0.1, 0.2] })).rejects.toThrow(
+      /dimension/i
+    );
+  });
+
+  it('should reject wrong type for Int8Vector', async () => {
+    const writer = new BulkWriter({
+      schema: {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.Int8Vector, dim: 4 },
+        ],
+      },
+      localPath: tmpDir,
+    });
+    await expect(writer.append({ id: 1, vec: 'not valid' })).rejects.toThrow(
+      /Int8Vector/
+    );
+  });
+
+  it('should reject wrong dimension for Int8Vector', async () => {
+    const writer = new BulkWriter({
+      schema: {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.Int8Vector, dim: 4 },
+        ],
+      },
+      localPath: tmpDir,
+    });
+    await expect(
+      writer.append({ id: 1, vec: new Int8Array([1, 2]) })
+    ).rejects.toThrow(/dimension/i);
+  });
+
+  it('should reject invalid $meta value', async () => {
+    const writer = new BulkWriter({
+      schema: {
+        ...WRITER_SCHEMA,
+        enable_dynamic_field: true,
+      },
+      localPath: tmpDir,
+    });
+    await expect(
+      writer.append({
+        id: 1,
+        vector: [0.1, 0.2, 0.3, 0.4],
+        text: 'hello',
+        $meta: 'not an object',
+      })
+    ).rejects.toThrow(/\$meta/);
   });
 
   it('should reject non-object for JSON field', async () => {
