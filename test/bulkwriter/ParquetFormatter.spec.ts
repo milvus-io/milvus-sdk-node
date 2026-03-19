@@ -332,6 +332,13 @@ describe('ParquetFormatter sparse vectors', () => {
     ]);
     expect(JSON.parse(allRows[0].sparse)).toEqual({ '2': 0.5, '5': 0.3 });
   });
+
+  it('should normalize array format to dict and store as JSON string', async () => {
+    const { allRows } = await writeAndReadParquet(SPARSE_SCHEMA, [
+      { id: 1, sparse: [undefined, 0.5, undefined, 0.3] },
+    ]);
+    expect(JSON.parse(allRows[0].sparse)).toEqual({ '1': 0.5, '3': 0.3 });
+  });
 });
 
 // ============================================================
@@ -511,7 +518,7 @@ describe('ParquetFormatter dynamic fields', () => {
     });
   });
 
-  it('should store empty $meta when no dynamic fields', async () => {
+  it('should store empty $meta when row has no extra keys', async () => {
     const { allRows } = await writeAndReadParquet(
       {
         fields: [
