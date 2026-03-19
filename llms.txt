@@ -1,0 +1,279 @@
+# @zilliz/milvus2-sdk-node
+
+> Node.js SDK for Milvus vector database. Use it for semantic search, RAG retrieval, recommendation systems, and any application that needs vector similarity search with metadata filtering.
+
+## Install
+
+```bash
+npm install @zilliz/milvus2-sdk-node
+```
+
+## Key Constraints
+
+- Call `loadCollection` after `createCollection` — collections must be loaded into memory before search/query.
+- Vector dimensions must be consistent: the dimension at insert and search must match the collection schema.
+- VarChar fields require `max_length`. Array fields require `element_type` and `max_capacity`.
+- `search` returns results sorted by similarity score. `query` returns rows matching a scalar filter (no vector needed).
+- Int64 values beyond Number.MAX_SAFE_INTEGER (2^53) should be passed as strings.
+- For serverless/edge environments (Cloudflare Workers, Vercel Edge), use `HttpClient` instead of `MilvusClient` — gRPC is not available there.
+
+## Task: Basic Vector Search (RAG Retrieval)
+
+```typescript
+import { MilvusClient, DataType, MetricType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({ address: 'localhost:19530' });
+
+// 1. Create collection with schema
+await client.createCollection({
+  collection_name: 'documents',
+  fields: [
+    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    { name: 'vector', data_type: DataType.FloatVector, dim: 1536 }, // match your embedding model
+    { name: 'text', data_type: DataType.VarChar, max_length: 4000 },
+    { name: 'source', data_type: DataType.VarChar, max_length: 256 },
+  ],
+  index_params: [
+    {
+      field_name: 'vector',
+      index_type: 'HNSW',
+      metric_type: MetricType.COSINE,
+      params: { M: 16, efConstruction: 256 },
+    },
+  ],
+});
+
+// 2. Load into memory (required before search/query)
+await client.loadCollection({ collection_name: 'documents' });
+
+// 3. Insert documents with embeddings
+await client.insert({
+  collection_name: 'documents',
+  data: [
+    { vector: embedding1, text: 'document content...', source: 'file1.pdf' },
+    { vector: embedding2, text: 'another document...', source: 'file2.pdf' },
+  ],
+});
+
+// 4. Retrieve top-K similar documents
+const { results } = await client.search({
+  collection_name: 'documents',
+  data: [queryEmbedding],
+  limit: 5,
+  output_fields: ['text', 'source'],
+});
+// results: [{ id, score, text, source }, ...]
+```
+
+## Task: Hybrid Search (Vector + Metadata Filter)
+
+```typescript
+const { results } = await client.search({
+  collection_name: 'products',
+  data: [queryVector],
+  limit: 20,
+  filter: 'category == "electronics" AND price < 500 AND brand IN ["Apple", "Samsung"]',
+  output_fields: ['name', 'price', 'category', 'brand'],
+});
+```
+
+Filter expression syntax:
+- Comparison: `==`, `!=`, `>`, `<`, `>=`, `<=`
+- Logical: `AND`, `OR`, `NOT`
+- Set: `IN [val1, val2]`
+- String: `LIKE "prefix%"`
+- Array: `ARRAY_CONTAINS(field, value)`, `ARRAY_LENGTH(field) > N`
+- JSON: `json_field["key"] == "value"`
+
+## Task: Collection with Rich Schema (Array, JSON, multiple fields)
+
+```typescript
+import { MilvusClient, DataType, MetricType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({ address: 'localhost:19530' });
+
+await client.createCollection({
+  collection_name: 'articles',
+  fields: [
+    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    { name: 'title', data_type: DataType.VarChar, max_length: 512 },
+    { name: 'embedding', data_type: DataType.FloatVector, dim: 768 },
+    { name: 'tags', data_type: DataType.Array, element_type: DataType.VarChar, max_length: 64, max_capacity: 20 },
+    { name: 'metadata', data_type: DataType.JSON },
+  ],
+  index_params: [
+    {
+      field_name: 'embedding',
+      index_type: 'HNSW',
+      metric_type: MetricType.COSINE,
+      params: { M: 16, efConstruction: 256 },
+    },
+  ],
+});
+
+await client.loadCollection({ collection_name: 'articles' });
+```
+
+## Task: Multi-Tenant with Partition Key
+
+Automatically routes data/queries by tenant without manual partition management.
+
+```typescript
+await client.createCollection({
+  collection_name: 'tenant_data',
+  fields: [
+    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    { name: 'tenant_id', data_type: DataType.VarChar, max_length: 64, is_partition_key: true },
+    { name: 'vector', data_type: DataType.FloatVector, dim: 128 },
+    { name: 'content', data_type: DataType.VarChar, max_length: 2000 },
+  ],
+  num_partitions: 16,
+});
+
+await client.loadCollection({ collection_name: 'tenant_data' });
+
+// Insert — Milvus routes to correct partition automatically
+await client.insert({
+  collection_name: 'tenant_data',
+  data: [{ tenant_id: 'user_123', vector: [...], content: 'hello' }],
+});
+
+// Search scoped to one tenant (fast — only reads that partition)
+const { results } = await client.search({
+  collection_name: 'tenant_data',
+  data: [queryVector],
+  filter: 'tenant_id == "user_123"',
+  limit: 10,
+  output_fields: ['content'],
+});
+```
+
+## Task: Sparse Vector / Full-Text Search
+
+```typescript
+await client.createCollection({
+  collection_name: 'text_search',
+  fields: [
+    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    { name: 'sparse', data_type: DataType.SparseFloatVector },
+    { name: 'text', data_type: DataType.VarChar, max_length: 5000 },
+  ],
+});
+
+// Sparse vectors as { dimension_index: weight } dictionaries
+await client.insert({
+  collection_name: 'text_search',
+  data: [
+    { sparse: { 0: 0.5, 10: 0.3, 200: 0.8 }, text: 'machine learning...' },
+    { sparse: { 1: 0.1, 50: 0.9 }, text: 'database systems...' },
+  ],
+});
+```
+
+## Task: Iterate Over Large Result Sets
+
+```typescript
+// Query iterator — paginate through all matching rows
+const queryIter = await client.queryIterator({
+  collection_name: 'documents',
+  filter: 'status == "active"',
+  batchSize: 1000,
+  limit: 100000,
+  output_fields: ['text', 'source'],
+});
+
+for await (const batch of queryIter) {
+  processBatch(batch); // batch: Record<string, any>[]
+}
+
+// Search iterator — paginated vector search
+const searchIter = await client.searchIterator({
+  collection_name: 'documents',
+  data: queryVector,
+  batchSize: 100,
+  limit: 5000,
+  output_fields: ['text'],
+});
+
+for await (const batch of searchIter) {
+  processBatch(batch);
+}
+```
+
+## Task: Bulk Data Import
+
+Generate Milvus-compatible files locally, then import server-side.
+
+```typescript
+import { BulkWriter, DataType } from '@zilliz/milvus2-sdk-node';
+
+const writer = new BulkWriter({
+  schema: {
+    fields: [
+      { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+      { name: 'vector', data_type: DataType.FloatVector, dim: 128 },
+    ],
+  },
+  format: 'parquet', // or 'json'
+  localPath: './bulk_data',
+});
+
+for (const row of largeDataset) {
+  await writer.append(row);
+}
+const batchFiles = await writer.close();
+
+// Import files server-side (files must be accessible by Milvus)
+await client.bulkInsert({ collection_name: 'my_collection', files: ['data.parquet'] });
+await client.getImportState({ taskId });
+```
+
+## Task: Connect to Zilliz Cloud
+
+```typescript
+const client = new MilvusClient({
+  address: 'https://your-instance.zillizcloud.com',
+  token: 'your-api-key',
+});
+await client.connectPromise;
+```
+
+## Task: Use HTTP Client (Edge/Serverless)
+
+```typescript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
+const client = new HttpClient({
+  endpoint: 'localhost:19530',
+  token: 'your-api-key', // optional
+});
+
+// Same data operations API
+await client.search({ collection_name: 'docs', data: [vector], limit: 10 });
+await client.query({ collection_name: 'docs', filter: 'id > 0', limit: 100 });
+```
+
+## Quick Reference: Data Types
+
+| Use case | DataType | Notes |
+|----------|----------|-------|
+| Primary key | `DataType.Int64` or `DataType.VarChar` | Set `is_primary_key: true` |
+| Dense embedding | `DataType.FloatVector` | Set `dim` to match model |
+| Sparse embedding | `DataType.SparseFloatVector` | No dim needed |
+| Text field | `DataType.VarChar` | Set `max_length` |
+| Flexible metadata | `DataType.JSON` | Access via `json["key"]` in filters |
+| Tags/lists | `DataType.Array` | Set `element_type` + `max_capacity` |
+| Numeric | `DataType.Int32`, `Float`, `Double` | |
+| Boolean | `DataType.Bool` | |
+
+## Quick Reference: Metric Types
+
+| Metric | Best for | Score meaning |
+|--------|----------|---------------|
+| `MetricType.COSINE` | Normalized embeddings (OpenAI, etc.) | Higher = more similar |
+| `MetricType.L2` | Raw embeddings | Lower = more similar |
+| `MetricType.IP` | Already-normalized + magnitude matters | Higher = more similar |
+
+## Full API Reference
+
+See [README.md](./README.md) for the complete API method signatures and parameters.
