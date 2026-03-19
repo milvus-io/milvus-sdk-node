@@ -26,7 +26,7 @@ export interface BulkWriterSchema {
 export interface BulkWriterOptions {
   schema: BulkWriterSchema;
   storage?: Storage;
-  format?: 'json';
+  format?: 'json' | 'parquet';
   chunkSize?: number;
   localPath?: string;
 }
