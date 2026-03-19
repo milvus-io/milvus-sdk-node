@@ -346,6 +346,32 @@ describe('ParquetFormatter sparse vectors', () => {
 // ============================================================
 
 describe('ParquetFormatter array fields', () => {
+  it('should handle Array<Int64> with BigInt conversion', async () => {
+    const { allRows } = await writeAndReadParquet(
+      {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+          {
+            name: 'arr',
+            data_type: DataType.Array,
+            element_type: DataType.Int64,
+            max_capacity: 4,
+          },
+        ],
+      },
+      [
+        {
+          id: 1,
+          vec: [0.1, 0.2, 0.3, 0.4],
+          arr: ['9100000000000000001', '9100000000000000002'],
+        },
+      ]
+    );
+    const list = allRows[0].arr.list.map((x: any) => String(x.element));
+    expect(list).toEqual(['9100000000000000001', '9100000000000000002']);
+  });
+
   it('should handle Array<Int32>', async () => {
     const { allRows } = await writeAndReadParquet(
       {
