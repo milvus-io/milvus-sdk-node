@@ -44,34 +44,33 @@
   resolved "https://registry.yarnpkg.com/@js-sdsl/ordered-map/-/ordered-map-4.4.2.tgz#9299f82874bab9e4c7f9c48d865becbfe8d6907c"
   integrity sha512-iUKgm52T8HOE/makSxjqoWhe95ZJA1/G1sYsGev2JDKUSS14KAgg1LHb+Ba+IPow0xflbnSkOsZcO08C7w1gYw==
 
-"@langchain/classic@1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@langchain/classic/-/classic-1.0.3.tgz#92482cb4cb8692407b4ecde0df312f035934472f"
-  integrity sha512-XyoaiJSi4y7SzrZMCb3DdDfC+M3gqIQpVH2cOCh9xQf4244jNrncpLXF/MwOJYWxzTsjfcCAHIbFJ0kSH5nqmg==
+"@langchain/classic@1.0.19":
+  version "1.0.19"
+  resolved "https://registry.yarnpkg.com/@langchain/classic/-/classic-1.0.19.tgz#b569d9011eca7e2494ab0ae5ea0957075658ef4f"
+  integrity sha512-aFx+xFhKnBF4yiSmzL/v2Xf6GMlDUEEwSj8+CaaFSHdR31reqCrpkF4eq1G0G7Q8j9LEpyOSKqoOi/fpSO5Hsg==
   dependencies:
-    "@langchain/openai" "1.1.1"
-    "@langchain/textsplitters" "1.0.0"
+    "@langchain/openai" "1.2.9"
+    "@langchain/textsplitters" "1.0.1"
     handlebars "^4.7.8"
-    js-yaml "^4.1.0"
+    js-yaml "^4.1.1"
     jsonpointer "^5.0.1"
     openapi-types "^12.1.3"
-    p-retry "4"
     uuid "^10.0.0"
     yaml "^2.2.1"
     zod "^3.25.76 || ^4"
   optionalDependencies:
-    langsmith "^0.3.64"
+    langsmith ">=0.4.0 <1.0.0"
 
-"@langchain/community@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@langchain/community/-/community-1.0.3.tgz#278c82eee22ff37b120e182b07b7c23ffc6786ab"
-  integrity sha512-86L7qooSY8Fh5Sf2Tu/X8PvDJqvEXohyZUGusuv0XtnWGivwtecBm0vEbVPkLF07I2ZMtyAGzHJOblbveq6Nmg==
+"@langchain/community@^1.1.18":
+  version "1.1.18"
+  resolved "https://registry.yarnpkg.com/@langchain/community/-/community-1.1.18.tgz#97745527aa51a35408613d25338e420fbb7755bc"
+  integrity sha512-F+grFLi2DtnFRQvdkRNiR8Ew6VAZ6ZP9VPmEHMTf5tOPPOR5IPPGA1USXxJMfVq6RbeOXEgNSElwDGgyg32FAQ==
   dependencies:
-    "@langchain/classic" "1.0.3"
-    "@langchain/openai" "1.1.1"
+    "@langchain/classic" "1.0.19"
+    "@langchain/openai" "1.2.9"
     binary-extensions "^2.2.0"
     flat "^5.0.2"
-    js-yaml "^4.1.0"
+    js-yaml "^4.1.1"
     math-expression-evaluator "^2.0.0"
     uuid "^10.0.0"
     zod "^3.25.76 || ^4"
@@ -117,19 +116,19 @@
     "@langchain/langgraph-sdk" "~1.0.0"
     uuid "^10.0.0"
 
-"@langchain/openai@1.1.1", "@langchain/openai@^1.0.0":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@langchain/openai/-/openai-1.1.1.tgz#67ddcf54ee7ac402f6b75b4b9e25447e78c56a93"
-  integrity sha512-0kUaXejo/sn6QAohWHDaAUapC4CJRkJIajGaWfJC+llSqpDBnmBE1oHg1M2fi1OCeP+ns9SxB6BTsq4Qbiqmig==
+"@langchain/openai@1.2.9", "@langchain/openai@^1.0.0":
+  version "1.2.9"
+  resolved "https://registry.yarnpkg.com/@langchain/openai/-/openai-1.2.9.tgz#664441ceb322abe9225ec5cd9482fd0f76e26200"
+  integrity sha512-hExRiUoKOg1vfkwBAI5J2C4tqNx5LLZ0CUelG8Ej6K8bS2LfFN9bL4ZNQYqNIwAJNSqpDaV9tknxP2fssZjp+Q==
   dependencies:
     js-tiktoken "^1.0.12"
-    openai "^6.9.0"
+    openai "^6.18.0"
     zod "^3.25.76 || ^4"
 
-"@langchain/textsplitters@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@langchain/textsplitters/-/textsplitters-1.0.0.tgz#1fe78562b9bf74b0a88f13d443cb3c79f4d28331"
-  integrity sha512-L1gOwOJXeM+6MKzrj9shSsDyH32j898jgqvVArOjdge2zLyY+Mv4aOuyAAxbPyaFdQXlxKfa9xjqIUyv8TzrqA==
+"@langchain/textsplitters@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@langchain/textsplitters/-/textsplitters-1.0.1.tgz#292f9c93239178c248b3338acf7b68aa47aa9830"
+  integrity sha512-rheJlB01iVtrOUzttscutRgLybPH9qR79EyzBEbf1u97ljWyuxQfCwIWK+SjoQTM9O8M7GGLLRBSYE26Jmcoww==
   dependencies:
     js-tiktoken "^1.0.12"
 
@@ -438,7 +437,7 @@ js-tiktoken@^1.0.12:
   dependencies:
     base64-js "^1.5.1"
 
-js-yaml@^4.1.0:
+js-yaml@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.1.1.tgz#854c292467705b699476e1a2decc0c8a3458806b"
   integrity sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==
@@ -475,19 +474,6 @@ langchain@^1.2.3:
     chalk "^4.1.2"
     console-table-printer "^2.12.1"
     p-queue "^6.6.2"
-    semver "^7.6.3"
-    uuid "^10.0.0"
-
-langsmith@^0.3.64:
-  version "0.3.79"
-  resolved "https://registry.yarnpkg.com/langsmith/-/langsmith-0.3.79.tgz#6c845644da26e7fdd8e9b80706091669fc43bda4"
-  integrity sha512-j5uiAsyy90zxlxaMuGjb7EdcL51Yx61SpKfDOI1nMPBbemGju+lf47he4e59Hp5K63CY8XWgFP42WeZ+zuIU4Q==
-  dependencies:
-    "@types/uuid" "^10.0.0"
-    chalk "^4.1.2"
-    console-table-printer "^2.12.1"
-    p-queue "^6.6.2"
-    p-retry "4"
     semver "^7.6.3"
     uuid "^10.0.0"
 
@@ -550,10 +536,10 @@ one-time@^1.0.0:
   dependencies:
     fn.name "1.x.x"
 
-openai@^6.9.0:
-  version "6.9.0"
-  resolved "https://registry.yarnpkg.com/openai/-/openai-6.9.0.tgz#acd15b2233c42b165981f3de8f4cfce27f844fce"
-  integrity sha512-n2sJRYmM+xfJ0l3OfH8eNnIyv3nQY7L08gZQu3dw6wSdfPtKAk92L83M2NIP5SS8Cl/bsBBG3yKzEOjkx0O+7A==
+openai@^6.18.0:
+  version "6.32.0"
+  resolved "https://registry.yarnpkg.com/openai/-/openai-6.32.0.tgz#61914f8c9f91c1cc775da9a9d76168745916c7ec"
+  integrity sha512-j3k+BjydAf8yQlcOI7WUQMQTbbF5GEIMAE2iZYCOzwwB3S2pCheaWYp+XZRNAch4jWVc52PMDGRRjutao3lLCg==
 
 openapi-types@^12.1.3:
   version "12.1.3"

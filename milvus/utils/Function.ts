@@ -7,11 +7,97 @@ import {
   FieldData,
   METADATA,
 } from '../';
+import { logger } from './logger';
 import { Pool } from 'generic-pool';
-import { Metadata } from '@grpc/grpc-js';
+import { Metadata, status as grpcStatus } from '@grpc/grpc-js';
 
 /**
- * Promisify a function call with optional timeout and metadata
+ * Failover handler type for global cluster support.
+ * When attached to a pool, promisify will call this on UNAVAILABLE errors
+ * after all interceptor retries are exhausted.
+ * Should return a new pool to retry with, or null if no failover occurred.
+ */
+export type FailoverHandler = (
+  error: any
+) => Promise<Pool<any> | null>;
+
+/** Well-known property key for attaching a failover handler to a pool. */
+export const FAILOVER_HANDLER_KEY = '__failoverHandler';
+
+/**
+ * Attach a failover handler to a pool for global cluster support.
+ */
+export function setPoolFailoverHandler(
+  pool: Pool<any>,
+  handler: FailoverHandler
+): void {
+  (pool as any)[FAILOVER_HANDLER_KEY] = handler;
+}
+
+/**
+ * Check if an error is a gRPC UNAVAILABLE error.
+ */
+function isUnavailableError(err: any): boolean {
+  return err && err.code === grpcStatus.UNAVAILABLE;
+}
+
+/**
+ * Execute a single gRPC call via the pool.
+ */
+function executeCall(
+  pool: Pool<any>,
+  target: string,
+  params: any,
+  timeout: number,
+  requestMetadata?: { 'client-request-id'?: string; client_request_id?: string }
+): Promise<any> {
+  const t = timeout === 0 ? 1000 * 60 * 60 * 24 : timeout;
+
+  return (async () => {
+    const client = await pool.acquire();
+
+    let finalRequestMetadata = requestMetadata;
+    if (!finalRequestMetadata && params) {
+      finalRequestMetadata = extractRequestMetadata(params);
+    }
+
+    const metadata = finalRequestMetadata ? new Metadata() : undefined;
+    if (metadata && finalRequestMetadata) {
+      const clientRequestId = getClientRequestId(finalRequestMetadata);
+      if (clientRequestId) {
+        metadata.add(METADATA.CLIENT_REQUEST_ID, String(clientRequestId));
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        const callOptions: any = { deadline: new Date(Date.now() + t) };
+        if (metadata) {
+          callOptions.metadata = metadata;
+        }
+
+        client[target](params, callOptions, (err: any, result: any) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
+          if (client) {
+            pool.release(client);
+          }
+        });
+      } catch (e: any) {
+        reject(e);
+        if (client) {
+          pool.release(client);
+        }
+      }
+    });
+  })();
+}
+
+/**
+ * Promisify a function call with optional timeout, metadata, and global cluster failover.
  * @param pool - The pool of gRPC clients
  * @param target - The name of the target function to call
  * @param params - The parameters to pass to the target function (may contain client_request_id or client-request-id)
@@ -26,59 +112,35 @@ export async function promisify(
   timeout: number,
   requestMetadata?: { 'client-request-id'?: string; client_request_id?: string }
 ): Promise<any> {
-  // Calculate the deadline for the function call
-  const t = timeout === 0 ? 1000 * 60 * 60 * 24 : timeout;
+  try {
+    return await executeCall(pool, target, params, timeout, requestMetadata);
+  } catch (error: any) {
+    // Check for global cluster failover handler
+    const handler: FailoverHandler | undefined =
+      (pool as any)[FAILOVER_HANDLER_KEY];
 
-  // get client
-  const client = await pool.acquire();
-
-  // Extract traceid from params if requestMetadata is not explicitly provided
-  let finalRequestMetadata = requestMetadata;
-  if (!finalRequestMetadata && params) {
-    finalRequestMetadata = extractRequestMetadata(params);
-  }
-
-  // Create metadata object if traceid is found
-  const metadata = finalRequestMetadata ? new Metadata() : undefined;
-
-  if (metadata && finalRequestMetadata) {
-    // Support both client_request_id and client-request-id (for compatibility)
-    // Priority: client_request_id > client-request-id (JavaScript/TypeScript convention)
-    const clientRequestId = getClientRequestId(finalRequestMetadata);
-    if (clientRequestId) {
-      // Convert to string to prevent runtime errors if non-string value is passed
-      metadata.add(METADATA.CLIENT_REQUEST_ID, String(clientRequestId));
-    }
-  }
-
-  // Create a new Promise that wraps the target function call
-  return new Promise((resolve, reject) => {
-    try {
-      // Call the target function with the provided parameters, deadline, and metadata
-      const callOptions: any = { deadline: new Date(Date.now() + t) };
-      if (metadata) {
-        callOptions.metadata = metadata;
-      }
-
-      client[target](params, callOptions, (err: any, result: any) => {
-        if (err) {
-          // If there was an error, reject the Promise with the error
-          reject(err);
-        } else {
-          // Otherwise, resolve the Promise with the result
-          resolve(result);
-        }
-        if (client) {
-          pool.release(client);
-        }
-      });
-    } catch (e: any) {
-      reject(e);
-      if (client) {
-        pool.release(client);
+    if (handler && isUnavailableError(error)) {
+      logger.debug(
+        `\x1b[36m[Global]\x1b[0m UNAVAILABLE error on \x1b[1m${target}\x1b[0m, triggering failover handler`
+      );
+      const newPool = await handler(error);
+      if (newPool) {
+        logger.debug(
+          `\x1b[36m[Global]\x1b[0m Failover complete, retrying \x1b[1m${target}\x1b[0m with new pool`
+        );
+        // Retry once with the new pool (after failover)
+        return await executeCall(
+          newPool,
+          target,
+          params,
+          timeout,
+          requestMetadata
+        );
       }
     }
-  });
+
+    throw error;
+  }
 }
 
 export const findKeyValue = (obj: KeyValuePair[], key: string) =>

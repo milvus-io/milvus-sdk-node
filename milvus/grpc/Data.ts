@@ -5,7 +5,11 @@ import {
   ERROR_REASONS,
   DeleteEntitiesReq,
   FlushReq,
+  FlushAllReq,
+  FlushAllResponse,
   GetFlushStateReq,
+  GetFlushAllStateReq,
+  GetFlushAllStateResponse,
   GetQuerySegmentInfoReq,
   GePersistentSegmentInfoReq,
   InsertReq,
@@ -13,6 +17,7 @@ import {
   LoadBalanceReq,
   ImportReq,
   ListImportTasksReq,
+  GetImportStateReq,
   ErrorCode,
   FlushResult,
   GetFlushStateResponse,
@@ -26,6 +31,7 @@ import {
   SearchResults,
   ImportResponse,
   ListImportTasksResponse,
+  GetImportStateResponse,
   GetMetricsRequest,
   QueryReq,
   GetReq,
@@ -1215,16 +1221,19 @@ export class Data extends Collection {
   }
 
   /**
-   * Get the flush state of specified segment IDs in Milvus.
+   * Get the flush state in Milvus. You can query by segment IDs or by collection name with flush timestamp.
    *
    * @param {GetFlushStateReq} data - The request parameters.
-   * @param {number[]} data.segmentIDs - The segment IDs.
+   * @param {number[]} [data.segmentIDs] - The segment IDs.
+   * @param {number} [data.flush_ts] - The flush timestamp.
+   * @param {string} [data.db_name] - The database name.
+   * @param {string} [data.collection_name] - The collection name.
    * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<GetFlushStateResponse>} The result of the operation.
    * @returns {string} status.error_code - The error code of the operation.
    * @returns {string} status.reason - The reason for the error, if any.
-   * @returns {boolean[]} flushed - Array indicating whether each segment is flushed or not.
+   * @returns {boolean} flushed - Whether the flush operation is completed.
    *
    * @example
    * ```
@@ -1235,12 +1244,116 @@ export class Data extends Collection {
    * ```
    */
   async getFlushState(data: GetFlushStateReq): Promise<GetFlushStateResponse> {
-    if (!data || !data.segmentIDs) {
+    if (
+      !data ||
+      (!data.segmentIDs && !data.collection_name && !data.flush_ts)
+    ) {
       throw new Error(ERROR_REASONS.GET_FLUSH_STATE_CHECK_PARAMS);
     }
     const res = await promisify(
       this.channelPool,
       'GetFlushState',
+      data,
+      data.timeout || this.timeout
+    );
+    return res;
+  }
+
+  /**
+   * Flushes all collections in the database. This is an asynchronous function.
+   *
+   * @param {FlushAllReq} [data] - The request parameters.
+   * @param {string} [data.db_name] - The database name (optional).
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<FlushAllResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {number} flush_all_ts - The flush all timestamp.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.flushAll();
+   * ```
+   */
+  async flushAll(data?: FlushAllReq): Promise<FlushAllResponse> {
+    const res = await promisify(
+      this.channelPool,
+      'FlushAll',
+      data || {},
+      data?.timeout || this.timeout
+    );
+    return res;
+  }
+
+  /**
+   * Flushes all collections synchronously, waiting until the flush operation is completed.
+   *
+   * @param {FlushAllReq} [data] - The request parameters.
+   * @param {string} [data.db_name] - The database name (optional).
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<GetFlushAllStateResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {boolean} flushed - Whether the flush operation is completed.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.flushAllSync();
+   * ```
+   */
+  async flushAllSync(data?: FlushAllReq): Promise<GetFlushAllStateResponse> {
+    const res = await this.flushAll(data);
+
+    let isFlushed = false;
+    let flushRes = null;
+    while (!isFlushed) {
+      flushRes = await this.getFlushAllState({
+        flush_all_ts: res.flush_all_ts,
+        flush_all_tss: res.flush_all_tss,
+        timeout: data?.timeout,
+      });
+      if (flushRes.status.error_code !== ErrorCode.SUCCESS) {
+        throw new Error(flushRes.status.reason);
+      }
+      await sleep(100);
+      isFlushed = flushRes.flushed;
+    }
+    return flushRes as GetFlushAllStateResponse;
+  }
+
+  /**
+   * Get the flush all state.
+   *
+   * @param {GetFlushAllStateReq} data - The request parameters.
+   * @param {Record<string, number>} [data.flush_all_tss] - The flush all timestamps.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<GetFlushAllStateResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {boolean} flushed - Whether the flush operation is completed.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
+   *  const res = await milvusClient.getFlushAllState({
+   *    flush_all_tss: { db1: 123456789 },
+   *  });
+   * ```
+   */
+  async getFlushAllState(
+    data: GetFlushAllStateReq
+  ): Promise<GetFlushAllStateResponse> {
+    if (!data || (!data.flush_all_ts && !data.flush_all_tss)) {
+      throw new Error(ERROR_REASONS.GET_FLUSH_ALL_STATE_CHECK_PARAMS);
+    }
+    const res = await promisify(
+      this.channelPool,
+      'GetFlushAllState',
       data,
       data.timeout || this.timeout
     );
@@ -1255,6 +1368,8 @@ export class Data extends Collection {
    * @param {number} data.src_nodeID - The source query node id to balance.
    * @param {number[]} [data.dst_nodeIDs] - The destination query node ids to balance (optional).
    * @param {number[]} [data.sealed_segmentIDs] - Sealed segment ids to balance (optional).
+   * @param {string} [data.collectionName] - The collection name (optional).
+   * @param {string} [data.db_name] - The database name (optional).
    * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} The result of the operation.
@@ -1375,7 +1490,6 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  /* istanbul ignore next */
   async bulkInsert(data: ImportReq): Promise<ImportResponse> {
     if (!data || !data.collection_name) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
@@ -1421,7 +1535,6 @@ export class Data extends Collection {
    *  });
    * ```
    */
-  /* istanbul ignore next */
   async listImportTasks(
     data: ListImportTasksReq
   ): Promise<ListImportTasksResponse> {
@@ -1435,6 +1548,43 @@ export class Data extends Collection {
         ...data,
         limit: data.limit || 0,
       },
+      data.timeout || this.timeout
+    );
+    return res;
+  }
+
+  /**
+   * Get the state of an import task.
+   *
+   * @param {GetImportStateReq} data - The request parameters.
+   * @param {number} data.task - The ID of the import task.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<GetImportStateResponse>} The result of the operation.
+   * @returns {string} status.error_code - The error code of the operation.
+   * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {ImportState} state - The state of the import task.
+   * @returns {number} row_count - How many rows have been imported/parsed.
+   * @returns {number[]} id_list - Auto generated IDs if the primary key is autoID.
+   * @returns {KeyValuePair[]} infos - Additional information (progress, file path, failed reason, etc.).
+   * @returns {number} id - The ID of the import task.
+   * @returns {number} collection_id - The collection ID of the import task.
+   * @returns {number[]} segment_ids - Segment IDs created by the import task.
+   * @returns {number} create_ts - Timestamp when the import task was created.
+   *
+   * @example
+   * ```
+   *  const milvusClient = new MilvusClient(MILVUS_ADDRESS);
+   *  const res = await milvusClient.getImportState({ task: 123456 });
+   * ```
+   */
+  async getImportState(
+    data: GetImportStateReq
+  ): Promise<GetImportStateResponse> {
+    const res = await promisify(
+      this.channelPool,
+      'GetImportState',
+      data,
       data.timeout || this.timeout
     );
     return res;

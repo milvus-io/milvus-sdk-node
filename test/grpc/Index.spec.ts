@@ -436,6 +436,31 @@ describe(`Milvus Index API`, () => {
   //   expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
   // });
 
+  it(`Get Index Statistics with index name`, async () => {
+    const res = await milvusClient.getIndexStatistics({
+      collection_name: COLLECTION_NAME,
+      index_name: INDEX_NAME,
+    });
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.index_descriptions.length).toBeGreaterThan(0);
+
+    const indexDesc = res.index_descriptions.find(
+      i => i.index_name === INDEX_NAME
+    );
+    expect(indexDesc).toBeDefined();
+    expect(indexDesc!.field_name).toEqual(VECTOR_FIELD_NAME);
+    expect(typeof indexDesc!.indexed_rows).toBeDefined();
+    expect(typeof indexDesc!.total_rows).toBeDefined();
+  });
+
+  it(`Get Index Statistics without index name`, async () => {
+    const res = await milvusClient.getIndexStatistics({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.index_descriptions.length).toBeGreaterThan(0);
+  });
+
   it(`Drop Index with index name`, async () => {
     const res = await milvusClient.dropIndex({
       collection_name: COLLECTION_NAME,

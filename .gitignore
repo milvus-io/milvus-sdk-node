@@ -4,3 +4,9 @@ coverage
 .DS_Store
 yarn-error.log
 .idea
+
+# Claude Code / OpenSpec
+.claude/
+.github/prompts/
+.github/skills/
+openspec/

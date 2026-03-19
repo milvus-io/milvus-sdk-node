@@ -68,12 +68,13 @@ describe(`Resource API`, () => {
 
     const res2 = await milvusClient.createResourceGroup({
       resource_group: resource_group2,
-      // config: {
-      //   requests: { node_num: 1 },
-      //   limits: { node_num: 10 },
-      //   transfer_from: [{ resource_group: DEFAULT_RESOURCE_GROUP }],
-      //   transfer_to: [{ resource_group: DEFAULT_RESOURCE_GROUP }],
-      // },
+      config: {
+        requests: { node_num: 0 },
+        limits: { node_num: 0 },
+        transfer_from: [{ resource_group: DEFAULT_RESOURCE_GROUP }],
+        transfer_to: [{ resource_group: DEFAULT_RESOURCE_GROUP }],
+        node_filter: { node_labels: [{ key: 'env', value: 'test' }] },
+      },
     });
 
     const res3 = await milvusClient.createResourceGroup({
@@ -109,10 +110,21 @@ describe(`Resource API`, () => {
     expect(typeof res.resource_group.num_available_node).toBe('number');
     expect(res.resource_group.num_available_node).toBe(queryNodeNum);
     expect(typeof res.resource_group.capacity).toBe('number');
+    expect(res.resource_group).toHaveProperty('nodes');
+    expect(Array.isArray(res.resource_group.nodes)).toBe(true);
+    if (res.resource_group.nodes!.length > 0) {
+      const node = res.resource_group.nodes![0];
+      expect(node).toHaveProperty('node_id');
+      expect(node).toHaveProperty('address');
+      expect(node).toHaveProperty('hostname');
+    }
 
-    await milvusClient.describeResourceGroup({
+    const res2 = await milvusClient.describeResourceGroup({
       resource_group: resource_group2,
     });
+    expect(res2.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res2.resource_group).toHaveProperty('config');
+    expect(res2.resource_group.config).toHaveProperty('node_filter');
   });
 
   it(`Update rg should be successful`, async () => {

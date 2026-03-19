@@ -69,6 +69,11 @@ export interface ClientConfig {
 
   // enable trace
   trace?: boolean;
+
+  // Explicitly enable/disable global cluster mode.
+  // When true, the SDK fetches topology from the endpoint and routes to the primary cluster.
+  // When omitted, auto-detected from the address URI (looks for 'global-cluster').
+  isGlobal?: boolean;
 }
 
 export interface ServerInfo {
@@ -81,10 +86,14 @@ export interface ServerInfo {
 }
 
 export interface RunAnalyzerRequest {
-  analyzer_params: Record<string, any>;
+  analyzer_params?: Record<string, any>;
   text: string | string[];
-  with_detail: boolean;
-  with_hash: boolean;
+  with_detail?: boolean;
+  with_hash?: boolean;
+  db_name?: string;
+  collection_name?: string;
+  field_name?: string;
+  analyzer_names?: string[];
 }
 
 type AnalyzerToken = {

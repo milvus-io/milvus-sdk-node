@@ -191,13 +191,13 @@ export const formatFieldSchema = (
   override?: {
     partition_key_field?: string;
     functionOutputFields?: string[];
-    clustring_key_field?: string;
+    clustering_key_field?: string;
   }
 ): { [k: string]: any } => {
   const {
     partition_key_field,
     functionOutputFields = [],
-    clustring_key_field,
+    clustering_key_field,
   } = override || {};
   // Assign the typeParams property to the result of parseToKeyValue(type_params).
   const {
@@ -220,7 +220,7 @@ export const formatFieldSchema = (
     isFunctionOutput:
       !!is_function_output || functionOutputFields.includes(field.name),
     isClusteringKey:
-      !!field.is_clustering_key || field.name === clustring_key_field,
+      !!field.is_clustering_key || field.name === clustering_key_field,
   };
 
   // if element type exist and
@@ -335,7 +335,7 @@ export const formatCollectionSchema = (
     enableDynamicField,
     partition_key_field,
     functions,
-    clustring_key_field,
+    clustering_key_field,
   } = data;
 
   let fields = (data as CreateCollectionWithFieldsReq).fields;
@@ -392,7 +392,7 @@ export const formatCollectionSchema = (
       formatFieldSchema(field, schemaTypes, {
         partition_key_field,
         functionOutputFields,
-        clustring_key_field,
+        clustering_key_field,
       })
     ),
     structArrayFields: structArrayFields.map(field =>

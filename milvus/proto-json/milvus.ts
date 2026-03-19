@@ -72,6 +72,10 @@ export default {
                       "requestType": "DropCollectionFunctionRequest",
                       "responseType": "common.Status"
                     },
+                    "TruncateCollection": {
+                      "requestType": "TruncateCollectionRequest",
+                      "responseType": "TruncateCollectionResponse"
+                    },
                     "CreatePartition": {
                       "requestType": "CreatePartitionRequest",
                       "responseType": "common.Status"
@@ -475,6 +479,10 @@ export default {
                     "UpdateReplicateConfiguration": {
                       "requestType": "UpdateReplicateConfigurationRequest",
                       "responseType": "common.Status"
+                    },
+                    "GetReplicateConfiguration": {
+                      "requestType": "GetReplicateConfigurationRequest",
+                      "responseType": "GetReplicateConfigurationResponse"
                     },
                     "GetReplicateInfo": {
                       "requestType": "GetReplicateInfoRequest",
@@ -5393,6 +5401,30 @@ export default {
                     "replicate_configuration": {
                       "type": "common.ReplicateConfiguration",
                       "id": 1
+                    },
+                    "force_promote": {
+                      "type": "bool",
+                      "id": 2
+                    }
+                  }
+                },
+                "GetReplicateConfigurationRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeGetReplicateConfiguration",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {}
+                },
+                "GetReplicateConfigurationResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "configuration": {
+                      "type": "common.ReplicateConfiguration",
+                      "id": 2
                     }
                   }
                 },
@@ -5462,6 +5494,35 @@ export default {
                   "fields": {
                     "replicate_confirmed_message_info": {
                       "type": "ReplicateConfirmedMessageInfo",
+                      "id": 1
+                    }
+                  }
+                },
+                "TruncateCollectionRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeDropCollection",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "TruncateCollectionResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
                       "id": 1
                     }
                   }
@@ -5722,6 +5783,7 @@ export default {
                     "AddCollectionFunction": 116,
                     "AlterCollectionFunction": 117,
                     "DropCollectionFunction": 118,
+                    "TruncateCollection": 119,
                     "CreatePartition": 200,
                     "DropPartition": 201,
                     "HasPartition": 202,
@@ -6012,7 +6074,8 @@ export default {
                     "PrivilegeAddFileResource": 72,
                     "PrivilegeRemoveFileResource": 73,
                     "PrivilegeListFileResources": 74,
-                    "PrivilegeUpdateReplicateConfiguration": 78
+                    "PrivilegeUpdateReplicateConfiguration": 78,
+                    "PrivilegeGetReplicateConfiguration": 85
                   }
                 },
                 "PrivilegeExt": {

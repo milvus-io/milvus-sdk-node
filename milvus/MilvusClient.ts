@@ -156,6 +156,7 @@ export class MilvusClient extends GRPCClient {
       index_params = {},
       timeout,
       consistency_level,
+      db_name,
     } = data as CreateColReq;
 
     // prepare result
@@ -168,7 +169,7 @@ export class MilvusClient extends GRPCClient {
     };
 
     // check if the collection is existing
-    const exist = await this.hasCollection({ collection_name });
+    const exist = await this.hasCollection({ collection_name, db_name });
     let indexNotExist = true;
 
     // if not, create one
@@ -185,6 +186,7 @@ export class MilvusClient extends GRPCClient {
       // create collection
       result = await this.createCollection({
         collection_name,
+        db_name,
         enable_dynamic_field: enableDynamicField || enable_dynamic_field,
         fields: schema,
         timeout,
@@ -195,13 +197,14 @@ export class MilvusClient extends GRPCClient {
         throw new Error(result.reason);
       }
     } else {
-      const info = await this.describeIndex({ collection_name });
+      const info = await this.describeIndex({ collection_name, db_name });
       indexNotExist = info.status.error_code === ErrorCode.IndexNotExist;
     }
 
     if (indexNotExist) {
       const createIndexParam: CreateIndexReq = {
         collection_name,
+        db_name,
         field_name: vector_field_name,
         extra_params: { metric_type, ...index_params },
       };
@@ -222,6 +225,7 @@ export class MilvusClient extends GRPCClient {
     // load collection
     const loadIndexPromise = await this.loadCollectionSync({
       collection_name,
+      db_name,
     });
 
     // if failed, throw the error

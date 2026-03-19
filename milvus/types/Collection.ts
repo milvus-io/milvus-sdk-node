@@ -36,6 +36,8 @@ export interface ReplicaInfo {
   partition_ids: string[];
   shard_replicas: ShardReplica[];
   node_ids: string[];
+  resource_group_name: string;
+  num_outbound_node: Record<string, number>;
 }
 
 export type TypeParam = string | number | boolean | Record<string, any>;
@@ -112,7 +114,7 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   consistency_level?: string; // optional,consistency level, default is 'Bounded'
   num_partitions?: number; // optional, partitions number, default is 1
   partition_key_field?: string; // optional, partition key field
-  clustring_key_field?: string; // optional, clustring key field
+  clustering_key_field?: string; // optional, clustering key field
   enable_dynamic_field?: boolean; // optional, enable dynamic field, default is false
   enableDynamicField?: boolean; // optional, alias of enable_dynamic_field
   properties?: Properties; // optional, collection properties
@@ -152,6 +154,12 @@ export interface DescribeCollectionReq extends collectionNameReq {
   cache?: boolean;
 }
 
+export interface BatchDescribeCollectionReq extends GrpcTimeOut {
+  collection_names: string[]; // required, collection names to describe
+  db_name?: string; // optional, db name
+  collectionIDs?: number[]; // optional, collection IDs to describe
+}
+
 export interface GetCollectionStatisticsReq extends collectionNameReq {}
 
 export interface LoadCollectionReq extends collectionNameReq {
@@ -181,6 +189,12 @@ export interface ListAliasesReq extends collectionNameReq {}
 
 export interface CompactReq extends collectionNameReq {
   timetravel?: number | string;
+  majorCompaction?: boolean;
+  partition_id?: number | string;
+  channel?: string;
+  segment_ids?: number[];
+  l0Compaction?: boolean;
+  target_size?: number | string;
 }
 
 export interface GetCompactionStateReq extends GrpcTimeOut {
@@ -194,6 +208,8 @@ export interface GetCompactionPlansReq extends GrpcTimeOut {
 export interface GetReplicaReq extends GrpcTimeOut {
   collectionID: number | string;
   with_shard_nodes?: boolean;
+  collection_name?: string;
+  db_name?: string;
 }
 
 export interface RenameCollectionReq extends collectionNameReq {
@@ -206,6 +222,7 @@ export interface BoolResponse extends resStatusResponse {
 }
 export interface CompactionResponse extends resStatusResponse {
   compactionID: string;
+  compactionPlanCount: number;
 }
 
 // type returned from milvus describe
@@ -244,6 +261,10 @@ export interface DescribeCollectionResponse extends TimeStamp {
   function_fields: Record<string, FieldSchema>;
 }
 
+export interface BatchDescribeCollectionResponse extends resStatusResponse {
+  responses: DescribeCollectionResponse[];
+}
+
 export interface GetCompactionPlansResponse extends resStatusResponse {
   state: CompactionState;
   mergeInfos: { sources: string[]; target: string }[];
@@ -254,6 +275,7 @@ export interface GetCompactionStateResponse extends resStatusResponse {
   executingPlanNo: string;
   timeoutPlanNo: string;
   completedPlanNo: string;
+  failedPlanNo: string;
 }
 
 export interface ShowCollectionsResponse extends TimeStampArray {

@@ -16,3 +16,4 @@ export * from './Segments';
 export * from './Insert';
 export * from './Search';
 export * from './DataTypes';
+export * from './GlobalCluster';

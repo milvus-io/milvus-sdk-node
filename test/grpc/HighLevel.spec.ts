@@ -19,6 +19,8 @@ const FAST_CREATE_COL_NAME = GENERATE_NAME();
 const CREATE_COL_SCHEMA_INDEX_NAME = GENERATE_NAME();
 const CREATE_COL_SCHEMA_NAME = GENERATE_NAME();
 const CREATE_COL_SCHEMA_INDEX_NAME_SINGLE = GENERATE_NAME();
+const FAST_CREATE_DB_NAME_COL = GENERATE_NAME();
+const DB_NAME = 'HighLevelDbTest';
 
 const schema = [
   {
@@ -202,6 +204,34 @@ describe(`High level API testing`, () => {
       collection_name: CREATE_COL_SCHEMA_INDEX_NAME_SINGLE,
     });
     expect(load.state).toEqual(LoadState.LoadStateLoaded);
+  });
+
+  it(`Fast collection with db_name should create in the correct database`, async () => {
+    // create a separate database
+    await milvusClient.createDatabase({ db_name: DB_NAME });
+
+    const dim = 4;
+    const create = await milvusClient.createCollection({
+      collection_name: FAST_CREATE_DB_NAME_COL,
+      dimension: dim,
+      db_name: DB_NAME,
+    });
+    expect(create.error_code).toEqual(ErrorCode.SUCCESS);
+
+    // verify collection exists in the target database
+    const des = await milvusClient.describeCollection({
+      collection_name: FAST_CREATE_DB_NAME_COL,
+      db_name: DB_NAME,
+    });
+    expect(des.collection_name).toEqual(FAST_CREATE_DB_NAME_COL);
+    expect(des.db_name).toEqual(DB_NAME);
+
+    // cleanup
+    await milvusClient.dropCollection({
+      collection_name: FAST_CREATE_DB_NAME_COL,
+      db_name: DB_NAME,
+    });
+    await milvusClient.dropDatabase({ db_name: DB_NAME });
   });
 
   it('create collection failed should throw error', async () => {
