@@ -310,6 +310,19 @@ export class BulkWriter extends EventEmitter {
           throw new Error(`Field "${field.name}": Bool must be a boolean.`);
         }
         break;
+      case DataType.Int64:
+        // Accept number, string (from query), BigInt, Long objects
+        if (
+          typeof val !== 'number' &&
+          typeof val !== 'string' &&
+          typeof val !== 'bigint' &&
+          typeof val !== 'object'
+        ) {
+          throw new Error(
+            `Field "${field.name}": Int64 must be a number, string, or BigInt.`
+          );
+        }
+        break;
       case DataType.Int8:
       case DataType.Int16:
       case DataType.Int32:
