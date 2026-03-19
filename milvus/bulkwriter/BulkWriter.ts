@@ -8,8 +8,10 @@ import {
   FlushEvent,
   Storage,
 } from './Types';
+import { Formatter } from './Types';
 import { ColumnBuffer } from './ColumnBuffer';
 import { JsonFormatter } from './JsonFormatter';
+import { ParquetFormatter } from './ParquetFormatter';
 import { LocalStorage } from './LocalStorage';
 
 const DEFAULT_CHUNK_SIZE = 128 * 1024 * 1024; // 128MB
@@ -18,7 +20,7 @@ export class BulkWriter extends EventEmitter {
   private schema: BulkWriterSchema;
   private buffer: ColumnBuffer;
   private bufferSize = 0;
-  private formatter: JsonFormatter;
+  private formatter: Formatter;
   private storage: Storage;
   private chunkSize: number;
   private basePath: string;
@@ -35,8 +37,12 @@ export class BulkWriter extends EventEmitter {
 
   constructor(options: BulkWriterOptions) {
     super();
-    this.schema = options.schema;
-    this.formatter = new JsonFormatter();
+    // Deep-clone schema to avoid mutation by external callers (e.g. createCollection)
+    this.schema = JSON.parse(JSON.stringify(options.schema));
+    this.formatter =
+      options.format === 'parquet'
+        ? new ParquetFormatter()
+        : new JsonFormatter();
     this.storage = options.storage ?? new LocalStorage();
     this.chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE;
     this.basePath = path.join(
