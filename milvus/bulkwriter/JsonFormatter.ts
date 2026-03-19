@@ -5,6 +5,14 @@ import { finished } from 'stream/promises';
 import { DataType, convertToDataType, FieldType } from '../';
 import { Formatter, BulkWriterSchema } from './Types';
 
+// Marker for Int64 values to bypass JSON.stringify precision loss.
+// JSON.stringify cannot output integers > Number.MAX_SAFE_INTEGER without
+// losing precision. We wrap Int64 values in markers, stringify normally,
+// then strip the quotes+markers to produce bare integer literals.
+const INT64_PREFIX = '___INT64_';
+const INT64_SUFFIX = '_INT64___';
+const INT64_REGEX = new RegExp(`"${INT64_PREFIX}(-?\\d+)${INT64_SUFFIX}"`, 'g');
+
 /**
  * Normalize a sparse vector (any SDK format) to dict format { "index": value }
  * which is what Milvus bulkInsert expects.
@@ -65,7 +73,7 @@ function normalizeSparseVector(val: any): Record<string, number> {
 
 /**
  * Normalize a field value for JSON serialization.
- * Handles typed arrays and sparse vector format conversion.
+ * Handles typed arrays, sparse vector format conversion, and Int64 precision.
  */
 function normalizeValue(val: any, field: FieldType): any {
   if (val === null || val === undefined) return val;
@@ -98,9 +106,53 @@ function normalizeValue(val: any, field: FieldType): any {
       }
       return val;
 
+    // Int64: wrap in marker to preserve precision through JSON.stringify
+    // Handles: number, string (from gRPC query), BigInt, Long objects
+    case DataType.Int64:
+      return `${INT64_PREFIX}${String(val)}${INT64_SUFFIX}`;
+
+    // Array: normalize elements based on element_type
+    case DataType.Array: {
+      if (!Array.isArray(val)) return val;
+      const et = field.element_type
+        ? convertToDataType(field.element_type)
+        : null;
+      if (et === DataType.Int64) {
+        return val.map(
+          (v: any) => `${INT64_PREFIX}${String(v)}${INT64_SUFFIX}`
+        );
+      }
+      // Array<Struct>: recursively normalize sub-fields (Int64 inside structs)
+      if (et === DataType.Struct && field.fields) {
+        const subFields = new Map(field.fields.map(sf => [sf.name, sf]));
+        return val.map((item: any) => {
+          const normalized: Record<string, any> = {};
+          for (const [k, v] of Object.entries(item)) {
+            const sf = subFields.get(k);
+            if (sf) {
+              normalized[k] = normalizeValue(v, sf);
+            } else {
+              normalized[k] = v;
+            }
+          }
+          return normalized;
+        });
+      }
+      return val;
+    }
+
     default:
       return val;
   }
+}
+
+/**
+ * Serialize a row to JSON, then fix Int64 markers to bare integer literals.
+ * "___INT64_1234567890123456789_INT64___" → 1234567890123456789
+ */
+function stringifyRow(row: Record<string, any>): string {
+  const json = JSON.stringify(row);
+  return json.replace(INT64_REGEX, '$1');
 }
 
 export class JsonFormatter implements Formatter {
@@ -146,7 +198,7 @@ export class JsonFormatter implements Formatter {
         }
       }
 
-      const ok = ws.write(JSON.stringify(row));
+      const ok = ws.write(stringifyRow(row));
       if (!ok) {
         await once(ws, 'drain');
       }

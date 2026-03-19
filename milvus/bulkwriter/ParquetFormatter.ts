@@ -203,6 +203,10 @@ function normalizeForParquet(val: any, field: FieldType, dt: DataType): any {
           }),
         };
       }
+      // Array<Int64> → elements need BigInt conversion
+      if (et === DataType.Int64 && Array.isArray(val)) {
+        return wrapList(val.map((v: any) => BigInt(v)));
+      }
       // Array<scalar>
       if (Array.isArray(val)) {
         return wrapList(val);

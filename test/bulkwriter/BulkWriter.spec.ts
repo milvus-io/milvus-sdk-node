@@ -592,6 +592,82 @@ describe('BulkWriter', () => {
     expect(Object.keys(parsed)).toEqual(['rows']);
   });
 
+  it('should preserve Int64 precision beyond MAX_SAFE_INTEGER in JSON', async () => {
+    const schema = {
+      fields: [
+        { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+        { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+        { name: 'big_val', data_type: DataType.Int64 },
+      ],
+    };
+    const writer = new BulkWriter({ schema, localPath: tmpDir });
+    await writer.append({
+      id: '9100000000000000042',
+      vec: [0.1, 0.2, 0.3, 0.4],
+      big_val: '9223372036854775807',
+    });
+    const files = await writer.close();
+    const raw = fs.readFileSync(files[0][0], 'utf8');
+    // Must contain bare integers, not quoted strings or truncated numbers
+    expect(raw).toContain('9100000000000000042');
+    expect(raw).toContain('9223372036854775807');
+    expect(raw).not.toContain('"9100000000000000042"');
+    expect(raw).not.toContain('"9223372036854775807"');
+  });
+
+  it('should preserve Array<Int64> precision in JSON', async () => {
+    const schema = {
+      fields: [
+        { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+        { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+        {
+          name: 'arr',
+          data_type: DataType.Array,
+          element_type: DataType.Int64,
+          max_capacity: 4,
+        },
+      ],
+    };
+    const writer = new BulkWriter({ schema, localPath: tmpDir });
+    await writer.append({
+      id: 1,
+      vec: [0.1, 0.2, 0.3, 0.4],
+      arr: ['9100000000000000001', '9100000000000000002'],
+    });
+    const files = await writer.close();
+    const raw = fs.readFileSync(files[0][0], 'utf8');
+    expect(raw).toContain('[9100000000000000001,9100000000000000002]');
+  });
+
+  it('should preserve Struct Int64 sub-field precision in JSON', async () => {
+    const schema = {
+      fields: [
+        { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+        { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+        {
+          name: 'structs',
+          data_type: DataType.Array,
+          element_type: DataType.Struct,
+          max_capacity: 4,
+          fields: [
+            { name: 'big_id', data_type: DataType.Int64 },
+            { name: 'label', data_type: DataType.Bool },
+          ],
+        },
+      ],
+    };
+    const writer = new BulkWriter({ schema, localPath: tmpDir });
+    await writer.append({
+      id: 1,
+      vec: [0.1, 0.2, 0.3, 0.4],
+      structs: [{ big_id: '9100000000000000099', label: true }],
+    });
+    const files = await writer.close();
+    const raw = fs.readFileSync(files[0][0], 'utf8');
+    expect(raw).toContain('"big_id":9100000000000000099');
+    expect(raw).not.toContain('"big_id":"9100000000000000099"');
+  });
+
   it('close on empty writer should return empty array', async () => {
     const writer = new BulkWriter({
       schema: WRITER_SCHEMA,
@@ -1907,6 +1983,22 @@ describe('BulkWriter validation', () => {
     await expect(
       writer.append({ id: 1, vec: new Int8Array([1, 2]) })
     ).rejects.toThrow(/dimension/i);
+  });
+
+  it('should reject invalid type for Int64 field', async () => {
+    const writer = new BulkWriter({
+      schema: {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+          { name: 'big', data_type: DataType.Int64 },
+        ],
+      },
+      localPath: tmpDir,
+    });
+    await expect(
+      writer.append({ id: 1, vec: [0.1, 0.2, 0.3, 0.4], big: true })
+    ).rejects.toThrow(/Int64/);
   });
 
   it('should reject invalid $meta value', async () => {
