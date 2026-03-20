@@ -104,6 +104,8 @@ export class Data extends Collection {
    * @param {{ [x: string]: any }[]} data.data - The data to be inserted. If the field type is binary, the vector data length needs to be dimension / 8.
    * @param {InsertTransformers} data.transformers - The transformers for bf16 or f16 data, it accept an f32 array, it should output f16 or bf16 bytes (optional)
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   * @param upsert - Whether to perform an upsert operation. Default is false (insert).
+   * @param enable_cache - Whether to use collection cache. Default is true.
    *
    * @returns {Promise<MutationResult>} The result of the operation.
    * @returns {string} status.error_code - The error code of the operation.
@@ -126,7 +128,8 @@ export class Data extends Collection {
    */
   private async _insert(
     data: InsertReq | UpsertReq,
-    upsert: boolean = false
+    upsert: boolean = false,
+    enable_cache: boolean = true
   ): Promise<MutationResult> {
     checkCollectionName(data);
     // ensure fields data available
@@ -140,7 +143,7 @@ export class Data extends Collection {
     }
     const { collection_name } = data;
 
-    const describeReq = { collection_name, cache: true };
+    const describeReq = { collection_name, cache: enable_cache };
     if (data.db_name) {
       (describeReq as any).db_name = data.db_name;
     }
@@ -467,11 +470,9 @@ export class Data extends Collection {
     );
 
     // if schema mismatch, reload collection info and redo the insert request
-    if (promise.status.error_code === ErrorCode.SchemaMismatch) {
-      // load collection info without cache
-      await this.describeCollection({ collection_name });
-      // redo the insert request
-      promise = await this._insert(data, upsert);
+    if (promise.status.error_code === ErrorCode.SchemaMismatch && enable_cache) {
+      // redo the insert request with collection cache off
+      promise = await this._insert(data, upsert, false);
     }
 
     return promise;
