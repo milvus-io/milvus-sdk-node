@@ -231,45 +231,47 @@ export const formatDescribedCol = (
   // add a dataType property which indicate datatype number
   const formatField = (field: any, isEmbList: boolean = false) => {
     field.dataType = DataTypeMap[field.data_type];
-    // used for search type
-    switch (field.dataType) {
-      case DataType.FloatVector:
-        field._placeholderType = isEmbList
-          ? PlaceholderType.EmbListFloatVector
-          : PlaceholderType.FloatVector;
-        break;
-      case DataType.BinaryVector:
-        field._placeholderType = isEmbList
-          ? PlaceholderType.EmbListBinaryVector
-          : PlaceholderType.BinaryVector;
-        break;
-      case DataType.BFloat16Vector:
-        field._placeholderType = isEmbList
-          ? PlaceholderType.EmbListBFloat16Vector
-          : PlaceholderType.BFloat16Vector;
-        break;
-      case DataType.Float16Vector:
-        field._placeholderType = isEmbList
-          ? PlaceholderType.EmbListFloat16Vector
-          : PlaceholderType.Float16Vector;
-        break;
-      case DataType.Int8Vector:
-        field._placeholderType = isEmbList
-          ? PlaceholderType.EmbListInt8Vector
-          : PlaceholderType.Int8Vector;
-        break;
-      case DataType.SparseFloatVector:
-        if (field.is_function_output) {
-          field._placeholderType = PlaceholderType.VarChar;
+    // if the field is a function output (e.g., OpenAI embedding, BM25),
+    // the search input is text, so use VarChar placeholder type
+    if (field.is_function_output) {
+      field._placeholderType = PlaceholderType.VarChar;
+    } else {
+      // used for search type
+      switch (field.dataType) {
+        case DataType.FloatVector:
+          field._placeholderType = isEmbList
+            ? PlaceholderType.EmbListFloatVector
+            : PlaceholderType.FloatVector;
           break;
-        }
-        field._placeholderType = isEmbList
-          ? PlaceholderType.EmbListSparseFloatVector
-          : PlaceholderType.SparseFloatVector;
-        break;
-      default:
-        field._placeholderType = field.dataType;
-        break;
+        case DataType.BinaryVector:
+          field._placeholderType = isEmbList
+            ? PlaceholderType.EmbListBinaryVector
+            : PlaceholderType.BinaryVector;
+          break;
+        case DataType.BFloat16Vector:
+          field._placeholderType = isEmbList
+            ? PlaceholderType.EmbListBFloat16Vector
+            : PlaceholderType.BFloat16Vector;
+          break;
+        case DataType.Float16Vector:
+          field._placeholderType = isEmbList
+            ? PlaceholderType.EmbListFloat16Vector
+            : PlaceholderType.Float16Vector;
+          break;
+        case DataType.Int8Vector:
+          field._placeholderType = isEmbList
+            ? PlaceholderType.EmbListInt8Vector
+            : PlaceholderType.Int8Vector;
+          break;
+        case DataType.SparseFloatVector:
+          field._placeholderType = isEmbList
+            ? PlaceholderType.EmbListSparseFloatVector
+            : PlaceholderType.SparseFloatVector;
+          break;
+        default:
+          field._placeholderType = field.dataType;
+          break;
+      }
     }
 
     // if default_value is set, parse it to the correct format

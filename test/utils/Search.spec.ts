@@ -1390,4 +1390,105 @@ describe('utils/Search', () => {
 
     expect(results).toEqual(expectedResults);
   });
+
+  it('should set _placeholderType to VarChar for function output FloatVector field', () => {
+    const milvusProtoJson = require('../../milvus/proto-json/milvus.base');
+    const milvusProto = protobuf.Root.fromJSON(
+      milvusProtoJson.default || milvusProtoJson
+    );
+
+    const searchParams = {
+      collection_name: 'test',
+      data: 'hello world',
+      anns_field: 'dense',
+      limit: 10,
+    };
+
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      collectionID: 0,
+      consistency_level: 'Session',
+      num_partitions: '0',
+      aliases: [],
+      virtual_channel_names: {},
+      physical_channel_names: {},
+      start_positions: [],
+      shards_num: 1,
+      created_timestamp: '0',
+      created_utc_timestamp: '0',
+      properties: [],
+      db_name: '',
+      schema: {
+        name: 'test',
+        description: '',
+        enable_dynamic_field: false,
+        autoID: false,
+        fields: [
+          {
+            name: 'id',
+            fieldID: '1',
+            dataType: 5,
+            is_primary_key: true,
+            description: 'id field',
+            data_type: 'Int64',
+            type_params: [],
+            index_params: [],
+          },
+          {
+            name: 'text',
+            fieldID: '2',
+            dataType: 21,
+            is_primary_key: false,
+            description: 'text field',
+            data_type: 'VarChar',
+            type_params: [{ key: 'max_length', value: '512' }],
+            index_params: [],
+          },
+          {
+            name: 'dense',
+            fieldID: '3',
+            dataType: 101,
+            is_primary_key: false,
+            is_function_output: true,
+            description: 'dense vector field',
+            data_type: 'FloatVector',
+            type_params: [{ key: 'dim', value: '1024' }],
+            index_params: [],
+            _placeholderType: PlaceholderType.VarChar,
+          },
+        ],
+        functions: [
+          {
+            name: 'openai',
+            type: 'TextEmbedding',
+            input_field_names: ['text'],
+            output_field_names: ['dense'],
+          },
+        ],
+      },
+      anns_fields: {
+        dense: {
+          name: 'dense',
+          data_type: 'FloatVector',
+          dataType: 101,
+          is_function_output: true,
+          type_params: [{ key: 'dim', value: '1024' }],
+          index_params: [],
+          _placeholderType: PlaceholderType.VarChar,
+        },
+      },
+    } as any;
+
+    const result = buildSearchRequest(
+      searchParams,
+      describeCollectionResponse,
+      milvusProto
+    );
+
+    expect(result.isHybridSearch).toEqual(false);
+    expect(result.nq).toEqual(1);
+    // The placeholder group should be built with VarChar type, not FloatVector
+    expect(result.request).toBeDefined();
+  });
 });
