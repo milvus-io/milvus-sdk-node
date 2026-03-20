@@ -12,6 +12,7 @@ import {
   extractMethodName,
   ERROR_REASONS,
   cloneObj,
+  logger,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -34,6 +35,42 @@ describe('utils/format', () => {
 
     const urlWithEmptyCustomPort = `://my-url:12345`;
     expect(formatAddress(urlWithEmptyCustomPort)).toBe(`my-url:12345`);
+  });
+
+  it(`should warn when no port is specified in address`, () => {
+    const warnSpy = jest.spyOn(logger, 'warn');
+
+    formatAddress('my-url');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('No port specified')
+    );
+
+    warnSpy.mockClear();
+    formatAddress('http://my-url');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('No port specified')
+    );
+
+    warnSpy.mockClear();
+    formatAddress('https://my-url');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('No port specified')
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  it(`should not warn when port is specified in address`, () => {
+    const warnSpy = jest.spyOn(logger, 'warn');
+
+    formatAddress('my-url:19530');
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    warnSpy.mockClear();
+    formatAddress('https://my-url:443');
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    warnSpy.mockRestore();
   });
 
   it(`should convert string to base64 encoding`, () => {
