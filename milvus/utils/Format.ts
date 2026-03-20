@@ -8,6 +8,7 @@ import {
   FieldSchema,
   isVectorType,
   PlaceholderType,
+  logger,
 } from '../';
 
 /**
@@ -155,7 +156,16 @@ export const stringToBase64 = (str: string) =>
  */
 export const formatAddress = (address: string) => {
   // remove http or https prefix from address
-  return address.replace(/(http|https)*:\/\//, '');
+  const formatted = address.replace(/(http|https)*:\/\//, '');
+
+  // warn if no port is specified
+  if (!formatted.includes(':')) {
+    logger.warn(
+      `No port specified in address "${address}". Milvus default port is 19530. If you are not using a proxy, consider specifying the port explicitly, e.g. "${formatted}:19530".`
+    );
+  }
+
+  return formatted;
 };
 
 /**
