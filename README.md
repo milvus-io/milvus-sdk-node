@@ -310,6 +310,26 @@ for await (const batch of iterator) {
 }
 ```
 
+#### hybridSearch
+
+Multi-vector search combining results from multiple vector fields with reranking.
+
+```typescript
+const results = await client.hybridSearch({
+  collection_name: string;
+  rerank: WeightedReranker | RRFReranker;  // Reranking strategy
+  requests: Array<{
+    data: number[][];
+    anns_field: string;
+    params?: Record<string, any>;
+    limit?: number;
+    filter?: string;
+  }>;
+  limit: number;
+  output_fields?: string[];
+});
+```
+
 ---
 
 ### Collection Management
@@ -333,14 +353,21 @@ await client.createCollection({
 ```typescript
 await client.hasCollection({ collection_name });          // { value: boolean }
 await client.describeCollection({ collection_name });     // Schema, fields, properties
+await client.batchDescribeCollections({ collection_names: string[] });  // Describe multiple collections
 await client.showCollections();                           // List all collections
 await client.loadCollection({ collection_name });         // Load into memory
 await client.releaseCollection({ collection_name });      // Release from memory
+await client.refreshLoad({ collection_name });            // Refresh loaded collection
 await client.dropCollection({ collection_name });         // Delete collection
 await client.renameCollection({ collection_name, new_collection_name });
 await client.truncateCollection({ collection_name });     // Clear all data
 await client.getLoadState({ collection_name });           // Loading status
 await client.getCollectionStatistics({ collection_name });
+await client.alterCollectionProperties({ collection_name, properties });
+await client.alterCollectionFieldProperties({ collection_name, field_name, properties });
+await client.dropCollectionProperties({ collection_name, delete_keys: string[] });
+await client.addCollectionFunction({ collection_name, functions });
+await client.dropCollectionFunction({ collection_name, functions });
 ```
 
 ---
@@ -361,9 +388,12 @@ await client.createIndex({
 // Other index operations
 await client.describeIndex({ collection_name, field_name? });
 await client.listIndexes({ collection_name });
+await client.getIndexStatistics({ collection_name, index_name? });
 await client.dropIndex({ collection_name, field_name, index_name? });
 await client.getIndexState({ collection_name, field_name? });
 await client.getIndexBuildProgress({ collection_name, field_name? });
+await client.alterIndexProperties({ collection_name, index_name, properties });
+await client.dropIndexProperties({ collection_name, index_name, delete_keys: string[] });
 ```
 
 ---
@@ -387,6 +417,8 @@ await client.dropPartition({ collection_name, partition_name });
 await client.createDatabase({ db_name });
 await client.listDatabases();
 await client.describeDatabase({ db_name });
+await client.alterDatabaseProperties({ db_name, properties });
+await client.dropDatabaseProperties({ db_name, delete_keys: string[] });
 await client.dropDatabase({ db_name });
 ```
 
@@ -492,8 +524,21 @@ await client.listImportTasks({ collection_name });
 ```typescript
 await client.flush({ collection_names: string[] });
 await client.flushSync({ collection_names: string[] });       // Wait for completion
+await client.flushAll();                                       // Flush all collections
+await client.flushAllSync();                                   // Flush all and wait for completion
 await client.compact({ collection_name });
 await client.getCompactionState({ compactionID });
+```
+
+---
+
+### System Operations
+
+```typescript
+await client.getVersion();                        // Milvus server version
+await client.checkHealth();                       // Server health status
+await client.reconnectToPrimary();                // Force reconnect to primary node
+await client.runAnalyzer({ text, analyzer });     // Test text analyzer tokenization
 ```
 
 ---
@@ -775,6 +820,17 @@ await client.search({
   limit: 10,
 });
 ```
+
+---
+
+### Advanced Features
+
+For detailed guides on advanced features, visit the documentation:
+
+- **[Hybrid Search](docs/content/operations/hybrid-search.mdx)** — Multi-vector search with reranking
+- **[Full-Text Search](docs/content/advanced/full-text-search.mdx)** — BM25 keyword search with text analyzers
+- **[Iterators](docs/content/operations/iterators.mdx)** — Paginate through large result sets
+- **[Global Cluster](docs/content/advanced/global-cluster.mdx)** — Multi-region failover support
 
 ---
 
