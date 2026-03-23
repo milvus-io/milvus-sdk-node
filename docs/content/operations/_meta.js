@@ -5,4 +5,6 @@ export default {
   'data-operations-query': 'Query & Search',
   'data-operations-delete': 'Delete',
   'data-management': 'Data Management',
+  'hybrid-search': 'Hybrid Search',
+  'iterators': 'Iterators',
 };
