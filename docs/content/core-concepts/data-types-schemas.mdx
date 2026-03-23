@@ -68,10 +68,41 @@ import { DataType } from '@zilliz/milvus2-sdk-node';
 }
 ```
 
-#### Special Types
+#### Geometry
 
-- **Geometry**: Geometric data
-- **Timestamptz**: Timestamp with timezone
+Geospatial data stored in WKT (Well-Known Text) format.
+
+```javascript
+{
+  name: 'location',
+  data_type: DataType.Geometry,
+}
+
+// Insert as WKT string
+{ location: 'POINT(121.47 31.23)' }
+```
+
+#### Timestamptz
+
+Timestamp with timezone information.
+
+```javascript
+{
+  name: 'created_at',
+  data_type: DataType.Timestamptz,
+}
+```
+
+#### Struct
+
+Nested structured data type for complex objects.
+
+```javascript
+{
+  name: 'metadata',
+  data_type: DataType.Struct,
+}
+```
 
 ### Vector Types
 
@@ -101,36 +132,30 @@ Binary vector (for binary embeddings):
 
 #### SparseFloatVector
 
-Sparse float vector (for sparse embeddings):
+Sparse vectors store only non-zero values with their indices. Commonly used for BM25 full-text search and keyword-based retrieval.
 
 ```javascript
 {
-  name: 'sparse_embedding',
+  name: 'sparse_vector',
   data_type: DataType.SparseFloatVector,
 }
 ```
 
-Sparse vectors can be represented in multiple formats:
+Sparse vectors can be inserted in two formats:
 
+**Dictionary format** (recommended):
 ```javascript
-// Array format (with undefined for zeros)
-[1.0, undefined, undefined, 2.5, undefined]
-
-// Dictionary format
-{ '0': 1.0, '3': 2.5 }
-
-// CSR format
-{
-  indices: [0, 3],
-  values: [1.0, 2.5]
-}
-
-// COO format
-[
-  { index: 0, value: 1.0 },
-  { index: 3, value: 2.5 }
-]
+// Keys are indices, values are float weights
+{ 10: 0.5, 100: 0.3, 500: 0.8, 1200: 0.1 }
 ```
+
+**Array of tuples format:**
+```javascript
+// [index, value] pairs
+[[10, 0.5], [100, 0.3], [500, 0.8], [1200, 0.1]]
+```
+
+Note: Dimension is determined automatically from the maximum index across all vectors.
 
 #### Float16Vector
 
