@@ -103,6 +103,76 @@ Release collection from memory.
 releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus>
 ```
 
+### truncateCollection
+
+Clear all data from a collection while keeping the schema.
+
+```typescript
+truncateCollection(data: DropCollectionReq): Promise<{ status: ResStatus }>
+```
+
+**Parameters**:
+- `collection_name`: Collection name
+
+### batchDescribeCollections
+
+Describe multiple collections in one call.
+
+```typescript
+batchDescribeCollections(data: BatchDescribeCollectionReq): Promise<BatchDescribeCollectionResponse>
+```
+
+**Parameters**:
+- `collection_names`: Array of collection names
+
+### renameCollection
+
+Rename a collection.
+
+```typescript
+renameCollection(data: RenameCollectionReq): Promise<ResStatus>
+```
+
+**Parameters**:
+- `collection_name`: Current collection name
+- `new_collection_name`: New collection name
+
+### alterCollectionFieldProperties
+
+Modify field properties of a collection.
+
+```typescript
+alterCollectionFieldProperties(data: AlterCollectionFieldPropertiesReq): Promise<ResStatus>
+```
+
+### refreshLoad
+
+Refresh a loaded collection to pick up schema changes.
+
+```typescript
+refreshLoad(data: RefreshLoadReq): Promise<ResStatus>
+```
+
+### addCollectionFunction
+
+Add a function to a collection.
+
+```typescript
+addCollectionFunction(data: AddCollectionFunctionReq): Promise<ResStatus>
+```
+
+**Parameters**:
+- `collection_name`: Collection name
+- `function`: Function schema (name, type, input/output fields, params)
+
+### dropCollectionFunction
+
+Remove a function from a collection.
+
+```typescript
+dropCollectionFunction(data: DropCollectionFunctionReq): Promise<ResStatus>
+```
+
 ## Data Operations
 
 ### insert
@@ -179,6 +249,107 @@ Count entities matching filter.
 count(data: CountReq): Promise<CountResult>
 ```
 
+### hybridSearch
+
+Hybrid search across multiple vector fields (alias for `search` with `HybridSearchReq`).
+
+```typescript
+hybridSearch(data: HybridSearchReq): Promise<SearchResults>
+```
+
+### searchIterator
+
+Search with iterator-based pagination.
+
+```typescript
+searchIterator(data: SearchIteratorReq): Promise<AsyncIterable>
+```
+
+### queryIterator
+
+Query with iterator-based pagination.
+
+```typescript
+queryIterator(data: QueryIteratorReq): Promise<AsyncIterable>
+```
+
+### get
+
+Get entities by primary key.
+
+```typescript
+get(data: GetReq): Promise<QueryResults>
+```
+
+**Parameters**:
+- `collection_name`: Collection name
+- `ids`: Array of primary key values
+- `output_fields`: Fields to return
+
+### flushAll
+
+Flush all collections asynchronously.
+
+```typescript
+flushAll(): Promise<FlushAllResponse>
+```
+
+### flushAllSync
+
+Flush all collections synchronously (waits for completion).
+
+```typescript
+flushAllSync(): Promise<GetFlushAllStateResponse>
+```
+
+### getFlushAllState
+
+Get the state of a flush-all operation.
+
+```typescript
+getFlushAllState(data: GetFlushAllStateReq): Promise<GetFlushAllStateResponse>
+```
+
+### compact
+
+Compact a collection (brief entry — see [Data Management](/operations/data-management) for details).
+
+```typescript
+compact(data: CompactReq): Promise<CompactionResponse>
+```
+
+### getCompactionState
+
+Get compaction state (brief entry — see [Data Management](/operations/data-management) for details).
+
+```typescript
+getCompactionState(data: GetCompactionStateReq): Promise<GetCompactionStateResponse>
+```
+
+### bulkInsert
+
+Bulk insert data from files.
+
+```typescript
+bulkInsert(data: BulkInsertReq): Promise<ImportResponse>
+```
+
+### getImportState
+
+Get bulk import task state.
+
+```typescript
+getImportState(data: GetImportStateReq): Promise<GetImportStateResponse>
+```
+
+### listImportTasks
+
+List import tasks.
+
+```typescript
+listImportTasks(data?: ListImportTasksReq): Promise<ListImportTasksResponse>
+```
+
 ## Index Operations
 
 ### createIndex
@@ -218,6 +389,38 @@ Get index build state.
 
 ```typescript
 getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse>
+```
+
+### listIndexes
+
+List all indexes on a collection.
+
+```typescript
+listIndexes(data: DescribeIndexReq): Promise<string[]>
+```
+
+### getIndexStatistics
+
+Get index statistics.
+
+```typescript
+getIndexStatistics(data: DescribeIndexReq): Promise<DescribeIndexResponse>
+```
+
+### alterIndexProperties
+
+Modify index properties.
+
+```typescript
+alterIndexProperties(data: AlterIndexReq): Promise<ResStatus>
+```
+
+### dropIndexProperties
+
+Remove index properties.
+
+```typescript
+dropIndexProperties(data: DropIndexPropertiesReq): Promise<ResStatus>
 ```
 
 ## Partition Operations
@@ -272,6 +475,30 @@ Delete a database.
 dropDatabase(data: DropDatabasesRequest): Promise<ResStatus>
 ```
 
+### describeDatabase
+
+Get database information.
+
+```typescript
+describeDatabase(data: DescribeDatabaseRequest): Promise<DescribeDatabaseResponse>
+```
+
+### alterDatabaseProperties
+
+Modify database properties.
+
+```typescript
+alterDatabaseProperties(data: AlterDatabaseRequest): Promise<ResStatus>
+```
+
+### dropDatabaseProperties
+
+Remove database properties.
+
+```typescript
+dropDatabaseProperties(data: DropDatabasePropertiesRequest): Promise<ResStatus>
+```
+
 ## User & Role Operations
 
 ### createUser
@@ -314,6 +541,44 @@ Grant privilege to role.
 grantPrivilege(data: OperateRolePrivilegeReq): Promise<ResStatus>
 ```
 
+## System Operations
+
+### getVersion
+
+Get server version.
+
+```typescript
+getVersion(): Promise<GetVersionResponse>
+```
+
+### checkHealth
+
+Check server health.
+
+```typescript
+checkHealth(): Promise<CheckHealthResponse>
+```
+
+### runAnalyzer
+
+Test text analyzer/tokenizer.
+
+```typescript
+runAnalyzer(data: RunAnalyzerRequest): Promise<RunAnalyzerResponse>
+```
+
+**Parameters**:
+- `text`: Array of text strings to analyze
+- `analyzer_params`: Analyzer configuration (type, etc.)
+
+### getMetric
+
+Get system metrics.
+
+```typescript
+getMetric(data: GetMetricsRequest): Promise<GetMetricsResponse>
+```
+
 ## Data Types
 
 ### DataType Enum
@@ -328,19 +593,18 @@ enum DataType {
   Int64 = 5,
   Float = 10,
   Double = 11,
-  String = 20,
   VarChar = 21,
+  Array = 22,
+  JSON = 23,
+  Geometry = 24,
+  Timestamptz = 26,
   BinaryVector = 100,
   FloatVector = 101,
   Float16Vector = 102,
   BFloat16Vector = 103,
   SparseFloatVector = 104,
   Int8Vector = 105,
-  JSON = 106,
-  Array = 107,
-  Struct = 108,
-  Geometry = 109,
-  Timestamptz = 110,
+  Struct = 201,
 }
 ```
 
