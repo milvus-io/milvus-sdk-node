@@ -430,6 +430,113 @@ await client.dropCollection({
 5. **Compaction**: Regularly compact collections to optimize performance
 6. **Release**: Release collections from memory when not in use to free resources
 
+## Truncate Collection
+
+Remove all data from a collection while keeping its schema and indexes:
+
+```javascript
+await client.truncateCollection({
+  collection_name: 'my_collection',
+});
+```
+
+This is faster than dropping and recreating the collection when you only need to clear data.
+
+## Batch Describe Collections
+
+Describe multiple collections in a single call:
+
+```javascript
+const result = await client.batchDescribeCollections({
+  collection_names: ['collection_a', 'collection_b', 'collection_c'],
+});
+
+result.responses.forEach(col => {
+  console.log(`Collection: ${col.collectionName}`);
+  console.log(`Fields: ${col.schema.fields.map(f => f.name)}`);
+});
+```
+
+## Alter Collection Properties
+
+Modify collection-level properties:
+
+```javascript
+await client.alterCollectionProperties({
+  collection_name: 'my_collection',
+  properties: {
+    'collection.ttl.seconds': 7200,
+  },
+});
+```
+
+### Alter Field Properties
+
+Modify field-level properties:
+
+```javascript
+await client.alterCollectionFieldProperties({
+  collection_name: 'my_collection',
+  field_name: 'text',
+  properties: {
+    max_length: 1024,
+  },
+});
+```
+
+### Drop Collection Properties
+
+Remove collection properties:
+
+```javascript
+await client.dropCollectionProperties({
+  collection_name: 'my_collection',
+  properties: ['collection.ttl.seconds'],
+});
+```
+
+## Collection Functions
+
+Collection functions are auto-processing pipelines that transform data at insert and query time. The most common use case is BM25 full-text search, where a function automatically converts text to sparse vectors.
+
+### Add a Function
+
+```javascript
+import { FunctionType } from '@zilliz/milvus2-sdk-node';
+
+await client.addCollectionFunction({
+  collection_name: 'my_collection',
+  function: {
+    name: 'text_bm25',
+    type: FunctionType.BM25,
+    input_field_names: ['body'],
+    output_field_names: ['sparse_vector'],
+    params: {},
+  },
+});
+```
+
+### Drop a Function
+
+```javascript
+await client.dropCollectionFunction({
+  collection_name: 'my_collection',
+  function_name: 'text_bm25',
+});
+```
+
+For more details on BM25 functions, see [Full-Text Search](/advanced/full-text-search).
+
+## Refresh Load
+
+After modifying a loaded collection's schema (e.g., adding fields or functions), refresh the load to pick up changes:
+
+```javascript
+await client.refreshLoad({
+  collection_name: 'my_collection',
+});
+```
+
 ## Next Steps
 
 - Learn about [Partition Management](./partition-management)
