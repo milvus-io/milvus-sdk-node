@@ -115,8 +115,9 @@ function buildParquetSchema(schema: BulkWriterSchema): ParquetSchema {
       schemaDef[field.name] = parquetFieldDef(dt);
     }
 
-    // Mark nullable fields as optional so parquetjs accepts null values
-    if (field.nullable) {
+    // Mark nullable / default_value fields as optional so parquetjs accepts null values.
+    // Fields with default_value may be omitted by the user; the server fills in the default.
+    if (field.nullable || field.default_value !== undefined) {
       schemaDef[field.name].optional = true;
     }
   }
@@ -310,32 +311,35 @@ export class ParquetFormatter implements Formatter {
 
     const writer = await ParquetWriter.openFile(parquetSchema, filePath);
 
-    for (let i = 0; i < rowCount; i++) {
-      const row: Record<string, any> = {};
-      for (const name of fieldNames) {
-        const val = columns.get(name)![i];
-        const field = fieldMap.get(name);
-        if (field) {
-          const dt = fieldDataTypes.get(name)!;
-          row[name] = normalizeForParquet(val, field, dt);
-        } else {
-          row[name] = val;
+    try {
+      for (let i = 0; i < rowCount; i++) {
+        const row: Record<string, any> = {};
+        for (const name of fieldNames) {
+          const val = columns.get(name)![i];
+          const field = fieldMap.get(name);
+          if (field) {
+            const dt = fieldDataTypes.get(name)!;
+            row[name] = normalizeForParquet(val, field, dt);
+          } else {
+            row[name] = val;
+          }
         }
-      }
 
-      // Dynamic field → JSON string in $meta column
-      if (hasDynamic && dynamicRows[i]) {
-        const dyn = dynamicRows[i];
-        row[DYNAMIC_FIELD] =
-          Object.keys(dyn).length > 0 ? JSON.stringify(dyn) : '{}';
-      } else if (schema.enable_dynamic_field) {
-        row[DYNAMIC_FIELD] = '{}';
-      }
+        // Dynamic field → JSON string in $meta column
+        if (hasDynamic && dynamicRows[i]) {
+          const dyn = dynamicRows[i];
+          row[DYNAMIC_FIELD] =
+            Object.keys(dyn).length > 0 ? JSON.stringify(dyn) : '{}';
+        } else if (schema.enable_dynamic_field) {
+          row[DYNAMIC_FIELD] = '{}';
+        }
 
-      await writer.appendRow(row);
+        await writer.appendRow(row);
+      }
+    } finally {
+      await writer.close();
     }
 
-    await writer.close();
     return [filePath];
   }
 }
