@@ -71,15 +71,7 @@ describe(`TruncateCollection API`, () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
 
-    // need to reload after truncate to query
-    await milvusClient.releaseCollection({
-      collection_name: COLLECTION_NAME,
-    });
-    await milvusClient.loadCollectionSync({
-      collection_name: COLLECTION_NAME,
-    });
-
-    // verify data is gone
+    // collection should still be loaded after truncate, verify data is gone
     const count = await milvusClient.count({
       collection_name: COLLECTION_NAME,
     });
