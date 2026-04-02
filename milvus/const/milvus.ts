@@ -167,6 +167,8 @@ export enum IndexType {
   IVF_RABITQ = 'IVF_RABITQ',
   MINHASH_LSH = 'MINHASH_LSH',
   RTREE = 'RTREE',
+  // MOL pattern index
+  PATTERN = 'PATTERN',
 }
 
 // MsgType
@@ -292,6 +294,7 @@ export enum DataType {
   JSON = 23,
   Geometry = 24,
   Timestamptz = 26,
+  Mol = 27,
 
   BinaryVector = 100,
   FloatVector = 101,
@@ -326,6 +329,7 @@ export enum FunctionType {
   BM25 = 1,
   TEXTEMBEDDING = 2,
   RERANK = 3,
+  MOL_FINGERPRINT = 5,
 }
 
 export const VectorDataTypes = [
@@ -353,6 +357,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   JSON: 23,
   Geometry: 24,
   Timestamptz: 26,
+  Mol: 27,
   BinaryVector: 100,
   FloatVector: 101,
   Float16Vector: 102,
@@ -377,6 +382,7 @@ export enum DataTypeStringEnum {
   JSON = 'JSON',
   Geometry = 'Geometry',
   Timestamptz = 'Timestamptz',
+  Mol = 'Mol',
   BinaryVector = 'BinaryVector',
   FloatVector = 'FloatVector',
   Float16Vector = 'Float16Vector',

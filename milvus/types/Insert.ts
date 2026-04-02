@@ -35,6 +35,7 @@ export type FieldData =
   | Geometry
   | Array
   | VectorTypes
+  | string // SMILES for DataType.Mol
   | null
   | undefined;
 

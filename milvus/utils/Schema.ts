@@ -86,6 +86,10 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.VarChar:
       dataKey = 'string_data';
       break;
+    case DataType.Mol:
+      // for MOL, accept SMILES strings path using mol_smiles_data
+      dataKey = 'mol_smiles_data';
+      break;
     case DataType.Array:
       dataKey = 'array_data';
       break;
