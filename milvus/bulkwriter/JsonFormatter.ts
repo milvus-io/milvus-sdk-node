@@ -193,9 +193,9 @@ export class JsonFormatter implements Formatter {
       }
       if (hasDynamic && dynamicRows[i]) {
         const dyn = dynamicRows[i];
-        if (Object.keys(dyn).length > 0) {
-          row['$meta'] = dyn;
-        }
+        row['$meta'] = Object.keys(dyn).length > 0 ? dyn : {};
+      } else if (schema.enable_dynamic_field) {
+        row['$meta'] = {};
       }
 
       const ok = ws.write(stringifyRow(row));

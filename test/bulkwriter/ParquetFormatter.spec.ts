@@ -624,6 +624,70 @@ describe('ParquetFormatter edge cases', () => {
     expect(allRows[0].ts).toBe('2025-01-15T12:00:00+08:00');
   });
 
+  it('should handle nullable fields with null values', async () => {
+    const { allRows } = await writeAndReadParquet(
+      {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+          {
+            name: 'geo',
+            data_type: DataType.Geometry,
+            nullable: true,
+          },
+          {
+            name: 'text',
+            data_type: DataType.VarChar,
+            max_length: 200,
+            nullable: true,
+          },
+        ],
+      },
+      [
+        {
+          id: 1,
+          vec: [0.1, 0.2, 0.3, 0.4],
+          geo: 'POINT (120.5 31.2)',
+          text: 'hello',
+        },
+        {
+          id: 2,
+          vec: [0.5, 0.6, 0.7, 0.8],
+          geo: null,
+          text: null,
+        },
+      ]
+    );
+    expect(allRows).toHaveLength(2);
+    expect(allRows[0].geo).toBe('POINT (120.5 31.2)');
+    expect(allRows[0].text).toBe('hello');
+    expect(allRows[1].geo).toBeNull();
+    expect(allRows[1].text).toBeNull();
+  });
+
+  it('should handle default_value fields with null values', async () => {
+    const { allRows } = await writeAndReadParquet(
+      {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'vec', data_type: DataType.FloatVector, dim: 4 },
+          {
+            name: 'score',
+            data_type: DataType.Float,
+            default_value: 0.5,
+          },
+        ],
+      },
+      [
+        { id: 1, vec: [0.1, 0.2, 0.3, 0.4], score: 3.14 },
+        { id: 2, vec: [0.5, 0.6, 0.7, 0.8] }, // score omitted → null
+      ]
+    );
+    expect(allRows).toHaveLength(2);
+    expect(allRows[0].score).toBeCloseTo(3.14, 1);
+    expect(allRows[1].score).toBeNull();
+  });
+
   it('should handle multiple rows with dynamic fields varying', async () => {
     const { allRows } = await writeAndReadParquet(
       {
