@@ -114,6 +114,11 @@ function buildParquetSchema(schema: BulkWriterSchema): ParquetSchema {
     } else {
       schemaDef[field.name] = parquetFieldDef(dt);
     }
+
+    // Mark nullable fields as optional so parquetjs accepts null values
+    if (field.nullable) {
+      schemaDef[field.name].optional = true;
+    }
   }
 
   // Dynamic field column
