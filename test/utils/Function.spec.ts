@@ -194,6 +194,7 @@ describe('Function API testing', () => {
     expect(getDataKey(DataType.Int8)).toEqual('int_data');
     expect(getDataKey(DataType.Bool)).toEqual('bool_data');
     expect(getDataKey(DataType.VarChar)).toEqual('string_data');
+    expect(getDataKey(DataType.Mol)).toEqual('mol_smiles_data');
     expect(getDataKey(DataType.Array)).toEqual('array_data');
     expect(getDataKey(DataType.JSON)).toEqual('json_data');
     expect(getDataKey(DataType.None)).toEqual('none');
@@ -215,6 +216,7 @@ describe('Function API testing', () => {
     expect(getDataKey(DataType.Int8, true)).toEqual('intData');
     expect(getDataKey(DataType.Bool, true)).toEqual('boolData');
     expect(getDataKey(DataType.VarChar, true)).toEqual('stringData');
+    expect(getDataKey(DataType.Mol, true)).toEqual('molSmilesData');
     expect(getDataKey(DataType.Array, true)).toEqual('arrayData');
     expect(getDataKey(DataType.JSON, true)).toEqual('jsonData');
     expect(getDataKey(DataType.None, true)).toEqual('none');

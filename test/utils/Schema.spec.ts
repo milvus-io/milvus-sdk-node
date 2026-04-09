@@ -1,5 +1,6 @@
 import path from 'path';
 import protobuf from 'protobufjs';
+import milvusProtoJson from '../../milvus/proto-json/milvus.base';
 import {
   ERROR_REASONS,
   _Field,
@@ -133,8 +134,37 @@ describe('utils/Schema', () => {
     );
   });
 
+  it('includes MOL scalar fields in the bundled protobuf schema', () => {
+    const root = protobuf.Root.fromJSON(milvusProtoJson as protobuf.INamespace);
+    const scalarFieldType = root.lookupType('milvus.proto.schema.ScalarField');
+
+    expect(scalarFieldType.oneofs?.data?.oneof).toContain('molSmilesData');
+    expect(scalarFieldType.fields.molSmilesData?.type).toBe('MolSmilesArray');
+    expect(scalarFieldType.fields.molData?.type).toBe('MolArray');
+  });
+
   it('should return number', () => {
     expect(convertToDataType(106 as any)).toBe(106);
+  });
+
+  it('encodes MOL scalar payloads with the bundled protobuf schema', () => {
+    const root = protobuf.Root.fromJSON(milvusProtoJson as protobuf.INamespace);
+    const scalarFieldType = root.lookupType('milvus.proto.schema.ScalarField');
+
+    const message = scalarFieldType.create({
+      molSmilesData: {
+        data: ['CCO'],
+      },
+    });
+    const encoded = scalarFieldType.encode(message).finish();
+    const decoded = scalarFieldType.decode(encoded) as protobuf.Message<{
+      molSmilesData?: { data: string[] };
+    }>;
+
+    expect(encoded.length).toBeGreaterThan(0);
+    expect(decoded.toJSON()).toMatchObject({
+      molSmilesData: { data: ['CCO'] },
+    });
   });
 
   it('should throw an error when given an invalid value', () => {

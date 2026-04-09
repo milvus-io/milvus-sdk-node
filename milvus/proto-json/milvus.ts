@@ -406,7 +406,15 @@ export default {
                     },
                     "ReplicateMessage": {
                       "requestType": "ReplicateMessageRequest",
-                      "responseType": "ReplicateMessageResponse"
+                      "responseType": "ReplicateMessageResponse",
+                      "options": {
+                        "deprecated": true
+                      },
+                      "parsedOptions": [
+                        {
+                          "deprecated": true
+                        }
+                      ]
                     },
                     "BackupRBAC": {
                       "requestType": "BackupRBACMetaRequest",
@@ -480,10 +488,6 @@ export default {
                       "requestType": "UpdateReplicateConfigurationRequest",
                       "responseType": "common.Status"
                     },
-                    "GetReplicateConfiguration": {
-                      "requestType": "GetReplicateConfigurationRequest",
-                      "responseType": "GetReplicateConfigurationResponse"
-                    },
                     "GetReplicateInfo": {
                       "requestType": "GetReplicateInfoRequest",
                       "responseType": "GetReplicateInfoResponse"
@@ -493,6 +497,46 @@ export default {
                       "requestStream": true,
                       "responseType": "ReplicateResponse",
                       "responseStream": true
+                    },
+                    "ComputePhraseMatchSlop": {
+                      "requestType": "ComputePhraseMatchSlopRequest",
+                      "responseType": "ComputePhraseMatchSlopResponse"
+                    },
+                    "CreateSnapshot": {
+                      "requestType": "CreateSnapshotRequest",
+                      "responseType": "common.Status"
+                    },
+                    "DropSnapshot": {
+                      "requestType": "DropSnapshotRequest",
+                      "responseType": "common.Status"
+                    },
+                    "ListSnapshots": {
+                      "requestType": "ListSnapshotsRequest",
+                      "responseType": "ListSnapshotsResponse"
+                    },
+                    "DescribeSnapshot": {
+                      "requestType": "DescribeSnapshotRequest",
+                      "responseType": "DescribeSnapshotResponse"
+                    },
+                    "RestoreSnapshot": {
+                      "requestType": "RestoreSnapshotRequest",
+                      "responseType": "RestoreSnapshotResponse"
+                    },
+                    "GetRestoreSnapshotState": {
+                      "requestType": "GetRestoreSnapshotStateRequest",
+                      "responseType": "GetRestoreSnapshotStateResponse"
+                    },
+                    "ListRestoreSnapshotJobs": {
+                      "requestType": "ListRestoreSnapshotJobsRequest",
+                      "responseType": "ListRestoreSnapshotJobsResponse"
+                    },
+                    "AlterCollectionSchema": {
+                      "requestType": "AlterCollectionSchemaRequest",
+                      "responseType": "AlterCollectionSchemaResponse"
+                    },
+                    "BatchUpdateManifest": {
+                      "requestType": "BatchUpdateManifestRequest",
+                      "responseType": "common.Status"
                     }
                   }
                 },
@@ -4857,6 +4901,9 @@ export default {
                   }
                 },
                 "ReplicateMessageRequest": {
+                  "options": {
+                    "deprecated": true
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -4892,6 +4939,9 @@ export default {
                   }
                 },
                 "ReplicateMessageResponse": {
+                  "options": {
+                    "deprecated": true
+                  },
                   "fields": {
                     "status": {
                       "type": "common.Status",
@@ -5401,30 +5451,6 @@ export default {
                     "replicate_configuration": {
                       "type": "common.ReplicateConfiguration",
                       "id": 1
-                    },
-                    "force_promote": {
-                      "type": "bool",
-                      "id": 2
-                    }
-                  }
-                },
-                "GetReplicateConfigurationRequest": {
-                  "options": {
-                    "(common.privilege_ext_obj).object_type": "Global",
-                    "(common.privilege_ext_obj).object_privilege": "PrivilegeGetReplicateConfiguration",
-                    "(common.privilege_ext_obj).object_name_index": -1
-                  },
-                  "fields": {}
-                },
-                "GetReplicateConfigurationResponse": {
-                  "fields": {
-                    "status": {
-                      "type": "common.Status",
-                      "id": 1
-                    },
-                    "configuration": {
-                      "type": "common.ReplicateConfiguration",
-                      "id": 2
                     }
                   }
                 },
@@ -5524,6 +5550,489 @@ export default {
                     "status": {
                       "type": "common.Status",
                       "id": 1
+                    }
+                  }
+                },
+                "ComputePhraseMatchSlopRequest": {
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "analyzer_params": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "query_text": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "data_texts": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "ComputePhraseMatchSlopResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "is_match": {
+                      "rule": "repeated",
+                      "type": "bool",
+                      "id": 2
+                    },
+                    "slops": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 3
+                    }
+                  }
+                },
+                "CreateSnapshotRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateSnapshot",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 5
+                    }
+                  }
+                },
+                "DropSnapshotRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeDropSnapshot",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "ListSnapshotsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeListSnapshots",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "ListSnapshotsResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "snapshots": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "DescribeSnapshotRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeDescribeSnapshot",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "DescribeSnapshotResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "partition_names": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 5
+                    },
+                    "create_ts": {
+                      "type": "int64",
+                      "id": 6
+                    },
+                    "s3_location": {
+                      "type": "string",
+                      "id": 7
+                    }
+                  }
+                },
+                "RestoreSnapshotRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeRestoreSnapshot",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "rewrite_data": {
+                      "type": "bool",
+                      "id": 5
+                    }
+                  }
+                },
+                "RestoreSnapshotResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "job_id": {
+                      "type": "int64",
+                      "id": 2
+                    }
+                  }
+                },
+                "RestoreSnapshotState": {
+                  "values": {
+                    "RestoreSnapshotNone": 0,
+                    "RestoreSnapshotPending": 1,
+                    "RestoreSnapshotExecuting": 2,
+                    "RestoreSnapshotCompleted": 3,
+                    "RestoreSnapshotFailed": 4
+                  }
+                },
+                "RestoreSnapshotInfo": {
+                  "fields": {
+                    "job_id": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "snapshot_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "state": {
+                      "type": "RestoreSnapshotState",
+                      "id": 5
+                    },
+                    "progress": {
+                      "type": "int32",
+                      "id": 6
+                    },
+                    "reason": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "start_time": {
+                      "type": "uint64",
+                      "id": 8
+                    },
+                    "time_cost": {
+                      "type": "uint64",
+                      "id": 9
+                    }
+                  }
+                },
+                "GetRestoreSnapshotStateRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeRestoreSnapshot",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "job_id": {
+                      "type": "int64",
+                      "id": 2
+                    }
+                  }
+                },
+                "GetRestoreSnapshotStateResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "info": {
+                      "type": "RestoreSnapshotInfo",
+                      "id": 2
+                    }
+                  }
+                },
+                "ListRestoreSnapshotJobsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeRestoreSnapshot",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "ListRestoreSnapshotJobsResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "jobs": {
+                      "rule": "repeated",
+                      "type": "RestoreSnapshotInfo",
+                      "id": 2
+                    }
+                  }
+                },
+                "AlterCollectionSchemaRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeAlterCollectionSchema",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collectionID": {
+                      "type": "int64",
+                      "id": 4
+                    },
+                    "action": {
+                      "type": "Action",
+                      "id": 5
+                    }
+                  },
+                  "nested": {
+                    "FieldInfo": {
+                      "fields": {
+                        "field_schema": {
+                          "type": "schema.FieldSchema",
+                          "id": 1
+                        },
+                        "index_name": {
+                          "type": "string",
+                          "id": 2
+                        },
+                        "extra_params": {
+                          "rule": "repeated",
+                          "type": "common.KeyValuePair",
+                          "id": 3
+                        }
+                      }
+                    },
+                    "AddRequest": {
+                      "fields": {
+                        "field_infos": {
+                          "rule": "repeated",
+                          "type": "FieldInfo",
+                          "id": 1
+                        },
+                        "func_schema": {
+                          "rule": "repeated",
+                          "type": "schema.FunctionSchema",
+                          "id": 2
+                        },
+                        "do_physical_backfill": {
+                          "type": "bool",
+                          "id": 3
+                        }
+                      }
+                    },
+                    "DropRequest": {
+                      "oneofs": {
+                        "field_identifier": {
+                          "oneof": [
+                            "field_name",
+                            "field_id"
+                          ]
+                        }
+                      },
+                      "fields": {
+                        "field_name": {
+                          "type": "string",
+                          "id": 1
+                        },
+                        "field_id": {
+                          "type": "int64",
+                          "id": 2
+                        }
+                      }
+                    },
+                    "Action": {
+                      "oneofs": {
+                        "op": {
+                          "oneof": [
+                            "add_request",
+                            "drop_request"
+                          ]
+                        }
+                      },
+                      "fields": {
+                        "add_request": {
+                          "type": "AddRequest",
+                          "id": 1
+                        },
+                        "drop_request": {
+                          "type": "DropRequest",
+                          "id": 2
+                        }
+                      }
+                    }
+                  }
+                },
+                "AlterCollectionSchemaResponse": {
+                  "fields": {
+                    "alter_status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "index_status": {
+                      "type": "common.Status",
+                      "id": 2
+                    }
+                  }
+                },
+                "BatchUpdateManifestRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeInsert",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "field_names": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 4
+                    },
+                    "items": {
+                      "rule": "repeated",
+                      "type": "BatchUpdateManifestItem",
+                      "id": 5
+                    }
+                  }
+                },
+                "BatchUpdateManifestItem": {
+                  "fields": {
+                    "segment_id": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "manifest_version": {
+                      "type": "int64",
+                      "id": 2
                     }
                   }
                 }
@@ -5737,6 +6246,10 @@ export default {
                       "rule": "repeated",
                       "type": "bytes",
                       "id": 3
+                    },
+                    "element_level": {
+                      "type": "bool",
+                      "id": 4
                     }
                   }
                 },
@@ -5762,6 +6275,11 @@ export default {
                   }
                 },
                 "MsgType": {
+                  "valuesOptions": {
+                    "Replicate": {
+                      "deprecated": true
+                    }
+                  },
                   "values": {
                     "Undefined": 0,
                     "CreateCollection": 100,
@@ -5885,7 +6403,15 @@ export default {
                     "AlterDatabase": 1804,
                     "DescribeDatabase": 1805,
                     "AddCollectionField": 1900,
-                    "AlterWAL": 2000
+                    "AlterWAL": 2000,
+                    "CreateSnapshot": 2100,
+                    "DropSnapshot": 2101,
+                    "ListSnapshots": 2102,
+                    "DescribeSnapshot": 2103,
+                    "RestoreSnapshot": 2104,
+                    "GetRestoreSnapshotState": 2105,
+                    "ListRestoreSnapshotJobs": 2106,
+                    "AlterCollectionSchema": 2200
                   }
                 },
                 "MsgBase": {
@@ -5917,11 +6443,17 @@ export default {
                     },
                     "replicateInfo": {
                       "type": "ReplicateInfo",
-                      "id": 7
+                      "id": 7,
+                      "options": {
+                        "deprecated": true
+                      }
                     }
                   }
                 },
                 "ReplicateInfo": {
+                  "options": {
+                    "deprecated": true
+                  },
                   "fields": {
                     "isReplicate": {
                       "type": "bool",
@@ -6075,7 +6607,12 @@ export default {
                     "PrivilegeRemoveFileResource": 73,
                     "PrivilegeListFileResources": 74,
                     "PrivilegeUpdateReplicateConfiguration": 78,
-                    "PrivilegeGetReplicateConfiguration": 85
+                    "PrivilegeCreateSnapshot": 79,
+                    "PrivilegeDropSnapshot": 80,
+                    "PrivilegeDescribeSnapshot": 81,
+                    "PrivilegeListSnapshots": 82,
+                    "PrivilegeRestoreSnapshot": 83,
+                    "PrivilegeAlterCollectionSchema": 84
                   }
                 },
                 "PrivilegeExt": {
@@ -6464,6 +7001,7 @@ export default {
                     "Geometry": 24,
                     "Text": 25,
                     "Timestamptz": 26,
+                    "Mol": 27,
                     "BinaryVector": 100,
                     "FloatVector": 101,
                     "Float16Vector": 102,
@@ -6480,7 +7018,9 @@ export default {
                     "Unknown": 0,
                     "BM25": 1,
                     "TextEmbedding": 2,
-                    "Rerank": 3
+                    "Rerank": 3,
+                    "MinHash": 4,
+                    "MolFingerprint": 5
                   }
                 },
                 "FieldState": {
@@ -6558,6 +7098,10 @@ export default {
                     "is_function_output": {
                       "type": "bool",
                       "id": 16
+                    },
+                    "external_field": {
+                      "type": "string",
+                      "id": 17
                     }
                   }
                 },
@@ -6668,6 +7212,23 @@ export default {
                     "version": {
                       "type": "int32",
                       "id": 10
+                    },
+                    "external_source": {
+                      "type": "string",
+                      "id": 11
+                    },
+                    "external_spec": {
+                      "type": "string",
+                      "id": 12
+                    },
+                    "do_physical_backfill": {
+                      "type": "bool",
+                      "id": 13
+                    },
+                    "file_resource_ids": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 14
                     },
                     "enable_namespace": {
                       "type": "bool",
@@ -6813,6 +7374,24 @@ export default {
                     }
                   }
                 },
+                "MolArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "bytes",
+                      "id": 1
+                    }
+                  }
+                },
+                "MolSmilesArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
                 "ValueField": {
                   "oneofs": {
                     "data": {
@@ -6878,7 +7457,9 @@ export default {
                         "json_data",
                         "geometry_data",
                         "timestamptz_data",
-                        "geometry_wkt_data"
+                        "geometry_wkt_data",
+                        "mol_data",
+                        "mol_smiles_data"
                       ]
                     }
                   },
@@ -6930,6 +7511,14 @@ export default {
                     "geometry_wkt_data": {
                       "type": "GeometryWktArray",
                       "id": 12
+                    },
+                    "mol_data": {
+                      "type": "MolArray",
+                      "id": 13
+                    },
+                    "mol_smiles_data": {
+                      "type": "MolSmilesArray",
+                      "id": 14
                     }
                   }
                 },
@@ -7173,6 +7762,10 @@ export default {
                       "rule": "repeated",
                       "type": "common.HighlightResult",
                       "id": 14
+                    },
+                    "element_indices": {
+                      "type": "LongArray",
+                      "id": 15
                     }
                   }
                 },
@@ -7754,6 +8347,9 @@ export default {
                   }
                 },
                 "ReplicateMsg": {
+                  "options": {
+                    "deprecated": true
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -7867,7 +8463,7 @@ export default {
                   "type": "string",
                   "id": 3
                 },
-                "publicDependency": {
+                "public_dependency": {
                   "rule": "repeated",
                   "type": "int32",
                   "id": 10,
@@ -7875,7 +8471,7 @@ export default {
                     "packed": false
                   }
                 },
-                "weakDependency": {
+                "weak_dependency": {
                   "rule": "repeated",
                   "type": "int32",
                   "id": 11,
@@ -7883,12 +8479,12 @@ export default {
                     "packed": false
                   }
                 },
-                "messageType": {
+                "message_type": {
                   "rule": "repeated",
                   "type": "DescriptorProto",
                   "id": 4
                 },
-                "enumType": {
+                "enum_type": {
                   "rule": "repeated",
                   "type": "EnumDescriptorProto",
                   "id": 5
@@ -7907,7 +8503,7 @@ export default {
                   "type": "FileOptions",
                   "id": 8
                 },
-                "sourceCodeInfo": {
+                "source_code_info": {
                   "type": "SourceCodeInfo",
                   "id": 9
                 },
@@ -7933,22 +8529,22 @@ export default {
                   "type": "FieldDescriptorProto",
                   "id": 6
                 },
-                "nestedType": {
+                "nested_type": {
                   "rule": "repeated",
                   "type": "DescriptorProto",
                   "id": 3
                 },
-                "enumType": {
+                "enum_type": {
                   "rule": "repeated",
                   "type": "EnumDescriptorProto",
                   "id": 4
                 },
-                "extensionRange": {
+                "extension_range": {
                   "rule": "repeated",
                   "type": "ExtensionRange",
                   "id": 5
                 },
-                "oneofDecl": {
+                "oneof_decl": {
                   "rule": "repeated",
                   "type": "OneofDescriptorProto",
                   "id": 8
@@ -7957,12 +8553,12 @@ export default {
                   "type": "MessageOptions",
                   "id": 7
                 },
-                "reservedRange": {
+                "reserved_range": {
                   "rule": "repeated",
                   "type": "ReservedRange",
                   "id": 9
                 },
-                "reservedName": {
+                "reserved_name": {
                   "rule": "repeated",
                   "type": "string",
                   "id": 10
@@ -8013,7 +8609,7 @@ export default {
                   "type": "Type",
                   "id": 5
                 },
-                "typeName": {
+                "type_name": {
                   "type": "string",
                   "id": 6
                 },
@@ -8021,15 +8617,15 @@ export default {
                   "type": "string",
                   "id": 2
                 },
-                "defaultValue": {
+                "default_value": {
                   "type": "string",
                   "id": 7
                 },
-                "oneofIndex": {
+                "oneof_index": {
                   "type": "int32",
                   "id": 9
                 },
-                "jsonName": {
+                "json_name": {
                   "type": "string",
                   "id": 10
                 },
@@ -8138,11 +8734,11 @@ export default {
                   "type": "string",
                   "id": 1
                 },
-                "inputType": {
+                "input_type": {
                   "type": "string",
                   "id": 2
                 },
-                "outputType": {
+                "output_type": {
                   "type": "string",
                   "id": 3
                 },
@@ -8150,11 +8746,11 @@ export default {
                   "type": "MethodOptions",
                   "id": 4
                 },
-                "clientStreaming": {
+                "client_streaming": {
                   "type": "bool",
                   "id": 5
                 },
-                "serverStreaming": {
+                "server_streaming": {
                   "type": "bool",
                   "id": 6
                 }
@@ -8162,49 +8758,49 @@ export default {
             },
             "FileOptions": {
               "fields": {
-                "javaPackage": {
+                "java_package": {
                   "type": "string",
                   "id": 1
                 },
-                "javaOuterClassname": {
+                "java_outer_classname": {
                   "type": "string",
                   "id": 8
                 },
-                "javaMultipleFiles": {
+                "java_multiple_files": {
                   "type": "bool",
                   "id": 10
                 },
-                "javaGenerateEqualsAndHash": {
+                "java_generate_equals_and_hash": {
                   "type": "bool",
                   "id": 20,
                   "options": {
                     "deprecated": true
                   }
                 },
-                "javaStringCheckUtf8": {
+                "java_string_check_utf8": {
                   "type": "bool",
                   "id": 27
                 },
-                "optimizeFor": {
+                "optimize_for": {
                   "type": "OptimizeMode",
                   "id": 9,
                   "options": {
                     "default": "SPEED"
                   }
                 },
-                "goPackage": {
+                "go_package": {
                   "type": "string",
                   "id": 11
                 },
-                "ccGenericServices": {
+                "cc_generic_services": {
                   "type": "bool",
                   "id": 16
                 },
-                "javaGenericServices": {
+                "java_generic_services": {
                   "type": "bool",
                   "id": 17
                 },
-                "pyGenericServices": {
+                "py_generic_services": {
                   "type": "bool",
                   "id": 18
                 },
@@ -8212,19 +8808,19 @@ export default {
                   "type": "bool",
                   "id": 23
                 },
-                "ccEnableArenas": {
+                "cc_enable_arenas": {
                   "type": "bool",
                   "id": 31
                 },
-                "objcClassPrefix": {
+                "objc_class_prefix": {
                   "type": "string",
                   "id": 36
                 },
-                "csharpNamespace": {
+                "csharp_namespace": {
                   "type": "string",
                   "id": 37
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8254,11 +8850,11 @@ export default {
             },
             "MessageOptions": {
               "fields": {
-                "messageSetWireFormat": {
+                "message_set_wire_format": {
                   "type": "bool",
                   "id": 1
                 },
-                "noStandardDescriptorAccessor": {
+                "no_standard_descriptor_accessor": {
                   "type": "bool",
                   "id": 2
                 },
@@ -8266,11 +8862,11 @@ export default {
                   "type": "bool",
                   "id": 3
                 },
-                "mapEntry": {
+                "map_entry": {
                   "type": "bool",
                   "id": 7
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8321,7 +8917,7 @@ export default {
                   "type": "bool",
                   "id": 10
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8358,7 +8954,7 @@ export default {
             },
             "OneofOptions": {
               "fields": {
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8373,7 +8969,7 @@ export default {
             },
             "EnumOptions": {
               "fields": {
-                "allowAlias": {
+                "allow_alias": {
                   "type": "bool",
                   "id": 2
                 },
@@ -8381,7 +8977,7 @@ export default {
                   "type": "bool",
                   "id": 3
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8400,7 +8996,7 @@ export default {
                   "type": "bool",
                   "id": 1
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8419,7 +9015,7 @@ export default {
                   "type": "bool",
                   "id": 33
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8438,7 +9034,7 @@ export default {
                   "type": "bool",
                   "id": 33
                 },
-                "uninterpretedOption": {
+                "uninterpreted_option": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
                   "id": 999
@@ -8458,27 +9054,27 @@ export default {
                   "type": "NamePart",
                   "id": 2
                 },
-                "identifierValue": {
+                "identifier_value": {
                   "type": "string",
                   "id": 3
                 },
-                "positiveIntValue": {
+                "positive_int_value": {
                   "type": "uint64",
                   "id": 4
                 },
-                "negativeIntValue": {
+                "negative_int_value": {
                   "type": "int64",
                   "id": 5
                 },
-                "doubleValue": {
+                "double_value": {
                   "type": "double",
                   "id": 6
                 },
-                "stringValue": {
+                "string_value": {
                   "type": "bytes",
                   "id": 7
                 },
-                "aggregateValue": {
+                "aggregate_value": {
                   "type": "string",
                   "id": 8
                 }
@@ -8486,12 +9082,12 @@ export default {
               "nested": {
                 "NamePart": {
                   "fields": {
-                    "namePart": {
+                    "name_part": {
                       "rule": "required",
                       "type": "string",
                       "id": 1
                     },
-                    "isExtension": {
+                    "is_extension": {
                       "rule": "required",
                       "type": "bool",
                       "id": 2
@@ -8521,15 +9117,15 @@ export default {
                       "type": "int32",
                       "id": 2
                     },
-                    "leadingComments": {
+                    "leading_comments": {
                       "type": "string",
                       "id": 3
                     },
-                    "trailingComments": {
+                    "trailing_comments": {
                       "type": "string",
                       "id": 4
                     },
-                    "leadingDetachedComments": {
+                    "leading_detached_comments": {
                       "rule": "repeated",
                       "type": "string",
                       "id": 6
@@ -8554,7 +9150,7 @@ export default {
                       "type": "int32",
                       "id": 1
                     },
-                    "sourceFile": {
+                    "source_file": {
                       "type": "string",
                       "id": 2
                     },

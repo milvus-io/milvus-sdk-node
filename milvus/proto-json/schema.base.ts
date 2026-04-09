@@ -31,6 +31,7 @@ export default {
                     "Geometry": 24,
                     "Text": 25,
                     "Timestamptz": 26,
+                    "Mol": 27,
                     "BinaryVector": 100,
                     "FloatVector": 101,
                     "Float16Vector": 102,
@@ -47,7 +48,9 @@ export default {
                     "Unknown": 0,
                     "BM25": 1,
                     "TextEmbedding": 2,
-                    "Rerank": 3
+                    "Rerank": 3,
+                    "MinHash": 4,
+                    "MolFingerprint": 5
                   }
                 },
                 "FieldState": {
@@ -125,6 +128,10 @@ export default {
                     "isFunctionOutput": {
                       "type": "bool",
                       "id": 16
+                    },
+                    "externalField": {
+                      "type": "string",
+                      "id": 17
                     }
                   }
                 },
@@ -235,6 +242,23 @@ export default {
                     "version": {
                       "type": "int32",
                       "id": 10
+                    },
+                    "externalSource": {
+                      "type": "string",
+                      "id": 11
+                    },
+                    "externalSpec": {
+                      "type": "string",
+                      "id": 12
+                    },
+                    "doPhysicalBackfill": {
+                      "type": "bool",
+                      "id": 13
+                    },
+                    "fileResourceIds": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 14
                     },
                     "enableNamespace": {
                       "type": "bool",
@@ -380,6 +404,24 @@ export default {
                     }
                   }
                 },
+                "MolArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "bytes",
+                      "id": 1
+                    }
+                  }
+                },
+                "MolSmilesArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
                 "ValueField": {
                   "oneofs": {
                     "data": {
@@ -445,7 +487,9 @@ export default {
                         "jsonData",
                         "geometryData",
                         "timestamptzData",
-                        "geometryWktData"
+                        "geometryWktData",
+                        "molData",
+                        "molSmilesData"
                       ]
                     }
                   },
@@ -497,6 +541,14 @@ export default {
                     "geometryWktData": {
                       "type": "GeometryWktArray",
                       "id": 12
+                    },
+                    "molData": {
+                      "type": "MolArray",
+                      "id": 13
+                    },
+                    "molSmilesData": {
+                      "type": "MolSmilesArray",
+                      "id": 14
                     }
                   }
                 },
@@ -740,6 +792,10 @@ export default {
                       "rule": "repeated",
                       "type": "common.HighlightResult",
                       "id": 14
+                    },
+                    "elementIndices": {
+                      "type": "LongArray",
+                      "id": 15
                     }
                   }
                 },
@@ -1071,6 +1127,10 @@ export default {
                       "rule": "repeated",
                       "type": "bytes",
                       "id": 3
+                    },
+                    "elementLevel": {
+                      "type": "bool",
+                      "id": 4
                     }
                   }
                 },
@@ -1096,6 +1156,11 @@ export default {
                   }
                 },
                 "MsgType": {
+                  "valuesOptions": {
+                    "Replicate": {
+                      "deprecated": true
+                    }
+                  },
                   "values": {
                     "Undefined": 0,
                     "CreateCollection": 100,
@@ -1219,7 +1284,15 @@ export default {
                     "AlterDatabase": 1804,
                     "DescribeDatabase": 1805,
                     "AddCollectionField": 1900,
-                    "AlterWAL": 2000
+                    "AlterWAL": 2000,
+                    "CreateSnapshot": 2100,
+                    "DropSnapshot": 2101,
+                    "ListSnapshots": 2102,
+                    "DescribeSnapshot": 2103,
+                    "RestoreSnapshot": 2104,
+                    "GetRestoreSnapshotState": 2105,
+                    "ListRestoreSnapshotJobs": 2106,
+                    "AlterCollectionSchema": 2200
                   }
                 },
                 "MsgBase": {
@@ -1251,11 +1324,17 @@ export default {
                     },
                     "replicateInfo": {
                       "type": "ReplicateInfo",
-                      "id": 7
+                      "id": 7,
+                      "options": {
+                        "deprecated": true
+                      }
                     }
                   }
                 },
                 "ReplicateInfo": {
+                  "options": {
+                    "deprecated": true
+                  },
                   "fields": {
                     "isReplicate": {
                       "type": "bool",
@@ -1409,7 +1488,12 @@ export default {
                     "PrivilegeRemoveFileResource": 73,
                     "PrivilegeListFileResources": 74,
                     "PrivilegeUpdateReplicateConfiguration": 78,
-                    "PrivilegeGetReplicateConfiguration": 85
+                    "PrivilegeCreateSnapshot": 79,
+                    "PrivilegeDropSnapshot": 80,
+                    "PrivilegeDescribeSnapshot": 81,
+                    "PrivilegeListSnapshots": 82,
+                    "PrivilegeRestoreSnapshot": 83,
+                    "PrivilegeAlterCollectionSchema": 84
                   }
                 },
                 "PrivilegeExt": {
