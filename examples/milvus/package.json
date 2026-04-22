@@ -14,5 +14,9 @@
   "devDependencies": {
     "@types/express": "^4.17.17",
     "autocannon": "^7.15.0"
+  },
+  "resolutions": {
+    "protobufjs": "^7.5.5",
+    "path-to-regexp": "0.1.13"
   }
 }
