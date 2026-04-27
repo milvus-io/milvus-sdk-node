@@ -243,6 +243,63 @@ describe('Global connection lifecycle', () => {
     client.topologyRefresher?.stop();
   });
 
+  it('should pass client option values to Connect reserved fields', async () => {
+    let capturedConnectRequest: any;
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      token: 'test-token',
+      option: { cluster_id: 'cluster-a' },
+      __SKIP_CONNECT__: true,
+    });
+    client.channelPool = {
+      acquire: jest.fn().mockResolvedValue({
+        Connect: (request: any, _options: any, callback: Function) => {
+          capturedConnectRequest = request;
+          callback(null, { identifier: 'client-1', server_info: {} });
+        },
+      }),
+      release: jest.fn(),
+    } as any;
+
+    await (client as any)._getServerInfo('test-version');
+
+    expect(capturedConnectRequest.client_info.reserved).toEqual({
+      cluster_id: 'cluster-a',
+    });
+  });
+
+  it('should pass client option values to Connect reserved fields after global init', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(validTopologyResponse),
+    }) as any;
+
+    let capturedConnectRequest: any;
+    const client = new MilvusClient({
+      address: 'https://glo-xxx.global-cluster.xyz',
+      token: 'test-token',
+      option: { cluster_id: 'cluster-a' },
+      __SKIP_CONNECT__: true,
+    });
+    (client as any).createChannelPool = jest.fn(() => ({
+      acquire: jest.fn().mockResolvedValue({
+        Connect: (request: any, _options: any, callback: Function) => {
+          capturedConnectRequest = request;
+          callback(null, { identifier: 'client-1', server_info: {} });
+        },
+      }),
+      release: jest.fn(),
+    }));
+
+    await (client as any)._initGlobalConnection('test-version');
+
+    expect(client.config.address).toBe('primary-host:19530');
+    expect(capturedConnectRequest.client_info.reserved).toEqual({
+      cluster_id: 'cluster-a',
+    });
+    client.topologyRefresher?.stop();
+  });
+
   it('should reconnect when primary changes', async () => {
     let fetchCount = 0;
     global.fetch = jest.fn().mockImplementation(() => {

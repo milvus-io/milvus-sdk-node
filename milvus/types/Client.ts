@@ -21,6 +21,8 @@ export interface ClientConfig {
   password?: string;
   // Additional options to pass to the gRPC channel.
   channelOptions?: ChannelOptions;
+  // Reserved connection options sent in ConnectRequest client info.
+  option?: Record<string, string>;
   // The timeout for requests, in milliseconds.
   timeout?: number | string;
   // number of retries

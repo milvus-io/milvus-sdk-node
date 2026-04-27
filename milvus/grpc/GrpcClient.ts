@@ -397,6 +397,7 @@ export class GRPCClient extends User {
         sdk_version: sdkVersion,
         local_time: dayjs().format(`YYYY-MM-DD HH:mm:ss.SSS`),
         user: this.config.username,
+        reserved: this.config.option || {},
       },
     };
 
