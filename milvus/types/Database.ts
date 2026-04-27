@@ -17,6 +17,8 @@ export interface DescribeDatabaseRequest extends databaseReq {}
 export interface ListDatabasesRequest extends GrpcTimeOut {}
 export interface ListDatabasesResponse extends resStatusResponse {
   db_names: string[]; // database names
+  db_ids: string[]; // database ids
+  created_timestamp: string[]; // created timestamps
 }
 export interface DescribeDatabaseResponse extends resStatusResponse {
   db_name: string; // database name

@@ -19,6 +19,7 @@ export class Database extends BaseClient {
    *
    * @param {CreateDatabaseRequest} data - The data for the new database.
    * @param {string} data.db_name - The name of the new database.
+   * @param {Object} [data.properties] - Optional database properties, such as { "database.resource_groups": "rg1" }.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} The response status of the operation.
@@ -28,7 +29,10 @@ export class Database extends BaseClient {
    * @example
    * ```
    *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
-   *  const resStatus = await milvusClient.createDatabase({ db_name: 'new_db' });
+   *  const resStatus = await milvusClient.createDatabase({
+   *    db_name: 'new_db',
+   *    properties: { 'database.resource_groups': 'rg1' }
+   *  });
    * ```
    */
   async createDatabase(data: CreateDatabaseRequest): Promise<ResStatus> {
@@ -58,6 +62,9 @@ export class Database extends BaseClient {
    * @returns {Promise<ListDatabasesResponse>} The response from the server.
    * @returns {string} status.error_code - The error code of the operation.
    * @returns {string} status.reason - The reason for the error, if any.
+   * @returns {string[]} db_names - The names of databases.
+   * @returns {string[]} db_ids - The IDs of databases.
+   * @returns {string[]} created_timestamp - The created timestamps of databases.
    *
    * @example
    * ```
@@ -157,7 +164,8 @@ export class Database extends BaseClient {
    *
    * @param {AlterDatabaseRequest} data - The request parameters.
    * @param {string} data.db_name - The name of the database to modify.
-   * @param {Object} data.properties - The properties to modify. For example, to change the TTL, use {"database.replica.number": 18000}.
+   * @param {string} [data.db_id] - The ID of the database to modify.
+   * @param {Object} data.properties - The properties to modify. For example, use { "database.resource_groups": "rg1" } to set database resource groups.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} The response status of the operation.
@@ -168,8 +176,8 @@ export class Database extends BaseClient {
    * ```
    *  const milvusClient = new milvusClient(MILUVS_ADDRESS);
    *  const resStatus = await milvusClient.alterDatabase({
-   *    database: 'my-db',
-   *    properties: {"database.replica.number": 18000}
+   *    db_name: 'my-db',
+   *    properties: { 'database.resource_groups': 'rg1' }
    *  });
    * ```
    */
@@ -179,6 +187,7 @@ export class Database extends BaseClient {
       'AlterDatabase',
       {
         db_name: data.db_name,
+        db_id: data.db_id,
         properties: parseToKeyValue(data.properties),
       },
       data?.timeout || this.timeout

@@ -4,6 +4,7 @@ import {
   DEFAULT_DB,
   formatKeyValueData,
   findKeyValue,
+  ListDatabasesResponse,
 } from '../../milvus';
 import {
   IP,
@@ -12,7 +13,12 @@ import {
   generateInsertData,
 } from '../tools';
 
-let milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+let milvusClient = new MilvusClient({
+  address: IP,
+  logLevel: 'info',
+  username: process.env.MILVUS_USERNAME || 'root',
+  password: process.env.MILVUS_PASSWORD || 'Milvus',
+});
 const DEFAULT = 'default';
 const DB_NAME = GENERATE_NAME('database');
 const DB_NAME2 = GENERATE_NAME('database');
@@ -65,14 +71,27 @@ describe(`Database API`, () => {
 
   it(`using database with address should be ok`, async () => {
     // use another client with db
-    const newClient = new MilvusClient({ address: IP, database: DB_NAME });
+    const newClient = new MilvusClient({
+      address: IP,
+      database: DB_NAME,
+      username: process.env.MILVUS_USERNAME || 'root',
+      password: process.env.MILVUS_PASSWORD || 'Milvus',
+      __SKIP_CONNECT__: true,
+    });
     expect(newClient.config.database).toEqual(DB_NAME);
   });
 
   it(`ListDatabases should be ok`, async () => {
-    const allDatabases = await milvusClient.listDatabases();
+    const allDatabases: ListDatabasesResponse =
+      await milvusClient.listDatabases();
     expect(allDatabases.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(allDatabases.db_names.length).toBeGreaterThan(1);
+    expect(allDatabases.db_ids.length).toEqual(allDatabases.db_names.length);
+    expect(allDatabases.created_timestamp.length).toEqual(
+      allDatabases.db_names.length
+    );
+    expect(typeof allDatabases.db_ids[0]).toEqual('string');
+    expect(typeof allDatabases.created_timestamp[0]).toEqual('string');
   });
 
   it(`describe database should be ok`, async () => {
@@ -363,6 +382,20 @@ describe(`Database API`, () => {
     expect(describe.properties).toEqual([
       { key: 'database.diskQuota.mb', value: '2048' },
     ]);
+
+    const alterById = await milvusClient.alterDatabase({
+      db_name: DB_NAME2,
+      db_id: String(describe.dbID),
+      properties: { 'database.diskQuota.mb': 4096 },
+    });
+    expect(alterById.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describeAfterAlterById = await milvusClient.describeDatabase({
+      db_name: DB_NAME2,
+    });
+    expect(describeAfterAlterById.properties).toEqual([
+      { key: 'database.diskQuota.mb', value: '4096' },
+    ]);
   });
 
   it(`drop database properties should be ok`, async () => {
@@ -379,30 +412,31 @@ describe(`Database API`, () => {
   });
 
   it(`create db with property set should be successful`, async () => {
-    const res = await milvusClient.createDatabase({
-      db_name: DB_WITH_PROPERTY,
-      properties: {
-        'replicate.id': 'local-mac',
-      },
-    });
-    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+    try {
+      const res = await milvusClient.createDatabase({
+        db_name: DB_WITH_PROPERTY,
+        properties: {
+          'replicate.id': 'local-mac',
+        },
+      });
+      expect(res.error_code).toEqual(ErrorCode.SUCCESS);
 
-    const describe = await milvusClient.describeDatabase({
-      db_name: DB_WITH_PROPERTY,
-    });
+      const describe = await milvusClient.describeDatabase({
+        db_name: DB_WITH_PROPERTY,
+      });
 
-    expect(
-      String(
-        formatKeyValueData(describe.properties, ['replicate.id'])[
-          'replicate.id'
-        ]
-      )
-    ).toEqual('local-mac');
-
-    // drop collection
-    await milvusClient.dropDatabase({
-      db_name: DB_WITH_PROPERTY,
-    });
+      expect(
+        String(
+          formatKeyValueData(describe.properties, ['replicate.id'])[
+            'replicate.id'
+          ]
+        )
+      ).toEqual('local-mac');
+    } finally {
+      await milvusClient.dropDatabase({
+        db_name: DB_WITH_PROPERTY,
+      });
+    }
   });
 
   // it(`drop database should be ok`, async () => {
