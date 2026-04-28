@@ -5,9 +5,263 @@ import {
   DataType,
   ERROR_REASONS,
   MilvusClient,
+  ErrorCode,
+  f32ArrayToF16Bytes,
+  f32ArrayToBf16Bytes,
+  sparseRowsToBytes,
+  int8VectorRowsToBytes,
+  f32ArrayToBinaryBytes,
+  processVectorData,
 } from '../../milvus';
 
 describe('utils/Data', () => {
+  const captureInsertField = async (
+    vectorType: DataType,
+    rows: any[],
+    dim = 2
+  ) => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    let insertParams: any;
+    (client as any).describeCollection = jest.fn().mockResolvedValue({
+      status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      schema: {
+        enable_dynamic_field: false,
+        fields: [
+          {
+            name: 'id',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+            autoID: false,
+            nullable: false,
+            element_type: DataType.None,
+          },
+          {
+            name: 'vector',
+            data_type: vectorType,
+            dim: String(dim),
+            nullable: true,
+            element_type: DataType.None,
+          },
+        ],
+      },
+      properties: [],
+    });
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({
+        Insert: (params: any, _options: any, cb: any) => {
+          insertParams = params;
+          cb(null, {
+            status: { error_code: ErrorCode.SUCCESS, reason: '' },
+            succ_index: [],
+            err_index: [],
+            acknowledged: true,
+            insert_cnt: String(rows.length),
+            delete_cnt: '0',
+            upsert_cnt: '0',
+            timestamp: '0',
+            IDs: {
+              int_id: { data: rows.map((_, i) => String(i + 1)) },
+              id_field: 'int_id',
+            },
+          });
+        },
+      }),
+      release: jest.fn(),
+    };
+
+    await client.insert({
+      collection_name: 'nullable_vector_collection',
+      fields_data: rows.map((vector, i) => ({ id: i + 1, vector })),
+    });
+
+    return insertParams.fields_data.find(
+      (field: any) => field.field_name === 'vector'
+    );
+  };
+
+  it('should encode nullable float vectors with valid_data and dense payload', async () => {
+    const vectorField = await captureInsertField(DataType.FloatVector, [
+      [1, 2],
+      null,
+      [3, 4],
+    ]);
+
+    expect(vectorField.valid_data).toEqual([true, false, true]);
+    expect(vectorField.vectors.float_vector.data).toEqual([1, 2, 3, 4]);
+  });
+
+  it('should encode nullable binary vectors with valid_data and dense payload', async () => {
+    const vectorField = await captureInsertField(
+      DataType.BinaryVector,
+      [[1], null, [2]],
+      8
+    );
+
+    expect(vectorField.valid_data).toEqual([true, false, true]);
+    expect(vectorField.vectors.binary_vector).toEqual(
+      f32ArrayToBinaryBytes([1, 2])
+    );
+  });
+
+  it('should encode nullable float16 vectors with valid_data and dense payload', async () => {
+    const vectorField = await captureInsertField(DataType.Float16Vector, [
+      [1, 2],
+      null,
+      [3, 4],
+    ]);
+
+    expect(vectorField.valid_data).toEqual([true, false, true]);
+    expect(vectorField.vectors.float16_vector).toEqual(
+      Buffer.concat([f32ArrayToF16Bytes([1, 2]), f32ArrayToF16Bytes([3, 4])])
+    );
+  });
+
+  it('should encode nullable bfloat16 vectors with valid_data and dense payload', async () => {
+    const vectorField = await captureInsertField(DataType.BFloat16Vector, [
+      [1, 2],
+      null,
+      [3, 4],
+    ]);
+
+    expect(vectorField.valid_data).toEqual([true, false, true]);
+    expect(vectorField.vectors.bfloat16_vector).toEqual(
+      Buffer.concat([f32ArrayToBf16Bytes([1, 2]), f32ArrayToBf16Bytes([3, 4])])
+    );
+  });
+
+  it('should encode nullable sparse vectors with valid_data and dense payload', async () => {
+    const rows = [{ '0': 1 }, null, { '1': 2 }];
+    const vectorField = await captureInsertField(
+      DataType.SparseFloatVector,
+      rows
+    );
+
+    expect(vectorField.valid_data).toEqual([true, false, true]);
+    expect(vectorField.vectors.sparse_float_vector.contents).toEqual(
+      sparseRowsToBytes([rows[0], rows[2]] as any)
+    );
+  });
+
+  it('should encode nullable int8 vectors with valid_data and dense payload', async () => {
+    const rows = [[1, 2], null, [3, 4]];
+    const vectorField = await captureInsertField(DataType.Int8Vector, rows);
+
+    expect(vectorField.valid_data).toEqual([true, false, true]);
+    expect(vectorField.vectors.int8_vector).toEqual(
+      int8VectorRowsToBytes([rows[0], rows[2]] as any)
+    );
+  });
+
+  it('should encode all-null nullable vectors with valid_data and empty payload', async () => {
+    const vectorField = await captureInsertField(DataType.FloatVector, [
+      null,
+      null,
+    ]);
+
+    expect(vectorField.valid_data).toEqual([false, false]);
+    expect(vectorField.vectors.dim).toBe(2);
+    expect(vectorField.vectors.float_vector.data).toEqual([]);
+  });
+
+  it('should decode nullable float vectors from valid_data and dense payload', () => {
+    const result = processVectorData({
+      valid_data: [true, false, true],
+      vectors: {
+        data: 'float_vector',
+        dim: 2,
+        float_vector: { data: [1, 2, 3, 4] },
+      },
+    });
+
+    expect(result).toEqual([[1, 2], null, [3, 4]]);
+  });
+
+  it('should decode nullable binary vectors from valid_data and dense payload', () => {
+    const result = processVectorData({
+      valid_data: [true, false, true],
+      vectors: {
+        data: 'binary_vector',
+        dim: 8,
+        binary_vector: f32ArrayToBinaryBytes([1, 2]),
+      },
+    });
+
+    expect(result).toEqual([[1], null, [2]]);
+  });
+
+  it('should decode nullable float16 vectors from valid_data and dense payload', () => {
+    const result = processVectorData({
+      valid_data: [true, false, true],
+      vectors: {
+        data: 'float16_vector',
+        dim: 2,
+        float16_vector: Buffer.concat([
+          f32ArrayToF16Bytes([1, 2]),
+          f32ArrayToF16Bytes([3, 4]),
+        ]),
+      },
+    });
+
+    expect(result[0]).toEqual([1, 2]);
+    expect(result[1]).toBeNull();
+    expect(result[2]).toEqual([3, 4]);
+  });
+
+  it('should decode nullable bfloat16 vectors from valid_data and dense payload', () => {
+    const result = processVectorData({
+      valid_data: [true, false, true],
+      vectors: {
+        data: 'bfloat16_vector',
+        dim: 2,
+        bfloat16_vector: Buffer.concat([
+          f32ArrayToBf16Bytes([1, 2]),
+          f32ArrayToBf16Bytes([3, 4]),
+        ]),
+      },
+    });
+
+    expect(result[0]).toEqual([1, 2]);
+    expect(result[1]).toBeNull();
+    expect(result[2]).toEqual([3, 4]);
+  });
+
+  it('should decode nullable sparse vectors from valid_data and dense payload', () => {
+    const result = processVectorData({
+      valid_data: [true, false, true],
+      vectors: {
+        data: 'sparse_float_vector',
+        dim: 2,
+        sparse_float_vector: {
+          dim: 2,
+          contents: sparseRowsToBytes([{ '0': 1 }, { '1': 2 }]).map(bytes =>
+            Buffer.from(bytes)
+          ),
+        },
+      },
+    });
+
+    expect(result).toEqual([{ '0': 1 }, null, { '1': 2 }]);
+  });
+
+  it('should decode nullable int8 vectors from valid_data and dense payload', () => {
+    const result = processVectorData({
+      valid_data: [true, false, true],
+      vectors: {
+        data: 'int8_vector',
+        dim: 2,
+        int8_vector: int8VectorRowsToBytes([
+          [1, 2],
+          [3, 4],
+        ]),
+      },
+    });
+
+    expect(result).toEqual([[1, 2], null, [3, 4]]);
+  });
+
   it('should expand query rows with element indices into offset rows', async () => {
     const client = new MilvusClient({
       address: 'localhost:19530',

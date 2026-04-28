@@ -68,6 +68,23 @@ export const processVectorData = (
   const dataKey = item.vectors!.data;
   let field_data: any;
 
+  const applyValidData = (physicalData: any[]) => {
+    if (!item.valid_data || !item.valid_data.length) {
+      return physicalData;
+    }
+    if (item.valid_data.every(Boolean)) {
+      return physicalData;
+    }
+
+    let physicalIndex = 0;
+    return item.valid_data.map((valid: boolean) => {
+      if (!valid) {
+        return null;
+      }
+      return physicalData[physicalIndex++];
+    });
+  };
+
   switch (dataKey) {
     case 'float_vector':
     case 'binary_vector':
@@ -160,7 +177,7 @@ export const processVectorData = (
       break;
   }
 
-  return field_data;
+  return applyValidData(field_data);
 };
 
 /**
