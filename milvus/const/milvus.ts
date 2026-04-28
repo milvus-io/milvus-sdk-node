@@ -299,6 +299,7 @@ export enum DataType {
   BFloat16Vector = 103,
   SparseFloatVector = 104,
   Int8Vector = 105,
+  ArrayOfVector = 106,
 
   Struct = 201,
 }
@@ -359,6 +360,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   BFloat16Vector: 103,
   SparseFloatVector: 104,
   Int8Vector: 105,
+  ArrayOfVector: 106,
   Struct: 201,
 };
 
@@ -383,6 +385,7 @@ export enum DataTypeStringEnum {
   BFloat16Vector = 'BFloat16Vector',
   SparseFloatVector = 'SparseFloatVector',
   Int8Vector = 'Int8Vector',
+  ArrayOfVector = 'ArrayOfVector',
   Struct = 'Struct',
 }
 

@@ -66,6 +66,7 @@ import {
   sparseRowsToBytes,
   Int8Vector,
   int8VectorRowsToBytes,
+  f32ArrayToInt8Bytes,
   getSparseDim,
   f32ArrayToBinaryBytes,
   getValidDataArray,
@@ -196,7 +197,7 @@ export class Data extends Collection {
                   {
                     name: field.name,
                     type: isVectorType(convertToDataType(field.data_type))
-                      ? (106 as DataType)
+                      ? DataType.ArrayOfVector
                       : DataType.Array,
                     elementType: convertToDataType(field.data_type),
                     dim: Number(field.dim),
@@ -316,8 +317,7 @@ export class Data extends Collection {
       };
 
       return Array.from(fields.values()).map(field => {
-        // 106 is ArrayOfVector, only internal data type
-        let key = [...VectorDataTypes, 106 as DataType].includes(field.type)
+        let key = [...VectorDataTypes, DataType.ArrayOfVector].includes(field.type)
           ? 'vectors'
           : 'scalars';
         if (field.elementType === DataType.Struct) {
@@ -390,24 +390,63 @@ export class Data extends Collection {
             };
             break;
 
-          // ArrayOfVector
-          case 106 as DataType:
-            keyValue = {
-              [dataKey]: {
-                dim: field.dim,
-                data: field.data.map(d => {
+          case DataType.ArrayOfVector: {
+            const buildVectorArrayData = (vector: any) => {
+              switch (field.elementType) {
+                case DataType.FloatVector:
+                  return {
+                    dim: field.dim,
+                    [elementTypeKey]: {
+                      data: vector,
+                    },
+                  };
+                case DataType.BinaryVector:
+                  return {
+                    dim: field.dim,
+                    [elementTypeKey]: f32ArrayToBinaryBytes(vector),
+                  };
+                case DataType.BFloat16Vector:
+                case DataType.Float16Vector:
+                  return {
+                    dim: field.dim,
+                    [elementTypeKey]: Buffer.concat(
+                      Array.isArray(vector) ? vector : [vector]
+                    ),
+                  };
+                case DataType.Int8Vector:
+                  return {
+                    dim: field.dim,
+                    [elementTypeKey]:
+                      Array.isArray(vector) && typeof vector[0] === 'number'
+                        ? f32ArrayToInt8Bytes(vector)
+                        : Array.isArray(vector)
+                          ? int8VectorRowsToBytes(vector)
+                          : Buffer.from(
+                              vector.buffer,
+                              vector.byteOffset,
+                              vector.byteLength
+                            ),
+                  };
+                default:
                   return {
                     dim: field.dim,
                     [elementTypeKey]: {
                       type: field.elementType,
-                      data: d,
+                      data: vector,
                     },
                   };
-                }),
+              }
+            };
+
+            keyValue = {
+              [dataKey]: {
+                dim: field.dim,
+                data: field.data.map(buildVectorArrayData),
                 element_type: field.elementType,
               },
             };
             break;
+          }
 
           case DataType.Array:
             if (field.elementType === DataType.Struct) {

@@ -16,6 +16,7 @@ import {
   f16BytesToF32Array,
   cloneObj,
   Struct,
+  VectorDataTypes,
 } from '../';
 
 /**
@@ -123,8 +124,13 @@ export const processVectorData = (
       // split buffer data to int8 vector
       for (let i = 0; i < int8Bytes.byteLength; i += int8Dim) {
         const slice = int8Bytes.slice(i, i + int8Dim);
+        const signedSlice = new Int8Array(
+          slice.buffer,
+          slice.byteOffset,
+          slice.byteLength
+        );
 
-        field_data.push(localTransformers[DataType.Int8Vector](slice));
+        field_data.push(localTransformers[DataType.Int8Vector](signedSlice));
       }
 
       break;
@@ -352,6 +358,24 @@ export const buildFieldData = (
         ? Buffer.from(JSON.stringify(rowData[name] || {}))
         : Buffer.alloc(0);
 
+    case DataType.ArrayOfVector:
+      switch (elementType) {
+        case DataType.BFloat16Vector:
+          const bf16Transformer =
+            transformers?.[DataType.BFloat16Vector] || f32ArrayToBf16Bytes;
+          return isFloat32
+            ? bf16Transformer(rowData[name] as BFloat16Vector)
+            : rowData[name];
+        case DataType.Float16Vector:
+          const f16Transformer =
+            transformers?.[DataType.Float16Vector] || f32ArrayToF16Bytes;
+          return isFloat32
+            ? f16Transformer(rowData[name] as Float16Vector)
+            : rowData[name];
+        default:
+          return rowData[name];
+      }
+
     case DataType.Array:
       const elementField = { ...field, type: elementType!, fieldMap: fieldMap };
 
@@ -380,15 +404,14 @@ export const buildFieldData = (
               rowIndex
             );
 
-            // Special handling for binary and float vector types
             const dataArray = structField.data[rowIndex!] || [];
             structField.data[rowIndex!] = dataArray;
 
-            const isVectorType =
-              structField.elementType === DataType.BinaryVector ||
-              structField.elementType === DataType.FloatVector;
+            const isStructVectorField =
+              structField.type === DataType.ArrayOfVector &&
+              VectorDataTypes.includes(structField.elementType!);
 
-            if (isVectorType) {
+            if (isStructVectorField) {
               (dataArray as FieldData[]).push(
                 ...(Array.isArray(fieldData) ? fieldData : [fieldData])
               );

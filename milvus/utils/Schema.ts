@@ -98,7 +98,7 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
     case DataType.Timestamptz:
       dataKey = 'timestamptz_data';
       break;
-    case 106 as DataType: // Internal: ArrayOfVector
+    case DataType.ArrayOfVector:
       dataKey = 'vector_array';
       break;
     case DataType.None:
@@ -230,7 +230,7 @@ export const formatFieldSchema = (
 
   // if element type exist and
   if (
-    (dataType === DataType.Array || dataType === (106 as DataType)) &&
+    (dataType === DataType.Array || dataType === DataType.ArrayOfVector) &&
     typeof element_type !== 'undefined'
   ) {
     createObj.elementType = convertToDataType(element_type);
@@ -314,7 +314,7 @@ export const formatStructArrayFieldSchema = (
       // convert the field to array field, and set the max capacity
       f.element_type = f.data_type;
       f.data_type = isVectorType(convertToDataType(f.data_type as DataType)!)
-        ? (106 as DataType) // ArrayOfVector
+        ? DataType.ArrayOfVector
         : DataType.Array;
       f.max_capacity = field.max_capacity;
 

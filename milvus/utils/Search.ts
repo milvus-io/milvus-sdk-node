@@ -634,19 +634,50 @@ export const formatSearchData = (
   }
 
   switch (_placeholderType) {
+    case PlaceholderType.EmbListSparseFloatVector:
+      throw new Error('Sparse embedding list search is not supported');
+
     case PlaceholderType.EmbListFloatVector:
+    case PlaceholderType.EmbListBinaryVector:
+    case PlaceholderType.EmbListFloat16Vector:
+    case PlaceholderType.EmbListBFloat16Vector:
+    case PlaceholderType.EmbListInt8Vector: {
+      const isTypedArray = (value: unknown): value is Uint8Array | Int8Array =>
+        value instanceof Uint8Array || value instanceof Int8Array;
+      const flattenEmbeddingList = (embeddingList: any) => {
+        if (
+          Array.isArray(embeddingList) &&
+          embeddingList.length > 0 &&
+          embeddingList.every(isTypedArray)
+        ) {
+          const totalLength = embeddingList.reduce(
+            (total, vector) => total + vector.length,
+            0
+          );
+          const flattened = new Uint8Array(totalLength);
+          let offset = 0;
+          embeddingList.forEach(vector => {
+            flattened.set(vector, offset);
+            offset += vector.length;
+          });
+          return flattened;
+        }
+        return embeddingList.flat();
+      };
       const isMultiEmbeddingList =
         Array.isArray(searchData) &&
         Array.isArray((searchData as any)[0]) &&
-        Array.isArray((searchData as any)[0][0]);
+        (Array.isArray((searchData as any)[0][0]) ||
+          isTypedArray((searchData as any)[0][0]));
 
       if (isMultiEmbeddingList) {
-        return (searchData as SearchEmbList[]).map(v => v.flat()) as [
-          SearchData
-        ];
+        return (searchData as SearchEmbList[]).map(v =>
+          flattenEmbeddingList(v)
+        ) as [SearchData];
       } else {
-        return [(searchData as SearchEmbList).flat() as SearchData];
+        return [flattenEmbeddingList(searchData) as SearchData];
       }
+    }
     case PlaceholderType.FloatVector:
     case PlaceholderType.BinaryVector:
     case PlaceholderType.Float16Vector:

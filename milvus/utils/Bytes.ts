@@ -312,22 +312,26 @@ export const buildPlaceholderGroupBytes = (
         break;
 
       case PlaceholderType.BinaryVector:
+      case PlaceholderType.EmbListBinaryVector:
         bytes = data.map(v => f32ArrayToBinaryBytes(v as BinaryVector));
         break;
 
       case PlaceholderType.BFloat16Vector:
+      case PlaceholderType.EmbListBFloat16Vector:
         bytes = data.map(v =>
           Array.isArray(v) ? f32ArrayToBf16Bytes(v as BFloat16Vector) : v
         );
         break;
 
       case PlaceholderType.Float16Vector:
+      case PlaceholderType.EmbListFloat16Vector:
         bytes = data.map(v =>
           Array.isArray(v) ? f32ArrayToF16Bytes(v as Float16Vector) : v
         );
         break;
 
       case PlaceholderType.Int8Vector:
+      case PlaceholderType.EmbListInt8Vector:
         bytes = data.map(v =>
           Array.isArray(v) ? f32ArrayToInt8Bytes(v as Int8Vector) : v
         );
@@ -336,6 +340,9 @@ export const buildPlaceholderGroupBytes = (
       case PlaceholderType.SparseFloatVector:
         bytes = data.map(v => sparseToBytes(v as SparseFloatVector));
         break;
+
+      case PlaceholderType.EmbListSparseFloatVector:
+        throw new Error('Sparse embedding list search is not supported');
     }
   }
 

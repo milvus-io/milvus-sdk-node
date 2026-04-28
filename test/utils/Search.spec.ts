@@ -1579,6 +1579,80 @@ describe('utils/Search', () => {
     ]);
   });
 
+  it('should format non-float embedding list vectors correctly', () => {
+    const embeddingListVectors = [
+      new Uint8Array([1, 2]),
+      new Uint8Array([3, 4]),
+    ];
+
+    [
+      PlaceholderType.EmbListBinaryVector,
+      PlaceholderType.EmbListFloat16Vector,
+      PlaceholderType.EmbListBFloat16Vector,
+      PlaceholderType.EmbListInt8Vector,
+    ].forEach(_placeholderType => {
+      const formattedEmbeddingListVectors = formatSearchData(
+        embeddingListVectors,
+        { _placeholderType } as any
+      );
+
+      expect(formattedEmbeddingListVectors).toEqual([
+        new Uint8Array([1, 2, 3, 4]),
+      ]);
+    });
+  });
+
+  it('should build non-float embedding-list placeholder bytes', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const PlaceholderGroup = milvusProto.lookupType(
+      'milvus.proto.common.PlaceholderGroup'
+    );
+
+    [
+      [PlaceholderType.EmbListBinaryVector, 'EmbListBinaryVector'],
+      [PlaceholderType.EmbListFloat16Vector, 'EmbListFloat16Vector'],
+      [PlaceholderType.EmbListBFloat16Vector, 'EmbListBFloat16Vector'],
+      [PlaceholderType.EmbListInt8Vector, 'EmbListInt8Vector'],
+    ].forEach(([_placeholderType, expectedType]) => {
+      const placeholderGroup = PlaceholderGroup.decode(
+        buildPlaceholderGroupBytes(
+          milvusProto,
+          [new Uint8Array([1, 2, 3, 4])],
+          { _placeholderType } as any
+        )
+      ).toJSON() as any;
+
+      expect(placeholderGroup.placeholders[0].type).toEqual(expectedType);
+      expect(placeholderGroup.placeholders[0].values).toEqual(['AQIDBA==']);
+    });
+  });
+
+  it('should reject sparse embedding-list placeholder formatting', () => {
+    expect(() =>
+      formatSearchData([{ 1: 0.5 }, { 3: 0.25 }], {
+        _placeholderType: PlaceholderType.EmbListSparseFloatVector,
+      } as any)
+    ).toThrow('Sparse embedding list search is not supported');
+
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+
+    expect(() =>
+      buildPlaceholderGroupBytes(
+        milvusProto,
+        [{ 1: 0.5 }, { 3: 0.25 }],
+        { _placeholderType: PlaceholderType.EmbListSparseFloatVector } as any
+      )
+    ).toThrow('Sparse embedding list search is not supported');
+  });
+
   it('should build varchar placeholder for function output vector search', () => {
     const milvusProtoPath = path.resolve(
       __dirname,
