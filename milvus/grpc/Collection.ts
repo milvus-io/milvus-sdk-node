@@ -43,7 +43,6 @@ import {
   ListAliasesResponse,
   promisify,
   formatKeyValueData,
-  checkCollectionFields,
   checkCollectionName,
   sleep,
   formatCollectionSchema,
@@ -62,11 +61,18 @@ import {
   isVectorType,
   AddCollectionFieldReq,
   AddCollectionFieldsReq,
+  checkCollectionFieldsWithOptions,
   formatFieldSchema,
   formatFunctionSchema,
   AddCollectionFunctionReq,
   AlterCollectionFunctionReq,
   DropCollectionFunctionReq,
+  RefreshExternalCollectionReq,
+  RefreshExternalCollectionResponse,
+  GetRefreshExternalCollectionProgressReq,
+  GetRefreshExternalCollectionProgressResponse,
+  ListRefreshExternalCollectionJobsReq,
+  ListRefreshExternalCollectionJobsResponse,
 } from '../';
 
 /**
@@ -150,8 +156,19 @@ export class Collection extends Database {
       throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PARAMS);
     }
 
+    const isExternalCollection = !!data.external_source;
+    if (
+      isExternalCollection &&
+      ('auto_id' in data || fields.some(field => field.autoID))
+    ) {
+      throw new Error(ERROR_REASONS.CREATE_EXTERNAL_COLLECTION_AUTO_ID);
+    }
+    if (isExternalCollection && fields.some(field => field.is_primary_key)) {
+      throw new Error(ERROR_REASONS.CREATE_EXTERNAL_COLLECTION_PRIMARY_KEY);
+    }
+
     // Check if the fields are valid.
-    checkCollectionFields(fields);
+    checkCollectionFieldsWithOptions(fields, { isExternalCollection });
 
     // if num_partitions is set, validate it
     if (typeof num_partitions !== 'undefined') {
@@ -670,10 +687,7 @@ export class Collection extends Database {
       data.timeout || this.timeout
     );
 
-    if (
-      promise.status.error_code !== ErrorCode.SUCCESS ||
-      !promise.responses
-    ) {
+    if (promise.status.error_code !== ErrorCode.SUCCESS || !promise.responses) {
       return promise;
     }
 
@@ -1662,6 +1676,76 @@ export class Collection extends Database {
       this.channelPool,
       'DropCollectionFunction',
       req,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Trigger a data refresh for an external collection.
+   *
+   * @param {RefreshExternalCollectionReq} data - The request parameters.
+   * @param {string} data.collection_name - The external collection to refresh.
+   * @param {string} [data.external_source] - Optional new external source path.
+   * @param {string} [data.external_spec] - Optional new external spec configuration.
+   * @param {string} [data.db_name] - The database name.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<RefreshExternalCollectionResponse>} The refresh job response.
+   */
+  async refreshExternalCollection(
+    data: RefreshExternalCollectionReq
+  ): Promise<RefreshExternalCollectionResponse> {
+    checkCollectionName(data);
+
+    return await promisify(
+      this.channelPool,
+      'RefreshExternalCollection',
+      data,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Get the progress of an external collection refresh job.
+   *
+   * @param {GetRefreshExternalCollectionProgressReq} data - The request parameters.
+   * @param {number|string} data.job_id - The job ID returned by refreshExternalCollection().
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<GetRefreshExternalCollectionProgressResponse>} The refresh job progress response.
+   */
+  async getRefreshExternalCollectionProgress(
+    data: GetRefreshExternalCollectionProgressReq
+  ): Promise<GetRefreshExternalCollectionProgressResponse> {
+    if (!data || typeof data.job_id === 'undefined') {
+      throw new Error('The `job_id` property is missing.');
+    }
+
+    return await promisify(
+      this.channelPool,
+      'GetRefreshExternalCollectionProgress',
+      data,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * List external collection refresh jobs.
+   *
+   * @param {ListRefreshExternalCollectionJobsReq} data - The request parameters.
+   * @param {string} [data.collection_name] - Optional collection name filter.
+   * @param {string} [data.db_name] - Optional database name filter.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<ListRefreshExternalCollectionJobsResponse>} The refresh jobs response.
+   */
+  async listRefreshExternalCollectionJobs(
+    data: ListRefreshExternalCollectionJobsReq = {}
+  ): Promise<ListRefreshExternalCollectionJobsResponse> {
+    return await promisify(
+      this.channelPool,
+      'ListRefreshExternalCollectionJobs',
+      data,
       data.timeout || this.timeout
     );
   }

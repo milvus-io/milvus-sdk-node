@@ -5,12 +5,14 @@ import {
   isInvalidMessage,
   ERROR_REASONS,
   checkCollectionFields,
+  checkCollectionFieldsWithOptions,
   checkTimeParam,
   DataType,
   FieldType,
   checkCreateCollectionCompatibility,
   CreateCollectionReq,
   isVectorType,
+  MilvusClient,
 } from '../../milvus';
 
 describe('utils/validate', () => {
@@ -418,6 +420,201 @@ describe('utils/validate', () => {
       ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST
     );
   });
+
+  it('should allow external collection fields without primary key or vector field', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'external_id',
+        data_type: DataType.Int64,
+        external_field: 'row_id',
+      },
+      {
+        name: 'title',
+        data_type: DataType.VarChar,
+        max_length: 100,
+        external_field: 'title',
+      },
+    ];
+
+    expect(
+      checkCollectionFieldsWithOptions(fields, { isExternalCollection: true })
+    ).toBe(true);
+  });
+
+  it('should still validate external collection field type parameters', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'title',
+        data_type: DataType.VarChar,
+        external_field: 'title',
+      },
+    ];
+
+    expect(() =>
+      checkCollectionFieldsWithOptions(fields, { isExternalCollection: true })
+    ).toThrowError(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAX_LENGTH);
+  });
+
+  it('should throw an error if external collection enables auto id', async () => {
+    const milvusClient = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+
+    await expect(
+      milvusClient._createCollection({
+        collection_name: 'external_collection',
+        external_source: 's3://bucket/path',
+        auto_id: true,
+        fields: [
+          {
+            name: 'external_id',
+            data_type: DataType.Int64,
+            external_field: 'row_id',
+          },
+        ],
+      } as any)
+    ).rejects.toThrowError(ERROR_REASONS.CREATE_EXTERNAL_COLLECTION_AUTO_ID);
+
+    await expect(
+      milvusClient._createCollection({
+        collection_name: 'external_collection',
+        external_source: 's3://bucket/path',
+        fields: [
+          {
+            name: 'external_id',
+            data_type: DataType.Int64,
+            external_field: 'row_id',
+            autoID: true,
+          },
+        ],
+      })
+    ).rejects.toThrowError(ERROR_REASONS.CREATE_EXTERNAL_COLLECTION_AUTO_ID);
+  });
+
+  it('should throw an error if external collection defines primary key', async () => {
+    const milvusClient = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+
+    await expect(
+      milvusClient._createCollection({
+        collection_name: 'external_collection',
+        external_source: 's3://bucket/path',
+        fields: [
+          {
+            name: 'external_id',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+            external_field: 'row_id',
+          },
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 4,
+            external_field: 'vector',
+          },
+        ],
+      })
+    ).rejects.toThrowError(
+      ERROR_REASONS.CREATE_EXTERNAL_COLLECTION_PRIMARY_KEY
+    );
+  });
+
+  it('should call refresh external collection APIs with expected requests', async () => {
+    const grpcClient = {
+      RefreshExternalCollection: jest.fn((params, options, callback) =>
+        callback(null, {
+          status: { error_code: 'Success', reason: '' },
+          job_id: '42',
+        })
+      ),
+      GetRefreshExternalCollectionProgress: jest.fn(
+        (params, options, callback) =>
+          callback(null, {
+            status: { error_code: 'Success', reason: '' },
+            job_info: {
+              job_id: '42',
+              collection_name: 'external_collection',
+              state: 'RefreshCompleted',
+              progress: '100',
+              reason: '',
+              external_source: 's3://bucket/path',
+              start_time: '1',
+              end_time: '2',
+            },
+          })
+      ),
+      ListRefreshExternalCollectionJobs: jest.fn((params, options, callback) =>
+        callback(null, {
+          status: { error_code: 'Success', reason: '' },
+          jobs: [],
+        })
+      ),
+    };
+    const channelPool = {
+      acquire: jest.fn().mockResolvedValue(grpcClient),
+      release: jest.fn(),
+    };
+    const milvusClient = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    (milvusClient as any).channelPool = channelPool;
+
+    await expect(
+      milvusClient.refreshExternalCollection({} as any)
+    ).rejects.toThrowError(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+
+    const refresh = await milvusClient.refreshExternalCollection({
+      db_name: 'default',
+      collection_name: 'external_collection',
+      external_source: 's3://bucket/path',
+      external_spec: '{"format":"parquet"}',
+    });
+    expect(refresh.job_id).toBe('42');
+    expect(grpcClient.RefreshExternalCollection).toHaveBeenCalledWith(
+      {
+        db_name: 'default',
+        collection_name: 'external_collection',
+        external_source: 's3://bucket/path',
+        external_spec: '{"format":"parquet"}',
+      },
+      expect.any(Object),
+      expect.any(Function)
+    );
+
+    await expect(
+      milvusClient.getRefreshExternalCollectionProgress({} as any)
+    ).rejects.toThrowError('The `job_id` property is missing.');
+
+    const progress = await milvusClient.getRefreshExternalCollectionProgress({
+      job_id: 42,
+    });
+    expect(progress.job_info.collection_name).toBe('external_collection');
+    expect(
+      grpcClient.GetRefreshExternalCollectionProgress
+    ).toHaveBeenCalledWith(
+      { job_id: 42 },
+      expect.any(Object),
+      expect.any(Function)
+    );
+
+    await milvusClient.listRefreshExternalCollectionJobs({
+      db_name: 'default',
+      collection_name: 'external_collection',
+    });
+    expect(grpcClient.ListRefreshExternalCollectionJobs).toHaveBeenCalledWith(
+      {
+        db_name: 'default',
+        collection_name: 'external_collection',
+      },
+      expect.any(Object),
+      expect.any(Function)
+    );
+  });
+
   it(`should return true for a bigint input`, () => {
     expect(checkTimeParam(BigInt(123))).toBe(true);
   });

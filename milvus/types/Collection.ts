@@ -70,6 +70,7 @@ export type FieldSchema = {
   is_clustering_key?: boolean;
   nullable?: boolean;
   is_function_output: boolean;
+  external_field?: string;
   fields?: FieldSchema[];
 } & Partial<Record<TypeParamKey, TypeParam>>;
 
@@ -87,6 +88,7 @@ export type FieldType = {
   autoID?: boolean;
   default_value?: number | string;
   nullable?: boolean;
+  external_field?: string;
   fields?: FieldType[];
 } & Partial<Record<TypeParamKey, TypeParam>>;
 
@@ -120,6 +122,10 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   properties?: Properties; // optional, collection properties
   db_name?: string; // optional, db name
   functions?: FunctionObject[]; // optionals, doc-in/doc-out functions
+  external_source?: string; // optional, external collection source path
+  external_spec?: string; // optional, external collection spec configuration
+  do_physical_backfill?: boolean; // optional, whether to physically backfill external data
+  file_resource_ids?: Array<number | string>; // optional, external file resource ids
 }
 
 export interface CreateCollectionWithFieldsReq extends BaseCreateCollectionReq {
@@ -234,6 +240,10 @@ export interface CollectionSchema {
   fields: FieldSchema[];
   functions: FunctionObject[];
   struct_array_fields: FieldSchema[];
+  external_source?: string;
+  external_spec?: string;
+  do_physical_backfill?: boolean;
+  file_resource_ids?: string[];
 }
 
 export interface DescribeCollectionResponse extends TimeStamp {
@@ -335,6 +345,52 @@ export interface DropCollectionFunctionReq extends collectionNameReq {
   collection_name: string; // required, collection name
   db_name?: string; // optional, db name
   function_name: string; // required, function name
+}
+
+export enum RefreshExternalCollectionState {
+  RefreshPending = 'RefreshPending',
+  RefreshInProgress = 'RefreshInProgress',
+  RefreshCompleted = 'RefreshCompleted',
+  RefreshFailed = 'RefreshFailed',
+}
+
+export interface RefreshExternalCollectionReq extends collectionNameReq {
+  external_source?: string; // optional, new external source path
+  external_spec?: string; // optional, new external spec configuration
+}
+
+export interface RefreshExternalCollectionResponse extends resStatusResponse {
+  job_id: string;
+}
+
+export interface GetRefreshExternalCollectionProgressReq extends GrpcTimeOut {
+  job_id: number | string;
+}
+
+export interface RefreshExternalCollectionJobInfo {
+  job_id: string;
+  collection_name: string;
+  state:
+    | RefreshExternalCollectionState
+    | keyof typeof RefreshExternalCollectionState;
+  progress: string;
+  reason: string;
+  external_source: string;
+  start_time: string;
+  end_time: string;
+}
+
+export interface GetRefreshExternalCollectionProgressResponse extends resStatusResponse {
+  job_info: RefreshExternalCollectionJobInfo;
+}
+
+export interface ListRefreshExternalCollectionJobsReq extends GrpcTimeOut {
+  db_name?: string;
+  collection_name?: string;
+}
+
+export interface ListRefreshExternalCollectionJobsResponse extends resStatusResponse {
+  jobs: RefreshExternalCollectionJobInfo[];
 }
 
 export interface DescribeAliasResponse extends resStatusResponse {

@@ -19,6 +19,10 @@ export const ERROR_REASONS = {
     'The `max_length` property is missing',
   CREATE_COLLECTION_CHECK_BINARY_DIM:
     'The `dim` property of the Binary vector should be value multiples of 8.',
+  CREATE_EXTERNAL_COLLECTION_AUTO_ID:
+    'External collections do not support auto_id.',
+  CREATE_EXTERNAL_COLLECTION_PRIMARY_KEY:
+    'External collections do not support primary key.',
   COLLECTION_NAME_IS_REQUIRED: 'The `collection_name` property is missing.',
   COLLECTION_ID_IS_REQUIRED: 'The `collectionID` property is missing.',
   COLLECTION_PARTITION_NAME_ARE_REQUIRED:
@@ -62,7 +66,8 @@ export const ERROR_REASONS = {
     'Only non-primary key Int64 or VarChar field support partition key.',
   PARTITION_KEY_FIELD_MAXED_OUT: `Only ${MAX_PARTITION_KEY_FIELD_COUNT} field supports partition key. `,
   IDS_REQUIRED: 'The `ids` is missing or empty.',
-  NO_ANNS_FEILD_FOUND_IN_SEARCH: 'Target anns field not found, please check your search parameters.',
+  NO_ANNS_FEILD_FOUND_IN_SEARCH:
+    'Target anns field not found, please check your search parameters.',
   FUNCTION_SCHEMA_IS_REQUIRED: 'The `function` property is missing.',
   FUNCTION_NAME_IS_REQUIRED: 'The `function_name` property is missing.',
 };
