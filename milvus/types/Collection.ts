@@ -393,6 +393,97 @@ export interface ListRefreshExternalCollectionJobsResponse extends resStatusResp
   jobs: RefreshExternalCollectionJobInfo[];
 }
 
+export enum RestoreSnapshotState {
+  RestoreSnapshotNone = 'RestoreSnapshotNone',
+  RestoreSnapshotPending = 'RestoreSnapshotPending',
+  RestoreSnapshotExecuting = 'RestoreSnapshotExecuting',
+  RestoreSnapshotCompleted = 'RestoreSnapshotCompleted',
+  RestoreSnapshotFailed = 'RestoreSnapshotFailed',
+}
+
+export interface CreateSnapshotReq extends collectionNameReq {
+  snapshot_name: string;
+  description?: string;
+  compaction_protection_seconds?: number | string;
+}
+
+export interface DropSnapshotReq extends collectionNameReq {
+  snapshot_name: string;
+}
+
+export interface ListSnapshotsReq extends collectionNameReq {}
+
+export interface ListSnapshotsResponse extends resStatusResponse {
+  snapshots: string[];
+}
+
+export interface DescribeSnapshotReq extends collectionNameReq {
+  snapshot_name: string;
+}
+
+export interface DescribeSnapshotResponse extends resStatusResponse {
+  name: string;
+  description: string;
+  collection_name: string;
+  partition_names: string[];
+  create_ts: string;
+  s3_location: string;
+}
+
+export interface RestoreSnapshotReq extends GrpcTimeOut {
+  snapshot_name: string;
+  source_collection_name: string;
+  target_collection_name: string;
+  source_db_name?: string;
+  target_db_name?: string;
+}
+
+export interface RestoreSnapshotResponse extends resStatusResponse {
+  job_id: string;
+}
+
+export interface GetRestoreSnapshotStateReq extends GrpcTimeOut {
+  job_id: number | string;
+}
+
+export interface RestoreSnapshotJobInfo {
+  job_id: string;
+  snapshot_name: string;
+  db_name: string;
+  collection_name: string;
+  state: RestoreSnapshotState | keyof typeof RestoreSnapshotState;
+  progress: number;
+  reason: string;
+  start_time: string;
+  time_cost: string;
+}
+
+export interface GetRestoreSnapshotStateResponse extends resStatusResponse {
+  info: RestoreSnapshotJobInfo;
+}
+
+export interface ListRestoreSnapshotJobsReq extends GrpcTimeOut {
+  db_name?: string;
+  collection_name?: string;
+}
+
+export interface ListRestoreSnapshotJobsResponse extends resStatusResponse {
+  jobs: RestoreSnapshotJobInfo[];
+}
+
+export interface PinSnapshotDataReq extends collectionNameReq {
+  snapshot_name: string;
+  ttl_seconds?: number | string;
+}
+
+export interface PinSnapshotDataResponse extends resStatusResponse {
+  pin_id: string;
+}
+
+export interface UnpinSnapshotDataReq extends GrpcTimeOut {
+  pin_id: number | string;
+}
+
 export interface DescribeAliasResponse extends resStatusResponse {
   db_name: string;
   alias: string;
