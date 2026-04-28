@@ -12,6 +12,7 @@ const milvusClient = new MilvusClient({
   logLevel: 'info',
 });
 const COLLECTION_NAME = GENERATE_NAME();
+const VECTOR_TYPE_COLLECTION_NAME = GENERATE_NAME();
 
 const dbParam = {
   db_name: 'struct_DB',
@@ -133,6 +134,55 @@ const collectionParams = {
 
 const data = generateInsertData(collectionParams.fields, 5);
 
+const vectorTypeCollectionParams = {
+  collection_name: VECTOR_TYPE_COLLECTION_NAME,
+  consistency_level: 'Strong',
+  fields: [
+    {
+      name: 'id',
+      description: 'id field',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'array_of_vector_struct',
+      description: 'struct array field',
+      data_type: DataType.Array,
+      element_type: DataType.Struct,
+      max_capacity: 2,
+      fields: [
+        {
+          name: 'binary_vector_of_struct',
+          description: 'binary vector array field',
+          data_type: DataType.BinaryVector,
+          dim: 8,
+        },
+        {
+          name: 'float16_vector_of_struct',
+          description: 'float16 vector array field',
+          data_type: DataType.Float16Vector,
+          dim: 4,
+        },
+        {
+          name: 'bfloat16_vector_of_struct',
+          description: 'bfloat16 vector array field',
+          data_type: DataType.BFloat16Vector,
+          dim: 4,
+        },
+        {
+          name: 'int8_vector_of_struct',
+          description: 'int8 vector array field',
+          data_type: DataType.Int8Vector,
+          dim: 4,
+        },
+      ],
+    },
+  ],
+};
+
+const vectorTypeData = generateInsertData(vectorTypeCollectionParams.fields, 5);
+
 describe(`Struct API testing`, () => {
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
@@ -140,7 +190,12 @@ describe(`Struct API testing`, () => {
   });
 
   afterAll(async () => {
-    await milvusClient.dropCollection({ collection_name: COLLECTION_NAME });
+    await milvusClient
+      .dropCollection({ collection_name: COLLECTION_NAME })
+      .catch(() => undefined);
+    await milvusClient
+      .dropCollection({ collection_name: VECTOR_TYPE_COLLECTION_NAME })
+      .catch(() => undefined);
     await milvusClient.dropDatabase(dbParam);
   });
 
@@ -187,25 +242,6 @@ describe(`Struct API testing`, () => {
     );
     expect(structArrayFields[1]!.fields![0].dim).toEqual('4');
     expect(structArrayFields[1]!.fields![1].dataType).toEqual(DataType.Bool);
-
-    // expect(structArrayFields[1]!.fields![1].dataType).toEqual(
-    //   DataType.Float16Vector
-    // );
-    // expect(structArrayFields[1]!.fields![1].dim).toEqual('4');
-    // expect(structArrayFields[1]!.fields![2].dataType).toEqual(
-    //   DataType.Int8Vector
-    // );
-    // expect(structArrayFields[1]!.fields![2].dim).toEqual('4');
-    // expect(structArrayFields[1]!.fields![3].dataType).toEqual(DataType.Int64);
-    // expect(structArrayFields[1]!.fields![4].dataType).toEqual(DataType.Bool);
-    // expect(structArrayFields[1]!.fields![5].dataType).toEqual(DataType.Float);
-    // expect(structArrayFields[1]!.fields![6].dataType).toEqual(DataType.Double);
-    // expect(structArrayFields[1]!.fields![7].dataType).toEqual(DataType.VarChar);
-    // expect(structArrayFields[1]!.fields![7].max_length).toEqual('4');
-
-    // expect(vectorArrayFields.length).toBe(1);
-
-    // console.dir(describe.schema, { depth: null });
   });
 
   it(`insert vector array data should be successful`, async () => {
@@ -216,6 +252,113 @@ describe(`Struct API testing`, () => {
 
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(insert.succ_index.length).toEqual(data.length);
+  });
+
+  it(`struct vector field types should be queryable`, async () => {
+    const create = await milvusClient.createCollection(
+      vectorTypeCollectionParams
+    );
+    expect(create.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: VECTOR_TYPE_COLLECTION_NAME,
+    });
+    const structArrayField = describe.schema.fields.find(
+      (field: any) =>
+        field.data_type === 'Array' && field.element_type === 'Struct'
+    );
+
+    expect(structArrayField).toBeDefined();
+    expect(
+      structArrayField!.fields!.map((field: any) => field.dataType)
+    ).toEqual([
+      DataType.BinaryVector,
+      DataType.Float16Vector,
+      DataType.BFloat16Vector,
+      DataType.Int8Vector,
+    ]);
+    expect(
+      structArrayField!.fields!.map((field: any) => field.data_type)
+    ).toEqual([
+      'BinaryVector',
+      'Float16Vector',
+      'BFloat16Vector',
+      'Int8Vector',
+    ]);
+
+    const insert = await milvusClient.insert({
+      collection_name: VECTOR_TYPE_COLLECTION_NAME,
+      data: vectorTypeData,
+    });
+    expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(insert.succ_index.length).toEqual(vectorTypeData.length);
+
+    const indexes = await milvusClient.createIndex([
+      {
+        collection_name: VECTOR_TYPE_COLLECTION_NAME,
+        index_name: 'array_of_vector_struct_binary',
+        field_name: 'array_of_vector_struct[binary_vector_of_struct]',
+        metric_type: MetricType.HAMMING,
+        index_type: IndexType.AUTOINDEX,
+      },
+      {
+        collection_name: VECTOR_TYPE_COLLECTION_NAME,
+        index_name: 'array_of_vector_struct_float16',
+        field_name: 'array_of_vector_struct[float16_vector_of_struct]',
+        metric_type: MetricType.MAX_SIM,
+        index_type: IndexType.AUTOINDEX,
+      },
+      {
+        collection_name: VECTOR_TYPE_COLLECTION_NAME,
+        index_name: 'array_of_vector_struct_bfloat16',
+        field_name: 'array_of_vector_struct[bfloat16_vector_of_struct]',
+        metric_type: MetricType.MAX_SIM,
+        index_type: IndexType.AUTOINDEX,
+      },
+      {
+        collection_name: VECTOR_TYPE_COLLECTION_NAME,
+        index_name: 'array_of_vector_struct_int8',
+        field_name: 'array_of_vector_struct[int8_vector_of_struct]',
+        metric_type: MetricType.MAX_SIM,
+        index_type: IndexType.AUTOINDEX,
+      },
+    ]);
+    expect(indexes.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const load = await milvusClient.loadCollection({
+      collection_name: VECTOR_TYPE_COLLECTION_NAME,
+    });
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const query = await milvusClient.query({
+      collection_name: VECTOR_TYPE_COLLECTION_NAME,
+      filter: 'id > 0',
+      output_fields: ['array_of_vector_struct'],
+    });
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    query.data.forEach((item: any, index: number) => {
+      expect(item.array_of_vector_struct.length).toEqual(2);
+      item.array_of_vector_struct.forEach(
+        (vector: any, vectorIndex: number) => {
+          const expectedVector =
+            vectorTypeData[index].array_of_vector_struct[vectorIndex];
+
+          expect(vector.binary_vector_of_struct).toEqual(
+            expectedVector.binary_vector_of_struct
+          );
+          vector.float16_vector_of_struct.forEach((v: number, i: number) => {
+            expect(v).toBeCloseTo(expectedVector.float16_vector_of_struct[i]);
+          });
+          vector.bfloat16_vector_of_struct.forEach((v: number, i: number) => {
+            expect(v).toBeCloseTo(expectedVector.bfloat16_vector_of_struct[i]);
+          });
+          expect(vector.int8_vector_of_struct).toEqual(
+            Array.from(expectedVector.int8_vector_of_struct)
+          );
+        }
+      );
+    });
   });
 
   it(`create index should be successful`, async () => {

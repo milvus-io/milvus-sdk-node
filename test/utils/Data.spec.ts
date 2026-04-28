@@ -11,10 +11,51 @@ import {
   sparseRowsToBytes,
   int8VectorRowsToBytes,
   f32ArrayToBinaryBytes,
+  f32ArrayToInt8Bytes,
   processVectorData,
 } from '../../milvus';
 
 describe('utils/Data', () => {
+  const captureInsertParams = async (describeResponse: any, rows: any[]) => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    let insertParams: any;
+    (client as any).describeCollection = jest.fn().mockResolvedValue(
+      describeResponse
+    );
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({
+        Insert: (params: any, _options: any, cb: any) => {
+          insertParams = params;
+          cb(null, {
+            status: { error_code: ErrorCode.SUCCESS, reason: '' },
+            succ_index: [],
+            err_index: [],
+            acknowledged: true,
+            insert_cnt: String(rows.length),
+            delete_cnt: '0',
+            upsert_cnt: '0',
+            timestamp: '0',
+            IDs: {
+              int_id: { data: rows.map((_, i) => String(i + 1)) },
+              id_field: 'int_id',
+            },
+          });
+        },
+      }),
+      release: jest.fn(),
+    };
+
+    await client.insert({
+      collection_name: 'test_collection',
+      fields_data: rows,
+    });
+
+    return insertParams;
+  };
+
   const captureInsertField = async (
     vectorType: DataType,
     rows: any[],
@@ -153,6 +194,158 @@ describe('utils/Data', () => {
     expect(vectorField.vectors.int8_vector).toEqual(
       int8VectorRowsToBytes([rows[0], rows[2]] as any)
     );
+  });
+
+  it('should reject unsupported top-level vector array element types', async () => {
+    await expect(
+      captureInsertParams(
+        {
+          status: { error_code: ErrorCode.SUCCESS, reason: '' },
+          schema: {
+            enable_dynamic_field: false,
+            fields: [
+              {
+                name: 'id',
+                data_type: DataType.Int64,
+                is_primary_key: true,
+                autoID: false,
+                nullable: false,
+                element_type: DataType.None,
+              },
+              {
+                name: 'vectorArray',
+                data_type: DataType.ArrayOfVector,
+                element_type: DataType.VarChar,
+                dim: '4',
+                nullable: false,
+              },
+            ],
+          },
+          properties: [],
+        },
+        [{ id: 1, vectorArray: [['unsupported']] }]
+      )
+    ).rejects.toThrow(
+      `ArrayOfVector element type is not supported: ${DataType.VarChar}`
+    );
+  });
+
+  it('should encode top-level int8 vector arrays from vector rows and typed payloads', async () => {
+    const rows = [
+      { id: 1, vectorArray: [[1, -2, 3, -4], new Int8Array([5, -6, 7, -8])] },
+      { id: 2, vectorArray: new Int8Array([9, -10, 11, -12]) },
+    ];
+    const insertParams = await captureInsertParams(
+      {
+        status: { error_code: ErrorCode.SUCCESS, reason: '' },
+        schema: {
+          enable_dynamic_field: false,
+          fields: [
+            {
+              name: 'id',
+              data_type: DataType.Int64,
+              is_primary_key: true,
+              autoID: false,
+              nullable: false,
+              element_type: DataType.None,
+            },
+            {
+              name: 'vectorArray',
+              data_type: DataType.ArrayOfVector,
+              element_type: DataType.Int8Vector,
+              dim: '4',
+              nullable: false,
+            },
+          ],
+        },
+        properties: [],
+      },
+      rows
+    );
+
+    const vectorField = insertParams.fields_data.find(
+      (field: any) => field.field_name === 'vectorArray'
+    );
+
+    expect(vectorField.vectors.vector_array.data).toEqual([
+      {
+        dim: 4,
+        int8_vector: int8VectorRowsToBytes([
+          [1, -2, 3, -4],
+          new Int8Array([5, -6, 7, -8]),
+        ]),
+      },
+      {
+        dim: 4,
+        int8_vector: Buffer.from(
+          new Int8Array([9, -10, 11, -12]).buffer
+        ),
+      },
+    ]);
+  });
+
+  it('should encode struct int8 vector arrays from number arrays and typed arrays', async () => {
+    const rows = [
+      {
+        id: 1,
+        structArray: [
+          { vector: [1, -2, 3, -4] },
+          { vector: new Int8Array([5, -6, 7, -8]) },
+        ],
+      },
+    ];
+    const insertParams = await captureInsertParams(
+      {
+        status: { error_code: ErrorCode.SUCCESS, reason: '' },
+        schema: {
+          enable_dynamic_field: false,
+          fields: [
+            {
+              name: 'id',
+              data_type: DataType.Int64,
+              is_primary_key: true,
+              autoID: false,
+              nullable: false,
+              element_type: DataType.None,
+            },
+            {
+              name: 'structArray',
+              data_type: DataType.Array,
+              element_type: DataType.Struct,
+              max_capacity: '2',
+              nullable: false,
+              fields: [
+                {
+                  name: 'vector',
+                  data_type: DataType.Int8Vector,
+                  dim: '4',
+                  nullable: false,
+                },
+              ],
+            },
+          ],
+        },
+        properties: [],
+      },
+      rows
+    );
+
+    const structField = insertParams.fields_data.find(
+      (field: any) => field.field_name === 'structArray'
+    );
+    const vectorField = structField.struct_arrays.fields.find(
+      (field: any) => field.field_name === 'vector'
+    );
+
+    expect(vectorField.vectors.vector_array.data).toEqual([
+      {
+        dim: 4,
+        int8_vector: int8VectorRowsToBytes([
+          [1, -2, 3, -4],
+          new Int8Array([5, -6, 7, -8]),
+        ]),
+      },
+    ]);
   });
 
   it('should encode all-null nullable vectors with valid_data and empty payload', async () => {
@@ -747,6 +940,21 @@ describe('utils/Data', () => {
         const result = buildFieldData(row, field, transformers);
         expect(customTransformer).toHaveBeenCalledWith([1.1, 2.2, 3.3]);
         expect(result).toBe('transformed');
+      });
+    });
+
+    describe('ArrayOfVector type', () => {
+      it('should handle Float16Vector with non-float32 input', () => {
+        const row = { vectorArray: new Uint8Array([1, 2, 3, 4]) };
+        const field = {
+          type: DataType.ArrayOfVector,
+          elementType: DataType.Float16Vector,
+          name: 'vectorArray',
+          fieldMap: new Map(),
+        } as _Field;
+
+        const result = buildFieldData(row, field);
+        expect(result).toEqual(new Uint8Array([1, 2, 3, 4]));
       });
     });
 

@@ -143,6 +143,7 @@ describe('utils/Schema', () => {
     expect(convertToDataType('FloatVector')).toEqual(DataType.FloatVector);
     expect(convertToDataType('Bool')).toEqual(DataType.Bool);
     expect(convertToDataType('Array')).toEqual(DataType.Array);
+    expect(convertToDataType('ArrayOfVector')).toEqual(DataType.ArrayOfVector);
     expect(convertToDataType('JSON')).toEqual(DataType.JSON);
   });
 
