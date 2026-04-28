@@ -69,6 +69,18 @@ jobs:
             sleep 2
           done
 
+      - name: Wait for Milvus to be ready
+        run: |
+          echo "Waiting for Milvus..."
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:9091/healthz > /dev/null 2>&1; then
+              echo "Milvus is ready"
+              break
+            fi
+            echo "Attempt $i/90..."
+            sleep 2
+          done
+
       - name: Install dependencies
         run: yarn
 
