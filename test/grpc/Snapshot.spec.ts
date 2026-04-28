@@ -52,6 +52,67 @@ describe('Snapshot API', () => {
     });
   });
 
+  it('validates required snapshot request fields before sending RPCs', async () => {
+    await expect(milvusClient.createSnapshot({} as any)).rejects.toThrow(
+      'The `collection_name` property is missing.'
+    );
+
+    await expect(
+      milvusClient.createSnapshot({ collection_name: collectionName } as any)
+    ).rejects.toThrow('The `snapshot_name` property is missing.');
+
+    await expect(milvusClient.dropSnapshot({} as any)).rejects.toThrow(
+      'The `collection_name` property is missing.'
+    );
+
+    await expect(
+      milvusClient.dropSnapshot({ collection_name: collectionName } as any)
+    ).rejects.toThrow('The `snapshot_name` property is missing.');
+
+    await expect(milvusClient.listSnapshots({} as any)).rejects.toThrow(
+      'The `collection_name` property is missing.'
+    );
+
+    await expect(milvusClient.describeSnapshot({} as any)).rejects.toThrow(
+      'The `collection_name` property is missing.'
+    );
+
+    await expect(
+      milvusClient.describeSnapshot({ collection_name: collectionName } as any)
+    ).rejects.toThrow('The `snapshot_name` property is missing.');
+
+    await expect(milvusClient.restoreSnapshot({} as any)).rejects.toThrow(
+      'The `snapshot_name` property is missing.'
+    );
+
+    await expect(
+      milvusClient.restoreSnapshot({ snapshot_name: snapshotName } as any)
+    ).rejects.toThrow('The `source_collection_name` property is missing.');
+
+    await expect(
+      milvusClient.restoreSnapshot({
+        snapshot_name: snapshotName,
+        source_collection_name: collectionName,
+      } as any)
+    ).rejects.toThrow('The `target_collection_name` property is missing.');
+
+    await expect(
+      milvusClient.getRestoreSnapshotState({} as any)
+    ).rejects.toThrow('The `job_id` property is missing.');
+
+    await expect(milvusClient.pinSnapshotData({} as any)).rejects.toThrow(
+      'The `collection_name` property is missing.'
+    );
+
+    await expect(
+      milvusClient.pinSnapshotData({ collection_name: collectionName } as any)
+    ).rejects.toThrow('The `snapshot_name` property is missing.');
+
+    await expect(milvusClient.unpinSnapshotData({} as any)).rejects.toThrow(
+      'The `pin_id` property is missing.'
+    );
+  });
+
   it('creates, lists, describes, pins, unpins, restores, and tracks a snapshot', async () => {
     const create = await milvusClient.createSnapshot({
       snapshot_name: snapshotName,
@@ -106,5 +167,9 @@ describe('Snapshot API', () => {
     });
     expect(jobs.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(jobs.jobs.some(job => job.job_id === restore.job_id)).toBe(true);
+
+    const allJobs = await milvusClient.listRestoreSnapshotJobs();
+    expect(allJobs.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(allJobs.jobs.some(job => job.job_id === restore.job_id)).toBe(true);
   });
 });
