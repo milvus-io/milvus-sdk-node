@@ -1140,6 +1140,21 @@ export class Data extends Collection {
       return acc;
     }, []);
 
+    if (promise.element_indices && promise.element_indices.length > 0) {
+      if (promise.element_indices.length !== results.length) {
+        throw new Error(
+          `element_indices length (${promise.element_indices.length}) != query result length (${results.length})`
+        );
+      }
+
+      results = promise.element_indices.flatMap((elementIndex, i) =>
+        elementIndex.indices.data.map(elementOffset => ({
+          ...results[i],
+          offset: elementOffset,
+        }))
+      );
+    }
+
     return {
       status: promise.status,
       data: results,

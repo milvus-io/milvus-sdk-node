@@ -12,6 +12,7 @@ import {
   SparseVectorDic,
   SparseFloatVector,
   Int8Vector,
+  FieldData,
 } from '../';
 
 // Highlighter types
@@ -160,28 +161,30 @@ export type HybridSearchReq = Omit<
   rerank?: RerankerObj | FunctionObject | FunctionScore;
 };
 
+export interface SearchFieldData {
+  type: string;
+  field_name: string;
+  field_id: number;
+  field: 'vectors' | 'scalars';
+  vectors?: {
+    dim: string;
+    data: 'float_vector' | 'binary_vector';
+    float_vector?: {
+      data: number[];
+    };
+    binary_vector?: Buffer;
+  };
+  scalars: {
+    [x: string]: any;
+    data: string;
+  };
+}
+
 // search api response type
 export interface SearchRes extends resStatusResponse {
   results: {
     top_k: number;
-    fields_data: {
-      type: string;
-      field_name: string;
-      field_id: number;
-      field: 'vectors' | 'scalars';
-      vectors?: {
-        dim: string;
-        data: 'float_vector' | 'binary_vector';
-        float_vector?: {
-          data: number[];
-        };
-        binary_vector?: Buffer;
-      };
-      scalars: {
-        [x: string]: any;
-        data: string;
-      };
-    }[];
+    fields_data: SearchFieldData[];
     scores: number[];
     ids: {
       int_id?: {
@@ -195,7 +198,10 @@ export interface SearchRes extends resStatusResponse {
     num_queries: number;
     topks: number[];
     output_fields: string[];
-    group_by_field_value: string;
+    group_by_field_value?: SearchFieldData | null;
+    group_by_field_values?: SearchFieldData[];
+    element_indices?: { data: number[] | string[] };
+    primary_field_name?: string;
     recalls: number[];
     search_iterator_v2_results?: Record<string, any>;
     _search_iterator_v2_results?: string;
@@ -235,6 +241,8 @@ export interface SearchResultData {
   [x: string]: any;
   score: number;
   id: string;
+  offset?: number | string;
+  group_by_field_values?: Record<string, FieldData>;
   highlight?: HighlightResult;
 }
 

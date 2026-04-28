@@ -13,6 +13,7 @@ import {
   FieldSchema,
   PlaceholderType,
   SearchData,
+  PlaceholderType as PlaceholderTypeEnum,
 } from '..';
 
 /**
@@ -291,9 +292,11 @@ export const bytesToSparseRow = (bufferData: Buffer): SparseFloatVector => {
 export const buildPlaceholderGroupBytes = (
   milvusProto: Root,
   data: [SearchData] | SearchData[],
-  field: FieldSchema
+  field: FieldSchema,
+  placeholderType?: PlaceholderTypeEnum
 ) => {
-  const { is_function_output, _placeholderType } = field as any;
+  const { is_function_output } = field as any;
+  const _placeholderType = placeholderType || (field as any)._placeholderType;
   // create placeholder_group value
   let bytes;
 

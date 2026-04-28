@@ -334,8 +334,36 @@ export const buildSearchRequest = (
     if ((!ids || ids.length === 0) && !data) {
       throw new Error('Search data is required');
     }
+    const metricType = annsField.index_params?.find(
+      param => param.key === 'metric_type'
+    )?.value;
+    const isPlainStructVectorMetric =
+      metricType !== undefined && !String(metricType).startsWith('MAX_SIM');
+    const isEmbeddingListPlaceholder = [
+      PlaceholderType.EmbListFloatVector,
+      PlaceholderType.EmbListBinaryVector,
+      PlaceholderType.EmbListFloat16Vector,
+      PlaceholderType.EmbListBFloat16Vector,
+      PlaceholderType.EmbListSparseFloatVector,
+      PlaceholderType.EmbListInt8Vector,
+    ].includes((annsField as any)._placeholderType);
+    const isEmbeddingListData =
+      isEmbeddingListPlaceholder &&
+      !isPlainStructVectorMetric &&
+      Array.isArray(data) &&
+      Array.isArray((data as any)[0]);
+    const placeholderType = (annsField as any).is_function_output
+      ? (annsField as any)._placeholderType
+      : isEmbeddingListData
+        ? (annsField as any)._placeholderType
+        : annsField.dataType || DataTypeMap[annsField.data_type];
     const searchData =
-      ids && ids.length > 0 ? [] : formatSearchData(data!, annsField);
+      ids && ids.length > 0
+        ? []
+        : formatSearchData(data!, {
+          ...annsField,
+          _placeholderType: placeholderType,
+        } as FieldSchema);
 
     const request: FormatedSearchRequest = {
       collection_name: params.collection_name,
@@ -362,7 +390,8 @@ export const buildSearchRequest = (
       request.placeholder_group = buildPlaceholderGroupBytes(
         milvusProto,
         searchData,
-        annsField
+        annsField,
+        placeholderType
       );
     }
 
@@ -473,9 +502,20 @@ export const formatSearchResult = (
   const { round_decimal } = options;
   // build final results array
   const results: any[] = [];
-  const { topks, scores, fields_data, highlight_results } = searchRes.results;
+  const {
+    topks,
+    scores,
+    fields_data,
+    highlight_results,
+    element_indices,
+    group_by_field_values,
+  } = searchRes.results;
+  const elementOffsets = element_indices?.data;
   // build fields data map
   const fieldsDataMap = buildFieldDataMap(fields_data, options.transformers);
+  const groupByFieldValuesMap = group_by_field_values?.length
+    ? buildFieldDataMap(group_by_field_values, options.transformers)
+    : undefined;
   // build output name array
   const output_fields = [
     ...(!!searchRes.results.output_fields?.length
@@ -510,6 +550,17 @@ export const formatSearchResult = (
             : formatNumberPrecision(score, round_decimal);
 
         const result: any = { score: fixedScore };
+
+        if (elementOffsets && elementOffsets.length > 0) {
+          result.offset = elementOffsets[absoluteIndex];
+        }
+
+        if (groupByFieldValuesMap) {
+          result.group_by_field_values = {};
+          groupByFieldValuesMap.forEach((data, fieldName) => {
+            result.group_by_field_values[fieldName] = data[absoluteIndex];
+          });
+        }
 
         // Get ID - Assuming ID field name is known or included in output_fields
         // Example: const idFieldName = collectionInfo.schema.primary_field_name;
