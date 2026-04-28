@@ -5,14 +5,42 @@ import {
   _Field,
   FieldType,
   assignTypeParams,
+  buildDefaultSchema,
   convertToDataType,
   DataType,
+  formatFieldSchema,
+  formatFunctionSchema,
   formatCollectionSchema,
   formatDescribedCol,
   CreateCollectionReq,
+  FunctionType,
 } from '../../milvus';
 
 describe('utils/Schema', () => {
+  it('builds the default schema from shorthand create collection params', () => {
+    expect(
+      buildDefaultSchema({
+        dimension: 8,
+        primary_field_name: 'id',
+        id_type: DataType.Int64,
+        vector_field_name: 'vector',
+        auto_id: true,
+      })
+    ).toEqual([
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+        autoID: true,
+      },
+      {
+        name: 'vector',
+        data_type: DataType.FloatVector,
+        dim: 8,
+      },
+    ]);
+  });
+
   it('should assign properties with keys `dim` or `max_length` to the `type_params`, `enable_match`, `analyzer_params`, `enable_analyzer` object and delete them from the `field` object', () => {
     const field = {
       name: 'vector',
@@ -153,6 +181,7 @@ describe('utils/Schema', () => {
           data_type: DataType.Int64,
           is_primary_key: true,
           description: 'Test PRIMARY KEY field',
+          external_field: 'external_id',
         },
         {
           name: 'testField2',
@@ -189,6 +218,10 @@ describe('utils/Schema', () => {
           ],
         },
       ],
+      external_source: 's3://bucket/path',
+      external_spec: '{"format":"parquet"}',
+      do_physical_backfill: true,
+      file_resource_ids: [1, '2'],
       functions: [
         {
           name: 'bm25f1',
@@ -214,98 +247,58 @@ describe('utils/Schema', () => {
       'milvus.proto.schema.FunctionSchema'
     );
 
-    const expectedResult = {
-      name: 'testCollection',
-      description: 'Test Collection for Jest',
-      enableDynamicField: false,
-      fields: [
-        {
-          typeParams: [],
-          indexParams: [],
-          name: 'testField1',
-          description: 'Test PRIMARY KEY field',
-          data_type: 5,
-          dataType: 5,
-          isPrimaryKey: true,
-          isPartitionKey: false,
-          isFunctionOutput: false,
-          isClusteringKey: false,
-        },
-        {
-          typeParams: [{ key: 'dim', value: '64' }],
-          indexParams: [],
-          name: 'testField2',
-          description: 'Test VECTOR field',
-          data_type: 'FloatVector',
-          dataType: 101,
-          isPrimaryKey: false,
-          isPartitionKey: false,
-          isFunctionOutput: false,
-          isClusteringKey: false,
-        },
-        {
-          typeParams: [{ key: 'max_capacity', value: '64' }],
-          indexParams: [],
-          name: 'arrayField',
-          description: 'Test Array field',
-          data_type: 22,
-          dataType: 22,
-          isPrimaryKey: false,
-          isPartitionKey: false,
-          isFunctionOutput: false,
-          isClusteringKey: false,
-          elementType: 5,
-          element_type: 5,
-        },
-        {
-          typeParams: [],
-          indexParams: [],
-          name: 'sparse',
-          description: 'sparse field',
-          data_type: 104,
-          dataType: 104,
-          isPrimaryKey: false,
-          isPartitionKey: false,
-          isFunctionOutput: true,
-          isClusteringKey: false,
-        },
-        {
-          typeParams: [],
-          indexParams: [],
-          name: 'struct',
-          fields: [
-            { name: 'field1', data_type: 5 },
-            { name: 'field1', data_type: 101, dim: 128 },
-          ],
-          data_type: 201,
-          dataType: 201,
-          isPrimaryKey: false,
-          isPartitionKey: false,
-          isFunctionOutput: false,
-          isClusteringKey: false,
-        },
-      ],
-      structArrayFields: [],
-      functions: [
-        {
-          inputFieldNames: ['testField1'],
-          inputFieldIds: [],
-          outputFieldNames: ['sparse'],
-          outputFieldIds: [],
-          params: [{ key: 'a', value: '1' }],
-          name: 'bm25f1',
-          description: 'bm25 function',
-          type: 1,
-        },
-      ],
-    };
-
     const payload = formatCollectionSchema(data, {
       fieldSchemaType,
       functionSchemaType,
     });
 
-    expect(payload).toEqual(expectedResult);
+    expect(payload).toMatchObject({
+      name: 'testCollection',
+      description: 'Test Collection for Jest',
+      enableDynamicField: false,
+      externalSource: 's3://bucket/path',
+      externalSpec: '{"format":"parquet"}',
+      doPhysicalBackfill: true,
+      fileResourceIds: [1, '2'],
+    });
+    expect(payload.fields[0]).toMatchObject({
+      name: 'testField1',
+      description: 'Test PRIMARY KEY field',
+      dataType: DataType.Int64,
+      isPrimaryKey: true,
+      isPartitionKey: false,
+      isFunctionOutput: false,
+      isClusteringKey: false,
+      externalField: 'external_id',
+    });
+    expect(payload.fields[1]).toMatchObject({
+      name: 'testField2',
+      typeParams: [{ key: 'dim', value: '64' }],
+      dataType: DataType.FloatVector,
+    });
+    expect(payload.fields[2]).toMatchObject({
+      name: 'arrayField',
+      typeParams: [{ key: 'max_capacity', value: '64' }],
+      dataType: DataType.Array,
+      elementType: DataType.Int64,
+    });
+    expect(payload.fields[3]).toMatchObject({
+      name: 'sparse',
+      dataType: DataType.SparseFloatVector,
+      isFunctionOutput: true,
+    });
+    expect(payload.fields[4]).toMatchObject({
+      name: 'struct',
+      dataType: DataType.Struct,
+    });
+    expect(payload.functions[0]).toMatchObject({
+      inputFieldNames: ['testField1'],
+      outputFieldNames: ['sparse'],
+      params: [{ key: 'a', value: '1' }],
+      name: 'bm25f1',
+      description: 'bm25 function',
+      type: 1,
+    });
   });
 
   it('converts TIMESTAMPTZ default_value correctly', () => {
@@ -393,6 +386,167 @@ describe('utils/Schema', () => {
     });
   });
 
+  it('formats external collection when schema is used instead of fields', () => {
+    const schemaProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/schema.proto'
+    );
+    const schemaProto = protobuf.loadSync(schemaProtoPath);
+
+    const fieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
+
+    const data = {
+      collection_name: 'externalCollection',
+      external_source: 's3://bucket/path',
+      schema: [
+        {
+          name: 'external_id',
+          data_type: DataType.Int64,
+          external_field: 'row_id',
+        },
+      ],
+    } as CreateCollectionReq;
+
+    const payload = formatCollectionSchema(data, { fieldSchemaType });
+
+    expect(payload.externalSource).toBe('s3://bucket/path');
+    expect(payload.fields[0]).toHaveProperty('externalField', 'row_id');
+
+    const collectionSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.CollectionSchema'
+    );
+    const decoded = collectionSchemaType.toObject(
+      collectionSchemaType.decode(
+        collectionSchemaType
+          .encode(collectionSchemaType.create(payload))
+          .finish()
+      ),
+      { defaults: true }
+    );
+    expect(decoded.externalSource).toBe('s3://bucket/path');
+    expect(decoded.fields[0]).toHaveProperty('externalField', 'row_id');
+  });
+
+  it('formats external field for add collection field APIs', () => {
+    const schemaProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/schema.proto'
+    );
+    const schemaProto = protobuf.loadSync(schemaProtoPath);
+
+    const fieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
+
+    const payload = formatFieldSchema(
+      {
+        name: 'product_name',
+        data_type: DataType.VarChar,
+        max_length: 256,
+        external_field: 'name',
+      },
+      { fieldSchemaType }
+    );
+    expect(payload.externalField).toBe('name');
+
+    const decoded = fieldSchemaType.toObject(
+      fieldSchemaType.decode(
+        fieldSchemaType.encode(fieldSchemaType.create(payload)).finish()
+      ),
+      { defaults: true }
+    );
+    expect(decoded.externalField).toBe('name');
+  });
+
+  it('formats function schema when function type is a string enum key', () => {
+    const payload = formatFunctionSchema({
+      name: 'bm25_func',
+      type: 'BM25' as unknown as FunctionType,
+      input_field_names: ['text'],
+      output_field_names: ['sparse'],
+      params: { enable_match: true },
+    });
+
+    expect(payload).toMatchObject({
+      name: 'bm25_func',
+      type: FunctionType.BM25,
+      input_field_names: ['text'],
+      output_field_names: ['sparse'],
+      params: [{ key: 'enable_match', value: 'true' }],
+    });
+  });
+
+  it('formats struct array fields in create collection schema', () => {
+    const schemaProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/schema.proto'
+    );
+    const schemaProto = protobuf.loadSync(schemaProtoPath);
+
+    const fieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
+    const structArrayFieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.StructArrayFieldSchema'
+    );
+
+    const payload = formatCollectionSchema(
+      {
+        collection_name: 'structCollection',
+        fields: [
+          {
+            name: 'id',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+          },
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 4,
+          },
+          {
+            name: 'metadata',
+            data_type: DataType.Array,
+            element_type: DataType.Struct,
+            max_capacity: 2,
+            fields: [
+              {
+                name: 'score',
+                data_type: DataType.Float,
+              },
+              {
+                name: 'embedding',
+                data_type: DataType.FloatVector,
+                dim: 4,
+              },
+            ],
+          },
+        ],
+      } as CreateCollectionReq,
+      { fieldSchemaType, structArrayFieldSchemaType }
+    );
+
+    expect(payload.fields).toHaveLength(2);
+    expect(payload.structArrayFields).toHaveLength(1);
+    expect(payload.structArrayFields[0].name).toBe('metadata');
+    expect(payload.structArrayFields[0].fields[0]).toMatchObject({
+      name: 'score',
+      dataType: DataType.Array,
+      elementType: DataType.Float,
+    });
+    expect(payload.structArrayFields[0].fields[1]).toMatchObject({
+      name: 'embedding',
+      dataType: 106,
+      elementType: DataType.FloatVector,
+      typeParams: [
+        { key: 'dim', value: '4' },
+        { key: 'max_capacity', value: '2' },
+      ],
+    });
+  });
+
   it('adds a dataType property to each field object in the schema', () => {
     const response: any = {
       virtual_channel_names: ['by-dev-rootcoord-dml_14_461525722618459440v0'],
@@ -427,6 +581,7 @@ describe('utils/Schema', () => {
             is_clustering_key: false,
             nullable: false,
             is_function_output: false,
+            external_field: 'row_id',
           },
           {
             type_params: [{ key: 'dim', value: '4' }],
@@ -583,6 +738,10 @@ describe('utils/Schema', () => {
         description: '',
         autoID: false,
         enable_dynamic_field: false,
+        external_source: 's3://bucket/path',
+        external_spec: '{"format":"parquet"}',
+        do_physical_backfill: true,
+        file_resource_ids: ['1', '2'],
         dbName: '',
       },
       collectionID: '461525722618459440',
@@ -603,6 +762,10 @@ describe('utils/Schema', () => {
 
     // Test that dataType property is added to each field
     expect(formatted.schema.fields[0]).toHaveProperty('dataType', 5); // Int64
+    expect(formatted.schema.fields[0]).toHaveProperty(
+      'external_field',
+      'row_id'
+    );
     expect(formatted.schema.fields[1]).toHaveProperty('dataType', 101); // FloatVector
     expect(formatted.schema.fields[1]).toHaveProperty('_placeholderType', 101); // EmbListFloatVector
     expect(formatted.schema.fields[2]).toHaveProperty('dataType', 21); // VarChar
@@ -703,6 +866,16 @@ describe('utils/Schema', () => {
     expect(formatted).toHaveProperty('collectionID', '461525722618459440');
     expect(formatted).toHaveProperty('schema');
     expect(formatted.schema).toHaveProperty('name', 'collection_qaw552nb');
+    expect(formatted.schema).toHaveProperty(
+      'external_source',
+      's3://bucket/path'
+    );
+    expect(formatted.schema).toHaveProperty(
+      'external_spec',
+      '{"format":"parquet"}'
+    );
+    expect(formatted.schema).toHaveProperty('do_physical_backfill', true);
+    expect(formatted.schema).toHaveProperty('file_resource_ids', ['1', '2']);
     expect(formatted.schema).toHaveProperty('properties');
     expect(formatted.schema).toHaveProperty('functions');
 

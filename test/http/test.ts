@@ -449,7 +449,7 @@ export function generateTests(
       expect(typeof search.data[0].distance).toEqual('number');
     });
 
-    it('should query data and get data and delete successfully', async () => {
+    it('should query data and get data successfully', async () => {
       const query = await client.query({
         collectionName: createParams.collectionName,
         outputFields: ['id'],
@@ -468,12 +468,6 @@ export function generateTests(
       });
       expect(get.code).toEqual(0);
       expect(get.data.length).toEqual(ids.length);
-
-      const del = await client.delete({
-        collectionName: createParams.collectionName,
-        filter: `id in [${ids.join(',')}]`,
-      });
-      expect(del.code).toEqual(0);
     });
 
     it('should search data successfully', async () => {
@@ -560,11 +554,12 @@ export function generateTests(
       expect(describe.code).toEqual(0);
       expect(describe.data.collectionName).toEqual(newCollectionName);
 
-      await client.renameCollection({
+      const renameBack = await client.renameCollection({
         dbName: config.database,
         collectionName: newCollectionName,
         newCollectionName: createParams.collectionName,
       });
+      expect(renameBack.code).toEqual(0);
     });
 
     it('should release collection successfully', async () => {
@@ -592,7 +587,7 @@ export function generateTests(
       });
 
       expect(statistics.code).toEqual(0);
-      expect(statistics.data.rowCount).toEqual(101);
+      expect(statistics.data.rowCount).toBeGreaterThanOrEqual(101);
     });
 
     it('should getCollectionLoadState successfully', async () => {

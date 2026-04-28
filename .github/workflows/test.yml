@@ -51,10 +51,15 @@ jobs:
           services:
             standalone:
               environment:
+                MQ_TYPE: rocksmq
                 MILVUS_OPENAI_API_KEY: ${MILVUS_OPENAI_API_KEY}
           EOF
 
+          mkdir -p volumes/etcd volumes/minio volumes/milvus
+          chmod -R 777 volumes
+
           docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+          docker compose -f docker-compose.yml -f docker-compose.override.yml ps
 
       - name: Wait for MinIO to be ready
         run: |
@@ -62,11 +67,42 @@ jobs:
           for i in $(seq 1 30); do
             if curl -sf http://localhost:9000/minio/health/live > /dev/null 2>&1; then
               echo "MinIO is ready"
-              break
+              exit 0
             fi
             echo "Attempt $i/30..."
             sleep 2
           done
+          echo "MinIO did not become ready"
+          docker compose -f docker-compose.yml -f docker-compose.override.yml ps
+          docker logs milvus-minio
+          exit 1
+
+      - name: Wait for Milvus to be ready
+        run: |
+          echo "Waiting for Milvus..."
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:9091/healthz > /dev/null 2>&1 && timeout 1 bash -c '</dev/tcp/127.0.0.1/19530' > /dev/null 2>&1; then
+              echo "Milvus is ready"
+              exit 0
+            fi
+            echo "Attempt $i/90..."
+            if [ $((i % 10)) -eq 0 ]; then
+              docker compose -f docker-compose.yml -f docker-compose.override.yml ps
+            fi
+            sleep 2
+          done
+          echo "Milvus did not become ready"
+          docker compose -f docker-compose.yml -f docker-compose.override.yml ps
+          docker logs milvus-standalone
+          exit 1
+
+      - name: Dump Milvus logs on failure
+        if: failure()
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.override.yml ps
+          docker logs milvus-standalone
+          docker logs milvus-etcd
+          docker logs milvus-minio
 
       - name: Install dependencies
         run: yarn
