@@ -407,15 +407,23 @@ export const buildFieldData = (
             const dataArray = structField.data[rowIndex!] || [];
             structField.data[rowIndex!] = dataArray;
 
-            const isStructVectorField =
-              VectorDataTypes.includes(structField.type) ||
-              (structField.type === DataType.ArrayOfVector &&
-                VectorDataTypes.includes(structField.elementType!));
-
-            if (isStructVectorField) {
+            if (VectorDataTypes.includes(structField.type)) {
               (dataArray as FieldData[]).push(
                 ...(Array.isArray(fieldData) ? fieldData : [fieldData])
               );
+            } else if (
+              structField.type === DataType.ArrayOfVector &&
+              (structField.elementType === DataType.FloatVector ||
+                structField.elementType === DataType.BinaryVector)
+            ) {
+              (dataArray as FieldData[]).push(
+                ...(Array.isArray(fieldData) ? fieldData : [fieldData])
+              );
+            } else if (
+              structField.type === DataType.ArrayOfVector &&
+              VectorDataTypes.includes(structField.elementType!)
+            ) {
+              (dataArray as FieldData[]).push(fieldData);
             } else {
               (dataArray as FieldData[]).push(fieldData);
             }
