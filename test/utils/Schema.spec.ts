@@ -8,9 +8,11 @@ import {
   convertToDataType,
   DataType,
   formatFieldSchema,
+  formatFunctionSchema,
   formatCollectionSchema,
   formatDescribedCol,
   CreateCollectionReq,
+  FunctionType,
 } from '../../milvus';
 
 describe('utils/Schema', () => {
@@ -431,6 +433,24 @@ describe('utils/Schema', () => {
       { defaults: true }
     );
     expect(decoded.externalField).toBe('name');
+  });
+
+  it('formats function schema when function type is a string enum key', () => {
+    const payload = formatFunctionSchema({
+      name: 'bm25_func',
+      type: 'BM25' as unknown as FunctionType,
+      input_field_names: ['text'],
+      output_field_names: ['sparse'],
+      params: { enable_match: true },
+    });
+
+    expect(payload).toMatchObject({
+      name: 'bm25_func',
+      type: FunctionType.BM25,
+      input_field_names: ['text'],
+      output_field_names: ['sparse'],
+      params: [{ key: 'enable_match', value: 'true' }],
+    });
   });
 
   it('adds a dataType property to each field object in the schema', () => {
