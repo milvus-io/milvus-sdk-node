@@ -207,6 +207,7 @@ export const formatFieldSchema = (
     is_function_output,
     is_partition_key,
     is_primary_key,
+    external_field,
     ...rest
   } = assignTypeParams(field);
   const dataType = convertToDataType(field.data_type);
@@ -222,6 +223,10 @@ export const formatFieldSchema = (
     isClusteringKey:
       !!field.is_clustering_key || field.name === clustering_key_field,
   };
+
+  if (external_field) {
+    createObj.externalField = external_field;
+  }
 
   // if element type exist and
   if (
@@ -269,14 +274,16 @@ export const formatFieldSchema = (
  * @param {FunctionObject} func - The function object to format.
  * @returns {Object} The formatted function schema payload (plain object).
  */
-export const formatFunctionSchema = (func: FunctionObject): { [k: string]: any } => {
+export const formatFunctionSchema = (
+  func: FunctionObject
+): { [k: string]: any } => {
   const { input_field_names, output_field_names, type, ...rest } = func;
 
   // Ensure type is a number (enum value), not a string
   const typeValue =
     typeof type === 'number'
       ? type
-      : FunctionType[type as keyof typeof FunctionType] ?? type;
+      : (FunctionType[type as keyof typeof FunctionType] ?? type);
 
   // Return a plain object with snake_case field names for gRPC
   // The @grpc/proto-loader uses milvus.ts which has snake_case field names
@@ -336,6 +343,10 @@ export const formatCollectionSchema = (
     partition_key_field,
     functions,
     clustering_key_field,
+    external_source,
+    external_spec,
+    do_physical_backfill,
+    file_resource_ids,
   } = data;
 
   let fields = (data as CreateCollectionWithFieldsReq).fields;
@@ -400,6 +411,22 @@ export const formatCollectionSchema = (
     ),
     ...payload,
   };
+
+  if (external_source) {
+    payload.externalSource = external_source;
+  }
+
+  if (external_spec) {
+    payload.externalSpec = external_spec;
+  }
+
+  if (typeof do_physical_backfill !== 'undefined') {
+    payload.doPhysicalBackfill = do_physical_backfill;
+  }
+
+  if (file_resource_ids) {
+    payload.fileResourceIds = file_resource_ids;
+  }
 
   return payload;
 };

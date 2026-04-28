@@ -6,6 +6,44 @@ const milvusClient = new MilvusClient({
   logLevel: 'info',
   logPrefix: 'Basic API',
 });
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const hasField = async (fieldName: string) => {
+  const describe = await milvusClient.describeCollection({
+    collection_name: COLLECTION_NAME,
+  });
+
+  return describe.schema.fields.some(field => field.name === fieldName);
+};
+
+const addCollectionFieldAndWait = async (field: FieldType) => {
+  let res = await milvusClient.addCollectionField({
+    collection_name: COLLECTION_NAME,
+    field,
+  });
+
+  for (let i = 0; i < 10; i++) {
+    if (res.error_code === ErrorCode.SUCCESS) {
+      return res;
+    }
+
+    if (
+      (res.error_code === 'NotReadyServe' ||
+        res.reason?.includes('duplicated field name')) &&
+      (await hasField(field.name))
+    ) {
+      return { error_code: ErrorCode.SUCCESS, reason: '' };
+    }
+
+    await sleep(1000);
+    res = await milvusClient.addCollectionField({
+      collection_name: COLLECTION_NAME,
+      field,
+    });
+  }
+
+  return res;
+};
 const COLLECTION_NAME = GENERATE_NAME();
 const schema: FieldType[] = [
   {
@@ -305,11 +343,16 @@ describe(`Basic API without database`, () => {
   });
 
   it(`add fields should be successful`, async () => {
-    const addVarChar = await milvusClient.addCollectionFields({
+    const release = await milvusClient.releaseCollection({
       collection_name: COLLECTION_NAME,
-      fields: fieldsToAdd,
     });
+    expect(release.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const addVarChar = await addCollectionFieldAndWait(fieldsToAdd[0]);
     expect(addVarChar.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const addArray = await addCollectionFieldAndWait(fieldsToAdd[1]);
+    expect(addArray.error_code).toEqual(ErrorCode.SUCCESS);
 
     const describe = await milvusClient.describeCollection({
       collection_name: COLLECTION_NAME,
@@ -319,14 +362,42 @@ describe(`Basic API without database`, () => {
     );
     expect(describe.schema.fields[6].name).toEqual('new_varChar2');
     expect(describe.schema.fields[7].name).toEqual('new_array2');
+
+    const load = await milvusClient.loadCollectionSync({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it('add wrong fields should be failed', async () => {
-    const addWrongFields = await milvusClient.addCollectionFields({
+    const release = await milvusClient.releaseCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(release.error_code).toEqual(ErrorCode.SUCCESS);
+
+    let addWrongFields = await milvusClient.addCollectionFields({
       collection_name: COLLECTION_NAME,
       fields: wrongFieldsToAdd,
     });
+
+    for (
+      let i = 0;
+      addWrongFields.error_code === 'NotReadyServe' && i < 10;
+      i++
+    ) {
+      await sleep(1000);
+      addWrongFields = await milvusClient.addCollectionFields({
+        collection_name: COLLECTION_NAME,
+        fields: wrongFieldsToAdd,
+      });
+    }
+
     expect(addWrongFields.error_code).toEqual(ErrorCode.IllegalArgument);
+
+    const load = await milvusClient.loadCollectionSync({
+      collection_name: COLLECTION_NAME,
+    });
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
   it(`search with ids should be successful`, async () => {
@@ -432,7 +503,9 @@ describe('Search by String IDs API testing', () => {
   });
 
   afterAll(async () => {
-    await milvusClient.dropCollection({ collection_name: COLLECTION_NAME_STRING });
+    await milvusClient.dropCollection({
+      collection_name: COLLECTION_NAME_STRING,
+    });
   });
 
   it(`search with string ids should be successful`, async () => {

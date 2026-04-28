@@ -100,6 +100,13 @@ const checkFieldsRecursive = (
  * @param fields
  */
 export const checkCollectionFields = (fields: FieldType[]) => {
+  return checkCollectionFieldsWithOptions(fields);
+};
+
+export const checkCollectionFieldsWithOptions = (
+  fields: FieldType[],
+  options: { isExternalCollection?: boolean } = {}
+) => {
   const result = {
     hasPrimaryKey: false,
     hasVectorField: false,
@@ -107,6 +114,10 @@ export const checkCollectionFields = (fields: FieldType[]) => {
   };
 
   checkFieldsRecursive(fields, result);
+
+  if (options.isExternalCollection) {
+    return true;
+  }
 
   // if no primary key field is found, throw error
   if (!result.hasPrimaryKey) {
