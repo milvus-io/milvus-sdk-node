@@ -162,55 +162,59 @@ export class Data extends Collection {
     // Tip: The field data sequence needs to be set same as `collectionInfo.schema.fields`.
     const functionOutputFields: string[] = [];
     const fieldMap = new Map<string, _Field>(
-      collectionInfo.schema.fields.reduce((acc, v) => {
-        // if autoID is true, ignore the primary key field or if upsert is true or allow_insert_auto_id is true
-        const insertable = !v.autoID || upsert || allowInsertAutoId === 'true';
+      collectionInfo.schema.fields.reduce(
+        (acc, v) => {
+          // if autoID is true, ignore the primary key field or if upsert is true or allow_insert_auto_id is true
+          const insertable =
+            !v.autoID || upsert || allowInsertAutoId === 'true';
 
-        //  if function field is set, you need to ignore the field value in the data.
-        if (v.is_function_output) {
-          functionOutputFields.push(v.name); // ignore function field
-        } else if (insertable) {
-          const field: _Field = {
-            name: v.name,
-            type: convertToDataType(v.data_type), // milvus return string here
-            elementType: convertToDataType(v.element_type!),
-            dim: Number(v.dim),
-            data: [], // values container
-            nullable: v.nullable,
-            default_value: v.default_value,
-            fieldMap: new Map(),
-          };
+          //  if function field is set, you need to ignore the field value in the data.
+          if (v.is_function_output) {
+            functionOutputFields.push(v.name); // ignore function field
+          } else if (insertable) {
+            const field: _Field = {
+              name: v.name,
+              type: convertToDataType(v.data_type), // milvus return string here
+              elementType: convertToDataType(v.element_type!),
+              dim: Number(v.dim),
+              data: [], // values container
+              nullable: v.nullable,
+              default_value: v.default_value,
+              fieldMap: new Map(),
+            };
 
-          // Check if this is a struct field (Array with element_type = 'Struct')
-          if (
-            convertToDataType(v.data_type) === DataType.Array &&
-            convertToDataType(v.element_type!) === DataType.Struct &&
-            v.fields
-          ) {
-            // build struct field map
-            field.fieldMap = new Map(
-              v.fields.map(field => [
-                field.name,
-                {
-                  name: field.name,
-                  type: isVectorType(convertToDataType(field.data_type))
-                    ? (106 as DataType)
-                    : DataType.Array,
-                  elementType: convertToDataType(field.data_type),
-                  dim: Number(field.dim),
-                  data: [],
-                  nullable: field.nullable,
-                  default_value: field.default_value,
-                  fieldMap: new Map(),
-                },
-              ])
-            );
+            // Check if this is a struct field (Array with element_type = 'Struct')
+            if (
+              convertToDataType(v.data_type) === DataType.Array &&
+              convertToDataType(v.element_type!) === DataType.Struct &&
+              v.fields
+            ) {
+              // build struct field map
+              field.fieldMap = new Map(
+                v.fields.map(field => [
+                  field.name,
+                  {
+                    name: field.name,
+                    type: isVectorType(convertToDataType(field.data_type))
+                      ? (106 as DataType)
+                      : DataType.Array,
+                    elementType: convertToDataType(field.data_type),
+                    dim: Number(field.dim),
+                    data: [],
+                    nullable: field.nullable,
+                    default_value: field.default_value,
+                    fieldMap: new Map(),
+                  },
+                ])
+              );
+            }
+
+            acc.push([v.name, field]);
           }
-
-          acc.push([v.name, field]);
-        }
-        return acc;
-      }, [] as [string, _Field][])
+          return acc;
+        },
+        [] as [string, _Field][]
+      )
     );
 
     // dynamic field is enabled, create $meta field
@@ -259,29 +263,27 @@ export class Data extends Collection {
             `${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${rowIndex}`
           );
         }
-        if (
-          field.type === DataType.BinaryVector &&
-          (rowData[name] as BinaryVector).length !== field.dim! / 8
-        ) {
-          throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
+        const fieldData = buildFieldData(
+          rowData,
+          field,
+          data.transformers,
+          rowIndex
+        );
+
+        if (field.type === DataType.BinaryVector && fieldData != null) {
+          if ((fieldData as BinaryVector).length !== field.dim! / 8) {
+            throw new Error(ERROR_REASONS.INSERT_CHECK_WRONG_DIM);
+          }
         }
 
-        // build field data
-        switch (field.type) {
-          case DataType.BinaryVector:
-          case DataType.FloatVector:
-            field.data.push(
-              ...(buildFieldData(rowData, field) as FloatVector | BinaryVector)
-            );
-            break;
-          default:
-            field.data[rowIndex] = buildFieldData(
-              rowData,
-              field,
-              data.transformers,
-              rowIndex
-            );
-            break;
+        if (
+          field.nullable !== true &&
+          (field.type === DataType.BinaryVector ||
+            field.type === DataType.FloatVector)
+        ) {
+          field.data.push(...(fieldData as FloatVector | BinaryVector));
+        } else {
+          field.data[rowIndex] = fieldData;
         }
       });
     });
@@ -326,18 +328,21 @@ export class Data extends Collection {
         const elementTypeKey = getDataKeyWithTimestamptz(field.elementType);
 
         // check if need valid data
-        // vector field doesn't support nullable
         // nullable field should always have valid_data array (format is unified)
         const needValidData =
-          key !== 'vectors' &&
-          (field.nullable === true ||
-            (typeof field.default_value !== 'undefined' &&
-              field.default_value !== null));
+          field.nullable === true ||
+          (key !== 'vectors' &&
+            typeof field.default_value !== 'undefined' &&
+            field.default_value !== null);
 
         // get valid data
         const valid_data = needValidData
           ? getValidDataArray(field.data, data.fields_data?.length!)
           : [];
+        const physicalData =
+          field.nullable === true && VectorDataTypes.includes(field.type)
+            ? field.data.filter(v => v !== undefined && v !== null)
+            : field.data;
 
         // build key value
         let keyValue;
@@ -346,7 +351,7 @@ export class Data extends Collection {
             keyValue = {
               dim: field.dim,
               [dataKey]: {
-                data: field.data,
+                data: (physicalData as FloatVector[]).flat(),
               },
             };
             break;
@@ -354,29 +359,34 @@ export class Data extends Collection {
           case DataType.Float16Vector:
             keyValue = {
               dim: field.dim,
-              [dataKey]: Buffer.concat(field.data as Uint8Array[]),
+              [dataKey]: Buffer.concat(physicalData as Uint8Array[]),
             };
             break;
           case DataType.BinaryVector:
             keyValue = {
               dim: field.dim,
-              [dataKey]: f32ArrayToBinaryBytes(field.data as BinaryVector),
+              [dataKey]: f32ArrayToBinaryBytes(
+                (physicalData as BinaryVector[]).flat()
+              ),
             };
             break;
           case DataType.SparseFloatVector:
-            const dim = getSparseDim(field.data as SparseFloatVector[]);
+            const dim =
+              field.dim || getSparseDim(physicalData as SparseFloatVector[]);
             keyValue = {
               dim,
               [dataKey]: {
                 dim,
-                contents: sparseRowsToBytes(field.data as SparseFloatVector[]),
+                contents: sparseRowsToBytes(
+                  physicalData as SparseFloatVector[]
+                ),
               },
             };
             break;
           case DataType.Int8Vector:
             keyValue = {
               dim: field.dim,
-              [dataKey]: int8VectorRowsToBytes(field.data as Int8Vector[]),
+              [dataKey]: int8VectorRowsToBytes(physicalData as Int8Vector[]),
             };
             break;
 
@@ -470,7 +480,10 @@ export class Data extends Collection {
     );
 
     // if schema mismatch, reload collection info and redo the insert request
-    if (promise.status.error_code === ErrorCode.SchemaMismatch && enable_cache) {
+    if (
+      promise.status.error_code === ErrorCode.SchemaMismatch &&
+      enable_cache
+    ) {
       // redo the insert request with collection cache off
       promise = await this._insert(data, upsert, false);
     }
