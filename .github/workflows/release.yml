@@ -4,6 +4,12 @@ on:
   release:
     types: [released, prereleased]
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run npm publish without publishing'
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   id-token: write # Required for OIDC
@@ -39,8 +45,8 @@ jobs:
 
       - name: Publish to npm
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "🔍 Testing npm authentication (workflow_dispatch is always dry-run)..."
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "🔍 Testing npm authentication (dry run)..."
             npm publish --dry-run
             echo "✅ Authentication successful! Trusted publishing is working."
           else
