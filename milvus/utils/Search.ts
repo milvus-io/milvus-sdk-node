@@ -352,9 +352,11 @@ export const buildSearchRequest = (
       !isPlainStructVectorMetric &&
       Array.isArray(data) &&
       Array.isArray((data as any)[0]);
-    const placeholderType = isEmbeddingListData
+    const placeholderType = (annsField as any).is_function_output
       ? (annsField as any)._placeholderType
-      : annsField.dataType || DataTypeMap[annsField.data_type];
+      : isEmbeddingListData
+        ? (annsField as any)._placeholderType
+        : annsField.dataType || DataTypeMap[annsField.data_type];
     const searchData =
       ids && ids.length > 0
         ? []

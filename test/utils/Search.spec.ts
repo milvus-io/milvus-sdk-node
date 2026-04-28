@@ -1579,6 +1579,55 @@ describe('utils/Search', () => {
     ]);
   });
 
+  it('should build varchar placeholder for function output vector search', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const result = buildSearchRequest(
+      {
+        collection_name: 'test',
+        data: 'hello world',
+        anns_field: 'dense',
+        limit: 2,
+      },
+      {
+        status: { error_code: 'Success', reason: '' },
+        collection_name: 'test',
+        consistency_level: 'Session',
+        schema: {
+          fields: [
+            {
+              name: 'id',
+              dataType: DataType.Int64,
+              is_primary_key: true,
+              data_type: 'Int64',
+            },
+          ],
+        },
+        anns_fields: {
+          dense: {
+            data_type: 'FloatVector',
+            dataType: DataType.FloatVector,
+            _placeholderType: PlaceholderType.VarChar,
+            is_function_output: true,
+            index_params: [],
+          },
+        },
+      } as any,
+      milvusProto
+    );
+    const PlaceholderGroup = milvusProto.lookupType(
+      'milvus.proto.common.PlaceholderGroup'
+    );
+    const placeholderGroup = PlaceholderGroup.decode(
+      (result.request as any).placeholder_group
+    ).toJSON() as any;
+
+    expect(placeholderGroup.placeholders[0].type).toEqual('VarChar');
+  });
+
   it('should throw error if ids type is not match Int64 primary key', () => {
     const milvusProtoPath = path.resolve(
       __dirname,

@@ -100,6 +100,24 @@ describe('Element-level query/search', () => {
     await milvusClient.dropDatabase(dbParam);
   });
 
+  it('should return offsets for element-level query rows', async () => {
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      filter: 'element_filter(items, $[order] == 20)',
+      output_fields: ['id', 'items[label]', 'items[order]'],
+    });
+
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(query.data).toHaveLength(1);
+    expect(query.data[0]).toMatchObject({
+      id: '1',
+      offset: '1',
+    });
+    const matchedElement = query.data[0].items[Number(query.data[0].offset)];
+    expect(matchedElement.label).toEqual('second');
+    expect(matchedElement.order).toEqual(20);
+  });
+
   it('should return offsets for element-level search hits', async () => {
     const search = await milvusClient.search({
       collection_name: COLLECTION_NAME,
@@ -108,8 +126,6 @@ describe('Element-level query/search', () => {
       output_fields: ['id', 'items[label]', 'items[order]'],
       limit: 3,
     });
-
-    console.dir(search, { depth: null });
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results[0]).toMatchObject({
