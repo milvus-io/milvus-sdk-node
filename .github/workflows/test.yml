@@ -55,6 +55,9 @@ jobs:
                 MILVUS_OPENAI_API_KEY: ${MILVUS_OPENAI_API_KEY}
           EOF
 
+          mkdir -p volumes/etcd volumes/minio volumes/milvus
+          chmod -R 777 volumes
+
           docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
           docker compose -f docker-compose.yml -f docker-compose.override.yml ps
 
