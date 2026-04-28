@@ -51,6 +51,7 @@ jobs:
           services:
             standalone:
               environment:
+                MQ_TYPE: rocksmq
                 MILVUS_OPENAI_API_KEY: ${MILVUS_OPENAI_API_KEY}
           EOF
 
