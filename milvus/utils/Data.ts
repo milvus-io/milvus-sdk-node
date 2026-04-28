@@ -408,8 +408,9 @@ export const buildFieldData = (
             structField.data[rowIndex!] = dataArray;
 
             const isStructVectorField =
-              structField.type === DataType.ArrayOfVector &&
-              VectorDataTypes.includes(structField.elementType!);
+              VectorDataTypes.includes(structField.type) ||
+              (structField.type === DataType.ArrayOfVector &&
+                VectorDataTypes.includes(structField.elementType!));
 
             if (isStructVectorField) {
               (dataArray as FieldData[]).push(
