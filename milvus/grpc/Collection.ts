@@ -73,6 +73,21 @@ import {
   GetRefreshExternalCollectionProgressResponse,
   ListRefreshExternalCollectionJobsReq,
   ListRefreshExternalCollectionJobsResponse,
+  CreateSnapshotReq,
+  DropSnapshotReq,
+  ListSnapshotsReq,
+  ListSnapshotsResponse,
+  DescribeSnapshotReq,
+  DescribeSnapshotResponse,
+  RestoreSnapshotReq,
+  RestoreSnapshotResponse,
+  GetRestoreSnapshotStateReq,
+  GetRestoreSnapshotStateResponse,
+  ListRestoreSnapshotJobsReq,
+  ListRestoreSnapshotJobsResponse,
+  PinSnapshotDataReq,
+  PinSnapshotDataResponse,
+  UnpinSnapshotDataReq,
 } from '../';
 
 /**
@@ -1745,6 +1760,273 @@ export class Collection extends Database {
     return await promisify(
       this.channelPool,
       'ListRefreshExternalCollectionJobs',
+      data,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Create a snapshot for a collection.
+   *
+   * @param {CreateSnapshotReq} data - The request parameters.
+   * @param {string} data.snapshot_name - The snapshot name.
+   * @param {string} data.collection_name - The collection to snapshot.
+   * @param {string} [data.db_name] - The database name.
+   * @param {string} [data.description] - Optional snapshot description.
+   * @param {number|string} [data.compaction_protection_seconds] - Duration to protect referenced segments from compaction.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   */
+  async createSnapshot(data: CreateSnapshotReq): Promise<ResStatus> {
+    checkCollectionName(data);
+    if (!data.snapshot_name) {
+      throw new Error('The `snapshot_name` property is missing.');
+    }
+
+    const { snapshot_name, timeout, ...rest } = data;
+    const req = {
+      ...rest,
+      name: snapshot_name,
+    };
+
+    return await promisify(
+      this.channelPool,
+      'CreateSnapshot',
+      req,
+      timeout || this.timeout
+    );
+  }
+
+  /**
+   * Drop a snapshot.
+   *
+   * @param {DropSnapshotReq} data - The request parameters.
+   * @param {string} data.snapshot_name - The snapshot name.
+   * @param {string} data.collection_name - The collection the snapshot belongs to.
+   * @param {string} [data.db_name] - The database name.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   */
+  async dropSnapshot(data: DropSnapshotReq): Promise<ResStatus> {
+    checkCollectionName(data);
+    if (!data.snapshot_name) {
+      throw new Error('The `snapshot_name` property is missing.');
+    }
+
+    const { snapshot_name, timeout, ...rest } = data;
+    const req = {
+      ...rest,
+      name: snapshot_name,
+    };
+
+    return await promisify(
+      this.channelPool,
+      'DropSnapshot',
+      req,
+      timeout || this.timeout
+    );
+  }
+
+  /**
+   * List snapshots for a collection.
+   *
+   * @param {ListSnapshotsReq} data - The request parameters.
+   * @param {string} data.collection_name - The collection name.
+   * @param {string} [data.db_name] - The database name.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<ListSnapshotsResponse>} The list snapshots response.
+   */
+  async listSnapshots(data: ListSnapshotsReq): Promise<ListSnapshotsResponse> {
+    checkCollectionName(data);
+
+    return await promisify(
+      this.channelPool,
+      'ListSnapshots',
+      data,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Describe a snapshot.
+   *
+   * @param {DescribeSnapshotReq} data - The request parameters.
+   * @param {string} data.snapshot_name - The snapshot name.
+   * @param {string} data.collection_name - The collection the snapshot belongs to.
+   * @param {string} [data.db_name] - The database name.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<DescribeSnapshotResponse>} The snapshot description response.
+   */
+  async describeSnapshot(
+    data: DescribeSnapshotReq
+  ): Promise<DescribeSnapshotResponse> {
+    checkCollectionName(data);
+    if (!data.snapshot_name) {
+      throw new Error('The `snapshot_name` property is missing.');
+    }
+
+    const { snapshot_name, timeout, ...rest } = data;
+    const req = {
+      ...rest,
+      name: snapshot_name,
+    };
+
+    return await promisify(
+      this.channelPool,
+      'DescribeSnapshot',
+      req,
+      timeout || this.timeout
+    );
+  }
+
+  /**
+   * Restore a snapshot into a target collection.
+   *
+   * @param {RestoreSnapshotReq} data - The request parameters.
+   * @param {string} data.snapshot_name - The snapshot name.
+   * @param {string} data.source_collection_name - The source collection name.
+   * @param {string} data.target_collection_name - The target collection name.
+   * @param {string} [data.source_db_name] - The source database name.
+   * @param {string} [data.target_db_name] - The target database name.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<RestoreSnapshotResponse>} The restore job response.
+   */
+  async restoreSnapshot(
+    data: RestoreSnapshotReq
+  ): Promise<RestoreSnapshotResponse> {
+    if (!data || !data.snapshot_name) {
+      throw new Error('The `snapshot_name` property is missing.');
+    }
+    if (!data.source_collection_name) {
+      throw new Error('The `source_collection_name` property is missing.');
+    }
+    if (!data.target_collection_name) {
+      throw new Error('The `target_collection_name` property is missing.');
+    }
+
+    const {
+      snapshot_name,
+      source_collection_name,
+      source_db_name,
+      timeout,
+      ...rest
+    } = data;
+    const req = {
+      ...rest,
+      name: snapshot_name,
+      db_name: source_db_name,
+      collection_name: source_collection_name,
+    };
+
+    return await promisify(
+      this.channelPool,
+      'RestoreSnapshot',
+      req,
+      timeout || this.timeout
+    );
+  }
+
+  /**
+   * Get the state of a restore snapshot job.
+   *
+   * @param {GetRestoreSnapshotStateReq} data - The request parameters.
+   * @param {number|string} data.job_id - The restore job ID.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<GetRestoreSnapshotStateResponse>} The restore job state response.
+   */
+  async getRestoreSnapshotState(
+    data: GetRestoreSnapshotStateReq
+  ): Promise<GetRestoreSnapshotStateResponse> {
+    if (!data || typeof data.job_id === 'undefined') {
+      throw new Error('The `job_id` property is missing.');
+    }
+
+    return await promisify(
+      this.channelPool,
+      'GetRestoreSnapshotState',
+      data,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * List restore snapshot jobs.
+   *
+   * @param {ListRestoreSnapshotJobsReq} data - The request parameters.
+   * @param {string} [data.collection_name] - Optional target collection name filter.
+   * @param {string} [data.db_name] - Optional database name filter.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<ListRestoreSnapshotJobsResponse>} The restore jobs response.
+   */
+  async listRestoreSnapshotJobs(
+    data: ListRestoreSnapshotJobsReq = {}
+  ): Promise<ListRestoreSnapshotJobsResponse> {
+    return await promisify(
+      this.channelPool,
+      'ListRestoreSnapshotJobs',
+      data,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Pin snapshot data to prevent garbage collection while it is being copied out.
+   *
+   * @param {PinSnapshotDataReq} data - The request parameters.
+   * @param {string} data.snapshot_name - The snapshot name.
+   * @param {string} data.collection_name - The collection the snapshot belongs to.
+   * @param {string} [data.db_name] - The database name.
+   * @param {number|string} [data.ttl_seconds] - Optional pin TTL in seconds.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<PinSnapshotDataResponse>} The pin response.
+   */
+  async pinSnapshotData(
+    data: PinSnapshotDataReq
+  ): Promise<PinSnapshotDataResponse> {
+    checkCollectionName(data);
+    if (!data.snapshot_name) {
+      throw new Error('The `snapshot_name` property is missing.');
+    }
+
+    const { snapshot_name, timeout, ...rest } = data;
+    const req = {
+      ...rest,
+      name: snapshot_name,
+    };
+
+    return await promisify(
+      this.channelPool,
+      'PinSnapshotData',
+      req,
+      timeout || this.timeout
+    );
+  }
+
+  /**
+   * Release a snapshot data pin.
+   *
+   * @param {UnpinSnapshotDataReq} data - The request parameters.
+   * @param {number|string} data.pin_id - The pin ID returned by pinSnapshotData().
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   */
+  async unpinSnapshotData(data: UnpinSnapshotDataReq): Promise<ResStatus> {
+    if (!data || typeof data.pin_id === 'undefined') {
+      throw new Error('The `pin_id` property is missing.');
+    }
+
+    return await promisify(
+      this.channelPool,
+      'UnpinSnapshotData',
       data,
       data.timeout || this.timeout
     );
