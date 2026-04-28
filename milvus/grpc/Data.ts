@@ -428,13 +428,9 @@ export class Data extends Collection {
                             ),
                   };
                 default:
-                  return {
-                    dim: field.dim,
-                    [elementTypeKey]: {
-                      type: field.elementType,
-                      data: vector,
-                    },
-                  };
+                  throw new Error(
+                    `ArrayOfVector element type is not supported: ${field.elementType}`
+                  );
               }
             };
 
