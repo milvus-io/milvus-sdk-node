@@ -4,9 +4,142 @@ import {
   buildFieldData,
   DataType,
   ERROR_REASONS,
+  MilvusClient,
 } from '../../milvus';
 
 describe('utils/Data', () => {
+  it('should expand query rows with element indices into offset rows', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const response: any = {
+      status: { error_code: 'Success', reason: '' },
+      fields_data: [
+        {
+          type: 'Int64',
+          field_name: 'id',
+          field_id: '101',
+          is_dynamic: false,
+          scalars: {
+            long_data: { data: ['1', '2'] },
+            data: 'long_data',
+          },
+          field: 'scalars',
+        },
+        {
+          type: 'VarChar',
+          field_name: 'name',
+          field_id: '102',
+          is_dynamic: false,
+          scalars: {
+            string_data: { data: ['first', 'second'] },
+            data: 'string_data',
+          },
+          field: 'scalars',
+        },
+      ],
+      element_indices: [
+        { indices: { data: ['0', '2'] } },
+        { indices: { data: ['1'] } },
+      ],
+    };
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({
+        Query: (_params: any, _options: any, cb: any) => cb(null, response),
+      }),
+      release: jest.fn(),
+    };
+
+    const result = await client.query({
+      collection_name: 'test_collection',
+      expr: 'id > 0',
+      output_fields: ['id', 'name'],
+    });
+
+    expect(result.data).toEqual([
+      { id: '1', name: 'first', offset: '0' },
+      { id: '1', name: 'first', offset: '2' },
+      { id: '2', name: 'second', offset: '1' },
+    ]);
+  });
+
+  it('should return query rows unchanged when element indices are empty', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const response: any = {
+      status: { error_code: 'Success', reason: '' },
+      fields_data: [
+        {
+          type: 'Int64',
+          field_name: 'id',
+          field_id: '101',
+          is_dynamic: false,
+          scalars: {
+            long_data: { data: ['1', '2'] },
+            data: 'long_data',
+          },
+          field: 'scalars',
+        },
+      ],
+      element_indices: [],
+    };
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({
+        Query: (_params: any, _options: any, cb: any) => cb(null, response),
+      }),
+      release: jest.fn(),
+    };
+
+    const result = await client.query({
+      collection_name: 'test_collection',
+      expr: 'id > 0',
+      output_fields: ['id'],
+    });
+
+    expect(result.data).toEqual([{ id: '1' }, { id: '2' }]);
+  });
+
+  it('should reject query element indices that do not match row count', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const response: any = {
+      status: { error_code: 'Success', reason: '' },
+      fields_data: [
+        {
+          type: 'Int64',
+          field_name: 'id',
+          field_id: '101',
+          is_dynamic: false,
+          scalars: {
+            long_data: { data: ['1', '2'] },
+            data: 'long_data',
+          },
+          field: 'scalars',
+        },
+      ],
+      element_indices: [{ indices: { data: ['0'] } }],
+    };
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({
+        Query: (_params: any, _options: any, cb: any) => cb(null, response),
+      }),
+      release: jest.fn(),
+    };
+
+    await expect(
+      client.query({
+        collection_name: 'test_collection',
+        expr: 'id > 0',
+        output_fields: ['id'],
+      })
+    ).rejects.toThrow('element_indices length (1) != query result length (2)');
+  });
+
   it('should return an empty object when data is empty', () => {
     const data = {};
     const fieldsDataMap = new Map();

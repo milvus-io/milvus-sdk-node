@@ -13,6 +13,7 @@ import {
   FunctionType,
   buildSearchParams,
   PlaceholderType,
+  buildPlaceholderGroupBytes,
 } from '../../milvus';
 describe('utils/Search', () => {
   it('should build single search request correctly', () => {
@@ -484,6 +485,374 @@ describe('utils/Search', () => {
     );
   });
 
+  it('should use field placeholder type when no placeholder override is provided', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const PlaceholderGroup = milvusProto.lookupType(
+      'milvus.proto.common.PlaceholderGroup'
+    );
+    const placeholderGroup = PlaceholderGroup.decode(
+      buildPlaceholderGroupBytes(
+        milvusProto,
+        [[1, 2, 3, 4]],
+        {
+          data_type: 'FloatVector',
+          dataType: DataType.FloatVector,
+          _placeholderType: PlaceholderType.EmbListFloatVector,
+        } as any
+      )
+    ).toJSON() as any;
+
+    expect(placeholderGroup.placeholders[0].type).toEqual('EmbListFloatVector');
+  });
+
+  it('should build embedding-list placeholder for struct MAX_SIM search', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const searchParams = {
+      collection_name: 'test',
+      data: [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+      ],
+      anns_field: 'struct_field[struct_float_vec]',
+      limit: 2,
+      output_fields: ['struct_field[struct_int]'],
+    };
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      consistency_level: 'Session',
+      schema: {
+        fields: [
+          {
+            name: 'id',
+            dataType: DataType.Int64,
+            is_primary_key: true,
+            data_type: 'Int64',
+          },
+        ],
+      },
+      anns_fields: {
+        'struct_field[struct_float_vec]': {
+          name: 'struct_float_vec',
+          data_type: 'FloatVector',
+          dataType: DataType.FloatVector,
+          _placeholderType: PlaceholderType.EmbListFloatVector,
+          index_params: [{ key: 'metric_type', value: 'MAX_SIM' }],
+        },
+      },
+    } as any;
+
+    const result = buildSearchRequest(
+      searchParams,
+      describeCollectionResponse,
+      milvusProto
+    );
+    const PlaceholderGroup = milvusProto.lookupType(
+      'milvus.proto.common.PlaceholderGroup'
+    );
+    const placeholderGroup = PlaceholderGroup.decode(
+      (result.request as any).placeholder_group
+    ).toJSON() as any;
+
+    expect(placeholderGroup.placeholders[0].type).toEqual('EmbListFloatVector');
+  });
+
+  it('should build plain vector placeholder for element-level struct vector search', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const searchParams = {
+      collection_name: 'test',
+      data: [1, 2, 3, 4],
+      anns_field: 'struct_field[struct_float_vec]',
+      limit: 2,
+      output_fields: ['struct_field[struct_int]'],
+    };
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      consistency_level: 'Session',
+      schema: {
+        fields: [
+          {
+            name: 'id',
+            dataType: DataType.Int64,
+            is_primary_key: true,
+            data_type: 'Int64',
+          },
+        ],
+      },
+      anns_fields: {
+        'struct_field[struct_float_vec]': {
+          name: 'struct_float_vec',
+          data_type: 'FloatVector',
+          dataType: DataType.FloatVector,
+          _placeholderType: PlaceholderType.EmbListFloatVector,
+          index_params: [{ key: 'metric_type', value: 'COSINE' }],
+        },
+      },
+    } as any;
+
+    const result = buildSearchRequest(
+      searchParams,
+      describeCollectionResponse,
+      milvusProto
+    );
+    const PlaceholderGroup = milvusProto.lookupType(
+      'milvus.proto.common.PlaceholderGroup'
+    );
+    const placeholderGroup = PlaceholderGroup.decode(
+      (result.request as any).placeholder_group
+    ).toJSON() as any;
+
+    expect(placeholderGroup.placeholders[0].type).toEqual('FloatVector');
+  });
+
+  it('should build string primary-key id search request without placeholder data', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const result = buildSearchRequest(
+      {
+        collection_name: 'test',
+        ids: ['a', 'b'],
+        anns_field: 'vector',
+        limit: 2,
+      },
+      {
+        status: { error_code: 'Success', reason: '' },
+        collection_name: 'test',
+        consistency_level: 'Session',
+        schema: {
+          fields: [
+            {
+              name: 'id',
+              dataType: DataType.VarChar,
+              is_primary_key: true,
+              data_type: 'VarChar',
+            },
+          ],
+        },
+        anns_fields: {
+          vector: {
+            data_type: 'FloatVector',
+            dataType: DataType.FloatVector,
+            _placeholderType: PlaceholderType.FloatVector,
+            index_params: [],
+          },
+        },
+      } as any,
+      milvusProto
+    );
+
+    expect((result.request as any).ids).toEqual({
+      str_id: { data: ['a', 'b'] },
+    });
+    expect((result.request as any).placeholder_group).toBeUndefined();
+  });
+
+  it('should ignore non-metric index params when choosing placeholder type', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const result = buildSearchRequest(
+      {
+        collection_name: 'test',
+        data: [1, 2, 3, 4],
+        anns_field: 'vector',
+        limit: 2,
+      },
+      {
+        status: { error_code: 'Success', reason: '' },
+        collection_name: 'test',
+        consistency_level: 'Session',
+        schema: {
+          fields: [
+            {
+              name: 'id',
+              dataType: DataType.Int64,
+              is_primary_key: true,
+              data_type: 'Int64',
+            },
+          ],
+        },
+        anns_fields: {
+          vector: {
+            data_type: 'FloatVector',
+            dataType: DataType.FloatVector,
+            _placeholderType: PlaceholderType.FloatVector,
+            index_params: [{ key: 'nlist', value: 128 }],
+          },
+        },
+      } as any,
+      milvusProto
+    );
+    const PlaceholderGroup = milvusProto.lookupType(
+      'milvus.proto.common.PlaceholderGroup'
+    );
+    const placeholderGroup = PlaceholderGroup.decode(
+      (result.request as any).placeholder_group
+    ).toJSON() as any;
+
+    expect(placeholderGroup.placeholders[0].type).toEqual('FloatVector');
+  });
+
+  it('should fall back to data_type when formatted dataType is unavailable', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const result = buildSearchRequest(
+      {
+        collection_name: 'test',
+        data: [1, 2, 3, 4],
+        anns_field: 'vector',
+        limit: 2,
+      },
+      {
+        status: { error_code: 'Success', reason: '' },
+        collection_name: 'test',
+        consistency_level: 'Session',
+        schema: {
+          fields: [
+            {
+              name: 'id',
+              dataType: DataType.Int64,
+              is_primary_key: true,
+              data_type: 'Int64',
+            },
+          ],
+        },
+        anns_fields: {
+          vector: {
+            data_type: 'FloatVector',
+            _placeholderType: PlaceholderType.FloatVector,
+            index_params: [],
+          },
+        },
+      } as any,
+      milvusProto
+    );
+    const PlaceholderGroup = milvusProto.lookupType(
+      'milvus.proto.common.PlaceholderGroup'
+    );
+    const placeholderGroup = PlaceholderGroup.decode(
+      (result.request as any).placeholder_group
+    ).toJSON() as any;
+
+    expect(placeholderGroup.placeholders[0].type).toEqual('FloatVector');
+  });
+
+  it('should build plain vector placeholder when index params are absent', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const result = buildSearchRequest(
+      {
+        collection_name: 'test',
+        data: [1, 2, 3, 4],
+        anns_field: 'vector',
+        limit: 2,
+      },
+      {
+        status: { error_code: 'Success', reason: '' },
+        collection_name: 'test',
+        consistency_level: 'Session',
+        schema: {
+          fields: [
+            {
+              name: 'id',
+              dataType: DataType.Int64,
+              is_primary_key: true,
+              data_type: 'Int64',
+            },
+          ],
+        },
+        anns_fields: {
+          vector: {
+            data_type: 'FloatVector',
+            dataType: DataType.FloatVector,
+            _placeholderType: PlaceholderType.FloatVector,
+          },
+        },
+      } as any,
+      milvusProto
+    );
+    const PlaceholderGroup = milvusProto.lookupType(
+      'milvus.proto.common.PlaceholderGroup'
+    );
+    const placeholderGroup = PlaceholderGroup.decode(
+      (result.request as any).placeholder_group
+    ).toJSON() as any;
+
+    expect(placeholderGroup.placeholders[0].type).toEqual('FloatVector');
+  });
+
+  it('should build plain vector placeholder when metric is unavailable', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const result = buildSearchRequest(
+      {
+        collection_name: 'test',
+        data: [1, 2, 3, 4],
+        anns_field: 'vector',
+        limit: 2,
+      },
+      {
+        status: { error_code: 'Success', reason: '' },
+        collection_name: 'test',
+        consistency_level: 'Session',
+        schema: {
+          fields: [
+            {
+              name: 'id',
+              dataType: DataType.Int64,
+              is_primary_key: true,
+              data_type: 'Int64',
+            },
+          ],
+        },
+        anns_fields: {
+          vector: {
+            data_type: 'FloatVector',
+            dataType: DataType.FloatVector,
+            _placeholderType: PlaceholderType.FloatVector,
+            index_params: [],
+          },
+        },
+      } as any,
+      milvusProto
+    );
+    const PlaceholderGroup = milvusProto.lookupType(
+      'milvus.proto.common.PlaceholderGroup'
+    );
+    const placeholderGroup = PlaceholderGroup.decode(
+      (result.request as any).placeholder_group
+    ).toJSON() as any;
+
+    expect(placeholderGroup.placeholders[0].type).toEqual('FloatVector');
+  });
+
   it(`it should get NO_ANNS_FEILD_FOUND_IN_SEARCH if buildSearchRequest with wrong searchParams`, () => {
     // path
     const milvusProtoPath = path.resolve(
@@ -911,6 +1280,98 @@ describe('utils/Search', () => {
     ];
     const results2 = formatSearchResult(searchPromise2, { round_decimal: -1 });
     expect(results2).toEqual(expectedResults2);
+  });
+
+  it('should expose element indices as offsets on search hits', () => {
+    const searchPromise: any = {
+      results: {
+        fields_data: [
+          {
+            type: 'Int64',
+            field_name: 'id',
+            field_id: '101',
+            is_dynamic: false,
+            scalars: {
+              long_data: { data: ['1', '2', '3'] },
+              data: 'long_data',
+            },
+            field: 'scalars',
+          },
+        ],
+        scores: [1, 2, 3],
+        topks: ['2', '1'],
+        output_fields: ['id'],
+        num_queries: '2',
+        top_k: '3',
+        ids: {
+          int_id: { data: ['1', '2', '3'] },
+          id_field: 'int_id',
+        },
+        element_indices: { data: ['10', '20', '30'] },
+        group_by_field_values: [],
+      },
+    };
+
+    const results = formatSearchResult(searchPromise, { round_decimal: -1 });
+
+    expect(results).toEqual([
+      [
+        { score: 1, id: '1', offset: '10' },
+        { score: 2, id: '2', offset: '20' },
+      ],
+      [{ score: 3, id: '3', offset: '30' }],
+    ]);
+  });
+
+  it('should expose group-by field values on search hits', () => {
+    const searchPromise: any = {
+      results: {
+        fields_data: [
+          {
+            type: 'Int64',
+            field_name: 'id',
+            field_id: '101',
+            is_dynamic: false,
+            scalars: {
+              long_data: { data: ['1', '2'] },
+              data: 'long_data',
+            },
+            field: 'scalars',
+          },
+        ],
+        scores: [1, 2],
+        topks: ['2'],
+        output_fields: ['id'],
+        num_queries: '1',
+        top_k: '2',
+        ids: {
+          int_id: { data: ['1', '2'] },
+          id_field: 'int_id',
+        },
+        group_by_field_values: [
+          {
+            type: 'VarChar',
+            field_name: 'category',
+            field_id: '102',
+            is_dynamic: false,
+            scalars: {
+              string_data: { data: ['red', 'blue'] },
+              data: 'string_data',
+            },
+            field: 'scalars',
+          },
+        ],
+      },
+    };
+
+    const results = formatSearchResult(searchPromise, { round_decimal: -1 });
+
+    expect(results).toEqual([
+      [
+        { score: 1, id: '1', group_by_field_values: { category: 'red' } },
+        { score: 2, id: '2', group_by_field_values: { category: 'blue' } },
+      ],
+    ]);
   });
 
   // Add new test case for multiple queries and fields

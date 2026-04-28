@@ -64,6 +64,12 @@ export interface QueryResults extends resStatusResponse {
   data: Record<string, any>[];
 }
 
+export interface ElementIndices {
+  indices: {
+    data: number[] | string[];
+  };
+}
+
 export interface CountResult extends resStatusResponse {
   data: number;
 }
@@ -129,4 +135,5 @@ export interface QueryRes extends resStatusResponse {
   }[];
   output_fields: string[];
   collection_name: string;
+  element_indices?: ElementIndices[];
 }
