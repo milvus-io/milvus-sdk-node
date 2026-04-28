@@ -5,6 +5,7 @@ import {
   _Field,
   FieldType,
   assignTypeParams,
+  buildDefaultSchema,
   convertToDataType,
   DataType,
   formatFieldSchema,
@@ -16,6 +17,30 @@ import {
 } from '../../milvus';
 
 describe('utils/Schema', () => {
+  it('builds the default schema from shorthand create collection params', () => {
+    expect(
+      buildDefaultSchema({
+        dimension: 8,
+        primary_field_name: 'id',
+        id_type: DataType.Int64,
+        vector_field_name: 'vector',
+        auto_id: true,
+      })
+    ).toEqual([
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+        autoID: true,
+      },
+      {
+        name: 'vector',
+        data_type: DataType.FloatVector,
+        dim: 8,
+      },
+    ]);
+  });
+
   it('should assign properties with keys `dim` or `max_length` to the `type_params`, `enable_match`, `analyzer_params`, `enable_analyzer` object and delete them from the `field` object', () => {
     const field = {
       name: 'vector',
@@ -450,6 +475,75 @@ describe('utils/Schema', () => {
       input_field_names: ['text'],
       output_field_names: ['sparse'],
       params: [{ key: 'enable_match', value: 'true' }],
+    });
+  });
+
+  it('formats struct array fields in create collection schema', () => {
+    const schemaProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/schema.proto'
+    );
+    const schemaProto = protobuf.loadSync(schemaProtoPath);
+
+    const fieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
+    const structArrayFieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.StructArrayFieldSchema'
+    );
+
+    const payload = formatCollectionSchema(
+      {
+        collection_name: 'structCollection',
+        fields: [
+          {
+            name: 'id',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+          },
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 4,
+          },
+          {
+            name: 'metadata',
+            data_type: DataType.Array,
+            element_type: DataType.Struct,
+            max_capacity: 2,
+            fields: [
+              {
+                name: 'score',
+                data_type: DataType.Float,
+              },
+              {
+                name: 'embedding',
+                data_type: DataType.FloatVector,
+                dim: 4,
+              },
+            ],
+          },
+        ],
+      } as CreateCollectionReq,
+      { fieldSchemaType, structArrayFieldSchemaType }
+    );
+
+    expect(payload.fields).toHaveLength(2);
+    expect(payload.structArrayFields).toHaveLength(1);
+    expect(payload.structArrayFields[0].name).toBe('metadata');
+    expect(payload.structArrayFields[0].fields[0]).toMatchObject({
+      name: 'score',
+      dataType: DataType.Array,
+      elementType: DataType.Float,
+    });
+    expect(payload.structArrayFields[0].fields[1]).toMatchObject({
+      name: 'embedding',
+      dataType: 106,
+      elementType: DataType.FloatVector,
+      typeParams: [
+        { key: 'dim', value: '4' },
+        { key: 'max_capacity', value: '2' },
+      ],
     });
   });
 
