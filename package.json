@@ -1,8 +1,8 @@
 {
   "name": "@zilliz/milvus2-sdk-node",
   "author": "Zilliz",
-  "milvusVersion": "v2.6.11",
-  "version": "2.6.13",
+  "milvusVersion": "v2.6.15",
+  "version": "2.6.14",
   "main": "dist/milvus",
   "files": [
     "dist"
