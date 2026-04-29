@@ -354,7 +354,7 @@ describe('utils/Search', () => {
         {
           data: [1, 2, 3, 4, 5, 6, 7, 8],
           anns_field: 'vector',
-          params: { nprobe: 2 },
+          params: { nprobe: 2, order_by_fields: 'sub_price:desc' },
           expr: 'id > 0',
         },
         {
@@ -366,7 +366,9 @@ describe('utils/Search', () => {
       ],
       limit: 2,
       output_fields: ['vector', 'vector1'],
-    };
+      params: { order_by_fields: 'shared_price:desc' },
+      order_by_fields: [{ field: 'price', order: 'asc' }],
+    } as any;
 
     const describeCollectionResponse = {
       status: { error_code: 'Success', reason: '' },
@@ -467,6 +469,11 @@ describe('utils/Search', () => {
             {}
           );
 
+        expect(searchParamsKeyValuePairObject.order_by_fields).toBeUndefined();
+        expect(searchParamsKeyValuePairObject.params).not.toContain(
+          'order_by_fields'
+        );
+
         if (index === 0) {
           expect(searchParamsKeyValuePairObject.anns_field).toEqual('vector');
           expect(searchParamsKeyValuePairObject.params).toEqual('{"nprobe":2}');
@@ -495,15 +502,11 @@ describe('utils/Search', () => {
       'milvus.proto.common.PlaceholderGroup'
     );
     const placeholderGroup = PlaceholderGroup.decode(
-      buildPlaceholderGroupBytes(
-        milvusProto,
-        [[1, 2, 3, 4]],
-        {
-          data_type: 'FloatVector',
-          dataType: DataType.FloatVector,
-          _placeholderType: PlaceholderType.EmbListFloatVector,
-        } as any
-      )
+      buildPlaceholderGroupBytes(milvusProto, [[1, 2, 3, 4]], {
+        data_type: 'FloatVector',
+        dataType: DataType.FloatVector,
+        _placeholderType: PlaceholderType.EmbListFloatVector,
+      } as any)
     ).toJSON() as any;
 
     expect(placeholderGroup.placeholders[0].type).toEqual('EmbListFloatVector');
@@ -1008,6 +1011,20 @@ describe('utils/Search', () => {
       test: 'test',
       nprobe: 2,
     });
+
+    const data3 = {
+      collection_name: 'test',
+      data: [1, 2, 3, 4, 5, 6, 7, 8],
+      params: { nprobe: 2, order_by_fields: 'params_value:desc' },
+      limit: 2,
+      order_by_fields: [
+        { field: 'price', order: 'asc' },
+        { field: 'rating', order: 'desc' },
+      ],
+    } as any;
+
+    const newSearchParams3 = buildSearchParams(data3, anns_field);
+    expect(newSearchParams3.order_by_fields).toBe('price:asc,rating:desc');
   });
 
   it('should format exprValues correctly', () => {
@@ -1645,11 +1662,9 @@ describe('utils/Search', () => {
     const milvusProto = protobuf.loadSync(milvusProtoPath);
 
     expect(() =>
-      buildPlaceholderGroupBytes(
-        milvusProto,
-        [{ 1: 0.5 }, { 3: 0.25 }],
-        { _placeholderType: PlaceholderType.EmbListSparseFloatVector } as any
-      )
+      buildPlaceholderGroupBytes(milvusProto, [{ 1: 0.5 }, { 3: 0.25 }], {
+        _placeholderType: PlaceholderType.EmbListSparseFloatVector,
+      } as any)
     ).toThrow('Sparse embedding list search is not supported');
   });
 

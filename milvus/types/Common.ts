@@ -69,6 +69,10 @@ export type keyValueObj = Record<
   string | number | string[] | number[] | boolean | unknown
 >;
 
+export type OrderByOrder = 'asc' | 'desc' | 'ascending' | 'descending';
+export type OrderByField = string | { field: string; order?: OrderByOrder };
+export type OrderByFields = string | OrderByField[];
+
 export interface collectionNameReq extends GrpcTimeOut {
   collection_name: string; // required, collection name
   db_name?: string;

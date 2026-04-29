@@ -8,6 +8,7 @@ import {
   collectionNameReq,
   resStatusResponse,
   OutputTransformers,
+  OrderByFields,
 } from '../';
 
 export interface CountReq extends collectionNameReq {
@@ -88,6 +89,8 @@ type BaseQueryReq = collectionNameReq & {
   filter?: string; // alias for expr
   offset?: number; // skip how many results
   limit?: number; // how many results you want
+  order_by_fields?: OrderByFields; // order by fields
+  order_by?: OrderByFields; // alias for order_by_fields
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
   exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
@@ -96,8 +99,10 @@ type BaseQueryReq = collectionNameReq & {
 export type QueryReq = BaseQueryReq &
   ({ expr?: string; filter?: never } | { filter?: string; expr?: never });
 
-export interface QueryIteratorReq
-  extends Omit<QueryReq, 'ids' | 'offset' | 'limit'> {
+export interface QueryIteratorReq extends Omit<
+  QueryReq,
+  'ids' | 'offset' | 'limit'
+> {
   limit?: number; // Optional. Specifies the maximum number of items. Default is no limit (-1 or if not set).
   batchSize: number; // Specifies the number of items to return in each batch. if it exceeds 16384, it will be set to 16384
 }

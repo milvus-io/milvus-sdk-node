@@ -13,6 +13,7 @@ import {
   ERROR_REASONS,
   cloneObj,
   logger,
+  normalizeOrderByFields,
 } from '../../milvus';
 
 describe('utils/format', () => {
@@ -106,12 +107,12 @@ describe('utils/format', () => {
   });
 
   it(`should serialize complex data types (objects/arrays) to JSON strings when valueToString is true`, () => {
-    const testValue = { 
+    const testValue = {
       simple: 'string',
       number: 42,
       object: { nested: 'value', count: 5 },
       array: [1, 2, 3],
-      nullValue: null
+      nullValue: null,
     };
     const res = parseToKeyValue(testValue, true);
     expect(res).toMatchObject([
@@ -121,6 +122,33 @@ describe('utils/format', () => {
       { key: 'array', value: '[1,2,3]' },
       { key: 'nullValue', value: 'null' },
     ]);
+  });
+
+  it(`should normalize order by fields`, () => {
+    expect(normalizeOrderByFields()).toBeUndefined();
+    expect(normalizeOrderByFields(null as any)).toBeUndefined();
+    expect(normalizeOrderByFields('price:asc,rating:desc')).toBe(
+      'price:asc,rating:desc'
+    );
+    expect(
+      normalizeOrderByFields([
+        'price:asc',
+        { field: 'rating', order: 'desc' },
+        { field: 'stock' },
+      ])
+    ).toBe('price:asc,rating:desc,stock:asc');
+  });
+
+  it(`should reject invalid order by fields`, () => {
+    expect(() => normalizeOrderByFields({ field: 'price' } as any)).toThrow(
+      'Invalid order_by_fields format'
+    );
+    expect(() => normalizeOrderByFields([{ order: 'desc' } as any])).toThrow(
+      'field'
+    );
+    expect(() => normalizeOrderByFields([1 as any])).toThrow(
+      'Invalid order_by_fields item format'
+    );
   });
 
   it(`should convert [{key:"row_count",value:4}] to {row_count:4}`, () => {

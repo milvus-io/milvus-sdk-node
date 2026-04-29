@@ -13,6 +13,7 @@ import {
   SparseFloatVector,
   Int8Vector,
   FieldData,
+  OrderByFields,
 } from '../';
 
 // Highlighter types
@@ -65,6 +66,7 @@ export interface SearchParam {
   group_by_field?: string; // group by field
   group_size?: number; // group size
   strict_group_size?: boolean; // if strict group size
+  order_by_fields?: OrderByFields; // order by fields
   hints?: string; // hints to improve milvus search performance
   [key: string]: any; // extra search parameters
 }
@@ -117,6 +119,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   group_by_field?: string; // group by field
   group_size?: number; // group size
   strict_group_size?: boolean; // if strict group size
+  order_by_fields?: OrderByFields; // order by fields
   hints?: string; // hints to improve milvus search performance
   round_decimal?: number; // round decimal
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
@@ -137,8 +140,10 @@ export type HybridSearchSingleReq = Pick<
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
 };
 
-export interface SearchIteratorReq
-  extends Omit<SearchSimpleReq, 'vectors' | 'offset' | 'limit' | 'topk'> {
+export interface SearchIteratorReq extends Omit<
+  SearchSimpleReq,
+  'vectors' | 'offset' | 'limit' | 'topk'
+> {
   limit?: number; // Optional. Specifies the maximum number of items. Default is no limit (-1 or if not set).
   batchSize: number; // Specifies the number of items to return in each batch. if it exceeds 16384, it will be set to 16384
   external_filter_fn?: (row: SearchResultData) => boolean; // Optional. Specifies the external filter function.
@@ -153,7 +158,13 @@ export type RerankerObj = {
 // hybrid search api parameter type
 export type HybridSearchReq = Omit<
   SearchSimpleReq,
-  'data' | 'vector' | 'vectors' | 'anns_field' | 'expr' | 'exprValues'
+  | 'data'
+  | 'vector'
+  | 'vectors'
+  | 'anns_field'
+  | 'expr'
+  | 'exprValues'
+  | 'order_by_fields'
 > & {
   // search requests
   data: HybridSearchSingleReq[];
@@ -226,16 +237,16 @@ export type OutputTransformers = {
 
 export type DetermineResultsType<T extends Record<string, any>> =
   T['vectors'] extends [SearchData]
-  ? SearchResultData[]
-  : T['vectors'] extends SearchData[]
-  ? SearchResultData[][]
-  : T['vector'] extends SearchData
-  ? SearchResultData[]
-  : T['data'] extends SearchData
-  ? SearchResultData[]
-  : T['data'] extends SearchData[]
-  ? SearchResultData[][]
-  : SearchResultData[];
+    ? SearchResultData[]
+    : T['vectors'] extends SearchData[]
+      ? SearchResultData[][]
+      : T['vector'] extends SearchData
+        ? SearchResultData[]
+        : T['data'] extends SearchData
+          ? SearchResultData[]
+          : T['data'] extends SearchData[]
+            ? SearchResultData[][]
+            : SearchResultData[];
 
 export interface SearchResultData {
   [x: string]: any;
@@ -247,7 +258,7 @@ export interface SearchResultData {
 }
 
 export interface SearchResults<
-  T extends SearchReq | SearchSimpleReq | HybridSearchReq
+  T extends SearchReq | SearchSimpleReq | HybridSearchReq,
 > extends resStatusResponse {
   results: DetermineResultsType<T>;
   recalls: number[];
