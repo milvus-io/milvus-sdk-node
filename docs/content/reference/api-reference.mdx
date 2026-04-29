@@ -367,8 +367,9 @@ search(data: SearchReq): Promise<SearchResults>
 **Parameters**:
 
 - `collection_name`: Collection name
-- `data`: Array of search vectors
-- `limit`: Number of results
+- `data?`: Array of search vectors. Not required when `ids` is provided.
+- `ids?`: Primary key IDs for Search By PK. Values must match the collection's primary key type (`Int64` or `VarChar`).
+- `limit?`: Number of results
 - `expr?`: Filter expression
 - `output_fields?`: Fields to return
 - `params?`: Search parameters
