@@ -125,6 +125,8 @@ describe('utils/format', () => {
   });
 
   it(`should normalize order by fields`, () => {
+    expect(normalizeOrderByFields()).toBeUndefined();
+    expect(normalizeOrderByFields(null as any)).toBeUndefined();
     expect(normalizeOrderByFields('price:asc,rating:desc')).toBe(
       'price:asc,rating:desc'
     );
@@ -138,6 +140,9 @@ describe('utils/format', () => {
   });
 
   it(`should reject invalid order by fields`, () => {
+    expect(() => normalizeOrderByFields({ field: 'price' } as any)).toThrow(
+      'Invalid order_by_fields format'
+    );
     expect(() => normalizeOrderByFields([{ order: 'desc' } as any])).toThrow(
       'field'
     );
