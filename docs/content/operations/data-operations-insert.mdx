@@ -69,7 +69,9 @@ Insert large amounts of data efficiently:
 
 ```javascript
 const batchSize = 1000;
-const allData = [/* large array of data */];
+const allData = [
+  /* large array of data */
+];
 
 for (let i = 0; i < allData.length; i += batchSize) {
   const batch = allData.slice(i, i + batchSize);
@@ -196,6 +198,49 @@ await client.upsert({
 });
 ```
 
+### Partial Array Upsert
+
+For Array fields, use `field_ops` to append values to or remove values from the existing array instead of replacing the whole field.
+
+```javascript
+import { FieldPartialUpdateOpType } from '@zilliz/milvus2-sdk-node';
+
+await client.upsert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      id: 1,
+      tags: ['new-tag'], // Appended to the existing tags array
+      scores: [3], // Removed from the existing scores array
+    },
+  ],
+  field_ops: [
+    { field_name: 'tags', op: FieldPartialUpdateOpType.ARRAY_APPEND },
+    { field_name: 'scores', op: FieldPartialUpdateOpType.ARRAY_REMOVE },
+  ],
+});
+```
+
+You can also pass operation names as strings:
+
+```javascript
+await client.upsert({
+  collection_name: 'my_collection',
+  data: [{ id: 1, tags: ['urgent'] }],
+  field_ops: [{ field_name: 'tags', op: 'ARRAY_APPEND' }],
+});
+```
+
+Notes:
+
+- `field_ops` is supported only by `upsert()`.
+- Each `field_ops[].field_name` must refer to an Array field.
+- The primary key must be included in each upsert row.
+- Fields not included in the upsert row remain unchanged.
+- `ARRAY_APPEND` must not make the array exceed its `max_capacity`.
+- `ARRAY_REMOVE` removes matching values from the existing array.
+- When `field_ops` is provided, the SDK automatically sends `partial_update: true`.
+
 ## Insert Transformers
 
 For Float16 and BFloat16 vectors, use transformers:
@@ -211,7 +256,7 @@ await client.insert({
     },
   ],
   transformers: {
-    vector: (data) => f32ArrayToF16Bytes(data), // Convert to f16 bytes
+    vector: data => f32ArrayToF16Bytes(data), // Convert to f16 bytes
   },
 });
 ```
@@ -223,7 +268,9 @@ The insert operation returns mutation results:
 ```javascript
 const result = await client.insert({
   collection_name: 'my_collection',
-  data: [/* ... */],
+  data: [
+    /* ... */
+  ],
 });
 
 console.log('IDs:', result.IDs); // Array of inserted IDs
@@ -251,7 +298,9 @@ Handle insertion errors:
 try {
   await client.insert({
     collection_name: 'my_collection',
-    data: [/* ... */],
+    data: [
+      /* ... */
+    ],
   });
 } catch (error) {
   if (error.message.includes('field does not exist')) {
@@ -335,4 +384,3 @@ await client.flush({
 - Learn about [Query Operations](./data-operations-query)
 - Explore [Delete Operations](./data-operations-delete)
 - Check out [Data Management](./data-management)
-
