@@ -12,6 +12,18 @@ await client.createDatabase({
 });
 ```
 
+Create a database with properties:
+
+```javascript
+await client.createDatabase({
+  db_name: 'my_database',
+  properties: {
+    owner: 'analytics-team',
+    environment: 'production',
+  },
+});
+```
+
 ## Listing Databases
 
 List all databases:
@@ -35,15 +47,16 @@ const result = await client.describeDatabase({
 console.log('Database info:', result);
 ```
 
-## Altering a Database
+## Altering Database Properties
 
 Modify database properties:
 
 ```javascript
-await client.alterDatabase({
+await client.alterDatabaseProperties({
   db_name: 'my_database',
   properties: {
-    'database.property': 'value',
+    owner: 'search-team',
+    environment: 'staging',
   },
 });
 ```
@@ -55,7 +68,7 @@ Remove specific properties from a database:
 ```javascript
 await client.dropDatabaseProperties({
   db_name: 'my_database',
-  property_names: ['database.property'],
+  properties: ['environment'],
 });
 ```
 
@@ -98,15 +111,20 @@ const db2Client = new MilvusClient({
 });
 
 // Use db1Client for database1 operations
-await db1Client.createCollection({ /* ... */ });
+await db1Client.createCollection({
+  /* ... */
+});
 
 // Use db2Client for database2 operations
-await db2Client.createCollection({ /* ... */ });
+await db2Client.createCollection({
+  /* ... */
+});
 ```
 
 ### Database Isolation
 
 Each database is isolated:
+
 - Collections in different databases are completely separate
 - Operations on one database don't affect others
 - Users and roles can have different permissions per database
@@ -122,4 +140,3 @@ Each database is isolated:
 
 - Learn about [Collection Management](./collection-management)
 - Explore [User & Role Management](./user-role-management)
-

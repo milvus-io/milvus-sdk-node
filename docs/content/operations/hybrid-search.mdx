@@ -35,14 +35,14 @@ const results = await client.hybridSearch({
 
 Each item in the `data` array is a `HybridSearchSingleReq`:
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `data` | `number[]` or `object` | The search vector (dense array or sparse dict) |
-| `anns_field` | `string` | The vector field to search |
-| `expr` | `string` | Optional filter expression |
-| `exprValues` | `object` | Optional template values for filter expression |
-| `params` | `object` | Optional search parameters (e.g., `{ nprobe: 10 }`) |
-| `group_by_field` | `string` | Optional field to group results by |
+| Parameter        | Type                   | Description                                         |
+| ---------------- | ---------------------- | --------------------------------------------------- |
+| `data`           | `number[]` or `object` | The search vector (dense array or sparse dict)      |
+| `anns_field`     | `string`               | The vector field to search                          |
+| `expr`           | `string`               | Optional filter expression                          |
+| `exprValues`     | `object`               | Optional template values for filter expression      |
+| `params`         | `object`               | Optional search parameters (e.g., `{ nprobe: 10 }`) |
+| `group_by_field` | `string`               | Optional field to group results by                  |
 
 ## Reranking Strategies
 
@@ -72,34 +72,69 @@ rerank: {
 
 ### FunctionScore
 
-Advanced reranking using custom scoring functions.
+Advanced reranking using custom scoring functions. A `FunctionScore` contains one or more function definitions plus optional top-level parameters for the reranker.
 
 ```javascript
-rerank: {
-  functions: [
+import { FunctionType } from '@zilliz/milvus2-sdk-node';
+
+const results = await client.hybridSearch({
+  collection_name: 'my_collection',
+  data: [
     {
-      name: 'my_scorer',
-      type: FunctionType.RERANK,
-      input_field_names: ['text'],
-      output_field_names: ['score'],
-      params: { key: 'value' },
+      data: [0.1, 0.2, 0.3, 0.4],
+      anns_field: 'dense_vector',
+      params: { nprobe: 10 },
+    },
+    {
+      data: { 1: 0.5, 100: 0.3 },
+      anns_field: 'sparse_vector',
     },
   ],
-  params: {},
-}
+  rerank: {
+    functions: [
+      {
+        name: 'freshness_boost',
+        type: FunctionType.RERANK,
+        input_field_names: ['publish_time'],
+        output_field_names: ['score'],
+        params: {
+          weight: 0.2,
+          decay: 'gauss',
+        },
+      },
+      {
+        name: 'quality_boost',
+        type: FunctionType.RERANK,
+        input_field_names: ['quality_score'],
+        output_field_names: ['score'],
+        params: {
+          weight: 0.8,
+        },
+      },
+    ],
+    params: {
+      score_mode: 'sum',
+      boost_mode: 'multiply',
+    },
+  },
+  limit: 10,
+  output_fields: ['id', 'text', 'publish_time', 'quality_score'],
+});
 ```
+
+Use FunctionScore when you need to blend vector similarity with business signals such as recency, popularity, quality scores, or custom server-side rerank functions.
 
 ## Top-Level Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `collection_name` | `string` | The collection to search |
-| `data` | `HybridSearchSingleReq[]` | Array of individual search requests |
-| `rerank` | `RerankerObj \| FunctionScore` | Reranking strategy |
-| `limit` | `number` | Maximum number of results to return |
-| `output_fields` | `string[]` | Fields to include in results |
-| `consistency_level` | `string` | Optional consistency level |
-| `partition_names` | `string[]` | Optional partitions to search |
+| Parameter           | Type                           | Description                         |
+| ------------------- | ------------------------------ | ----------------------------------- |
+| `collection_name`   | `string`                       | The collection to search            |
+| `data`              | `HybridSearchSingleReq[]`      | Array of individual search requests |
+| `rerank`            | `RerankerObj \| FunctionScore` | Reranking strategy                  |
+| `limit`             | `number`                       | Maximum number of results to return |
+| `output_fields`     | `string[]`                     | Fields to include in results        |
+| `consistency_level` | `string`                       | Optional consistency level          |
+| `partition_names`   | `string[]`                     | Optional partitions to search       |
 
 ## End-to-End Example
 
@@ -112,7 +147,12 @@ const client = new MilvusClient({ address: 'localhost:19530' });
 await client.createCollection({
   collection_name: 'hybrid_demo',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
     { name: 'text', data_type: DataType.VarChar, max_length: 512 },
     { name: 'dense_vector', data_type: DataType.FloatVector, dim: 4 },
     { name: 'sparse_vector', data_type: DataType.SparseFloatVector },
@@ -123,8 +163,16 @@ await client.createCollection({
 await client.createIndex({
   collection_name: 'hybrid_demo',
   index_params: [
-    { field_name: 'dense_vector', index_type: 'AUTOINDEX', metric_type: 'COSINE' },
-    { field_name: 'sparse_vector', index_type: 'SPARSE_INVERTED_INDEX', metric_type: 'IP' },
+    {
+      field_name: 'dense_vector',
+      index_type: 'AUTOINDEX',
+      metric_type: 'COSINE',
+    },
+    {
+      field_name: 'sparse_vector',
+      index_type: 'SPARSE_INVERTED_INDEX',
+      metric_type: 'IP',
+    },
   ],
 });
 

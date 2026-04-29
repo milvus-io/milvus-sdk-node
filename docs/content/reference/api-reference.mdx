@@ -19,7 +19,7 @@ new MilvusClient(config: ClientConfig | string, ssl?: boolean, username?: string
 Get SDK version information:
 
 ```typescript
-MilvusClient.sdkInfo
+MilvusClient.sdkInfo;
 // Returns: { version: string, recommendMilvus: string }
 ```
 
@@ -34,10 +34,15 @@ createCollection(data: CreateCollectionReq): Promise<ResStatus>
 ```
 
 **Parameters**:
+
 - `collection_name`: Collection name
 - `fields`: Array of field schemas
 - `consistency_level?`: Consistency level
 - `properties?`: Collection properties
+- `external_source?`: External collection source path
+- `external_spec?`: External collection source configuration
+- `do_physical_backfill?`: Whether to physically backfill external data
+- `file_resource_ids?`: External file resource IDs
 
 ### hasCollection
 
@@ -112,6 +117,7 @@ truncateCollection(data: DropCollectionReq): Promise<{ status: ResStatus }>
 ```
 
 **Parameters**:
+
 - `collection_name`: Collection name
 
 ### batchDescribeCollections
@@ -123,6 +129,7 @@ batchDescribeCollections(data: BatchDescribeCollectionReq): Promise<BatchDescrib
 ```
 
 **Parameters**:
+
 - `collection_names`: Array of collection names
 
 ### renameCollection
@@ -134,6 +141,7 @@ renameCollection(data: RenameCollectionReq): Promise<ResStatus>
 ```
 
 **Parameters**:
+
 - `collection_name`: Current collection name
 - `new_collection_name`: New collection name
 
@@ -162,6 +170,7 @@ addCollectionFunction(data: AddCollectionFunctionReq): Promise<ResStatus>
 ```
 
 **Parameters**:
+
 - `collection_name`: Collection name
 - `function`: Function schema (name, type, input/output fields, params)
 
@@ -171,6 +180,102 @@ Remove a function from a collection.
 
 ```typescript
 dropCollectionFunction(data: DropCollectionFunctionReq): Promise<ResStatus>
+```
+
+### refreshExternalCollection
+
+Trigger a refresh job for an external collection.
+
+```typescript
+refreshExternalCollection(data: RefreshExternalCollectionReq): Promise<RefreshExternalCollectionResponse>
+```
+
+### getRefreshExternalCollectionProgress
+
+Get external collection refresh job progress.
+
+```typescript
+getRefreshExternalCollectionProgress(data: GetRefreshExternalCollectionProgressReq): Promise<GetRefreshExternalCollectionProgressResponse>
+```
+
+### listRefreshExternalCollectionJobs
+
+List external collection refresh jobs.
+
+```typescript
+listRefreshExternalCollectionJobs(data?: ListRefreshExternalCollectionJobsReq): Promise<ListRefreshExternalCollectionJobsResponse>
+```
+
+### createSnapshot
+
+Create a collection snapshot.
+
+```typescript
+createSnapshot(data: CreateSnapshotReq): Promise<ResStatus>
+```
+
+### dropSnapshot
+
+Drop a collection snapshot.
+
+```typescript
+dropSnapshot(data: DropSnapshotReq): Promise<ResStatus>
+```
+
+### listSnapshots
+
+List snapshots for a collection.
+
+```typescript
+listSnapshots(data: ListSnapshotsReq): Promise<ListSnapshotsResponse>
+```
+
+### describeSnapshot
+
+Describe a collection snapshot.
+
+```typescript
+describeSnapshot(data: DescribeSnapshotReq): Promise<DescribeSnapshotResponse>
+```
+
+### restoreSnapshot
+
+Restore a snapshot into a target collection.
+
+```typescript
+restoreSnapshot(data: RestoreSnapshotReq): Promise<RestoreSnapshotResponse>
+```
+
+### getRestoreSnapshotState
+
+Get restore snapshot job state.
+
+```typescript
+getRestoreSnapshotState(data: GetRestoreSnapshotStateReq): Promise<GetRestoreSnapshotStateResponse>
+```
+
+### listRestoreSnapshotJobs
+
+List restore snapshot jobs.
+
+```typescript
+listRestoreSnapshotJobs(data?: ListRestoreSnapshotJobsReq): Promise<ListRestoreSnapshotJobsResponse>
+```
+
+### pinSnapshotData
+
+Pin snapshot data to protect it from garbage collection while it is copied out.
+
+```typescript
+pinSnapshotData(data: PinSnapshotDataReq): Promise<PinSnapshotDataResponse>
+```
+
+### unpinSnapshotData
+
+Release a snapshot data pin.
+
+```typescript
+unpinSnapshotData(data: UnpinSnapshotDataReq): Promise<ResStatus>
 ```
 
 ## Data Operations
@@ -184,6 +289,7 @@ insert(data: InsertReq): Promise<MutationResult>
 ```
 
 **Parameters**:
+
 - `collection_name`: Collection name
 - `data`: Array of data objects
 - `partition_name?`: Partition name
@@ -205,11 +311,14 @@ query(data: QueryReq): Promise<QueryResults>
 ```
 
 **Parameters**:
+
 - `collection_name`: Collection name
 - `expr`: Filter expression
 - `output_fields`: Fields to return
 - `limit?`: Result limit
 - `offset?`: Result offset
+- `order_by_fields?`: Sort fields, for example `'price:asc'` or `[{ field: 'price', order: 'asc' }]`
+- `order_by?`: Alias for `order_by_fields`
 
 ### search
 
@@ -220,12 +329,14 @@ search(data: SearchReq): Promise<SearchResults>
 ```
 
 **Parameters**:
+
 - `collection_name`: Collection name
 - `data`: Array of search vectors
 - `limit`: Number of results
 - `expr?`: Filter expression
 - `output_fields?`: Fields to return
 - `params?`: Search parameters
+- `order_by_fields?`: Sort fields, for example `'price:asc'` or `[{ field: 'price', order: 'asc' }]`
 
 ### delete
 
@@ -236,6 +347,7 @@ delete(data: DeleteReq): Promise<MutationResult>
 ```
 
 **Parameters**:
+
 - `collection_name`: Collection name
 - `ids?`: Array of IDs
 - `filter?`: Filter expression
@@ -282,6 +394,7 @@ get(data: GetReq): Promise<QueryResults>
 ```
 
 **Parameters**:
+
 - `collection_name`: Collection name
 - `ids`: Array of primary key values
 - `output_fields`: Fields to return
@@ -291,15 +404,20 @@ get(data: GetReq): Promise<QueryResults>
 Flush all collections asynchronously.
 
 ```typescript
-flushAll(): Promise<FlushAllResponse>
+flushAll(data?: FlushAllReq): Promise<FlushAllResponse>
 ```
+
+**Parameters**:
+
+- `db_name?`: Legacy database name field
+- `timeout?`: Request timeout
 
 ### flushAllSync
 
 Flush all collections synchronously (waits for completion).
 
 ```typescript
-flushAllSync(): Promise<GetFlushAllStateResponse>
+flushAllSync(data?: FlushAllReq): Promise<GetFlushAllStateResponse>
 ```
 
 ### getFlushAllState
@@ -310,6 +428,13 @@ Get the state of a flush-all operation.
 getFlushAllState(data: GetFlushAllStateReq): Promise<GetFlushAllStateResponse>
 ```
 
+**Parameters**:
+
+- `flush_all_tss?`: Flush timestamps returned by `flushAll()`
+- `flush_all_ts?`: Legacy flush timestamp field
+- `db_name?`: Legacy database name field
+- `timeout?`: Request timeout
+
 ### compact
 
 Compact a collection (brief entry — see [Data Management](/operations/data-management) for details).
@@ -317,6 +442,17 @@ Compact a collection (brief entry — see [Data Management](/operations/data-man
 ```typescript
 compact(data: CompactReq): Promise<CompactionResponse>
 ```
+
+**Parameters**:
+
+- `collection_name`: Collection name
+- `timetravel?`: Timestamp boundary for compaction
+- `majorCompaction?`: Request major compaction
+- `partition_id?`: Target partition ID
+- `channel?`: Target DML channel
+- `segment_ids?`: Target segment IDs
+- `l0Compaction?`: Request L0 compaction
+- `target_size?`: Target segment size in bytes
 
 ### getCompactionState
 
@@ -361,9 +497,10 @@ createIndex(data: CreateIndexReq): Promise<ResStatus>
 ```
 
 **Parameters**:
+
 - `collection_name`: Collection name
 - `field_name`: Field name
-- `index_type`: Index type
+- `index_type`: Index type, such as `HNSW`, `IVF_FLAT`, `AUTOINDEX`, or `MINHASH_LSH`
 - `metric_type`: Metric type
 - `params?`: Index parameters
 
@@ -459,6 +596,11 @@ Create a database.
 createDatabase(data: CreateDatabaseRequest): Promise<ResStatus>
 ```
 
+**Parameters**:
+
+- `db_name`: Database name
+- `properties?`: Database properties
+
 ### listDatabases
 
 List all databases.
@@ -498,6 +640,11 @@ Remove database properties.
 ```typescript
 dropDatabaseProperties(data: DropDatabasePropertiesRequest): Promise<ResStatus>
 ```
+
+**Parameters**:
+
+- `db_name`: Database name
+- `properties`: Property names to remove
 
 ## User & Role Operations
 
@@ -568,8 +715,15 @@ runAnalyzer(data: RunAnalyzerRequest): Promise<RunAnalyzerResponse>
 ```
 
 **Parameters**:
-- `text`: Array of text strings to analyze
-- `analyzer_params`: Analyzer configuration (type, etc.)
+
+- `text`: Text string or array of text strings to analyze
+- `analyzer_params?`: Analyzer configuration for ad-hoc analysis
+- `with_detail?`: Return detailed token data
+- `with_hash?`: Return token hash values
+- `db_name?`: Database name when using collection field analyzers
+- `collection_name?`: Collection name when using collection field analyzers
+- `field_name?`: Field name when using collection field analyzers
+- `analyzer_names?`: Analyzer names configured on the field
 
 ### getMetric
 
@@ -604,6 +758,7 @@ enum DataType {
   BFloat16Vector = 103,
   SparseFloatVector = 104,
   Int8Vector = 105,
+  ArrayOfVector = 106,
   Struct = 201,
 }
 ```
@@ -673,4 +828,3 @@ interface SearchResults {
 - Explore [Examples & Tutorials](./examples-tutorials)
 - Check [Best Practices](./best-practices)
 - Read [Troubleshooting](./troubleshooting)
-

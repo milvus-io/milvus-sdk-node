@@ -30,15 +30,34 @@ const results = await client.query({
 });
 ```
 
-### Query with Limit and Offset
+### Query with Limit, Offset, and Ordering
 
 ```javascript
 const results = await client.query({
   collection_name: 'my_collection',
   expr: 'age > 25',
-  output_fields: ['id', 'text'],
+  output_fields: ['id', 'text', 'price'],
   limit: 10,
   offset: 0,
+  order_by_fields: [{ field: 'price', order: 'desc' }],
+});
+```
+
+`order_by_fields` can be a string, an array of strings, or an array of `{ field, order }` objects:
+
+```javascript
+await client.query({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+  output_fields: ['id', 'price', 'rating'],
+  order_by_fields: 'price:asc,rating:desc',
+});
+
+await client.query({
+  collection_name: 'my_collection',
+  expr: 'age > 25',
+  output_fields: ['id', 'price', 'rating'],
+  order_by: ['price:asc', { field: 'rating', order: 'desc' }], // alias
 });
 ```
 
@@ -68,7 +87,7 @@ const iterator = await client.queryIterator({
 while (true) {
   const batch = await iterator.next();
   if (batch.done) break;
-  
+
   console.log('Batch:', batch.value);
 }
 ```
@@ -127,6 +146,7 @@ const results = await client.search({
 ```
 
 > [!NOTE]
+>
 > - When `ids` are provided, the `data` parameter (dummy vectors) is not required.
 > - The provided `ids` must match the collection's Primary Key type (`Int64` or `VarChar`).
 > - For collections with multiple vector fields, explicitly specifying `anns_field` is recommended (and required to disambiguate).
@@ -158,6 +178,25 @@ const results = await client.search({
   output_fields: ['id', 'text', 'age'],
 });
 ```
+
+### Search with Ordering
+
+Sort search results by scalar fields after vector retrieval:
+
+```javascript
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  limit: 10,
+  output_fields: ['id', 'price', 'rating'],
+  order_by_fields: [
+    { field: 'price', order: 'asc' },
+    { field: 'rating', order: 'desc' },
+  ],
+});
+```
+
+You can also pass `order_by_fields` as a string, for example `'price:asc,rating:desc'`. If you also pass `params.order_by_fields`, the top-level `order_by_fields` value takes precedence.
 
 ### Search Parameters
 
@@ -212,7 +251,7 @@ const iterator = await client.searchIterator({
 while (true) {
   const batch = await iterator.next();
   if (batch.done) break;
-  
+
   console.log('Batch:', batch.value);
 }
 ```
@@ -251,41 +290,41 @@ Filter expressions use Milvus expression syntax:
 ### Comparison Operators
 
 ```javascript
-'age > 25'
-'age >= 25'
-'age < 25'
-'age <= 25'
-'age == 25'
-'age != 25'
+'age > 25';
+'age >= 25';
+'age < 25';
+'age <= 25';
+'age == 25';
+'age != 25';
 ```
 
 ### Logical Operators
 
 ```javascript
-'age > 25 AND category == "tech"'
-'age > 25 OR age < 18'
-'NOT (age > 25)'
+'age > 25 AND category == "tech"';
+'age > 25 OR age < 18';
+'NOT (age > 25)';
 ```
 
 ### In Operator
 
 ```javascript
-'id in [1, 2, 3, 4, 5]'
-'category in ["tech", "science"]'
+'id in [1, 2, 3, 4, 5]';
+'category in ["tech", "science"]';
 ```
 
 ### String Operations
 
 ```javascript
-'text like "milvus%"'
-'text like "%database%"'
+'text like "milvus%"';
+'text like "%database%"';
 ```
 
 ### JSON Field Access
 
 ```javascript
-'metadata.category == "tech"'
-'metadata.tags[0] == "ai"'
+'metadata.category == "tech"';
+'metadata.tags[0] == "ai"';
 ```
 
 ## Search Results
@@ -307,19 +346,42 @@ results.results.forEach(result => {
 });
 ```
 
+### Element-Level Offsets
+
+For element-level retrieval, Milvus can return the matching element offsets for array or multi-vector fields. The SDK flattens `element_indices` into result rows and adds an `offset` property that identifies the matched element within the source field.
+
+```javascript
+const results = await client.search({
+  collection_name: 'chunked_docs',
+  data: [
+    [
+      /* query vector */
+    ],
+  ],
+  anns_field: 'chunk_embeddings',
+  limit: 10,
+  output_fields: ['doc_id', 'title'],
+});
+
+results.results.forEach(row => {
+  console.log('Document:', row.doc_id);
+  console.log('Matched element offset:', row.offset);
+});
+```
+
 ## Output Fields
 
 Specify which fields to return:
 
 ```javascript
 // Return specific fields
-output_fields: ['id', 'text', 'age']
+output_fields: ['id', 'text', 'age'];
 
 // Return all fields
-output_fields: ['*']
+output_fields: ['*'];
 
 // Return vector fields
-output_fields: ['id', 'vector']
+output_fields: ['id', 'vector'];
 ```
 
 ## Performance Optimization
@@ -327,9 +389,11 @@ output_fields: ['id', 'vector']
 ### Search Parameters Tuning
 
 **IVF indexes:**
+
 - `nprobe`: Higher values improve recall but slower (typical: 16-256)
 
 **HNSW indexes:**
+
 - `ef`: Higher values improve recall but slower (typical: 50-200)
 
 ### Batch Search
@@ -340,9 +404,15 @@ Search multiple vectors efficiently:
 const results = await client.search({
   collection_name: 'my_collection',
   data: [
-    [/* vector 1 */],
-    [/* vector 2 */],
-    [/* vector 3 */],
+    [
+      /* vector 1 */
+    ],
+    [
+      /* vector 2 */
+    ],
+    [
+      /* vector 3 */
+    ],
   ],
   limit: 10,
 });
@@ -358,7 +428,9 @@ await client.loadCollectionSync({
 });
 
 // Now search
-const results = await client.search({ /* ... */ });
+const results = await client.search({
+  /* ... */
+});
 ```
 
 ## Best Practices
@@ -416,4 +488,3 @@ console.log('Search results:', searchResults.results);
 - Learn about [Delete Operations](./data-operations-delete)
 - Explore [Data Management](./data-management)
 - Check out [Best Practices](./best-practices)
-
