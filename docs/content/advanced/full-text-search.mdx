@@ -25,13 +25,33 @@ console.log('Results:', result.results);
 // Each text input produces an AnalyzerResult with tokens
 ```
 
+You can also test analyzers that are configured on a collection field, request detailed token data, and include token hashes:
+
+```javascript
+const result = await client.runAnalyzer({
+  db_name: 'default',
+  collection_name: 'articles',
+  field_name: 'body',
+  analyzer_names: ['english_analyzer'],
+  text: ['Running analyzers with offsets and hashes'],
+  with_detail: true,
+  with_hash: true,
+});
+
+result.results[0].tokens.forEach(token => {
+  console.log(token.token, token.start_offset, token.end_offset, token.hash);
+});
+```
+
+`runAnalyzer()` accepts either `analyzer_params` for an ad-hoc analyzer configuration or collection context fields (`db_name`, `collection_name`, `field_name`, `analyzer_names`) to use analyzers defined in a schema.
+
 ### Analyzer Types
 
-| Type | Description |
-|------|-------------|
+| Type       | Description                              |
+| ---------- | ---------------------------------------- |
 | `standard` | Standard tokenizer with lowercase filter |
-| `english` | English-specific tokenizer with stemming |
-| `chinese` | Chinese text tokenizer |
+| `english`  | English-specific tokenizer with stemming |
+| `chinese`  | Chinese text tokenizer                   |
 
 ## Creating a Full-Text Search Collection
 
@@ -44,9 +64,24 @@ const client = new MilvusClient({ address: 'localhost:19530' });
 await client.createCollection({
   collection_name: 'articles',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
-    { name: 'title', data_type: DataType.VarChar, max_length: 256, enable_analyzer: true },
-    { name: 'body', data_type: DataType.VarChar, max_length: 10000, enable_analyzer: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'title',
+      data_type: DataType.VarChar,
+      max_length: 256,
+      enable_analyzer: true,
+    },
+    {
+      name: 'body',
+      data_type: DataType.VarChar,
+      max_length: 10000,
+      enable_analyzer: true,
+    },
     { name: 'sparse_vector', data_type: DataType.SparseFloatVector },
   ],
   functions: [
@@ -96,8 +131,14 @@ await client.loadCollectionSync({ collection_name: 'articles' });
 await client.insert({
   collection_name: 'articles',
   data: [
-    { title: 'Introduction to Machine Learning', body: 'Machine learning is a branch of AI...' },
-    { title: 'Deep Learning Basics', body: 'Deep learning uses neural networks...' },
+    {
+      title: 'Introduction to Machine Learning',
+      body: 'Machine learning is a branch of AI...',
+    },
+    {
+      title: 'Deep Learning Basics',
+      body: 'Deep learning uses neural networks...',
+    },
   ],
 });
 
@@ -129,7 +170,7 @@ const results = await client.search({
   limit: 10,
   output_fields: ['title', 'body'],
   highlighter: {
-    type: 0,  // HighlightType.Lexical
+    type: 0, // HighlightType.Lexical
     pre_tags: ['<em>'],
     post_tags: ['</em>'],
     fragment_size: 100,
@@ -150,7 +191,7 @@ const results = await client.search({
   limit: 10,
   output_fields: ['title', 'body'],
   highlighter: {
-    type: 1,  // HighlightType.Semantic
+    type: 1, // HighlightType.Semantic
     queries: ['machine learning'],
     input_fields: ['body'],
     pre_tags: ['<mark>'],
@@ -159,6 +200,25 @@ const results = await client.search({
   },
 });
 ```
+
+### Highlight Results
+
+Search hits include highlight data when highlighting is enabled. Each highlighted field contains text fragments and optional scores.
+
+```javascript
+results.results.forEach(hit => {
+  console.log('Title:', hit.title);
+  console.log('Highlight:', hit.highlight);
+
+  const bodyHighlight = hit.highlight?.body;
+  bodyHighlight?.fragments.forEach((fragment, index) => {
+    console.log('Fragment:', fragment);
+    console.log('Score:', bodyHighlight.scores?.[index]);
+  });
+});
+```
+
+For lexical highlighting, set `highlight_search_text: true` to include the matched search text in highlight output when supported by Milvus. For semantic highlighting, set `highlight_only: true` to return only highlighted fragments instead of the full source text.
 
 ## Managing Collection Functions
 

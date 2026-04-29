@@ -47,7 +47,7 @@ await client.createIndex({
   index_type: 'HNSW',
   metric_type: 'L2',
   params: {
-    M: 16,           // Number of connections
+    M: 16, // Number of connections
     efConstruction: 200, // Construction parameter
   },
 });
@@ -97,7 +97,7 @@ await client.createIndex({
   metric_type: 'L2',
   params: {
     nlist: 1024,
-    m: 8,    // Number of sub-vectors
+    m: 8, // Number of sub-vectors
     nbits: 8, // Number of bits per sub-vector
   },
 });
@@ -129,6 +129,29 @@ await client.createIndex({
 });
 ```
 
+### MINHASH_LSH
+
+`MINHASH_LSH` is an index for binary vectors that uses MinHash locality-sensitive hashing. It is useful for approximate similarity search on binary signatures, sets, shingles, or other binary encodings where Jaccard-style similarity is appropriate.
+
+```javascript
+await client.createCollection({
+  collection_name: 'binary_docs',
+  fields: [
+    { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+    { name: 'binary_vector', data_type: DataType.BinaryVector, dim: 128 },
+  ],
+});
+
+await client.createIndex({
+  collection_name: 'binary_docs',
+  field_name: 'binary_vector',
+  index_type: 'MINHASH_LSH',
+  metric_type: 'JACCARD',
+});
+```
+
+For binary vectors, the `dim` value must be a multiple of 8, and inserted binary vector payloads use `dim / 8` bytes.
+
 ## Metric Types
 
 Choose the appropriate metric type for your use case:
@@ -137,7 +160,7 @@ Choose the appropriate metric type for your use case:
 - **IP**: Inner product
 - **COSINE**: Cosine similarity
 - **HAMMING**: Hamming distance (for binary vectors)
-- **JACCARD**: Jaccard distance (for binary vectors)
+- **JACCARD**: Jaccard distance (for binary vectors, including MinHash use cases)
 
 ```javascript
 // L2 distance
@@ -259,17 +282,21 @@ await client.dropIndex({
 3. **Large datasets (> 10M vectors)**: Use IVF_PQ for memory efficiency
 4. **High-dimensional vectors**: Prefer HNSW or IVF_FLAT
 5. **Memory-constrained**: Use IVF_SQ8 or IVF_PQ
+6. **Binary signatures / set similarity**: Use MINHASH_LSH with JACCARD
 
 ### Index Parameters
 
 **HNSW Parameters:**
+
 - `M`: Higher values improve recall but increase memory (typical: 16-32)
 - `efConstruction`: Higher values improve index quality but slower build (typical: 100-500)
 
 **IVF Parameters:**
+
 - `nlist`: Number of clusters (typical: sqrt(total_vectors) to total_vectors/10)
 
 **IVF_PQ Parameters:**
+
 - `m`: Number of sub-vectors (typical: 8-16)
 - `nbits`: Bits per sub-vector (typical: 8)
 
@@ -279,6 +306,7 @@ await client.dropIndex({
 - **IP**: Use for embeddings trained with inner product
 - **COSINE**: Use for normalized embeddings
 - **HAMMING/JACCARD**: Use for binary vectors
+- **JACCARD + MINHASH_LSH**: Use for binary signatures and set-similarity workloads
 
 ### Index Building
 
@@ -311,7 +339,9 @@ await client.createCollection({
 // Insert data
 await client.insert({
   collection_name: 'my_collection',
-  data: [/* ... */],
+  data: [
+    /* ... */
+  ],
 });
 
 // Create index
@@ -344,7 +374,9 @@ await client.loadCollectionSync({
 // Now you can search
 const results = await client.search({
   collection_name: 'my_collection',
-  data: [/* vector */],
+  data: [
+    /* vector */
+  ],
   limit: 10,
 });
 ```
@@ -354,4 +386,3 @@ const results = await client.search({
 - Learn about [Data Operations](./data-operations-insert)
 - Explore [Search Operations](./data-operations-query)
 - Check out [Best Practices](./best-practices)
-

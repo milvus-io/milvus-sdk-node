@@ -144,15 +144,22 @@ Sparse vectors store only non-zero values with their indices. Commonly used for 
 Sparse vectors can be inserted in two formats:
 
 **Dictionary format** (recommended):
+
 ```javascript
 // Keys are indices, values are float weights
 { 10: 0.5, 100: 0.3, 500: 0.8, 1200: 0.1 }
 ```
 
 **Array of tuples format:**
+
 ```javascript
 // [index, value] pairs
-[[10, 0.5], [100, 0.3], [500, 0.8], [1200, 0.1]]
+[
+  [10, 0.5],
+  [100, 0.3],
+  [500, 0.8],
+  [1200, 0.1],
+];
 ```
 
 Note: Dimension is determined automatically from the maximum index across all vectors.
@@ -193,6 +200,29 @@ BFloat16 vector:
 }
 ```
 
+#### Nullable Vector Fields
+
+Vector fields can be marked as nullable. Insert or upsert `null` for rows that do not have an embedding yet; query and search results return `null` for those fields.
+
+```javascript
+{
+  name: 'optional_embedding',
+  data_type: DataType.FloatVector,
+  dim: 128,
+  nullable: true,
+}
+
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    { id: 1, optional_embedding: [/* 128 floats */] },
+    { id: 2, optional_embedding: null },
+  ],
+});
+```
+
+Nullable vector payloads are supported for `FloatVector`, `BinaryVector`, `Float16Vector`, `BFloat16Vector`, `SparseFloatVector`, and `Int8Vector`.
+
 ### Complex Types
 
 #### Array
@@ -207,6 +237,35 @@ Array of scalar values:
   max_capacity: 100,
 }
 ```
+
+#### ArrayOfVector
+
+`DataType.ArrayOfVector` stores multiple vectors in a single field value. This is useful for documents split into chunks, multi-vector embeddings, or struct array payloads that contain vector arrays.
+
+```javascript
+{
+  name: 'chunk_embeddings',
+  data_type: DataType.ArrayOfVector,
+  element_type: DataType.FloatVector,
+  dim: 128,
+  max_capacity: 32,
+}
+
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      id: 1,
+      chunk_embeddings: [
+        [/* first 128-d vector */],
+        [/* second 128-d vector */],
+      ],
+    },
+  ],
+});
+```
+
+Supported element vector types include dense, binary, float16, bfloat16, sparse, and int8 vector payloads where supported by Milvus.
 
 #### Struct
 
@@ -237,6 +296,9 @@ Each field in a collection schema must include:
   autoID: false,                // Optional: auto-generate IDs
   max_length: 256,              // Required for VarChar
   dim: 128,                     // Required for vector types
+  nullable: false,              // Optional: allow null values
+  default_value: undefined,     // Optional scalar default value
+  external_field: undefined,    // Optional: source field name for external collections
 }
 ```
 
@@ -364,9 +426,11 @@ await client.insert({
   collection_name: 'my_collection',
   data: [
     {
-      vector: [/* ... */],
+      vector: [
+        /* ... */
+      ],
       dynamic_field_1: 'value1', // Automatically added
-      dynamic_field_2: 123,      // Automatically added
+      dynamic_field_2: 123, // Automatically added
     },
   ],
 });
@@ -395,4 +459,3 @@ The SDK validates schemas before creating collections. Common validation errors:
 - Learn about [Collection Management](./collection-management)
 - Explore [Data Operations](./data-operations-insert)
 - Check out [Best Practices](./best-practices)
-

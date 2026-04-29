@@ -118,6 +118,39 @@ await client.transferReplica({
 }
 ```
 
+### Transfer Policies and Node Filters
+
+Resource group configuration can also define where to borrow missing nodes from, where to send redundant nodes, and which node labels are allowed in the group.
+
+```javascript
+await client.updateResourceGroup({
+  resource_groups: {
+    rg1: {
+      requests: { node_num: 2 },
+      limits: { node_num: 4 },
+      transfer_from: [{ resource_group: '__default_resource_group' }],
+      transfer_to: [{ resource_group: 'rg_overflow' }],
+      node_filter: {
+        node_labels: [{ key: 'workload', value: 'search' }],
+      },
+    },
+  },
+});
+```
+
+When describing a resource group, the response includes node and movement details when Milvus returns them:
+
+```javascript
+const info = await client.describeResourceGroup({
+  resource_group: 'rg1',
+});
+
+console.log('Available nodes:', info.resource_group.num_available_node);
+console.log('Incoming nodes:', info.resource_group.num_incoming_node);
+console.log('Outgoing nodes:', info.resource_group.num_outgoing_node);
+console.log('Nodes:', info.resource_group.nodes);
+```
+
 ## Best Practices
 
 1. **Organize by workload**: Create resource groups for different workloads
@@ -129,4 +162,3 @@ await client.transferReplica({
 
 - Learn about [Collection Management](./collection-management)
 - Explore [Best Practices](./best-practices)
-

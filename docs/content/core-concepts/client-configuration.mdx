@@ -69,23 +69,23 @@ const client = new MilvusClient({
     rootCertPath: '/path/to/ca.pem',
     // Or certificate buffer
     rootCert: Buffer.from('...'),
-    
+
     // Private key path (for client authentication)
     privateKeyPath: '/path/to/key.pem',
     // Or private key buffer
     privateKey: Buffer.from('...'),
-    
+
     // Certificate chain path
     certChainPath: '/path/to/cert.pem',
     // Or certificate buffer
     certChain: Buffer.from('...'),
-    
+
     // Server name for SNI
     serverName: 'milvus.example.com',
-    
+
     // Skip certificate verification (not recommended for production)
     skipCertCheck: false,
-    
+
     // Additional verify options
     verifyOptions: {},
   },
@@ -171,6 +171,22 @@ const client = new MilvusClient({
 });
 ```
 
+### Connect Reserved Options
+
+Use `option` to pass reserved key-value metadata in the initial Milvus `Connect` request. These values are sent as `client_info.reserved` and are useful for deployment-specific routing, attribution, or internal integrations.
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  option: {
+    app: 'recommendation-service',
+    environment: 'production',
+  },
+});
+```
+
+`option` values must be strings.
+
 ## Environment-Specific Configuration
 
 ### Development
@@ -217,32 +233,32 @@ const client = new MilvusClient({
 const client = new MilvusClient({
   // Required
   address: 'localhost:19530',
-  
+
   // Authentication (choose one)
   username: 'root',
   password: 'Milvus',
   // OR
   token: 'api-key',
-  
+
   // SSL/TLS
   ssl: true,
   tls: {
     rootCertPath: '/path/to/ca.pem',
     serverName: 'milvus.example.com',
   },
-  
+
   // Timeouts and retries
   timeout: 30000,
   maxRetries: 3,
   retryDelay: 1000,
-  
+
   // Database
   database: 'default',
-  
+
   // Logging
   logLevel: 'info',
   logPrefix: 'milvus',
-  
+
   // Connection pooling
   pool: {
     min: 2,
@@ -263,6 +279,7 @@ interface ClientConfig {
   username?: string;
   password?: string;
   channelOptions?: ChannelOptions;
+  option?: Record<string, string>;
   timeout?: number | string;
   maxRetries?: number;
   retryDelay?: number;
@@ -307,6 +324,7 @@ await client.createCollection({
 ```
 
 **Features:**
+
 - Automatic timestamp: Every request includes `client-request-unixmsec`
 - Trace ID support: Add `client_request_id` or `client-request-id` to track requests
 - Global support: All API methods automatically support trace IDs
@@ -319,4 +337,3 @@ For more details, see [Request Tracing](../advanced/advanced-features#request-tr
 - Learn about [Data Types & Schemas](./data-types-schemas)
 - Explore [Collection Management](./collection-management)
 - Check out [Best Practices](./best-practices) for production configurations
-
