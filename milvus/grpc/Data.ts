@@ -687,8 +687,9 @@ export class Data extends Collection {
    * @param {string} [params.db_name] - The name of the database (optional).
    *
    * For SearchSimpleReq:
-   * @param {SearchData | SearchData[]} params.data - Vector or text to search.
+   * @param {SearchData | SearchData[]} [params.data] - Vector or text to search. Not required when ids is provided.
    * @param {SearchData | SearchData[]} [params.vector] - Alias for data (optional).
+   * @param {(number[] | string[])} [params.ids] - Primary key IDs for Search By PK. When provided, vector data is not required.
    * @param {string[]} [params.partition_names] - Array of partition names (optional).
    * @param {string} [params.anns_field] - Vector field name, required for multi-vector collections (optional).
    * @param {string[]} [params.output_fields] - Fields to return (optional).
@@ -711,6 +712,7 @@ export class Data extends Collection {
    * @param {OutputTransformers} [params.transformers] - Custom data transformers for bf16/f16 vectors (optional).
    * @param {RerankerObj | FunctionObject} [params.rerank] - Reranker configuration (optional).
    * @param {number} [params.nq] - Number of query vectors (optional).
+   * @param {(number[] | string[])} [params.ids] - Primary key IDs for Search By PK. When provided, vector data is not required.
    *
    * For HybridSearchReq:
    * @param {HybridSearchSingleReq[]} params.data - Array of search requests.

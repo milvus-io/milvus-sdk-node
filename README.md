@@ -231,8 +231,9 @@ Vector similarity search.
 ```typescript
 const results = await client.search({
   collection_name: string;
-  data: number[][] | number[];  // Query vector(s)
-  limit: number;                // Top-K results (default: 100)
+  data?: number[][] | number[]; // Query vector(s), not required when ids is provided
+  ids?: (string | number)[];    // Primary key IDs for Search By PK
+  limit?: number;               // Top-K results (default: 100)
   output_fields?: string[];     // Fields to return
   filter?: string;              // Scalar filter expression
   metric_type?: MetricType;     // Distance metric
@@ -247,6 +248,16 @@ const results = await client.search({
   group_by_field?: string;      // Group results by field
 });
 // Returns: { results: [{ id, score, ...output_fields }], ... }
+```
+
+Search by primary key IDs without providing query vectors:
+
+```typescript
+const results = await client.search({
+  collection_name: 'articles',
+  ids: [1, 2, 3],
+  output_fields: ['title', 'category'],
+});
 ```
 
 #### query
