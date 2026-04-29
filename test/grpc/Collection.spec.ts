@@ -6,6 +6,9 @@ import {
   ERROR_REASONS,
   LoadState,
   formatKeyValueData,
+  CollectionProperties,
+  IndexType,
+  MetricType,
 } from '../../milvus';
 import {
   IP,
@@ -23,10 +26,45 @@ const TEST_CONSISTENCY_LEVEL_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME = GENERATE_NAME();
 const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
 const COLLECTION_WITH_PROPERTY = GENERATE_NAME();
+const COLLECTION_WITH_ENTITY_TTL = GENERATE_NAME();
+const COLLECTION_ENTITY_TTL_ALTER = GENERATE_NAME();
 const NON_EXISTENT_COLLECTION_NAME = 'none_existent';
 
 const dbParam = {
   db_name: 'Collection',
+};
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const addCollectionFieldAndWait = async (
+  collectionName: string,
+  field: { name: string; data_type: DataType; nullable?: boolean }
+) => {
+  let res = await milvusClient.addCollectionField({
+    collection_name: collectionName,
+    field,
+  });
+
+  for (let i = 0; i < 10; i++) {
+    if (res.error_code === ErrorCode.SUCCESS) {
+      return res;
+    }
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: collectionName,
+    });
+    if (describe.schema.fields.some(f => f.name === field.name)) {
+      return { error_code: ErrorCode.SUCCESS, reason: '' };
+    }
+
+    await sleep(1000);
+    res = await milvusClient.addCollectionField({
+      collection_name: collectionName,
+      field,
+    });
+  }
+
+  return res;
 };
 
 const COLLECTION_NAME_PARAMS = genCollectionParams({
@@ -88,7 +126,7 @@ describe(`Collection API`, () => {
   it(`Drop Collection properties should be successful`, async () => {
     const dropRes = await milvusClient.dropCollectionProperties({
       collection_name: COLLECTION_WITH_PROPERTY,
-      properties: ['collection.ttl.seconds'],
+      properties: [CollectionProperties.TTL_SECONDS],
     });
 
     expect(dropRes.error_code).toEqual(ErrorCode.SUCCESS);
@@ -98,14 +136,170 @@ describe(`Collection API`, () => {
     });
 
     expect(
-      formatKeyValueData(describe.properties, ['collection.ttl.seconds'])[
-        'collection.ttl.seconds'
-      ]
+      formatKeyValueData(describe.properties, [
+        CollectionProperties.TTL_SECONDS,
+      ])[CollectionProperties.TTL_SECONDS]
     ).toBeUndefined();
 
     // drop collection
     await milvusClient.dropCollection({
       collection_name: COLLECTION_WITH_PROPERTY,
+    });
+  });
+
+  it(`Create Collection with entity-level TTL should be successful`, async () => {
+    const res = await milvusClient.createCollection({
+      collection_name: COLLECTION_WITH_ENTITY_TTL,
+      fields: [
+        {
+          name: 'id',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+          autoID: false,
+        },
+        {
+          name: 'ttl',
+          data_type: DataType.Timestamptz,
+          nullable: true,
+        },
+        {
+          name: VECTOR_FIELD_NAME,
+          data_type: DataType.FloatVector,
+          dim: 4,
+        },
+      ],
+      properties: {
+        [CollectionProperties.TTL_FIELD]: 'ttl',
+      },
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION_WITH_ENTITY_TTL,
+    });
+
+    expect(
+      formatKeyValueData(describe.properties, [CollectionProperties.TTL_FIELD])[
+        CollectionProperties.TTL_FIELD
+      ]
+    ).toEqual('ttl');
+
+    const ttlField = describe.schema.fields.find(field => field.name === 'ttl');
+    expect(ttlField?.dataType).toEqual(DataType.Timestamptz);
+    expect(ttlField?.nullable).toEqual(true);
+
+    const insert = await milvusClient.insert({
+      collection_name: COLLECTION_WITH_ENTITY_TTL,
+      data: [
+        {
+          id: 1,
+          ttl: null,
+          [VECTOR_FIELD_NAME]: [0.1, 0.2, 0.3, 0.4],
+        },
+        {
+          id: 2,
+          ttl: '2099-12-31T00:00:00Z',
+          [VECTOR_FIELD_NAME]: [0.2, 0.3, 0.4, 0.5],
+        },
+      ],
+    });
+    expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const flush = await milvusClient.flushSync({
+      collection_names: [COLLECTION_WITH_ENTITY_TTL],
+    });
+    expect(flush.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const createIndex = await milvusClient.createIndex({
+      collection_name: COLLECTION_WITH_ENTITY_TTL,
+      field_name: VECTOR_FIELD_NAME,
+      index_type: IndexType.AUTOINDEX,
+      metric_type: MetricType.L2,
+    });
+    expect(createIndex.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const load = await milvusClient.loadCollectionSync({
+      collection_name: COLLECTION_WITH_ENTITY_TTL,
+    });
+    expect(load.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_WITH_ENTITY_TTL,
+      filter: 'id in [1, 2]',
+      output_fields: ['id', 'ttl'],
+      limit: 10,
+    });
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(query.data.length).toEqual(2);
+
+    await milvusClient.dropCollection({
+      collection_name: COLLECTION_WITH_ENTITY_TTL,
+    });
+  });
+
+  it(`Alter Collection entity-level TTL property should be successful`, async () => {
+    const create = await milvusClient.createCollection({
+      collection_name: COLLECTION_ENTITY_TTL_ALTER,
+      fields: [
+        {
+          name: 'id',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+          autoID: false,
+        },
+        {
+          name: VECTOR_FIELD_NAME,
+          data_type: DataType.FloatVector,
+          dim: 4,
+        },
+      ],
+    });
+    expect(create.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const addField = await addCollectionFieldAndWait(
+      COLLECTION_ENTITY_TTL_ALTER,
+      {
+        name: 'ttl',
+        data_type: DataType.Timestamptz,
+        nullable: true,
+      }
+    );
+    expect(addField.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const alter = await milvusClient.alterCollectionProperties({
+      collection_name: COLLECTION_ENTITY_TTL_ALTER,
+      properties: {
+        [CollectionProperties.TTL_FIELD]: 'ttl',
+      },
+    });
+    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION_ENTITY_TTL_ALTER,
+    });
+    expect(
+      formatKeyValueData(describe.properties, [CollectionProperties.TTL_FIELD])[
+        CollectionProperties.TTL_FIELD
+      ]
+    ).toEqual('ttl');
+
+    const drop = await milvusClient.dropCollectionProperties({
+      collection_name: COLLECTION_ENTITY_TTL_ALTER,
+      properties: [CollectionProperties.TTL_FIELD],
+    });
+    expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describeAfterDrop = await milvusClient.describeCollection({
+      collection_name: COLLECTION_ENTITY_TTL_ALTER,
+    });
+    expect(
+      formatKeyValueData(describeAfterDrop.properties, [
+        CollectionProperties.TTL_FIELD,
+      ])[CollectionProperties.TTL_FIELD]
+    ).toBeUndefined();
+
+    await milvusClient.dropCollection({
+      collection_name: COLLECTION_ENTITY_TTL_ALTER,
     });
   });
 
