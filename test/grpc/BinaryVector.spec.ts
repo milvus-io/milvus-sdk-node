@@ -27,6 +27,16 @@ const p = {
 const collectionParams = genCollectionParams(p);
 const data = generateInsertData(collectionParams.fields, 10);
 
+const deterministicBinaryRows = [
+  { ...data[0], int64: 1000, vector: [0x00, 0xff], vector1: [0x0f, 0xf0] },
+  { ...data[1], int64: 1001, vector: [0xaa, 0x55], vector1: [0x33, 0xcc] },
+  { ...data[2], int64: 1002, vector: [0x12, 0x34], vector1: [0x56, 0x78] },
+];
+
+const expectBinaryVector = (actual: number[], expected: number[]) => {
+  expect(actual).toEqual(expected);
+};
+
 describe(`Binary vectors API testing`, () => {
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
@@ -57,13 +67,15 @@ describe(`Binary vectors API testing`, () => {
   it(`insert binary vector data should be successful`, async () => {
     const insert = await milvusClient.insert({
       collection_name: COLLECTION_NAME,
-      data,
+      data: [...data, ...deterministicBinaryRows],
     });
 
     // console.log('data to insert', data);
 
     expect(insert.status.error_code).toEqual(ErrorCode.SUCCESS);
-    expect(insert.succ_index.length).toEqual(data.length);
+    expect(insert.succ_index.length).toEqual(
+      data.length + deterministicBinaryRows.length
+    );
   });
 
   it(`create index should be successful`, async () => {
@@ -119,6 +131,26 @@ describe(`Binary vectors API testing`, () => {
     expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
   });
 
+  it(`query binary vector bytes should match inserted data`, async () => {
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      filter: 'int64 >= 1000 and int64 <= 1002',
+      output_fields: ['int64', 'vector', 'vector1'],
+    });
+
+    expect(query.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(query.data.length).toEqual(deterministicBinaryRows.length);
+
+    const sortedRows = [...query.data].sort(
+      (a, b) => Number(a.int64) - Number(b.int64)
+    );
+    deterministicBinaryRows.forEach((expected, index) => {
+      expect(Number(sortedRows[index].int64)).toEqual(expected.int64);
+      expectBinaryVector(sortedRows[index].vector, expected.vector);
+      expectBinaryVector(sortedRows[index].vector1, expected.vector1);
+    });
+  });
+
   it(`search with binary vector should be successful`, async () => {
     const search = await milvusClient.search({
       data: data[0].vector,
@@ -129,5 +161,27 @@ describe(`Binary vectors API testing`, () => {
 
     expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(search.results.length).toBeGreaterThan(0);
+  });
+
+  it(`search binary vector bytes should match inserted data`, async () => {
+    const search = await milvusClient.search({
+      data: deterministicBinaryRows[0].vector,
+      collection_name: COLLECTION_NAME,
+      filter: 'int64 >= 1000 and int64 <= 1002',
+      output_fields: ['int64', 'vector', 'vector1'],
+      limit: 3,
+      params: { nprobe: 10 },
+    });
+
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.length).toBeGreaterThan(0);
+
+    const exactHit = (search.results as any[]).find(
+      result => Number(result.int64) === deterministicBinaryRows[0].int64
+    );
+    expect(exactHit).toBeDefined();
+    expect(exactHit.score).toEqual(0);
+    expectBinaryVector(exactHit.vector, deterministicBinaryRows[0].vector);
+    expectBinaryVector(exactHit.vector1, deterministicBinaryRows[0].vector1);
   });
 });
