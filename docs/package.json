@@ -23,7 +23,7 @@
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.23",
     "pagefind": "^1.0.0",
-    "postcss": "^8.5.6",
+    "postcss": "^8.5.10",
     "typescript": "^5.0.0"
   },
   "resolutions": {
@@ -32,6 +32,8 @@
     "lodash-es": "^4.18.0",
     "@xmldom/xmldom": "^0.9.9",
     "brace-expansion": "^5.0.5",
-    "yaml": "^2.8.3"
+    "yaml": "^2.8.3",
+    "postcss": "^8.5.10",
+    "uuid": "^14.0.0"
   }
 }

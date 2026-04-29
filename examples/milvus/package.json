@@ -17,6 +17,7 @@
   },
   "resolutions": {
     "protobufjs": "^7.5.5",
-    "path-to-regexp": "0.1.13"
+    "path-to-regexp": "0.1.13",
+    "uuid": "^14.0.0"
   }
 }
