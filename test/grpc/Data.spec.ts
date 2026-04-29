@@ -52,6 +52,17 @@ const createCollectionParamsVarcharID = genCollectionParams({
 const INDEX_NAME = 'collection_index';
 const PARTITION_NAME = GENERATE_NAME('partition');
 
+const isSortedByBigInt = (values: any[], direction: 'asc' | 'desc') => {
+  return values.every((value, index) => {
+    if (index === 0) {
+      return true;
+    }
+    const current = BigInt(value.toString());
+    const previous = BigInt(values[index - 1].toString());
+    return direction === 'asc' ? previous <= current : previous >= current;
+  });
+};
+
 describe(`Data.API`, () => {
   beforeAll(async () => {
     // create db and use db
@@ -290,6 +301,7 @@ describe(`Data.API`, () => {
     expect(searchWithData2.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(searchWithData2.results.length).toEqual(limit);
 
+
     // partition search
     const partitionSearch = await milvusClient.search({
       collection_name: COLLECTION_NAME,
@@ -301,6 +313,26 @@ describe(`Data.API`, () => {
 
     expect(partitionSearch.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(partitionSearch.results.length).toEqual(limit);
+  });
+
+  it(`Search with order_by_fields should sort results`, async () => {
+    const searchOrderBy = await milvusClient.search({
+      collection_name: COLLECTION_NAME,
+      filter: '',
+      data: [1, 2, 3, 4],
+      limit: 10,
+      output_fields: ['id'],
+      order_by_fields: [{ field: 'id', order: 'desc' }],
+    });
+
+    expect(searchOrderBy.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(searchOrderBy.results.length).toEqual(10);
+    expect(
+      isSortedByBigInt(
+        searchOrderBy.results.map(item => item.id),
+        'desc'
+      )
+    ).toBe(true);
   });
 
   it(`Exec simple search without params and output fields and limit should success`, async () => {
@@ -579,6 +611,32 @@ describe(`Data.API`, () => {
     });
 
     expect(res4.data.length).toBe(default_values.length);
+
+    const orderByFieldsRes = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: 5,
+      order_by_fields: [{ field: 'id' }],
+    });
+
+    expect(orderByFieldsRes.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(isSortedByBigInt(orderByFieldsRes.data.map(item => item.id), 'asc')).toBe(
+      true
+    );
+
+    const orderByAliasRes = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      expr: 'id > 0',
+      output_fields: ['id'],
+      limit: 5,
+      order_by: ['id:desc'],
+    });
+
+    expect(orderByAliasRes.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(isSortedByBigInt(orderByAliasRes.data.map(item => item.id), 'desc')).toBe(
+      true
+    );
   });
 
   it(`Query withouth output fields should success`, async () => {

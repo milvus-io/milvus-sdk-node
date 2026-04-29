@@ -13,18 +13,53 @@ import {
   f32ArrayToBinaryBytes,
   f32ArrayToInt8Bytes,
   processVectorData,
+  findKeyValue,
 } from '../../milvus';
 
 describe('utils/Data', () => {
+  it('should pass query order by fields through query params', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    let queryParams: any;
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({
+        Query: (params: any, _options: any, cb: any) => {
+          queryParams = params;
+          cb(null, {
+            status: { error_code: ErrorCode.SUCCESS, reason: '' },
+            fields_data: [],
+          });
+        },
+      }),
+      release: jest.fn(),
+    };
+
+    await client.query({
+      collection_name: 'test_collection',
+      filter: 'id > 0',
+      limit: 10,
+      offset: 2,
+      order_by: ['price:asc', { field: 'rating', order: 'desc' }],
+    });
+
+    expect(findKeyValue(queryParams.query_params, 'limit')).toBe(10);
+    expect(findKeyValue(queryParams.query_params, 'offset')).toBe(2);
+    expect(findKeyValue(queryParams.query_params, 'order_by_fields')).toBe(
+      'price:asc,rating:desc'
+    );
+  });
+
   const captureInsertParams = async (describeResponse: any, rows: any[]) => {
     const client = new MilvusClient({
       address: 'localhost:19530',
       __SKIP_CONNECT__: true,
     });
     let insertParams: any;
-    (client as any).describeCollection = jest.fn().mockResolvedValue(
-      describeResponse
-    );
+    (client as any).describeCollection = jest
+      .fn()
+      .mockResolvedValue(describeResponse);
     (client as any).channelPool = {
       acquire: jest.fn().mockResolvedValue({
         Insert: (params: any, _options: any, cb: any) => {
@@ -277,9 +312,7 @@ describe('utils/Data', () => {
       },
       {
         dim: 4,
-        int8_vector: Buffer.from(
-          new Int8Array([9, -10, 11, -12]).buffer
-        ),
+        int8_vector: Buffer.from(new Int8Array([9, -10, 11, -12]).buffer),
       },
     ]);
   });

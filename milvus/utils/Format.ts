@@ -9,6 +9,7 @@ import {
   isVectorType,
   PlaceholderType,
   logger,
+  OrderByFields,
 } from '../';
 
 /**
@@ -54,6 +55,42 @@ export const parseToKeyValue = (
         return [...pre, { key: cur, value }];
       }, [])
     : [];
+};
+
+export const normalizeOrderByFields = (orderByFields?: OrderByFields) => {
+  if (orderByFields === undefined || orderByFields === null) {
+    return undefined;
+  }
+
+  if (typeof orderByFields === 'string') {
+    return orderByFields;
+  }
+
+  if (!Array.isArray(orderByFields)) {
+    throw new Error('Invalid order_by_fields format');
+  }
+
+  return orderByFields
+    .map(item => {
+      if (typeof item === 'string') {
+        return item;
+      }
+
+      if (!item || typeof item !== 'object') {
+        throw new Error(
+          `Invalid order_by_fields item format, expect string or object, got ${typeof item}`
+        );
+      }
+
+      if (!item.field) {
+        throw new Error(
+          "Invalid order_by_fields item: 'field' key is required and cannot be empty"
+        );
+      }
+
+      return `${item.field}:${item.order ?? 'asc'}`;
+    })
+    .join(',');
 };
 
 /**

@@ -26,6 +26,7 @@ import {
   cloneObj,
   parseToKeyValue,
   formatNumberPrecision,
+  normalizeOrderByFields,
   SparseFloatVector,
   PlaceholderType,
   SearchEmbList,
@@ -49,6 +50,21 @@ const isFunctionScore = (obj: any): obj is FunctionScore => {
     typeof obj.params === 'object' &&
     obj.params !== null
   );
+};
+
+const omitOrderByFields = <T extends Record<string, any>>(data: T) => {
+  const { order_by_fields, order_by, ...rest } = data;
+  return rest;
+};
+
+const omitOrderByFieldsFromRequest = <T extends Record<string, any>>(
+  data: T
+) => {
+  const request = omitOrderByFields(data);
+  return {
+    ...request,
+    params: request.params ? omitOrderByFields(request.params) : request.params,
+  };
 };
 
 /**
@@ -88,6 +104,11 @@ export const buildSearchParams = (
   // data.params -> search_params
   for (let key in data.params) {
     search_params[key] = data.params[key];
+  }
+
+  const orderByFields = normalizeOrderByFields(data.order_by_fields);
+  if (orderByFields !== undefined) {
+    search_params.order_by_fields = orderByFields;
   }
 
   return search_params;
@@ -262,19 +283,19 @@ export const buildSearchRequest = (
   // build user search requests
   const userRequests = isHybridSearch
     ? searchHybridReq.data.map(d => ({
-      ...params,
-      ...d,
-    }))
+        ...omitOrderByFieldsFromRequest(params as any),
+        ...omitOrderByFieldsFromRequest(d as any),
+      }))
     : [
-      {
-        ...searchSimpleReq,
-        data:
-          searchReq.vectors || searchSimpleReq.vector || searchSimpleReq.data, // data or vector or vectors
-        anns_field:
-          searchSimpleReq.anns_field ||
-          Object.keys(collectionInfo.anns_fields || {})[0],
-      },
-    ];
+        {
+          ...searchSimpleReq,
+          data:
+            searchReq.vectors || searchSimpleReq.vector || searchSimpleReq.data, // data or vector or vectors
+          anns_field:
+            searchSimpleReq.anns_field ||
+            Object.keys(collectionInfo.anns_fields || {})[0],
+        },
+      ];
 
   // get primary field type for ids
   const pkField = collectionInfo.schema.fields.find(f => f.is_primary_key);
@@ -308,7 +329,8 @@ export const buildSearchRequest = (
         if (
           !(ids as any[]).every(
             (id: any) =>
-              typeof id === 'number' || (typeof id === 'string' && !isNaN(Number(id)))
+              typeof id === 'number' ||
+              (typeof id === 'string' && !isNaN(Number(id)))
           )
         ) {
           throw new Error(
@@ -361,15 +383,16 @@ export const buildSearchRequest = (
       ids && ids.length > 0
         ? []
         : formatSearchData(data!, {
-          ...annsField,
-          _placeholderType: placeholderType,
-        } as FieldSchema);
+            ...annsField,
+            _placeholderType: placeholderType,
+          } as FieldSchema);
 
     const request: FormatedSearchRequest = {
       collection_name: params.collection_name,
       partition_names: params.partition_names || [],
       output_fields: params.output_fields || default_output_fields,
-      nq: ids && ids.length > 0 ? ids.length : searchReq.nq || searchData.length,
+      nq:
+        ids && ids.length > 0 ? ids.length : searchReq.nq || searchData.length,
       dsl: userRequest.expr || searchReq.expr || searchSimpleReq.filter || '', // expr, inner expr or outer expr
       dsl_type: DslType.BoolExprV1,
       search_params: parseToKeyValue(
@@ -429,7 +452,8 @@ export const buildSearchRequest = (
   const hasFunctionScore = isFunctionScore(rerank);
 
   // build highlighter if provided
-  const highlighter = searchSimpleOrHybridReq.highlighter || searchReq.highlighter;
+  const highlighter =
+    searchSimpleOrHybridReq.highlighter || searchReq.highlighter;
   const highlighterParam = highlighter
     ? { highlighter: buildHighlighter(highlighter) }
     : {};
@@ -438,44 +462,44 @@ export const buildSearchRequest = (
     isHybridSearch: isHybridSearch,
     request: isHybridSearch
       ? {
-        collection_name: params.collection_name,
-        partition_names: params.partition_names,
-        requests: requests,
-        output_fields: requests[0]?.output_fields,
-        consistency_level: requests[0]?.consistency_level,
+          collection_name: params.collection_name,
+          partition_names: params.partition_names,
+          requests: requests,
+          output_fields: requests[0]?.output_fields,
+          consistency_level: requests[0]?.consistency_level,
 
-        // if ranker is set and it is a hybrid search, add it to the request
-        ...createFunctionScore(rerank),
+          // if ranker is set and it is a hybrid search, add it to the request
+          ...createFunctionScore(rerank),
 
-        // if ranker is not exist, use RRFRanker ranker
-        ...{
-          rank_params: [
-            ...(isRerankerObj
-              ? parseToKeyValue(convertRerankParams(rerank as RerankerObj))
-              : !hasRerankFunction && !hasFunctionScore
-                ? parseToKeyValue(convertRerankParams(RRFRanker()))
-                : []),
-            { key: 'round_decimal', value: round_decimal },
-            {
-              key: 'limit',
-              value:
-                searchSimpleReq.limit ?? searchSimpleReq.topk ?? DEFAULT_TOPK,
-            },
-            {
-              key: 'offset',
-              value: searchSimpleReq.offset ?? 0,
-            },
-          ],
-        },
+          // if ranker is not exist, use RRFRanker ranker
+          ...{
+            rank_params: [
+              ...(isRerankerObj
+                ? parseToKeyValue(convertRerankParams(rerank as RerankerObj))
+                : !hasRerankFunction && !hasFunctionScore
+                  ? parseToKeyValue(convertRerankParams(RRFRanker()))
+                  : []),
+              { key: 'round_decimal', value: round_decimal },
+              {
+                key: 'limit',
+                value:
+                  searchSimpleReq.limit ?? searchSimpleReq.topk ?? DEFAULT_TOPK,
+              },
+              {
+                key: 'offset',
+                value: searchSimpleReq.offset ?? 0,
+              },
+            ],
+          },
 
-        // highlighter
-        ...highlighterParam,
-      }
+          // highlighter
+          ...highlighterParam,
+        }
       : {
-        ...requests[0],
-        ...createFunctionScore(rerank),
-        ...highlighterParam,
-      },
+          ...requests[0],
+          ...createFunctionScore(rerank),
+          ...highlighterParam,
+        },
     // need for parsing the search results
     ...(round_decimal !== -1 ? { round_decimal } : {}),
     nq: requests[0].nq,

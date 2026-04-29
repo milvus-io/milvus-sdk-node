@@ -73,6 +73,7 @@ import {
   NO_LIMIT,
   DescribeCollectionReq,
   formatExprValues,
+  normalizeOrderByFields,
   isVectorType,
   convertToDataType,
   GetQuerySegmentInfoResponse,
@@ -317,7 +318,9 @@ export class Data extends Collection {
       };
 
       return Array.from(fields.values()).map(field => {
-        let key = [...VectorDataTypes, DataType.ArrayOfVector].includes(field.type)
+        let key = [...VectorDataTypes, DataType.ArrayOfVector].includes(
+          field.type
+        )
           ? 'vectors'
           : 'scalars';
         if (field.elementType === DataType.Struct) {
@@ -666,6 +669,7 @@ export class Data extends Collection {
    * @param {string} [params.group_by_field] - Field to group results by (optional).
    * @param {number} [params.group_size] - Size of each group (optional).
    * @param {boolean} [params.strict_group_size] - Whether to enforce strict group size (optional).
+   * @param {OrderByFields} [params.order_by_fields] - Fields to sort search results by, for example `price:asc` or `[{ field: 'price', order: 'asc' }]` (optional).
    * @param {string} [params.hints] - Hints to improve search performance (optional).
    * @param {number} [params.round_decimal] - Number of decimal places to round scores (optional).
    * @param {OutputTransformers} [params.transformers] - Custom data transformers for bf16/f16 vectors (optional).
@@ -1078,6 +1082,8 @@ export class Data extends Collection {
    * @param {string[]} [data.partitions_names] - Array of partition names (optional).
    * @param {string[]} data.output_fields - Vector or scalar field to be returned.
    * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   * @param {OrderByFields} [data.order_by_fields] - Fields to sort query results by, for example `price:asc` or `[{ field: 'price', order: 'asc' }]` (optional).
+   * @param {OrderByFields} [data.order_by] - Alias for data.order_by_fields (optional).
    * @param {{key: value}[]} [data.params] - An optional key pair json array of search parameters.
    * @param {OutputTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
    *
@@ -1110,6 +1116,14 @@ export class Data extends Collection {
       offset = { offset: data.offset };
     }
 
+    const queryParams: { [key: string]: any } = { ...limits, ...offset };
+    const orderByFields = normalizeOrderByFields(
+      data.order_by_fields ?? data.order_by
+    );
+    if (orderByFields !== undefined) {
+      queryParams.order_by_fields = orderByFields;
+    }
+
     // id in expression
     let primaryKeyInIdsExpression = '';
 
@@ -1140,7 +1154,7 @@ export class Data extends Collection {
       {
         ...data,
         output_fields: data.output_fields || ['*'],
-        query_params: parseToKeyValue({ ...limits, ...offset }),
+        query_params: parseToKeyValue(queryParams),
       },
       data.timeout || this.timeout
     );
