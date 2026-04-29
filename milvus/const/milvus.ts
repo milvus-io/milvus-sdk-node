@@ -389,6 +389,14 @@ export enum DataTypeStringEnum {
   Struct = 'Struct',
 }
 
+// Collection property keys
+export const CollectionProperties = {
+  TTL_SECONDS: 'collection.ttl.seconds',
+  TTL_FIELD: 'ttl_field',
+  TIMEZONE: 'collection.timezone',
+  MMAP_ENABLED: 'mmap.enabled',
+} as const;
+
 // RBAC: operate user role type
 export enum OperateUserRoleType {
   AddUserToRole = 0,
