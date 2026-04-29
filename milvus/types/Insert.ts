@@ -19,6 +19,7 @@ import {
   VectorTypes,
   BFloat16Vector,
   Float16Vector,
+  FieldPartialUpdateOpType,
 } from '../';
 
 // Represents the possible data types for a field(cell)
@@ -72,8 +73,19 @@ interface BaseInsertReq extends collectionNameReq {
 
 // Union type to enforce mutual exclusivity
 export type InsertReq = DataInsertReq | FieldsDataInsertReq;
+export type FieldPartialUpdateOpName = keyof typeof FieldPartialUpdateOpType;
+export type FieldPartialUpdateOpValue =
+  | FieldPartialUpdateOpType
+  | FieldPartialUpdateOpName;
+
+export interface FieldPartialUpdateOp {
+  field_name: string;
+  op: FieldPartialUpdateOpValue;
+}
+
 export type UpsertReq = (DataInsertReq | FieldsDataInsertReq) & {
   partial_update?: boolean;
+  field_ops?: FieldPartialUpdateOp[];
 };
 
 // Variant with data property

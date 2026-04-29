@@ -14,6 +14,7 @@ import {
   f32ArrayToInt8Bytes,
   processVectorData,
   findKeyValue,
+  FieldPartialUpdateOpType,
 } from '../../milvus';
 
 describe('utils/Data', () => {
@@ -49,6 +50,142 @@ describe('utils/Data', () => {
     expect(findKeyValue(queryParams.query_params, 'order_by_fields')).toBe(
       'price:asc,rating:desc'
     );
+  });
+
+  const captureUpsertParams = async (
+    describeResponse: any,
+    rows: any[],
+    extraParams: any = {}
+  ) => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    let upsertParams: any;
+    (client as any).describeCollection = jest
+      .fn()
+      .mockResolvedValue(describeResponse);
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({
+        Upsert: (params: any, _options: any, cb: any) => {
+          upsertParams = params;
+          cb(null, {
+            status: { error_code: ErrorCode.SUCCESS, reason: '' },
+            succ_index: [],
+            err_index: [],
+            acknowledged: true,
+            insert_cnt: '0',
+            delete_cnt: '0',
+            upsert_cnt: String(rows.length),
+            timestamp: '0',
+            IDs: {
+              int_id: { data: rows.map((_, i) => String(i + 1)) },
+              id_field: 'int_id',
+            },
+          });
+        },
+      }),
+      release: jest.fn(),
+    };
+
+    await client.upsert({
+      collection_name: 'test_collection',
+      fields_data: rows,
+      ...extraParams,
+    });
+
+    return upsertParams;
+  };
+
+  const arrayPartialDescribeResponse = {
+    status: { error_code: ErrorCode.SUCCESS, reason: '' },
+    schema: {
+      enable_dynamic_field: false,
+      fields: [
+        {
+          name: 'id',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+          autoID: false,
+          nullable: false,
+          element_type: DataType.None,
+        },
+        {
+          name: 'vector',
+          data_type: DataType.FloatVector,
+          dim: '2',
+          nullable: false,
+          element_type: DataType.None,
+        },
+        {
+          name: 'tags',
+          data_type: DataType.Array,
+          element_type: DataType.VarChar,
+          max_capacity: '8',
+          nullable: false,
+        },
+        {
+          name: 'scores',
+          data_type: DataType.Array,
+          element_type: DataType.Int64,
+          max_capacity: '8',
+          nullable: false,
+        },
+      ],
+    },
+    properties: [],
+  };
+
+  it('should pass field_ops through and auto-enable partial_update for upsert', async () => {
+    const upsertParams = await captureUpsertParams(
+      arrayPartialDescribeResponse,
+      [{ id: 1, tags: ['new'], scores: [2] }],
+      {
+        field_ops: [
+          { field_name: 'tags', op: FieldPartialUpdateOpType.ARRAY_APPEND },
+          { field_name: 'scores', op: 'ARRAY_REMOVE' },
+        ],
+      }
+    );
+
+    expect(upsertParams.partial_update).toBe(true);
+    expect(upsertParams.field_ops).toEqual([
+      { field_name: 'tags', op: 'ARRAY_APPEND' },
+      { field_name: 'scores', op: 'ARRAY_REMOVE' },
+    ]);
+    expect(upsertParams.fields_data.map((f: any) => f.field_name)).toEqual([
+      'id',
+      'tags',
+      'scores',
+    ]);
+  });
+
+  it('should reject unsupported field_ops op values', async () => {
+    await expect(
+      captureUpsertParams(
+        arrayPartialDescribeResponse,
+        [{ id: 1, tags: ['new'] }],
+        { field_ops: [{ field_name: 'tags', op: 999 }] }
+      )
+    ).rejects.toThrow('unsupported field partial update op: 999');
+
+    await expect(
+      captureUpsertParams(
+        arrayPartialDescribeResponse,
+        [{ id: 1, tags: ['new'] }],
+        { field_ops: [{ field_name: 'tags', op: 'INVALID_OP' }] }
+      )
+    ).rejects.toThrow('unsupported field partial update op: INVALID_OP');
+  });
+
+  it('should reject field_ops without field_name', async () => {
+    await expect(
+      captureUpsertParams(
+        arrayPartialDescribeResponse,
+        [{ id: 1, tags: ['new'] }],
+        { field_ops: [{ field_name: '', op: 'ARRAY_APPEND' }] }
+      )
+    ).rejects.toThrow('field_ops field_name is required');
   });
 
   const captureInsertParams = async (describeResponse: any, rows: any[]) => {

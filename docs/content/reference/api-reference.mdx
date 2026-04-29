@@ -302,6 +302,42 @@ Upsert data (insert or update).
 upsert(data: UpsertReq): Promise<MutationResult>
 ```
 
+**Parameters**:
+
+- `collection_name`: Collection name
+- `data` or `fields_data`: Array of row objects
+- `partition_name?`: Partition name
+- `partial_update?`: Whether to update only provided fields
+- `field_ops?`: Per-field partial update operations for Array fields. Providing `field_ops` automatically enables `partial_update`.
+
+```typescript
+type FieldPartialUpdateOp = {
+  field_name: string;
+  op:
+    | FieldPartialUpdateOpType.REPLACE
+    | FieldPartialUpdateOpType.ARRAY_APPEND
+    | FieldPartialUpdateOpType.ARRAY_REMOVE
+    | 'REPLACE'
+    | 'ARRAY_APPEND'
+    | 'ARRAY_REMOVE';
+};
+```
+
+Example:
+
+```typescript
+import { FieldPartialUpdateOpType } from '@zilliz/milvus2-sdk-node';
+
+await client.upsert({
+  collection_name: 'my_collection',
+  data: [{ id: 1, tags: ['new'], scores: [3] }],
+  field_ops: [
+    { field_name: 'tags', op: FieldPartialUpdateOpType.ARRAY_APPEND },
+    { field_name: 'scores', op: 'ARRAY_REMOVE' },
+  ],
+});
+```
+
 ### query
 
 Query entities by filter.

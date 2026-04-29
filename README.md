@@ -184,6 +184,25 @@ await client.upsert({
   collection_name: string;
   data: Record<string, any>[];
   partition_name?: string;
+  partial_update?: boolean;
+  field_ops?: Array<{
+    field_name: string;
+    op: 'REPLACE' | 'ARRAY_APPEND' | 'ARRAY_REMOVE';
+  }>;
+});
+```
+
+Partial array upsert can append to or remove from existing Array fields:
+
+```typescript
+import { FieldPartialUpdateOpType } from '@zilliz/milvus2-sdk-node';
+
+await client.upsert({
+  collection_name: 'articles',
+  data: [{ id: 1, tags: ['featured'] }],
+  field_ops: [
+    { field_name: 'tags', op: FieldPartialUpdateOpType.ARRAY_APPEND },
+  ],
 });
 ```
 
