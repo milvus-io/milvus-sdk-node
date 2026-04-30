@@ -857,10 +857,10 @@ await client.search({
 
 For detailed guides on advanced features, visit the documentation:
 
-- **[Hybrid Search](docs/content/operations/hybrid-search.mdx)** — Multi-vector search with reranking
-- **[Full-Text Search](docs/content/advanced/full-text-search.mdx)** — BM25 keyword search with text analyzers
-- **[Iterators](docs/content/operations/iterators.mdx)** — Paginate through large result sets
-- **[Global Cluster](docs/content/advanced/global-cluster.mdx)** — Multi-region failover support
+- **[Hybrid Search](docs/src/content/docs/operations/hybrid-search.mdx)** — Multi-vector search with reranking
+- **[Full-Text Search](docs/src/content/docs/advanced/full-text-search.mdx)** — BM25 keyword search with text analyzers
+- **[Iterators](docs/src/content/docs/operations/iterators.mdx)** — Paginate through large result sets
+- **[Global Cluster](docs/src/content/docs/advanced/global-cluster.mdx)** — Multi-region failover support
 
 ---
 

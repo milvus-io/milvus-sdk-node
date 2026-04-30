@@ -1,0 +1,71 @@
+---
+title: "Global Cluster"
+---
+
+Global cluster mode enables multi-region Milvus deployments with automatic failover. The SDK fetches cluster topology from the endpoint and routes requests to the primary cluster.
+
+## Enabling Global Cluster Mode
+
+Set `isGlobal: true` in the client configuration:
+
+```javascript
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'your-global-endpoint:19530',
+  isGlobal: true,
+  token: 'your-token',
+});
+```
+
+### Auto-Detection
+
+When `isGlobal` is not explicitly set, the SDK auto-detects global cluster mode by checking if the address URI contains `global-cluster`. You can override this by explicitly setting `isGlobal: true` or `isGlobal: false`.
+
+## How It Works
+
+When global cluster mode is enabled:
+
+1. **Connection:** The SDK connects to the provided endpoint and queries the cluster topology
+2. **Routing:** Requests are routed to the primary cluster automatically
+3. **Failover:** If the primary cluster becomes unavailable, the SDK can reconnect to a new primary
+
+## Manual Primary Reconnection
+
+Use `reconnectToPrimary()` to manually trigger a reconnection to the current primary cluster:
+
+```javascript
+const changed = await client.reconnectToPrimary();
+
+if (changed) {
+  console.log('Reconnected to new primary cluster');
+} else {
+  console.log('Primary unchanged, no reconnection needed');
+}
+```
+
+This method:
+- Queries the endpoint for the current primary cluster
+- If the primary has changed, creates a new connection pool for the new primary
+- Drains the old connection pool gracefully
+- Returns `true` if a reconnection occurred, `false` if the primary is unchanged
+
+## Configuration
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `isGlobal` | `boolean` | Auto-detected | Enable/disable global cluster mode |
+| `address` | `string` | Required | Global cluster endpoint address |
+| `token` | `string` | - | Authentication token |
+
+## Next Steps
+
+- Learn about [Client Configuration](/milvus-sdk-node/core-concepts/client-configuration) for all connection options
+- Explore [Advanced Features](/milvus-sdk-node/advanced/advanced-features) for connection pooling and retries
+
+## Commit
+
+```bash
+git add docs/src/content/docs/advanced/global-cluster.mdx
+git commit --signoff -m "docs: add global cluster documentation page"
+```
