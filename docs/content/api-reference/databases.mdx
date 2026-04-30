@@ -1,0 +1,183 @@
+# Database Operations
+
+Database APIs manage Milvus databases and database-level properties. Most collection and data APIs accept `db_name`; you can also set the active database with [`client.use`](/api-reference/client#use).
+
+## createDatabase
+
+Create a database.
+
+```typescript
+createDatabase(data: CreateDatabaseRequest): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `db_name`: Database name.
+- `properties?`: Database properties.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.createDatabase({
+  db_name: 'analytics',
+  properties: {
+    owner: 'recommendation-team',
+  },
+});
+```
+
+## listDatabases
+
+List databases.
+
+```typescript
+listDatabases(data?: ListDatabasesRequest): Promise<ListDatabasesResponse>
+```
+
+**Parameters**:
+
+- `timeout?`: Request timeout in milliseconds.
+
+**Response**:
+
+```typescript
+interface ListDatabasesResponse {
+  status: ResStatus;
+  db_names: string[];
+  db_ids: string[];
+  created_timestamp: string[];
+}
+```
+
+Example:
+
+```typescript
+const databases = await client.listDatabases();
+console.log(databases.db_names);
+```
+
+## describeDatabase
+
+Describe database metadata and properties.
+
+```typescript
+describeDatabase(data: DescribeDatabaseRequest): Promise<DescribeDatabaseResponse>
+```
+
+**Parameters**:
+
+- `db_name`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+**Response**:
+
+```typescript
+interface DescribeDatabaseResponse {
+  status: ResStatus;
+  db_name: string;
+  dbID: number;
+  created_timestamp: number;
+  properties: KeyValuePair[];
+}
+```
+
+Example:
+
+```typescript
+const db = await client.describeDatabase({ db_name: 'analytics' });
+```
+
+## alterDatabaseProperties
+
+Modify database properties.
+
+```typescript
+alterDatabaseProperties(data: AlterDatabaseRequest): Promise<ResStatus>
+alterDatabase(data: AlterDatabaseRequest): Promise<ResStatus> // alias
+```
+
+**Parameters**:
+
+- `db_name`: Database name.
+- `db_id?`: Database ID.
+- `properties`: Properties to set.
+- `delete_keys?`: Property keys to delete.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.alterDatabaseProperties({
+  db_name: 'analytics',
+  properties: {
+    description: 'Analytics workloads',
+  },
+});
+```
+
+## dropDatabaseProperties
+
+Remove database properties by key.
+
+```typescript
+dropDatabaseProperties(data: DropDatabasePropertiesRequest): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `db_name`: Database name.
+- `properties`: Property names to remove.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.dropDatabaseProperties({
+  db_name: 'analytics',
+  properties: ['description'],
+});
+```
+
+## dropDatabase
+
+Drop a database.
+
+```typescript
+dropDatabase(data: DropDatabasesRequest): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `db_name`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.dropDatabase({ db_name: 'analytics' });
+```
+
+## Working with database context
+
+```typescript
+await client.createDatabase({ db_name: 'analytics' });
+await client.use({ db_name: 'analytics' });
+
+await client.createCollection({
+  collection_name: 'events',
+  dimension: 128,
+});
+```
+
+Alternatively pass `db_name` per request:
+
+```typescript
+await client.showCollections({ db_name: 'analytics' });
+```
+
+## Related
+
+- [API Reference overview](/api-reference)
+- [Database Operations guide](/operations/database-operations)
+- [User & Role Operations](/api-reference/users-roles)

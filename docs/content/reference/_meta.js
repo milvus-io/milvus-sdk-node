@@ -1,8 +1,7 @@
 export default {
-  'api-reference': 'API Reference',
-  'troubleshooting': 'Troubleshooting',
+  troubleshooting: 'Troubleshooting',
   'migration-compatibility': 'Migration & Compatibility',
-  'contributing': 'Contributing',
+  contributing: 'Contributing',
   'additional-resources': 'Additional Resources',
 };
 

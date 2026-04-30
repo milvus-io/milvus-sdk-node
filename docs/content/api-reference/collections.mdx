@@ -1,0 +1,604 @@
+# Collection Operations
+
+Collection APIs manage schemas, collection lifecycle, load/release state, aliases, functions, compaction, external collections, and snapshots.
+
+```typescript
+import {
+  CollectionProperties,
+  DataType,
+  FunctionType,
+} from '@zilliz/milvus2-sdk-node';
+```
+
+## createCollection
+
+Create a collection. `MilvusClient#createCollection` supports both a quick-create form and explicit schema forms.
+
+```typescript
+createCollection(
+  data: CreateColReq | CreateColWithSchemaAndIndexParamsReq | CreateCollectionReq
+): Promise<ResStatus>
+```
+
+### Quick-create parameters
+
+- `collection_name`: Collection name.
+- `dimension`: Vector dimension.
+- `primary_field_name?`: Primary key field name. Defaults to `id`.
+- `id_type?`: `DataType.Int64` or `DataType.VarChar`.
+- `vector_field_name?`: Vector field name. Defaults to `embedding`.
+- `metric_type?`: Metric type for the default index.
+- `enable_dynamic_field?` / `enableDynamicField?`: Enable dynamic field. Defaults to `true`.
+- `auto_id?`: Whether primary key auto-increments.
+- `consistency_level?`: Consistency level.
+- `index_params?`: Optional index params.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.createCollection({
+  collection_name: 'books',
+  dimension: 768,
+  metric_type: 'COSINE',
+});
+```
+
+### Explicit schema parameters
+
+- `collection_name`: Collection name.
+- `fields` or `schema`: Field schema array.
+- `shards_num?`: Number of shards.
+- `description?`: Collection description.
+- `consistency_level?`: Consistency level.
+- `num_partitions?`: Initial partition count.
+- `partition_key_field?`: Partition key field.
+- `clustering_key_field?`: Clustering key field.
+- `enable_dynamic_field?` / `enableDynamicField?`: Enable dynamic field.
+- `properties?`: Collection properties such as TTL or mmap settings.
+- `functions?`: Collection functions such as BM25 or text embedding.
+- `external_source?`, `external_spec?`, `do_physical_backfill?`, `file_resource_ids?`: External collection configuration.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.createCollection({
+  collection_name: 'books',
+  fields: [
+    { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+    { name: 'title', data_type: DataType.VarChar, max_length: 512 },
+    { name: 'embedding', data_type: DataType.FloatVector, dim: 768 },
+  ],
+  properties: {
+    [CollectionProperties.TTL_SECONDS]: 86_400,
+  },
+});
+```
+
+## Schema mutation
+
+### addCollectionField
+
+Add one field to an existing collection.
+
+```typescript
+addCollectionField(data: AddCollectionFieldReq): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `field`: Field schema.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+### addCollectionFields
+
+Add multiple fields by calling `addCollectionField` for each field.
+
+```typescript
+addCollectionFields(data: AddCollectionFieldsReq): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `fields`: Field schema array.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+### alterCollectionFieldProperties
+
+Modify field properties, such as `max_length` or `mmap.enabled`.
+
+```typescript
+alterCollectionFieldProperties(data: AlterCollectionFieldPropertiesReq): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `field_name`: Field name.
+- `properties`: Properties to set.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.alterCollectionFieldProperties({
+  collection_name: 'books',
+  field_name: 'title',
+  properties: { max_length: 1024 },
+});
+```
+
+## Collection inspection
+
+### hasCollection
+
+Check if a collection exists.
+
+```typescript
+hasCollection(data: HasCollectionReq): Promise<BoolResponse>
+```
+
+**Response**: `value` is `true` when the collection exists.
+
+### showCollections
+
+List collections or loaded collections.
+
+```typescript
+showCollections(data?: ShowCollectionsReq): Promise<ShowCollectionsResponse>
+listCollections(data?: ShowCollectionsReq): Promise<ShowCollectionsResponse> // alias
+list_collections(data?: ShowCollectionsReq): Promise<ShowCollectionsResponse> // alias
+```
+
+**Parameters**:
+
+- `type?`: `ShowCollectionsType.All` or `ShowCollectionsType.Loaded`.
+- `collection_names?`: Collection names to check when using loaded status.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+**Response**:
+
+- `data[]`: Collection info with `name`, `id`, `timestamp`, and `loadedPercentage`.
+
+### describeCollection
+
+Describe schema and collection metadata.
+
+```typescript
+describeCollection(data: DescribeCollectionReq): Promise<DescribeCollectionResponse>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `cache?`: Return cached schema when `true`.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+**Response highlights**:
+
+- `schema.fields`: Field schema list.
+- `schema.functions`: Function schemas.
+- `collectionID`, `collection_name`, `consistency_level`.
+- `aliases`.
+- `properties`.
+- `anns_fields`, `scalar_fields`, `function_fields`: SDK-formatted field maps.
+
+### batchDescribeCollections
+
+Describe multiple collections in one request.
+
+```typescript
+batchDescribeCollections(data: BatchDescribeCollectionReq): Promise<BatchDescribeCollectionResponse>
+```
+
+**Parameters**:
+
+- `collection_names`: Collection names.
+- `collectionIDs?`: Collection IDs.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+### getCollectionStatistics
+
+Get collection statistics.
+
+```typescript
+getCollectionStatistics(data: GetCollectionStatisticsReq): Promise<StatisticsResponse>
+getCollectionStats(data: GetCollectionStatisticsReq): Promise<StatisticsResponse> // alias
+```
+
+**Response**:
+
+- `stats`: Raw key-value statistics.
+- `data.row_count`: Parsed row count.
+
+## Collection properties
+
+### alterCollectionProperties
+
+Modify collection properties.
+
+```typescript
+alterCollectionProperties(data: AlterCollectionReq): Promise<ResStatus>
+alterCollection(data: AlterCollectionReq): Promise<ResStatus> // deprecated alias
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `properties`: Properties to set.
+- `delete_keys?`: Property keys to delete.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.alterCollectionProperties({
+  collection_name: 'books',
+  properties: { [CollectionProperties.MMAP_ENABLED]: true },
+});
+```
+
+### dropCollectionProperties
+
+Remove collection properties.
+
+```typescript
+dropCollectionProperties(data: DropCollectionPropertiesReq): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `properties`: Property keys to remove.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+## Load and release
+
+### loadCollectionAsync
+
+Start loading a collection without waiting for completion.
+
+```typescript
+loadCollectionAsync(data: LoadCollectionReq): Promise<ResStatus>
+```
+
+### loadCollection
+
+Load a collection and wait until loading progress reaches 100%.
+
+```typescript
+loadCollection(data: LoadCollectionReq): Promise<ResStatus>
+loadCollectionSync(data: LoadCollectionReq): Promise<ResStatus> // alias
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `replica_number?`: Replica count.
+- `resource_groups?`: Target resource groups.
+- `refresh?`: Refresh loaded data.
+- `load_fields?`: Fields to load.
+- `skip_load_dynamic_field?`: Skip dynamic field loading.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+### refreshLoad
+
+Refresh a loaded collection to pick up schema or data changes.
+
+```typescript
+refreshLoad(data: RefreshLoadReq): Promise<ResStatus>
+```
+
+### releaseCollection
+
+Release a collection from query nodes.
+
+```typescript
+releaseCollection(data: ReleaseLoadCollectionReq): Promise<ResStatus>
+```
+
+### getLoadingProgress
+
+Get load progress for a collection or partitions.
+
+```typescript
+getLoadingProgress(data: GetLoadingProgressReq): Promise<GetLoadingProgressResponse>
+```
+
+### getLoadState
+
+Get collection or partition load state.
+
+```typescript
+getLoadState(data: GetLoadStateReq): Promise<GetLoadStateResponse>
+```
+
+## Rename, truncate, and drop
+
+### renameCollection
+
+Rename a collection and optionally move it to another database.
+
+```typescript
+renameCollection(data: RenameCollectionReq): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `collection_name`: Current collection name.
+- `new_collection_name`: New collection name.
+- `new_db_name?`: Target database name.
+- `db_name?`: Current database name.
+- `timeout?`: Request timeout in milliseconds.
+
+### truncateCollection
+
+Delete all rows while keeping the schema.
+
+```typescript
+truncateCollection(data: DropCollectionReq): Promise<{ status: ResStatus }>
+```
+
+### dropCollection
+
+Drop a collection and all its data.
+
+```typescript
+dropCollection(data: DropCollectionReq): Promise<ResStatus>
+drop_collection(data: DropCollectionReq): Promise<ResStatus> // alias
+```
+
+## Alias operations
+
+### createAlias
+
+```typescript
+createAlias(data: CreateAliasReq): Promise<ResStatus>
+```
+
+**Parameters**: `collection_name`, `alias`, optional `db_name`, optional `timeout`.
+
+### describeAlias
+
+```typescript
+describeAlias(data: DescribeAliasReq): Promise<DescribeAliasResponse>
+```
+
+### listAliases
+
+```typescript
+listAliases(data: ListAliasesReq): Promise<ListAliasesResponse>
+```
+
+### alterAlias
+
+```typescript
+alterAlias(data: AlterAliasReq): Promise<ResStatus>
+```
+
+### dropAlias
+
+```typescript
+dropAlias(data: DropAliasReq): Promise<ResStatus>
+```
+
+## Function operations
+
+### addCollectionFunction
+
+Add a function to a collection, such as BM25, text embedding, or rerank.
+
+```typescript
+addCollectionFunction(data: AddCollectionFunctionReq): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `function`: Function schema.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.addCollectionFunction({
+  collection_name: 'books',
+  function: {
+    name: 'title_bm25',
+    type: FunctionType.BM25,
+    input_field_names: ['title'],
+    output_field_names: ['title_sparse'],
+    params: {},
+  },
+});
+```
+
+### alterCollectionFunction
+
+```typescript
+alterCollectionFunction(data: AlterCollectionFunctionReq): Promise<ResStatus>
+```
+
+### dropCollectionFunction
+
+```typescript
+dropCollectionFunction(data: DropCollectionFunctionReq): Promise<ResStatus>
+```
+
+## Compaction and replicas
+
+### compact
+
+Trigger compaction.
+
+```typescript
+compact(data: CompactReq): Promise<CompactionResponse>
+```
+
+### getCompactionState
+
+```typescript
+getCompactionState(data: GetCompactionStateReq): Promise<GetCompactionStateResponse>
+```
+
+### getCompactionStateWithPlans
+
+```typescript
+getCompactionStateWithPlans(data: GetCompactionPlansReq): Promise<GetCompactionPlansResponse>
+```
+
+### getReplicas
+
+Get collection replica information.
+
+```typescript
+getReplicas(data: GetReplicaReq): Promise<ReplicasResponse>
+describeReplicas(data: GetReplicaReq): Promise<ReplicasResponse> // alias
+```
+
+### Primary key helpers
+
+```typescript
+getPkFieldName(data: DescribeCollectionReq, desc?: DescribeCollectionResponse): Promise<string>
+getPkFieldType(data: DescribeCollectionReq, desc?: DescribeCollectionResponse): Promise<keyof typeof DataType>
+getPkField(data: DescribeCollectionReq): Promise<FieldSchema>
+```
+
+## External collection refresh
+
+### refreshExternalCollection
+
+Trigger a refresh job for an external collection.
+
+```typescript
+refreshExternalCollection(data: RefreshExternalCollectionReq): Promise<RefreshExternalCollectionResponse>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `external_source?`: New external source path.
+- `external_spec?`: New external spec configuration.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+### getRefreshExternalCollectionProgress
+
+```typescript
+getRefreshExternalCollectionProgress(data: GetRefreshExternalCollectionProgressReq): Promise<GetRefreshExternalCollectionProgressResponse>
+```
+
+**Parameters**: `job_id`, optional `timeout`.
+
+### listRefreshExternalCollectionJobs
+
+```typescript
+listRefreshExternalCollectionJobs(data?: ListRefreshExternalCollectionJobsReq): Promise<ListRefreshExternalCollectionJobsResponse>
+```
+
+**Parameters**: optional `db_name`, `collection_name`, and `timeout`.
+
+## Snapshots
+
+### createSnapshot
+
+```typescript
+createSnapshot(data: CreateSnapshotReq): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `snapshot_name`: Snapshot name.
+- `description?`: Snapshot description.
+- `compaction_protection_seconds?`: Protection duration.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+### dropSnapshot
+
+```typescript
+dropSnapshot(data: DropSnapshotReq): Promise<ResStatus>
+```
+
+### listSnapshots
+
+```typescript
+listSnapshots(data: ListSnapshotsReq): Promise<ListSnapshotsResponse>
+```
+
+### describeSnapshot
+
+```typescript
+describeSnapshot(data: DescribeSnapshotReq): Promise<DescribeSnapshotResponse>
+```
+
+### restoreSnapshot
+
+Restore a snapshot into a target collection.
+
+```typescript
+restoreSnapshot(data: RestoreSnapshotReq): Promise<RestoreSnapshotResponse>
+```
+
+**Parameters**:
+
+- `snapshot_name`: Snapshot name.
+- `source_collection_name`: Source collection.
+- `target_collection_name`: Target collection.
+- `source_db_name?`: Source database.
+- `target_db_name?`: Target database.
+- `timeout?`: Request timeout in milliseconds.
+
+### getRestoreSnapshotState
+
+```typescript
+getRestoreSnapshotState(data: GetRestoreSnapshotStateReq): Promise<GetRestoreSnapshotStateResponse>
+```
+
+### listRestoreSnapshotJobs
+
+```typescript
+listRestoreSnapshotJobs(data?: ListRestoreSnapshotJobsReq): Promise<ListRestoreSnapshotJobsResponse>
+```
+
+### pinSnapshotData
+
+Pin snapshot data to protect it from garbage collection while it is copied out.
+
+```typescript
+pinSnapshotData(data: PinSnapshotDataReq): Promise<PinSnapshotDataResponse>
+```
+
+**Parameters**: `collection_name`, `snapshot_name`, optional `ttl_seconds`, `db_name`, and `timeout`.
+
+### unpinSnapshotData
+
+Release a snapshot data pin.
+
+```typescript
+unpinSnapshotData(data: UnpinSnapshotDataReq): Promise<ResStatus>
+```
+
+**Parameters**: `pin_id`, optional `timeout`.
+
+## Related
+
+- [API Reference overview](/api-reference)
+- [Collection Management guide](/management/collection-management)
+- [Data Operations](/api-reference/data)
