@@ -1,0 +1,382 @@
+---
+title: "Types & Enums"
+---
+
+This page lists common SDK types and enums used across API requests and responses.
+
+## Common response types
+
+### ResStatus
+
+Most mutation and management APIs either return `ResStatus` directly or include it as `response.status`.
+
+```typescript
+interface ResStatus {
+  extra_info: Record<string, any>;
+  error_code: string | number;
+  reason: string;
+  code?: number;
+  retriable: boolean;
+  detail: string;
+}
+```
+
+Check `error_code` against `ErrorCode.SUCCESS` before using returned data:
+
+```typescript
+const status = await client.dropCollection({ collection_name: 'books' });
+if (status.error_code !== ErrorCode.SUCCESS) {
+  throw new Error(status.reason);
+}
+```
+
+### ErrorCode
+
+```typescript
+enum ErrorCode {
+  SUCCESS = 'Success',
+  IndexNotExist = 'IndexNotExist',
+  UnexpectedError = 'UnexpectedError',
+  EmptyCollection = 'EmptyCollection',
+  UpsertAutoIDTrue = 'UpsertAutoIDTrue',
+  CollectionNotExists = 'CollectionNotExists',
+  IllegalArgument = 'IllegalArgument',
+  RateLimit = 'RateLimit',
+  SchemaMismatch = 'SchemaMismatch',
+}
+```
+
+### KeyValuePair
+
+```typescript
+interface KeyValuePair<T = string, U = string | number> {
+  key: T;
+  value: U;
+}
+```
+
+### GrpcTimeOut
+
+Many gRPC requests extend this type.
+
+```typescript
+interface GrpcTimeOut {
+  timeout?: number;
+  client_request_id?: string;
+  'client-request-id'?: string;
+}
+```
+
+## DataType enum
+
+```typescript
+enum DataType {
+  None = 0,
+  Bool = 1,
+  Int8 = 2,
+  Int16 = 3,
+  Int32 = 4,
+  Int64 = 5,
+  Float = 10,
+  Double = 11,
+  VarChar = 21,
+  Array = 22,
+  JSON = 23,
+  Geometry = 24,
+  Timestamptz = 26,
+  BinaryVector = 100,
+  FloatVector = 101,
+  Float16Vector = 102,
+  BFloat16Vector = 103,
+  SparseFloatVector = 104,
+  Int8Vector = 105,
+  ArrayOfVector = 106,
+  Struct = 201,
+}
+```
+
+## Scalar and vector value types
+
+```typescript
+type Bool = boolean;
+type Int8 = number;
+type Int16 = number;
+type Int32 = number;
+type Int64 = number;
+type Float = number;
+type Double = number;
+type VarChar = string;
+type JSON = { [key: string]: any };
+type Geometry = string;
+type Timestamptz = string;
+```
+
+Vector aliases:
+
+```typescript
+type FloatVector = number[];
+type Float16Vector = number[] | Uint8Array;
+type BFloat16Vector = number[] | Uint8Array;
+type BinaryVector = number[];
+type Int8Vector = number[] | Int8Array;
+
+type SparseVectorArray = (number | undefined)[];
+type SparseVectorDic = { [key: string]: number };
+type SparseVectorCSR = { indices: number[]; values: number[] };
+type SparseVectorCOO = { index: number; value: number }[];
+
+type SparseFloatVector =
+  | SparseVectorArray
+  | SparseVectorDic
+  | SparseVectorCSR
+  | SparseVectorCOO;
+```
+
+Row data:
+
+```typescript
+type FieldData =
+  | Bool
+  | Int8
+  | Int16
+  | Int32
+  | Int64
+  | Float
+  | Double
+  | VarChar
+  | JSON
+  | Geometry
+  | Array
+  | VectorTypes
+  | null
+  | undefined;
+
+interface RowData {
+  [fieldName: string]: FieldData;
+}
+```
+
+## Field and schema types
+
+### FieldType
+
+Used by `createCollection`, `addCollectionField`, and `addCollectionFields`.
+
+```typescript
+type FieldType = {
+  name: string;
+  description?: string;
+  data_type: DataType | keyof typeof DataTypeMap;
+  element_type?: DataType | keyof typeof DataTypeMap;
+  is_primary_key?: boolean;
+  is_partition_key?: boolean;
+  is_function_output?: boolean;
+  is_clustering_key?: boolean;
+  type_params?: Partial<Record<TypeParamKey, TypeParam>>;
+  autoID?: boolean;
+  default_value?: number | string;
+  nullable?: boolean;
+  external_field?: string;
+  fields?: FieldType[];
+} & Partial<Record<TypeParamKey, TypeParam>>;
+```
+
+Common `TypeParamKey` values include:
+
+- `dim`
+- `max_length`
+- `max_capacity`
+- `analyzer_params`
+- `enable_analyzer`
+- `enable_match`
+- `mmap.enabled`
+
+### FunctionObject
+
+Used for BM25, text embedding, and rerank functions.
+
+```typescript
+type FunctionObject = {
+  name: string;
+  description?: string;
+  type: FunctionType;
+  input_field_names: string[];
+  output_field_names?: string[];
+  params: Record<string, any>;
+};
+```
+
+## Search and query result types
+
+### QueryResults
+
+```typescript
+interface QueryResults {
+  status: ResStatus;
+  data: Record<string, any>[];
+}
+```
+
+### SearchResults
+
+```typescript
+interface SearchResults<
+  T extends SearchReq | SearchSimpleReq | HybridSearchReq
+> {
+  status: ResStatus;
+  results: SearchResultData[] | SearchResultData[][];
+  recalls: number[];
+  session_ts: number;
+  collection_name: string;
+  all_search_count?: number;
+}
+
+interface SearchResultData {
+  [fieldName: string]: any;
+  score: number;
+  id: string;
+  offset?: number | string;
+  group_by_field_values?: Record<string, FieldData>;
+  highlight?: HighlightResult;
+}
+```
+
+### MutationResult
+
+Returned by `insert`, `upsert`, and `delete`.
+
+```typescript
+interface MutationResult {
+  status: ResStatus;
+  succ_index: Number[];
+  err_index: Number[];
+  acknowledged: boolean;
+  insert_cnt: string;
+  delete_cnt: string;
+  upsert_cnt: string;
+  timestamp: string;
+  IDs: StringArrayId | NumberArrayId;
+}
+```
+
+## ConsistencyLevelEnum
+
+```typescript
+enum ConsistencyLevelEnum {
+  Strong = 0,
+  Session = 1,
+  Bounded = 2,
+  Eventually = 3,
+  Customized = 4,
+}
+```
+
+Many APIs also accept string equivalents such as `'Strong'`, `'Session'`, `'Bounded'`, and `'Eventually'`.
+
+## Index enums
+
+```typescript
+enum IndexState {
+  IndexStateNone = 0,
+  Unissued = 1,
+  InProgress = 2,
+  Finished = 3,
+  Failed = 4,
+}
+
+enum IndexType {
+  FLAT = 'FLAT',
+  IVF_FLAT = 'IVF_FLAT',
+  IVF_SQ8 = 'IVF_SQ8',
+  IVF_PQ = 'IVF_PQ',
+  HNSW = 'HNSW',
+  DISKANN = 'DISKANN',
+  AUTOINDEX = 'AUTOINDEX',
+  SPARSE_INVERTED_INDEX = 'SPARSE_INVERTED_INDEX',
+  SPARSE_WAND = 'SPARSE_WAND',
+  STL_SORT = 'STL_SORT',
+  TRIE = 'Trie',
+  INVERTED = 'INVERTED',
+  BITMAP = 'BITMAP',
+  MINHASH_LSH = 'MINHASH_LSH',
+  RTREE = 'RTREE',
+}
+```
+
+## MetricType enum
+
+```typescript
+enum MetricType {
+  L2 = 'L2',
+  IP = 'IP',
+  COSINE = 'COSINE',
+  HAMMING = 'HAMMING',
+  JACCARD = 'JACCARD',
+  TANIMOTO = 'TANIMOTO',
+  SUBSTRUCTURE = 'SUBSTRUCTURE',
+  SUPERSTRUCTURE = 'SUPERSTRUCTURE',
+  BM25 = 'BM25',
+  MHJACCARD = 'MHJACCARD',
+  MAX_SIM = 'MAX_SIM',
+  MAX_SIM_COSINE = 'MAX_SIM_COSINE',
+  MAX_SIM_IP = 'MAX_SIM_IP',
+  MAX_SIM_L2 = 'MAX_SIM_L2',
+  DTW_COSINE = 'DTW_COSINE',
+  DTW_IP = 'DTW_IP',
+}
+```
+
+## Load, compaction, and import states
+
+```typescript
+enum LoadState {
+  LoadStateNotExist = 'LoadStateNotExist',
+  LoadStateNotLoad = 'LoadStateNotLoad',
+  LoadStateLoading = 'LoadStateLoading',
+  LoadStateLoaded = 'LoadStateLoaded',
+}
+
+enum CompactionState {
+  UndefiedState = 0,
+  Executing = 1,
+  Completed = 2,
+}
+
+enum ImportState {
+  ImportPending = 'ImportPending',
+  ImportFailed = 'ImportFailed',
+  ImportStarted = 'ImportStarted',
+  ImportPersisted = 'ImportPersisted',
+  ImportCompleted = 'ImportCompleted',
+  ImportFailedAndCleaned = 'ImportFailedAndCleaned',
+}
+```
+
+## RBAC enums and privilege types
+
+```typescript
+enum RbacObjects {
+  Collection = 'Collection',
+  Global = 'Global',
+  User = 'User',
+}
+
+enum Roles {
+  ADMIN = 'admin',
+  PUBLIC = 'public',
+}
+
+type PrivilegesTypes =
+  | CollectionPrivileges
+  | UserPrivileges
+  | GlobalPrivileges
+  | string;
+```
+
+See [User & Role Operations](/milvus-sdk-node/api-reference/users-roles) for RBAC methods and examples.
+
+## Related
+
+- [API Reference overview](/milvus-sdk-node/api-reference)
+- [Data Types & Schemas guide](/milvus-sdk-node/core-concepts/data-types-schemas)
+- [Data Operations](/milvus-sdk-node/api-reference/data)

@@ -1,0 +1,61 @@
+---
+import LanguageSelect from 'virtual:starlight/components/LanguageSelect';
+import ThemeSelect from 'virtual:starlight/components/ThemeSelect';
+
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+const isApiReference = Astro.url.pathname.startsWith(
+  `${baseUrl}/api-reference`
+);
+---
+
+<div class="mobile-links">
+  {
+    isApiReference ? (
+      <a href={import.meta.env.BASE_URL}>Guides</a>
+    ) : (
+      <a href={`${baseUrl}/api-reference`}>API Reference</a>
+    )
+  }
+  <a
+    href="https://cloud.zilliz.com/signup?utm_page=nodejs-sdk&utm_button=nav_right"
+    target="_blank"
+    rel="noopener noreferrer">Zilliz Cloud</a
+  >
+  <a href="https://milvus.io" target="_blank" rel="noopener noreferrer"
+    >Milvus</a
+  >
+  <a
+    href="https://github.com/zilliztech/attu/releases"
+    target="_blank"
+    rel="noopener noreferrer">Attu</a
+  >
+</div>
+<div class="mobile-preferences sl-flex">
+  <ThemeSelect />
+  <LanguageSelect />
+</div>
+
+<style>
+  @layer starlight.core {
+    .mobile-links {
+      display: grid;
+      gap: 0.75rem;
+      padding: 1rem 0;
+    }
+    .mobile-links a {
+      color: var(--sl-color-gray-2);
+      font-size: var(--sl-text-sm);
+      text-decoration: none;
+    }
+    .mobile-links a:hover {
+      color: var(--sl-color-white);
+    }
+    .mobile-preferences {
+      justify-content: space-between;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--sl-color-gray-6);
+      column-gap: 1rem;
+      padding: 0.5rem 0;
+    }
+  }
+</style>

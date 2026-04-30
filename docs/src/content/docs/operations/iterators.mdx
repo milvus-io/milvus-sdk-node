@@ -1,0 +1,166 @@
+---
+title: "Iterators"
+---
+
+Iterators allow you to paginate through large result sets that exceed the `topk` limit (16,384). Instead of retrieving all results at once, iterators fetch data in configurable batches.
+
+## Search Iterator
+
+`searchIterator()` performs vector similarity search and returns results in batches.
+
+### Basic Usage
+
+```javascript
+const iterator = await client.searchIterator({
+  collection_name: 'my_collection',
+  data: [0.1, 0.2, 0.3, ...],  // search vector
+  batchSize: 100,
+  limit: 1000,  // total results to return (-1 or omit for no limit)
+  output_fields: ['id', 'text', 'score'],
+  expr: 'age > 25',
+});
+
+for await (const batch of iterator) {
+  console.log('Batch size:', batch.length);
+  // Process each batch
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `collection_name` | `string` | Yes | Collection to search |
+| `data` | `number[]` or `number[][]` | Yes | Search vector(s) |
+| `batchSize` | `number` | Yes | Items per batch (max 16384) |
+| `limit` | `number` | No | Total results limit (-1 for unlimited) |
+| `expr` | `string` | No | Filter expression |
+| `output_fields` | `string[]` | No | Fields to return |
+| `anns_field` | `string` | No | Vector field name (auto-detected if only one) |
+| `params` | `object` | No | Search parameters (e.g., `{ nprobe: 10 }`) |
+| `external_filter_fn` | `function` | No | Client-side filter function (see below) |
+
+### Client-Side Filtering
+
+Use `external_filter_fn` to apply additional filtering on the client side after results are returned from the server:
+
+```javascript
+const iterator = await client.searchIterator({
+  collection_name: 'my_collection',
+  data: [0.1, 0.2, 0.3, ...],
+  batchSize: 100,
+  external_filter_fn: (row) => {
+    // Only keep results where the text length > 50
+    return row.text && row.text.length > 50;
+  },
+});
+
+for await (const batch of iterator) {
+  // All items in batch satisfy the external filter
+  console.log(batch);
+}
+```
+
+## Query Iterator
+
+`queryIterator()` retrieves entities matching a filter expression in batches.
+
+### Basic Usage
+
+```javascript
+const iterator = await client.queryIterator({
+  collection_name: 'my_collection',
+  expr: 'age > 30',
+  output_fields: ['id', 'text', 'age'],
+  batchSize: 100,
+  limit: 5000,
+});
+
+for await (const batch of iterator) {
+  console.log('Batch:', batch.length);
+  // Process each batch of query results
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `collection_name` | `string` | Yes | Collection to query |
+| `expr` | `string` | Yes | Filter expression |
+| `batchSize` | `number` | Yes | Items per batch |
+| `limit` | `number` | No | Total results limit |
+| `output_fields` | `string[]` | No | Fields to return |
+| `partition_names` | `string[]` | No | Partitions to query |
+
+## End-to-End Example: Full Collection Scan
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({ address: 'localhost:19530' });
+
+// Create and populate a collection
+await client.createCollection({
+  collection_name: 'iterator_demo',
+  fields: [
+    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    { name: 'category', data_type: DataType.VarChar, max_length: 64 },
+    { name: 'vector', data_type: DataType.FloatVector, dim: 4 },
+  ],
+});
+
+await client.createIndex({
+  collection_name: 'iterator_demo',
+  field_name: 'vector',
+  index_type: 'AUTOINDEX',
+  metric_type: 'COSINE',
+});
+
+await client.loadCollectionSync({ collection_name: 'iterator_demo' });
+
+// Insert sample data
+const data = Array.from({ length: 1000 }, (_, i) => ({
+  category: `cat_${i % 10}`,
+  vector: Array.from({ length: 4 }, () => Math.random()),
+}));
+await client.insert({ collection_name: 'iterator_demo', data });
+
+// Scan all entities in category 'cat_5'
+let totalCount = 0;
+const iterator = await client.queryIterator({
+  collection_name: 'iterator_demo',
+  expr: 'category == "cat_5"',
+  output_fields: ['id', 'category'],
+  batchSize: 50,
+});
+
+for await (const batch of iterator) {
+  totalCount += batch.length;
+  console.log(`Fetched ${batch.length} items, total: ${totalCount}`);
+}
+
+console.log(`Total matching entities: ${totalCount}`);
+
+// Cleanup
+await client.dropCollection({ collection_name: 'iterator_demo' });
+```
+
+## Best Practices
+
+1. **Batch size tuning** — Start with 100-500. Larger batches reduce round trips but increase memory usage per batch. Maximum is 16,384.
+2. **Use filters** — Apply server-side filters (`expr`) to reduce data transfer. Use `external_filter_fn` only for logic that can't be expressed as a Milvus filter.
+3. **Output fields** — Only request fields you need to minimize data transfer.
+4. **Memory** — For very large scans, process and discard each batch promptly rather than accumulating all results in memory.
+
+## Next Steps
+
+- Learn about [Hybrid Search](/milvus-sdk-node/operations/hybrid-search) for multi-vector search
+- Explore [Query & Search](/milvus-sdk-node/operations/data-operations-query) for standard operations
+
+## Commit
+
+```bash
+git add docs/src/content/docs/operations/iterators.mdx
+git commit --signoff -m "docs: add iterators documentation page"
+```
