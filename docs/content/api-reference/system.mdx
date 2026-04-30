@@ -1,0 +1,163 @@
+# System Operations
+
+System APIs expose connection context, server status, analyzer testing, and server metrics.
+
+## getVersion
+
+Get the connected Milvus server version.
+
+```typescript
+getVersion(): Promise<GetVersionResponse>
+```
+
+**Response**:
+
+```typescript
+interface GetVersionResponse {
+  version: string;
+}
+```
+
+Example:
+
+```typescript
+const version = await client.getVersion();
+console.log(version.version);
+```
+
+## checkHealth
+
+Check Milvus server health.
+
+```typescript
+checkHealth(): Promise<CheckHealthResponse>
+```
+
+**Response**:
+
+```typescript
+interface CheckHealthResponse {
+  isHealthy: boolean;
+  reasons: [];
+}
+```
+
+Example:
+
+```typescript
+const health = await client.checkHealth();
+if (!health.isHealthy) {
+  console.warn('Milvus is unhealthy:', health.reasons);
+}
+```
+
+## runAnalyzer
+
+Test a text analyzer/tokenizer without inserting data.
+
+```typescript
+runAnalyzer(data: RunAnalyzerRequest): Promise<RunAnalyzerResponse>
+```
+
+**Parameters**:
+
+- `text`: Text string or array of text strings to analyze.
+- `analyzer_params?`: Analyzer configuration for ad-hoc analysis.
+- `with_detail?`: Return detailed token data.
+- `with_hash?`: Return token hash values.
+- `db_name?`: Database name when using analyzers configured on a collection field.
+- `collection_name?`: Collection name when using analyzers configured on a collection field.
+- `field_name?`: Field name when using analyzers configured on a collection field.
+- `analyzer_names?`: Analyzer names configured on the field.
+
+**Response**:
+
+```typescript
+type AnalyzerToken = {
+  token: string;
+  start_offset: number;
+  end_offset: number;
+  position: number;
+  position_length: number;
+  hash: number;
+};
+
+interface RunAnalyzerResponse {
+  status: ResStatus;
+  results: { tokens: AnalyzerToken[] }[];
+}
+```
+
+Example with ad-hoc analyzer params:
+
+```typescript
+const analyzed = await client.runAnalyzer({
+  text: ['The quick brown fox', 'jumps over Milvus'],
+  analyzer_params: {
+    tokenizer: 'standard',
+    filter: ['lowercase'],
+  },
+  with_detail: true,
+});
+```
+
+Example using a collection field analyzer:
+
+```typescript
+const analyzed = await client.runAnalyzer({
+  text: 'vector database search',
+  db_name: 'default',
+  collection_name: 'books',
+  field_name: 'title',
+  analyzer_names: ['default'],
+  with_detail: true,
+});
+```
+
+## getMetric
+
+Get raw Milvus metrics.
+
+```typescript
+getMetric(data: GetMetricsRequest): Promise<GetMetricsResponse>
+```
+
+**Parameters**:
+
+- `request.metric_type`: `'system_info'`, `'system_statistics'`, or `'system_log'`.
+- `timeout?`: Request timeout in milliseconds.
+
+**Response**:
+
+- `status`: Response status.
+- `component_name`: Component that returned the metrics.
+- `response`: Parsed JSON metrics payload.
+
+Example:
+
+```typescript
+const metrics = await client.getMetric({
+  request: { metric_type: 'system_info' },
+});
+
+console.log(metrics.component_name, metrics.response);
+```
+
+## Connection helpers
+
+These are available on `MilvusClient` because it extends the underlying gRPC client:
+
+```typescript
+use(data?: { db_name: string }): Promise<ResStatus>
+useDatabase(data?: { db_name: string }): Promise<ResStatus> // alias
+closeConnection(): Promise<CONNECT_STATUS>
+reconnectToPrimary(): Promise<boolean>
+```
+
+See [MilvusClient](/api-reference/client) for details.
+
+## Related
+
+- [API Reference overview](/api-reference)
+- [Troubleshooting](/reference/troubleshooting)
+- [Types & Enums](/api-reference/types-and-enums)

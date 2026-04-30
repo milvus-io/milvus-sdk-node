@@ -24,6 +24,8 @@ async function getAllMdxPaths(dir, basePath = '') {
       const pathWithoutExt = relativePath.replace(/\.mdx$/, '');
       if (pathWithoutExt === 'index') {
         paths.push([]);
+      } else if (pathWithoutExt.endsWith('/index')) {
+        paths.push(pathWithoutExt.replace(/\/index$/, '').split('/'));
       } else {
         paths.push(pathWithoutExt.split('/'));
       }
