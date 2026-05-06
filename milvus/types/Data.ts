@@ -13,6 +13,7 @@ import {
 
 export interface CountReq extends collectionNameReq {
   expr?: string; // filter expression
+  filter?: string; // alias for expr
 }
 
 interface BaseDeleteReq extends collectionNameReq {
@@ -114,6 +115,8 @@ export interface GetReq extends collectionNameReq {
   offset?: number; // skip how many results
   limit?: number; // how many results you want
   consistency_level?: ConsistencyLevelEnum; // consistency level
+  transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
 }
 
 export interface QueryRes extends resStatusResponse {

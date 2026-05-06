@@ -12,6 +12,15 @@ import {
   CreateCollectionReq,
   ERROR_REASONS,
   checkCreateCollectionCompatibility,
+  SearchReq,
+  SearchSimpleReq,
+  HybridSearchReq,
+  SearchIteratorReq,
+  QueryReq,
+  QueryIteratorReq,
+  GetReq,
+  SearchResults,
+  QueryResults,
   DEFAULT_PRIMARY_KEY_FIELD,
   DEFAULT_METRIC_TYPE,
   DEFAULT_VECTOR_FIELD,
@@ -72,6 +81,19 @@ export class MilvusClient extends GRPCClient {
     ) {
       this.connect(MilvusClient.sdkInfo.version);
     }
+  }
+
+  /**
+   * Creates a lightweight DQL session pinned to a target cluster.
+   * The session reuses this client's connection and injects `cluster_id` into
+   * search/query/get/iterator request parameters.
+   * @param clusterId The target cluster id.
+   */
+  session(clusterId: string): MilvusClientSession {
+    if (typeof clusterId !== 'string' || clusterId.length === 0) {
+      throw new Error('clusterId must be a non-empty string');
+    }
+    return new MilvusClientSession(this, clusterId);
   }
 
   // High level API: align with python MilvusClient
@@ -234,5 +256,69 @@ export class MilvusClient extends GRPCClient {
     }
 
     return result;
+  }
+}
+
+/**
+ * Lightweight DQL session bound to a cluster id and backed by a parent client.
+ * Closing the session only prevents future session calls; it does not close the
+ * parent client or its gRPC channel pool.
+ */
+export class MilvusClientSession {
+  private readonly parent: MilvusClient;
+  private readonly clusterId: string;
+  private closed = false;
+
+  constructor(parent: MilvusClient, clusterId: string) {
+    this.parent = parent;
+    this.clusterId = clusterId;
+  }
+
+  private ensureOpen() {
+    if (this.closed) {
+      throw new Error('MilvusClient session is closed');
+    }
+  }
+
+  private withClusterId<T extends { cluster_id?: string }>(params: T): T {
+    return { ...params, cluster_id: this.clusterId };
+  }
+
+  close(): void {
+    this.closed = true;
+  }
+
+  search<T extends SearchReq | SearchSimpleReq | HybridSearchReq>(
+    params: T
+  ): Promise<SearchResults<T>> {
+    this.ensureOpen();
+    return this.parent.search(this.withClusterId(params));
+  }
+
+  hybridSearch<T extends HybridSearchReq>(
+    params: T
+  ): Promise<SearchResults<T>> {
+    this.ensureOpen();
+    return this.parent.hybridSearch(this.withClusterId(params));
+  }
+
+  searchIterator(param: SearchIteratorReq): Promise<any> {
+    this.ensureOpen();
+    return this.parent.searchIterator(this.withClusterId(param));
+  }
+
+  query(data: QueryReq): Promise<QueryResults> {
+    this.ensureOpen();
+    return this.parent.query(this.withClusterId(data));
+  }
+
+  queryIterator(data: QueryIteratorReq): Promise<any> {
+    this.ensureOpen();
+    return this.parent.queryIterator(this.withClusterId(data));
+  }
+
+  get(data: GetReq): Promise<QueryResults> {
+    this.ensureOpen();
+    return this.parent.get(this.withClusterId(data));
   }
 }

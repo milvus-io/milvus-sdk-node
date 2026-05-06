@@ -14,6 +14,7 @@ import {
   Int8Vector,
   FieldData,
   OrderByFields,
+  GrpcTimeOut,
 } from '../';
 
 // Highlighter types
@@ -132,13 +133,14 @@ export interface SearchSimpleReq extends collectionNameReq {
 export type HybridSearchSingleReq = Pick<
   SearchParam,
   'anns_field' | 'ignore_growing' | 'group_by_field'
-> & {
-  data: SearchData; // vector to search
-  expr?: string; // filter expression
-  exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
-  params?: keyValueObj; // extra search parameters
-  transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
-};
+> &
+  GrpcTimeOut & {
+    data: SearchData; // vector to search
+    expr?: string; // filter expression
+    exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
+    params?: keyValueObj; // extra search parameters
+    transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+  };
 
 export interface SearchIteratorReq extends Omit<
   SearchSimpleReq,

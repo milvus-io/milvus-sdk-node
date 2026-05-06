@@ -14,6 +14,9 @@ import {
   buildSearchParams,
   PlaceholderType,
   buildPlaceholderGroupBytes,
+  CLUSTER_ID,
+  findKeyValue,
+  RRFRanker,
 } from '../../milvus';
 describe('utils/Search', () => {
   it('should build single search request correctly', () => {
@@ -120,6 +123,104 @@ describe('utils/Search', () => {
     expect(searchParamsKeyValuePairObject.offset).toEqual(0);
     expect(searchParamsKeyValuePairObject.metric_type).toEqual('');
     expect(searchParamsKeyValuePairObject.ignore_growing).toEqual(false);
+  });
+
+  it('should add cluster_id to search params for search request', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      collectionID: 0,
+      consistency_level: 'Session',
+      schema: {
+        fields: [
+          { name: 'id', dataType: DataType.Int64, is_primary_key: true },
+          {
+            name: 'vector',
+            dataType: DataType.FloatVector,
+            data_type: 'FloatVector',
+            type_params: [{ key: 'dim', value: '3' }],
+            index_params: [],
+          },
+        ],
+      },
+      anns_fields: {
+        vector: {
+          dataType: DataType.FloatVector,
+          data_type: 'FloatVector',
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
+      },
+    } as any;
+
+    const result = buildSearchRequest(
+      {
+        collection_name: 'test',
+        data: [1, 2, 3],
+        cluster_id: 'in07-xxx',
+      },
+      describeCollectionResponse,
+      milvusProto
+    );
+
+    expect(
+      findKeyValue((result.request as any).search_params, CLUSTER_ID)
+    ).toBe('in07-xxx');
+  });
+
+  it('should add cluster_id to rank params for hybrid search request', () => {
+    const milvusProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/milvus.proto'
+    );
+    const milvusProto = protobuf.loadSync(milvusProtoPath);
+    const describeCollectionResponse = {
+      status: { error_code: 'Success', reason: '' },
+      collection_name: 'test',
+      collectionID: 0,
+      consistency_level: 'Session',
+      schema: {
+        fields: [
+          { name: 'id', dataType: DataType.Int64, is_primary_key: true },
+          {
+            name: 'vector',
+            dataType: DataType.FloatVector,
+            data_type: 'FloatVector',
+            type_params: [{ key: 'dim', value: '3' }],
+            index_params: [],
+          },
+        ],
+      },
+      anns_fields: {
+        vector: {
+          dataType: DataType.FloatVector,
+          data_type: 'FloatVector',
+          type_params: [{ key: 'dim', value: '3' }],
+          index_params: [],
+        },
+      },
+    } as any;
+
+    const result = buildSearchRequest(
+      {
+        collection_name: 'test',
+        data: [{ data: [1, 2, 3], anns_field: 'vector' }],
+        rerank: RRFRanker(),
+        limit: 10,
+        cluster_id: 'in07-xxx',
+      },
+      describeCollectionResponse,
+      milvusProto
+    );
+
+    expect(findKeyValue((result.request as any).rank_params, CLUSTER_ID)).toBe(
+      'in07-xxx'
+    );
   });
 
   it('should build search request with rerank function correctly', () => {

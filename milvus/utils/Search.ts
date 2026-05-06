@@ -22,6 +22,7 @@ import {
   keyValueObj,
   FunctionObject,
   FunctionScore,
+  CLUSTER_ID,
   buildFieldDataMap,
   cloneObj,
   parseToKeyValue,
@@ -418,6 +419,13 @@ export const buildSearchRequest = (
       );
     }
 
+    if (!isHybridSearch && params.cluster_id) {
+      request.search_params = [
+        ...(request.search_params as KeyValuePair[]),
+        { key: CLUSTER_ID, value: params.cluster_id },
+      ];
+    }
+
     // if exprValues is set, add it to the request(inner)
     if (userRequest.exprValues) {
       request.expr_template_values = formatExprValues(userRequest.exprValues);
@@ -450,6 +458,9 @@ export const buildSearchRequest = (
     'type' in rerank
   );
   const hasFunctionScore = isFunctionScore(rerank);
+  const clusterIdParam = params.cluster_id
+    ? [{ key: CLUSTER_ID, value: params.cluster_id }]
+    : [];
 
   // build highlighter if provided
   const highlighter =
@@ -489,6 +500,7 @@ export const buildSearchRequest = (
                 key: 'offset',
                 value: searchSimpleReq.offset ?? 0,
               },
+              ...clusterIdParam,
             ],
           },
 

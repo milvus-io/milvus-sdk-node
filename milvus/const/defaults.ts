@@ -12,6 +12,7 @@ export const DEFAULT_RESOURCE_GROUP = '__default_resource_group'; // default res
 export const DEFAULT_DB = 'default'; // default database name
 export const DEFAULT_DYNAMIC_FIELD = '$meta'; // default dynamic field name
 export const DEFAULT_COUNT_QUERY_STRING = 'count(*)'; // default count query string
+export const CLUSTER_ID = 'cluster_id'; // cluster id routing parameter for DQL requests
 export const DEFAULT_HTTP_TIMEOUT = 60000; // default http timeout, 60s
 export const DEFAULT_HTTP_ENDPOINT_VERSION = 'v2'; // api version, default v1
 

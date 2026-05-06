@@ -81,6 +81,7 @@ import {
   FloatVector,
   FieldPartialUpdateOpType,
   FieldPartialUpdateOp,
+  CLUSTER_ID,
 } from '../';
 import { Collection } from './Collection';
 
@@ -842,11 +843,14 @@ export class Data extends Collection {
     const count = await client.count({
       collection_name: param.collection_name,
       expr: param.expr || param.filter || '',
+      db_name: param.db_name,
+      cluster_id: param.cluster_id,
     });
 
     // get collection Info
     const collectionInfo = await this.describeCollection({
       collection_name: param.collection_name,
+      db_name: param.db_name,
     });
 
     // if limit not set, set it to count
@@ -874,6 +878,7 @@ export class Data extends Collection {
     // search iterator special params
     const params: any = {
       ...param.params,
+      ...(param.cluster_id ? { [CLUSTER_ID]: param.cluster_id } : {}),
       [ITERATOR_FIELD]: true,
       [ITER_SEARCH_V2_KEY]: true,
       [ITER_SEARCH_BATCH_SIZE_KEY]: batchSize,
@@ -956,6 +961,8 @@ export class Data extends Collection {
     const count = await client.count({
       collection_name: data.collection_name,
       expr: userExpr,
+      db_name: data.db_name,
+      cluster_id: data.cluster_id,
     });
     // remove filter field to avoid conflict with expr in query method
     const queryData = { ...data };
@@ -1186,6 +1193,10 @@ export class Data extends Collection {
     }
 
     // Execute the query and get the results
+    if (data.cluster_id) {
+      queryParams[CLUSTER_ID] = data.cluster_id;
+    }
+
     const promise: QueryRes = await promisify(
       this.channelPool,
       'Query',
@@ -1264,12 +1275,15 @@ export class Data extends Collection {
   async count(data: CountReq): Promise<CountResult> {
     const req: any = {
       collection_name: data.collection_name,
-      expr: data.expr || '',
+      expr: data.filter || data.expr || '',
       output_fields: [DEFAULT_COUNT_QUERY_STRING],
     };
 
     if (data.db_name) {
       req.db_name = data.db_name;
+    }
+    if (data.cluster_id) {
+      req.cluster_id = data.cluster_id;
     }
     const queryResult = await this.query(req);
 

@@ -15,6 +15,7 @@ import {
   processVectorData,
   findKeyValue,
   FieldPartialUpdateOpType,
+  CLUSTER_ID,
 } from '../../milvus';
 
 describe('utils/Data', () => {
@@ -43,12 +44,148 @@ describe('utils/Data', () => {
       limit: 10,
       offset: 2,
       order_by: ['price:asc', { field: 'rating', order: 'desc' }],
+      cluster_id: 'in07-xxx',
     });
 
     expect(findKeyValue(queryParams.query_params, 'limit')).toBe(10);
     expect(findKeyValue(queryParams.query_params, 'offset')).toBe(2);
     expect(findKeyValue(queryParams.query_params, 'order_by_fields')).toBe(
       'price:asc,rating:desc'
+    );
+    expect(findKeyValue(queryParams.query_params, CLUSTER_ID)).toBe('in07-xxx');
+  });
+
+  it('should forward cluster_id through count query requests', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const querySpy = jest.spyOn(client, 'query').mockResolvedValue({
+      status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      data: [{ 'count(*)': '7' }],
+    } as any);
+
+    const result = await client.count({
+      collection_name: 'test_collection',
+      filter: 'id > 0',
+      db_name: 'db1',
+      cluster_id: 'in07-xxx',
+    });
+
+    expect(result.data).toBe(7);
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection_name: 'test_collection',
+        expr: 'id > 0',
+        db_name: 'db1',
+        cluster_id: 'in07-xxx',
+        output_fields: ['count(*)'],
+      })
+    );
+  });
+
+  it('should forward cluster_id through search iterator requests', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const countSpy = jest.spyOn(client, 'count').mockResolvedValue({
+      status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      data: 1,
+    } as any);
+    const describeSpy = jest
+      .spyOn(client, 'describeCollection')
+      .mockResolvedValue({
+        status: { error_code: ErrorCode.SUCCESS, reason: '' },
+        collectionID: '100',
+      } as any);
+    const searchSpy = jest.spyOn(client, 'search').mockResolvedValue({
+      status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      results: [{ id: '1' }],
+      search_iterator_v2_results: { token: 'token', last_bound: 'bound' },
+      session_ts: 123,
+    } as any);
+
+    const iterator = await client.searchIterator({
+      collection_name: 'test_collection',
+      expr: 'id > 0',
+      filter: 'ignored',
+      data: [0.1, 0.2],
+      batchSize: 10,
+      db_name: 'db1',
+      cluster_id: 'in07-xxx',
+    });
+    const page = await iterator[Symbol.asyncIterator]().next();
+
+    expect(page.value).toEqual([{ id: '1' }]);
+    expect(countSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection_name: 'test_collection',
+        expr: 'id > 0',
+        db_name: 'db1',
+        cluster_id: 'in07-xxx',
+      })
+    );
+    expect(describeSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection_name: 'test_collection',
+        db_name: 'db1',
+      })
+    );
+    expect(searchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection_name: 'test_collection',
+        cluster_id: 'in07-xxx',
+        params: expect.objectContaining({
+          cluster_id: 'in07-xxx',
+          collection_id: '100',
+        }),
+      })
+    );
+  });
+
+  it('should forward cluster_id through query iterator count and query requests', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const countSpy = jest.spyOn(client, 'count').mockResolvedValue({
+      status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      data: 1,
+    } as any);
+    const querySpy = jest.spyOn(client, 'query').mockResolvedValue({
+      status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      data: [{ id: '1' }],
+    } as any);
+    jest.spyOn(client, 'getPkField').mockResolvedValue({
+      name: 'id',
+      data_type: 'VarChar',
+    } as any);
+
+    const iterator = await client.queryIterator({
+      collection_name: 'test_collection',
+      filter: 'score > 0',
+      batchSize: 10,
+      db_name: 'db1',
+      cluster_id: 'in07-xxx',
+    });
+    const page = await iterator[Symbol.asyncIterator]().next();
+
+    expect(page.value).toEqual([{ id: '1' }]);
+    expect(countSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection_name: 'test_collection',
+        expr: 'score > 0',
+        db_name: 'db1',
+        cluster_id: 'in07-xxx',
+      })
+    );
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection_name: 'test_collection',
+        db_name: 'db1',
+        cluster_id: 'in07-xxx',
+      })
     );
   });
 
