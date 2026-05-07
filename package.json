@@ -54,7 +54,9 @@
     "fast-xml-parser": "^5.7.0",
     "protobufjs": "^7.5.5",
     "lodash": "^4.18.1",
-    "picomatch": "^2.3.2"
+    "picomatch": "^2.3.2",
+    "thrift": "^0.23.0",
+    "thrift/uuid": "11.1.0"
   },
   "publishConfig": {
     "access": "public"
