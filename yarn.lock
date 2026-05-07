@@ -3758,15 +3758,16 @@ text-hex@1.0.x:
   resolved "https://registry.npmjs.org/text-hex/-/text-hex-1.0.0.tgz"
   integrity sha512-uuVGNWzgJ4yhRaNSiubPY7OjISw4sw4E5Uv0wbjp+OzcbmVU/rsT8ujgcXJhn9ypzsgr5vlzpPqP+MBBKcGvbg==
 
-thrift@0.21.0:
-  version "0.21.0"
-  resolved "https://registry.npmjs.org/thrift/-/thrift-0.21.0.tgz#baf3bea94a543f9c1c591242d263802489eeb447"
-  integrity sha512-AW8rwHYjeqXisS8B1iwko2gkNMFwSRJ+bO/W0xTGqRspTD3lGHwZx438+pHdOJ3GwpRAnK7TKbjqPOrHAa7ZwQ==
+thrift@0.21.0, thrift@^0.23.0:
+  version "0.23.0"
+  resolved "https://registry.npmjs.org/thrift/-/thrift-0.23.0.tgz#de1162a3a2355f983eff73161bae57bca3fa5ccf"
+  integrity sha512-j7F1ls8JogClU88Ta/pwD/OzYuiFeD6Z5GoWw7ip+jcDhcNYFKgfXYEsyLXYpiNfJO94fbLnITGxyfZ19YzA6Q==
   dependencies:
     browser-or-node "^1.2.1"
     isomorphic-ws "^4.0.1"
     node-int64 "^0.4.0"
     q "^1.5.0"
+    uuid "^13.0.0"
     ws "^5.2.3"
 
 through2@^4.0.2:
@@ -3892,6 +3893,11 @@ utilium@^1.3.3:
     eventemitter3 "^5.0.1"
   optionalDependencies:
     "@xterm/xterm" "^5.5.0"
+
+uuid@11.1.0, uuid@^13.0.0:
+  version "11.1.0"
+  resolved "https://registry.npmjs.org/uuid/-/uuid-11.1.0.tgz#9549028be1753bb934fc96e2bca09bb4105ae912"
+  integrity sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==
 
 v8-compile-cache-lib@^3.0.1:
   version "3.0.1"
