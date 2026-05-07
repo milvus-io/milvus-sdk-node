@@ -34,6 +34,7 @@ export interface GrpcTimeOut {
   timeout?: number;
   client_request_id?: string; // optional, trace id for request tracking
   'client-request-id'?: string; // optional, trace id for request tracking (alternative format)
+  cluster_id?: string; // optional, route DQL request to a specific cluster
 }
 export type PrivilegesTypes =
   | CollectionPrivileges

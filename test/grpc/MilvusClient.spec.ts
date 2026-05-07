@@ -2,6 +2,7 @@ import path from 'path';
 import { readFileSync } from 'fs';
 import {
   MilvusClient,
+  MilvusClientSession,
   ERROR_REASONS,
   CONNECT_STATUS,
   TLS_MODE,
@@ -203,9 +204,9 @@ describe(`Milvus client`, () => {
 
     expect(client.channelOptions['grpc.keepalive_time_ms']).toEqual(10000);
     expect(client.channelOptions['grpc.keepalive_timeout_ms']).toEqual(5000);
-    expect(client.channelOptions['grpc.keepalive_permit_without_calls']).toEqual(
-      1
-    );
+    expect(
+      client.channelOptions['grpc.keepalive_permit_without_calls']
+    ).toEqual(1);
   });
 
   it(`should allow overriding keepalive options via channelOptions`, async () => {
@@ -220,9 +221,9 @@ describe(`Milvus client`, () => {
 
     expect(client.channelOptions['grpc.keepalive_time_ms']).toEqual(20000);
     expect(client.channelOptions['grpc.keepalive_timeout_ms']).toEqual(8000);
-    expect(client.channelOptions['grpc.keepalive_permit_without_calls']).toEqual(
-      1
-    );
+    expect(
+      client.channelOptions['grpc.keepalive_permit_without_calls']
+    ).toEqual(1);
   });
 
   it(`should add trace interceptor if enableTrace is true`, async () => {
@@ -248,14 +249,98 @@ describe(`Milvus client`, () => {
       __SKIP_CONNECT__: true,
     });
     // Should have request metadata interceptor (adds client-request-unixmsec)
-    expect(client.channelOptions.interceptors.length).toBeGreaterThanOrEqual(
-      3
-    );
+    expect(client.channelOptions.interceptors.length).toBeGreaterThanOrEqual(3);
   });
 
   it(`Expect get node sdk info`, async () => {
     expect(MilvusClient.sdkInfo.version).toEqual(sdkInfo.version);
     expect(MilvusClient.sdkInfo.recommendMilvus).toEqual(sdkInfo.milvusVersion);
+  });
+
+  it('should create a session that injects cluster_id into DQL methods', async () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+    const session = client.session('in07-xxx');
+    const expected = { status: { error_code: 'Success', reason: '' } };
+
+    const searchSpy = jest
+      .spyOn(client, 'search')
+      .mockResolvedValue(expected as any);
+    const hybridSearchSpy = jest
+      .spyOn(client, 'hybridSearch')
+      .mockResolvedValue(expected as any);
+    const querySpy = jest
+      .spyOn(client, 'query')
+      .mockResolvedValue(expected as any);
+    const getSpy = jest.spyOn(client, 'get').mockResolvedValue(expected as any);
+    const searchIteratorSpy = jest
+      .spyOn(client, 'searchIterator')
+      .mockResolvedValue(expected as any);
+    const queryIteratorSpy = jest
+      .spyOn(client, 'queryIterator')
+      .mockResolvedValue(expected as any);
+
+    await session.search({
+      collection_name: 'col',
+      data: [0.1, 0.2],
+      cluster_id: 'ignored',
+    });
+    await session.hybridSearch({
+      collection_name: 'col',
+      data: [{ data: [0.1, 0.2], anns_field: 'vector' }],
+    });
+    await session.query({ collection_name: 'col', filter: 'id > 0' });
+    await session.get({ collection_name: 'col', ids: [1, 2] });
+    await session.searchIterator({
+      collection_name: 'col',
+      data: [0.1, 0.2],
+      batchSize: 10,
+    });
+    await session.queryIterator({
+      collection_name: 'col',
+      filter: 'id > 0',
+      batchSize: 10,
+    });
+
+    expect(searchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(hybridSearchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(getSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(searchIteratorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(queryIteratorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+
+    session.close();
+    expect(() =>
+      session.query({ collection_name: 'col', filter: 'id > 0' })
+    ).toThrow('session is closed');
+  });
+
+  it('should reject an invalid cluster id when creating a session', () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(() => client.session('')).toThrow(
+      'clusterId must be a non-empty string'
+    );
+    expect(() => client.session(undefined as any)).toThrow(
+      'clusterId must be a non-empty string'
+    );
   });
 
   it(`Get milvus version`, async () => {

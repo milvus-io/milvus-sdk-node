@@ -6513,6 +6513,10 @@ export default {
                     "endTime": {
                       "type": "int64",
                       "id": 8
+                    },
+                    "externalSpec": {
+                      "type": "string",
+                      "id": 9
                     }
                   }
                 },
