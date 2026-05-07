@@ -17,6 +17,7 @@ const isApiReference = Astro.url.pathname.startsWith(
   `${baseUrl}/api-reference`
 );
 const { siteTitleHref } = Astro.locals.starlightRoute;
+const logo = logos.dark;
 ---
 
 <div class="header">
@@ -26,12 +27,16 @@ const { siteTitleHref } = Astro.locals.starlightRoute;
       class="site-title sl-flex"
       aria-label="Milvus Node SDK home"
     >
-      <img
-        src={logos.dark.src}
-        alt="Milvus"
-        width={logos.dark.width}
-        height={logos.dark.height}
-      />
+      {
+        logo && (
+          <img
+            src={logo.src}
+            alt="Milvus"
+            width={logo.width}
+            height={logo.height}
+          />
+        )
+      }
       <span>Node SDK</span>
     </a>
   </div>

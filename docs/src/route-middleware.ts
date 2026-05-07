@@ -80,7 +80,11 @@ export const onRequest = defineRouteMiddleware(async (context, next) => {
   await next();
 
   const route = context.locals.starlightRoute;
-  const currentSlug = normalizeSlug(route.entry.slug);
+  if (!route || typeof route.id !== 'string') {
+    return;
+  }
+
+  const currentSlug = normalizeSlug(route.id);
 
   if (!isApiReferenceRoute(currentSlug)) {
     return;
