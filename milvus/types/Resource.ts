@@ -62,3 +62,36 @@ export interface ListResourceGroupsResponse extends resStatusResponse {
 export interface DescribeResourceGroupResponse extends resStatusResponse {
   resource_group: ResourceGroup;
 }
+
+export interface ReplicateConnectionParam {
+  uri: string;
+  token?: string;
+}
+
+export interface ReplicateCluster {
+  cluster_id: string;
+  connection_param: ReplicateConnectionParam;
+  pchannels?: string[];
+}
+
+export interface CrossClusterTopology {
+  source_cluster_id: string;
+  target_cluster_id: string;
+}
+
+export interface ReplicateConfiguration {
+  clusters: ReplicateCluster[];
+  cross_cluster_topology?: CrossClusterTopology[];
+}
+
+export interface UpdateReplicateConfigurationReq extends GrpcTimeOut {
+  clusters: ReplicateCluster[];
+  cross_cluster_topology?: CrossClusterTopology[];
+  force_promote?: boolean;
+}
+
+export interface GetReplicateConfigurationReq extends GrpcTimeOut {}
+
+export interface GetReplicateConfigurationResponse extends resStatusResponse {
+  configuration: ReplicateConfiguration;
+}

@@ -11,10 +11,69 @@ import {
   UpdateRresourceGroupReq,
   TransferNodeReq,
   TransferReplicaReq,
+  UpdateReplicateConfigurationReq,
+  GetReplicateConfigurationReq,
+  GetReplicateConfigurationResponse,
   promisify,
 } from '../';
 
 export class Resource extends Partition {
+  /**
+   * Update cross-cluster replication configuration.
+   *
+   * @param {UpdateReplicateConfigurationReq} data - The request parameters.
+   * @param {ReplicateCluster[]} data.clusters - Cluster configurations.
+   * @param {CrossClusterTopology[]} [data.cross_cluster_topology] - Replication topology between clusters.
+   * @param {boolean} [data.force_promote] - Whether to force promote the current cluster to primary.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<ResStatus>} The response status of the operation.
+   */
+  async updateReplicateConfiguration(
+    data: UpdateReplicateConfigurationReq
+  ): Promise<ResStatus> {
+    if (!data || !data.clusters) {
+      throw new Error('The `clusters` property is missing.');
+    }
+
+    const { clusters, cross_cluster_topology, force_promote, timeout } = data;
+    return await promisify(
+      this.channelPool,
+      'UpdateReplicateConfiguration',
+      {
+        replicate_configuration: {
+          clusters,
+          cross_cluster_topology: cross_cluster_topology || [],
+        },
+        force_promote: force_promote || false,
+      },
+      timeout || this.timeout
+    );
+  }
+
+  /**
+   * Get cross-cluster replication configuration.
+   *
+   * @param {GetReplicateConfigurationReq} [data] - Optional request parameters.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC.
+   *
+   * @returns {Promise<GetReplicateConfigurationResponse>} The replication configuration response.
+   */
+  async getReplicateConfiguration(
+    data: GetReplicateConfigurationReq = {}
+  ): Promise<GetReplicateConfigurationResponse> {
+    return await promisify(
+      this.channelPool,
+      'GetReplicateConfiguration',
+      {},
+      data.timeout || this.timeout
+    );
+  }
+
+  // aliases
+  update_replicate_configuration = this.updateReplicateConfiguration;
+  get_replicate_configuration = this.getReplicateConfiguration;
+
   /**
    * Creates a resource group.
    *
