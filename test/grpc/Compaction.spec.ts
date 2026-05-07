@@ -1,9 +1,4 @@
-import {
-  MilvusClient,
-  DataType,
-  ErrorCode,
-  ERROR_REASONS,
-} from '../../milvus';
+import { MilvusClient, DataType, ErrorCode, ERROR_REASONS } from '../../milvus';
 import {
   IP,
   generateInsertData,
@@ -67,6 +62,15 @@ describe(`Compaction API`, () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res).toHaveProperty('compactionID');
+  });
+
+  it(`Compact should forward target_size to server`, async () => {
+    const res = await milvusClient.compact({
+      collection_name: COLLECTION_NAME,
+      target_size: 1,
+    });
+    expect(res.status.error_code).toEqual(ErrorCode.IllegalArgument);
+    expect(res.status.reason).toContain('targetSize 1 MB');
   });
 
   it(`GetCompactionState should contain failedPlanNo`, async () => {

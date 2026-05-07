@@ -1208,14 +1208,27 @@ export class Collection extends Database {
    */
   async compact(data: CompactReq): Promise<CompactionResponse> {
     checkCollectionName(data);
-    const collectionInfo = await this.describeCollection(data);
+
+    const describeReq: DescribeCollectionReq = {
+      collection_name: data.collection_name,
+    };
+    if (data.db_name) {
+      describeReq.db_name = data.db_name;
+    }
+    if (typeof data.timeout !== 'undefined') {
+      describeReq.timeout = data.timeout;
+    }
+
+    const collectionInfo = await this.describeCollection(describeReq);
+    const { timeout, ...compactionReq } = data;
     const res = await promisify(
       this.channelPool,
       'ManualCompaction',
       {
+        ...compactionReq,
         collectionID: collectionInfo.collectionID,
       },
-      data.timeout || this.timeout
+      timeout || this.timeout
     );
     return res;
   }
