@@ -550,7 +550,7 @@ await client.search({ collection_name: 'docs', data: [Array(128).fill(0.1)], lim
 await client.query({ collection_name: 'docs', filter: 'id > 0', limit: 100 });
 ```
 
-Some HTTP examples and types use camelCase REST fields (`collectionName`, `fieldName`, `metricType`) internally, while the SDK accepts the public SDK-style snake_case in many high-level methods. Prefer examples from `README.md` and `docs/content/http-client.mdx` when targeting HTTP specifically.
+Some HTTP examples and types use camelCase REST fields (`collectionName`, `fieldName`, `metricType`) internally, while the SDK accepts the public SDK-style snake_case in many high-level methods. Prefer examples from `README.md` and `docs/src/content/docs/http-client.mdx` when targeting HTTP specifically.
 
 ## Quick Reference: Data Types
 

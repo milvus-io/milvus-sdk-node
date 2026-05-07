@@ -1,0 +1,388 @@
+---
+title: "Data Operations - Insert & Update"
+---
+
+This guide covers inserting and updating data in Milvus collections.
+
+## Inserting Data
+
+### Basic Insert
+
+Insert data into a collection:
+
+```javascript
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      id: 1,
+      vector: [0.1, 0.2, 0.3, 0.4],
+      text: 'Hello Milvus',
+    },
+    {
+      id: 2,
+      vector: [0.5, 0.6, 0.7, 0.8],
+      text: 'Vector database',
+    },
+  ],
+});
+```
+
+### Insert with AutoID
+
+If your collection uses autoID, omit the ID field:
+
+```javascript
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      vector: [0.1, 0.2, 0.3, 0.4],
+      text: 'Hello Milvus',
+    },
+    {
+      vector: [0.5, 0.6, 0.7, 0.8],
+      text: 'Vector database',
+    },
+  ],
+});
+```
+
+### Insert into Specific Partition
+
+Insert data into a specific partition:
+
+```javascript
+await client.insert({
+  collection_name: 'my_collection',
+  partition_name: 'partition_1',
+  data: [
+    {
+      vector: [0.1, 0.2, 0.3, 0.4],
+      text: 'Data for partition 1',
+    },
+  ],
+});
+```
+
+### Batch Insertion
+
+Insert large amounts of data efficiently:
+
+```javascript
+const batchSize = 1000;
+const allData = [
+  /* large array of data */
+];
+
+for (let i = 0; i < allData.length; i += batchSize) {
+  const batch = allData.slice(i, i + batchSize);
+  await client.insert({
+    collection_name: 'my_collection',
+    data: batch,
+  });
+}
+```
+
+## Data Format
+
+### Vector Data Formats
+
+#### FloatVector
+
+```javascript
+{
+  vector: [0.1, 0.2, 0.3, 0.4, /* ... */], // Array of numbers
+}
+```
+
+#### BinaryVector
+
+```javascript
+{
+  binary_vector: [1, 0, 1, 0, /* ... */], // Array of 0s and 1s, length = dim / 8
+}
+```
+
+#### SparseFloatVector
+
+Multiple formats supported:
+
+```javascript
+// Array format
+{
+  sparse_vector: [1.0, undefined, undefined, 2.5, undefined],
+}
+
+// Dictionary format
+{
+  sparse_vector: { '0': 1.0, '3': 2.5 },
+}
+
+// CSR format
+{
+  sparse_vector: {
+    indices: [0, 3],
+    values: [1.0, 2.5],
+  },
+}
+
+// COO format
+{
+  sparse_vector: [
+    { index: 0, value: 1.0 },
+    { index: 3, value: 2.5 },
+  ],
+}
+```
+
+#### Float16Vector / BFloat16Vector
+
+```javascript
+{
+  vector: [0.1, 0.2, 0.3, 0.4], // Array of numbers (will be converted)
+}
+```
+
+### Scalar Data Formats
+
+```javascript
+{
+  id: 123,                    // Int64
+  age: 25,                    // Int64
+  score: 98.5,                // Float
+  is_active: true,             // Bool
+  name: 'John Doe',            // VarChar
+  metadata: {                  // JSON
+    category: 'tech',
+    tags: ['ai', 'ml'],
+  },
+}
+```
+
+## Upserting Data
+
+Upsert updates existing entities or inserts new ones:
+
+```javascript
+await client.upsert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      id: 1,
+      vector: [0.9, 0.8, 0.7, 0.6], // Update existing entity
+      text: 'Updated text',
+    },
+    {
+      id: 999,
+      vector: [0.1, 0.2, 0.3, 0.4], // Insert new entity
+      text: 'New text',
+    },
+  ],
+});
+```
+
+### Partial Update
+
+Update only specific fields:
+
+```javascript
+await client.upsert({
+  collection_name: 'my_collection',
+  partial_update: true,
+  data: [
+    {
+      id: 1,
+      text: 'Updated text only', // Only update text field
+      // vector field not included, will remain unchanged
+    },
+  ],
+});
+```
+
+### Partial Array Upsert
+
+For Array fields, use `field_ops` to append values to or remove values from the existing array instead of replacing the whole field.
+
+```javascript
+import { FieldPartialUpdateOpType } from '@zilliz/milvus2-sdk-node';
+
+await client.upsert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      id: 1,
+      tags: ['new-tag'], // Appended to the existing tags array
+      scores: [3], // Removed from the existing scores array
+    },
+  ],
+  field_ops: [
+    { field_name: 'tags', op: FieldPartialUpdateOpType.ARRAY_APPEND },
+    { field_name: 'scores', op: FieldPartialUpdateOpType.ARRAY_REMOVE },
+  ],
+});
+```
+
+You can also pass operation names as strings:
+
+```javascript
+await client.upsert({
+  collection_name: 'my_collection',
+  data: [{ id: 1, tags: ['urgent'] }],
+  field_ops: [{ field_name: 'tags', op: 'ARRAY_APPEND' }],
+});
+```
+
+Notes:
+
+- `field_ops` is supported only by `upsert()`.
+- Each `field_ops[].field_name` must refer to an Array field.
+- The primary key must be included in each upsert row.
+- Fields not included in the upsert row remain unchanged.
+- `ARRAY_APPEND` must not make the array exceed its `max_capacity`.
+- `ARRAY_REMOVE` removes matching values from the existing array.
+- When `field_ops` is provided, the SDK automatically sends `partial_update: true`.
+
+## Insert Transformers
+
+For Float16 and BFloat16 vectors, use transformers:
+
+```javascript
+import { f32ArrayToF16Bytes } from '@zilliz/milvus2-sdk-node';
+
+await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      vector: [0.1, 0.2, 0.3, 0.4], // f32 array
+    },
+  ],
+  transformers: {
+    vector: data => f32ArrayToF16Bytes(data), // Convert to f16 bytes
+  },
+});
+```
+
+## Insert Response
+
+The insert operation returns mutation results:
+
+```javascript
+const result = await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    /* ... */
+  ],
+});
+
+console.log('IDs:', result.IDs); // Array of inserted IDs
+console.log('Insert count:', result.insert_cnt);
+console.log('Delete count:', result.delete_cnt);
+console.log('Upsert count:', result.upsert_cnt);
+console.log('Timestamp:', result.timestamp);
+```
+
+## Data Validation
+
+The SDK validates data before insertion:
+
+- **Field existence**: All fields must exist in the collection schema
+- **Data types**: Values must match field data types
+- **Vector dimensions**: Vector length must match field dimension
+- **Binary vectors**: Length must be dimension / 8
+- **VarChar length**: String length must not exceed max_length
+
+## Error Handling
+
+Handle insertion errors:
+
+```javascript
+try {
+  await client.insert({
+    collection_name: 'my_collection',
+    data: [
+      /* ... */
+    ],
+  });
+} catch (error) {
+  if (error.message.includes('field does not exist')) {
+    console.error('Invalid field name');
+  } else if (error.message.includes('dimension')) {
+    console.error('Vector dimension mismatch');
+  } else {
+    console.error('Insert failed:', error);
+  }
+}
+```
+
+## Best Practices
+
+1. **Batch inserts**: Insert data in batches (1000-10000 entities per batch)
+2. **Flush after insertion**: Call `flush()` after inserting data to ensure persistence
+3. **Use autoID**: Let Milvus generate IDs unless you have specific requirements
+4. **Validate data**: Validate data before insertion to avoid errors
+5. **Handle errors**: Always wrap insertions in try-catch blocks
+6. **Use upsert for updates**: Use `upsert()` instead of delete + insert for updates
+
+## Complete Example
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+});
+
+await client.connectPromise;
+
+// Create collection
+await client.createCollection({
+  collection_name: 'my_collection',
+  fields: [
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'vector',
+      data_type: DataType.FloatVector,
+      dim: 128,
+    },
+    {
+      name: 'text',
+      data_type: DataType.VarChar,
+      max_length: 256,
+    },
+  ],
+});
+
+// Insert data
+const result = await client.insert({
+  collection_name: 'my_collection',
+  data: [
+    {
+      vector: Array.from({ length: 128 }, () => Math.random()),
+      text: 'First document',
+    },
+    {
+      vector: Array.from({ length: 128 }, () => Math.random()),
+      text: 'Second document',
+    },
+  ],
+});
+
+console.log('Inserted IDs:', result.IDs);
+
+// Flush to ensure data is persisted
+await client.flush({
+  collection_names: ['my_collection'],
+});
+```
+
+## Next Steps
+
+- Learn about [Query Operations](./data-operations-query)
+- Explore [Delete Operations](./data-operations-delete)
+- Check out [Data Management](./data-management)

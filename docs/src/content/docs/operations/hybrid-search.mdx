@@ -1,0 +1,232 @@
+---
+title: "Hybrid Search"
+---
+
+Hybrid search combines multiple vector similarity searches across different vector fields and merges the results using a reranking strategy. This is useful when your data has multiple vector representations (e.g., dense + sparse vectors, or text + image embeddings).
+
+## Overview
+
+In the Milvus Node.js SDK, `hybridSearch()` is an alias for `search()`. When you pass a `HybridSearchReq` (with `data` as an array of individual search requests), the SDK automatically performs a hybrid search. You can also call `search()` directly with the same parameter shape.
+
+## Basic Usage
+
+```javascript
+const results = await client.hybridSearch({
+  collection_name: 'my_collection',
+  data: [
+    {
+      data: [0.1, 0.2, 0.3, ...],  // dense vector
+      anns_field: 'dense_vector',
+      params: { nprobe: 10 },
+    },
+    {
+      data: { 1: 0.5, 100: 0.3, 500: 0.8 },  // sparse vector
+      anns_field: 'sparse_vector',
+    },
+  ],
+  rerank: {
+    strategy: 'rrf',
+    params: { k: 60 },
+  },
+  limit: 10,
+  output_fields: ['id', 'text'],
+});
+```
+
+## Search Request Parameters
+
+Each item in the `data` array is a `HybridSearchSingleReq`:
+
+| Parameter        | Type                   | Description                                         |
+| ---------------- | ---------------------- | --------------------------------------------------- |
+| `data`           | `number[]` or `object` | The search vector (dense array or sparse dict)      |
+| `anns_field`     | `string`               | The vector field to search                          |
+| `expr`           | `string`               | Optional filter expression                          |
+| `exprValues`     | `object`               | Optional template values for filter expression      |
+| `params`         | `object`               | Optional search parameters (e.g., `{ nprobe: 10 }`) |
+| `group_by_field` | `string`               | Optional field to group results by                  |
+
+## Reranking Strategies
+
+The `rerank` parameter controls how results from multiple searches are merged.
+
+### RRF (Reciprocal Rank Fusion)
+
+Combines results based on their rank positions. Higher-ranked results from any search get more weight.
+
+```javascript
+rerank: {
+  strategy: 'rrf',
+  params: { k: 60 },  // k controls rank smoothing (default: 60)
+}
+```
+
+### Weighted Ranker
+
+Assigns explicit weights to each search request's results.
+
+```javascript
+rerank: {
+  strategy: 'weighted',
+  params: { weights: [0.7, 0.3] },  // weights correspond to each search in data[]
+}
+```
+
+### FunctionScore
+
+Advanced reranking using custom scoring functions. A `FunctionScore` contains one or more function definitions plus optional top-level parameters for the reranker.
+
+```javascript
+import { FunctionType } from '@zilliz/milvus2-sdk-node';
+
+const results = await client.hybridSearch({
+  collection_name: 'my_collection',
+  data: [
+    {
+      data: [0.1, 0.2, 0.3, 0.4],
+      anns_field: 'dense_vector',
+      params: { nprobe: 10 },
+    },
+    {
+      data: { 1: 0.5, 100: 0.3 },
+      anns_field: 'sparse_vector',
+    },
+  ],
+  rerank: {
+    functions: [
+      {
+        name: 'freshness_boost',
+        type: FunctionType.RERANK,
+        input_field_names: ['publish_time'],
+        output_field_names: ['score'],
+        params: {
+          weight: 0.2,
+          decay: 'gauss',
+        },
+      },
+      {
+        name: 'quality_boost',
+        type: FunctionType.RERANK,
+        input_field_names: ['quality_score'],
+        output_field_names: ['score'],
+        params: {
+          weight: 0.8,
+        },
+      },
+    ],
+    params: {
+      score_mode: 'sum',
+      boost_mode: 'multiply',
+    },
+  },
+  limit: 10,
+  output_fields: ['id', 'text', 'publish_time', 'quality_score'],
+});
+```
+
+Use FunctionScore when you need to blend vector similarity with business signals such as recency, popularity, quality scores, or custom server-side rerank functions.
+
+## Top-Level Parameters
+
+| Parameter           | Type                           | Description                         |
+| ------------------- | ------------------------------ | ----------------------------------- |
+| `collection_name`   | `string`                       | The collection to search            |
+| `data`              | `HybridSearchSingleReq[]`      | Array of individual search requests |
+| `rerank`            | `RerankerObj \| FunctionScore` | Reranking strategy                  |
+| `limit`             | `number`                       | Maximum number of results to return |
+| `output_fields`     | `string[]`                     | Fields to include in results        |
+| `consistency_level` | `string`                       | Optional consistency level          |
+| `partition_names`   | `string[]`                     | Optional partitions to search       |
+
+## End-to-End Example
+
+```javascript
+import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({ address: 'localhost:19530' });
+
+// 1. Create a collection with two vector fields
+await client.createCollection({
+  collection_name: 'hybrid_demo',
+  fields: [
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    { name: 'text', data_type: DataType.VarChar, max_length: 512 },
+    { name: 'dense_vector', data_type: DataType.FloatVector, dim: 4 },
+    { name: 'sparse_vector', data_type: DataType.SparseFloatVector },
+  ],
+});
+
+// 2. Create indexes for both vector fields
+await client.createIndex({
+  collection_name: 'hybrid_demo',
+  index_params: [
+    {
+      field_name: 'dense_vector',
+      index_type: 'AUTOINDEX',
+      metric_type: 'COSINE',
+    },
+    {
+      field_name: 'sparse_vector',
+      index_type: 'SPARSE_INVERTED_INDEX',
+      metric_type: 'IP',
+    },
+  ],
+});
+
+// 3. Load collection
+await client.loadCollectionSync({ collection_name: 'hybrid_demo' });
+
+// 4. Insert data
+await client.insert({
+  collection_name: 'hybrid_demo',
+  data: [
+    {
+      text: 'machine learning fundamentals',
+      dense_vector: [0.1, 0.2, 0.3, 0.4],
+      sparse_vector: { 10: 0.5, 20: 0.3 },
+    },
+    {
+      text: 'deep learning neural networks',
+      dense_vector: [0.5, 0.6, 0.7, 0.8],
+      sparse_vector: { 15: 0.8, 25: 0.2 },
+    },
+  ],
+});
+
+// 5. Hybrid search
+const results = await client.hybridSearch({
+  collection_name: 'hybrid_demo',
+  data: [
+    {
+      data: [0.1, 0.2, 0.3, 0.4],
+      anns_field: 'dense_vector',
+    },
+    {
+      data: { 10: 0.5, 20: 0.3 },
+      anns_field: 'sparse_vector',
+    },
+  ],
+  rerank: {
+    strategy: 'rrf',
+    params: { k: 60 },
+  },
+  limit: 10,
+  output_fields: ['text'],
+});
+
+console.log('Results:', results.results);
+
+// 6. Cleanup
+await client.dropCollection({ collection_name: 'hybrid_demo' });
+```
+
+## Next Steps
+
+- Learn about [Full-Text Search](/milvus-sdk-node/advanced/full-text-search) for text-based hybrid search
+- Explore [Iterators](/milvus-sdk-node/operations/iterators) for paginating large result sets
+- Check [Query & Search](/milvus-sdk-node/operations/data-operations-query) for standard search operations

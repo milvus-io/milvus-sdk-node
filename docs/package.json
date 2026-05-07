@@ -4,36 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "postbuild": "pagefind --site out --output-path out/_pagefind"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
   },
-  "dependencies": {
-    "next": "16.2.3",
-    "nextra": "^4.0.0",
-    "nextra-theme-docs": "^4.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
-    "@types/node": "^20.0.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "autoprefixer": "^10.4.23",
-    "pagefind": "^1.0.0",
-    "postcss": "^8.5.10",
+    "@astrojs/check": "^0.9.9",
+    "@astrojs/starlight": "^0.35.0",
+    "astro": "^5.18.1",
+    "prettier": "^3.8.3",
+    "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.0.0"
-  },
-  "resolutions": {
-    "next": "16.2.3",
-    "dompurify": "^3.4.0",
-    "lodash-es": "^4.18.0",
-    "@xmldom/xmldom": "^0.9.9",
-    "brace-expansion": "^5.0.5",
-    "yaml": "^2.8.3",
-    "postcss": "^8.5.10",
-    "uuid": "^14.0.0"
   }
 }

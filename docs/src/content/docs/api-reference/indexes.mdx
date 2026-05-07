@@ -1,0 +1,311 @@
+---
+title: "Index Operations"
+---
+
+Index APIs create, inspect, and update vector or scalar indexes. Create indexes after collection creation and before loading/searching when you need explicit index configuration.
+
+```typescript
+import { IndexType, MetricType } from '@zilliz/milvus2-sdk-node';
+```
+
+## createIndex
+
+Create one or more indexes.
+
+```typescript
+createIndex(data: CreateIndexesReq): Promise<ResStatus>
+
+type CreateIndexesReq = CreateIndexRequest[] | CreateIndexRequest;
+type CreateIndexRequest = CreateIndexReq | CreateIndexSimpleReq;
+```
+
+Simple request shape:
+
+```typescript
+interface CreateIndexSimpleReq {
+  collection_name: string;
+  field_name: string;
+  index_type: string;
+  metric_type?: string;
+  index_name?: string;
+  params?: Record<string, number | string | boolean>;
+  db_name?: string;
+  timeout?: number;
+}
+```
+
+Legacy request shape:
+
+```typescript
+interface CreateIndexReq {
+  collection_name: string;
+  field_name: string;
+  index_name?: string;
+  extra_params?: {
+    index_type?: string;
+    metric_type: string;
+    params?: string;
+  };
+  db_name?: string;
+  timeout?: number;
+}
+```
+
+Example:
+
+```typescript
+await client.createIndex({
+  collection_name: 'books',
+  field_name: 'embedding',
+  index_name: 'embedding_index',
+  index_type: IndexType.HNSW,
+  metric_type: MetricType.COSINE,
+  params: { M: 16, efConstruction: 200 },
+});
+```
+
+Create multiple indexes:
+
+```typescript
+await client.createIndex([
+  {
+    collection_name: 'books',
+    field_name: 'embedding',
+    index_type: IndexType.AUTOINDEX,
+    metric_type: MetricType.COSINE,
+  },
+  {
+    collection_name: 'books',
+    field_name: 'title',
+    index_name: 'title_inverted',
+    index_type: IndexType.INVERTED,
+  },
+]);
+```
+
+## describeIndex
+
+Describe indexes on a collection. Filter by field or index name when needed.
+
+```typescript
+describeIndex(data: DescribeIndexReq): Promise<DescribeIndexResponse>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `field_name?`: Field name.
+- `index_name?`: Index name.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+**Response**:
+
+```typescript
+interface DescribeIndexResponse {
+  status: ResStatus;
+  index_descriptions: IndexDescription[];
+}
+
+interface IndexDescription {
+  index_name: string;
+  indexID: number;
+  params: KeyValuePair[];
+  field_name: string;
+  indexed_rows: string;
+  total_rows: string;
+  state: string;
+  index_state_fail_reason: string;
+  pending_index_rows: string;
+}
+```
+
+Example:
+
+```typescript
+const res = await client.describeIndex({
+  collection_name: 'books',
+  index_name: 'embedding_index',
+});
+```
+
+## listIndexes
+
+List index names for a collection.
+
+```typescript
+listIndexes(data: DescribeIndexReq): Promise<ListIndexResponse>
+```
+
+**Response**:
+
+- `status`: Response status.
+- `indexes`: Index names.
+
+Example:
+
+```typescript
+const { indexes } = await client.listIndexes({ collection_name: 'books' });
+```
+
+## getIndexState
+
+Get index build state.
+
+```typescript
+getIndexState(data: GetIndexStateReq): Promise<GetIndexStateResponse>
+```
+
+**Parameters** are the same as `DescribeIndexReq`.
+
+**Response**:
+
+- `status`: Response status.
+- `state`: `IndexState`.
+
+> This API is deprecated in some Milvus versions. Prefer `describeIndex` or `getIndexStatistics` when available.
+
+## getIndexBuildProgress
+
+Get indexed row count and total row count while an index is building.
+
+```typescript
+getIndexBuildProgress(data: GetIndexBuildProgressReq): Promise<GetIndexBuildProgressResponse>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `field_name?`: Field name.
+- `index_name?`: Index name.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+**Response**:
+
+- `indexed_rows`: Number of indexed rows.
+- `total_rows`: Total row count.
+
+## getIndexStatistics
+
+Get index statistics including index state and row counts.
+
+```typescript
+getIndexStatistics(data: DescribeIndexReq): Promise<DescribeIndexResponse>
+```
+
+Use this when you need the full `IndexDescription[]` structure.
+
+## alterIndexProperties
+
+Modify mutable index properties.
+
+```typescript
+alterIndexProperties(data: AlterIndexReq): Promise<ResStatus>
+alterIndex(data: AlterIndexReq): Promise<ResStatus> // deprecated alias
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `index_name`: Index name.
+- `params`: Properties to update.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.alterIndexProperties({
+  collection_name: 'books',
+  index_name: 'embedding_index',
+  params: { 'mmap.enabled': true },
+});
+```
+
+## dropIndexProperties
+
+Remove index properties.
+
+```typescript
+dropIndexProperties(data: DropIndexPropertiesReq): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `index_name`: Index name.
+- `properties`: Property keys to remove.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.dropIndexProperties({
+  collection_name: 'books',
+  index_name: 'embedding_index',
+  properties: ['mmap.enabled'],
+});
+```
+
+## dropIndex
+
+Drop an index.
+
+```typescript
+dropIndex(data: DropIndexReq): Promise<ResStatus>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `field_name?`: Field name.
+- `index_name?`: Index name.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+Example:
+
+```typescript
+await client.dropIndex({
+  collection_name: 'books',
+  index_name: 'embedding_index',
+});
+```
+
+## Common index and metric enums
+
+```typescript
+enum IndexType {
+  FLAT = 'FLAT',
+  IVF_FLAT = 'IVF_FLAT',
+  IVF_SQ8 = 'IVF_SQ8',
+  IVF_PQ = 'IVF_PQ',
+  HNSW = 'HNSW',
+  DISKANN = 'DISKANN',
+  AUTOINDEX = 'AUTOINDEX',
+  SPARSE_INVERTED_INDEX = 'SPARSE_INVERTED_INDEX',
+  SPARSE_WAND = 'SPARSE_WAND',
+  INVERTED = 'INVERTED',
+  BITMAP = 'BITMAP',
+  MINHASH_LSH = 'MINHASH_LSH',
+  RTREE = 'RTREE',
+}
+
+enum MetricType {
+  L2 = 'L2',
+  IP = 'IP',
+  COSINE = 'COSINE',
+  HAMMING = 'HAMMING',
+  JACCARD = 'JACCARD',
+  BM25 = 'BM25',
+  MAX_SIM = 'MAX_SIM',
+}
+```
+
+## Related
+
+- [API Reference overview](/milvus-sdk-node/api-reference)
+- [Index Management guide](/milvus-sdk-node/management/index-management)
+- [Collection Operations](/milvus-sdk-node/api-reference/collections)

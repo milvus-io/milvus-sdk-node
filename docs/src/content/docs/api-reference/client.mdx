@@ -1,0 +1,231 @@
+---
+title: "MilvusClient"
+---
+
+`MilvusClient` is the main gRPC client for Milvus. It owns connection metadata, authentication, retry behavior, database context, and all high-level APIs exposed by the SDK.
+
+## Constructor
+
+```typescript
+new MilvusClient(
+  config: ClientConfig | string,
+  ssl?: boolean,
+  username?: string,
+  password?: string,
+  channelOptions?: ChannelOptions
+)
+```
+
+You can construct the client with either a configuration object or the legacy positional arguments.
+
+### Configuration object
+
+```typescript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  ssl: false,
+  username: 'root',
+  password: 'Milvus',
+  database: 'default',
+  timeout: 30_000,
+  maxRetries: 3,
+  retryDelay: 200,
+});
+
+await client.connectPromise;
+```
+
+### Legacy positional form
+
+```typescript
+const client = new MilvusClient('localhost:19530', false, 'root', 'Milvus');
+```
+
+## ClientConfig
+
+```typescript
+interface ClientConfig {
+  address: string;
+  token?: string;
+  ssl?: boolean;
+  username?: string;
+  password?: string;
+  channelOptions?: ChannelOptions;
+  option?: Record<string, string>;
+  timeout?: number | string;
+  maxRetries?: number;
+  retryDelay?: number;
+  database?: string;
+  logLevel?: string;
+  logPrefix?: string;
+  tls?: {
+    rootCertPath?: string;
+    rootCert?: Buffer;
+    privateKeyPath?: string;
+    privateKey?: Buffer;
+    certChainPath?: string;
+    certChain?: Buffer;
+    verifyOptions?: Record<string, any>;
+    serverName?: string;
+    skipCertCheck?: boolean;
+  };
+  pool?: Options;
+  loaderOptions?: LoaderOption;
+  trace?: boolean;
+  isGlobal?: boolean;
+}
+```
+
+**Important fields**:
+
+- `address`: Milvus gRPC address, for example `localhost:19530`.
+- `token`: Auth token. Accepts `username:password` or a Zilliz Cloud API key.
+- `username` / `password`: Alternative auth fields when `token` is not provided.
+- `ssl`: Enables TLS when `true`.
+- `tls`: Certificate and verification options for TLS connections.
+- `database`: Initial database context. Defaults to `default`.
+- `timeout`: Default request timeout in milliseconds.
+- `maxRetries` / `retryDelay`: gRPC retry behavior.
+- `pool`: `generic-pool` options for the gRPC channel pool.
+- `loaderOptions`: protobuf loader options. `longs: String` is the default to avoid int64 precision loss.
+- `trace`: Enables request tracing metadata.
+- `isGlobal`: Explicitly enables or disables global-cluster routing.
+
+## Static properties
+
+### sdkInfo
+
+Return SDK version and the recommended Milvus version encoded at build time.
+
+```typescript
+MilvusClient.sdkInfo;
+// { version: string, recommendMilvus: string }
+```
+
+Example:
+
+```typescript
+console.log('SDK version:', MilvusClient.sdkInfo.version);
+console.log('Recommended Milvus:', MilvusClient.sdkInfo.recommendMilvus);
+```
+
+## Connection lifecycle
+
+### connectPromise
+
+`MilvusClient` starts connecting during construction unless `__SKIP_CONNECT__` is set. Await `connectPromise` before the first operation when you want explicit connection readiness.
+
+```typescript
+const client = new MilvusClient({ address: 'localhost:19530' });
+await client.connectPromise;
+```
+
+### use
+
+Set the active database for subsequent gRPC requests.
+
+```typescript
+use(data?: { db_name: string }): Promise<ResStatus>
+useDatabase(data?: { db_name: string }): Promise<ResStatus> // alias
+```
+
+Example:
+
+```typescript
+await client.use({ db_name: 'analytics' });
+await client.showCollections();
+```
+
+Calling `use()` with no database resets the context to `default`.
+
+### closeConnection
+
+Drain and clear the gRPC connection pool.
+
+```typescript
+closeConnection(): Promise<CONNECT_STATUS>
+```
+
+Example:
+
+```typescript
+await client.closeConnection();
+```
+
+### reconnectToPrimary
+
+For global-cluster connections, refresh topology and reconnect to a new primary cluster if failover occurred.
+
+```typescript
+reconnectToPrimary(): Promise<boolean>
+```
+
+Returns `true` when the primary endpoint changed and reconnection was performed.
+
+## High-level createCollection overload
+
+`MilvusClient#createCollection` extends the lower-level collection API with a quick-create form that aligns with the Python SDK.
+
+```typescript
+createCollection(
+  data: CreateColReq | CreateColWithSchemaAndIndexParamsReq | CreateCollectionReq
+): Promise<ResStatus>
+```
+
+Quick-create example:
+
+```typescript
+await client.createCollection({
+  collection_name: 'quick_start',
+  dimension: 768,
+  metric_type: 'COSINE',
+  primary_field_name: 'id',
+  vector_field_name: 'embedding',
+  auto_id: false,
+});
+```
+
+Schema + index example:
+
+```typescript
+await client.createCollection({
+  collection_name: 'books',
+  fields: [
+    { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+    { name: 'embedding', data_type: DataType.FloatVector, dim: 768 },
+  ],
+  index_params: {
+    field_name: 'embedding',
+    index_type: 'AUTOINDEX',
+    metric_type: 'COSINE',
+  },
+});
+```
+
+## Auth examples
+
+### Local Milvus username/password
+
+```typescript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  username: 'root',
+  password: 'Milvus',
+});
+```
+
+### Zilliz Cloud token
+
+```typescript
+const client = new MilvusClient({
+  address: 'your-cluster-endpoint:19530',
+  ssl: true,
+  token: process.env.ZILLIZ_CLOUD_API_KEY,
+});
+```
+
+## Related
+
+- [API Reference overview](/milvus-sdk-node/api-reference)
+- [Collection Operations](/milvus-sdk-node/api-reference/collections)
+- [Client Configuration](/milvus-sdk-node/core-concepts/client-configuration)
