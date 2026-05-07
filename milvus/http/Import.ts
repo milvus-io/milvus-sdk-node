@@ -2,11 +2,12 @@ import { HttpBaseClient } from '../HttpClient';
 import {
   Constructor,
   FetchOptions,
-  HttpBaseReq,
   HttpImportListResponse,
+  HttpImportListReq,
   HttpImportCreateReq,
   HttpImportCreateResponse,
   HttpImportProgressReq,
+  HttpImportProgressResponse,
 } from '../types';
 
 /**
@@ -24,7 +25,7 @@ export function Import<T extends Constructor<HttpBaseClient>>(Base: T) {
       return '/vectordb/jobs/import';
     }
 
-    async listImportJobs(params: HttpBaseReq, options?: FetchOptions) {
+    async listImportJobs(params: HttpImportListReq, options?: FetchOptions) {
       const url = `${this.importPrefix}/list`;
       return await this.POST<HttpImportListResponse>(url, params, options);
     }
@@ -42,7 +43,7 @@ export function Import<T extends Constructor<HttpBaseClient>>(Base: T) {
       options?: FetchOptions
     ) {
       const url = `${this.importPrefix}/get_progress`;
-      return await this.POST<HttpImportCreateResponse>(url, params, options);
+      return await this.POST<HttpImportProgressResponse>(url, params, options);
     }
   };
 }

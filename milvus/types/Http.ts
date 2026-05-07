@@ -471,7 +471,18 @@ type ImportJobDetailType = {
 export interface HttpImportListResponse
   extends HttpBaseResponse<{ records: ImportJobType[] }> {}
 
-export interface HttpImportCreateReq extends HttpBaseReq {
+interface HttpImportProjectRegionReq {
+  projectId?: string;
+  regionId?: string;
+}
+
+export interface HttpImportListReq
+  extends HttpBaseReq,
+    HttpImportProjectRegionReq {}
+
+export interface HttpImportCreateReq
+  extends HttpBaseReq,
+    HttpImportProjectRegionReq {
   files: string[][];
   options?: {
     timeout: string;
@@ -483,7 +494,9 @@ export interface HttpImportCreateResponse
     jobId: string;
   }> {}
 
-export interface HttpImportProgressReq extends Pick<HttpBaseReq, 'dbName'> {
+export interface HttpImportProgressReq
+  extends Pick<HttpBaseReq, 'dbName'>,
+    HttpImportProjectRegionReq {
   jobId: string;
 }
 
