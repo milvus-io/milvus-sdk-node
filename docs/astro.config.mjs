@@ -12,6 +12,7 @@ export default defineConfig({
     starlight({
       title: 'Node SDK',
       description: 'The official Milvus client for Node.js',
+      social: [],
       favicon: '/icon.svg',
       logo: {
         src: './public/milvus-logo.svg',
