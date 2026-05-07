@@ -17,3 +17,4 @@ export * from './Insert';
 export * from './Search';
 export * from './DataTypes';
 export * from './GlobalCluster';
+export * from './Volume';
