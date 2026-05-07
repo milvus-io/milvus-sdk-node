@@ -1,4 +1,5 @@
 export { BulkWriter } from './BulkWriter';
+export { VolumeManager } from './VolumeManager';
 export { ColumnBuffer } from './ColumnBuffer';
 export { JsonFormatter } from './JsonFormatter';
 export { ParquetFormatter } from './ParquetFormatter';
