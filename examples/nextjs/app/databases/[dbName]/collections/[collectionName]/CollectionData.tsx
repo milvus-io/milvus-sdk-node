@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -112,7 +112,7 @@ export function CollectionData({ dbName, collectionName }: CollectionDataProps) 
     fetchSchema();
   }, [dbName, collectionName]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(
@@ -131,11 +131,11 @@ export function CollectionData({ dbName, collectionName }: CollectionDataProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [collectionName, dbName, limit, offset]);
 
   useEffect(() => {
     fetchData();
-  }, [dbName, collectionName, offset]);
+  }, [fetchData]);
 
   const handlePrevious = () => {
     if (offset > 0) {
