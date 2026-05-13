@@ -1,5 +1,5 @@
 ---
-title: "Migration & Compatibility"
+title: 'Migration & Compatibility'
 ---
 
 This guide covers version compatibility, migration paths, and breaking changes.
@@ -8,13 +8,14 @@ This guide covers version compatibility, migration paths, and breaking changes.
 
 ### SDK and Milvus Compatibility
 
-| Milvus version | Node SDK version | Installation                               |
-| :------------: | :--------------: | :----------------------------------------- |
-|    v2.6.0+     |    **latest**    | `yarn add @zilliz/milvus2-sdk-node@latest` |
-|    v2.5.0+     |      v2.5.0      | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
-|    v2.4.0+     |      v2.4.9      | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
-|    v2.3.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
-|    v2.2.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+| Milvus version |   Node SDK version   | Installation                               |
+| :------------: | :------------------: | :----------------------------------------- |
+|    v3.0.0+     | v3.0.0+ / **latest** | `yarn add @zilliz/milvus2-sdk-node@latest` |
+|    v2.6.0+     |        v2.6.x        | `yarn add @zilliz/milvus2-sdk-node@2.6.9`  |
+|    v2.5.0+     |        v2.5.x        | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
+|    v2.4.0+     |        v2.4.9        | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
+|    v2.3.0+     |        v2.3.5        | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+|    v2.2.0+     |        v2.3.5        | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
 
 ### Node.js Compatibility
 
@@ -52,6 +53,7 @@ const info = await client.getMetric({
    - Review breaking changes in release notes
 
 2. **Update Package**:
+
 ```bash
 yarn add @zilliz/milvus2-sdk-node@latest
 # or specific version
@@ -75,7 +77,27 @@ yarn add @zilliz/milvus2-sdk-node@2.6.9
 
 5. **Test**: Verify all operations work correctly
 
+## Milvus 3.0 feature coverage <span className="version-tag">Milvus 3.0</span>
+
+The following SDK features require a Milvus 3.0 server. They are marked with the `Milvus 3.0` tag in the relevant guides and API reference pages.
+
+| Area                           | SDK surface                                                                                                                                                                                                                   | Docs                                                                                                                                               |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External collections           | `external_source`, `external_spec`, `do_physical_backfill`, `file_resource_ids`, field-level `external_field`, `refreshExternalCollection()`, `getRefreshExternalCollectionProgress()`, `listRefreshExternalCollectionJobs()` | [Collection Management](../management/collection-management), [Collection Operations](../api-reference/collections)                                |
+| Collection snapshots           | `createSnapshot()`, `dropSnapshot()`, `listSnapshots()`, `describeSnapshot()`, `restoreSnapshot()`, `getRestoreSnapshotState()`, `listRestoreSnapshotJobs()`, `pinSnapshotData()`, `unpinSnapshotData()`                      | [Collection Management](../management/collection-management), [Collection Operations](../api-reference/collections)                                |
+| Partial array upsert           | `upsert({ field_ops })`, `FieldPartialUpdateOpType.REPLACE`, `ARRAY_APPEND`, `ARRAY_REMOVE`                                                                                                                                   | [Insert & Update](../operations/data-operations-insert), [Data Operations](../api-reference/data)                                                  |
+| Element-level result metadata  | Query/search result `offset`; grouped search `group_by_field_values`                                                                                                                                                          | [Query & Search](../operations/data-operations-query), [Data Operations](../api-reference/data)                                                    |
+| Schema and function management | `addCollectionField()`, `addCollectionFields()`, `addCollectionFunction()`, `alterCollectionFunction()`, `dropCollectionFunction()`                                                                                           | [Collection Management](../management/collection-management#dynamic-schema), [Collection Operations](../api-reference/collections#schema-mutation) |
+
+Not all Milvus 3.0 proto additions are public Node SDK APIs yet. Client telemetry, WAL dump/data-salvage APIs, `ComputePhraseMatchSlop`, `BatchUpdateManifest`, and full molecular data helpers are currently proto-level/internal surfaces unless explicitly exposed in a later SDK release.
+
 ## Breaking Changes
+
+### Version 3.0.x <span className="version-tag">Milvus 3.0</span>
+
+- SDK 3.x targets the Milvus 3.0 proto line while keeping the public package name `@zilliz/milvus2-sdk-node`.
+- Milvus 3.0-only APIs require a Milvus 3.0 server; older servers may return unimplemented or unknown-field errors.
+- Legacy replicate/CDC proto fields are deprecated upstream. Avoid building new integrations on them.
 
 ### Version 2.6.x
 
@@ -99,20 +121,37 @@ yarn add @zilliz/milvus2-sdk-node@2.6.9
 
 ### Feature Compatibility
 
-| Feature | Milvus 2.2 | Milvus 2.3 | Milvus 2.4 | Milvus 2.5 | Milvus 2.6 |
-|---------|------------|------------|------------|------------|------------|
-| Basic CRUD | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Index Types | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Dynamic Schema | ✅ | ✅ | ✅ | ✅ | ✅ |
-| RBAC v2 | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Sparse Vectors | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Float16/BFloat16 | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Feature                       | Milvus 2.2 | Milvus 2.3 | Milvus 2.4 | Milvus 2.5 | Milvus 2.6 | Milvus 3.0 |
+| ----------------------------- | ---------- | ---------- | ---------- | ---------- | ---------- | ---------- |
+| Basic CRUD                    | ✅         | ✅         | ✅         | ✅         | ✅         | ✅         |
+| Index Types                   | ✅         | ✅         | ✅         | ✅         | ✅         | ✅         |
+| Dynamic Schema                | ✅         | ✅         | ✅         | ✅         | ✅         | ✅         |
+| RBAC v2                       | ❌         | ❌         | ✅         | ✅         | ✅         | ✅         |
+| Sparse Vectors                | ❌         | ❌         | ✅         | ✅         | ✅         | ✅         |
+| Float16/BFloat16              | ❌         | ❌         | ❌         | ✅         | ✅         | ✅         |
+| External Collections          | ❌         | ❌         | ❌         | ❌         | ❌         | ✅         |
+| Collection Snapshots          | ❌         | ❌         | ❌         | ❌         | ❌         | ✅         |
+| Partial Array Upsert          | ❌         | ❌         | ❌         | ❌         | ❌         | ✅         |
+| Element-Level Result Metadata | ❌         | ❌         | ❌         | ❌         | ❌         | ✅         |
 
 ## Upgrade Paths
+
+### From v2.6.x to v3.0.x <span className="version-tag">Milvus 3.0</span>
+
+1. Upgrade Milvus to 3.0 following the Milvus server upgrade guide.
+2. Update the Node SDK:
+
+```bash
+yarn add @zilliz/milvus2-sdk-node@latest
+```
+
+3. If you use new 3.0 APIs, ensure your deployment is actually connected to a Milvus 3.0 server.
+4. Test collection management, write paths, and query/search result parsing before production rollout.
 
 ### From v2.3.x to v2.6.x
 
 1. Update SDK:
+
 ```bash
 yarn add @zilliz/milvus2-sdk-node@latest
 ```
@@ -125,6 +164,7 @@ yarn add @zilliz/milvus2-sdk-node@latest
 ### From v2.4.x to v2.6.x
 
 1. Update SDK:
+
 ```bash
 yarn add @zilliz/milvus2-sdk-node@latest
 ```
@@ -141,10 +181,14 @@ Some methods may be deprecated in newer versions:
 
 ```javascript
 // Old method (deprecated)
-client.alterCollection({ /* ... */ });
+client.alterCollection({
+  /* ... */
+});
 
 // New method
-client.alterCollectionProperties({ /* ... */ });
+client.alterCollectionProperties({
+  /* ... */
+});
 ```
 
 ### Migration Steps

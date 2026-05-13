@@ -1,5 +1,5 @@
 ---
-title: "Collection Management"
+title: 'Collection Management'
 ---
 
 Collections are the primary data structure in Milvus, similar to tables in traditional databases. This guide covers all collection management operations.
@@ -169,7 +169,7 @@ const result = await client.showCollections({
   type: ShowCollectionsType.All, // 'All' or 'InMemory'
 });
 
-result.data.forEach(collection => {
+result.data.forEach((collection) => {
   console.log(`Collection: ${collection.name}`);
   console.log(`ID: ${collection.id}`);
   console.log(`Loaded: ${collection.loadedPercentage}%`);
@@ -466,7 +466,7 @@ const replicas = await client.getReplicas({
   with_shard_nodes: true,
 });
 
-replicas.replicas.forEach(replica => {
+replicas.replicas.forEach((replica) => {
   console.log('Resource group:', replica.resource_group_name);
   console.log('Outbound nodes:', replica.num_outbound_node);
   console.log('Shard replicas:', replica.shard_replicas);
@@ -547,9 +547,9 @@ const result = await client.batchDescribeCollections({
   collection_names: ['collection_a', 'collection_b', 'collection_c'],
 });
 
-result.responses.forEach(col => {
+result.responses.forEach((col) => {
   console.log(`Collection: ${col.collectionName}`);
-  console.log(`Fields: ${col.schema.fields.map(f => f.name)}`);
+  console.log(`Fields: ${col.schema.fields.map((f) => f.name)}`);
 });
 ```
 
@@ -591,7 +591,7 @@ await client.dropCollectionProperties({
 });
 ```
 
-## External Collections
+## External Collections <span className="version-tag">Milvus 3.0</span>
 
 External collections reference data stored outside Milvus. Use `external_source` and `external_spec` at collection creation time, and map Milvus fields to source fields with `external_field`.
 
@@ -643,7 +643,7 @@ const jobs = await client.listRefreshExternalCollectionJobs({
 });
 ```
 
-## Collection Snapshots
+## Collection Snapshots <span className="version-tag">Milvus 3.0</span>
 
 Snapshots capture a collection at a point in time. You can describe, restore, pin, and remove snapshots with the snapshot APIs.
 
@@ -704,6 +704,10 @@ await client.dropSnapshot({
 Collection functions are auto-processing pipelines that transform data at insert and query time. The most common use case is BM25 full-text search, where a function automatically converts text to sparse vectors.
 
 ### Add a Function
+
+<span className="version-tag">Milvus 3.0</span>
+
+Milvus 3.0's collection schema alteration support includes adding and dropping functions on existing collections. In the Node SDK, use the collection function APIs below.
 
 ```javascript
 import { FunctionType } from '@zilliz/milvus2-sdk-node';

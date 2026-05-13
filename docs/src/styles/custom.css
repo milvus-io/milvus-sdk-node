@@ -409,6 +409,27 @@ main > .content-panel:first-child h1 {
   font-weight: 680;
 }
 
+.sl-markdown-content .version-tag:not(:where(.not-content *)) {
+  align-items: center;
+  background: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+  border: 1px solid var(--doc-border-strong);
+  border-radius: 999px;
+  color: var(--sl-color-text-accent);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-inline-start: 0.45rem;
+  padding: 0.22rem 0.48rem;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.sl-markdown-content p > .version-tag:first-child:not(:where(.not-content *)) {
+  margin-inline-start: 0;
+}
+
 /* Inline code and code blocks */
 .sl-markdown-content
   code:not(:where(pre code, .expressive-code *, .not-content *)) {

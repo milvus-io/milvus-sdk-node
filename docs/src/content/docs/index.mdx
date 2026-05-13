@@ -50,13 +50,26 @@ The Milvus Node.js SDK offers:
 
 The following table shows the recommended `@zilliz/milvus2-sdk-node` versions for different Milvus versions:
 
-| Milvus version | Node SDK version | Installation                               |
-| :------------: | :--------------: | :----------------------------------------- |
-|    v2.6.0+     |    **latest**    | `yarn add @zilliz/milvus2-sdk-node@latest` |
-|    v2.5.0+     |      v2.5.0      | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
-|    v2.4.0+     |      v2.4.9      | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
-|    v2.3.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
-|    v2.2.0+     |      v2.3.5      | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+| Milvus version |   Node SDK version   | Installation                               |
+| :------------: | :------------------: | :----------------------------------------- |
+|    v3.0.0+     | v3.0.0+ / **latest** | `yarn add @zilliz/milvus2-sdk-node@latest` |
+|    v2.6.0+     |        v2.6.x        | `yarn add @zilliz/milvus2-sdk-node@2.6.9`  |
+|    v2.5.0+     |        v2.5.x        | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
+|    v2.4.0+     |        v2.4.9        | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
+|    v2.3.0+     |        v2.3.5        | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+|    v2.2.0+     |        v2.3.5        | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+
+## Milvus 3.0 feature highlights <span className="version-tag">Milvus 3.0</span>
+
+Features that require a Milvus 3.0 server are marked with the `Milvus 3.0` tag throughout this documentation. The Node SDK 3.x docs now cover:
+
+- External collections: create collections over external data sources and refresh external collection jobs.
+- Collection snapshots: create, list, describe, restore, pin, unpin, and drop snapshots.
+- Partial array upsert: append to or remove from Array fields with `field_ops`.
+- Element-level result metadata: read `offset` values from query/search results and `group_by_field_values` from grouped search results.
+- Schema and function management: add fields/functions and manage collection functions from the SDK.
+
+See [Migration & Compatibility](./reference/migration-compatibility) for the detailed coverage matrix, including Milvus 3.0 proto additions that are not exposed as public SDK methods.
 
 ## Prerequisites
 

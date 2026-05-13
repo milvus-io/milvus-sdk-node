@@ -1,5 +1,5 @@
 ---
-title: "Types & Enums"
+title: 'Types & Enums'
 ---
 
 This page lists common SDK types and enums used across API requests and responses.
@@ -162,6 +162,9 @@ interface RowData {
 
 Used by `createCollection`, `addCollectionField`, and `addCollectionFields`.
 
+<span className="version-tag">Milvus 3.0</span> `external_field` maps a Milvus
+field to a source field when creating external collections.
+
 ```typescript
 type FieldType = {
   name: string;
@@ -195,6 +198,9 @@ Common `TypeParamKey` values include:
 
 Used for BM25, text embedding, and rerank functions.
 
+<span className="version-tag">Milvus 3.0</span> Collection functions can be
+added to or dropped from existing collections through schema alteration APIs.
+
 ```typescript
 type FunctionObject = {
   name: string;
@@ -204,6 +210,18 @@ type FunctionObject = {
   output_field_names?: string[];
   params: Record<string, any>;
 };
+```
+
+## Partial update enums <span className="version-tag">Milvus 3.0</span>
+
+`FieldPartialUpdateOpType` is used by `upsert({ field_ops })` to control Array field partial updates.
+
+```typescript
+enum FieldPartialUpdateOpType {
+  REPLACE = 0,
+  ARRAY_APPEND = 1,
+  ARRAY_REMOVE = 2,
+}
 ```
 
 ## Search and query result types
@@ -219,9 +237,13 @@ interface QueryResults {
 
 ### SearchResults
 
+<span className="version-tag">Milvus 3.0</span> `offset` represents
+element-level result offsets, and `group_by_field_values` carries grouped search
+metadata when Milvus returns it.
+
 ```typescript
 interface SearchResults<
-  T extends SearchReq | SearchSimpleReq | HybridSearchReq
+  T extends SearchReq | SearchSimpleReq | HybridSearchReq,
 > {
   status: ResStatus;
   results: SearchResultData[] | SearchResultData[][];
