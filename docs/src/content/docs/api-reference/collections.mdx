@@ -1,5 +1,5 @@
 ---
-title: "Collection Operations"
+title: 'Collection Operations'
 ---
 
 Collection APIs manage schemas, collection lifecycle, load/release state, aliases, functions, compaction, external collections, and snapshots.
@@ -81,6 +81,10 @@ await client.createCollection({
 ```
 
 ## Schema mutation
+
+<span className="version-tag">Milvus 3.0</span>
+
+Milvus 3.0 introduces collection schema alteration for adding fields and functions to existing collections. The Node SDK exposes this through the following field and function management methods.
 
 ### addCollectionField
 
@@ -481,7 +485,7 @@ getPkFieldType(data: DescribeCollectionReq, desc?: DescribeCollectionResponse): 
 getPkField(data: DescribeCollectionReq): Promise<FieldSchema>
 ```
 
-## External collection refresh
+## External collection refresh <span className="version-tag">Milvus 3.0</span>
 
 ### refreshExternalCollection
 
@@ -515,7 +519,7 @@ listRefreshExternalCollectionJobs(data?: ListRefreshExternalCollectionJobsReq): 
 
 **Parameters**: optional `db_name`, `collection_name`, and `timeout`.
 
-## Snapshots
+## Snapshots <span className="version-tag">Milvus 3.0</span>
 
 ### createSnapshot
 

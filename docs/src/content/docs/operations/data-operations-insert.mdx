@@ -1,5 +1,5 @@
 ---
-title: "Data Operations - Insert & Update"
+title: 'Data Operations - Insert & Update'
 ---
 
 This guide covers inserting and updating data in Milvus collections.
@@ -200,7 +200,7 @@ await client.upsert({
 });
 ```
 
-### Partial Array Upsert
+### Partial Array Upsert <span className="version-tag">Milvus 3.0</span>
 
 For Array fields, use `field_ops` to append values to or remove values from the existing array instead of replacing the whole field.
 
@@ -258,7 +258,7 @@ await client.insert({
     },
   ],
   transformers: {
-    vector: data => f32ArrayToF16Bytes(data), // Convert to f16 bytes
+    vector: (data) => f32ArrayToF16Bytes(data), // Convert to f16 bytes
   },
 });
 ```

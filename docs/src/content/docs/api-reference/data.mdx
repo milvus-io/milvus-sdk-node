@@ -1,5 +1,5 @@
 ---
-title: "Data Operations"
+title: 'Data Operations'
 ---
 
 Data APIs write, read, search, delete, flush, compact, and bulk-import collection data. Most request types extend `collectionNameReq`, so they accept `collection_name`, optional `db_name`, optional `timeout`, and optional request tracing fields.
@@ -66,7 +66,7 @@ upsert(data: UpsertReq): Promise<MutationResult>
 In addition to `InsertReq` fields, `UpsertReq` accepts:
 
 - `partial_update?`: Update only provided fields.
-- `field_ops?`: Per-field partial update operations. Providing `field_ops` automatically enables partial update behavior.
+- `field_ops?`: Per-field partial update operations. Providing `field_ops` automatically enables partial update behavior. <span className="version-tag">Milvus 3.0</span>
 
 ```typescript
 type FieldPartialUpdateOp = {
@@ -331,6 +331,10 @@ const res = await client.hybridSearch({
 
 **Search response**:
 
+<span className="version-tag">Milvus 3.0</span> Milvus 3.0 can return
+element-level offsets and grouped search metadata. The SDK exposes them as
+`offset` and `group_by_field_values` on each result row.
+
 ```typescript
 interface SearchResults<T> {
   status: ResStatus;
@@ -345,8 +349,8 @@ interface SearchResultData {
   [fieldName: string]: any;
   score: number;
   id: string;
-  offset?: number | string;
-  group_by_field_values?: Record<string, FieldData>;
+  offset?: number | string; // Milvus 3.0 element-level result offset
+  group_by_field_values?: Record<string, FieldData>; // Milvus 3.0 grouped result metadata
   highlight?: HighlightResult;
 }
 ```

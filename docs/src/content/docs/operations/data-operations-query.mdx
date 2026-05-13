@@ -1,5 +1,5 @@
 ---
-title: "Data Operations - Query & Search"
+title: 'Data Operations - Query & Search'
 ---
 
 This guide covers querying and searching data in Milvus collections.
@@ -340,7 +340,7 @@ const results = await client.search({
   limit: 10,
 });
 
-results.results.forEach(result => {
+results.results.forEach((result) => {
   console.log('ID:', result.id);
   console.log('Distance:', result.distance);
   console.log('Score:', result.score);
@@ -348,7 +348,7 @@ results.results.forEach(result => {
 });
 ```
 
-### Element-Level Offsets
+### Element-Level Offsets <span className="version-tag">Milvus 3.0</span>
 
 For element-level retrieval, Milvus can return the matching element offsets for array or multi-vector fields. The SDK flattens `element_indices` into result rows and adds an `offset` property that identifies the matched element within the source field.
 
@@ -365,9 +365,18 @@ const results = await client.search({
   output_fields: ['doc_id', 'title'],
 });
 
-results.results.forEach(row => {
+results.results.forEach((row) => {
   console.log('Document:', row.doc_id);
   console.log('Matched element offset:', row.offset);
+});
+```
+
+Grouped search responses can also include `group_by_field_values`, which the SDK exposes on each result row:
+
+```javascript
+results.results.forEach((row) => {
+  console.log('Score:', row.score);
+  console.log('Group by values:', row.group_by_field_values);
 });
 ```
 
