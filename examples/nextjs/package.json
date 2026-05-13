@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -15,11 +15,11 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
-    "@zilliz/milvus2-sdk-node": "^2.5.8",
+    "@zilliz/milvus2-sdk-node": "3.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
-    "next": "16.2.3",
+    "next": "16.2.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^3.4.0",
@@ -31,7 +31,7 @@
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.39.1",
-    "eslint-config-next": "^16.0.3",
+    "eslint-config-next": "16.2.6",
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.19",
     "typescript": "^5"

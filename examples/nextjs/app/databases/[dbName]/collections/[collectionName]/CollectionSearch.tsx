@@ -91,7 +91,7 @@ export function CollectionSearch({
     };
 
     fetchSchema();
-  }, [dbName, collectionName]);
+  }, [dbName, collectionName, selectedVectorField]);
 
   const parseVectorInput = (input: string): number[][] => {
     try {
@@ -338,7 +338,7 @@ export function CollectionSearch({
               />
               <p className="text-xs text-muted-foreground">
                 Enter vector(s) as JSON array or comma-separated values (one per
-                line). Click "Generate Random Vector" to auto-generate a vector
+                line). Click &quot;Generate Random Vector&quot; to auto-generate a vector
                 based on the selected field dimension.
               </p>
             </div>
