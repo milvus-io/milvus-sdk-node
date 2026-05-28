@@ -37,11 +37,13 @@
     "typescript": "^5"
   },
   "resolutions": {
-    "protobufjs": "^7.5.5",
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.10",
+    "protobufjs": "^7.5.8",
+    "thrift": "^0.23.0"
   },
   "overrides": {
-    "protobufjs": "^7.5.5",
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.10",
+    "protobufjs": "^7.5.8",
+    "thrift": "^0.23.0"
   }
 }
