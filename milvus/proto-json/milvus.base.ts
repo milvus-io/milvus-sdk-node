@@ -493,6 +493,11 @@ export default {
                       "requestStream": true,
                       "responseType": "ReplicateResponse",
                       "responseStream": true
+                    },
+                    "DumpMessages": {
+                      "requestType": "DumpMessagesRequest",
+                      "responseType": "DumpMessagesResponse",
+                      "responseStream": true
                     }
                   }
                 },
@@ -2053,6 +2058,11 @@ export default {
                       "options": {
                         "proto3_optional": true
                       }
+                    },
+                    "fieldOps": {
+                      "rule": "repeated",
+                      "type": "schema.FieldPartialUpdateOp",
+                      "id": 11
                     }
                   }
                 },
@@ -5445,6 +5455,10 @@ export default {
                     "checkpoint": {
                       "type": "common.ReplicateCheckpoint",
                       "id": 1
+                    },
+                    "salvageCheckpoint": {
+                      "type": "common.ReplicateCheckpoint",
+                      "id": 2
                     }
                   }
                 },
@@ -5495,6 +5509,46 @@ export default {
                     "replicateConfirmedMessageInfo": {
                       "type": "ReplicateConfirmedMessageInfo",
                       "id": 1
+                    }
+                  }
+                },
+                "DumpMessagesRequest": {
+                  "fields": {
+                    "pchannel": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "startMessageId": {
+                      "type": "common.MessageID",
+                      "id": 2
+                    },
+                    "startTimetick": {
+                      "type": "uint64",
+                      "id": 3
+                    },
+                    "endTimetick": {
+                      "type": "uint64",
+                      "id": 4
+                    }
+                  }
+                },
+                "DumpMessagesResponse": {
+                  "oneofs": {
+                    "response": {
+                      "oneof": [
+                        "status",
+                        "message"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "message": {
+                      "type": "common.ImmutableMessage",
+                      "id": 2
                     }
                   }
                 },
@@ -5737,6 +5791,10 @@ export default {
                       "rule": "repeated",
                       "type": "bytes",
                       "id": 3
+                    },
+                    "elementLevel": {
+                      "type": "bool",
+                      "id": 4
                     }
                   }
                 },
@@ -7021,6 +7079,27 @@ export default {
                     }
                   }
                 },
+                "FieldPartialUpdateOp": {
+                  "fields": {
+                    "fieldName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "op": {
+                      "type": "OpType",
+                      "id": 2
+                    }
+                  },
+                  "nested": {
+                    "OpType": {
+                      "values": {
+                        "REPLACE": 0,
+                        "ARRAY_APPEND": 1,
+                        "ARRAY_REMOVE": 2
+                      }
+                    }
+                  }
+                },
                 "FieldData": {
                   "oneofs": {
                     "field": {
@@ -7173,6 +7252,10 @@ export default {
                       "rule": "repeated",
                       "type": "common.HighlightResult",
                       "id": 14
+                    },
+                    "elementIndices": {
+                      "type": "LongArray",
+                      "id": 15
                     }
                   }
                 },
@@ -7844,15 +7927,40 @@ export default {
         "protobuf": {
           "nested": {
             "FileDescriptorSet": {
+              "edition": "proto2",
               "fields": {
                 "file": {
                   "rule": "repeated",
                   "type": "FileDescriptorProto",
                   "id": 1
                 }
+              },
+              "extensions": [
+                [
+                  536000000,
+                  536000000
+                ]
+              ]
+            },
+            "Edition": {
+              "edition": "proto2",
+              "values": {
+                "EDITION_UNKNOWN": 0,
+                "EDITION_LEGACY": 900,
+                "EDITION_PROTO2": 998,
+                "EDITION_PROTO3": 999,
+                "EDITION_2023": 1000,
+                "EDITION_2024": 1001,
+                "EDITION_1_TEST_ONLY": 1,
+                "EDITION_2_TEST_ONLY": 2,
+                "EDITION_99997_TEST_ONLY": 99997,
+                "EDITION_99998_TEST_ONLY": 99998,
+                "EDITION_99999_TEST_ONLY": 99999,
+                "EDITION_MAX": 2147483647
               }
             },
             "FileDescriptorProto": {
+              "edition": "proto2",
               "fields": {
                 "name": {
                   "type": "string",
@@ -7870,18 +7978,17 @@ export default {
                 "publicDependency": {
                   "rule": "repeated",
                   "type": "int32",
-                  "id": 10,
-                  "options": {
-                    "packed": false
-                  }
+                  "id": 10
                 },
                 "weakDependency": {
                   "rule": "repeated",
                   "type": "int32",
-                  "id": 11,
-                  "options": {
-                    "packed": false
-                  }
+                  "id": 11
+                },
+                "optionDependency": {
+                  "rule": "repeated",
+                  "type": "string",
+                  "id": 15
                 },
                 "messageType": {
                   "rule": "repeated",
@@ -7914,10 +8021,15 @@ export default {
                 "syntax": {
                   "type": "string",
                   "id": 12
+                },
+                "edition": {
+                  "type": "Edition",
+                  "id": 14
                 }
               }
             },
             "DescriptorProto": {
+              "edition": "proto2",
               "fields": {
                 "name": {
                   "type": "string",
@@ -7966,6 +8078,10 @@ export default {
                   "rule": "repeated",
                   "type": "string",
                   "id": 10
+                },
+                "visibility": {
+                  "type": "SymbolVisibility",
+                  "id": 11
                 }
               },
               "nested": {
@@ -7978,6 +8094,10 @@ export default {
                     "end": {
                       "type": "int32",
                       "id": 2
+                    },
+                    "options": {
+                      "type": "ExtensionRangeOptions",
+                      "id": 3
                     }
                   }
                 },
@@ -7995,7 +8115,82 @@ export default {
                 }
               }
             },
+            "ExtensionRangeOptions": {
+              "edition": "proto2",
+              "fields": {
+                "uninterpretedOption": {
+                  "rule": "repeated",
+                  "type": "UninterpretedOption",
+                  "id": 999
+                },
+                "declaration": {
+                  "rule": "repeated",
+                  "type": "Declaration",
+                  "id": 2,
+                  "options": {
+                    "retention": "RETENTION_SOURCE"
+                  }
+                },
+                "features": {
+                  "type": "FeatureSet",
+                  "id": 50
+                },
+                "verification": {
+                  "type": "VerificationState",
+                  "id": 3,
+                  "options": {
+                    "default": "UNVERIFIED",
+                    "retention": "RETENTION_SOURCE"
+                  }
+                }
+              },
+              "extensions": [
+                [
+                  1000,
+                  536870911
+                ]
+              ],
+              "nested": {
+                "Declaration": {
+                  "fields": {
+                    "number": {
+                      "type": "int32",
+                      "id": 1
+                    },
+                    "fullName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "type": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "reserved": {
+                      "type": "bool",
+                      "id": 5
+                    },
+                    "repeated": {
+                      "type": "bool",
+                      "id": 6
+                    }
+                  },
+                  "reserved": [
+                    [
+                      4,
+                      4
+                    ]
+                  ]
+                },
+                "VerificationState": {
+                  "values": {
+                    "DECLARATION": 0,
+                    "UNVERIFIED": 1
+                  }
+                }
+              }
+            },
             "FieldDescriptorProto": {
+              "edition": "proto2",
               "fields": {
                 "name": {
                   "type": "string",
@@ -8036,6 +8231,10 @@ export default {
                 "options": {
                   "type": "FieldOptions",
                   "id": 8
+                },
+                "proto3Optional": {
+                  "type": "bool",
+                  "id": 17
                 }
               },
               "nested": {
@@ -8064,13 +8263,14 @@ export default {
                 "Label": {
                   "values": {
                     "LABEL_OPTIONAL": 1,
-                    "LABEL_REQUIRED": 2,
-                    "LABEL_REPEATED": 3
+                    "LABEL_REPEATED": 3,
+                    "LABEL_REQUIRED": 2
                   }
                 }
               }
             },
             "OneofDescriptorProto": {
+              "edition": "proto2",
               "fields": {
                 "name": {
                   "type": "string",
@@ -8083,6 +8283,7 @@ export default {
               }
             },
             "EnumDescriptorProto": {
+              "edition": "proto2",
               "fields": {
                 "name": {
                   "type": "string",
@@ -8096,10 +8297,39 @@ export default {
                 "options": {
                   "type": "EnumOptions",
                   "id": 3
+                },
+                "reservedRange": {
+                  "rule": "repeated",
+                  "type": "EnumReservedRange",
+                  "id": 4
+                },
+                "reservedName": {
+                  "rule": "repeated",
+                  "type": "string",
+                  "id": 5
+                },
+                "visibility": {
+                  "type": "SymbolVisibility",
+                  "id": 6
+                }
+              },
+              "nested": {
+                "EnumReservedRange": {
+                  "fields": {
+                    "start": {
+                      "type": "int32",
+                      "id": 1
+                    },
+                    "end": {
+                      "type": "int32",
+                      "id": 2
+                    }
+                  }
                 }
               }
             },
             "EnumValueDescriptorProto": {
+              "edition": "proto2",
               "fields": {
                 "name": {
                   "type": "string",
@@ -8116,6 +8346,7 @@ export default {
               }
             },
             "ServiceDescriptorProto": {
+              "edition": "proto2",
               "fields": {
                 "name": {
                   "type": "string",
@@ -8133,6 +8364,7 @@ export default {
               }
             },
             "MethodDescriptorProto": {
+              "edition": "proto2",
               "fields": {
                 "name": {
                   "type": "string",
@@ -8161,6 +8393,7 @@ export default {
               }
             },
             "FileOptions": {
+              "edition": "proto2",
               "fields": {
                 "javaPackage": {
                   "type": "string",
@@ -8214,7 +8447,10 @@ export default {
                 },
                 "ccEnableArenas": {
                   "type": "bool",
-                  "id": 31
+                  "id": 31,
+                  "options": {
+                    "default": true
+                  }
                 },
                 "objcClassPrefix": {
                   "type": "string",
@@ -8223,6 +8459,30 @@ export default {
                 "csharpNamespace": {
                   "type": "string",
                   "id": 37
+                },
+                "swiftPrefix": {
+                  "type": "string",
+                  "id": 39
+                },
+                "phpClassPrefix": {
+                  "type": "string",
+                  "id": 40
+                },
+                "phpNamespace": {
+                  "type": "string",
+                  "id": 41
+                },
+                "phpMetadataNamespace": {
+                  "type": "string",
+                  "id": 44
+                },
+                "rubyPackage": {
+                  "type": "string",
+                  "id": 45
+                },
+                "features": {
+                  "type": "FeatureSet",
+                  "id": 50
                 },
                 "uninterpretedOption": {
                   "rule": "repeated",
@@ -8238,9 +8498,14 @@ export default {
               ],
               "reserved": [
                 [
+                  42,
+                  42
+                ],
+                [
                   38,
                   38
-                ]
+                ],
+                "php_generic_services"
               ],
               "nested": {
                 "OptimizeMode": {
@@ -8253,6 +8518,7 @@ export default {
               }
             },
             "MessageOptions": {
+              "edition": "proto2",
               "fields": {
                 "messageSetWireFormat": {
                   "type": "bool",
@@ -8270,6 +8536,17 @@ export default {
                   "type": "bool",
                   "id": 7
                 },
+                "deprecatedLegacyJsonFieldConflicts": {
+                  "type": "bool",
+                  "id": 11,
+                  "options": {
+                    "deprecated": true
+                  }
+                },
+                "features": {
+                  "type": "FeatureSet",
+                  "id": 12
+                },
                 "uninterpretedOption": {
                   "rule": "repeated",
                   "type": "UninterpretedOption",
@@ -8284,12 +8561,29 @@ export default {
               ],
               "reserved": [
                 [
+                  4,
+                  4
+                ],
+                [
+                  5,
+                  5
+                ],
+                [
+                  6,
+                  6
+                ],
+                [
                   8,
                   8
+                ],
+                [
+                  9,
+                  9
                 ]
               ]
             },
             "FieldOptions": {
+              "edition": "proto2",
               "fields": {
                 "ctype": {
                   "type": "CType",
@@ -8313,13 +8607,46 @@ export default {
                   "type": "bool",
                   "id": 5
                 },
+                "unverifiedLazy": {
+                  "type": "bool",
+                  "id": 15
+                },
                 "deprecated": {
                   "type": "bool",
                   "id": 3
                 },
                 "weak": {
                   "type": "bool",
-                  "id": 10
+                  "id": 10,
+                  "options": {
+                    "deprecated": true
+                  }
+                },
+                "debugRedact": {
+                  "type": "bool",
+                  "id": 16
+                },
+                "retention": {
+                  "type": "OptionRetention",
+                  "id": 17
+                },
+                "targets": {
+                  "rule": "repeated",
+                  "type": "OptionTargetType",
+                  "id": 19
+                },
+                "editionDefaults": {
+                  "rule": "repeated",
+                  "type": "EditionDefault",
+                  "id": 20
+                },
+                "features": {
+                  "type": "FeatureSet",
+                  "id": 21
+                },
+                "featureSupport": {
+                  "type": "FeatureSupport",
+                  "id": 22
                 },
                 "uninterpretedOption": {
                   "rule": "repeated",
@@ -8337,6 +8664,10 @@ export default {
                 [
                   4,
                   4
+                ],
+                [
+                  18,
+                  18
                 ]
               ],
               "nested": {
@@ -8353,51 +8684,67 @@ export default {
                     "JS_STRING": 1,
                     "JS_NUMBER": 2
                   }
+                },
+                "OptionRetention": {
+                  "values": {
+                    "RETENTION_UNKNOWN": 0,
+                    "RETENTION_RUNTIME": 1,
+                    "RETENTION_SOURCE": 2
+                  }
+                },
+                "OptionTargetType": {
+                  "values": {
+                    "TARGET_TYPE_UNKNOWN": 0,
+                    "TARGET_TYPE_FILE": 1,
+                    "TARGET_TYPE_EXTENSION_RANGE": 2,
+                    "TARGET_TYPE_MESSAGE": 3,
+                    "TARGET_TYPE_FIELD": 4,
+                    "TARGET_TYPE_ONEOF": 5,
+                    "TARGET_TYPE_ENUM": 6,
+                    "TARGET_TYPE_ENUM_ENTRY": 7,
+                    "TARGET_TYPE_SERVICE": 8,
+                    "TARGET_TYPE_METHOD": 9
+                  }
+                },
+                "EditionDefault": {
+                  "fields": {
+                    "edition": {
+                      "type": "Edition",
+                      "id": 3
+                    },
+                    "value": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "FeatureSupport": {
+                  "fields": {
+                    "editionIntroduced": {
+                      "type": "Edition",
+                      "id": 1
+                    },
+                    "editionDeprecated": {
+                      "type": "Edition",
+                      "id": 2
+                    },
+                    "deprecationWarning": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "editionRemoved": {
+                      "type": "Edition",
+                      "id": 4
+                    }
+                  }
                 }
               }
             },
             "OneofOptions": {
+              "edition": "proto2",
               "fields": {
-                "uninterpretedOption": {
-                  "rule": "repeated",
-                  "type": "UninterpretedOption",
-                  "id": 999
-                }
-              },
-              "extensions": [
-                [
-                  1000,
-                  536870911
-                ]
-              ]
-            },
-            "EnumOptions": {
-              "fields": {
-                "allowAlias": {
-                  "type": "bool",
-                  "id": 2
-                },
-                "deprecated": {
-                  "type": "bool",
-                  "id": 3
-                },
-                "uninterpretedOption": {
-                  "rule": "repeated",
-                  "type": "UninterpretedOption",
-                  "id": 999
-                }
-              },
-              "extensions": [
-                [
-                  1000,
-                  536870911
-                ]
-              ]
-            },
-            "EnumValueOptions": {
-              "fields": {
-                "deprecated": {
-                  "type": "bool",
+                "features": {
+                  "type": "FeatureSet",
                   "id": 1
                 },
                 "uninterpretedOption": {
@@ -8413,8 +8760,86 @@ export default {
                 ]
               ]
             },
-            "ServiceOptions": {
+            "EnumOptions": {
+              "edition": "proto2",
               "fields": {
+                "allowAlias": {
+                  "type": "bool",
+                  "id": 2
+                },
+                "deprecated": {
+                  "type": "bool",
+                  "id": 3
+                },
+                "deprecatedLegacyJsonFieldConflicts": {
+                  "type": "bool",
+                  "id": 6,
+                  "options": {
+                    "deprecated": true
+                  }
+                },
+                "features": {
+                  "type": "FeatureSet",
+                  "id": 7
+                },
+                "uninterpretedOption": {
+                  "rule": "repeated",
+                  "type": "UninterpretedOption",
+                  "id": 999
+                }
+              },
+              "extensions": [
+                [
+                  1000,
+                  536870911
+                ]
+              ],
+              "reserved": [
+                [
+                  5,
+                  5
+                ]
+              ]
+            },
+            "EnumValueOptions": {
+              "edition": "proto2",
+              "fields": {
+                "deprecated": {
+                  "type": "bool",
+                  "id": 1
+                },
+                "features": {
+                  "type": "FeatureSet",
+                  "id": 2
+                },
+                "debugRedact": {
+                  "type": "bool",
+                  "id": 3
+                },
+                "featureSupport": {
+                  "type": "FieldOptions.FeatureSupport",
+                  "id": 4
+                },
+                "uninterpretedOption": {
+                  "rule": "repeated",
+                  "type": "UninterpretedOption",
+                  "id": 999
+                }
+              },
+              "extensions": [
+                [
+                  1000,
+                  536870911
+                ]
+              ]
+            },
+            "ServiceOptions": {
+              "edition": "proto2",
+              "fields": {
+                "features": {
+                  "type": "FeatureSet",
+                  "id": 34
+                },
                 "deprecated": {
                   "type": "bool",
                   "id": 33
@@ -8433,10 +8858,22 @@ export default {
               ]
             },
             "MethodOptions": {
+              "edition": "proto2",
               "fields": {
                 "deprecated": {
                   "type": "bool",
                   "id": 33
+                },
+                "idempotencyLevel": {
+                  "type": "IdempotencyLevel",
+                  "id": 34,
+                  "options": {
+                    "default": "IDEMPOTENCY_UNKNOWN"
+                  }
+                },
+                "features": {
+                  "type": "FeatureSet",
+                  "id": 35
                 },
                 "uninterpretedOption": {
                   "rule": "repeated",
@@ -8449,9 +8886,19 @@ export default {
                   1000,
                   536870911
                 ]
-              ]
+              ],
+              "nested": {
+                "IdempotencyLevel": {
+                  "values": {
+                    "IDEMPOTENCY_UNKNOWN": 0,
+                    "NO_SIDE_EFFECTS": 1,
+                    "IDEMPOTENT": 2
+                  }
+                }
+              }
             },
             "UninterpretedOption": {
+              "edition": "proto2",
               "fields": {
                 "name": {
                   "rule": "repeated",
@@ -8500,7 +8947,240 @@ export default {
                 }
               }
             },
+            "FeatureSet": {
+              "edition": "proto2",
+              "fields": {
+                "fieldPresence": {
+                  "type": "FieldPresence",
+                  "id": 1,
+                  "options": {
+                    "retention": "RETENTION_RUNTIME",
+                    "targets": "TARGET_TYPE_FILE",
+                    "feature_support.edition_introduced": "EDITION_2023",
+                    "edition_defaults.edition": "EDITION_2023",
+                    "edition_defaults.value": "EXPLICIT"
+                  }
+                },
+                "enumType": {
+                  "type": "EnumType",
+                  "id": 2,
+                  "options": {
+                    "retention": "RETENTION_RUNTIME",
+                    "targets": "TARGET_TYPE_FILE",
+                    "feature_support.edition_introduced": "EDITION_2023",
+                    "edition_defaults.edition": "EDITION_PROTO3",
+                    "edition_defaults.value": "OPEN"
+                  }
+                },
+                "repeatedFieldEncoding": {
+                  "type": "RepeatedFieldEncoding",
+                  "id": 3,
+                  "options": {
+                    "retention": "RETENTION_RUNTIME",
+                    "targets": "TARGET_TYPE_FILE",
+                    "feature_support.edition_introduced": "EDITION_2023",
+                    "edition_defaults.edition": "EDITION_PROTO3",
+                    "edition_defaults.value": "PACKED"
+                  }
+                },
+                "utf8Validation": {
+                  "type": "Utf8Validation",
+                  "id": 4,
+                  "options": {
+                    "retention": "RETENTION_RUNTIME",
+                    "targets": "TARGET_TYPE_FILE",
+                    "feature_support.edition_introduced": "EDITION_2023",
+                    "edition_defaults.edition": "EDITION_PROTO3",
+                    "edition_defaults.value": "VERIFY"
+                  }
+                },
+                "messageEncoding": {
+                  "type": "MessageEncoding",
+                  "id": 5,
+                  "options": {
+                    "retention": "RETENTION_RUNTIME",
+                    "targets": "TARGET_TYPE_FILE",
+                    "feature_support.edition_introduced": "EDITION_2023",
+                    "edition_defaults.edition": "EDITION_LEGACY",
+                    "edition_defaults.value": "LENGTH_PREFIXED"
+                  }
+                },
+                "jsonFormat": {
+                  "type": "JsonFormat",
+                  "id": 6,
+                  "options": {
+                    "retention": "RETENTION_RUNTIME",
+                    "targets": "TARGET_TYPE_FILE",
+                    "feature_support.edition_introduced": "EDITION_2023",
+                    "edition_defaults.edition": "EDITION_PROTO3",
+                    "edition_defaults.value": "ALLOW"
+                  }
+                },
+                "enforceNamingStyle": {
+                  "type": "EnforceNamingStyle",
+                  "id": 7,
+                  "options": {
+                    "retention": "RETENTION_SOURCE",
+                    "targets": "TARGET_TYPE_METHOD",
+                    "feature_support.edition_introduced": "EDITION_2024",
+                    "edition_defaults.edition": "EDITION_2024",
+                    "edition_defaults.value": "STYLE2024"
+                  }
+                },
+                "defaultSymbolVisibility": {
+                  "type": "VisibilityFeature.DefaultSymbolVisibility",
+                  "id": 8,
+                  "options": {
+                    "retention": "RETENTION_SOURCE",
+                    "targets": "TARGET_TYPE_FILE",
+                    "feature_support.edition_introduced": "EDITION_2024",
+                    "edition_defaults.edition": "EDITION_2024",
+                    "edition_defaults.value": "EXPORT_TOP_LEVEL"
+                  }
+                }
+              },
+              "extensions": [
+                [
+                  1000,
+                  9994
+                ],
+                [
+                  9995,
+                  9999
+                ],
+                [
+                  10000,
+                  10000
+                ]
+              ],
+              "reserved": [
+                [
+                  999,
+                  999
+                ]
+              ],
+              "nested": {
+                "FieldPresence": {
+                  "values": {
+                    "FIELD_PRESENCE_UNKNOWN": 0,
+                    "EXPLICIT": 1,
+                    "IMPLICIT": 2,
+                    "LEGACY_REQUIRED": 3
+                  }
+                },
+                "EnumType": {
+                  "values": {
+                    "ENUM_TYPE_UNKNOWN": 0,
+                    "OPEN": 1,
+                    "CLOSED": 2
+                  }
+                },
+                "RepeatedFieldEncoding": {
+                  "values": {
+                    "REPEATED_FIELD_ENCODING_UNKNOWN": 0,
+                    "PACKED": 1,
+                    "EXPANDED": 2
+                  }
+                },
+                "Utf8Validation": {
+                  "values": {
+                    "UTF8_VALIDATION_UNKNOWN": 0,
+                    "VERIFY": 2,
+                    "NONE": 3
+                  }
+                },
+                "MessageEncoding": {
+                  "values": {
+                    "MESSAGE_ENCODING_UNKNOWN": 0,
+                    "LENGTH_PREFIXED": 1,
+                    "DELIMITED": 2
+                  }
+                },
+                "JsonFormat": {
+                  "values": {
+                    "JSON_FORMAT_UNKNOWN": 0,
+                    "ALLOW": 1,
+                    "LEGACY_BEST_EFFORT": 2
+                  }
+                },
+                "EnforceNamingStyle": {
+                  "values": {
+                    "ENFORCE_NAMING_STYLE_UNKNOWN": 0,
+                    "STYLE2024": 1,
+                    "STYLE_LEGACY": 2
+                  }
+                },
+                "VisibilityFeature": {
+                  "fields": {},
+                  "reserved": [
+                    [
+                      1,
+                      536870911
+                    ]
+                  ],
+                  "nested": {
+                    "DefaultSymbolVisibility": {
+                      "values": {
+                        "DEFAULT_SYMBOL_VISIBILITY_UNKNOWN": 0,
+                        "EXPORT_ALL": 1,
+                        "EXPORT_TOP_LEVEL": 2,
+                        "LOCAL_ALL": 3,
+                        "STRICT": 4
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "FeatureSetDefaults": {
+              "edition": "proto2",
+              "fields": {
+                "defaults": {
+                  "rule": "repeated",
+                  "type": "FeatureSetEditionDefault",
+                  "id": 1
+                },
+                "minimumEdition": {
+                  "type": "Edition",
+                  "id": 4
+                },
+                "maximumEdition": {
+                  "type": "Edition",
+                  "id": 5
+                }
+              },
+              "nested": {
+                "FeatureSetEditionDefault": {
+                  "fields": {
+                    "edition": {
+                      "type": "Edition",
+                      "id": 3
+                    },
+                    "overridableFeatures": {
+                      "type": "FeatureSet",
+                      "id": 4
+                    },
+                    "fixedFeatures": {
+                      "type": "FeatureSet",
+                      "id": 5
+                    }
+                  },
+                  "reserved": [
+                    [
+                      1,
+                      1
+                    ],
+                    [
+                      2,
+                      2
+                    ],
+                    "features"
+                  ]
+                }
+              }
+            },
             "SourceCodeInfo": {
+              "edition": "proto2",
               "fields": {
                 "location": {
                   "rule": "repeated",
@@ -8508,18 +9188,30 @@ export default {
                   "id": 1
                 }
               },
+              "extensions": [
+                [
+                  536000000,
+                  536000000
+                ]
+              ],
               "nested": {
                 "Location": {
                   "fields": {
                     "path": {
                       "rule": "repeated",
                       "type": "int32",
-                      "id": 1
+                      "id": 1,
+                      "options": {
+                        "packed": true
+                      }
                     },
                     "span": {
                       "rule": "repeated",
                       "type": "int32",
-                      "id": 2
+                      "id": 2,
+                      "options": {
+                        "packed": true
+                      }
                     },
                     "leadingComments": {
                       "type": "string",
@@ -8539,6 +9231,7 @@ export default {
               }
             },
             "GeneratedCodeInfo": {
+              "edition": "proto2",
               "fields": {
                 "annotation": {
                   "rule": "repeated",
@@ -8552,7 +9245,10 @@ export default {
                     "path": {
                       "rule": "repeated",
                       "type": "int32",
-                      "id": 1
+                      "id": 1,
+                      "options": {
+                        "packed": true
+                      }
                     },
                     "sourceFile": {
                       "type": "string",
@@ -8565,9 +9261,30 @@ export default {
                     "end": {
                       "type": "int32",
                       "id": 4
+                    },
+                    "semantic": {
+                      "type": "Semantic",
+                      "id": 5
+                    }
+                  },
+                  "nested": {
+                    "Semantic": {
+                      "values": {
+                        "NONE": 0,
+                        "SET": 1,
+                        "ALIAS": 2
+                      }
                     }
                   }
                 }
+              }
+            },
+            "SymbolVisibility": {
+              "edition": "proto2",
+              "values": {
+                "VISIBILITY_UNSET": 0,
+                "VISIBILITY_LOCAL": 1,
+                "VISIBILITY_EXPORT": 2
               }
             }
           }
