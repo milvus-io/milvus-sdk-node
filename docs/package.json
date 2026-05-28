@@ -16,5 +16,10 @@
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.0.0"
+  },
+  "resolutions": {
+    "devalue": "^5.8.1",
+    "fast-uri": "^3.1.2",
+    "yaml": "^2.8.3"
   }
 }
