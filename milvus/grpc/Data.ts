@@ -77,6 +77,8 @@ import {
   GetQuerySegmentInfoResponse,
   SearchData,
   FloatVector,
+  FieldPartialUpdateOpType,
+  FieldPartialUpdateOp,
 } from '../';
 import { Collection } from './Collection';
 
@@ -142,6 +144,9 @@ export class Data extends Collection {
       throw new Error(ERROR_REASONS.INSERT_CHECK_FIELD_DATA_IS_REQUIRED);
     }
     const { collection_name } = data;
+    const fieldOps = upsert
+      ? this.normalizeFieldOps((data as UpsertReq).field_ops)
+      : [];
 
     const describeReq = { collection_name, cache: enable_cache };
     if (data.db_name) {
@@ -228,7 +233,8 @@ export class Data extends Collection {
 
     // Track which fields are present in the original row data for partial updates
     const isPartialUpdate =
-      'partial_update' in data && data.partial_update === true;
+      ('partial_update' in data && data.partial_update === true) ||
+      fieldOps.length > 0;
     const originalRowKeys = new Set<string>();
 
     // Loop through each row and set the corresponding field values in the Map.
@@ -293,10 +299,9 @@ export class Data extends Collection {
       schema_timestamp:
         collectionInfo.update_timestamp_str ||
         (collectionInfo.update_timestamp as string | number | undefined),
-      // Ensure partial_update is passed for upsert operations
-      ...(upsert && (data as UpsertReq).partial_update
-        ? { partial_update: true }
-        : {}),
+      // Ensure partial_update is passed for explicit partial updates and field_ops.
+      ...(upsert && isPartialUpdate ? { partial_update: true } : {}),
+      ...(upsert && fieldOps.length > 0 ? { field_ops: fieldOps } : {}),
     };
     /* istanbul ignore next if */
     if (data.skip_check_schema) {
@@ -476,6 +481,35 @@ export class Data extends Collection {
     }
 
     return promise;
+  }
+
+  private normalizeFieldOps(
+    fieldOps?: FieldPartialUpdateOp[]
+  ): { field_name: string; op: keyof typeof FieldPartialUpdateOpType }[] {
+    if (!fieldOps || fieldOps.length === 0) {
+      return [];
+    }
+
+    return fieldOps.map(({ field_name, op }) => {
+      if (!field_name) {
+        throw new Error('field_ops field_name is required');
+      }
+
+      if (typeof op === 'number') {
+        const opName = FieldPartialUpdateOpType[op] as
+          | keyof typeof FieldPartialUpdateOpType
+          | undefined;
+        if (typeof opName === 'undefined') {
+          throw new Error(`unsupported field partial update op: ${op}`);
+        }
+        return { field_name, op: opName };
+      }
+
+      if (typeof FieldPartialUpdateOpType[op] === 'undefined') {
+        throw new Error(`unsupported field partial update op: ${op}`);
+      }
+      return { field_name, op };
+    });
   }
 
   /**
