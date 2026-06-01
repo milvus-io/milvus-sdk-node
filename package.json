@@ -2,7 +2,7 @@
   "name": "@zilliz/milvus2-sdk-node",
   "author": "Zilliz",
   "milvusVersion": "v3.0-beta-amd64",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "main": "dist/milvus",
   "files": [
     "dist"
