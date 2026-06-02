@@ -1,13 +1,13 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { ParquetSchema, ParquetWriter } from '@dsnp/parquetjs';
+import { ParquetSchema, ParquetWriter } from '@shanghaikid/parquetjs';
 import { DataType, convertToDataType, FieldType } from '../';
 import { Formatter, BulkWriterSchema } from './Types';
 
 const DYNAMIC_FIELD = '$meta';
 
 /**
- * Maps a Milvus DataType to a @dsnp/parquetjs schema field definition.
+ * Maps a Milvus DataType to a @shanghaikid/parquetjs schema field definition.
  * Follows the same mapping as pymilvus ARROW_TYPE_CREATOR.
  */
 function parquetFieldDef(dt: DataType): Record<string, any> {
