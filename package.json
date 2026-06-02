@@ -2,7 +2,7 @@
   "name": "@zilliz/milvus2-sdk-node",
   "author": "Zilliz",
   "milvusVersion": "v3.0-beta-amd64",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "main": "dist/milvus",
   "files": [
     "dist"
@@ -23,7 +23,7 @@
     "proto:json": "yarn test test/utils/ProtoJson.spec.ts"
   },
   "dependencies": {
-    "@dsnp/parquetjs": "npm:@shanghaikid/parquetjs@1.8.8",
+    "@shanghaikid/parquetjs": "1.8.8",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
     "@opentelemetry/api": "^1.9.0",
