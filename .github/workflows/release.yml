@@ -50,11 +50,18 @@ jobs:
             npm publish --dry-run
             echo "✅ Authentication successful! Trusted publishing is working."
           else
+            VERSION=$(node -p "require('./package.json').version")
+            VERSION_TAG=$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')")
+
             echo "📦 Publishing to npm..."
             if [ "${{ github.event.release.prerelease }}" = "true" ]; then
-              npm publish --tag next
+              NPM_TAG=next
+            elif [ "${{ github.event.release.make_latest }}" = "true" ]; then
+              NPM_TAG=latest
             else
-              npm publish --tag latest
+              NPM_TAG="$VERSION_TAG"
             fi
+            echo "Publishing version $VERSION with npm dist-tag $NPM_TAG"
+            npm publish --tag "$NPM_TAG"
             echo "✅ Published successfully!"
           fi
