@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ParquetReader } from '@dsnp/parquetjs';
+import { ParquetReader } from '@shanghaikid/parquetjs';
 import { DataType } from '../../milvus';
 import { BulkWriter } from '../../milvus/bulkwriter/BulkWriter';
 import { ParquetFormatter } from '../../milvus/bulkwriter/ParquetFormatter';
