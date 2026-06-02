@@ -695,7 +695,7 @@
     enabled "2.0.x"
     kuler "^2.0.0"
 
-"@dsnp/parquetjs@npm:@shanghaikid/parquetjs@1.8.8":
+"@shanghaikid/parquetjs@1.8.8":
   version "1.8.8"
   resolved "https://registry.npmjs.org/@shanghaikid/parquetjs/-/parquetjs-1.8.8.tgz#f7438dbf6f381d2799fef2fbb7e1f48fc8878c62"
   integrity sha512-uaYXx4yP4cipVU8EZR4OZohiklsazyAcIXtfNEEYBcsMlnz5w4gEvv9vw+cP3yZBv7d1+OQYKfCfKI7oK0iUZQ==
