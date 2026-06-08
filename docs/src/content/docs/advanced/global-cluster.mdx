@@ -1,5 +1,5 @@
 ---
-title: "Global Cluster"
+title: 'Global Cluster'
 ---
 
 Global cluster mode enables multi-region Milvus deployments with automatic failover. The SDK fetches cluster topology from the endpoint and routes requests to the primary cluster.
@@ -45,27 +45,40 @@ if (changed) {
 ```
 
 This method:
+
 - Queries the endpoint for the current primary cluster
 - If the primary has changed, creates a new connection pool for the new primary
 - Drains the old connection pool gracefully
 - Returns `true` if a reconnection occurred, `false` if the primary is unchanged
 
+## Cluster-pinned DQL Sessions
+
+Use `session(clusterId)` when you need search/query/get requests to target a specific cluster explicitly. The session reuses the parent client's connection and only injects `cluster_id`; it does not create or close a separate connection pool.
+
+```javascript
+const session = client.session('cluster-a');
+
+const results = await session.search({
+  collection_name: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  anns_field: 'vector',
+  limit: 10,
+});
+
+session.close();
+```
+
+Supported session methods are `search()`, `hybridSearch()`, `searchIterator()`, `query()`, `queryIterator()`, `get()`, and `close()`.
+
 ## Configuration
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
+| Parameter  | Type      | Default       | Description                        |
+| ---------- | --------- | ------------- | ---------------------------------- |
 | `isGlobal` | `boolean` | Auto-detected | Enable/disable global cluster mode |
-| `address` | `string` | Required | Global cluster endpoint address |
-| `token` | `string` | - | Authentication token |
+| `address`  | `string`  | Required      | Global cluster endpoint address    |
+| `token`    | `string`  | -             | Authentication token               |
 
 ## Next Steps
 
 - Learn about [Client Configuration](/milvus-sdk-node/core-concepts/client-configuration) for all connection options
 - Explore [Advanced Features](/milvus-sdk-node/advanced/advanced-features) for connection pooling and retries
-
-## Commit
-
-```bash
-git add docs/src/content/docs/advanced/global-cluster.mdx
-git commit --signoff -m "docs: add global cluster documentation page"
-```

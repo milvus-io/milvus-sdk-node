@@ -1,0 +1,257 @@
+---
+title: 'HttpClient'
+---
+
+`HttpClient` is the REST client exported by `@zilliz/milvus2-sdk-node`. Use it when an environment prefers HTTP over gRPC, such as serverless platforms, HTTP-only runtimes, or proxy-restricted deployments.
+
+HTTP request fields use the REST API's camelCase naming convention, for example `collectionName`, `dbName`, `outputFields`, and `indexParams`. gRPC APIs on `MilvusClient` use snake_case fields such as `collection_name` and `output_fields`.
+
+## Constructor
+
+```typescript
+new HttpClient(config: HttpClientConfig)
+```
+
+```typescript
+type HttpClientConfig =
+  | {
+      endpoint: string;
+      baseURL?: string;
+      database?: string;
+      token?: string;
+      username?: string;
+      password?: string;
+      timeout?: number;
+      fetch?: typeof fetch;
+      acceptInt64?: boolean;
+    }
+  | {
+      baseURL: string;
+      endpoint?: string;
+      database?: string;
+      token?: string;
+      username?: string;
+      password?: string;
+      timeout?: number;
+      fetch?: typeof fetch;
+      acceptInt64?: boolean;
+    };
+```
+
+`endpoint` is combined with the SDK HTTP API version. `baseURL` overrides that derived URL when provided.
+
+Example:
+
+```typescript
+import { HttpClient, HttpError } from '@zilliz/milvus2-sdk-node';
+
+const client = new HttpClient({
+  baseURL: 'https://your-cluster.example.com/v2',
+  token: process.env.MILVUS_TOKEN,
+  database: 'default',
+  timeout: 30_000,
+  acceptInt64: true,
+});
+```
+
+## Per-request options
+
+Every HTTP method accepts an optional `FetchOptions` object.
+
+```typescript
+type FetchOptions = {
+  abortController: AbortController;
+  timeout: number;
+};
+```
+
+Example:
+
+```typescript
+await client.search(
+  {
+    collectionName: 'books',
+    data: [[0.1, 0.2, 0.3, 0.4]],
+    outputFields: ['title'],
+    limit: 10,
+  },
+  { abortController: new AbortController(), timeout: 10_000 }
+);
+```
+
+## Collection APIs
+
+| Method                                           | Description                                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `createCollection(data, options?)`               | Create a collection by dimension shortcut or explicit schema.                         |
+| `describeCollection(data, options?)`             | Describe collection schema, indexes, load status, and shard information.              |
+| `dropCollection(data, options?)`                 | Drop a collection.                                                                    |
+| `addCollectionField(data, options?)`             | Add a field to an existing collection.                                                |
+| `alterCollectionProperties(data, options?)`      | Add or update collection properties.                                                  |
+| `alterCollectionFieldProperties(data, options?)` | Alter field-level properties such as `max_length`, `max_capacity`, or `mmap_enabled`. |
+| `dropCollectionProperties(data, options?)`       | Remove collection properties by key.                                                  |
+| `listCollections(data?, options?)`               | List collections in a database.                                                       |
+| `hasCollection(data, options?)`                  | Check whether a collection exists.                                                    |
+| `renameCollection(data, options?)`               | Rename a collection, optionally into another database.                                |
+| `getCollectionStatistics(data, options?)`        | Get collection statistics such as row count.                                          |
+| `flushCollection(data, options?)`                | Flush a collection.                                                                   |
+| `loadCollection(data, options?)`                 | Load a collection into memory.                                                        |
+| `releaseCollection(data, options?)`              | Release a loaded collection.                                                          |
+| `getCollectionLoadState(data, options?)`         | Get load progress and load state.                                                     |
+| `compactCollection(data, options?)`              | Start collection compaction.                                                          |
+| `getCompactionState(data, options?)`             | Get compaction progress by compaction ID.                                             |
+| `refreshLoad(data, options?)`                    | Refresh an existing loaded collection.                                                |
+
+Example:
+
+```typescript
+await client.flushCollection({ collectionName: 'books' });
+
+const loadState = await client.getCollectionLoadState({
+  collectionName: 'books',
+});
+
+const compaction = await client.compactCollection({
+  collectionName: 'books',
+});
+```
+
+## Data APIs
+
+| Method                         | Description                                                 |
+| ------------------------------ | ----------------------------------------------------------- |
+| `insert(data, options?)`       | Insert rows.                                                |
+| `upsert(data, options?)`       | Insert or update rows.                                      |
+| `get(data, options?)`          | Fetch rows by ID.                                           |
+| `query(data, options?)`        | Query rows by filter.                                       |
+| `search(data, options?)`       | Vector search.                                              |
+| `hybridSearch(data, options?)` | Hybrid search over multiple vector requests with reranking. |
+| `delete(data, options?)`       | Delete rows by filter.                                      |
+
+Example:
+
+```typescript
+const results = await client.search({
+  collectionName: 'books',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  annsField: 'vector',
+  outputFields: ['title'],
+  limit: 5,
+});
+```
+
+## Database APIs
+
+| Method                                    | Description                                |
+| ----------------------------------------- | ------------------------------------------ |
+| `createDatabase(data, options?)`          | Create a database.                         |
+| `dropDatabase(data, options?)`            | Drop a database.                           |
+| `describeDatabase(data, options?)`        | Describe database metadata and properties. |
+| `listDatabases(options?)`                 | List databases.                            |
+| `alterDatabaseProperties(data, options?)` | Add or update database properties.         |
+| `dropDatabaseProperties(data, options?)`  | Remove database properties by key.         |
+
+## Index APIs
+
+| Method                                 | Description                     |
+| -------------------------------------- | ------------------------------- |
+| `createIndex(data, options?)`          | Create one or more indexes.     |
+| `dropIndex(data, options?)`            | Drop an index.                  |
+| `describeIndex(data, options?)`        | Describe indexes.               |
+| `listIndexes(data, options?)`          | List index names.               |
+| `alterIndexProperties(data, options?)` | Add or update index properties. |
+| `dropIndexProperties(data, options?)`  | Remove index properties by key. |
+
+## Partition APIs
+
+| Method                                   | Description                                 |
+| ---------------------------------------- | ------------------------------------------- |
+| `listPartitions(data, options?)`         | List partitions.                            |
+| `createPartition(data, options?)`        | Create a partition.                         |
+| `dropPartition(data, options?)`          | Drop a partition.                           |
+| `loadPartitions(data, options?)`         | Load partitions.                            |
+| `releasePartitions(data, options?)`      | Release partitions.                         |
+| `hasPartition(data, options?)`           | Check whether a partition exists.           |
+| `getPartitionStatistics(data, options?)` | Get partition statistics such as row count. |
+
+## Alias APIs
+
+| Method                          | Description                               |
+| ------------------------------- | ----------------------------------------- |
+| `listAliases(data, options?)`   | List aliases in a database or collection. |
+| `createAlias(data, options?)`   | Create an alias for a collection.         |
+| `describeAlias(data, options?)` | Describe an alias.                        |
+| `alterAlias(data, options?)`    | Move an alias to another collection.      |
+| `dropAlias(data, options?)`     | Drop an alias.                            |
+
+## Import APIs
+
+HTTP import APIs are separate from the gRPC `bulkInsert`, `getImportState`, and `listImportTasks` APIs.
+
+| Method                                 | Description                                |
+| -------------------------------------- | ------------------------------------------ |
+| `listImportJobs(data, options?)`       | List REST import jobs for a collection.    |
+| `createImportJobs(data, options?)`     | Create REST import jobs from staged files. |
+| `getImportJobProgress(data, options?)` | Get progress for a REST import job.        |
+
+```typescript
+const job = await client.createImportJobs({
+  collectionName: 'books',
+  files: [['imports/books/part-0.parquet']],
+});
+
+const progress = await client.getImportJobProgress({
+  jobId: job.data.jobId,
+});
+```
+
+For Zilliz Cloud import workflows, include `projectId` and `regionId` when required by the cloud endpoint.
+
+## User and Role APIs
+
+| Method                                    | Description                     |
+| ----------------------------------------- | ------------------------------- |
+| `createUser(data, options?)`              | Create a user.                  |
+| `updateUserPassword(data, options?)`      | Update a user's password.       |
+| `dropUser(data, options?)`                | Drop a user.                    |
+| `describeUser(data, options?)`            | Describe user details.          |
+| `listUsers(options?)`                     | List users.                     |
+| `grantRoleToUser(data, options?)`         | Grant a role to a user.         |
+| `revokeRoleFromUser(data, options?)`      | Revoke a role from a user.      |
+| `createRole(data, options?)`              | Create a role.                  |
+| `dropRole(data, options?)`                | Drop a role.                    |
+| `describeRole(data, options?)`            | Describe role privileges.       |
+| `listRoles(options?)`                     | List roles.                     |
+| `grantPrivilegeToRole(data, options?)`    | Grant a privilege to a role.    |
+| `revokePrivilegeFromRole(data, options?)` | Revoke a privilege from a role. |
+
+Example:
+
+```typescript
+await client.grantPrivilegeToRole({
+  roleName: 'reader',
+  objectType: 'Collection',
+  objectName: 'books',
+  privilege: 'Search',
+});
+```
+
+## Errors
+
+Non-2xx responses throw `HttpError`.
+
+```typescript
+try {
+  await client.describeCollection({ collectionName: 'missing' });
+} catch (error) {
+  if (error instanceof HttpError) {
+    console.error(error.status, error.statusText, error.url);
+  }
+}
+```
+
+## Related
+
+- [HTTP Client guide](/milvus-sdk-node/advanced/http-client)
+- [MilvusClient](/milvus-sdk-node/api-reference/client)
+- [BulkWriter](/milvus-sdk-node/api-reference/bulk-writer)

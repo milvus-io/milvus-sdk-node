@@ -1,5 +1,5 @@
 ---
-title: "HTTP Client"
+title: 'HTTP Client'
 ---
 
 The Milvus SDK provides both gRPC and HTTP clients. This guide covers the HTTP client and when to use it.
@@ -12,6 +12,7 @@ The Milvus SDK provides both gRPC and HTTP clients. This guide covers the HTTP c
 ## When to Use HTTP Client
 
 Use HTTP client when:
+
 - You need HTTP/REST compatibility
 - Working behind firewalls that block gRPC
 - Integrating with systems that prefer HTTP
@@ -23,10 +24,12 @@ Use HTTP client when:
 import { HttpClient } from '@zilliz/milvus2-sdk-node';
 
 const client = new HttpClient({
-  baseURL: 'http://localhost:19530',
+  endpoint: 'http://localhost:19530',
   token: 'your-token', // Optional
 });
 ```
+
+HTTP client requests use camelCase field names such as `collectionName`, `dbName`, and `outputFields`. The gRPC `MilvusClient` uses snake_case names such as `collection_name` and `output_fields`.
 
 ## Using HTTP Client in Serverless Environments
 
@@ -74,10 +77,10 @@ function getClient() {
 export default async function handler(req, res) {
   try {
     const milvusClient = getClient();
-    
+
     const results = await milvusClient.search({
-      collection_name: 'my_collection',
-      vector: req.body.vector,
+      collectionName: 'my_collection',
+      data: [req.body.vector],
       limit: 10,
     });
 
@@ -123,10 +126,10 @@ export default {
 
     try {
       const body = await request.json();
-      
+
       const results = await client.search({
-        collection_name: 'my_collection',
-        vector: body.vector,
+        collectionName: 'my_collection',
+        data: [body.vector],
         limit: 10,
       });
 
@@ -134,13 +137,10 @@ export default {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch (error) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { 
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
   },
 };
@@ -180,10 +180,10 @@ function getClient() {
 export const handler = async (event) => {
   try {
     const milvusClient = getClient();
-    
+
     const results = await milvusClient.search({
-      collection_name: 'my_collection',
-      vector: event.vector,
+      collectionName: 'my_collection',
+      data: [event.vector],
       limit: 10,
     });
 
@@ -224,9 +224,9 @@ export const handler = async (event) => {
 
 ```javascript
 await client.createCollection({
-  collection_name: 'my_collection',
+  collectionName: 'my_collection',
   dimension: 128,
-  metric_type: 'L2',
+  metricType: 'L2',
 });
 ```
 
@@ -234,7 +234,7 @@ await client.createCollection({
 
 ```javascript
 const collections = await client.listCollections({
-  db_name: 'default',
+  dbName: 'default',
 });
 
 console.log('Collections:', collections);
@@ -244,7 +244,7 @@ console.log('Collections:', collections);
 
 ```javascript
 const info = await client.describeCollection({
-  collection_name: 'my_collection',
+  collectionName: 'my_collection',
 });
 
 console.log('Collection info:', info);
@@ -254,7 +254,7 @@ console.log('Collection info:', info);
 
 ```javascript
 await client.dropCollection({
-  collection_name: 'my_collection',
+  collectionName: 'my_collection',
 });
 ```
 
@@ -264,7 +264,7 @@ await client.dropCollection({
 
 ```javascript
 await client.insert({
-  collection_name: 'my_collection',
+  collectionName: 'my_collection',
   data: [
     {
       id: 1,
@@ -278,8 +278,8 @@ await client.insert({
 
 ```javascript
 const results = await client.search({
-  collection_name: 'my_collection',
-  vector: [0.1, 0.2, 0.3, 0.4],
+  collectionName: 'my_collection',
+  data: [[0.1, 0.2, 0.3, 0.4]],
   limit: 10,
 });
 ```
@@ -288,9 +288,9 @@ const results = await client.search({
 
 ```javascript
 const results = await client.query({
-  collection_name: 'my_collection',
+  collectionName: 'my_collection',
   filter: 'age > 25',
-  output_fields: ['id', 'vector'],
+  outputFields: ['id', 'vector'],
 });
 ```
 
@@ -298,8 +298,8 @@ const results = await client.query({
 
 ```javascript
 await client.delete({
-  collection_name: 'my_collection',
-  ids: [1, 2, 3],
+  collectionName: 'my_collection',
+  filter: 'id in [1, 2, 3]',
 });
 ```
 
@@ -309,10 +309,15 @@ await client.delete({
 
 ```javascript
 await client.createIndex({
-  collection_name: 'my_collection',
-  field_name: 'vector',
-  index_type: 'HNSW',
-  metric_type: 'L2',
+  collectionName: 'my_collection',
+  indexParams: [
+    {
+      fieldName: 'vector',
+      indexName: 'vector_idx',
+      metricType: 'L2',
+      params: { index_type: 'HNSW' },
+    },
+  ],
 });
 ```
 
@@ -320,8 +325,8 @@ await client.createIndex({
 
 ```javascript
 const index = await client.describeIndex({
-  collection_name: 'my_collection',
-  field_name: 'vector',
+  collectionName: 'my_collection',
+  indexName: 'vector_idx',
 });
 
 console.log('Index info:', index);
@@ -331,7 +336,7 @@ console.log('Index info:', index);
 
 ```javascript
 const indexes = await client.listIndexes({
-  collection_name: 'my_collection',
+  collectionName: 'my_collection',
 });
 
 console.log('Indexes:', indexes);
@@ -341,8 +346,8 @@ console.log('Indexes:', indexes);
 
 ```javascript
 await client.dropIndex({
-  collection_name: 'my_collection',
-  field_name: 'vector',
+  collectionName: 'my_collection',
+  indexName: 'vector_idx',
 });
 ```
 
@@ -352,8 +357,8 @@ await client.dropIndex({
 
 ```javascript
 await client.createPartition({
-  collection_name: 'my_collection',
-  partition_name: 'partition_1',
+  collectionName: 'my_collection',
+  partitionName: 'partition_1',
 });
 ```
 
@@ -361,7 +366,7 @@ await client.createPartition({
 
 ```javascript
 const partitions = await client.listPartitions({
-  collection_name: 'my_collection',
+  collectionName: 'my_collection',
 });
 
 console.log('Partitions:', partitions);
@@ -371,8 +376,8 @@ console.log('Partitions:', partitions);
 
 ```javascript
 await client.dropPartition({
-  collection_name: 'my_collection',
-  partition_name: 'partition_1',
+  collectionName: 'my_collection',
+  partitionName: 'partition_1',
 });
 ```
 
@@ -382,8 +387,8 @@ await client.dropPartition({
 
 ```javascript
 await client.createAlias({
-  collection_name: 'my_collection',
-  alias: 'my_alias',
+  collectionName: 'my_collection',
+  aliasName: 'my_alias',
 });
 ```
 
@@ -391,7 +396,7 @@ await client.createAlias({
 
 ```javascript
 const aliases = await client.listAliases({
-  collection_name: 'my_collection',
+  collectionName: 'my_collection',
 });
 
 console.log('Aliases:', aliases);
@@ -401,7 +406,7 @@ console.log('Aliases:', aliases);
 
 ```javascript
 await client.dropAlias({
-  alias: 'my_alias',
+  aliasName: 'my_alias',
 });
 ```
 
@@ -410,9 +415,9 @@ await client.dropAlias({
 ### Import Data
 
 ```javascript
-const result = await client.import({
-  collection_name: 'my_collection',
-  files: ['/path/to/data.json'],
+const result = await client.createImportJobs({
+  collectionName: 'my_collection',
+  files: [['imports/data.json']],
 });
 
 console.log('Import task:', result);
@@ -424,7 +429,7 @@ console.log('Import task:', result);
 
 ```javascript
 await client.createUser({
-  username: 'newuser',
+  userName: 'newuser',
   password: 'password',
 });
 ```
@@ -459,12 +464,9 @@ console.log('Roles:', roles);
 
 ```javascript
 const client = new HttpClient({
-  baseURL: 'http://localhost:19530',
+  endpoint: 'http://localhost:19530',
   token: 'your-token',
   timeout: 30000,
-  headers: {
-    'Custom-Header': 'value',
-  },
 });
 ```
 
@@ -474,7 +476,9 @@ HTTP client errors follow the same pattern as gRPC client:
 
 ```javascript
 try {
-  await client.createCollection({ /* ... */ });
+  await client.createCollection({
+    /* ... */
+  });
 } catch (error) {
   console.error('Error:', error.message);
   console.error('Status:', error.status);

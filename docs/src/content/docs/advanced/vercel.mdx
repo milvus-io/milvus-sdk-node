@@ -1,5 +1,5 @@
 ---
-title: "Deploying to Vercel"
+title: 'Deploying to Vercel'
 ---
 
 This guide covers deploying the Milvus Node.js SDK to Vercel serverless functions using the HTTP client.
@@ -59,20 +59,19 @@ export default async function handler(req, res) {
   try {
     const milvusClient = getClient();
 
-    const { collection_name, vector, limit = 10, output_fields = [] } =
-      req.body;
+    const { collectionName, vector, limit = 10, outputFields = [] } = req.body;
 
-    if (!collection_name || !vector) {
+    if (!collectionName || !vector) {
       return res.status(400).json({
-        error: 'Missing required fields: collection_name and vector',
+        error: 'Missing required fields: collectionName and vector',
       });
     }
 
     const results = await milvusClient.search({
-      collection_name,
+      collectionName,
       data: Array.isArray(vector[0]) ? vector : [vector],
       limit,
-      output_fields,
+      outputFields,
     });
 
     res.status(200).json({ results });
@@ -148,11 +147,11 @@ function getClient() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { collection_name, vector, limit = 10, output_fields = [] } = body;
+    const { collectionName, vector, limit = 10, outputFields = [] } = body;
 
-    if (!collection_name || !vector) {
+    if (!collectionName || !vector) {
       return NextResponse.json(
-        { error: 'Missing required fields: collection_name and vector' },
+        { error: 'Missing required fields: collectionName and vector' },
         { status: 400 }
       );
     }
@@ -160,10 +159,10 @@ export async function POST(request) {
     const milvusClient = getClient();
 
     const results = await milvusClient.search({
-      collection_name,
+      collectionName,
       data: Array.isArray(vector[0]) ? vector : [vector],
       limit,
-      output_fields,
+      outputFields,
     });
 
     return NextResponse.json({ results });
@@ -206,14 +205,13 @@ export default async function handler(req, res) {
 
   try {
     const milvusClient = getClient();
-    const { collection_name, vectors, limit = 10, output_fields = [] } =
-      req.body;
+    const { collectionName, vectors, limit = 10, outputFields = [] } = req.body;
 
     const results = await milvusClient.search({
-      collection_name,
+      collectionName,
       data: vectors,
       limit,
-      output_fields,
+      outputFields,
     });
 
     res.status(200).json({ results });
@@ -248,10 +246,10 @@ export default async function handler(req, res) {
 
   try {
     const milvusClient = getClient();
-    const { collection_name, data } = req.body;
+    const { collectionName, data } = req.body;
 
     const result = await milvusClient.insert({
-      collection_name,
+      collectionName,
       data,
     });
 
@@ -287,12 +285,12 @@ export default async function handler(req, res) {
 
   try {
     const milvusClient = getClient();
-    const { collection_name, filter, output_fields = [] } = req.body;
+    const { collectionName, filter, outputFields = [] } = req.body;
 
     const results = await milvusClient.query({
-      collection_name,
+      collectionName,
       filter,
-      output_fields,
+      outputFields,
     });
 
     res.status(200).json({ results });
@@ -327,7 +325,7 @@ vercel dev
 curl -X POST http://localhost:3000/api/search \
   -H "Content-Type: application/json" \
   -d '{
-    "collection_name": "my_collection",
+    "collectionName": "my_collection",
     "vectors": [[0.1, 0.2, 0.3]],
     "limit": 5
   }'
@@ -365,7 +363,8 @@ Configure in `vercel.json`:
 
 ### Error: "Function execution timeout"
 
-**Solution**: 
+**Solution**:
+
 - Reduce timeout value in HttpClient configuration
 - Optimize your Milvus queries
 - Upgrade to Pro plan for longer execution times
@@ -376,7 +375,8 @@ Configure in `vercel.json`:
 
 ### Error: "Environment variable not found"
 
-**Solution**: 
+**Solution**:
+
 - Set environment variables in Vercel dashboard
 - Or use `vercel env add` command
 - Ensure variables are set for correct environments (development, preview, production)

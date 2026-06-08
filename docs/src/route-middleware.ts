@@ -14,6 +14,7 @@ type SidebarLinkConfig = {
 const API_REFERENCE_LINKS: SidebarLinkConfig[] = [
   { slug: 'api-reference', label: 'Overview' },
   { slug: 'api-reference/client', label: 'MilvusClient' },
+  { slug: 'api-reference/http-client', label: 'HttpClient' },
   { slug: 'api-reference/collections', label: 'Collection Operations' },
   { slug: 'api-reference/data', label: 'Data Operations' },
   { slug: 'api-reference/indexes', label: 'Index Operations' },
@@ -25,6 +26,7 @@ const API_REFERENCE_LINKS: SidebarLinkConfig[] = [
     label: 'Resource Group Operations',
   },
   { slug: 'api-reference/system', label: 'System Operations' },
+  { slug: 'api-reference/bulk-writer', label: 'BulkWriter' },
   { slug: 'api-reference/types-and-enums', label: 'Types & Enums' },
 ];
 

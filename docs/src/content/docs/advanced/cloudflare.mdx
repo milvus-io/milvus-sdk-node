@@ -1,5 +1,5 @@
 ---
-title: "Deploying to Cloudflare Workers"
+title: 'Deploying to Cloudflare Workers'
 ---
 
 This guide covers deploying the Milvus Node.js SDK to Cloudflare Workers using the HTTP client.
@@ -50,10 +50,10 @@ export default {
         const body = await request.json();
 
         const results = await client.search({
-          collection_name: body.collection_name || 'my_collection',
+          collectionName: body.collectionName || 'my_collection',
           data: body.vectors,
           limit: body.limit || 10,
-          output_fields: body.output_fields || [],
+          outputFields: body.outputFields || [],
         });
 
         return new Response(JSON.stringify({ results }), {
@@ -68,7 +68,7 @@ export default {
         const body = await request.json();
 
         const result = await client.insert({
-          collection_name: body.collection_name || 'my_collection',
+          collectionName: body.collectionName || 'my_collection',
           data: body.data,
         });
 
@@ -196,7 +196,7 @@ export default {
       if (url.pathname === '/api/search' && request.method === 'POST') {
         const body = await request.json();
 
-        if (!body.vector || !body.collection_name) {
+        if (!body.vector || !body.collectionName) {
           return new Response(
             JSON.stringify({ error: 'Missing required fields' }),
             {
@@ -207,11 +207,11 @@ export default {
         }
 
         const results = await client.search({
-          collection_name: body.collection_name,
+          collectionName: body.collectionName,
           data: [body.vector],
           limit: body.limit || 10,
-          output_fields: body.output_fields || [],
-          search_params: body.search_params || {},
+          outputFields: body.outputFields || [],
+          searchParams: body.searchParams || {},
         });
 
         return new Response(JSON.stringify({ results }), {
@@ -268,7 +268,7 @@ wrangler dev
 curl -X POST http://localhost:8787/api/search \
   -H "Content-Type: application/json" \
   -d '{
-    "collection_name": "my_collection",
+    "collectionName": "my_collection",
     "vector": [0.1, 0.2, 0.3],
     "limit": 5
   }'
@@ -307,7 +307,8 @@ const client = new HttpClient({
 
 ### Error: "Request timeout"
 
-**Solution**: 
+**Solution**:
+
 - Reduce timeout value to leave buffer for Worker overhead
 - Optimize your Milvus queries
 - Consider upgrading to paid tier for longer execution times

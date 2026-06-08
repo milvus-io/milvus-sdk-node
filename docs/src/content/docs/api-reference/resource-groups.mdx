@@ -1,5 +1,5 @@
 ---
-title: "Resource Group Operations"
+title: 'Resource Group Operations'
 ---
 
 Resource group APIs manage query-node resource groups and move nodes or loaded replicas between groups. These APIs are primarily useful for Milvus cluster deployments.
@@ -207,6 +207,98 @@ dropAllResourceGroups(): Promise<ResStatus[]>
 ```
 
 Use this only in cleanup scripts or test environments.
+
+## updateReplicateConfiguration
+
+Update cross-cluster replication configuration.
+
+```typescript
+updateReplicateConfiguration(data: UpdateReplicateConfigurationReq): Promise<ResStatus>
+update_replicate_configuration(data: UpdateReplicateConfigurationReq): Promise<ResStatus> // alias
+```
+
+**Parameters**:
+
+- `clusters`: Cluster connection definitions. Required.
+- `cross_cluster_topology?`: Source-to-target topology entries.
+- `force_promote?`: Force promote the current cluster to primary.
+- `timeout?`: Request timeout in milliseconds.
+
+```typescript
+type ReplicateCluster = {
+  cluster_id: string;
+  connection_param: {
+    uri: string;
+    token?: string;
+  };
+  pchannels?: string[];
+};
+
+type CrossClusterTopology = {
+  source_cluster_id: string;
+  target_cluster_id: string;
+};
+```
+
+Example:
+
+```typescript
+await client.updateReplicateConfiguration({
+  clusters: [
+    {
+      cluster_id: 'primary',
+      connection_param: {
+        uri: 'primary.example.com:19530',
+        token: process.env.PRIMARY_TOKEN,
+      },
+    },
+    {
+      cluster_id: 'secondary',
+      connection_param: {
+        uri: 'secondary.example.com:19530',
+        token: process.env.SECONDARY_TOKEN,
+      },
+    },
+  ],
+  cross_cluster_topology: [
+    {
+      source_cluster_id: 'primary',
+      target_cluster_id: 'secondary',
+    },
+  ],
+});
+```
+
+## getReplicateConfiguration
+
+Get the current cross-cluster replication configuration.
+
+```typescript
+getReplicateConfiguration(data?: GetReplicateConfigurationReq): Promise<GetReplicateConfigurationResponse>
+get_replicate_configuration(data?: GetReplicateConfigurationReq): Promise<GetReplicateConfigurationResponse> // alias
+```
+
+**Parameters**:
+
+- `timeout?`: Request timeout in milliseconds.
+
+**Response**:
+
+```typescript
+interface GetReplicateConfigurationResponse extends resStatusResponse {
+  configuration: {
+    clusters: ReplicateCluster[];
+    cross_cluster_topology?: CrossClusterTopology[];
+  };
+}
+```
+
+Example:
+
+```typescript
+const config = await client.getReplicateConfiguration();
+console.log(config.configuration.clusters);
+```
 
 ## Related
 

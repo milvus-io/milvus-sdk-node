@@ -1,5 +1,5 @@
 ---
-title: "Deployment Guide"
+title: 'Deployment Guide'
 ---
 
 This guide provides an overview of deploying applications using the Milvus Node.js SDK to various platforms.
@@ -14,6 +14,7 @@ The Milvus SDK provides two clients:
 ### When to Use HTTP Client
 
 Use `HttpClient` when deploying to:
+
 - **Serverless platforms** (Vercel, AWS Lambda, Cloudflare Workers)
 - **Edge computing** environments
 - **Firewall-restricted** environments
@@ -22,6 +23,7 @@ Use `HttpClient` when deploying to:
 ### When to Use gRPC Client
 
 Use `MilvusClient` (gRPC) for:
+
 - **Traditional servers** (Node.js, Express, NestJS)
 - **Long-lived connections**
 - **Maximum performance** requirements
@@ -55,7 +57,7 @@ function getClient() {
 export default async function handler(req, res) {
   const milvusClient = getClient();
   const results = await milvusClient.search({
-    collection_name: 'my_collection',
+    collectionName: 'my_collection',
     data: req.body.vectors,
     limit: 10,
   });
@@ -84,8 +86,10 @@ export default {
     });
 
     const results = await client.search({
-      collection_name: 'my_collection',
-      data: [/* vectors */],
+      collectionName: 'my_collection',
+      data: [
+        /* vectors */
+      ],
       limit: 10,
     });
 
@@ -124,7 +128,7 @@ function getClient() {
 export const handler = async (event) => {
   const milvusClient = getClient();
   const results = await milvusClient.search({
-    collection_name: 'my_collection',
+    collectionName: 'my_collection',
     data: JSON.parse(event.body).vectors,
     limit: 10,
   });
@@ -202,12 +206,12 @@ const client = new HttpClient({
 
 ## Platform Comparison
 
-| Platform | Client Type | Timeout Limit | Best For |
-|----------|-------------|---------------|----------|
-| Vercel | HTTP | 10s (Hobby), 60s (Pro) | Next.js apps, static sites |
-| Cloudflare Workers | HTTP | 30s (free), 15min (paid) | Edge computing, global distribution |
-| AWS Lambda | HTTP | Up to 15 minutes | Enterprise serverless |
-| Traditional Server | gRPC or HTTP | No limit | Long-lived applications |
+| Platform           | Client Type  | Timeout Limit            | Best For                            |
+| ------------------ | ------------ | ------------------------ | ----------------------------------- |
+| Vercel             | HTTP         | 10s (Hobby), 60s (Pro)   | Next.js apps, static sites          |
+| Cloudflare Workers | HTTP         | 30s (free), 15min (paid) | Edge computing, global distribution |
+| AWS Lambda         | HTTP         | Up to 15 minutes         | Enterprise serverless               |
+| Traditional Server | gRPC or HTTP | No limit                 | Long-lived applications             |
 
 ## Common Patterns
 
@@ -235,7 +239,9 @@ Always handle errors appropriately:
 
 ```javascript
 try {
-  const results = await client.search({ /* ... */ });
+  const results = await client.search({
+    /* ... */
+  });
   return { success: true, results };
 } catch (error) {
   console.error('Milvus error:', error);

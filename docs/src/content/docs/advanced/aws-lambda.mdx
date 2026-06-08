@@ -1,5 +1,5 @@
 ---
-title: "Deploying to AWS Lambda"
+title: 'Deploying to AWS Lambda'
 ---
 
 This guide covers deploying the Milvus Node.js SDK to AWS Lambda using the HTTP client.
@@ -55,23 +55,27 @@ export const handler = async (event) => {
   try {
     const milvusClient = getClient();
 
-    const { collection_name, vector, limit = 10, output_fields = [] } =
-      JSON.parse(event.body || '{}');
+    const {
+      collectionName,
+      vector,
+      limit = 10,
+      outputFields = [],
+    } = JSON.parse(event.body || '{}');
 
-    if (!collection_name || !vector) {
+    if (!collectionName || !vector) {
       return {
         statusCode: 400,
         body: JSON.stringify({
-          error: 'Missing required fields: collection_name and vector',
+          error: 'Missing required fields: collectionName and vector',
         }),
       };
     }
 
     const results = await milvusClient.search({
-      collection_name,
+      collectionName,
       data: Array.isArray(vector[0]) ? vector : [vector],
       limit,
-      output_fields,
+      outputFields,
     });
 
     return {
@@ -202,14 +206,18 @@ export const handler = async (event) => {
   try {
     // Search endpoint
     if (path === '/search' && httpMethod === 'POST') {
-      const { collection_name, vectors, limit = 10, output_fields = [] } =
-        parsedBody;
+      const {
+        collectionName,
+        vectors,
+        limit = 10,
+        outputFields = [],
+      } = parsedBody;
 
       const results = await milvusClient.search({
-        collection_name,
+        collectionName,
         data: vectors,
         limit,
-        output_fields,
+        outputFields,
       });
 
       return {
@@ -224,10 +232,10 @@ export const handler = async (event) => {
 
     // Insert endpoint
     if (path === '/insert' && httpMethod === 'POST') {
-      const { collection_name, data } = parsedBody;
+      const { collectionName, data } = parsedBody;
 
       const result = await milvusClient.insert({
-        collection_name,
+        collectionName,
         data,
       });
 
@@ -243,12 +251,12 @@ export const handler = async (event) => {
 
     // Query endpoint
     if (path === '/query' && httpMethod === 'POST') {
-      const { collection_name, filter, output_fields = [] } = parsedBody;
+      const { collectionName, filter, outputFields = [] } = parsedBody;
 
       const results = await milvusClient.query({
-        collection_name,
+        collectionName,
         filter,
-        output_fields,
+        outputFields,
       });
 
       return {
@@ -418,7 +426,10 @@ aws lambda update-function-configuration \
 For better security, use AWS Secrets Manager:
 
 ```javascript
-import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from '@aws-sdk/client-secrets-manager';
 
 let client;
 let secrets;
@@ -453,14 +464,16 @@ async function getClient() {
 
 ### Error: "Task timed out"
 
-**Solution**: 
+**Solution**:
+
 - Increase Lambda timeout
 - Optimize your Milvus queries
 - Reduce timeout value in HttpClient configuration
 
 ### Error: "Out of memory"
 
-**Solution**: 
+**Solution**:
+
 - Increase Lambda memory allocation
 - Optimize your code
 - Reduce batch sizes

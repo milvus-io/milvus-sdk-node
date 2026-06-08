@@ -1,5 +1,5 @@
 ---
-title: "MilvusClient"
+title: 'MilvusClient'
 ---
 
 `MilvusClient` is the main gRPC client for Milvus. It owns connection metadata, authentication, retry behavior, database context, and all high-level APIs exposed by the SDK.
@@ -161,6 +161,43 @@ reconnectToPrimary(): Promise<boolean>
 ```
 
 Returns `true` when the primary endpoint changed and reconnection was performed.
+
+### session
+
+Create a lightweight DQL session pinned to a target cluster id.
+
+```typescript
+session(clusterId: string): MilvusClientSession
+```
+
+The session reuses the parent client's connection and injects `cluster_id` into supported requests. Closing the session prevents future session calls, but it does not close the parent `MilvusClient` or the gRPC channel pool.
+
+Supported session methods:
+
+| Method                   | Description                                           |
+| ------------------------ | ----------------------------------------------------- |
+| `search(params)`         | Search with the session cluster id.                   |
+| `hybridSearch(params)`   | Hybrid search with the session cluster id.            |
+| `searchIterator(params)` | Create a search iterator with the session cluster id. |
+| `query(params)`          | Query with the session cluster id.                    |
+| `queryIterator(params)`  | Create a query iterator with the session cluster id.  |
+| `get(params)`            | Get rows by primary key with the session cluster id.  |
+| `close()`                | Close only this session wrapper.                      |
+
+Example:
+
+```typescript
+const session = client.session('cluster-a');
+
+const results = await session.search({
+  collection_name: 'books',
+  data: [[0.1, 0.2, 0.3, 0.4]],
+  anns_field: 'vector',
+  limit: 10,
+});
+
+session.close();
+```
 
 ## High-level createCollection overload
 

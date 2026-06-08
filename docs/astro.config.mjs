@@ -139,6 +139,7 @@ export default defineConfig({
           items: [
             { slug: 'api-reference', label: 'Overview' },
             { slug: 'api-reference/client', label: 'MilvusClient' },
+            { slug: 'api-reference/http-client', label: 'HttpClient' },
             {
               slug: 'api-reference/collections',
               label: 'Collection Operations',
@@ -162,6 +163,7 @@ export default defineConfig({
               label: 'Resource Group Operations',
             },
             { slug: 'api-reference/system', label: 'System Operations' },
+            { slug: 'api-reference/bulk-writer', label: 'BulkWriter' },
             {
               slug: 'api-reference/types-and-enums',
               label: 'Types & Enums',
