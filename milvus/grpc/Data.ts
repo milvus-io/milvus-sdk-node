@@ -43,7 +43,14 @@ import {
   SearchRes,
   SearchSimpleReq,
   SearchIteratorReq,
+  SearchResultData,
   HybridSearchReq,
+  HybridSearchIteratorReq,
+  RrfHybridFuser,
+  DEFAULT_RRF_K,
+  FetchBatch,
+  FusionItem,
+  FusionPk,
   promisify,
   sleep,
   parseToKeyValue,
@@ -79,6 +86,7 @@ import {
   FloatVector,
   FieldPartialUpdateOpType,
   FieldPartialUpdateOp,
+  unixtimeToHybridts,
 } from '../';
 import { Collection } from './Collection';
 
@@ -821,7 +829,9 @@ export class Data extends Collection {
       [ITERATOR_FIELD]: true,
       [ITER_SEARCH_V2_KEY]: true,
       [ITER_SEARCH_BATCH_SIZE_KEY]: batchSize,
-      [GUARANTEE_TIMESTAMP_KEY]: 0,
+      // use the caller's pinned snapshot if injected (hybridSearchIterator does
+      // this to share one snapshot across modalities); else self-pin below
+      [GUARANTEE_TIMESTAMP_KEY]: param.guarantee_timestamp ?? 0,
       [COLLECTION_ID]: collectionInfo.collectionID,
     };
 
@@ -849,7 +859,11 @@ export class Data extends Collection {
                 batchRes.search_iterator_v2_results!.token;
               params[ITER_SEARCH_LAST_BOUND_KEY] =
                 batchRes.search_iterator_v2_results?.last_bound;
-              params[GUARANTEE_TIMESTAMP_KEY] = batchRes.session_ts;
+              // self-pin the snapshot from the first batch, unless the caller
+              // injected a guarantee_timestamp (then keep that fixed)
+              if (!param.guarantee_timestamp) {
+                params[GUARANTEE_TIMESTAMP_KEY] = batchRes.session_ts;
+              }
               params[ITER_SEARCH_BATCH_SIZE_KEY] = batchSize;
 
               return {
@@ -862,6 +876,172 @@ export class Data extends Collection {
               console.error('Error during search iteration:', error);
               return { done: true, value: null };
             }
+          },
+        };
+      },
+    };
+  }
+
+  /**
+   * Executes a hybrid search and returns an async iterator over RRF-fused batches.
+   *
+   * Each request in `param.data` is iterated as its own stateless single-modality
+   * search_iterator; the score-descending streams are fused client-side with
+   * Reciprocal Rank Fusion via the NRA threshold algorithm (SPEC 6.6). One
+   * snapshot timestamp is pinned for the whole hybrid iterator and shared by
+   * every modality, so the fusion is over a single consistent snapshot.
+   *
+   * The emitted score is the NRA lower bound on the true RRF score (re-score if
+   * an exact RRF score is required). `output_fields` are forwarded to every
+   * modality and carried back through the fusion onto each result row.
+   *
+   * @param {HybridSearchIteratorReq} param - The hybrid search iterator request.
+   * @returns {Promise<any>} - An async iterator yielding RRF-fused result batches.
+   *
+   * @example
+   * const iterator = await client.hybridSearchIterator({
+   *   collection_name: 'my_collection',
+   *   data: [
+   *     { anns_field: 'vector', data: [0.1, 0.2, 0.3, 0.4] },
+   *     { anns_field: 'emb_list', data: [[0.1, 0.2], [0.3, 0.4]] }, // emb_list query
+   *   ],
+   *   batchSize: 100,
+   *   output_fields: ['title'],
+   * });
+   *
+   * for await (const batch of iterator) {
+   *   console.log(batch); // each batch is RRF-descending
+   * }
+   */
+  async hybridSearchIterator(param: HybridSearchIteratorReq): Promise<any> {
+    // batchSize lower-bound validation (the high end is capped per modality by
+    // searchIterator); parity with pymilvus, which rejects a non-positive batch_size
+    if (typeof param.batchSize !== 'number' || param.batchSize < 1) {
+      throw new Error('batchSize must be a positive integer');
+    }
+
+    const client = this;
+    const rrfK = param.rrf_k ?? DEFAULT_RRF_K;
+    const limit =
+      !param.limit || param.limit === NO_LIMIT ? Infinity : param.limit;
+
+    // Pin ONE snapshot for the whole hybrid iterator and share it with every
+    // modality, so the fused result is over a single consistent snapshot --
+    // mirroring pymilvus's HybridSearchIteratorV2. Each modality below is a real
+    // single-modality searchIterator (stateless Iterator v2) composed here; the
+    // injected guarantee_timestamp is what makes the shared snapshot possible --
+    // without it each searchIterator self-pins its own per-instance snapshot.
+    const pinnedTs =
+      param.guarantee_timestamp ??
+      unixtimeToHybridts(Math.floor(Date.now() / 1000).toString());
+
+    // each emitted doc's hit, kept so next() can carry output_fields through the
+    // fusion; dropped on emit and pruned against the fuser's emitted set
+    const hitsById = new Map<FusionPk, SearchResultData>();
+
+    // The RRF fuser keys each modality's hits on the primary key (hit.id). The
+    // sdk's formatSearchResult only populates hit.id when the PK field is present
+    // in output_fields -- otherwise every hit has id === undefined and they all
+    // collapse to a single fusion key. So force-include the PK field in every
+    // sub-iterator's output_fields (it's the join key for fusion).
+    const pkName = await client.getPkFieldName({
+      collection_name: param.collection_name,
+      db_name: param.db_name,
+    } as DescribeCollectionReq);
+    const subOutputFields =
+      param.output_fields && param.output_fields.includes(pkName)
+        ? param.output_fields
+        : [...(param.output_fields ?? []), pkName];
+
+    // compose one real single-modality searchIterator per request, all sharing
+    // the pinned snapshot ts
+    const subIterators = await Promise.all(
+      param.data.map(req =>
+        client.searchIterator({
+          collection_name: param.collection_name,
+          db_name: param.db_name,
+          anns_field: req.anns_field,
+          data: req.data,
+          expr: req.expr,
+          exprValues: req.exprValues,
+          output_fields: subOutputFields,
+          consistency_level: param.consistency_level,
+          ignore_growing: req.ignore_growing,
+          group_by_field: req.group_by_field,
+          params: req.params,
+          batchSize: param.batchSize,
+          guarantee_timestamp: pinnedTs,
+        })
+      )
+    );
+
+    // adapt each searchIterator into a () -> [(id, score)] batch source for the
+    // RRF fuser, stashing each hit so next() can return its output_fields
+    const fetchBatches: FetchBatch[] = subIterators.map(subIt => {
+      const cursor = subIt[Symbol.asyncIterator]();
+      return async (): Promise<FusionItem[]> => {
+        const { value } = await cursor.next();
+        const hits = (value as SearchResultData[]) || [];
+        const items: FusionItem[] = [];
+        for (const hit of hits) {
+          // Defensive: a missing PK would silently collapse all hits onto one
+          // fusion key (see the output_fields note above). Fail loud instead.
+          if (hit.id === undefined || hit.id === null) {
+            throw new Error(
+              'hybridSearchIterator: a hit is missing its primary key (id); ' +
+                'cannot fuse modalities. The collection must have a primary key.'
+            );
+          }
+          hitsById.set(hit.id, hit);
+          items.push([hit.id, Number(hit.score)]);
+        }
+        return items;
+      };
+    });
+
+    const fuser = new RrfHybridFuser(fetchBatches, rrfK);
+    let currentTotal = 0;
+
+    return {
+      [Symbol.asyncIterator]() {
+        return {
+          async next() {
+            if (currentTotal >= limit) {
+              return { done: true, value: null };
+            }
+            const target = Math.min(param.batchSize, limit - currentTotal);
+
+            let fused: FusionItem[];
+            try {
+              fused = await fuser.nextBatch(target);
+            } catch (error) {
+              console.error('Error during hybrid search iteration:', error);
+              return { done: true, value: null };
+            }
+
+            if (fused.length === 0) {
+              return { done: true, value: [] };
+            }
+            currentTotal += fused.length;
+
+            // carry output_fields back through the fusion: take each emitted
+            // doc's stashed hit and replace its score with the fused RRF score
+            const value: SearchResultData[] = fused.map(([id, score]) => {
+              const hit = hitsById.get(id);
+              hitsById.delete(id);
+              return { ...(hit as SearchResultData), score };
+            });
+
+            // a doc can resurface in another modality after it was emitted: the
+            // fuser skips it, but its hit was still stashed -- drop those so
+            // hitsById stays bounded by dense/sparse stream skew
+            for (const key of [...hitsById.keys()]) {
+              if (fuser.hasEmitted(key)) {
+                hitsById.delete(key);
+              }
+            }
+
+            return { done: false, value };
           },
         };
       },

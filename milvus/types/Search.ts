@@ -141,6 +141,7 @@ export interface SearchIteratorReq
   limit?: number; // Optional. Specifies the maximum number of items. Default is no limit (-1 or if not set).
   batchSize: number; // Specifies the number of items to return in each batch. if it exceeds 16384, it will be set to 16384
   external_filter_fn?: (row: SearchResultData) => boolean; // Optional. Specifies the external filter function.
+  guarantee_timestamp?: string | number; // Optional. A pinned snapshot timestamp; when set, the iterator reads this fixed snapshot instead of self-pinning from the first batch. hybridSearchIterator injects it to share one snapshot across modalities.
 }
 
 // rerank strategy and parameters
@@ -158,6 +159,17 @@ export type HybridSearchReq = Omit<
   data: HybridSearchSingleReq[];
   // reranker
   rerank?: RerankerObj | FunctionObject | FunctionScore;
+};
+
+// hybrid search_iterator parameter type. Each request in `data` is iterated as
+// its own stateless single-modality search_iterator; the score-descending
+// streams are fused client-side with Reciprocal Rank Fusion (SPEC 6.6). The
+// server-side `rerank` is replaced by client-side RRF, tuned by `rrf_k`.
+export type HybridSearchIteratorReq = Omit<HybridSearchReq, 'rerank' | 'topk'> & {
+  batchSize: number; // fused results per batch; capped at DEFAULT_MAX_SEARCH_SIZE
+  limit?: number; // total fused results to return; default no limit
+  rrf_k?: number; // RRF constant k; defaults to 60
+  guarantee_timestamp?: string | number; // Optional. A pinned snapshot timestamp shared by every modality; defaults to one pinned at call time.
 };
 
 // search api response type
