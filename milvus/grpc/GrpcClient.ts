@@ -29,6 +29,11 @@ import {
   DEFAULT_POOL_MIN,
   RunAnalyzerRequest,
   RunAnalyzerResponse,
+  ResStatus,
+  AddFileResourceReq,
+  RemoveFileResourceReq,
+  ListFileResourcesReq,
+  ListFileResourcesResponse,
   fetchTopology,
   getPrimaryCluster,
   TopologyRefresher,
@@ -493,6 +498,55 @@ export class GRPCClient extends User {
         analyzer_names: data.analyzer_names,
       },
       this.timeout
+    );
+  }
+
+  /**
+   * Adds a file resource to Milvus metadata.
+   * @param {AddFileResourceReq} data - The file resource name and server-visible path.
+   * @returns {Promise<ResStatus>} - A Promise that resolves with the operation status.
+   */
+  async addFileResource(data: AddFileResourceReq): Promise<ResStatus> {
+    return await promisify(
+      this.channelPool,
+      'AddFileResource',
+      {
+        name: data.name,
+        path: data.path,
+      },
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Removes a file resource from Milvus metadata.
+   * @param {RemoveFileResourceReq} data - The file resource name.
+   * @returns {Promise<ResStatus>} - A Promise that resolves with the operation status.
+   */
+  async removeFileResource(data: RemoveFileResourceReq): Promise<ResStatus> {
+    return await promisify(
+      this.channelPool,
+      'RemoveFileResource',
+      {
+        name: data.name,
+      },
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Lists file resources registered in Milvus metadata.
+   * @param {ListFileResourcesReq} [data] - Optional request parameters.
+   * @returns {Promise<ListFileResourcesResponse>} - A Promise that resolves with file resources.
+   */
+  async listFileResources(
+    data: ListFileResourcesReq = {}
+  ): Promise<ListFileResourcesResponse> {
+    return await promisify(
+      this.channelPool,
+      'ListFileResources',
+      {},
+      data.timeout || this.timeout
     );
   }
 }

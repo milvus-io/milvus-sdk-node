@@ -1,7 +1,7 @@
 import { ChannelOptions } from '@grpc/grpc-js';
 import { Options as LoaderOption } from '@grpc/proto-loader';
 import { Options } from 'generic-pool';
-import { ResStatus } from './';
+import { GrpcTimeOut, ResStatus } from './Common';
 
 /**
  * Configuration options for the Milvus client.
@@ -113,4 +113,26 @@ export type AnalyzerResult = {
 export interface RunAnalyzerResponse {
   status: ResStatus;
   results: AnalyzerResult[];
+}
+
+export interface AddFileResourceReq extends GrpcTimeOut {
+  name: string;
+  path: string;
+}
+
+export interface RemoveFileResourceReq extends GrpcTimeOut {
+  name: string;
+}
+
+export interface ListFileResourcesReq extends GrpcTimeOut {}
+
+export interface FileResourceInfo {
+  id: string;
+  name: string;
+  path: string;
+}
+
+export interface ListFileResourcesResponse {
+  status: ResStatus;
+  resources: FileResourceInfo[];
 }
