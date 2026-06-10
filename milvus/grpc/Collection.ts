@@ -55,6 +55,7 @@ import {
   CreateCollectionWithFieldsReq,
   CreateCollectionWithSchemaReq,
   FieldSchema,
+  FieldType,
   DropCollectionPropertiesReq,
   AlterCollectionFieldPropertiesReq,
   RefreshLoadReq,
@@ -67,6 +68,9 @@ import {
   AddCollectionFunctionReq,
   AlterCollectionFunctionReq,
   DropCollectionFunctionReq,
+  AlterCollectionSchemaReq,
+  AlterCollectionSchemaResponse,
+  AddFunctionFieldReq,
   RefreshExternalCollectionReq,
   RefreshExternalCollectionResponse,
   GetRefreshExternalCollectionProgressReq,
@@ -88,7 +92,35 @@ import {
   PinSnapshotDataReq,
   PinSnapshotDataResponse,
   UnpinSnapshotDataReq,
+  FunctionType,
 } from '../';
+
+const formatGrpcFieldSchema = (
+  field: FieldType,
+  schemaTypes: { fieldSchemaType: any }
+): Record<string, any> => {
+  const schema = formatFieldSchema(field, schemaTypes);
+
+  return {
+    fieldID: schema.fieldID,
+    name: schema.name,
+    is_primary_key: schema.isPrimaryKey,
+    description: schema.description,
+    data_type: schema.dataType,
+    type_params: schema.typeParams,
+    index_params: schema.indexParams,
+    autoID: schema.autoID,
+    state: schema.state,
+    element_type: schema.elementType,
+    default_value: schema.defaultValue,
+    is_dynamic: schema.isDynamic,
+    is_partition_key: schema.isPartitionKey,
+    is_clustering_key: schema.isClusteringKey,
+    nullable: schema.nullable,
+    is_function_output: schema.isFunctionOutput,
+    external_field: schema.externalField,
+  };
+};
 
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
@@ -1537,6 +1569,118 @@ export class Collection extends Database {
     }
 
     return pkField;
+  }
+
+  /**
+   * Alter collection schema by adding a function-backed output field.
+   *
+   * Milvus 3.0-beta supports the add path for BM25 function fields through
+   * AlterCollectionSchema. It does not create an index automatically.
+   *
+   * @param {AlterCollectionSchemaReq} data - The request parameters.
+   * @param {string} data.collection_name - The collection name.
+   * @param {FieldType} data.field - The function output field schema.
+   * @param {FunctionObject} data.function - The function schema.
+   * @param {boolean} [data.do_physical_backfill] - Whether to backfill existing data.
+   * @param {string} [data.db_name] - The database name.
+   * @param {number} [data.timeout] - Optional RPC timeout in milliseconds.
+   *
+   * @returns {Promise<AlterCollectionSchemaResponse>} The response from Milvus.
+   */
+  async alterCollectionSchema(
+    data: AlterCollectionSchemaReq
+  ): Promise<AlterCollectionSchemaResponse> {
+    checkCollectionName(data);
+
+    if (!data.field) {
+      throw new Error(ERROR_REASONS.FUNCTION_FIELD_SCHEMA_IS_REQUIRED);
+    }
+
+    if (!data.function) {
+      throw new Error(ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED);
+    }
+
+    const schemaTypes = {
+      fieldSchemaType: this.schemaProto.lookupType(
+        this.protoInternalPath.fieldSchema
+      ),
+    };
+
+    const req: any = {
+      collection_name: data.collection_name,
+      action: {
+        add_request: {
+          field_infos: [
+            {
+              field_schema: formatGrpcFieldSchema(data.field, schemaTypes),
+              index_name: data.index_name || '',
+              extra_params: parseToKeyValue(data.extra_params, true),
+            },
+          ],
+          func_schema: [formatFunctionSchema(data.function)],
+          do_physical_backfill: !!data.do_physical_backfill,
+        },
+      },
+    };
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
+    const result = await promisify(
+      this.channelPool,
+      'AlterCollectionSchema',
+      req,
+      data.timeout || this.timeout
+    );
+
+    this.collectionInfoCache.delete(
+      `${data.db_name || this.metadata.get(METADATA.DATABASE)}:${
+        data.collection_name
+      }`
+    );
+
+    return result;
+  }
+
+  /**
+   * Add a BM25 function-backed sparse vector field to an existing collection.
+   *
+   * This is a convenience wrapper around alterCollectionSchema. Create indexes
+   * separately after the schema change succeeds.
+   *
+   * @param {AddFunctionFieldReq} data - The request parameters.
+   * @returns {Promise<ResStatus>} The AlterCollectionSchema alter status.
+   */
+  async addFunctionField(data: AddFunctionFieldReq): Promise<ResStatus> {
+    if (!data.field) {
+      throw new Error(ERROR_REASONS.FUNCTION_FIELD_SCHEMA_IS_REQUIRED);
+    }
+
+    if (!data.function) {
+      throw new Error(ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED);
+    }
+
+    const functionType =
+      typeof data.function.type === 'number'
+        ? data.function.type
+        : FunctionType[data.function.type as keyof typeof FunctionType];
+    if (functionType !== FunctionType.BM25) {
+      throw new Error(ERROR_REASONS.ADD_FUNCTION_FIELD_TYPE_NOT_SUPPORTED);
+    }
+
+    const fieldType =
+      typeof data.field.data_type === 'number'
+        ? data.field.data_type
+        : DataType[data.field.data_type as keyof typeof DataType];
+    if (fieldType !== DataType.SparseFloatVector) {
+      throw new Error(
+        ERROR_REASONS.ADD_FUNCTION_FIELD_OUTPUT_TYPE_NOT_SUPPORTED
+      );
+    }
+
+    const result = await this.alterCollectionSchema(data);
+    return result.alter_status;
   }
 
   /**

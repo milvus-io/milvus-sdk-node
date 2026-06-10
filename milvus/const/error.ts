@@ -70,6 +70,11 @@ export const ERROR_REASONS = {
     'Target anns field not found, please check your search parameters.',
   FUNCTION_SCHEMA_IS_REQUIRED: 'The `function` property is missing.',
   FUNCTION_NAME_IS_REQUIRED: 'The `function_name` property is missing.',
+  FUNCTION_FIELD_SCHEMA_IS_REQUIRED: 'The `field` property is missing.',
+  ADD_FUNCTION_FIELD_TYPE_NOT_SUPPORTED:
+    'The `function.type` property only supports FunctionType.BM25.',
+  ADD_FUNCTION_FIELD_OUTPUT_TYPE_NOT_SUPPORTED:
+    'The `field.data_type` property only supports DataType.SparseFloatVector.',
 };
 
 export enum ErrorCode {

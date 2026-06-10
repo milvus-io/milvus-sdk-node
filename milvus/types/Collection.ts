@@ -347,6 +347,23 @@ export interface DropCollectionFunctionReq extends collectionNameReq {
   function_name: string; // required, function name
 }
 
+export interface AlterCollectionSchemaReq extends collectionNameReq {
+  collection_name: string; // required, collection name
+  db_name?: string; // optional, db name
+  field: FieldType; // required, function output field schema to add
+  function: FunctionObject; // required, function schema to add
+  do_physical_backfill?: boolean; // optional, whether Milvus should backfill existing data
+  index_name?: string; // optional, index name for the new field
+  extra_params?: Properties; // optional, field info extra params
+}
+
+export interface AlterCollectionSchemaResponse {
+  alter_status: ResStatus;
+  index_status?: ResStatus;
+}
+
+export interface AddFunctionFieldReq extends AlterCollectionSchemaReq {}
+
 export enum RefreshExternalCollectionState {
   RefreshPending = 'RefreshPending',
   RefreshInProgress = 'RefreshInProgress',

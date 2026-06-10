@@ -18,6 +18,7 @@ import {
 const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION = GENERATE_NAME();
 const COLLECTION_FOR_FUNCTION_OPS = GENERATE_NAME();
+const COLLECTION_FOR_ADD_FUNCTION_FIELD = GENERATE_NAME();
 const dbParam = {
   db_name: 'FullTextSearch',
 };
@@ -92,6 +93,9 @@ describe(`FulltextSearch API`, () => {
     });
     await milvusClient.dropCollection({
       collection_name: COLLECTION_FOR_FUNCTION_OPS,
+    });
+    await milvusClient.dropCollection({
+      collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
     });
     await milvusClient.dropDatabase(dbParam);
   });
@@ -701,6 +705,273 @@ describe(`FulltextSearch API`, () => {
       // Note: Drop operation may be idempotent and return success even if function doesn't exist
       // This is acceptable behavior, so we just verify the operation completes
       expect(dropFunction).toBeDefined();
+    });
+  });
+
+  describe('Add Function Field Operations', () => {
+    beforeAll(async () => {
+      await milvusClient.createCollection({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        consistency_level: 'Strong',
+        fields: [
+          {
+            name: 'id',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+            autoID: false,
+          },
+          {
+            name: 'text',
+            data_type: DataType.VarChar,
+            max_length: 128,
+            enable_analyzer: true,
+          },
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 4,
+          },
+        ],
+      });
+    });
+
+    it(`Alter collection schema should add BM25 function field`, async () => {
+      const res = await milvusClient.alterCollectionSchema({
+        db_name: dbParam.db_name,
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        index_name: 'sparse_index',
+        extra_params: { metric_type: MetricType.BM25 },
+        field: {
+          name: 'sparse',
+          data_type: DataType.SparseFloatVector,
+          is_function_output: true,
+        },
+        function: {
+          name: 'bm25_added',
+          description: 'bm25 function added via alter schema',
+          type: FunctionType.BM25,
+          input_field_names: ['text'],
+          output_field_names: ['sparse'],
+          params: {},
+        },
+      });
+
+      expect(res.alter_status.error_code).toEqual(ErrorCode.SUCCESS);
+
+      const describe = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        cache: false,
+      });
+
+      const sparseField = describe.schema.fields.find(f => f.name === 'sparse');
+      expect(sparseField).toBeDefined();
+      expect(sparseField!.is_function_output).toEqual(true);
+      expect(sparseField!.data_type).toEqual('SparseFloatVector');
+
+      const func = describe.schema.functions.find(f => f.name === 'bm25_added');
+      expect(func).toBeDefined();
+      expect(func!.type).toEqual('BM25');
+      expect(func!.input_field_names).toEqual(['text']);
+      expect(func!.output_field_names).toEqual(['sparse']);
+    });
+
+    it(`Add function field should success`, async () => {
+      const res = await milvusClient.addFunctionField({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        field: {
+          name: 'sparse2',
+          data_type: DataType.SparseFloatVector,
+          is_function_output: true,
+        },
+        function: {
+          name: 'bm25_added_by_wrapper',
+          description: 'bm25 function added via addFunctionField',
+          type: FunctionType.BM25,
+          input_field_names: ['text'],
+          output_field_names: ['sparse2'],
+          params: {},
+        },
+      });
+
+      expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+      const describe = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        cache: false,
+      });
+
+      const sparseField = describe.schema.fields.find(
+        f => f.name === 'sparse2'
+      );
+      expect(sparseField).toBeDefined();
+      expect(sparseField!.is_function_output).toEqual(true);
+
+      const func = describe.schema.functions.find(
+        f => f.name === 'bm25_added_by_wrapper'
+      );
+      expect(func).toBeDefined();
+      expect(func!.type).toEqual('BM25');
+      expect(func!.output_field_names).toEqual(['sparse2']);
+    });
+
+    it(`Add function field should accept string enum values`, async () => {
+      const res = await milvusClient.addFunctionField({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        field: {
+          name: 'sparse3',
+          data_type: 'SparseFloatVector' as any,
+          is_function_output: true,
+        },
+        function: {
+          name: 'bm25_added_with_string_enum',
+          description: 'bm25 function added with string enum values',
+          type: 'BM25' as any,
+          input_field_names: ['text'],
+          output_field_names: ['sparse3'],
+          params: {},
+        },
+      });
+
+      expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+      const describe = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        cache: false,
+      });
+
+      const sparseField = describe.schema.fields.find(
+        f => f.name === 'sparse3'
+      );
+      expect(sparseField).toBeDefined();
+      expect(sparseField!.is_function_output).toEqual(true);
+    });
+
+    it(`Alter collection schema should reject missing field`, async () => {
+      try {
+        await milvusClient.alterCollectionSchema({
+          collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+          function: {
+            name: 'missing_field',
+            type: FunctionType.BM25,
+            input_field_names: ['text'],
+            output_field_names: ['missing_field'],
+            params: {},
+          },
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_FIELD_SCHEMA_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Alter collection schema should reject missing function`, async () => {
+      try {
+        await milvusClient.alterCollectionSchema({
+          collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+          field: {
+            name: 'missing_function',
+            data_type: DataType.SparseFloatVector,
+            is_function_output: true,
+          },
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Add function field should reject missing field`, async () => {
+      try {
+        await milvusClient.addFunctionField({
+          collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+          function: {
+            name: 'missing_field_wrapper',
+            type: FunctionType.BM25,
+            input_field_names: ['text'],
+            output_field_names: ['missing_field_wrapper'],
+            params: {},
+          },
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_FIELD_SCHEMA_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Add function field should reject missing function`, async () => {
+      try {
+        await milvusClient.addFunctionField({
+          collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+          field: {
+            name: 'missing_function_wrapper',
+            data_type: DataType.SparseFloatVector,
+            is_function_output: true,
+          },
+        } as any);
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.FUNCTION_SCHEMA_IS_REQUIRED
+        );
+      }
+    });
+
+    it(`Add function field should reject unsupported function type`, async () => {
+      try {
+        await milvusClient.addFunctionField({
+          collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+          field: {
+            name: 'dense',
+            data_type: DataType.FloatVector,
+            dim: 4,
+            is_function_output: true,
+          },
+          function: {
+            name: 'rerank_invalid',
+            type: FunctionType.RERANK,
+            input_field_names: ['text'],
+            output_field_names: ['dense'],
+            params: {},
+          },
+        });
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.ADD_FUNCTION_FIELD_TYPE_NOT_SUPPORTED
+        );
+      }
+    });
+
+    it(`Add function field should reject unsupported output field type`, async () => {
+      try {
+        await milvusClient.addFunctionField({
+          collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+          field: {
+            name: 'dense',
+            data_type: DataType.FloatVector,
+            dim: 4,
+            is_function_output: true,
+          },
+          function: {
+            name: 'bm25_invalid_output',
+            type: FunctionType.BM25,
+            input_field_names: ['text'],
+            output_field_names: ['dense'],
+            params: {},
+          },
+        });
+        expect(true).toBe(false);
+      } catch (error) {
+        expect((error as Error).message).toEqual(
+          ERROR_REASONS.ADD_FUNCTION_FIELD_OUTPUT_TYPE_NOT_SUPPORTED
+        );
+      }
     });
   });
 });
