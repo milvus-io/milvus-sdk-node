@@ -19,6 +19,10 @@ const NEW_PASSWORD = '1234567';
 const ROLE_NAME = GENERATE_NAME('role');
 const COLLECTION_NAME = GENERATE_NAME();
 const PRIVILEGE_GRP_NAME = GENERATE_NAME('privilege');
+const USER_DESCRIPTION = 'created user description';
+const UPDATED_USER_DESCRIPTION = 'updated user description';
+const ROLE_DESCRIPTION = 'created role description';
+const UPDATED_ROLE_DESCRIPTION = 'updated role description';
 
 describe(`User Api`, () => {
   beforeAll(async () => {
@@ -77,6 +81,7 @@ describe(`User Api`, () => {
     const res = await milvusClient.createUser({
       username: USERNAME,
       password: PASSWORD,
+      description: USER_DESCRIPTION,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -132,6 +137,14 @@ describe(`User Api`, () => {
     });
   });
 
+  it(`It should get created user description successfully`, async () => {
+    const res = await authClient.selectUser({
+      username: USERNAME,
+    });
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.results[0].description).toEqual(USER_DESCRIPTION);
+  });
+
   it(`Auth client update user expect success`, async () => {
     const res = await authClient!.updateUser({
       username: USERNAME,
@@ -170,6 +183,15 @@ describe(`User Api`, () => {
     });
     const res = await authClient.createRole({
       roleName: ROLE_NAME,
+      description: ROLE_DESCRIPTION,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+  });
+
+  it(`Auth client update user description expect success`, async () => {
+    const res = await authClient!.updateUser({
+      username: USERNAME,
+      description: UPDATED_USER_DESCRIPTION,
     });
     expect(res.error_code).toEqual(ErrorCode.SUCCESS);
   });
@@ -197,11 +219,31 @@ describe(`User Api`, () => {
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].users[0].name).toEqual(USERNAME);
     expect(res.results[0].role.name).toEqual(ROLE_NAME);
+    expect(res.results[0].role.description).toEqual(ROLE_DESCRIPTION);
     expect(alias.status.error_code).toEqual(res.status.error_code);
     expect(alias.results[0].users[0].name).toEqual(
       res.results[0].users[0].name
     );
     expect(alias.results[0].role.name).toEqual(res.results[0].role.name);
+    expect(alias.results[0].role.description).toEqual(
+      res.results[0].role.description
+    );
+  });
+
+  it(`It should alter role description successfully`, async () => {
+    const res = await authClient.alterRole({
+      roleName: ROLE_NAME,
+      description: UPDATED_ROLE_DESCRIPTION,
+    });
+    expect(res.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await authClient.describeRole({
+      roleName: ROLE_NAME,
+    });
+    expect(describe.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(describe.results[0].role.description).toEqual(
+      UPDATED_ROLE_DESCRIPTION
+    );
   });
 
   it(`It should get user successfully`, async () => {
@@ -213,9 +255,11 @@ describe(`User Api`, () => {
     });
     expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
     expect(res.results[0].user.name).toEqual(USERNAME);
+    expect(res.results[0].description).toEqual(UPDATED_USER_DESCRIPTION);
     expect(res.results[0].roles[0].name).toEqual(ROLE_NAME);
     expect(alias.status.error_code).toEqual(res.status.error_code);
     expect(alias.results[0].user.name).toEqual(res.results[0].user.name);
+    expect(alias.results[0].description).toEqual(res.results[0].description);
     expect(alias.results[0].roles[0].name).toEqual(
       res.results[0].roles[0].name
     );
@@ -272,7 +316,6 @@ describe(`User Api`, () => {
     // it should have three entities of collection_name = COLLECTION_NAME
     const col = res.entities.filter(e => e.object_name === COLLECTION_NAME);
     expect(col.length).toEqual(3);
-
 
     const res2 = await authClient.listGrants({
       roleName: ROLE_NAME,

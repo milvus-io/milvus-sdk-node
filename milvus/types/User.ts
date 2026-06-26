@@ -16,15 +16,22 @@ export interface roleNameReq extends GrpcTimeOut {
 
 export interface CreateUserReq extends usernameReq {
   password: string; // required, password
+  description?: string; // optional, user description
 }
 export interface DeleteUserReq extends usernameReq {}
 export interface UpdateUserReq extends usernameReq {
-  oldPassword: string; // required, old password
-  newPassword: string; // required, new password
+  oldPassword?: string; // required when updating password
+  newPassword?: string; // required when updating password
+  description?: string; // optional, user description
 }
 export interface ListUsersReq extends GrpcTimeOut {}
 
-export interface CreateRoleReq extends roleNameReq {}
+export interface CreateRoleReq extends roleNameReq {
+  description?: string; // optional, role description
+}
+export interface AlterRoleReq extends roleNameReq {
+  description: string; // required, role description
+}
 export interface DropRoleReq extends roleNameReq {}
 export interface HasRoleReq extends roleNameReq {}
 export interface AddUserToRoleReq extends roleNameReq {
@@ -60,7 +67,7 @@ export interface ListCredUsersResponse extends resStatusResponse {
   usernames: string[]; // usernames
 }
 
-export type RoleEntity = { name: string };
+export type RoleEntity = { name: string; description?: string };
 export type User = { name: string };
 export type RoleResult = {
   users: User[];
@@ -83,7 +90,11 @@ export interface SelectRoleResponse extends resStatusResponse {
   results: RoleResult[];
 }
 
-export type UserResult = { user: User; roles: RoleEntity[] };
+export type UserResult = {
+  user: User;
+  roles: RoleEntity[];
+  description?: string;
+};
 export interface SelectUserResponse extends resStatusResponse {
   results: UserResult[];
 }

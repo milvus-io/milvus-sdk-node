@@ -216,6 +216,10 @@ export default {
                       "requestType": "AddCollectionFieldRequest",
                       "responseType": "common.Status"
                     },
+                    "AddCollectionStructField": {
+                      "requestType": "AddCollectionStructFieldRequest",
+                      "responseType": "common.Status"
+                    },
                     "GetFlushState": {
                       "requestType": "GetFlushStateRequest",
                       "responseType": "GetFlushStateResponse"
@@ -298,6 +302,10 @@ export default {
                     },
                     "CreateRole": {
                       "requestType": "CreateRoleRequest",
+                      "responseType": "common.Status"
+                    },
+                    "AlterRole": {
+                      "requestType": "AlterRoleRequest",
                       "responseType": "common.Status"
                     },
                     "DropRole": {
@@ -530,6 +538,14 @@ export default {
                     "RestoreSnapshot": {
                       "requestType": "RestoreSnapshotRequest",
                       "responseType": "RestoreSnapshotResponse"
+                    },
+                    "RestoreExternalSnapshot": {
+                      "requestType": "RestoreExternalSnapshotRequest",
+                      "responseType": "RestoreExternalSnapshotResponse"
+                    },
+                    "ExportSnapshot": {
+                      "requestType": "ExportSnapshotRequest",
+                      "responseType": "ExportSnapshotResponse"
                     },
                     "GetRestoreSnapshotState": {
                       "requestType": "GetRestoreSnapshotStateRequest",
@@ -1997,6 +2013,35 @@ export default {
                     }
                   }
                 },
+                "AddCollectionStructFieldRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeAddCollectionField",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "dbName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collectionName": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collectionID": {
+                      "type": "int64",
+                      "id": 4
+                    },
+                    "structArrayFieldSchema": {
+                      "type": "schema.StructArrayFieldSchema",
+                      "id": 5
+                    }
+                  }
+                },
                 "AddCollectionFunctionRequest": {
                   "options": {
                     "(common.privilege_ext_obj).object_type": "Global",
@@ -2202,6 +2247,13 @@ export default {
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeDelete",
                     "(common.privilege_ext_obj).object_name_index": 3
                   },
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -2236,6 +2288,13 @@ export default {
                       "keyType": "string",
                       "type": "schema.TemplateValue",
                       "id": 8
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 9,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -2401,6 +2460,15 @@ export default {
                     "highlighter": {
                       "type": "common.Highlighter",
                       "id": 21
+                    },
+                    "searchAggregation": {
+                      "type": "common.SearchAggregationSpec",
+                      "id": 23
+                    },
+                    "functionChains": {
+                      "rule": "repeated",
+                      "type": "schema.FunctionChain",
+                      "id": 24
                     }
                   }
                 },
@@ -2519,6 +2587,11 @@ export default {
                       "options": {
                         "proto3_optional": true
                       }
+                    },
+                    "functionChains": {
+                      "rule": "repeated",
+                      "type": "schema.FunctionChain",
+                      "id": 15
                     }
                   }
                 },
@@ -3725,6 +3798,13 @@ export default {
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateOwnership",
                     "(common.privilege_ext_obj).object_name_index": -1
                   },
+                  "oneofs": {
+                    "_description": {
+                      "oneof": [
+                        "description"
+                      ]
+                    }
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -3745,6 +3825,13 @@ export default {
                     "modifiedUtcTimestamps": {
                       "type": "uint64",
                       "id": 5
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 6,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -3753,6 +3840,13 @@ export default {
                     "(common.privilege_ext_obj).object_type": "User",
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeUpdateUser",
                     "(common.privilege_ext_obj).object_name_index": 2
+                  },
+                  "oneofs": {
+                    "_description": {
+                      "oneof": [
+                        "description"
+                      ]
+                    }
                   },
                   "fields": {
                     "base": {
@@ -3778,6 +3872,13 @@ export default {
                     "modifiedUtcTimestamps": {
                       "type": "uint64",
                       "id": 6
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 7,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -3829,6 +3930,10 @@ export default {
                     "name": {
                       "type": "string",
                       "id": 1
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 2
                     }
                   }
                 },
@@ -3854,6 +3959,27 @@ export default {
                     "entity": {
                       "type": "RoleEntity",
                       "id": 2
+                    }
+                  }
+                },
+                "AlterRoleRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateOwnership",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "roleName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 3
                     }
                   }
                 },
@@ -4092,6 +4218,10 @@ export default {
                       "rule": "repeated",
                       "type": "RoleEntity",
                       "id": 2
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 3
                     }
                   }
                 },
@@ -5636,6 +5766,10 @@ export default {
                     "endTimetick": {
                       "type": "uint64",
                       "id": 4
+                    },
+                    "includeStartMessage": {
+                      "type": "bool",
+                      "id": 5
                     }
                   }
                 },
@@ -5926,6 +6060,92 @@ export default {
                     }
                   }
                 },
+                "RestoreExternalSnapshotRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeRestoreExternalSnapshot",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "dbName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "targetCollectionName": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "snapshotMetadataUri": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "externalSpec": {
+                      "type": "string",
+                      "id": 5
+                    }
+                  }
+                },
+                "RestoreExternalSnapshotResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "jobId": {
+                      "type": "int64",
+                      "id": 2
+                    }
+                  }
+                },
+                "ExportSnapshotRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeExportSnapshot",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "dbName": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collectionName": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "targetS3Path": {
+                      "type": "string",
+                      "id": 5
+                    },
+                    "externalSpec": {
+                      "type": "string",
+                      "id": 6
+                    }
+                  }
+                },
+                "ExportSnapshotResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "snapshotMetadataUri": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
                 "RestoreSnapshotState": {
                   "values": {
                     "RestoreSnapshotNone": 0,
@@ -6177,6 +6397,10 @@ export default {
                         "functionName": {
                           "type": "string",
                           "id": 3
+                        },
+                        "dropFunctionOutputFields": {
+                          "type": "bool",
+                          "id": 4
                         }
                       }
                     },
@@ -6207,10 +6431,6 @@ export default {
                     "alterStatus": {
                       "type": "common.Status",
                       "id": 1
-                    },
-                    "indexStatus": {
-                      "type": "common.Status",
-                      "id": 2
                     }
                   }
                 },
@@ -6915,6 +7135,7 @@ export default {
                     "ListPrivilegeGroups": 1612,
                     "OperatePrivilegeGroup": 1613,
                     "OperatePrivilegeV2": 1614,
+                    "AlterRole": 1615,
                     "CreateResourceGroup": 1700,
                     "DropResourceGroup": 1701,
                     "ListResourceGroups": 1702,
@@ -6938,6 +7159,8 @@ export default {
                     "ListRestoreSnapshotJobs": 2106,
                     "PinSnapshotData": 2107,
                     "UnpinSnapshotData": 2108,
+                    "RestoreExternalSnapshot": 2109,
+                    "ExportSnapshot": 2110,
                     "AlterCollectionSchema": 2200,
                     "RefreshExternalCollection": 2300,
                     "GetRefreshExternalCollectionProgress": 2301,
@@ -7146,7 +7369,9 @@ export default {
                     "PrivilegeGetReplicateConfiguration": 85,
                     "PrivilegeRefreshExternalCollection": 86,
                     "PrivilegePinSnapshotData": 87,
-                    "PrivilegeUnpinSnapshotData": 88
+                    "PrivilegeUnpinSnapshotData": 88,
+                    "PrivilegeRestoreExternalSnapshot": 89,
+                    "PrivilegeExportSnapshot": 90
                   }
                 },
                 "PrivilegeExt": {
@@ -7535,6 +7760,98 @@ export default {
                       "id": 2
                     }
                   }
+                },
+                "MetricAggSpec": {
+                  "fields": {
+                    "op": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "fieldName": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "SortSpec": {
+                  "fields": {
+                    "fieldName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "direction": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "nullFirst": {
+                      "type": "bool",
+                      "id": 3
+                    }
+                  }
+                },
+                "TopHitsSpec": {
+                  "fields": {
+                    "size": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "sort": {
+                      "rule": "repeated",
+                      "type": "SortSpec",
+                      "id": 2
+                    }
+                  }
+                },
+                "OrderSpec": {
+                  "fields": {
+                    "key": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "direction": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "nullFirst": {
+                      "type": "bool",
+                      "id": 3
+                    }
+                  }
+                },
+                "SearchAggregationSpec": {
+                  "fields": {
+                    "fields": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    },
+                    "size": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "metrics": {
+                      "keyType": "string",
+                      "type": "MetricAggSpec",
+                      "id": 3
+                    },
+                    "order": {
+                      "rule": "repeated",
+                      "type": "OrderSpec",
+                      "id": 4
+                    },
+                    "topHits": {
+                      "type": "TopHitsSpec",
+                      "id": 5
+                    },
+                    "subAggregation": {
+                      "type": "SearchAggregationSpec",
+                      "id": 6
+                    },
+                    "searchSize": {
+                      "type": "int64",
+                      "id": 7
+                    }
+                  }
                 }
               }
             },
@@ -7788,6 +8105,170 @@ export default {
                       "rule": "repeated",
                       "type": "common.KeyValuePair",
                       "id": 2
+                    }
+                  }
+                },
+                "FunctionChainStage": {
+                  "values": {
+                    "FunctionChainStageUnspecified": 0,
+                    "FunctionChainStageIngestion": 1,
+                    "FunctionChainStagePreProcess": 2,
+                    "FunctionChainStageL0Rerank": 3,
+                    "FunctionChainStageL1Rerank": 4,
+                    "FunctionChainStageL2Rerank": 5,
+                    "FunctionChainStagePostProcess": 6
+                  }
+                },
+                "FunctionChain": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "stage": {
+                      "type": "FunctionChainStage",
+                      "id": 2
+                    },
+                    "ops": {
+                      "rule": "repeated",
+                      "type": "FunctionChainOp",
+                      "id": 3
+                    }
+                  }
+                },
+                "FunctionChainOp": {
+                  "fields": {
+                    "op": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "expr": {
+                      "type": "FunctionChainExpr",
+                      "id": 2
+                    },
+                    "inputs": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 3
+                    },
+                    "outputs": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 4
+                    },
+                    "params": {
+                      "keyType": "string",
+                      "type": "FunctionParamValue",
+                      "id": 5
+                    }
+                  }
+                },
+                "FunctionChainExpr": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "args": {
+                      "rule": "repeated",
+                      "type": "FunctionChainExprArg",
+                      "id": 2
+                    },
+                    "params": {
+                      "keyType": "string",
+                      "type": "FunctionParamValue",
+                      "id": 3
+                    }
+                  }
+                },
+                "FunctionChainExprArg": {
+                  "oneofs": {
+                    "arg": {
+                      "oneof": [
+                        "column",
+                        "literal"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "column": {
+                      "type": "FunctionChainColumnArg",
+                      "id": 1
+                    },
+                    "literal": {
+                      "type": "FunctionParamValue",
+                      "id": 2
+                    }
+                  }
+                },
+                "FunctionChainColumnArg": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
+                "FunctionParamValue": {
+                  "oneofs": {
+                    "value": {
+                      "oneof": [
+                        "boolValue",
+                        "int64Value",
+                        "doubleValue",
+                        "stringValue",
+                        "arrayValue",
+                        "objectValue",
+                        "bytesValue"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "boolValue": {
+                      "type": "bool",
+                      "id": 1
+                    },
+                    "int64Value": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "doubleValue": {
+                      "type": "double",
+                      "id": 3
+                    },
+                    "stringValue": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "arrayValue": {
+                      "type": "FunctionParamArray",
+                      "id": 5
+                    },
+                    "objectValue": {
+                      "type": "FunctionParamObject",
+                      "id": 6
+                    },
+                    "bytesValue": {
+                      "type": "bytes",
+                      "id": 7
+                    }
+                  }
+                },
+                "FunctionParamArray": {
+                  "fields": {
+                    "values": {
+                      "rule": "repeated",
+                      "type": "FunctionParamValue",
+                      "id": 1
+                    }
+                  }
+                },
+                "FunctionParamObject": {
+                  "fields": {
+                    "fields": {
+                      "keyType": "string",
+                      "type": "FunctionParamValue",
+                      "id": 1
                     }
                   }
                 },
@@ -8423,6 +8904,16 @@ export default {
                       "rule": "repeated",
                       "type": "FieldData",
                       "id": 17
+                    },
+                    "aggBuckets": {
+                      "rule": "repeated",
+                      "type": "AggBucket",
+                      "id": 18
+                    },
+                    "aggTopks": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 19
                     }
                   },
                   "reserved": [
@@ -8431,6 +8922,174 @@ export default {
                       16
                     ]
                   ]
+                },
+                "AggBucket": {
+                  "fields": {
+                    "key": {
+                      "rule": "repeated",
+                      "type": "BucketKeyEntry",
+                      "id": 1
+                    },
+                    "count": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "metrics": {
+                      "keyType": "string",
+                      "type": "MetricValue",
+                      "id": 3
+                    },
+                    "hits": {
+                      "rule": "repeated",
+                      "type": "AggHit",
+                      "id": 4
+                    },
+                    "subGroups": {
+                      "rule": "repeated",
+                      "type": "AggBucket",
+                      "id": 5
+                    }
+                  }
+                },
+                "MetricValue": {
+                  "oneofs": {
+                    "value": {
+                      "oneof": [
+                        "intVal",
+                        "doubleVal",
+                        "stringVal",
+                        "boolVal"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "intVal": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "doubleVal": {
+                      "type": "double",
+                      "id": 2
+                    },
+                    "stringVal": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "boolVal": {
+                      "type": "bool",
+                      "id": 4
+                    }
+                  }
+                },
+                "BucketKeyEntry": {
+                  "oneofs": {
+                    "value": {
+                      "oneof": [
+                        "intVal",
+                        "stringVal",
+                        "boolVal"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "fieldId": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "fieldName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "intVal": {
+                      "type": "int64",
+                      "id": 3
+                    },
+                    "stringVal": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "boolVal": {
+                      "type": "bool",
+                      "id": 5
+                    }
+                  }
+                },
+                "AggHit": {
+                  "oneofs": {
+                    "pk": {
+                      "oneof": [
+                        "intPk",
+                        "strPk"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "intPk": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "strPk": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "score": {
+                      "type": "float",
+                      "id": 3
+                    },
+                    "fields": {
+                      "rule": "repeated",
+                      "type": "AggHitField",
+                      "id": 4
+                    }
+                  }
+                },
+                "AggHitField": {
+                  "oneofs": {
+                    "value": {
+                      "oneof": [
+                        "intVal",
+                        "boolVal",
+                        "floatVal",
+                        "doubleVal",
+                        "stringVal",
+                        "bytesVal"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "fieldId": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "fieldName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "intVal": {
+                      "type": "int64",
+                      "id": 3
+                    },
+                    "boolVal": {
+                      "type": "bool",
+                      "id": 4
+                    },
+                    "floatVal": {
+                      "type": "float",
+                      "id": 5
+                    },
+                    "doubleVal": {
+                      "type": "double",
+                      "id": 6
+                    },
+                    "stringVal": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "bytesVal": {
+                      "type": "bytes",
+                      "id": 8
+                    }
+                  }
                 },
                 "VectorClusteringInfo": {
                   "fields": {
@@ -8799,6 +9458,10 @@ export default {
                     "segmentId": {
                       "type": "int64",
                       "id": 13
+                    },
+                    "serializedExprPlan": {
+                      "type": "bytes",
+                      "id": 14
                     }
                   }
                 },
