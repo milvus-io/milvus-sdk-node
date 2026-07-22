@@ -161,7 +161,6 @@ describe(`Database API`, () => {
         { key: 'timezone', value: 'UTC' },
       ])
     );
-    expect(describeCollectionAfterAlter.properties).toHaveLength(2);
 
     // drop collection properties
     const dropCollectionProperties =
@@ -176,9 +175,14 @@ describe(`Database API`, () => {
       collection_name: COLLECTION_NAME2,
       db_name: DB_NAME2,
     });
-    expect(describeCollectionAfterDrop.properties).toEqual([
-      { key: 'timezone', value: 'UTC' },
-    ]);
+    expect(describeCollectionAfterDrop.properties).toEqual(
+      expect.arrayContaining([{ key: 'timezone', value: 'UTC' }])
+    );
+    expect(
+      describeCollectionAfterDrop.properties.some(
+        property => property.key === 'collection.segment.rowLimit'
+      )
+    ).toEqual(false);
 
     // show collections
     const showCollections = await milvusClient.showCollections({

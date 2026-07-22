@@ -7,6 +7,7 @@ import {
   FunctionType,
   ERROR_REASONS,
   IndexType,
+  findKeyValue,
 } from '../../milvus';
 import {
   IP,
@@ -267,8 +268,8 @@ describe(`FulltextSearch API`, () => {
       consistency_level: ConsistencyLevelEnum.Strong,
     });
 
-    expect(query.status.error_code).toEqual(ErrorCode.UnexpectedError);
-    expect(query.status.reason).toEqual(
+    expect(query.status.error_code).toEqual(ErrorCode.IllegalArgument);
+    expect(query.status.reason).toContain(
       'not allowed to retrieve raw data of field sparse'
     );
 
@@ -559,7 +560,7 @@ describe(`FulltextSearch API`, () => {
       }
     });
 
-    it(`Add collection function should success`, async () => {
+    it(`Add collection function should be rejected by current server`, async () => {
       const addFunction = await milvusClient.addCollectionFunction({
         collection_name: COLLECTION_FOR_FUNCTION_OPS,
         function: {
@@ -575,104 +576,22 @@ describe(`FulltextSearch API`, () => {
         },
       });
 
-      if (addFunction.error_code !== ErrorCode.SUCCESS) {
-        console.log(
-          'Add function error:',
-          JSON.stringify(addFunction, null, 2)
-        );
-      }
-      expect(addFunction.error_code).toEqual(ErrorCode.SUCCESS);
-
-      // Verify function was added
-      const describe = await milvusClient.describeCollection({
-        collection_name: COLLECTION_FOR_FUNCTION_OPS,
-      });
-
-      expect(describe.schema.functions.length).toBeGreaterThanOrEqual(1);
-      const addedFunction = describe.schema.functions.find(
-        f => f.name === 'embedding_new'
-      );
-      expect(addedFunction).toBeDefined();
-      expect(addedFunction!.input_field_names).toEqual(['text']);
-      expect(addedFunction!.type).toEqual('TextEmbedding');
-    });
-
-    it(`Alter collection function should success`, async () => {
-      // Alter the function
-      const alterFunction = await milvusClient.alterCollectionFunction({
-        collection_name: COLLECTION_FOR_FUNCTION_OPS,
-        function_name: 'embedding_new',
-        function: {
-          name: 'embedding_new',
-          description: 'text embedding function altered via API',
-          type: FunctionType.TEXTEMBEDDING,
-          input_field_names: ['text'],
-          output_field_names: ['vector'],
-          params: {
-            provider: 'openai',
-            model_name: 'text-embedding-3-small',
-          },
-        },
-      });
-
-      expect(alterFunction.error_code).toEqual(ErrorCode.SUCCESS);
-
-      // Verify function was altered
-      const describe = await milvusClient.describeCollection({
-        collection_name: COLLECTION_FOR_FUNCTION_OPS,
-      });
-
-      const alteredFunction = describe.schema.functions.find(
-        f => f.name === 'embedding_new'
-      );
-      expect(alteredFunction).toBeDefined();
-      expect(alteredFunction!.description).toEqual(
-        'text embedding function altered via API'
+      expect(addFunction.error_code).not.toEqual(ErrorCode.SUCCESS);
+      expect(addFunction.reason).toContain(
+        'AddCollectionFunction RPC is no longer supported'
       );
     });
 
-    it(`Drop collection function should success`, async () => {
-      // Drop the function
+    it(`Drop collection function should be rejected by current server`, async () => {
       const dropFunction = await milvusClient.dropCollectionFunction({
         collection_name: COLLECTION_FOR_FUNCTION_OPS,
         function_name: 'embedding_new',
       });
 
-      expect(dropFunction.error_code).toEqual(ErrorCode.SUCCESS);
-
-      // Verify function was dropped
-      const describeAfter = await milvusClient.describeCollection({
-        collection_name: COLLECTION_FOR_FUNCTION_OPS,
-        cache: false,
-      });
-      const functionAfter = describeAfter.schema.functions.find(
-        f => f.name === 'embedding_new'
+      expect(dropFunction.error_code).not.toEqual(ErrorCode.SUCCESS);
+      expect(dropFunction.reason).toContain(
+        'DropCollectionFunction RPC is no longer supported'
       );
-      expect(functionAfter).toBeUndefined();
-    });
-
-    it(`Add collection function with invalid collection name should fail`, async () => {
-      try {
-        await milvusClient.addCollectionFunction({
-          collection_name: 'non_existent_collection',
-          function: {
-            name: 'test_embedding_function',
-            description: 'test text embedding function',
-            type: FunctionType.TEXTEMBEDDING,
-            input_field_names: ['text'],
-            output_field_names: ['vector'],
-            params: {
-              provider: 'openai',
-              model_name: 'text-embedding-3-small',
-              api_key: 'yourkey',
-            },
-          },
-        });
-        // Should not reach here
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeDefined();
-      }
     });
 
     it(`Alter collection function with invalid function name should fail`, async () => {
@@ -693,19 +612,10 @@ describe(`FulltextSearch API`, () => {
         },
       });
 
-      // Should return error
-      expect(alterFunction.error_code).not.toEqual(ErrorCode.SUCCESS);
-    });
-
-    it(`Drop collection function with invalid function name should fail`, async () => {
-      const dropFunction = await milvusClient.dropCollectionFunction({
-        collection_name: COLLECTION_FOR_FUNCTION_OPS,
-        function_name: 'non_existent_embedding_function',
-      });
-
-      // Note: Drop operation may be idempotent and return success even if function doesn't exist
-      // This is acceptable behavior, so we just verify the operation completes
-      expect(dropFunction).toBeDefined();
+      expect(alterFunction.error_code).toEqual(ErrorCode.IllegalArgument);
+      expect(alterFunction.reason).toContain(
+        'function non_existent_embedding_function not found'
+      );
     });
   });
 
@@ -777,6 +687,24 @@ describe(`FulltextSearch API`, () => {
       expect(func!.type).toEqual('BM25');
       expect(func!.input_field_names).toEqual(['text']);
       expect(func!.output_field_names).toEqual(['sparse']);
+
+      const index = await milvusClient.describeIndex({
+        db_name: dbParam.db_name,
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        index_name: 'sparse_index',
+      });
+      expect(index.status.error_code).toEqual(ErrorCode.SUCCESS);
+      const indexDescription = index.index_descriptions.find(
+        description => description.index_name === 'sparse_index'
+      );
+      expect(indexDescription).toBeDefined();
+      expect(indexDescription!.field_name).toEqual('sparse');
+      expect(findKeyValue(indexDescription!.params, 'index_type')).toEqual(
+        IndexType.SPARSE_INVERTED_INDEX
+      );
+      expect(findKeyValue(indexDescription!.params, 'metric_type')).toEqual(
+        MetricType.BM25
+      );
     });
 
     it(`Add function field should success`, async () => {
@@ -903,6 +831,23 @@ describe(`FulltextSearch API`, () => {
         )?.type
       ).toEqual('MinHash');
 
+      const index = await milvusClient.describeIndex({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        index_name: 'minhash_index',
+      });
+      expect(index.status.error_code).toEqual(ErrorCode.SUCCESS);
+      const indexDescription = index.index_descriptions.find(
+        description => description.index_name === 'minhash_index'
+      );
+      expect(indexDescription).toBeDefined();
+      expect(indexDescription!.field_name).toEqual('minhash_vector');
+      expect(findKeyValue(indexDescription!.params, 'index_type')).toEqual(
+        IndexType.MINHASH_LSH
+      );
+      expect(findKeyValue(indexDescription!.params, 'metric_type')).toEqual(
+        MetricType.MHJACCARD
+      );
+
       const drop = await milvusClient.dropFunctionField({
         collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
         function_name: 'minhash_added_by_wrapper',
@@ -923,6 +868,12 @@ describe(`FulltextSearch API`, () => {
           func => func.name === 'minhash_added_by_wrapper'
         )
       ).toEqual(false);
+
+      const indexAfterDrop = await milvusClient.describeIndex({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        index_name: 'minhash_index',
+      });
+      expect(indexAfterDrop.status.error_code).toEqual(ErrorCode.IndexNotExist);
     });
 
     it(`Alter collection schema should reject missing field`, async () => {

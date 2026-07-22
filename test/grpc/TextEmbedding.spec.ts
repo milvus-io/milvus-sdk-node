@@ -8,14 +8,21 @@ import {
 } from '../../milvus';
 import { IP, GENERATE_NAME } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
+let milvusClient: MilvusClient;
 const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'TextEmbedding',
 };
+const hasOpenAICredentials =
+  process.env.MILVUS_OPENAI_ENABLED === '1' ||
+  Boolean(process.env.MILVUS_OPENAI_API_KEY);
+const describeIfOpenAIConfigured = hasOpenAICredentials
+  ? describe
+  : describe.skip;
 
-describe(`Text Embedding Function API`, () => {
+describeIfOpenAIConfigured(`Text Embedding Function API`, () => {
   beforeAll(async () => {
+    milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
   });
@@ -77,6 +84,35 @@ describe(`Text Embedding Function API`, () => {
     expect(func!.input_field_names).toEqual(['text']);
     expect(func!.output_field_names).toEqual(['dense']);
     expect(func!.type).toEqual('TextEmbedding');
+  });
+
+  it(`Alter text embedding function should success`, async () => {
+    const alter = await milvusClient.alterCollectionFunction({
+      collection_name: COLLECTION,
+      function_name: 'openai',
+      function: {
+        name: 'openai',
+        description: 'openai text embedding function altered via API',
+        type: FunctionType.TEXTEMBEDDING,
+        input_field_names: ['text'],
+        output_field_names: ['dense'],
+        params: {
+          provider: 'openai',
+          model_name: 'text-embedding-3-small',
+        },
+      },
+    });
+    expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const describe = await milvusClient.describeCollection({
+      collection_name: COLLECTION,
+      cache: false,
+    });
+    const func = describe.schema.functions.find(f => f.name === 'openai');
+    expect(func).toBeDefined();
+    expect(func!.description).toEqual(
+      'openai text embedding function altered via API'
+    );
   });
 
   it(`Insert text data should success`, async () => {

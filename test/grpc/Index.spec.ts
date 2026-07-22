@@ -129,7 +129,7 @@ describe(`Milvus Index API`, () => {
       },
     ]);
 
-    expect(createsError.error_code).toEqual(ErrorCode.UnexpectedError);
+    expect(createsError.error_code).toEqual(ErrorCode.IllegalArgument);
   });
 
   it(`Create IVF_FLAT index should success`, async () => {
@@ -304,7 +304,7 @@ describe(`Milvus Index API`, () => {
         params: JSON.stringify({ nlist: 1024 }),
       },
     });
-    expect(res.error_code).toEqual(ErrorCode.UnexpectedError);
+    expect(res.error_code).toEqual(ErrorCode.IllegalArgument);
   });
 
   it(`Describe Index with index name`, async () => {

@@ -12,7 +12,7 @@ import {
   generateInsertData,
 } from '../tools';
 
-const milvusClient = new MilvusClient({ address: IP , logLevel: 'info' });
+const milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME();
 const COLLECTION_NAME2 = GENERATE_NAME();
 const COLLECTION_NAME3 = GENERATE_NAME();
@@ -161,7 +161,7 @@ describe(`Partition key API`, () => {
       partition_name: 'p',
     });
 
-    expect(res.error_code).toEqual(ErrorCode.UnexpectedError);
+    expect(res.error_code).toEqual(ErrorCode.IllegalArgument);
   });
 
   it(`Describe Collection should be successful`, async () => {
@@ -219,6 +219,6 @@ describe(`Partition key API`, () => {
       output_fields: ['varChar'],
     });
 
-    expect(search.status.error_code).toEqual(ErrorCode.UnexpectedError);
+    expect(search.status.error_code).toEqual(ErrorCode.IllegalArgument);
   });
 });

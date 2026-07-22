@@ -6,6 +6,7 @@ import {
   HttpClientConfig,
   MilvusClient,
   DEFAULT_DB,
+  LoadState,
 } from '../../milvus';
 import {
   genCollectionParams,
@@ -347,11 +348,34 @@ export function generateTests(
     });
 
     it('should refresh load successfully', async () => {
+      const load = await client.loadCollection({
+        dbName: config.database,
+        collectionName: createParams.collectionName,
+      });
+      expect(load.code).toEqual(0);
+
+      let loadState = '';
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const state = await client.getCollectionLoadState({
+          dbName: config.database,
+          collectionName: createParams.collectionName,
+        });
+        expect(state.code).toEqual(0);
+
+        loadState = state.data.loadState;
+        if (loadState === LoadState.LoadStateLoaded) {
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      expect(loadState).toEqual(LoadState.LoadStateLoaded);
+
       const refresh = await client.refreshLoad({
+        dbName: config.database,
         collectionName: createParams.collectionName,
       });
 
-      expect([0, 65535]).toContain(refresh.code);
+      expect(refresh.code).toEqual(0);
     });
 
     it('should describe default collection successfully', async () => {

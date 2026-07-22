@@ -43,6 +43,12 @@ jobs:
         env:
           MILVUS_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
+          if [ -n "${MILVUS_OPENAI_API_KEY}" ]; then
+            echo "MILVUS_OPENAI_ENABLED=1" >> "$GITHUB_ENV"
+          else
+            echo "MILVUS_OPENAI_ENABLED=0" >> "$GITHUB_ENV"
+          fi
+
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
           sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ steps.info.outputs.milvusVersion }}/g" docker-compose.yml
 
@@ -53,6 +59,9 @@ jobs:
               environment:
                 MQ_TYPE: rocksmq
                 MILVUS_OPENAI_API_KEY: ${MILVUS_OPENAI_API_KEY}
+                COMMON_STORAGE_USELOONFFI: "true"
+                DATACOORD_COMPACTION_BUMPSCHEMAVERSION_ENABLED: "true"
+                DATACOORD_COMPACTION_STORAGEVERSION_ENABLED: "true"
           EOF
 
           mkdir -p volumes/etcd volumes/minio volumes/milvus
