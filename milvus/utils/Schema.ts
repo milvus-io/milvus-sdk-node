@@ -114,6 +114,18 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
   return camelCase ? convertToCamelCase(dataKey) : dataKey;
 };
 
+const normalizeFunctionType = (type: FunctionObject['type']) => {
+  if (typeof type !== 'string') {
+    return type;
+  }
+
+  return (
+    FunctionType[type as keyof typeof FunctionType] ??
+    FunctionType[type.toUpperCase() as keyof typeof FunctionType] ??
+    type
+  );
+};
+
 /**
  * Assigns specified properties from the `field` object to `type_params` within the `FieldType` object.
  * Converts properties to strings, serializing objects as JSON strings if needed, then removes them from `field`.
@@ -239,28 +251,26 @@ export const formatFieldSchema = (
 
   if (typeof field.default_value !== 'undefined') {
     const dataKey = getDataKey(createObj.dataType, true);
+    let defaultValue = field.default_value;
 
     // Convert TIMESTAMPTZ default value to UTC microseconds (int64)
     // Milvus stores TIMESTAMPTZ default values internally as int64 (UTC microsecond)
     // Users can pass either a string (RFC3339 format) or a number (microseconds)
     if (createObj.dataType === DataType.Timestamptz) {
-      if (typeof field.default_value === 'string') {
+      if (typeof defaultValue === 'string') {
         // Convert RFC3339 string to UTC microseconds
-        const date = new Date(field.default_value);
-        field.default_value = (date.getTime() * 1000).toString();
-      } else if (typeof field.default_value === 'number') {
+        const date = new Date(defaultValue);
+        defaultValue = (date.getTime() * 1000).toString();
+      } else if (typeof defaultValue === 'number') {
         // If already a number, assume it's microseconds (or milliseconds if < 1e12)
         // Convert to microseconds if it looks like milliseconds (< year 2286)
-        const value =
-          field.default_value < 1e12
-            ? field.default_value * 1000
-            : field.default_value;
-        field.default_value = Math.floor(value).toString();
+        const value = defaultValue < 1e12 ? defaultValue * 1000 : defaultValue;
+        defaultValue = Math.floor(value).toString();
       }
     }
 
     createObj.defaultValue = {
-      [dataKey]: field.default_value,
+      [dataKey]: defaultValue,
     };
   }
   return schemaTypes.fieldSchemaType.create(createObj);
@@ -279,17 +289,11 @@ export const formatFunctionSchema = (
 ): { [k: string]: any } => {
   const { input_field_names, output_field_names, type, ...rest } = func;
 
-  // Ensure type is a number (enum value), not a string
-  const typeValue =
-    typeof type === 'number'
-      ? type
-      : (FunctionType[type as keyof typeof FunctionType] ?? type);
-
   // Return a plain object with snake_case field names for gRPC
   // The @grpc/proto-loader uses milvus.ts which has snake_case field names
   return {
     ...rest,
-    type: typeValue,
+    type: normalizeFunctionType(type),
     input_field_names: input_field_names || [],
     output_field_names: output_field_names || [],
     params: parseToKeyValue(func.params, true),
@@ -363,12 +367,13 @@ export const formatCollectionSchema = (
   // if functions is set, parse its params to key-value pairs, and delete inputs and outputs
   if (functions) {
     payload.functions = functions.map((func: FunctionObject) => {
-      const { input_field_names, output_field_names, ...rest } = func;
+      const { input_field_names, output_field_names, type, ...rest } = func;
 
       functionOutputFields.push(...(output_field_names || []));
 
       return schemaTypes.functionSchemaType.create({
         ...rest,
+        type: normalizeFunctionType(type),
         inputFieldNames: input_field_names || [],
         outputFieldNames: output_field_names || [],
         params: parseToKeyValue(func.params, true),

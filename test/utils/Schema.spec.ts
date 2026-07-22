@@ -464,7 +464,7 @@ describe('utils/Schema', () => {
   it('formats function schema when function type is a string enum key', () => {
     const payload = formatFunctionSchema({
       name: 'bm25_func',
-      type: 'BM25' as unknown as FunctionType,
+      type: 'BM25',
       input_field_names: ['text'],
       output_field_names: ['sparse'],
       params: { enable_match: true },
@@ -478,6 +478,68 @@ describe('utils/Schema', () => {
       params: [{ key: 'enable_match', value: 'true' }],
     });
   });
+
+  it.each([
+    ['Unknown', FunctionType.Unknown],
+    ['BM25', FunctionType.BM25],
+    ['TextEmbedding', FunctionType.TEXTEMBEDDING],
+    ['Rerank', FunctionType.RERANK],
+    ['MinHash', FunctionType.MINHASH],
+    ['MolFingerprint', FunctionType.MOLFINGERPRINT],
+  ] as const)(
+    'encodes string function type %s correctly in collection schemas',
+    (functionType, expectedType) => {
+      const schemaProtoPath = path.resolve(
+        __dirname,
+        '../../proto/proto/schema.proto'
+      );
+      const schemaProto = protobuf.loadSync(schemaProtoPath);
+      const collectionSchemaType = schemaProto.lookupType(
+        'milvus.proto.schema.CollectionSchema'
+      );
+      const fieldSchemaType = schemaProto.lookupType(
+        'milvus.proto.schema.FieldSchema'
+      );
+      const functionSchemaType = schemaProto.lookupType(
+        'milvus.proto.schema.FunctionSchema'
+      );
+
+      const payload = formatCollectionSchema(
+        {
+          collection_name: 'function_type_collection',
+          fields: [
+            {
+              name: 'id',
+              data_type: DataType.Int64,
+              is_primary_key: true,
+            },
+          ],
+          functions: [
+            {
+              name: 'function',
+              type: functionType,
+              input_field_names: ['id'],
+              output_field_names: [],
+              params: {},
+            },
+          ],
+        },
+        { fieldSchemaType, functionSchemaType }
+      );
+
+      expect(payload.functions[0].type).toBe(expectedType);
+
+      const decoded = collectionSchemaType.toObject(
+        collectionSchemaType.decode(
+          collectionSchemaType
+            .encode(collectionSchemaType.create(payload))
+            .finish()
+        ),
+        { enums: String, defaults: true }
+      );
+      expect(decoded.functions[0].type).toBe(functionType);
+    }
+  );
 
   it('formats struct array fields in create collection schema', () => {
     const schemaProtoPath = path.resolve(

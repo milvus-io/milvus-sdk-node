@@ -6,6 +6,7 @@ import {
   ConsistencyLevelEnum,
   FunctionType,
   ERROR_REASONS,
+  IndexType,
 } from '../../milvus';
 import {
   IP,
@@ -740,7 +741,10 @@ describe(`FulltextSearch API`, () => {
         db_name: dbParam.db_name,
         collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
         index_name: 'sparse_index',
-        extra_params: { metric_type: MetricType.BM25 },
+        extra_params: {
+          index_type: IndexType.SPARSE_INVERTED_INDEX,
+          metric_type: MetricType.BM25,
+        },
         field: {
           name: 'sparse',
           data_type: DataType.SparseFloatVector,
@@ -778,6 +782,11 @@ describe(`FulltextSearch API`, () => {
     it(`Add function field should success`, async () => {
       const res = await milvusClient.addFunctionField({
         collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        index_name: 'sparse2_index',
+        extra_params: {
+          index_type: IndexType.SPARSE_INVERTED_INDEX,
+          metric_type: MetricType.BM25,
+        },
         field: {
           name: 'sparse2',
           data_type: DataType.SparseFloatVector,
@@ -817,6 +826,11 @@ describe(`FulltextSearch API`, () => {
     it(`Add function field should accept string enum values`, async () => {
       const res = await milvusClient.addFunctionField({
         collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        index_name: 'sparse3_index',
+        extra_params: {
+          index_type: IndexType.SPARSE_INVERTED_INDEX,
+          metric_type: MetricType.BM25,
+        },
         field: {
           name: 'sparse3',
           data_type: 'SparseFloatVector' as any,
@@ -844,6 +858,71 @@ describe(`FulltextSearch API`, () => {
       );
       expect(sparseField).toBeDefined();
       expect(sparseField!.is_function_output).toEqual(true);
+    });
+
+    it(`Add and drop MinHash function field should success`, async () => {
+      const add = await milvusClient.addFunctionField({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        index_name: 'minhash_index',
+        extra_params: {
+          index_type: IndexType.MINHASH_LSH,
+          metric_type: MetricType.MHJACCARD,
+          params: { mh_lsh_band: 8 },
+        },
+        field: {
+          name: 'minhash_vector',
+          data_type: DataType.BinaryVector,
+          dim: 512,
+          is_function_output: true,
+        },
+        function: {
+          name: 'minhash_added_by_wrapper',
+          type: FunctionType.MINHASH,
+          input_field_names: ['text'],
+          output_field_names: ['minhash_vector'],
+          params: { num_hashes: 16, shingle_size: 3 },
+        },
+      });
+      expect(add.error_code).toEqual(ErrorCode.SUCCESS);
+
+      const describe = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        cache: false,
+      });
+      expect(
+        describe.schema.fields.some(field => field.name === 'minhash_vector')
+      ).toEqual(true);
+      expect(
+        describe.schema.functions.some(
+          func => func.name === 'minhash_added_by_wrapper'
+        )
+      ).toEqual(true);
+      expect(
+        describe.schema.functions.find(
+          func => func.name === 'minhash_added_by_wrapper'
+        )?.type
+      ).toEqual('MinHash');
+
+      const drop = await milvusClient.dropFunctionField({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        function_name: 'minhash_added_by_wrapper',
+      });
+      expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
+
+      const describeAfterDrop = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        cache: false,
+      });
+      expect(
+        describeAfterDrop.schema.fields.some(
+          field => field.name === 'minhash_vector'
+        )
+      ).toEqual(false);
+      expect(
+        describeAfterDrop.schema.functions.some(
+          func => func.name === 'minhash_added_by_wrapper'
+        )
+      ).toEqual(false);
     });
 
     it(`Alter collection schema should reject missing field`, async () => {
@@ -908,6 +987,9 @@ describe(`FulltextSearch API`, () => {
       try {
         await milvusClient.addFunctionField({
           collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+          extra_params: {
+            index_type: IndexType.SPARSE_INVERTED_INDEX,
+          },
           field: {
             name: 'missing_function_wrapper',
             data_type: DataType.SparseFloatVector,
@@ -926,6 +1008,9 @@ describe(`FulltextSearch API`, () => {
       try {
         await milvusClient.addFunctionField({
           collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+          extra_params: {
+            index_type: IndexType.SPARSE_INVERTED_INDEX,
+          },
           field: {
             name: 'dense',
             data_type: DataType.FloatVector,
@@ -952,6 +1037,9 @@ describe(`FulltextSearch API`, () => {
       try {
         await milvusClient.addFunctionField({
           collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+          extra_params: {
+            index_type: IndexType.SPARSE_INVERTED_INDEX,
+          },
           field: {
             name: 'dense',
             data_type: DataType.FloatVector,

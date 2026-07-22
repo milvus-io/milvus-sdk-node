@@ -1,9 +1,14 @@
 import path from 'path';
-import { InterceptingCall, Metadata } from '@grpc/grpc-js';
+import {
+  InterceptingCall,
+  Metadata,
+  status as grpcStatus,
+} from '@grpc/grpc-js';
 import {
   getGRPCService,
   getMetaInterceptor,
   getRequestMetadataInterceptor,
+  getRetryInterceptor,
   LOADER_OPTIONS,
 } from '../../milvus';
 // mock
@@ -16,6 +21,7 @@ jest.mock('@grpc/grpc-js', () => {
     loadPackageDefinition: actual.loadPackageDefinition,
     ServiceClientConstructor: actual.ServiceClientConstructor,
     GrpcObject: actual.GrpcObject,
+    status: actual.status,
   };
 });
 
@@ -23,6 +29,45 @@ describe(`utils/grpc`, () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
+  const createRetryCall = (methodName: string) => {
+    let retryListener: any;
+    const nextCall = jest.fn(() => ({
+      start: jest.fn(),
+      sendMessage: jest.fn(),
+    }));
+    const startNext = jest.fn((_metadata: Metadata, listener: any) => {
+      retryListener = listener;
+    });
+
+    (InterceptingCall as any).mockImplementationOnce(
+      (call: any, requester: any) => ({
+        call,
+        start: requester.start,
+        sendMessage: requester.sendMessage,
+      })
+    );
+
+    const interceptor = getRetryInterceptor({
+      maxRetries: 3,
+      retryDelay: 0,
+      clientId: 'test-client',
+    });
+    const interceptedCall = interceptor(
+      {
+        method_definition: {
+          path: `/milvus.proto.milvus.MilvusService/${methodName}`,
+        },
+        deadline: new Date(Date.now() + 1000),
+      },
+      nextCall
+    ) as any;
+
+    interceptedCall.start(new Metadata(), jest.fn(), startNext);
+    interceptedCall.sendMessage({}, jest.fn());
+
+    return { nextCall, retryListener };
+  };
 
   it(`should return a service client constructor`, () => {
     const protoPath = path.resolve(__dirname, '../../proto/proto/milvus.proto');
@@ -145,5 +190,56 @@ describe(`utils/grpc`, () => {
     // Should also have added client-request-unixmsec
     const unixmsecValues = metadata.get('client-request-unixmsec');
     expect(unixmsecValues.length).toBeGreaterThan(0);
+  });
+
+  it.each(['Connect', 'CreateSnapshot'])(
+    'should retain the existing UNIMPLEMENTED compatibility for %s',
+    methodName => {
+      const { nextCall, retryListener } = createRetryCall(methodName);
+      const messageNext = jest.fn();
+      const statusNext = jest.fn();
+
+      retryListener.onReceiveMessage(
+        { reason: `${methodName} is not implemented` },
+        messageNext
+      );
+      retryListener.onReceiveStatus(
+        {
+          code: grpcStatus.UNIMPLEMENTED,
+          details: `${methodName} is not implemented`,
+          metadata: new Metadata(),
+        },
+        statusNext
+      );
+
+      expect(messageNext).toHaveBeenCalledWith({});
+      expect(statusNext).toHaveBeenCalledWith(
+        expect.objectContaining({ code: grpcStatus.OK })
+      );
+      expect(nextCall).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it('should propagate UNIMPLEMENTED from AlterCollectionSchema without retrying', () => {
+    const { nextCall, retryListener } = createRetryCall(
+      'AlterCollectionSchema'
+    );
+    const messageNext = jest.fn();
+    const statusNext = jest.fn();
+
+    retryListener.onReceiveStatus(
+      {
+        code: grpcStatus.UNIMPLEMENTED,
+        details: 'AlterCollectionSchema is not implemented',
+        metadata: new Metadata(),
+      },
+      statusNext
+    );
+
+    expect(statusNext).toHaveBeenCalledWith(
+      expect.objectContaining({ code: grpcStatus.UNIMPLEMENTED })
+    );
+    expect(nextCall).toHaveBeenCalledTimes(1);
+    expect(messageNext).not.toHaveBeenCalled();
   });
 });

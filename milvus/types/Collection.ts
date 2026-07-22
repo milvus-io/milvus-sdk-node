@@ -100,10 +100,18 @@ export interface ShowCollectionsReq extends GrpcTimeOut {
 
 export type Properties = Record<string, string | number | boolean>;
 
+export type FunctionTypeName =
+  | 'Unknown'
+  | 'BM25'
+  | 'TextEmbedding'
+  | 'Rerank'
+  | 'MinHash'
+  | 'MolFingerprint';
+
 export type FunctionObject = {
   name: string;
   description?: string;
-  type: FunctionType;
+  type: FunctionType | FunctionTypeName;
   input_field_names: string[];
   output_field_names?: string[];
   params: Record<string, any>;
@@ -138,8 +146,7 @@ export interface CreateCollectionWithSchemaReq extends BaseCreateCollectionReq {
 
 // create collection with schema requests
 export type CreateCollectionReq =
-  | CreateCollectionWithFieldsReq
-  | CreateCollectionWithSchemaReq;
+  CreateCollectionWithFieldsReq | CreateCollectionWithSchemaReq;
 
 // add collection field req
 export interface AddCollectionFieldReq extends collectionNameReq {
@@ -354,15 +361,43 @@ export interface AlterCollectionSchemaReq extends collectionNameReq {
   function: FunctionObject; // required, function schema to add
   do_physical_backfill?: boolean; // optional, whether Milvus should backfill existing data
   index_name?: string; // optional, index name for the new field
-  extra_params?: Properties; // optional, field info extra params
+  extra_params?: Record<string, any>; // optional, field info extra params
 }
 
 export interface AlterCollectionSchemaResponse {
   alter_status: ResStatus;
+  /** @deprecated Removed from the AlterCollectionSchema wire response. */
   index_status?: ResStatus;
 }
 
-export interface AddFunctionFieldReq extends AlterCollectionSchemaReq {}
+export type FunctionFieldIndexParams = Record<string, any> &
+  (
+    | { index_type: string }
+    | {
+        index_type?: never;
+        params: (Record<string, any> & { index_type: string }) | string;
+      }
+  );
+
+export interface AddFunctionFieldReq extends AlterCollectionSchemaReq {
+  extra_params: FunctionFieldIndexParams;
+}
+
+export type DropCollectionFieldReq = collectionNameReq &
+  (
+    | {
+        field_name: string;
+        field_id?: never;
+      }
+    | {
+        field_name?: never;
+        field_id: number | string;
+      }
+  );
+
+export interface DropFunctionFieldReq extends collectionNameReq {
+  function_name: string;
+}
 
 export enum RefreshExternalCollectionState {
   RefreshPending = 'RefreshPending',

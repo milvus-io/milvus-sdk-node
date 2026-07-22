@@ -28,6 +28,7 @@ const LOAD_COLLECTION_NAME_SYNC = GENERATE_NAME();
 const COLLECTION_WITH_PROPERTY = GENERATE_NAME();
 const COLLECTION_WITH_ENTITY_TTL = GENERATE_NAME();
 const COLLECTION_ENTITY_TTL_ALTER = GENERATE_NAME();
+const COLLECTION_FIELD_DROP = GENERATE_NAME();
 const NON_EXISTENT_COLLECTION_NAME = 'none_existent';
 
 const dbParam = {
@@ -301,6 +302,74 @@ describe(`Collection API`, () => {
     await milvusClient.dropCollection({
       collection_name: COLLECTION_ENTITY_TTL_ALTER,
     });
+  });
+
+  it(`Add and drop collection fields by name and ID`, async () => {
+    try {
+      const create = await milvusClient.createCollection({
+        collection_name: COLLECTION_FIELD_DROP,
+        fields: [
+          {
+            name: 'id',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+          },
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 4,
+          },
+        ],
+      });
+      expect(create.error_code).toEqual(ErrorCode.SUCCESS);
+
+      for (const fieldName of ['drop_by_name', 'drop_by_id']) {
+        const add = await milvusClient.addCollectionField({
+          collection_name: COLLECTION_FIELD_DROP,
+          field: {
+            name: fieldName,
+            data_type: DataType.Int64,
+            nullable: true,
+          },
+        });
+        expect(add.error_code).toEqual(ErrorCode.SUCCESS);
+      }
+
+      const dropByName = await milvusClient.dropCollectionField({
+        collection_name: COLLECTION_FIELD_DROP,
+        field_name: 'drop_by_name',
+      });
+      expect(dropByName.error_code).toEqual(ErrorCode.SUCCESS);
+
+      const describe = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FIELD_DROP,
+        cache: false,
+      });
+      const fieldToDrop = describe.schema.fields.find(
+        field => field.name === 'drop_by_id'
+      );
+      expect(fieldToDrop).toBeDefined();
+
+      const dropByID = await milvusClient.dropCollectionField({
+        collection_name: COLLECTION_FIELD_DROP,
+        field_id: fieldToDrop!.fieldID,
+      });
+      expect(dropByID.error_code).toEqual(ErrorCode.SUCCESS);
+
+      const describeAfterDrop = await milvusClient.describeCollection({
+        collection_name: COLLECTION_FIELD_DROP,
+        cache: false,
+      });
+      expect(
+        describeAfterDrop.schema.fields.some(field =>
+          ['drop_by_name', 'drop_by_id'].includes(field.name)
+        )
+      ).toEqual(false);
+    } finally {
+      await milvusClient.dropCollection({
+        collection_name: COLLECTION_FIELD_DROP,
+      });
+    }
   });
 
   it(`Should get pk fieldname successfully`, async () => {

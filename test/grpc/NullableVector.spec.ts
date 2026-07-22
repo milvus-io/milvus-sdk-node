@@ -2,6 +2,7 @@ import {
   MilvusClient,
   ErrorCode,
   DataType,
+  ERROR_REASONS,
   IndexType,
   MetricType,
 } from '../../milvus';
@@ -292,15 +293,18 @@ describe('Nullable vector API testing', () => {
         true
       );
 
-      const addNonNullableVector = await milvusClient.addCollectionField({
-        collection_name: collectionName,
-        field: {
-          name: 'non_nullable_vector',
-          data_type: DataType.FloatVector,
-          dim: 2,
-        },
-      });
-      expect(addNonNullableVector.error_code).not.toEqual(ErrorCode.SUCCESS);
+      await expect(
+        milvusClient.addCollectionField({
+          collection_name: collectionName,
+          field: {
+            name: 'non_nullable_vector',
+            data_type: DataType.FloatVector,
+            dim: 2,
+          },
+        })
+      ).rejects.toThrow(
+        ERROR_REASONS.ADD_COLLECTION_FIELD_VECTOR_NULLABLE_REQUIRED
+      );
     } finally {
       await cleanupCollection(collectionName);
     }

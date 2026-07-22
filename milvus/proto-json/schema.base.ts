@@ -826,6 +826,16 @@ export default {
                       "rule": "repeated",
                       "type": "FieldData",
                       "id": 17
+                    },
+                    "aggBuckets": {
+                      "rule": "repeated",
+                      "type": "AggBucket",
+                      "id": 18
+                    },
+                    "aggTopks": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 19
                     }
                   },
                   "reserved": [
@@ -834,6 +844,174 @@ export default {
                       16
                     ]
                   ]
+                },
+                "AggBucket": {
+                  "fields": {
+                    "key": {
+                      "rule": "repeated",
+                      "type": "BucketKeyEntry",
+                      "id": 1
+                    },
+                    "count": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "metrics": {
+                      "keyType": "string",
+                      "type": "MetricValue",
+                      "id": 3
+                    },
+                    "hits": {
+                      "rule": "repeated",
+                      "type": "AggHit",
+                      "id": 4
+                    },
+                    "subGroups": {
+                      "rule": "repeated",
+                      "type": "AggBucket",
+                      "id": 5
+                    }
+                  }
+                },
+                "MetricValue": {
+                  "oneofs": {
+                    "value": {
+                      "oneof": [
+                        "intVal",
+                        "doubleVal",
+                        "stringVal",
+                        "boolVal"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "intVal": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "doubleVal": {
+                      "type": "double",
+                      "id": 2
+                    },
+                    "stringVal": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "boolVal": {
+                      "type": "bool",
+                      "id": 4
+                    }
+                  }
+                },
+                "BucketKeyEntry": {
+                  "oneofs": {
+                    "value": {
+                      "oneof": [
+                        "intVal",
+                        "stringVal",
+                        "boolVal"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "fieldId": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "fieldName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "intVal": {
+                      "type": "int64",
+                      "id": 3
+                    },
+                    "stringVal": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "boolVal": {
+                      "type": "bool",
+                      "id": 5
+                    }
+                  }
+                },
+                "AggHit": {
+                  "oneofs": {
+                    "pk": {
+                      "oneof": [
+                        "intPk",
+                        "strPk"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "intPk": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "strPk": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "score": {
+                      "type": "float",
+                      "id": 3
+                    },
+                    "fields": {
+                      "rule": "repeated",
+                      "type": "AggHitField",
+                      "id": 4
+                    }
+                  }
+                },
+                "AggHitField": {
+                  "oneofs": {
+                    "value": {
+                      "oneof": [
+                        "intVal",
+                        "boolVal",
+                        "floatVal",
+                        "doubleVal",
+                        "stringVal",
+                        "bytesVal"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "fieldId": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "fieldName": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "intVal": {
+                      "type": "int64",
+                      "id": 3
+                    },
+                    "boolVal": {
+                      "type": "bool",
+                      "id": 4
+                    },
+                    "floatVal": {
+                      "type": "float",
+                      "id": 5
+                    },
+                    "doubleVal": {
+                      "type": "double",
+                      "id": 6
+                    },
+                    "stringVal": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "bytesVal": {
+                      "type": "bytes",
+                      "id": 8
+                    }
+                  }
                 },
                 "VectorClusteringInfo": {
                   "fields": {
@@ -1330,6 +1508,8 @@ export default {
                     "ListRestoreSnapshotJobs": 2106,
                     "PinSnapshotData": 2107,
                     "UnpinSnapshotData": 2108,
+                    "RestoreExternalSnapshot": 2109,
+                    "ExportSnapshot": 2110,
                     "AlterCollectionSchema": 2200,
                     "RefreshExternalCollection": 2300,
                     "GetRefreshExternalCollectionProgress": 2301,
@@ -1538,7 +1718,9 @@ export default {
                     "PrivilegeGetReplicateConfiguration": 85,
                     "PrivilegeRefreshExternalCollection": 86,
                     "PrivilegePinSnapshotData": 87,
-                    "PrivilegeUnpinSnapshotData": 88
+                    "PrivilegeUnpinSnapshotData": 88,
+                    "PrivilegeRestoreExternalSnapshot": 89,
+                    "PrivilegeExportSnapshot": 90
                   }
                 },
                 "PrivilegeExt": {
@@ -1925,6 +2107,98 @@ export default {
                       "rule": "repeated",
                       "type": "KeyValuePair",
                       "id": 2
+                    }
+                  }
+                },
+                "MetricAggSpec": {
+                  "fields": {
+                    "op": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "fieldName": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "SortSpec": {
+                  "fields": {
+                    "fieldName": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "direction": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "nullFirst": {
+                      "type": "bool",
+                      "id": 3
+                    }
+                  }
+                },
+                "TopHitsSpec": {
+                  "fields": {
+                    "size": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "sort": {
+                      "rule": "repeated",
+                      "type": "SortSpec",
+                      "id": 2
+                    }
+                  }
+                },
+                "OrderSpec": {
+                  "fields": {
+                    "key": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "direction": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "nullFirst": {
+                      "type": "bool",
+                      "id": 3
+                    }
+                  }
+                },
+                "SearchAggregationSpec": {
+                  "fields": {
+                    "fields": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 1
+                    },
+                    "size": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "metrics": {
+                      "keyType": "string",
+                      "type": "MetricAggSpec",
+                      "id": 3
+                    },
+                    "order": {
+                      "rule": "repeated",
+                      "type": "OrderSpec",
+                      "id": 4
+                    },
+                    "topHits": {
+                      "type": "TopHitsSpec",
+                      "id": 5
+                    },
+                    "subAggregation": {
+                      "type": "SearchAggregationSpec",
+                      "id": 6
+                    },
+                    "searchSize": {
+                      "type": "int64",
+                      "id": 7
                     }
                   }
                 }

@@ -155,12 +155,15 @@ export const getRetryInterceptor = ({
               savedStatusNext = next;
             }
 
-            // transform code and message if needed(for compatibility with old version of milvus)
-            switch (status.code) {
-              case grpcStatus.UNIMPLEMENTED:
-                savedReceiveMessage = {};
-                status.code = grpcStatus.OK;
-                break;
+            // Keep the existing compatibility behavior for older RPCs, but
+            // let AlterCollectionSchema observe UNIMPLEMENTED so add field can
+            // fall back to the legacy AddCollectionField RPC.
+            if (
+              status.code === grpcStatus.UNIMPLEMENTED &&
+              methodName !== 'AlterCollectionSchema'
+            ) {
+              savedReceiveMessage = {};
+              status.code = grpcStatus.OK;
             }
 
             // check message if need retry
@@ -212,7 +215,7 @@ export const getRetryInterceptor = ({
                 newCall.sendMessage(savedSendMessage);
               }, _retryDelay);
             } else {
-              const string = JSON.stringify(savedReceiveMessage);
+              const string = JSON.stringify(savedReceiveMessage) || '';
               const msg =
                 string.length > 4096 ? string.slice(0, 4096) + '...' : string;
 
@@ -234,7 +237,9 @@ export const getRetryInterceptor = ({
                 );
               }
 
-              savedMessageNext(savedReceiveMessage);
+              if (savedMessageNext) {
+                savedMessageNext(savedReceiveMessage);
+              }
               savedStatusNext(status);
             }
           },

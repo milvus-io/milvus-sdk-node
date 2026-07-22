@@ -1,5 +1,6 @@
 import { Database } from './Database';
 import { LRUCache } from 'lru-cache';
+import { status as grpcStatus } from '@grpc/grpc-js';
 import {
   ERROR_REASONS,
   ConsistencyLevelEnum,
@@ -47,6 +48,7 @@ import {
   sleep,
   formatCollectionSchema,
   formatDescribedCol,
+  getDataKey,
   validatePartitionNumbers,
   METADATA,
   AlterCollectionReq,
@@ -60,6 +62,7 @@ import {
   AlterCollectionFieldPropertiesReq,
   RefreshLoadReq,
   isVectorType,
+  convertToDataType,
   AddCollectionFieldReq,
   AddCollectionFieldsReq,
   checkCollectionFieldsWithOptions,
@@ -71,6 +74,8 @@ import {
   AlterCollectionSchemaReq,
   AlterCollectionSchemaResponse,
   AddFunctionFieldReq,
+  DropCollectionFieldReq,
+  DropFunctionFieldReq,
   RefreshExternalCollectionReq,
   RefreshExternalCollectionResponse,
   GetRefreshExternalCollectionProgressReq,
@@ -93,6 +98,8 @@ import {
   PinSnapshotDataResponse,
   UnpinSnapshotDataReq,
   FunctionType,
+  IndexType,
+  collectionNameReq,
 } from '../';
 
 const formatGrpcFieldSchema = (
@@ -100,6 +107,13 @@ const formatGrpcFieldSchema = (
   schemaTypes: { fieldSchemaType: any }
 ): Record<string, any> => {
   const schema = formatFieldSchema(field, schemaTypes);
+  let defaultValue = schema.defaultValue;
+  if (defaultValue) {
+    defaultValue = {
+      [getDataKey(schema.dataType)]:
+        defaultValue[getDataKey(schema.dataType, true)],
+    };
+  }
 
   return {
     fieldID: schema.fieldID,
@@ -112,7 +126,7 @@ const formatGrpcFieldSchema = (
     autoID: schema.autoID,
     state: schema.state,
     element_type: schema.elementType,
-    default_value: schema.defaultValue,
+    default_value: defaultValue,
     is_dynamic: schema.isDynamic,
     is_partition_key: schema.isPartitionKey,
     is_clustering_key: schema.isClusteringKey,
@@ -142,6 +156,50 @@ export class Collection extends Database {
     updateAgeOnGet: false,
     updateAgeOnHas: false,
   });
+
+  private getCollectionInfoCacheKey(data: collectionNameReq): string {
+    return `${data.db_name || this.metadata.get(METADATA.DATABASE)}:${
+      data.collection_name
+    }`;
+  }
+
+  private invalidateCollectionInfo(data: collectionNameReq): void {
+    this.collectionInfoCache.delete(this.getCollectionInfoCacheKey(data));
+  }
+
+  private async callAlterCollectionSchema(
+    data: collectionNameReq,
+    action: Record<string, any>
+  ): Promise<AlterCollectionSchemaResponse> {
+    checkCollectionName(data);
+
+    const req: any = {
+      collection_name: data.collection_name,
+      action,
+    };
+
+    if (data.db_name) {
+      req.db_name = data.db_name;
+    }
+
+    const result = await promisify(
+      this.channelPool,
+      'AlterCollectionSchema',
+      req,
+      data.timeout || this.timeout,
+      data
+    );
+
+    if (!result?.alter_status) {
+      throw new Error(ERROR_REASONS.ALTER_COLLECTION_SCHEMA_STATUS_IS_REQUIRED);
+    }
+
+    if (result.alter_status.error_code === ErrorCode.SUCCESS) {
+      this.invalidateCollectionInfo(data);
+    }
+
+    return result;
+  }
 
   /**
    * Creates a new collection in Milvus.
@@ -310,6 +368,17 @@ export class Collection extends Database {
    * ```
    */
   async addCollectionField(data: AddCollectionFieldReq): Promise<ResStatus> {
+    checkCollectionName(data);
+
+    if (
+      isVectorType(convertToDataType(data.field.data_type)) &&
+      data.field.nullable !== true
+    ) {
+      throw new Error(
+        ERROR_REASONS.ADD_COLLECTION_FIELD_VECTOR_NULLABLE_REQUIRED
+      );
+    }
+
     // Get the CollectionSchemaType and FieldSchemaType from the schemaProto object.
     const schemaTypes = {
       fieldSchemaType: this.schemaProto.lookupType(
@@ -317,13 +386,30 @@ export class Collection extends Database {
       ),
     };
 
+    try {
+      const result = await this.callAlterCollectionSchema(data, {
+        add_request: {
+          field_infos: [
+            {
+              field_schema: formatGrpcFieldSchema(data.field, schemaTypes),
+            },
+          ],
+        },
+      });
+      return result.alter_status;
+    } catch (error) {
+      if ((error as { code?: number })?.code !== grpcStatus.UNIMPLEMENTED) {
+        throw error;
+      }
+    }
+
     // Create the payload object with the collection_name, description, and fields.
     // it should follow CollectionSchema in schema.proto
     const payload = formatFieldSchema(data.field, schemaTypes);
     const schema = schemaTypes.fieldSchemaType.create(payload);
     const schemaBytes = schemaTypes.fieldSchemaType.encode(schema).finish();
 
-    return await promisify(
+    const result = await promisify(
       this.channelPool,
       'AddCollectionField',
       {
@@ -332,6 +418,12 @@ export class Collection extends Database {
       },
       data.timeout || this.timeout
     );
+
+    if (result.error_code === ErrorCode.SUCCESS) {
+      this.invalidateCollectionInfo(data);
+    }
+
+    return result;
   }
 
   /**
@@ -668,9 +760,7 @@ export class Collection extends Database {
   ): Promise<DescribeCollectionResponse> {
     checkCollectionName(data);
 
-    const key = `${this.metadata.get(METADATA.DATABASE)}:${
-      data.collection_name
-    }`;
+    const key = this.getCollectionInfoCacheKey(data);
 
     // if we have cache return cache data
     if (this.collectionInfoCache.has(key) && data.cache === true) {
@@ -1003,9 +1093,7 @@ export class Collection extends Database {
       data.timeout || this.timeout
     );
 
-    this.collectionInfoCache.delete(
-      `${this.metadata.get(METADATA.DATABASE)}:${data.collection_name}`
-    );
+    this.invalidateCollectionInfo(data);
     return promise;
   }
   // alias
@@ -1574,8 +1662,8 @@ export class Collection extends Database {
   /**
    * Alter collection schema by adding a function-backed output field.
    *
-   * Milvus 3.0-beta supports the add path for BM25 function fields through
-   * AlterCollectionSchema. It does not create an index automatically.
+   * For vector function outputs, provide bound-index metadata with an explicit
+   * index_type. Milvus creates the bound index atomically with the schema change.
    *
    * @param {AlterCollectionSchemaReq} data - The request parameters.
    * @param {string} data.collection_name - The collection name.
@@ -1606,48 +1694,27 @@ export class Collection extends Database {
       ),
     };
 
-    const req: any = {
-      collection_name: data.collection_name,
-      action: {
-        add_request: {
-          field_infos: [
-            {
-              field_schema: formatGrpcFieldSchema(data.field, schemaTypes),
-              index_name: data.index_name || '',
-              extra_params: parseToKeyValue(data.extra_params, true),
-            },
-          ],
-          func_schema: [formatFunctionSchema(data.function)],
-          do_physical_backfill: !!data.do_physical_backfill,
-        },
+    return await this.callAlterCollectionSchema(data, {
+      add_request: {
+        field_infos: [
+          {
+            field_schema: formatGrpcFieldSchema(data.field, schemaTypes),
+            index_name: data.index_name || '',
+            extra_params: parseToKeyValue(data.extra_params, true),
+          },
+        ],
+        func_schema: [formatFunctionSchema(data.function)],
+        do_physical_backfill: !!data.do_physical_backfill,
       },
-    };
-
-    if (data.db_name) {
-      req.db_name = data.db_name;
-    }
-
-    const result = await promisify(
-      this.channelPool,
-      'AlterCollectionSchema',
-      req,
-      data.timeout || this.timeout
-    );
-
-    this.collectionInfoCache.delete(
-      `${data.db_name || this.metadata.get(METADATA.DATABASE)}:${
-        data.collection_name
-      }`
-    );
-
-    return result;
+    });
   }
 
   /**
-   * Add a BM25 function-backed sparse vector field to an existing collection.
+   * Add a function-backed vector field and its bound index to an existing collection.
    *
-   * This is a convenience wrapper around alterCollectionSchema. Create indexes
-   * separately after the schema change succeeds.
+   * BM25 requires a SparseFloatVector output field. MinHash requires a
+   * BinaryVector output field. The bound index must provide an explicit
+   * index_type and cannot use AUTOINDEX.
    *
    * @param {AddFunctionFieldReq} data - The request parameters.
    * @returns {Promise<ResStatus>} The AlterCollectionSchema alter status.
@@ -1664,27 +1731,140 @@ export class Collection extends Database {
     const functionType =
       typeof data.function.type === 'number'
         ? data.function.type
-        : FunctionType[data.function.type as keyof typeof FunctionType];
-    if (functionType !== FunctionType.BM25) {
+        : (FunctionType[data.function.type as keyof typeof FunctionType] ??
+          FunctionType[
+            String(
+              data.function.type
+            ).toUpperCase() as keyof typeof FunctionType
+          ]);
+    if (
+      functionType !== FunctionType.BM25 &&
+      functionType !== FunctionType.MINHASH
+    ) {
       throw new Error(ERROR_REASONS.ADD_FUNCTION_FIELD_TYPE_NOT_SUPPORTED);
     }
 
-    const fieldType =
-      typeof data.field.data_type === 'number'
-        ? data.field.data_type
-        : DataType[data.field.data_type as keyof typeof DataType];
-    if (fieldType !== DataType.SparseFloatVector) {
+    const fieldType = convertToDataType(data.field.data_type);
+    if (
+      (functionType === FunctionType.BM25 &&
+        fieldType !== DataType.SparseFloatVector) ||
+      (functionType === FunctionType.MINHASH &&
+        fieldType !== DataType.BinaryVector)
+    ) {
       throw new Error(
         ERROR_REASONS.ADD_FUNCTION_FIELD_OUTPUT_TYPE_NOT_SUPPORTED
       );
     }
 
-    const result = await this.alterCollectionSchema(data);
+    const extraParams = { ...(data.extra_params || {}) };
+    for (const key of Object.keys(extraParams)) {
+      if (typeof extraParams[key] === 'undefined') {
+        delete extraParams[key];
+      }
+    }
+
+    const nestedParams = extraParams.params;
+    let nestedIndexParams: Record<string, any> | undefined;
+    if (
+      nestedParams &&
+      typeof nestedParams === 'object' &&
+      !Array.isArray(nestedParams)
+    ) {
+      nestedIndexParams = nestedParams;
+    } else if (typeof nestedParams === 'string') {
+      try {
+        const parsed = JSON.parse(nestedParams);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          nestedIndexParams = parsed;
+        }
+      } catch {
+        // Leave malformed params for Milvus to validate.
+      }
+    }
+
+    if (
+      nestedIndexParams &&
+      Object.keys(nestedIndexParams).some(key =>
+        Object.prototype.hasOwnProperty.call(extraParams, key)
+      )
+    ) {
+      throw new Error(ERROR_REASONS.ADD_FUNCTION_FIELD_DUPLICATED_INDEX_PARAM);
+    }
+
+    const indexType = extraParams.index_type || nestedIndexParams?.index_type;
+    if (typeof indexType !== 'string' || indexType.length === 0) {
+      throw new Error(ERROR_REASONS.ADD_FUNCTION_FIELD_INDEX_TYPE_IS_REQUIRED);
+    }
+    if (indexType === IndexType.AUTOINDEX) {
+      throw new Error(ERROR_REASONS.ADD_FUNCTION_FIELD_AUTOINDEX_NOT_SUPPORTED);
+    }
+
+    const result = await this.alterCollectionSchema({
+      ...data,
+      extra_params: extraParams,
+    });
+    return result.alter_status;
+  }
+
+  /**
+   * Drop a field from an existing collection by name or ID.
+   *
+   * @param {DropCollectionFieldReq} data - The request parameters.
+   * @returns {Promise<ResStatus>} The AlterCollectionSchema alter status.
+   */
+  async dropCollectionField(data: DropCollectionFieldReq): Promise<ResStatus> {
+    checkCollectionName(data);
+
+    const validFieldName =
+      typeof data.field_name === 'string' && data.field_name.length > 0;
+    const validFieldID =
+      (typeof data.field_id === 'number' &&
+        Number.isSafeInteger(data.field_id) &&
+        data.field_id > 0) ||
+      (typeof data.field_id === 'string' &&
+        /^[1-9]\d*$/.test(data.field_id) &&
+        BigInt(data.field_id) <= BigInt('9223372036854775807'));
+
+    if (validFieldName === validFieldID) {
+      throw new Error(
+        ERROR_REASONS.DROP_COLLECTION_FIELD_IDENTIFIER_IS_REQUIRED
+      );
+    }
+
+    const result = await this.callAlterCollectionSchema(data, {
+      drop_request: validFieldName
+        ? { field_name: data.field_name }
+        : { field_id: data.field_id },
+    });
+    return result.alter_status;
+  }
+
+  /**
+   * Drop a function and its output fields and indexes from a collection.
+   *
+   * @param {DropFunctionFieldReq} data - The request parameters.
+   * @returns {Promise<ResStatus>} The AlterCollectionSchema alter status.
+   */
+  async dropFunctionField(data: DropFunctionFieldReq): Promise<ResStatus> {
+    checkCollectionName(data);
+
+    if (!data.function_name) {
+      throw new Error(ERROR_REASONS.FUNCTION_NAME_IS_REQUIRED);
+    }
+
+    const result = await this.callAlterCollectionSchema(data, {
+      drop_request: {
+        function_name: data.function_name,
+        drop_function_output_fields: true,
+      },
+    });
     return result.alter_status;
   }
 
   /**
    * Add a function to a collection.
+   *
+   * @deprecated Use addFunctionField instead.
    *
    * @param {AddCollectionFunctionReq} data - The request parameters.
    * @param {string} data.collection_name - The name of the collection.
@@ -1806,6 +1986,8 @@ export class Collection extends Database {
 
   /**
    * Drop a function from a collection.
+   *
+   * @deprecated Use dropFunctionField instead.
    *
    * @param {DropCollectionFunctionReq} data - The request parameters.
    * @param {string} data.collection_name - The name of the collection.

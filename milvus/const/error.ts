@@ -72,9 +72,21 @@ export const ERROR_REASONS = {
   FUNCTION_NAME_IS_REQUIRED: 'The `function_name` property is missing.',
   FUNCTION_FIELD_SCHEMA_IS_REQUIRED: 'The `field` property is missing.',
   ADD_FUNCTION_FIELD_TYPE_NOT_SUPPORTED:
-    'The `function.type` property only supports FunctionType.BM25.',
+    'The `function.type` property only supports FunctionType.BM25 and FunctionType.MINHASH.',
   ADD_FUNCTION_FIELD_OUTPUT_TYPE_NOT_SUPPORTED:
-    'The `field.data_type` property only supports DataType.SparseFloatVector.',
+    'FunctionType.BM25 requires DataType.SparseFloatVector and FunctionType.MINHASH requires DataType.BinaryVector.',
+  ADD_FUNCTION_FIELD_INDEX_TYPE_IS_REQUIRED:
+    'An explicit `index_type` is required for the bound index.',
+  ADD_FUNCTION_FIELD_AUTOINDEX_NOT_SUPPORTED:
+    'The bound index does not support IndexType.AUTOINDEX.',
+  ADD_FUNCTION_FIELD_DUPLICATED_INDEX_PARAM:
+    'Duplicated bound index parameters are not allowed.',
+  ADD_COLLECTION_FIELD_VECTOR_NULLABLE_REQUIRED:
+    'Adding a vector field to an existing collection requires nullable=true.',
+  DROP_COLLECTION_FIELD_IDENTIFIER_IS_REQUIRED:
+    'Specify exactly one valid `field_name` or `field_id`.',
+  ALTER_COLLECTION_SCHEMA_STATUS_IS_REQUIRED:
+    'The AlterCollectionSchema response is missing `alter_status`.',
 };
 
 export enum ErrorCode {

@@ -334,6 +334,8 @@ export enum FunctionType {
   BM25 = 1,
   TEXTEMBEDDING = 2,
   RERANK = 3,
+  MINHASH = 4,
+  MOLFINGERPRINT = 5,
 }
 
 export const VectorDataTypes = [
