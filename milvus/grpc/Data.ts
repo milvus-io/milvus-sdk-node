@@ -1127,6 +1127,7 @@ export class Data extends Collection {
    * @param {string[]} [data.partitions_names] - Array of partition names (optional).
    * @param {string[]} data.output_fields - Vector or scalar field to be returned.
    * @param {number} [data.timeout] - An optional duration of time in millisecond to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   * @param {string[]} [data.group_by_fields] - Scalar fields used to group aggregation results. Aggregation expressions such as `count(*)`, `min(price)`, `max(price)`, `sum(price)`, and `avg(price)` are specified in `output_fields`.
    * @param {OrderByFields} [data.order_by_fields] - Fields to sort query results by, for example `price:asc` or `[{ field: 'price', order: 'asc' }]` (optional).
    * @param {OrderByFields} [data.order_by] - Alias for data.order_by_fields (optional).
    * @param {{key: value}[]} [data.params] - An optional key pair json array of search parameters.
@@ -1162,6 +1163,15 @@ export class Data extends Collection {
     }
 
     const queryParams: { [key: string]: any } = { ...limits, ...offset };
+    if (data.group_by_fields !== undefined) {
+      if (!Array.isArray(data.group_by_fields)) {
+        throw new Error('Invalid group_by_fields format');
+      }
+
+      if (data.group_by_fields.length > 0) {
+        queryParams.group_by_fields = data.group_by_fields.join(',');
+      }
+    }
     const orderByFields = normalizeOrderByFields(
       data.order_by_fields ?? data.order_by
     );

@@ -19,7 +19,7 @@ import {
 } from '../../milvus';
 
 describe('utils/Data', () => {
-  it('should pass query order by fields through query params', async () => {
+  it('should pass query grouping and order by fields through query params', async () => {
     const client = new MilvusClient({
       address: 'localhost:19530',
       __SKIP_CONNECT__: true,
@@ -43,16 +43,129 @@ describe('utils/Data', () => {
       filter: 'id > 0',
       limit: 10,
       offset: 2,
+      group_by_fields: ['category', 'brand'],
       order_by: ['price:asc', { field: 'rating', order: 'desc' }],
       cluster_id: 'in07-xxx',
     });
 
     expect(findKeyValue(queryParams.query_params, 'limit')).toBe(10);
     expect(findKeyValue(queryParams.query_params, 'offset')).toBe(2);
+    expect(findKeyValue(queryParams.query_params, 'group_by_fields')).toBe(
+      'category,brand'
+    );
     expect(findKeyValue(queryParams.query_params, 'order_by_fields')).toBe(
       'price:asc,rating:desc'
     );
     expect(findKeyValue(queryParams.query_params, CLUSTER_ID)).toBe('in07-xxx');
+  });
+
+  it('should reject an invalid query group_by_fields value', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+
+    await expect(
+      client.query({
+        collection_name: 'test_collection',
+        group_by_fields: 'category',
+        output_fields: ['category', 'count(*)'],
+      } as any)
+    ).rejects.toThrow('Invalid group_by_fields format');
+  });
+
+  it('should decode grouped count, min, max, sum, and avg query results', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const response: any = {
+      status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      fields_data: [
+        {
+          type: 'VarChar',
+          field_name: 'category',
+          field_id: '101',
+          is_dynamic: false,
+          scalars: {
+            string_data: { data: ['books', 'music'] },
+            data: 'string_data',
+          },
+          field: 'scalars',
+        },
+        ...['count(price)', 'min(price)', 'max(price)', 'sum(price)'].map(
+          (field_name, index) => ({
+            type: 'Int64',
+            field_name,
+            field_id: `${102 + index}`,
+            is_dynamic: false,
+            scalars: {
+              long_data: {
+                data:
+                  field_name === 'count(price)'
+                    ? ['2', '1']
+                    : field_name === 'min(price)'
+                    ? ['10', '30']
+                    : field_name === 'max(price)'
+                    ? ['20', '30']
+                    : ['30', '30'],
+              },
+              data: 'long_data',
+            },
+            field: 'scalars',
+          })
+        ),
+        {
+          type: 'Double',
+          field_name: 'avg(price)',
+          field_id: '106',
+          is_dynamic: false,
+          scalars: {
+            double_data: { data: [15, 30] },
+            data: 'double_data',
+          },
+          field: 'scalars',
+        },
+      ],
+    };
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({
+        Query: (_params: any, _options: any, cb: any) => cb(null, response),
+      }),
+      release: jest.fn(),
+    };
+
+    const result = await client.query({
+      collection_name: 'test_collection',
+      group_by_fields: ['category'],
+      output_fields: [
+        'category',
+        'count(price)',
+        'min(price)',
+        'max(price)',
+        'sum(price)',
+        'avg(price)',
+      ],
+    });
+
+    expect(result.data).toEqual([
+      {
+        category: 'books',
+        'count(price)': '2',
+        'min(price)': '10',
+        'max(price)': '20',
+        'sum(price)': '30',
+        'avg(price)': 15,
+      },
+      {
+        category: 'music',
+        'count(price)': '1',
+        'min(price)': '30',
+        'max(price)': '30',
+        'sum(price)': '30',
+        'avg(price)': 30,
+      },
+    ]);
   });
 
   it('should forward cluster_id through count query requests', async () => {

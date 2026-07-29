@@ -271,10 +271,30 @@ const results = await client.query({
   output_fields?: string[];     // Fields to return (default: all)
   limit?: number;
   offset?: number;
+  group_by_fields?: string[];   // Scalar fields used to group aggregation results
   consistency_level?: ConsistencyLevelEnum;
   partition_names?: string[];
 });
 // Returns: { data: Record<string, any>[] }
+```
+
+Aggregation functions are specified in `output_fields`. The supported functions
+are `count`, `min`, `max`, `sum`, and `avg`.
+
+```typescript
+const results = await client.query({
+  collection_name: 'sales',
+  filter: 'price > 0',
+  group_by_fields: ['category'],
+  output_fields: [
+    'category',
+    'count(price)',
+    'min(price)',
+    'max(price)',
+    'sum(price)',
+    'avg(price)',
+  ],
+});
 ```
 
 #### get

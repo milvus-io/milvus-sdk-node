@@ -667,6 +667,39 @@ describe(`Data.API`, () => {
     expect(Number(res.data[0][DEFAULT_COUNT_QUERY_STRING])).toEqual(count.data);
   });
 
+  it(`Query with grouped count, min, max, sum, and avg aggregations`, async () => {
+    const res = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      group_by_fields: ['varChar2'],
+      output_fields: [
+        'varChar2',
+        'count(float)',
+        'min(float)',
+        'max(float)',
+        'sum(float)',
+        'avg(float)',
+      ],
+      limit: 10,
+    });
+
+    expect(res.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(res.data.length).toBeGreaterThan(0);
+    expect(res.data.length).toBeLessThanOrEqual(10);
+    res.data.forEach(row => {
+      const count = Number(row['count(float)']);
+      const min = Number(row['min(float)']);
+      const max = Number(row['max(float)']);
+      const sum = Number(row['sum(float)']);
+      const avg = Number(row['avg(float)']);
+
+      expect(row.varChar2).toBeDefined();
+      expect(count).toBeGreaterThan(0);
+      expect(min).toBeLessThanOrEqual(avg);
+      expect(avg).toBeLessThanOrEqual(max);
+      expect(sum).toBeCloseTo(avg * count, 5);
+    });
+  });
+
   it(`Query with count(*) and expr`, async () => {
     const count = await milvusClient.count({
       collection_name: COLLECTION_NAME,

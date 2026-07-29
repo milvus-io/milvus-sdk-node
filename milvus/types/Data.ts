@@ -90,6 +90,7 @@ type BaseQueryReq = collectionNameReq & {
   filter?: string; // alias for expr
   offset?: number; // skip how many results
   limit?: number; // how many results you want
+  group_by_fields?: string[]; // scalar fields used to group aggregation results
   order_by_fields?: OrderByFields; // order by fields
   order_by?: OrderByFields; // alias for order_by_fields
   consistency_level?: ConsistencyLevelEnum; // consistency level
