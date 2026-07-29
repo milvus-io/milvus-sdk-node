@@ -260,6 +260,37 @@ const results = await client.search({
 });
 ```
 
+Search aggregation supports bucket metrics, top hits, and nested buckets.
+
+```typescript
+const results = await client.search({
+  collection_name: 'products',
+  data: [0.1, 0.2, 0.3, 0.4],
+  output_fields: ['category', 'brand', 'price'],
+  search_aggregation: {
+    fields: ['category'],
+    size: 5,
+    metrics: {
+      item_count: { op: 'count', field_name: '*' },
+      avg_price: { op: 'avg', field_name: 'price' },
+    },
+    order: [{ key: 'avg_price', direction: 'desc' }],
+    top_hits: {
+      size: 2,
+      sort: [{ field_name: 'price', direction: 'asc' }],
+    },
+    sub_aggregation: {
+      fields: ['brand'],
+      size: 3,
+    },
+  },
+});
+
+// A single query vector returns AggregationBucket[].
+// Multiple query vectors return AggregationBucket[][].
+console.log(results.agg_buckets);
+```
+
 #### query
 
 Query rows with scalar filter expression.

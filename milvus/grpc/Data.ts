@@ -25,6 +25,7 @@ import {
   GePersistentSegmentInfoResponse,
   buildSearchRequest,
   formatSearchResult,
+  formatSearchAggregationResult,
   MutationResult,
   QueryResults,
   ResStatus,
@@ -792,13 +793,15 @@ export class Data extends Collection {
       request,
       params.timeout || this.timeout
     );
+    const hasSearchAggregation =
+      'search_aggregation' in params && !!params.search_aggregation;
 
     // if search failed
     // if nothing returned
     // return empty with status
     if (
       originSearchResult.status.error_code !== ErrorCode.SUCCESS ||
-      originSearchResult.results.scores.length === 0
+      (originSearchResult.results.scores.length === 0 && !hasSearchAggregation)
     ) {
       return {
         status: originSearchResult.status,
@@ -816,10 +819,20 @@ export class Data extends Collection {
     }
 
     // build final results array
-    const results = formatSearchResult(originSearchResult, {
-      round_decimal: round_decimal || -1,
-      transformers: params.transformers,
-    });
+    const results = originSearchResult.results.scores.length
+      ? formatSearchResult(originSearchResult, {
+          round_decimal: round_decimal || -1,
+          transformers: params.transformers,
+        })
+      : [];
+    const aggBuckets = hasSearchAggregation
+      ? formatSearchAggregationResult(originSearchResult)
+      : undefined;
+    const formattedAggBuckets = aggBuckets
+      ? ((nq === 1 ? aggBuckets[0] || [] : aggBuckets) as SearchResults<T>[
+          'agg_buckets'
+        ])
+      : undefined;
 
     return {
       status: originSearchResult.status,
@@ -833,6 +846,9 @@ export class Data extends Collection {
         originSearchResult.results.search_iterator_v2_results,
       _search_iterator_v2_results:
         originSearchResult.results._search_iterator_v2_results,
+      ...(formattedAggBuckets
+        ? { agg_buckets: formattedAggBuckets }
+        : {}),
     };
   }
 

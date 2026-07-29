@@ -15,6 +15,7 @@ export * from './Http';
 export * from './Segments';
 export * from './Insert';
 export * from './Search';
+export * from './SearchAggregation';
 export * from './DataTypes';
 export * from './GlobalCluster';
 export * from './Volume';

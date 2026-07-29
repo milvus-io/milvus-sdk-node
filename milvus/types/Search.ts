@@ -16,6 +16,11 @@ import {
   OrderByFields,
   GrpcTimeOut,
 } from '../';
+import {
+  AggregationBucket,
+  ProtoAggregationBucket,
+  SearchAggregation,
+} from './SearchAggregation';
 
 // Highlighter types
 export enum HighlightType {
@@ -93,6 +98,7 @@ export interface SearchReq extends collectionNameReq {
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
   ids?: number[] | string[]; // primary keys for search by IDs
   highlighter?: Highlighter; // highlighter for search results
+  search_aggregation?: SearchAggregation; // bucket aggregation configuration
 }
 
 export interface FunctionScore {
@@ -128,6 +134,7 @@ export interface SearchSimpleReq extends collectionNameReq {
   nq?: number; // number of query vectors
   ids?: number[] | string[]; // primary keys for search by IDs
   highlighter?: Highlighter; // highlighter for search results
+  search_aggregation?: SearchAggregation; // bucket aggregation configuration
 }
 
 export type HybridSearchSingleReq = Pick<
@@ -144,7 +151,7 @@ export type HybridSearchSingleReq = Pick<
 
 export interface SearchIteratorReq extends Omit<
   SearchSimpleReq,
-  'vectors' | 'offset' | 'limit' | 'topk'
+  'vectors' | 'offset' | 'limit' | 'topk' | 'search_aggregation'
 > {
   limit?: number; // Optional. Specifies the maximum number of items. Default is no limit (-1 or if not set).
   batchSize: number; // Specifies the number of items to return in each batch. if it exceeds 16384, it will be set to 16384
@@ -167,6 +174,7 @@ export type HybridSearchReq = Omit<
   | 'expr'
   | 'exprValues'
   | 'order_by_fields'
+  | 'search_aggregation'
 > & {
   // search requests
   data: HybridSearchSingleReq[];
@@ -223,6 +231,8 @@ export interface SearchRes extends resStatusResponse {
       field_name: string;
       datas: HighlightData[];
     }[];
+    agg_buckets: ProtoAggregationBucket[];
+    agg_topks: (string | number)[];
   };
   collection_name: string;
   session_ts: number;
@@ -250,6 +260,20 @@ export type DetermineResultsType<T extends Record<string, any>> =
             ? SearchResultData[][]
             : SearchResultData[];
 
+export type DetermineAggregationResultsType<
+  T extends Record<string, any>,
+> = T['vectors'] extends [SearchData]
+  ? AggregationBucket[]
+  : T['vectors'] extends SearchData[]
+    ? AggregationBucket[][]
+    : T['vector'] extends SearchData
+      ? AggregationBucket[]
+      : T['data'] extends SearchData
+        ? AggregationBucket[]
+        : T['data'] extends SearchData[]
+          ? AggregationBucket[][]
+          : AggregationBucket[];
+
 export interface SearchResultData {
   [x: string]: any;
   score: number;
@@ -269,4 +293,5 @@ export interface SearchResults<
   all_search_count?: number;
   search_iterator_v2_results?: Record<string, any>;
   _search_iterator_v2_results?: string;
+  agg_buckets?: DetermineAggregationResultsType<T>;
 }

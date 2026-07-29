@@ -13,5 +13,6 @@ export * from './types/Http';
 export * from './types/Segments';
 export * from './types/Insert';
 export * from './types/Search';
+export * from './types/SearchAggregation';
 export * from './types/DataTypes';
 export * from './types/Volume';

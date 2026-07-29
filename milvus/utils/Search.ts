@@ -37,6 +37,8 @@ import {
   HighlightData,
   HighlightResult,
 } from '../';
+import { SearchAggregationSpec } from '../types/SearchAggregation';
+import { buildSearchAggregation } from './SearchAggregation';
 
 /**
  * Type guard to check if an object is a FunctionScore
@@ -171,6 +173,7 @@ type FormatedSearchRequest = {
   function_score?: any;
   requests?: FormatedSearchRequest[];
   highlighter?: { type: number; params: KeyValuePair[] };
+  search_aggregation?: SearchAggregationSpec;
 };
 
 /**
@@ -277,6 +280,59 @@ export const buildSearchRequest = (
     typeof searchHybridReq.data[0] === 'object' &&
     searchHybridReq.data[0].anns_field
   );
+
+  const searchAggregation =
+    searchSimpleReq.search_aggregation || searchReq.search_aggregation;
+  if (searchAggregation && isHybridSearch) {
+    throw new Error('search_aggregation is not supported for hybrid search');
+  }
+  if (searchAggregation && searchSimpleOrHybridReq.highlighter) {
+    throw new Error(
+      'highlighter and search_aggregation cannot be used simultaneously'
+    );
+  }
+
+  const aggregationConflictSources = [
+    searchSimpleReq.params,
+    searchReq.search_params,
+  ];
+  const hasNonEmptyAggregationConflict = (key: string) =>
+    aggregationConflictSources.some(source => {
+      const value = source?.[key];
+      return Array.isArray(value)
+        ? value.length > 0
+        : value !== undefined &&
+            value !== null &&
+            String(value).trim().length > 0;
+    });
+
+  if (
+    searchAggregation &&
+    (searchSimpleReq.group_by_field ||
+      hasNonEmptyAggregationConflict('group_by_field'))
+  ) {
+    throw new Error(
+      'search_aggregation and group_by_field are mutually exclusive'
+    );
+  }
+  if (
+    searchAggregation &&
+    ((Array.isArray((params as any).group_by_fields) &&
+      (params as any).group_by_fields.length > 0) ||
+      hasNonEmptyAggregationConflict('group_by_fields'))
+  ) {
+    throw new Error(
+      'search_aggregation and group_by_fields are mutually exclusive'
+    );
+  }
+
+  const aggregationOffset =
+    searchSimpleReq.offset ??
+    (searchSimpleReq.params?.offset as number | undefined) ??
+    searchReq.search_params?.offset;
+  if (searchAggregation && Number(aggregationOffset || 0) > 0) {
+    throw new Error('offset is not supported with search_aggregation');
+  }
 
   // output fields(reference fields)
   const default_output_fields: string[] = ['*'];
@@ -401,6 +457,9 @@ export const buildSearchRequest = (
       ),
       consistency_level:
         params.consistency_level || (collectionInfo.consistency_level as any),
+      ...(searchAggregation
+        ? { search_aggregation: buildSearchAggregation(searchAggregation) }
+        : {}),
     };
 
     if (ids && ids.length > 0) {
