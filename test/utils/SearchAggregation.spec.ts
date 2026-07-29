@@ -123,11 +123,28 @@ describe('SearchAggregation', () => {
   });
 
   it.each([
+    null,
     {},
     { fields: [], size: 1 },
     { fields: [''], size: 1 },
     { fields: ['meta["region"]'], size: 1 },
     { fields: ['brand'], size: 0 },
+    { fields: ['brand'], size: 1, metrics: null },
+    {
+      fields: ['brand'],
+      size: 1,
+      metrics: { ' ': { op: 'count', field_name: '*' } },
+    },
+    {
+      fields: ['brand'],
+      size: 1,
+      metrics: { bad: null },
+    },
+    {
+      fields: ['brand'],
+      size: 1,
+      metrics: { bad: { op: 'count', field_name: ' ' } },
+    },
     {
       fields: ['brand'],
       size: 1,
@@ -138,6 +155,8 @@ describe('SearchAggregation', () => {
       size: 1,
       metrics: { bad: { op: 'avg', field_name: '*' } },
     },
+    { fields: ['brand'], size: 1, order: null },
+    { fields: ['brand'], size: 1, order: [{}] },
     {
       fields: ['brand'],
       size: 1,
@@ -146,7 +165,23 @@ describe('SearchAggregation', () => {
     {
       fields: ['brand'],
       size: 1,
+      order: [{ key: '_key', direction: 'sideways' }],
+    },
+    { fields: ['brand'], size: 1, top_hits: null },
+    {
+      fields: ['brand'],
+      size: 1,
       top_hits: { size: 0 },
+    },
+    {
+      fields: ['brand'],
+      size: 1,
+      top_hits: { size: 1, sort: null },
+    },
+    {
+      fields: ['brand'],
+      size: 1,
+      top_hits: { size: 1, sort: [{}] },
     },
     {
       fields: ['brand'],
@@ -158,6 +193,21 @@ describe('SearchAggregation', () => {
     },
   ])('rejects invalid configurations', aggregation => {
     expect(() => buildSearchAggregation(aggregation as any)).toThrow();
+  });
+
+  it('rejects aggregation nesting deeper than four levels', () => {
+    let aggregation: any = { fields: ['level_5'], size: 1 };
+    for (let level = 4; level >= 1; level--) {
+      aggregation = {
+        fields: [`level_${level}`],
+        size: 1,
+        sub_aggregation: aggregation,
+      };
+    }
+
+    expect(() => buildSearchAggregation(aggregation)).toThrow(
+      'at most 4 levels'
+    );
   });
 
   it('adds a plain aggregation object to a regular search request', () => {
@@ -181,8 +231,11 @@ describe('SearchAggregation', () => {
 
   it.each([
     { group_by_field: 'brand', error: 'group_by_field' },
+    { params: { group_by_field: 'brand' }, error: 'group_by_field' },
+    { group_by_fields: ['brand'], error: 'group_by_fields' },
     { params: { group_by_fields: ['brand'] }, error: 'group_by_fields' },
     { offset: 1, error: 'offset' },
+    { params: { offset: 1 }, error: 'offset' },
     {
       highlighter: { type: HighlightType.Lexical },
       error: 'highlighter',
@@ -327,6 +380,79 @@ describe('SearchAggregation', () => {
       [1, 2],
       [3],
       [4, 5, 6],
+    ]);
+  });
+
+  it('handles protobuf oneofs without discriminators', () => {
+    const result = formatSearchAggregationResult({
+      results: {
+        primary_field_name: 'product_id',
+        num_queries: 1,
+        agg_topks: [],
+        agg_buckets: [
+          {
+            key: [
+              { field_id: '10', field_name: '', int_val: '7' },
+              { field_id: '11', field_name: 'missing' },
+            ],
+            count: '1',
+            metrics: {
+              count: { int_val: '1' },
+              missing: {},
+            },
+            hits: [
+              {
+                str_pk: 'product-1',
+                score: 0.5,
+                fields: [
+                  {
+                    field_id: '20',
+                    field_name: '',
+                    string_val: 'value',
+                  },
+                  { field_id: '21', field_name: 'missing' },
+                ],
+              },
+            ],
+            sub_groups: [],
+          },
+        ],
+      },
+    } as any);
+
+    expect(result[0][0]).toEqual({
+      key: [
+        { field_id: '10', field_name: '10', value: '7' },
+        { field_id: '11', field_name: 'missing', value: undefined },
+      ],
+      count: '1',
+      metrics: { count: '1', missing: undefined },
+      hits: [{ product_id: 'product-1', score: 0.5, '20': 'value' }],
+      sub_groups: [],
+    });
+  });
+
+  it('returns empty buckets and appends unmatched trailing buckets', () => {
+    expect(
+      formatSearchAggregationResult({
+        results: { num_queries: 1, agg_topks: [], agg_buckets: [] },
+      } as any)
+    ).toEqual([]);
+
+    const result = formatSearchAggregationResult({
+      results: {
+        num_queries: 2,
+        agg_topks: ['1', '0'],
+        agg_buckets: [
+          { key: [], count: 1, metrics: {}, hits: [], sub_groups: [] },
+          { key: [], count: 2, metrics: {}, hits: [], sub_groups: [] },
+        ],
+      },
+    } as any);
+
+    expect(result.map(buckets => buckets.map(bucket => bucket.count))).toEqual([
+      [1],
+      [2],
     ]);
   });
 
