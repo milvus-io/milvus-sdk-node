@@ -669,10 +669,12 @@ describe(`Collection API`, () => {
   it(`alter collection success`, async () => {
     const key = 'collection.ttl.seconds';
     const value = 18000;
+    const descriptionKey = 'collection.description';
+    const description = 'updated collection description';
 
     const alter = await milvusClient.alterCollectionProperties({
       collection_name: LOAD_COLLECTION_NAME,
-      properties: { [key]: value },
+      properties: { [key]: value, [descriptionKey]: description },
     });
     expect(alter.error_code).toEqual(ErrorCode.SUCCESS);
 
@@ -696,11 +698,14 @@ describe(`Collection API`, () => {
     expect(
       Boolean(formatKeyValueData(describe.properties, [key2])[key2])
     ).toEqual(value2);
+    expect(describe.schema.description).toEqual(description);
   });
 
   it(`Alter collection field properties should success`, async () => {
     const key = 'mmap.enabled';
     const value = true;
+    const descriptionKey = 'field.description';
+    const fieldDescription = 'updated field description';
 
     const alter = await milvusClient.alterCollectionFieldProperties({
       collection_name: LOAD_COLLECTION_NAME,
@@ -724,7 +729,7 @@ describe(`Collection API`, () => {
     const alter2 = await milvusClient.alterCollectionFieldProperties({
       collection_name: LOAD_COLLECTION_NAME,
       field_name: 'varChar',
-      properties: { max_length: 1024 },
+      properties: { max_length: 1024, [descriptionKey]: fieldDescription },
       db_name: 'Collection', // pass test case
     });
     expect(alter2.error_code).toEqual(ErrorCode.SUCCESS);
@@ -739,6 +744,7 @@ describe(`Collection API`, () => {
     ) as any;
 
     expect(varCharField['max_length']).toEqual('1024');
+    expect(varCharField.description).toEqual(fieldDescription);
   });
 
   it(`Load Collection Sync throw COLLECTION_NAME_IS_REQUIRED`, async () => {

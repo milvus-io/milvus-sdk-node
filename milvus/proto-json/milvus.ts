@@ -92,6 +92,14 @@ export default {
                       "requestType": "LoadPartitionsRequest",
                       "responseType": "common.Status"
                     },
+                    "Prewarm": {
+                      "requestType": "PrewarmRequest",
+                      "responseType": "PrewarmResponse"
+                    },
+                    "DescribePrewarmTask": {
+                      "requestType": "DescribePrewarmTaskRequest",
+                      "responseType": "DescribePrewarmTaskResponse"
+                    },
                     "ReleasePartitions": {
                       "requestType": "ReleasePartitionsRequest",
                       "responseType": "common.Status"
@@ -103,6 +111,30 @@ export default {
                     "ShowPartitions": {
                       "requestType": "ShowPartitionsRequest",
                       "responseType": "ShowPartitionsResponse"
+                    },
+                    "CreateNamespace": {
+                      "requestType": "CreateNamespaceRequest",
+                      "responseType": "CreateNamespaceResponse"
+                    },
+                    "DescribeNamespace": {
+                      "requestType": "DescribeNamespaceRequest",
+                      "responseType": "DescribeNamespaceResponse"
+                    },
+                    "ListNamespaces": {
+                      "requestType": "ListNamespacesRequest",
+                      "responseType": "ListNamespacesResponse"
+                    },
+                    "DropNamespace": {
+                      "requestType": "DropNamespaceRequest",
+                      "responseType": "DropNamespaceResponse"
+                    },
+                    "HasNamespace": {
+                      "requestType": "HasNamespaceRequest",
+                      "responseType": "HasNamespaceResponse"
+                    },
+                    "GetNamespaceStats": {
+                      "requestType": "GetNamespaceStatsRequest",
+                      "responseType": "GetNamespaceStatsResponse"
                     },
                     "GetLoadingProgress": {
                       "requestType": "GetLoadingProgressRequest",
@@ -302,6 +334,10 @@ export default {
                     },
                     "CreateRole": {
                       "requestType": "CreateRoleRequest",
+                      "responseType": "common.Status"
+                    },
+                    "AlterRole": {
+                      "requestType": "AlterRoleRequest",
                       "responseType": "common.Status"
                     },
                     "DropRole": {
@@ -1439,6 +1475,143 @@ export default {
                     }
                   }
                 },
+                "PrewarmRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeLoad",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 4,
+                      "options": {
+                        "proto3_optional": true
+                      }
+                    },
+                    "replica_number": {
+                      "type": "int32",
+                      "id": 5
+                    },
+                    "resource_groups": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 6
+                    },
+                    "load_fields": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 7
+                    },
+                    "skip_load_dynamic_field": {
+                      "type": "bool",
+                      "id": 8
+                    },
+                    "load_params": {
+                      "keyType": "string",
+                      "type": "string",
+                      "id": 9
+                    },
+                    "ttl_seconds": {
+                      "type": "int64",
+                      "id": 10
+                    },
+                    "priority": {
+                      "type": "string",
+                      "id": 11
+                    }
+                  }
+                },
+                "PrewarmTaskState": {
+                  "values": {
+                    "PrewarmTaskStateUnknown": 0,
+                    "PrewarmTaskStatePending": 1,
+                    "PrewarmTaskStateWarming": 2,
+                    "PrewarmTaskStateCompleted": 3,
+                    "PrewarmTaskStateFailed": 4
+                  }
+                },
+                "PrewarmResponse": {
+                  "oneofs": {
+                    "_namespace": {
+                      "oneof": [
+                        "namespace"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "taskID": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "id": 3,
+                      "options": {
+                        "proto3_optional": true
+                      }
+                    }
+                  }
+                },
+                "DescribePrewarmTaskRequest": {
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "taskID": {
+                      "type": "string",
+                      "id": 2
+                    }
+                  }
+                },
+                "DescribePrewarmTaskResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "taskID": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "state": {
+                      "type": "PrewarmTaskState",
+                      "id": 3
+                    },
+                    "progress": {
+                      "type": "int32",
+                      "id": 4
+                    },
+                    "error_message": {
+                      "type": "string",
+                      "id": 5
+                    }
+                  }
+                },
                 "ReleasePartitionsRequest": {
                   "options": {
                     "(common.privilege_ext_obj).object_type": "Collection",
@@ -1568,6 +1741,310 @@ export default {
                       "options": {
                         "deprecated": true
                       }
+                    }
+                  }
+                },
+                "NamespaceStats": {
+                  "fields": {
+                    "stats": {
+                      "rule": "repeated",
+                      "type": "common.KeyValuePair",
+                      "id": 1
+                    },
+                    "approx_entity_count": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "entity_count": {
+                      "type": "int64",
+                      "id": 3
+                    },
+                    "entity_count_type": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "logical_bytes": {
+                      "type": "int64",
+                      "id": 5
+                    },
+                    "last_write_timestamp": {
+                      "type": "uint64",
+                      "id": 6
+                    },
+                    "last_write_utc_timestamp": {
+                      "type": "uint64",
+                      "id": 7
+                    }
+                  }
+                },
+                "NamespaceInfo": {
+                  "fields": {
+                    "collection_name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "namespace_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "created_timestamp": {
+                      "type": "uint64",
+                      "id": 3
+                    },
+                    "created_utc_timestamp": {
+                      "type": "uint64",
+                      "id": 4
+                    },
+                    "state": {
+                      "type": "string",
+                      "id": 5
+                    },
+                    "stats": {
+                      "type": "NamespaceStats",
+                      "id": 6
+                    }
+                  }
+                },
+                "CreateNamespaceRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCreatePartition",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "namespace_name": {
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "CreateNamespaceResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "namespace": {
+                      "type": "NamespaceInfo",
+                      "id": 2
+                    }
+                  }
+                },
+                "DescribeNamespaceRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeShowPartitions",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "namespace_name": {
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "DescribeNamespaceResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "namespace": {
+                      "type": "NamespaceInfo",
+                      "id": 2
+                    }
+                  }
+                },
+                "ListNamespacesRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeShowPartitions",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "prefix": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "page_size": {
+                      "type": "int64",
+                      "id": 5
+                    },
+                    "page_token": {
+                      "type": "string",
+                      "id": 6
+                    }
+                  }
+                },
+                "ListNamespacesResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "namespaces": {
+                      "rule": "repeated",
+                      "type": "NamespaceInfo",
+                      "id": 2
+                    },
+                    "next_page_token": {
+                      "type": "string",
+                      "id": 3
+                    }
+                  }
+                },
+                "DropNamespaceRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeDropPartition",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "namespace_name": {
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "DropNamespaceResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "namespace": {
+                      "type": "NamespaceInfo",
+                      "id": 2
+                    }
+                  }
+                },
+                "HasNamespaceRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeHasPartition",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "namespace_name": {
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "HasNamespaceResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "value": {
+                      "type": "bool",
+                      "id": 2
+                    }
+                  }
+                },
+                "GetNamespaceStatsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeShowPartitions",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "namespace_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "exact": {
+                      "type": "bool",
+                      "id": 5
+                    }
+                  }
+                },
+                "GetNamespaceStatsResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "namespace_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "stats": {
+                      "type": "NamespaceStats",
+                      "id": 3
                     }
                   }
                 },
@@ -2460,6 +2937,11 @@ export default {
                     "search_aggregation": {
                       "type": "common.SearchAggregationSpec",
                       "id": 23
+                    },
+                    "function_chains": {
+                      "rule": "repeated",
+                      "type": "schema.FunctionChain",
+                      "id": 24
                     }
                   }
                 },
@@ -2578,6 +3060,11 @@ export default {
                       "options": {
                         "proto3_optional": true
                       }
+                    },
+                    "function_chains": {
+                      "rule": "repeated",
+                      "type": "schema.FunctionChain",
+                      "id": 15
                     }
                   }
                 },
@@ -3784,6 +4271,13 @@ export default {
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateOwnership",
                     "(common.privilege_ext_obj).object_name_index": -1
                   },
+                  "oneofs": {
+                    "_description": {
+                      "oneof": [
+                        "description"
+                      ]
+                    }
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -3804,6 +4298,13 @@ export default {
                     "modified_utc_timestamps": {
                       "type": "uint64",
                       "id": 5
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 6,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -3812,6 +4313,13 @@ export default {
                     "(common.privilege_ext_obj).object_type": "User",
                     "(common.privilege_ext_obj).object_privilege": "PrivilegeUpdateUser",
                     "(common.privilege_ext_obj).object_name_index": 2
+                  },
+                  "oneofs": {
+                    "_description": {
+                      "oneof": [
+                        "description"
+                      ]
+                    }
                   },
                   "fields": {
                     "base": {
@@ -3837,6 +4345,13 @@ export default {
                     "modified_utc_timestamps": {
                       "type": "uint64",
                       "id": 6
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 7,
+                      "options": {
+                        "proto3_optional": true
+                      }
                     }
                   }
                 },
@@ -3888,6 +4403,10 @@ export default {
                     "name": {
                       "type": "string",
                       "id": 1
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 2
                     }
                   }
                 },
@@ -3913,6 +4432,27 @@ export default {
                     "entity": {
                       "type": "RoleEntity",
                       "id": 2
+                    }
+                  }
+                },
+                "AlterRoleRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateOwnership",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "role_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 3
                     }
                   }
                 },
@@ -4151,6 +4691,10 @@ export default {
                       "rule": "repeated",
                       "type": "RoleEntity",
                       "id": 2
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 3
                     }
                   }
                 },
@@ -5695,6 +6239,10 @@ export default {
                     "end_timetick": {
                       "type": "uint64",
                       "id": 4
+                    },
+                    "include_start_message": {
+                      "type": "bool",
+                      "id": 5
                     }
                   }
                 },
@@ -7060,6 +7608,7 @@ export default {
                     "ListPrivilegeGroups": 1612,
                     "OperatePrivilegeGroup": 1613,
                     "OperatePrivilegeV2": 1614,
+                    "AlterRole": 1615,
                     "CreateResourceGroup": 1700,
                     "DropResourceGroup": 1701,
                     "ListResourceGroups": 1702,
@@ -7870,6 +8419,9 @@ export default {
                     "Text": 25,
                     "Timestamptz": 26,
                     "Mol": 27,
+                    "Date": 28,
+                    "Time": 29,
+                    "Decimal": 30,
                     "BinaryVector": 100,
                     "FloatVector": 101,
                     "Float16Vector": 102,
@@ -8029,6 +8581,170 @@ export default {
                       "rule": "repeated",
                       "type": "common.KeyValuePair",
                       "id": 2
+                    }
+                  }
+                },
+                "FunctionChainStage": {
+                  "values": {
+                    "FunctionChainStageUnspecified": 0,
+                    "FunctionChainStageIngestion": 1,
+                    "FunctionChainStagePreProcess": 2,
+                    "FunctionChainStageL0Rerank": 3,
+                    "FunctionChainStageL1Rerank": 4,
+                    "FunctionChainStageL2Rerank": 5,
+                    "FunctionChainStagePostProcess": 6
+                  }
+                },
+                "FunctionChain": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "stage": {
+                      "type": "FunctionChainStage",
+                      "id": 2
+                    },
+                    "ops": {
+                      "rule": "repeated",
+                      "type": "FunctionChainOp",
+                      "id": 3
+                    }
+                  }
+                },
+                "FunctionChainOp": {
+                  "fields": {
+                    "op": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "expr": {
+                      "type": "FunctionChainExpr",
+                      "id": 2
+                    },
+                    "inputs": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 3
+                    },
+                    "outputs": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 4
+                    },
+                    "params": {
+                      "keyType": "string",
+                      "type": "FunctionParamValue",
+                      "id": 5
+                    }
+                  }
+                },
+                "FunctionChainExpr": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "args": {
+                      "rule": "repeated",
+                      "type": "FunctionChainExprArg",
+                      "id": 2
+                    },
+                    "params": {
+                      "keyType": "string",
+                      "type": "FunctionParamValue",
+                      "id": 3
+                    }
+                  }
+                },
+                "FunctionChainExprArg": {
+                  "oneofs": {
+                    "arg": {
+                      "oneof": [
+                        "column",
+                        "literal"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "column": {
+                      "type": "FunctionChainColumnArg",
+                      "id": 1
+                    },
+                    "literal": {
+                      "type": "FunctionParamValue",
+                      "id": 2
+                    }
+                  }
+                },
+                "FunctionChainColumnArg": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
+                "FunctionParamValue": {
+                  "oneofs": {
+                    "value": {
+                      "oneof": [
+                        "bool_value",
+                        "int64_value",
+                        "double_value",
+                        "string_value",
+                        "array_value",
+                        "object_value",
+                        "bytes_value"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "bool_value": {
+                      "type": "bool",
+                      "id": 1
+                    },
+                    "int64_value": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "double_value": {
+                      "type": "double",
+                      "id": 3
+                    },
+                    "string_value": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "array_value": {
+                      "type": "FunctionParamArray",
+                      "id": 5
+                    },
+                    "object_value": {
+                      "type": "FunctionParamObject",
+                      "id": 6
+                    },
+                    "bytes_value": {
+                      "type": "bytes",
+                      "id": 7
+                    }
+                  }
+                },
+                "FunctionParamArray": {
+                  "fields": {
+                    "values": {
+                      "rule": "repeated",
+                      "type": "FunctionParamValue",
+                      "id": 1
+                    }
+                  }
+                },
+                "FunctionParamObject": {
+                  "fields": {
+                    "fields": {
+                      "keyType": "string",
+                      "type": "FunctionParamValue",
+                      "id": 1
                     }
                   }
                 },
@@ -8237,6 +8953,24 @@ export default {
                     }
                   }
                 },
+                "DateArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "int32",
+                      "id": 1
+                    }
+                  }
+                },
+                "TimeArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 1
+                    }
+                  }
+                },
                 "GeometryWktArray": {
                   "fields": {
                     "data": {
@@ -8275,7 +9009,9 @@ export default {
                         "double_data",
                         "string_data",
                         "bytes_data",
-                        "timestamptz_data"
+                        "timestamptz_data",
+                        "date_data",
+                        "time_data"
                       ]
                     }
                   },
@@ -8311,6 +9047,14 @@ export default {
                     "timestamptz_data": {
                       "type": "int64",
                       "id": 8
+                    },
+                    "date_data": {
+                      "type": "int32",
+                      "id": 9
+                    },
+                    "time_data": {
+                      "type": "int64",
+                      "id": 10
                     }
                   }
                 },
@@ -8331,7 +9075,9 @@ export default {
                         "timestamptz_data",
                         "geometry_wkt_data",
                         "mol_data",
-                        "mol_smiles_data"
+                        "mol_smiles_data",
+                        "date_data",
+                        "time_data"
                       ]
                     }
                   },
@@ -8391,6 +9137,14 @@ export default {
                     "mol_smiles_data": {
                       "type": "MolSmilesArray",
                       "id": 14
+                    },
+                    "date_data": {
+                      "type": "DateArray",
+                      "id": 15
+                    },
+                    "time_data": {
+                      "type": "TimeArray",
+                      "id": 16
                     }
                   }
                 },
@@ -8893,7 +9647,8 @@ export default {
                         "int64_val",
                         "float_val",
                         "string_val",
-                        "array_val"
+                        "array_val",
+                        "bytes_val"
                       ]
                     }
                   },
@@ -8917,6 +9672,10 @@ export default {
                     "array_val": {
                       "type": "TemplateArrayValue",
                       "id": 5
+                    },
+                    "bytes_val": {
+                      "type": "bytes",
+                      "id": 6
                     }
                   }
                 },
@@ -9218,6 +9977,10 @@ export default {
                     "segment_id": {
                       "type": "int64",
                       "id": 13
+                    },
+                    "serialized_expr_plan": {
+                      "type": "bytes",
+                      "id": 14
                     }
                   }
                 },

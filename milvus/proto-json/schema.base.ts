@@ -32,6 +32,9 @@ export default {
                     "Text": 25,
                     "Timestamptz": 26,
                     "Mol": 27,
+                    "Date": 28,
+                    "Time": 29,
+                    "Decimal": 30,
                     "BinaryVector": 100,
                     "FloatVector": 101,
                     "Float16Vector": 102,
@@ -191,6 +194,170 @@ export default {
                       "rule": "repeated",
                       "type": "common.KeyValuePair",
                       "id": 2
+                    }
+                  }
+                },
+                "FunctionChainStage": {
+                  "values": {
+                    "FunctionChainStageUnspecified": 0,
+                    "FunctionChainStageIngestion": 1,
+                    "FunctionChainStagePreProcess": 2,
+                    "FunctionChainStageL0Rerank": 3,
+                    "FunctionChainStageL1Rerank": 4,
+                    "FunctionChainStageL2Rerank": 5,
+                    "FunctionChainStagePostProcess": 6
+                  }
+                },
+                "FunctionChain": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "stage": {
+                      "type": "FunctionChainStage",
+                      "id": 2
+                    },
+                    "ops": {
+                      "rule": "repeated",
+                      "type": "FunctionChainOp",
+                      "id": 3
+                    }
+                  }
+                },
+                "FunctionChainOp": {
+                  "fields": {
+                    "op": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "expr": {
+                      "type": "FunctionChainExpr",
+                      "id": 2
+                    },
+                    "inputs": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 3
+                    },
+                    "outputs": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 4
+                    },
+                    "params": {
+                      "keyType": "string",
+                      "type": "FunctionParamValue",
+                      "id": 5
+                    }
+                  }
+                },
+                "FunctionChainExpr": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "args": {
+                      "rule": "repeated",
+                      "type": "FunctionChainExprArg",
+                      "id": 2
+                    },
+                    "params": {
+                      "keyType": "string",
+                      "type": "FunctionParamValue",
+                      "id": 3
+                    }
+                  }
+                },
+                "FunctionChainExprArg": {
+                  "oneofs": {
+                    "arg": {
+                      "oneof": [
+                        "column",
+                        "literal"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "column": {
+                      "type": "FunctionChainColumnArg",
+                      "id": 1
+                    },
+                    "literal": {
+                      "type": "FunctionParamValue",
+                      "id": 2
+                    }
+                  }
+                },
+                "FunctionChainColumnArg": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
+                "FunctionParamValue": {
+                  "oneofs": {
+                    "value": {
+                      "oneof": [
+                        "boolValue",
+                        "int64Value",
+                        "doubleValue",
+                        "stringValue",
+                        "arrayValue",
+                        "objectValue",
+                        "bytesValue"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "boolValue": {
+                      "type": "bool",
+                      "id": 1
+                    },
+                    "int64Value": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "doubleValue": {
+                      "type": "double",
+                      "id": 3
+                    },
+                    "stringValue": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "arrayValue": {
+                      "type": "FunctionParamArray",
+                      "id": 5
+                    },
+                    "objectValue": {
+                      "type": "FunctionParamObject",
+                      "id": 6
+                    },
+                    "bytesValue": {
+                      "type": "bytes",
+                      "id": 7
+                    }
+                  }
+                },
+                "FunctionParamArray": {
+                  "fields": {
+                    "values": {
+                      "rule": "repeated",
+                      "type": "FunctionParamValue",
+                      "id": 1
+                    }
+                  }
+                },
+                "FunctionParamObject": {
+                  "fields": {
+                    "fields": {
+                      "keyType": "string",
+                      "type": "FunctionParamValue",
+                      "id": 1
                     }
                   }
                 },
@@ -399,6 +566,24 @@ export default {
                     }
                   }
                 },
+                "DateArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "int32",
+                      "id": 1
+                    }
+                  }
+                },
+                "TimeArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 1
+                    }
+                  }
+                },
                 "GeometryWktArray": {
                   "fields": {
                     "data": {
@@ -437,7 +622,9 @@ export default {
                         "doubleData",
                         "stringData",
                         "bytesData",
-                        "timestamptzData"
+                        "timestamptzData",
+                        "dateData",
+                        "timeData"
                       ]
                     }
                   },
@@ -473,6 +660,14 @@ export default {
                     "timestamptzData": {
                       "type": "int64",
                       "id": 8
+                    },
+                    "dateData": {
+                      "type": "int32",
+                      "id": 9
+                    },
+                    "timeData": {
+                      "type": "int64",
+                      "id": 10
                     }
                   }
                 },
@@ -493,7 +688,9 @@ export default {
                         "timestamptzData",
                         "geometryWktData",
                         "molData",
-                        "molSmilesData"
+                        "molSmilesData",
+                        "dateData",
+                        "timeData"
                       ]
                     }
                   },
@@ -553,6 +750,14 @@ export default {
                     "molSmilesData": {
                       "type": "MolSmilesArray",
                       "id": 14
+                    },
+                    "dateData": {
+                      "type": "DateArray",
+                      "id": 15
+                    },
+                    "timeData": {
+                      "type": "TimeArray",
+                      "id": 16
                     }
                   }
                 },
@@ -1055,7 +1260,8 @@ export default {
                         "int64Val",
                         "floatVal",
                         "stringVal",
-                        "arrayVal"
+                        "arrayVal",
+                        "bytesVal"
                       ]
                     }
                   },
@@ -1079,6 +1285,10 @@ export default {
                     "arrayVal": {
                       "type": "TemplateArrayValue",
                       "id": 5
+                    },
+                    "bytesVal": {
+                      "type": "bytes",
+                      "id": 6
                     }
                   }
                 },
@@ -1485,6 +1695,7 @@ export default {
                     "ListPrivilegeGroups": 1612,
                     "OperatePrivilegeGroup": 1613,
                     "OperatePrivilegeV2": 1614,
+                    "AlterRole": 1615,
                     "CreateResourceGroup": 1700,
                     "DropResourceGroup": 1701,
                     "ListResourceGroups": 1702,

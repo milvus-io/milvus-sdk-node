@@ -8,6 +8,7 @@ import {
   ListUsersReq,
   UpdateUserReq,
   CreateRoleReq,
+  AlterRoleReq,
   DropRoleReq,
   AddUserToRoleReq,
   RemoveUserFromRoleReq,
@@ -48,6 +49,7 @@ export class User extends Resource {
    * @param {CreateUserReq} data - The user data.
    * @param {string} data.username - The username of the new user.
    * @param {string} data.password - The password for the new user.
+   * @param {string} [data.description] - An optional description for the new user.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} The response status.
@@ -73,6 +75,7 @@ export class User extends Resource {
       {
         username: data.username,
         password: encryptedPassword,
+        description: data.description,
       },
       data.timeout || this.timeout
     );
@@ -84,8 +87,9 @@ export class User extends Resource {
    *
    * @param {UpdateUserReq} data - The user data.
    * @param {string} data.username - The username of the user to be updated.
-   * @param {string} data.newPassword - The new password for the user.
-   * @param {string} data.oldPassword - The old password of the user.
+   * @param {string} [data.newPassword] - The new password for the user.
+   * @param {string} [data.oldPassword] - The old password required when updating the password.
+   * @param {string} [data.description] - The new description for the user.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} The response status.
@@ -102,24 +106,36 @@ export class User extends Resource {
    * ```
    */
   async updateUser(data: UpdateUserReq): Promise<ResStatus> {
+    const hasDescription = data.description !== undefined;
+    const hasPassword = data.newPassword !== undefined;
+
     if (
       data.username === undefined ||
-      data.newPassword === undefined ||
-      data.oldPassword === undefined
+      (!hasDescription && !hasPassword) ||
+      (hasPassword && data.oldPassword === undefined)
     ) {
       throw new Error(ERROR_REASONS.USERNAME_PWD_ARE_REQUIRED);
     }
-    const encryptedOldPwd = stringToBase64(data.oldPassword);
-    const encryptedNewPwd = stringToBase64(data.newPassword);
+
+    const req: {
+      username: string;
+      description?: string;
+      oldPassword?: string;
+      newPassword?: string;
+    } = {
+      username: data.username,
+      ...(hasDescription ? { description: data.description } : {}),
+    };
+
+    if (hasPassword) {
+      req.oldPassword = stringToBase64(data.oldPassword!);
+      req.newPassword = stringToBase64(data.newPassword!);
+    }
 
     const promise = await promisify(
       this.channelPool,
       'UpdateCredential',
-      {
-        username: data.username,
-        oldPassword: encryptedOldPwd,
-        newPassword: encryptedNewPwd,
-      },
+      req,
       data.timeout || this.timeout
     );
     return promise;
@@ -192,6 +208,7 @@ export class User extends Resource {
    *
    * @param {CreateRoleReq} data - The role data.
    * @param {string} data.roleName - The name of the new role.
+   * @param {string} [data.description] - An optional description for the new role.
    * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
    *
    * @returns {Promise<ResStatus>} The response status.
@@ -210,7 +227,40 @@ export class User extends Resource {
       this.channelPool,
       'CreateRole',
       {
-        entity: { name: data.roleName },
+        entity: { name: data.roleName, description: data.description },
+      },
+      data.timeout || this.timeout
+    );
+    return promise;
+  }
+
+  /**
+   * Alters a role in Milvus.
+   *
+   * @param {AlterRoleReq} data - The role data.
+   * @param {string} data.roleName - The name of the role to alter.
+   * @param {string} data.description - The new role description.
+   * @param {number} [data.timeout] - An optional duration of time in milliseconds to allow for the RPC. If it is set to undefined, the client keeps waiting until the server responds or error occurs. Default is undefined.
+   *
+   * @returns {Promise<ResStatus>} The response status.
+   * @returns {number} ResStatus.error_code - The error code number.
+   * @returns {string} ResStatus.reason - The cause of the error, if any.
+   *
+   * @example
+   * ```javascript
+   *  milvusClient.alterRole({
+   *    roleName: 'exampleRole',
+   *    description: 'example role description',
+   *  });
+   * ```
+   */
+  async alterRole(data: AlterRoleReq): Promise<ResStatus> {
+    const promise = await promisify(
+      this.channelPool,
+      'AlterRole',
+      {
+        role_name: data.roleName,
+        description: data.description,
       },
       data.timeout || this.timeout
     );
