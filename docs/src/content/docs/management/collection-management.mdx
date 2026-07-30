@@ -229,6 +229,8 @@ await client.dropCollectionProperties({
 
 ## Dynamic Schema
 
+<span className="version-tag">Milvus 3.0</span>
+
 ### Adding Fields to Existing Collection
 
 Add a single field:
@@ -262,6 +264,20 @@ await client.addCollectionFields({
   ],
 });
 ```
+
+### Dropping Fields
+
+Drop a field by name:
+
+```javascript
+await client.dropCollectionField({
+  collection_name: 'my_collection',
+  field_name: 'field1',
+});
+```
+
+You can also pass `field_id` instead of `field_name`. Get the field ID from
+`describeCollection({ cache: false })` and provide exactly one identifier.
 
 ### Alter Field Properties
 
@@ -703,17 +719,28 @@ await client.dropSnapshot({
 
 Collection functions are auto-processing pipelines that transform data at insert and query time. The most common use case is BM25 full-text search, where a function automatically converts text to sparse vectors.
 
-### Add a Function
+### Add a Function Output Field and Index
 
 <span className="version-tag">Milvus 3.0</span>
 
-Milvus 3.0's collection schema alteration support includes adding and dropping functions on existing collections. In the Node SDK, use the collection function APIs below.
+Use `addFunctionField()` to atomically add a function output field, the function
+schema, and its bound index. The wrapper supports BM25 and MinHash functions.
 
 ```javascript
-import { FunctionType } from '@zilliz/milvus2-sdk-node';
+import {
+  DataType,
+  FunctionType,
+  IndexType,
+  MetricType,
+} from '@zilliz/milvus2-sdk-node';
 
-await client.addCollectionFunction({
+await client.addFunctionField({
   collection_name: 'my_collection',
+  field: {
+    name: 'sparse_vector',
+    data_type: DataType.SparseFloatVector,
+    is_function_output: true,
+  },
   function: {
     name: 'text_bm25',
     type: FunctionType.BM25,
@@ -721,17 +748,58 @@ await client.addCollectionFunction({
     output_field_names: ['sparse_vector'],
     params: {},
   },
+  index_name: 'text_bm25_index',
+  extra_params: {
+    index_type: IndexType.SPARSE_INVERTED_INDEX,
+    metric_type: MetricType.BM25,
+  },
 });
 ```
 
-### Drop a Function
+MinHash functions generate binary signatures for set or shingle similarity:
 
 ```javascript
-await client.dropCollectionFunction({
+await client.addFunctionField({
+  collection_name: 'my_collection',
+  field: {
+    name: 'minhash_vector',
+    data_type: DataType.BinaryVector,
+    dim: 512,
+    is_function_output: true,
+  },
+  function: {
+    name: 'body_minhash',
+    type: FunctionType.MINHASH,
+    input_field_names: ['body'],
+    output_field_names: ['minhash_vector'],
+    params: { num_hashes: 16, shingle_size: 3 },
+  },
+  index_name: 'minhash_index',
+  extra_params: {
+    index_type: IndexType.MINHASH_LSH,
+    metric_type: MetricType.MHJACCARD,
+    params: { mh_lsh_band: 8 },
+  },
+});
+```
+
+The lower-level `alterCollectionSchema()` API exposes the same schema mutation
+when you need to build the complete request yourself. The older
+`addCollectionFunction()` method remains available, but is deprecated for this
+schema-evolution workflow.
+
+### Drop a Function and Its Output Field
+
+```javascript
+await client.dropFunctionField({
   collection_name: 'my_collection',
   function_name: 'text_bm25',
 });
 ```
+
+`dropFunctionField()` also removes the function output fields and bound indexes.
+The older `dropCollectionFunction()` method does not provide this cascade and is
+deprecated for schema-evolution workflows.
 
 For more details on BM25 functions, see [Full-Text Search](/milvus-sdk-node/advanced/full-text-search).
 

@@ -1,8 +1,9 @@
 ---
-title: "System Operations"
+title: 'System Operations'
 ---
 
-System APIs expose connection context, server status, analyzer testing, and server metrics.
+System APIs expose connection context, server status, analyzer testing, analyzer
+file resources, and server metrics.
 
 ## getVersion
 
@@ -116,6 +117,55 @@ const analyzed = await client.runAnalyzer({
 });
 ```
 
+## File resources
+
+<span className="version-tag">Milvus 3.0</span>
+
+Register server-visible files for analyzers that use custom dictionaries or
+other external text resources. The `path` is resolved by Milvus storage; it is
+not uploaded from the Node.js process.
+
+### addFileResource
+
+```typescript
+addFileResource(data: AddFileResourceReq): Promise<ResStatus>
+```
+
+```typescript
+await client.addFileResource({
+  name: 'product_dictionary',
+  path: 'analyzer-resources/product-dictionary.txt',
+});
+```
+
+### listFileResources
+
+```typescript
+listFileResources(
+  data?: ListFileResourcesReq
+): Promise<ListFileResourcesResponse>
+```
+
+```typescript
+const result = await client.listFileResources();
+for (const resource of result.resources) {
+  console.log(resource.id, resource.name, resource.path);
+}
+```
+
+### removeFileResource
+
+```typescript
+removeFileResource(data: RemoveFileResourceReq): Promise<ResStatus>
+```
+
+```typescript
+await client.removeFileResource({ name: 'product_dictionary' });
+```
+
+File resource requests accept an optional `timeout`. Removing a resource does
+not delete the underlying object from storage.
+
 ## getMetric
 
 Get raw Milvus metrics.
@@ -161,5 +211,6 @@ See [MilvusClient](/milvus-sdk-node/api-reference/client) for details.
 ## Related
 
 - [API Reference overview](/milvus-sdk-node/api-reference)
+- [Full-Text Search](/milvus-sdk-node/advanced/full-text-search)
 - [Troubleshooting](/milvus-sdk-node/reference/troubleshooting)
 - [Types & Enums](/milvus-sdk-node/api-reference/types-and-enums)

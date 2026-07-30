@@ -9,6 +9,8 @@ import {
   CollectionProperties,
   DataType,
   FunctionType,
+  IndexType,
+  MetricType,
 } from '@zilliz/milvus2-sdk-node';
 ```
 
@@ -84,7 +86,9 @@ await client.createCollection({
 
 <span className="version-tag">Milvus 3.0</span>
 
-Milvus 3.0 introduces collection schema alteration for adding fields and functions to existing collections. The Node SDK exposes this through the following field and function management methods.
+Milvus 3.0 introduces collection schema alteration for adding and dropping
+fields and for atomically managing function output fields and indexes. The Node
+SDK exposes these operations through the following field and function methods.
 
 ### addCollectionField
 
@@ -115,6 +119,29 @@ addCollectionFields(data: AddCollectionFieldsReq): Promise<ResStatus>
 - `fields`: Field schema array.
 - `db_name?`: Database name.
 - `timeout?`: Request timeout in milliseconds.
+
+### dropCollectionField
+
+Drop a field by name or field ID.
+
+```typescript
+dropCollectionField(data: DropCollectionFieldReq): Promise<ResStatus>
+```
+
+Provide exactly one field identifier:
+
+- `field_name`: Field name.
+- `field_id`: Positive numeric field ID returned by `describeCollection`.
+- `collection_name`: Collection name.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+```typescript
+await client.dropCollectionField({
+  collection_name: 'books',
+  field_name: 'legacy_category',
+});
+```
 
 ### alterCollectionFieldProperties
 
@@ -404,9 +431,85 @@ dropAlias(data: DropAliasReq): Promise<ResStatus>
 
 ## Function operations
 
+### alterCollectionSchema
+
+Low-level schema alteration API for atomically adding a function output field,
+its function schema, and optional bound index metadata.
+
+```typescript
+alterCollectionSchema(
+  data: AlterCollectionSchemaReq
+): Promise<AlterCollectionSchemaResponse>
+```
+
+**Parameters**:
+
+- `collection_name`: Collection name.
+- `field`: Function output field schema.
+- `function`: Function schema.
+- `do_physical_backfill?`: Backfill existing rows.
+- `index_name?`: Name of the bound index.
+- `extra_params?`: Bound index parameters.
+- `db_name?`: Database name.
+- `timeout?`: Request timeout in milliseconds.
+
+### addFunctionField
+
+Convenience wrapper for adding a BM25 or MinHash function output field and its
+bound index in one schema alteration.
+
+```typescript
+addFunctionField(data: AddFunctionFieldReq): Promise<ResStatus>
+```
+
+The output field must be `SparseFloatVector` for BM25 and `BinaryVector` for
+MinHash. A non-`AUTOINDEX` `index_type` is required.
+
+```typescript
+await client.addFunctionField({
+  collection_name: 'documents',
+  field: {
+    name: 'minhash_vector',
+    data_type: DataType.BinaryVector,
+    dim: 512,
+    is_function_output: true,
+  },
+  function: {
+    name: 'body_minhash',
+    type: FunctionType.MINHASH,
+    input_field_names: ['body'],
+    output_field_names: ['minhash_vector'],
+    params: { num_hashes: 16, shingle_size: 3 },
+  },
+  index_name: 'minhash_index',
+  extra_params: {
+    index_type: IndexType.MINHASH_LSH,
+    metric_type: MetricType.MHJACCARD,
+    params: { mh_lsh_band: 8 },
+  },
+});
+```
+
+### dropFunctionField
+
+Drop a function together with its output fields and bound indexes.
+
+```typescript
+dropFunctionField(data: DropFunctionFieldReq): Promise<ResStatus>
+```
+
+```typescript
+await client.dropFunctionField({
+  collection_name: 'documents',
+  function_name: 'body_minhash',
+});
+```
+
 ### addCollectionFunction
 
 Add a function to a collection, such as BM25, text embedding, or rerank.
+This method is deprecated for schema-evolution workflows; use
+`addFunctionField` when the output field and index must be created atomically.
 
 ```typescript
 addCollectionFunction(data: AddCollectionFunctionReq): Promise<ResStatus>
@@ -441,6 +544,9 @@ alterCollectionFunction(data: AlterCollectionFunctionReq): Promise<ResStatus>
 ```
 
 ### dropCollectionFunction
+
+This method is deprecated for schema-evolution workflows. Use
+`dropFunctionField` to remove the function output fields and indexes as well.
 
 ```typescript
 dropCollectionFunction(data: DropCollectionFunctionReq): Promise<ResStatus>

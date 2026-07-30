@@ -196,7 +196,7 @@ Common `TypeParamKey` values include:
 
 ### FunctionObject
 
-Used for BM25, text embedding, and rerank functions.
+Used for BM25, text embedding, rerank, MinHash, and other function schemas.
 
 <span className="version-tag">Milvus 3.0</span> Collection functions can be
 added to or dropped from existing collections through schema alteration APIs.
@@ -212,6 +212,20 @@ type FunctionObject = {
 };
 ```
 
+```typescript
+enum FunctionType {
+  Unknown = 0,
+  BM25 = 1,
+  TEXTEMBEDDING = 2,
+  RERANK = 3,
+  MINHASH = 4,
+  MOLFINGERPRINT = 5,
+}
+```
+
+`addFunctionField()` currently provides validated convenience wrappers for
+`FunctionType.BM25` and `FunctionType.MINHASH` schema evolution.
+
 ## Partial update enums <span className="version-tag">Milvus 3.0</span>
 
 `FieldPartialUpdateOpType` is used by `upsert({ field_ops })` to control Array field partial updates.
@@ -225,6 +239,36 @@ enum FieldPartialUpdateOpType {
 ```
 
 ## Search and query result types
+
+### SearchAggregation <span className="version-tag">Milvus 3.0</span>
+
+```typescript
+type AggregationMetricOp = 'avg' | 'sum' | 'count' | 'min' | 'max';
+type AggregationDirection = 'asc' | 'desc';
+
+interface SearchAggregation {
+  fields: string[];
+  size: number;
+  metrics?: Record<string, { op: AggregationMetricOp; field_name: string }>;
+  order?: { key: string; direction: AggregationDirection }[];
+  top_hits?: {
+    size: number;
+    sort?: {
+      field_name: string;
+      direction: AggregationDirection;
+    }[];
+  };
+  sub_aggregation?: SearchAggregation;
+}
+
+interface AggregationBucket {
+  key: { field_id: string | number; field_name: string; value?: unknown }[];
+  count: string | number;
+  metrics: Record<string, unknown>;
+  hits: Record<string, unknown>[];
+  sub_groups: AggregationBucket[];
+}
+```
 
 ### QueryResults
 
@@ -251,6 +295,7 @@ interface SearchResults<
   session_ts: number;
   collection_name: string;
   all_search_count?: number;
+  agg_buckets?: AggregationBucket[] | AggregationBucket[][];
 }
 
 interface SearchResultData {

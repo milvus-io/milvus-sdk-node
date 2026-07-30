@@ -1,5 +1,5 @@
 ---
-title: "Index Management"
+title: 'Index Management'
 ---
 
 Indexes are crucial for optimizing search performance in Milvus. This guide covers creating, managing, and optimizing indexes.
@@ -153,6 +153,44 @@ await client.createIndex({
 ```
 
 For binary vectors, the `dim` value must be a multiple of 8, and inserted binary vector payloads use `dim / 8` bytes.
+
+Milvus 3.0 can generate MinHash binary signatures from a text field and create
+the bound index atomically:
+
+```javascript
+import {
+  DataType,
+  FunctionType,
+  IndexType,
+  MetricType,
+} from '@zilliz/milvus2-sdk-node';
+
+await client.addFunctionField({
+  collection_name: 'documents',
+  field: {
+    name: 'minhash_vector',
+    data_type: DataType.BinaryVector,
+    dim: 512,
+    is_function_output: true,
+  },
+  function: {
+    name: 'body_minhash',
+    type: FunctionType.MINHASH,
+    input_field_names: ['body'],
+    output_field_names: ['minhash_vector'],
+    params: { num_hashes: 16, shingle_size: 3 },
+  },
+  index_name: 'minhash_index',
+  extra_params: {
+    index_type: IndexType.MINHASH_LSH,
+    metric_type: MetricType.MHJACCARD,
+    params: { mh_lsh_band: 8 },
+  },
+});
+```
+
+Use `MHJACCARD` for MinHash function output. Plain binary-vector workflows can
+continue to use `JACCARD` when appropriate.
 
 ## Metric Types
 
@@ -365,7 +403,7 @@ do {
     collection_name: 'my_collection',
     field_name: 'vector',
   });
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 } while (state.state !== 'IndexStateFinished');
 
 // Load collection

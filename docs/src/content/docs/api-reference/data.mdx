@@ -165,8 +165,10 @@ query(data: QueryReq): Promise<QueryResults>
 - `partition_names?`: Partition names.
 - `offset?`: Number of rows to skip.
 - `limit?`: Number of rows to return.
+- `group_by_fields?`: Scalar fields used to group aggregation results.
 - `order_by_fields?`: Sort fields, such as `'price:asc'` or `[{ field: 'price', order: 'asc' }]`.
 - `order_by?`: Alias for `order_by_fields`.
+- `params?`: Additional query parameters forwarded to Milvus.
 - `consistency_level?`: Consistency level.
 - `transformers?`: Custom transformers for vector outputs.
 - `db_name?`: Database name.
@@ -183,6 +185,38 @@ const res = await client.query({
   order_by_fields: 'id:asc',
 });
 ```
+
+### Query aggregation
+
+<span className="version-tag">Milvus 3.0</span>
+
+Specify aggregation expressions in `output_fields`. Use `group_by_fields` to
+return one row per scalar group. Supported aggregation functions are `count`,
+`min`, `max`, `sum`, and `avg`.
+
+```typescript
+const res = await client.query({
+  collection_name: 'sales',
+  filter: 'price > 0',
+  group_by_fields: ['category'],
+  output_fields: [
+    'category',
+    'count(price)',
+    'min(price)',
+    'max(price)',
+    'sum(price)',
+    'avg(price)',
+  ],
+  limit: 20,
+});
+
+for (const row of res.data) {
+  console.log(row.category, row['count(price)'], row['avg(price)']);
+}
+```
+
+Without `group_by_fields`, aggregation expressions return collection-level
+values. Response keys use the expressions supplied in `output_fields`.
 
 **Response**:
 
@@ -265,6 +299,7 @@ hybridSearch(data: HybridSearchReq): Promise<SearchResults<HybridSearchReq>> // 
 - `transformers?`: Custom output transformers.
 - `rerank?`: Reranker configuration.
 - `highlighter?`: Text highlight configuration.
+- `search_aggregation?`: Bucket aggregation configuration.
 - `db_name?`: Database name.
 - `timeout?`: Request timeout in milliseconds.
 
@@ -281,6 +316,66 @@ const res = await client.search({
   params: { ef: 64 },
 });
 ```
+
+### Search aggregation
+
+<span className="version-tag">Milvus 3.0</span>
+
+`search_aggregation` groups search candidates into buckets and can calculate
+metrics, return sorted top hits, and recursively create nested buckets.
+
+```typescript
+const res = await client.search({
+  collection_name: 'products',
+  anns_field: 'embedding',
+  data: [0.1, 0.2, 0.3, 0.4],
+  limit: 100,
+  filter: 'in_stock == true',
+  output_fields: ['category', 'brand', 'price'],
+  search_aggregation: {
+    fields: ['category'],
+    size: 5,
+    metrics: {
+      item_count: { op: 'count', field_name: '*' },
+      average_price: { op: 'avg', field_name: 'price' },
+    },
+    order: [{ key: 'average_price', direction: 'desc' }],
+    top_hits: {
+      size: 2,
+      sort: [{ field_name: 'price', direction: 'asc' }],
+    },
+    sub_aggregation: {
+      fields: ['brand'],
+      size: 3,
+    },
+  },
+});
+
+console.log(res.agg_buckets);
+```
+
+```typescript
+interface SearchAggregation {
+  fields: string[];
+  size: number;
+  metrics?: Record<
+    string,
+    { op: 'avg' | 'sum' | 'count' | 'min' | 'max'; field_name: string }
+  >;
+  order?: { key: string; direction: 'asc' | 'desc' }[];
+  top_hits?: {
+    size: number;
+    sort?: { field_name: string; direction: 'asc' | 'desc' }[];
+  };
+  sub_aggregation?: SearchAggregation;
+}
+```
+
+A single query vector returns `AggregationBucket[]`; multiple query vectors
+return `AggregationBucket[][]`. Aggregation searches return their grouped data
+through `agg_buckets` instead of regular hit rows. Search aggregation cannot be combined with
+hybrid search, highlighters, `group_by_field`, `group_by_fields`, or a positive
+offset.
 
 Search by primary key:
 
@@ -343,6 +438,7 @@ interface SearchResults<T> {
   session_ts: number;
   collection_name: string;
   all_search_count?: number;
+  agg_buckets?: AggregationBucket[] | AggregationBucket[][];
 }
 
 interface SearchResultData {

@@ -1,5 +1,5 @@
 ---
-title: "Data Types & Schemas"
+title: 'Data Types & Schemas'
 ---
 
 Milvus supports various data types for storing different kinds of data. Understanding these types is essential for designing effective schemas.
@@ -268,6 +268,72 @@ await client.insert({
 ```
 
 Supported element vector types include dense, binary, float16, bfloat16, sparse, and int8 vector payloads where supported by Milvus.
+
+#### StructArray
+
+<span className="version-tag">Milvus 3.0</span>
+
+A StructArray is an `Array` whose elements share a nested struct schema. Define
+the child fields with `fields` and set `element_type` to `DataType.Struct`.
+
+```javascript
+{
+  name: 'features',
+  data_type: DataType.Array,
+  element_type: DataType.Struct,
+  max_capacity: 16,
+  nullable: true,
+  fields: [
+    { name: 'label', data_type: DataType.VarChar, max_length: 64 },
+    { name: 'score', data_type: DataType.Int32 },
+    { name: 'active', data_type: DataType.Bool },
+    { name: 'embedding', data_type: DataType.FloatVector, dim: 128 },
+  ],
+}
+```
+
+Insert arrays of objects that match the child schema:
+
+```javascript
+await client.insert({
+  collection_name: 'documents',
+  data: [
+    {
+      id: 1,
+      features: [
+        {
+          label: 'title',
+          score: 95,
+          active: true,
+          embedding: [
+            /* 128 floats */
+          ],
+        },
+      ],
+    },
+  ],
+});
+```
+
+Use bracketed paths for child fields and `element_filter` when predicates must
+match values from the same array element:
+
+```javascript
+const rows = await client.query({
+  collection_name: 'documents',
+  filter: 'element_filter(features, $[score] >= 90 AND $[active] == true)',
+  output_fields: ['id', 'features[label]', 'features[score]'],
+});
+```
+
+Vector and scalar child fields can be indexed with paths such as
+`features[embedding]`, `features[score]`, or `features[label]`. Element-level
+query and search results include an `offset` for the matching StructArray
+element. Separate StructArray fields may reuse the same child names.
+
+To add a StructArray to an existing collection with `addCollectionField()`, set
+`nullable: true` so existing rows remain valid. Nested `Array` children inside
+a StructArray are not currently accepted by the Milvus 3.0 server.
 
 #### Struct
 

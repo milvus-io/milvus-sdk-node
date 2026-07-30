@@ -83,7 +83,7 @@ const iterator = await client.queryIterator({
   collection_name: 'my_collection',
   expr: 'age > 25',
   output_fields: ['id', 'text'],
-  batch_size: 100,
+  batchSize: 100,
 });
 
 while (true) {
@@ -119,6 +119,37 @@ const result = await client.count({
 console.log('Count:', result.data);
 ```
 
+### Query Aggregation
+
+<span className="version-tag">Milvus 3.0</span>
+
+Put aggregation expressions in `output_fields`. Add `group_by_fields` when you
+want one result row per scalar group.
+
+```javascript
+const result = await client.query({
+  collection_name: 'sales',
+  filter: 'price > 0',
+  group_by_fields: ['category'],
+  output_fields: [
+    'category',
+    'count(price)',
+    'min(price)',
+    'max(price)',
+    'sum(price)',
+    'avg(price)',
+  ],
+  limit: 20,
+});
+
+result.data.forEach((row) => {
+  console.log(row.category, row['count(price)'], row['avg(price)']);
+});
+```
+
+The supported functions are `count`, `min`, `max`, `sum`, and `avg`. Without
+`group_by_fields`, Milvus returns collection-level aggregation values.
+
 ## Search Operations
 
 Search finds similar vectors using distance metrics.
@@ -133,6 +164,49 @@ const results = await client.search({
   output_fields: ['id', 'text'],
 });
 ```
+
+### Search Aggregation
+
+<span className="version-tag">Milvus 3.0</span>
+
+Search aggregation groups the candidate set into buckets. Each bucket can
+include metrics, sorted top hits, and nested sub-aggregations.
+
+```javascript
+const results = await client.search({
+  collection_name: 'products',
+  anns_field: 'embedding',
+  data: [0.1, 0.2, 0.3, 0.4],
+  limit: 100,
+  filter: 'in_stock == true',
+  output_fields: ['category', 'brand', 'price'],
+  search_aggregation: {
+    fields: ['category'],
+    size: 5,
+    metrics: {
+      item_count: { op: 'count', field_name: '*' },
+      average_price: { op: 'avg', field_name: 'price' },
+    },
+    order: [{ key: 'average_price', direction: 'desc' }],
+    top_hits: {
+      size: 2,
+      sort: [{ field_name: 'price', direction: 'asc' }],
+    },
+    sub_aggregation: {
+      fields: ['brand'],
+      size: 3,
+    },
+  },
+});
+
+console.log(results.agg_buckets);
+```
+
+For one query vector, `agg_buckets` is an `AggregationBucket[]`. For multiple
+query vectors, it is an `AggregationBucket[][]`. Aggregation searches return
+their grouped data through `agg_buckets` instead of regular hit rows. Search aggregation is not
+available for hybrid search and cannot be combined with highlighters, grouping,
+or a positive offset.
 
 ### Search by ID
 
@@ -247,7 +321,7 @@ const iterator = await client.searchIterator({
   data: [[0.1, 0.2, 0.3, 0.4]],
   expr: 'age > 25',
   limit: 1000,
-  batch_size: 100,
+  batchSize: 100,
 });
 
 while (true) {
@@ -327,6 +401,39 @@ Filter expressions use Milvus expression syntax:
 ```javascript
 'metadata.category == "tech"';
 'metadata.tags[0] == "ai"';
+```
+
+### StructArray Element Filters
+
+<span className="version-tag">Milvus 3.0</span>
+
+Use `element_filter` and `$[...]` to apply predicates to fields in the same
+StructArray element:
+
+```javascript
+'element_filter(profile, $[score] >= 90 AND $[active] == true)';
+```
+
+Select child fields with bracketed paths such as `profile[score]` and
+`profile[tag]`. Element-level query and search results include an `offset`
+identifying the matching array element.
+
+### Regex, Raw Strings, and Bitwise Operators <span className="version-tag">Milvus 3.0</span>
+
+These expressions are passed through to the Milvus expression parser:
+
+```javascript
+// Regular expression match and negative match
+'name =~ "^milvus-[0-9]+$"';
+'name !~ "-archived$"';
+
+// Raw string literal for patterns with backslashes
+'path == r"C:\\data\\vectors"';
+
+// Bitwise AND, OR, and XOR
+'(permissions & 4) != 0';
+'(flags | 2) == 3';
+'(mask ^ 1) == 0';
 ```
 
 ## Search Results

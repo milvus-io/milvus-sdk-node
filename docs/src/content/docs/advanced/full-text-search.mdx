@@ -1,5 +1,5 @@
 ---
-title: "Full-Text Search"
+title: 'Full-Text Search'
 ---
 
 Full-text search enables keyword-based text retrieval using BM25 scoring. Milvus supports this through **collection functions** that automatically tokenize text and convert it to sparse vectors at insert and query time.
@@ -40,7 +40,7 @@ const result = await client.runAnalyzer({
   with_hash: true,
 });
 
-result.results[0].tokens.forEach(token => {
+result.results[0].tokens.forEach((token) => {
   console.log(token.token, token.start_offset, token.end_offset, token.hash);
 });
 ```
@@ -55,10 +55,41 @@ result.results[0].tokens.forEach(token => {
 | `english`  | English-specific tokenizer with stemming |
 | `chinese`  | Chinese text tokenizer                   |
 
+### Custom Dictionary Files
+
+<span className="version-tag">Milvus 3.0</span>
+
+For analyzers that load a custom dictionary or synonym file, register the
+server-visible object before referencing it from analyzer parameters:
+
+```javascript
+await client.addFileResource({
+  name: 'product_dictionary',
+  path: 'analyzer-resources/product-dictionary.txt',
+});
+
+const resources = await client.listFileResources();
+console.log(resources.resources);
+```
+
+The file must already be available through the storage configured for Milvus.
+`addFileResource()` registers metadata; it does not upload a local Node.js file.
+Remove the registration when it is no longer used:
+
+```javascript
+await client.removeFileResource({ name: 'product_dictionary' });
+```
+
 ## Creating a Full-Text Search Collection
 
 ```javascript
-import { MilvusClient, DataType, FunctionType } from '@zilliz/milvus2-sdk-node';
+import {
+  MilvusClient,
+  DataType,
+  FunctionType,
+  IndexType,
+  MetricType,
+} from '@zilliz/milvus2-sdk-node';
 
 const client = new MilvusClient({ address: 'localhost:19530' });
 
@@ -99,17 +130,28 @@ await client.createCollection({
 
 ## Adding Functions to Existing Collections
 
-You can also add a BM25 function to an existing collection:
+You can add the BM25 output field, function, and bound index to an existing
+collection in one schema alteration:
 
 ```javascript
-await client.addCollectionFunction({
+await client.addFunctionField({
   collection_name: 'articles',
+  field: {
+    name: 'title_sparse',
+    data_type: DataType.SparseFloatVector,
+    is_function_output: true,
+  },
   function: {
     name: 'title_bm25',
     type: FunctionType.BM25,
     input_field_names: ['title'],
     output_field_names: ['title_sparse'],
     params: {},
+  },
+  index_name: 'title_bm25_index',
+  extra_params: {
+    index_type: IndexType.SPARSE_INVERTED_INDEX,
+    metric_type: MetricType.BM25,
   },
 });
 ```
@@ -208,7 +250,7 @@ const results = await client.search({
 Search hits include highlight data when highlighting is enabled. Each highlighted field contains text fragments and optional scores.
 
 ```javascript
-results.results.forEach(hit => {
+results.results.forEach((hit) => {
   console.log('Title:', hit.title);
   console.log('Highlight:', hit.highlight);
 
@@ -242,8 +284,8 @@ await client.alterCollectionFunction({
   },
 });
 
-// Drop a function
-await client.dropCollectionFunction({
+// Drop the function, output field, and bound index
+await client.dropFunctionField({
   collection_name: 'articles',
   function_name: 'bm25',
 });
@@ -253,10 +295,3 @@ await client.dropCollectionFunction({
 
 - Learn about [Hybrid Search](/milvus-sdk-node/operations/hybrid-search) for combining full-text with vector search
 - Explore [Data Types & Schemas](/milvus-sdk-node/core-concepts/data-types-schemas) for SparseFloatVector details
-
-## Commit
-
-```bash
-git add docs/src/content/docs/advanced/full-text-search.mdx
-git commit --signoff -m "docs: add full-text search documentation page"
-```
