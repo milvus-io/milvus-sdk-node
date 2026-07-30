@@ -169,7 +169,7 @@ describe('StructArray advanced integration', () => {
       {
         id: 1,
         normal_vector: unitVector(0),
-        nullable_text: 'present',
+        nullable_text: 'quoted "element_filter(profile, value)',
         nullable_numbers: [1, 2],
         nullable_json: { kind: 'object' },
         image_features: [
@@ -399,7 +399,9 @@ describe('StructArray advanced integration', () => {
       label: 'text-one',
       score: 101,
     });
-    expect(byId.get(1)!.nullable_text).toEqual('present');
+    expect(byId.get(1)!.nullable_text).toEqual(
+      'quoted "element_filter(profile, value)'
+    );
     expect(byId.get(1)!.nullable_numbers).toEqual([1, 2]);
     expect(byId.get(1)!.nullable_json).toEqual({ kind: 'object' });
     expect(byId.get(BACKGROUND_ROWS + 2)!.profile).toBeNull();
@@ -410,6 +412,40 @@ describe('StructArray advanced integration', () => {
     expect(byId.get(BACKGROUND_ROWS + 3)!.nullable_text).toEqual('');
     expect(byId.get(BACKGROUND_ROWS + 3)!.nullable_numbers).toEqual([]);
     expect(byId.get(BACKGROUND_ROWS + 3)!.nullable_json).toEqual({});
+  });
+
+  it('requires nullable struct arrays for dynamic fields', async () => {
+    await expect(
+      client.addCollectionField({
+        collection_name: COLLECTION_NAME,
+        field: {
+          name: 'invalid_profile',
+          data_type: DataType.Array,
+          element_type: DataType.Struct,
+          max_capacity: 2,
+          fields: [{ name: 'score', data_type: DataType.Int64 }],
+        },
+      })
+    ).rejects.toThrow(
+      'Adding a struct array field to an existing collection requires nullable=true.'
+    );
+  });
+
+  it('treats element_filter text inside quoted values as plain text', async () => {
+    const iterator = await client.queryIterator({
+      collection_name: COLLECTION_NAME,
+      filter: 'nullable_text == "quoted \\"element_filter(profile, value)"',
+      output_fields: ['id', 'nullable_text'],
+      batchSize: 1,
+      limit: 1,
+    });
+    const rows = await drain(iterator);
+
+    expect(rows).toHaveLength(1);
+    expect(Number(rows[0].id)).toBe(1);
+    expect(rows[0].nullable_text).toBe(
+      'quoted "element_filter(profile, value)'
+    );
   });
 
   it('reports DISKANN, STL_SORT, Bitmap, and scalar indexes on struct children', async () => {
@@ -612,5 +648,34 @@ describe('StructArray advanced integration', () => {
     const queryRows = await drain(queryIterator);
     expect(queryRows.map(row => Number(row.id))).toEqual([1, 1, 1]);
     expect(queryRows.map(row => Number(row.offset))).toEqual([0, 1, 2]);
+
+    const growingID = BACKGROUND_ROWS + 4;
+    const growingInsert = await client.insert({
+      collection_name: COLLECTION_NAME,
+      data: [
+        {
+          id: growingID,
+          normal_vector: unitVector(4),
+          nullable_text: null,
+          nullable_numbers: null,
+          nullable_json: null,
+          image_features: null,
+          text_features: null,
+          profile: null,
+        },
+      ],
+    });
+    expect(growingInsert.status.error_code).toEqual(ErrorCode.SUCCESS);
+
+    const ignoreGrowingIterator = await client.queryIterator({
+      collection_name: COLLECTION_NAME,
+      filter: `id == ${growingID}`,
+      output_fields: ['id'],
+      params: { ignore_growing: true },
+      batchSize: 1,
+    });
+    const emptyPage =
+      await ignoreGrowingIterator[Symbol.asyncIterator]().next();
+    expect(emptyPage).toEqual({ done: true, value: null });
   });
 });
