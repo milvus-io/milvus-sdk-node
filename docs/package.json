@@ -10,16 +10,21 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@astrojs/check": "^0.9.9",
-    "@astrojs/starlight": "^0.38.5",
-    "astro": "^6.1.6",
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/starlight": "^0.41.5",
+    "astro": "^7.1.6",
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.0.0"
   },
   "resolutions": {
     "devalue": "^5.8.1",
-    "fast-uri": "^3.1.2",
+    "esbuild": "^0.28.1",
+    "fast-uri": "^3.1.4",
+    "js-yaml": "^4.3.0",
+    "postcss": "^8.5.25",
+    "sharp": "^0.35.3",
+    "svgo": "^4.0.2",
     "yaml": "^2.8.3"
   }
 }
