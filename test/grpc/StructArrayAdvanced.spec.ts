@@ -468,6 +468,46 @@ describe('StructArray advanced integration', () => {
     }
   });
 
+  it('supports MATCH family filters with indexed struct children', async () => {
+    const queryIds = async (matchExpr: string) => {
+      const result = await client.query({
+        collection_name: COLLECTION_NAME,
+        filter: `id in [1, 2] && ${matchExpr}`,
+        output_fields: ['id'],
+        limit: 10,
+      });
+      expect(result.status.error_code).toEqual(ErrorCode.SUCCESS);
+      return result.data
+        .map(row => Number(row.id))
+        .sort((left, right) => left - right);
+    };
+
+    expect(await queryIds('MATCH_ANY(profile, $[tag] == "hot")')).toEqual([1]);
+    expect(await queryIds('MATCH_ALL(profile, $[score] >= 900000)')).toEqual([
+      1,
+    ]);
+    expect(
+      await queryIds('MATCH_LEAST(profile, $[rank] >= 2, threshold=2)')
+    ).toEqual([1]);
+    expect(
+      await queryIds('MATCH_MOST(profile, $[rank] >= 2, threshold=1)')
+    ).toEqual([2]);
+    expect(
+      await queryIds('MATCH_EXACT(profile, $[rank] >= 2, threshold=2)')
+    ).toEqual([1]);
+
+    const search = await client.search({
+      collection_name: COLLECTION_NAME,
+      anns_field: 'normal_vector',
+      data: unitVector(0),
+      filter: 'id in [1, 2] && MATCH_ANY(profile, $[tag] == "hot")',
+      output_fields: ['id'],
+      limit: 10,
+    });
+    expect(search.status.error_code).toEqual(ErrorCode.SUCCESS);
+    expect(search.results.map(hit => Number(hit.id))).toEqual([1]);
+  });
+
   it('rejects nested Array children with the server limitation', async () => {
     await expect(
       client.createCollection({
