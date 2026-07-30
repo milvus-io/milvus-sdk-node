@@ -61,6 +61,7 @@ const createTestClient = () => {
     DropCollectionFunction: jest.fn(),
     DropCollection: jest.fn(),
     DescribeCollection: jest.fn(),
+    GetCollectionStatistics: jest.fn(),
   };
   const channelPool = {
     acquire: jest.fn().mockResolvedValue(rpcClient),
@@ -474,6 +475,32 @@ describe('collection schema alteration', () => {
           params: [{ key: 'analyzer', value: 'standard' }],
         }),
       ]);
+      expect(addRequest).not.toHaveProperty('do_physical_backfill');
+    });
+
+    it('ignores the legacy do_physical_backfill runtime property', async () => {
+      const { client, rpcClient } = createTestClient();
+      rpcClient.AlterCollectionSchema.mockImplementation(
+        respondWith({ alter_status: successStatus })
+      );
+
+      await client.addFunctionField({
+        collection_name: COLLECTION_NAME,
+        field: {
+          name: 'sparse_vector',
+          data_type: DataType.SparseFloatVector,
+        },
+        function: bm25Function,
+        extra_params: {
+          index_type: IndexType.SPARSE_INVERTED_INDEX,
+          metric_type: 'BM25',
+        },
+        do_physical_backfill: true,
+      } as any);
+
+      const addRequest =
+        rpcClient.AlterCollectionSchema.mock.calls[0][0].action.add_request;
+      expect(addRequest).not.toHaveProperty('do_physical_backfill');
     });
 
     it('serializes a MinHash function field and its bound index parameters', async () => {
@@ -737,6 +764,32 @@ describe('collection schema alteration', () => {
       expect(rpcClient.DropCollectionFunction.mock.calls[0][0]).toEqual({
         collection_name: COLLECTION_NAME,
         function_name: 'bm25_function',
+      });
+    });
+  });
+
+  describe('collection statistics', () => {
+    it('exposes schema-version backfill progress in data', async () => {
+      const { client, rpcClient } = createTestClient();
+      rpcClient.GetCollectionStatistics.mockImplementation(
+        respondWith({
+          status: successStatus,
+          stats: [
+            { key: 'row_count', value: '3' },
+            { key: 'schema_version_consistent_segments', value: '1' },
+            { key: 'schema_version_total_segments', value: '2' },
+          ],
+        })
+      );
+
+      const result = await client.getCollectionStatistics({
+        collection_name: COLLECTION_NAME,
+      });
+
+      expect(result.data).toEqual({
+        row_count: '3',
+        schema_version_consistent_segments: '1',
+        schema_version_total_segments: '2',
       });
     });
   });

@@ -270,6 +270,10 @@ export const formatDescribedCol = (
 ): DescribeCollectionResponse => {
   // clone object
   const newData = cloneObj<DescribeCollectionResponse>(data);
+  // do_physical_backfill is a legacy wire field ignored by current Milvus.
+  // Keep it out of the public SDK response to match schema-extension requests.
+  delete (newData.schema as any).do_physical_backfill;
+  delete (newData.schema as any).doPhysicalBackfill;
   // merge fields and struct_array_fields
   newData.schema.fields = [
     ...newData.schema.fields,

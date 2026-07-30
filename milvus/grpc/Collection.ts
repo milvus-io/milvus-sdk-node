@@ -100,6 +100,7 @@ import {
   UnpinSnapshotDataReq,
   FunctionType,
   IndexType,
+  KeyValuePair,
   collectionNameReq,
 } from '../';
 
@@ -920,7 +921,10 @@ export class Collection extends Database {
    * @returns {string} status.error_code - The error code of the operation.
    * @returns {string} status.reason - The reason for the error, if any.
    * @returns {Object[]} stats - An array of objects, each containing a key-value pair representing a statistic.
-   * @returns {Object} data - Transforms **stats** to an object with properties representing statistics (e.g., { row_count: 0 }).
+   * @returns {Object} data - Transforms every **stats** entry to an object,
+   * including schema-version Backfill progress when reported by Milvus (for
+   * example, `schema_version_consistent_segments` and
+   * `schema_version_total_segments`).
    *
    * @example
    * ```
@@ -940,7 +944,10 @@ export class Collection extends Database {
       data.timeout || this.timeout
     );
 
-    promise.data = formatKeyValueData(promise.stats, ['row_count']);
+    promise.data = formatKeyValueData(
+      promise.stats,
+      promise.stats.map(({ key }: KeyValuePair) => key)
+    );
 
     return promise;
   }
@@ -1744,7 +1751,6 @@ export class Collection extends Database {
    * @param {string} data.collection_name - The collection name.
    * @param {FieldType} data.field - The function output field schema.
    * @param {FunctionObject} data.function - The function schema.
-   * @param {boolean} [data.do_physical_backfill] - Whether to backfill existing data.
    * @param {string} [data.db_name] - The database name.
    * @param {number} [data.timeout] - Optional RPC timeout in milliseconds.
    *
@@ -1779,7 +1785,6 @@ export class Collection extends Database {
           },
         ],
         func_schema: [formatFunctionSchema(data.function)],
-        do_physical_backfill: !!data.do_physical_backfill,
       },
     });
   }
@@ -1789,7 +1794,9 @@ export class Collection extends Database {
    *
    * BM25 requires a SparseFloatVector output field. MinHash requires a
    * BinaryVector output field. The bound index must provide an explicit
-   * index_type and cannot use AUTOINDEX.
+   * index_type and cannot use AUTOINDEX. Milvus backfills existing sealed
+   * segments asynchronously through schema-bump compaction; this RPC returns
+   * after the schema change is accepted, not after backfill finishes.
    *
    * @param {AddFunctionFieldReq} data - The request parameters.
    * @returns {Promise<ResStatus>} The AlterCollectionSchema alter status.

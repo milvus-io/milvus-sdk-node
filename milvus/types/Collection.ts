@@ -132,7 +132,6 @@ export interface BaseCreateCollectionReq extends GrpcTimeOut {
   functions?: FunctionObject[]; // optionals, doc-in/doc-out functions
   external_source?: string; // optional, external collection source path
   external_spec?: string; // optional, external collection spec configuration
-  do_physical_backfill?: boolean; // optional, whether to physically backfill external data
   file_resource_ids?: Array<number | string>; // optional, external file resource ids
 }
 
@@ -249,7 +248,6 @@ export interface CollectionSchema {
   struct_array_fields: FieldSchema[];
   external_source?: string;
   external_spec?: string;
-  do_physical_backfill?: boolean;
   file_resource_ids?: string[];
 }
 
@@ -359,7 +357,6 @@ export interface AlterCollectionSchemaReq extends collectionNameReq {
   db_name?: string; // optional, db name
   field: FieldType; // required, function output field schema to add
   function: FunctionObject; // required, function schema to add
-  do_physical_backfill?: boolean; // optional, whether Milvus should backfill existing data
   index_name?: string; // optional, index name for the new field
   extra_params?: Record<string, any>; // optional, field info extra params
 }

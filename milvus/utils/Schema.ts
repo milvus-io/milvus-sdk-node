@@ -361,7 +361,6 @@ export const formatCollectionSchema = (
     clustering_key_field,
     external_source,
     external_spec,
-    do_physical_backfill,
     file_resource_ids,
   } = data;
 
@@ -435,10 +434,6 @@ export const formatCollectionSchema = (
 
   if (external_spec) {
     payload.externalSpec = external_spec;
-  }
-
-  if (typeof do_physical_backfill !== 'undefined') {
-    payload.doPhysicalBackfill = do_physical_backfill;
   }
 
   if (file_resource_ids) {

@@ -786,6 +786,12 @@ describe(`FulltextSearch API`, () => {
       );
       expect(sparseField).toBeDefined();
       expect(sparseField!.is_function_output).toEqual(true);
+
+      const drop = await milvusClient.dropFunctionField({
+        collection_name: COLLECTION_FOR_ADD_FUNCTION_FIELD,
+        function_name: 'bm25_added_with_string_enum',
+      });
+      expect(drop.error_code).toEqual(ErrorCode.SUCCESS);
     });
 
     it(`Add and drop MinHash function field should success`, async () => {

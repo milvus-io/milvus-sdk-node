@@ -70,10 +70,12 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
           docker compose -f docker-compose.yml -f docker-compose.override.yml ps
 
-      - name: Verify StorageV3 is enabled for Text fields
+      - name: Verify function-field Backfill configuration
         run: |
-          docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' milvus-standalone \
-            | grep -qx 'COMMON_STORAGE_USELOONFFI=true'
+          envs="$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' milvus-standalone)"
+          grep -qx 'COMMON_STORAGE_USELOONFFI=true' <<< "$envs"
+          grep -qx 'DATACOORD_COMPACTION_BUMPSCHEMAVERSION_ENABLED=true' <<< "$envs"
+          grep -qx 'DATACOORD_COMPACTION_STORAGEVERSION_ENABLED=true' <<< "$envs"
 
       - name: Wait for MinIO to be ready
         run: |
@@ -129,6 +131,7 @@ jobs:
       - name: Run Test coverage
         run: |
           yarn build-test
+          NODE_ENV=dev npx jest test/grpc/FunctionFieldBackfill.e2e.spec.ts --runInBand
           yarn coverage
 
       - name: send to codecov

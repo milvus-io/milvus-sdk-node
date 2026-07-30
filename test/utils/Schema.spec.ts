@@ -256,6 +256,8 @@ describe('utils/Schema', () => {
       ],
       external_source: 's3://bucket/path',
       external_spec: '{"format":"parquet"}',
+      // Legacy callers may still provide this at runtime. Current Milvus
+      // ignores it, so the Node SDK intentionally leaves it off the wire.
       do_physical_backfill: true,
       file_resource_ids: [1, '2'],
       functions: [
@@ -294,9 +296,9 @@ describe('utils/Schema', () => {
       enableDynamicField: false,
       externalSource: 's3://bucket/path',
       externalSpec: '{"format":"parquet"}',
-      doPhysicalBackfill: true,
       fileResourceIds: [1, '2'],
     });
+    expect(payload).not.toHaveProperty('doPhysicalBackfill');
     expect(payload.fields[0]).toMatchObject({
       name: 'testField1',
       description: 'Test PRIMARY KEY field',
@@ -982,7 +984,7 @@ describe('utils/Schema', () => {
       'external_spec',
       '{"format":"parquet"}'
     );
-    expect(formatted.schema).toHaveProperty('do_physical_backfill', true);
+    expect(formatted.schema).not.toHaveProperty('do_physical_backfill');
     expect(formatted.schema).toHaveProperty('file_resource_ids', ['1', '2']);
     expect(formatted.schema).toHaveProperty('properties');
     expect(formatted.schema).toHaveProperty('functions');
