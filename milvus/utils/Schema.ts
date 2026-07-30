@@ -84,6 +84,7 @@ export const getDataKey = (type: DataType, camelCase: boolean = false) => {
       dataKey = 'bool_data';
       break;
     case DataType.VarChar:
+    case DataType.Text:
       dataKey = 'string_data';
       break;
     case DataType.Array:

@@ -353,6 +353,7 @@ const createDataGenMap = () => {
     [DataType.Float]: genFloat,
     [DataType.Double]: genFloat,
     [DataType.VarChar]: genVarChar,
+    [DataType.Text]: genVarChar,
     [DataType.Array]: genArray,
     [DataType.JSON]: genJSON,
     [DataType.Geometry]: genGeometry,

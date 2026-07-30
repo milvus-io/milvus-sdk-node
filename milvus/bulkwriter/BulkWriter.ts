@@ -264,6 +264,12 @@ export class BulkWriter extends EventEmitter {
         }
         break;
       }
+      case DataType.Text: {
+        if (typeof val !== 'string') {
+          throw new Error(`Field "${field.name}": Text must be a string.`);
+        }
+        break;
+      }
       case DataType.Array: {
         if (!Array.isArray(val)) {
           throw new Error(

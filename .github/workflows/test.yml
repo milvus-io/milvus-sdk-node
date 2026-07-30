@@ -52,7 +52,7 @@ jobs:
           wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
           sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ steps.info.outputs.milvusVersion }}/g" docker-compose.yml
 
-          # Use docker-compose override to pass OpenAI key
+          # Pass the OpenAI key and enable StorageV3, which is required by Text fields.
           cat > docker-compose.override.yml << EOF
           services:
             standalone:
@@ -69,6 +69,11 @@ jobs:
 
           docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
           docker compose -f docker-compose.yml -f docker-compose.override.yml ps
+
+      - name: Verify StorageV3 is enabled for Text fields
+        run: |
+          docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' milvus-standalone \
+            | grep -qx 'COMMON_STORAGE_USELOONFFI=true'
 
       - name: Wait for MinIO to be ready
         run: |

@@ -1852,6 +1852,37 @@ describe('BulkWriter validation', () => {
     ).rejects.toThrow(/max_length/);
   });
 
+  it('should write Text values beyond the VarChar length limit', async () => {
+    const longText = 'milvus-text-'.repeat(6000);
+    const { allRows } = await writeAndParse(
+      {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'content', data_type: DataType.Text },
+        ],
+      },
+      [{ id: 1, content: longText }]
+    );
+
+    expect(allRows[0].content).toBe(longText);
+  });
+
+  it('should reject non-string Text values', async () => {
+    const writer = new BulkWriter({
+      schema: {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'content', data_type: DataType.Text },
+        ],
+      },
+      localPath: tmpDir,
+    });
+
+    await expect(writer.append({ id: 1, content: 12345 })).rejects.toThrow(
+      /Text/
+    );
+  });
+
   it('should reject non-array for Array field', async () => {
     const writer = new BulkWriter({
       schema: {

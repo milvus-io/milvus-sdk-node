@@ -105,6 +105,21 @@ describe('ParquetFormatter basic', () => {
     expect(allRows[1].text).toBe('world');
   });
 
+  it('should write and read Text without max_length', async () => {
+    const longText = 'milvus-text-'.repeat(6000);
+    const { allRows } = await writeAndReadParquet(
+      {
+        fields: [
+          { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+          { name: 'content', data_type: DataType.Text },
+        ],
+      },
+      [{ id: 1, content: longText }]
+    );
+
+    expect(allRows[0].content).toBe(longText);
+  });
+
   it('should auto-chunk with parquet format', async () => {
     const { files, allRows } = await writeAndReadParquet(
       {

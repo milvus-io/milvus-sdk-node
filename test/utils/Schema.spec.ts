@@ -17,6 +17,41 @@ import {
 } from '../../milvus';
 
 describe('utils/Schema', () => {
+  it('formats Text fields without requiring max_length', () => {
+    const schemaProtoPath = path.resolve(
+      __dirname,
+      '../../proto/proto/schema.proto'
+    );
+    const schemaProto = protobuf.loadSync(schemaProtoPath);
+    const fieldSchemaType = schemaProto.lookupType(
+      'milvus.proto.schema.FieldSchema'
+    );
+
+    const payload = formatFieldSchema(
+      {
+        name: 'content',
+        data_type: DataType.Text,
+        enable_analyzer: true,
+        analyzer_params: { tokenizer: 'standard' },
+      },
+      { fieldSchemaType }
+    );
+
+    expect(payload.dataType).toBe(25);
+    expect(payload.typeParams).toEqual(
+      expect.arrayContaining([
+        { key: 'enable_analyzer', value: 'true' },
+        {
+          key: 'analyzer_params',
+          value: JSON.stringify({ tokenizer: 'standard' }),
+        },
+      ])
+    );
+    expect(payload.typeParams).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'max_length' })])
+    );
+  });
+
   it('builds the default schema from shorthand create collection params', () => {
     expect(
       buildDefaultSchema({

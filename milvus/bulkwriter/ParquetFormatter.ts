@@ -26,8 +26,9 @@ function parquetFieldDef(dt: DataType): Record<string, any> {
       return { type: 'FLOAT' };
     case DataType.Double:
       return { type: 'DOUBLE' };
-    // VarChar, JSON, Geometry, Timestamptz, SparseFloatVector → UTF8 string
+    // VarChar, Text, JSON, Geometry, Timestamptz, SparseFloatVector → UTF8 string
     case DataType.VarChar:
+    case DataType.Text:
     case DataType.JSON:
     case DataType.Geometry:
     case DataType.Timestamptz:

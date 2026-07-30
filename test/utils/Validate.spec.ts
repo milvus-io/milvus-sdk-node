@@ -206,6 +206,27 @@ describe('utils/validate', () => {
     );
   });
 
+  it('should accept a Text field without max_length', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'content',
+        data_type: DataType.Text,
+      },
+      {
+        name: 'vector',
+        data_type: DataType.FloatVector,
+        dim: 4,
+      },
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
   it('should return true if all fields are valid', () => {
     const fields: FieldType[] = [
       {

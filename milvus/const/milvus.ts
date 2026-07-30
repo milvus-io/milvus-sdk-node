@@ -291,6 +291,7 @@ export enum DataType {
   Array = 22,
   JSON = 23,
   Geometry = 24,
+  Text = 25, // variable-length strings without a max_length limit; requires StorageV3
   Timestamptz = 26,
 
   BinaryVector = 100,
@@ -362,6 +363,7 @@ export const DataTypeMap: { [key in keyof typeof DataType]: number } = {
   Array: 22,
   JSON: 23,
   Geometry: 24,
+  Text: 25,
   Timestamptz: 26,
   BinaryVector: 100,
   FloatVector: 101,
@@ -387,6 +389,7 @@ export enum DataTypeStringEnum {
   Array = 'Array',
   JSON = 'JSON',
   Geometry = 'Geometry',
+  Text = 'Text',
   Timestamptz = 'Timestamptz',
   BinaryVector = 'BinaryVector',
   FloatVector = 'FloatVector',

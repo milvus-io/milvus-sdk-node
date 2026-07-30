@@ -101,6 +101,7 @@ export class ColumnBuffer {
     if (fixed) return fixed;
     if (
       dt === DataType.VarChar ||
+      dt === DataType.Text ||
       dt === DataType.Geometry ||
       dt === DataType.Timestamptz
     ) {
