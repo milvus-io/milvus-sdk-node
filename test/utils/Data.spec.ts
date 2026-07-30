@@ -13,6 +13,8 @@ import {
   f32ArrayToBinaryBytes,
   f32ArrayToInt8Bytes,
   processVectorData,
+  processScalarData,
+  processStructArraysData,
   findKeyValue,
   FieldPartialUpdateOpType,
   CLUSTER_ID,
@@ -779,6 +781,92 @@ describe('utils/Data', () => {
     expect(vectorField.vectors.float_vector.data).toEqual([]);
   });
 
+  it('should expand compact nullable scalar payloads', () => {
+    expect(
+      processScalarData({
+        valid_data: [true, false, true],
+        scalars: {
+          data: 'int_data',
+          int_data: { data: [10, 30] },
+        },
+      })
+    ).toEqual([10, null, 30]);
+  });
+
+  it('should preserve row-dense nullable scalar payload alignment', () => {
+    expect(
+      processScalarData({
+        valid_data: [false, true, false],
+        scalars: {
+          data: 'array_data',
+          array_data: {
+            data: [
+              { data: 'int_data', int_data: { data: [] } },
+              { data: 'int_data', int_data: { data: [10] } },
+              {},
+            ],
+          },
+        },
+      })
+    ).toEqual([null, [10], null]);
+  });
+
+  it('should decode nullable struct arrays with scalar and vector children', () => {
+    const result = processStructArraysData({
+      valid_data: [true, false, true],
+      struct_arrays: {
+        fields: [
+          {
+            field_name: 'score',
+            valid_data: [true, false, true],
+            scalars: {
+              data: 'array_data',
+              array_data: {
+                data: [
+                  {
+                    data: 'int_data',
+                    int_data: { data: [1, 2] },
+                  },
+                  { data: 'int_data', int_data: { data: [3] } },
+                ],
+              },
+            },
+          },
+          {
+            field_name: 'embedding',
+            valid_data: [true, false, true],
+            vectors: {
+              data: 'vector_array',
+              vector_array: {
+                data: [
+                  {
+                    data: 'float_vector',
+                    dim: 2,
+                    float_vector: { data: [1, 0, 0, 1] },
+                  },
+                  {
+                    data: 'float_vector',
+                    dim: 2,
+                    float_vector: { data: [0.5, 0.5] },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    expect(result).toEqual([
+      [
+        { score: 1, embedding: [1, 0] },
+        { score: 2, embedding: [0, 1] },
+      ],
+      null,
+      [{ score: 3, embedding: [0.5, 0.5] }],
+    ]);
+  });
+
   it('should decode nullable float vectors from valid_data and dense payload', () => {
     const result = processVectorData({
       valid_data: [true, false, true],
@@ -1404,8 +1492,7 @@ describe('utils/Data', () => {
         } as _Field;
 
         const result = buildFieldData(row, field);
-        expect(Buffer.isBuffer(result)).toBe(true);
-        expect((result as Buffer).length).toBe(0);
+        expect(result).toBeUndefined();
       });
 
       it('should handle JSON type with undefined value', () => {
@@ -1417,8 +1504,7 @@ describe('utils/Data', () => {
         } as _Field;
 
         const result = buildFieldData(row, field);
-        expect(Buffer.isBuffer(result)).toBe(true);
-        expect((result as Buffer).length).toBe(0); // undefined returns empty buffer
+        expect(result).toBeUndefined();
       });
     });
 

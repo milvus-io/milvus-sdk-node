@@ -83,6 +83,8 @@ export const ERROR_REASONS = {
     'Duplicated bound index parameters are not allowed.',
   ADD_COLLECTION_FIELD_VECTOR_NULLABLE_REQUIRED:
     'Adding a vector field to an existing collection requires nullable=true.',
+  ADD_COLLECTION_STRUCT_FIELD_NULLABLE_REQUIRED:
+    'Adding a struct array field to an existing collection requires nullable=true.',
   DROP_COLLECTION_FIELD_IDENTIFIER_IS_REQUIRED:
     'Specify exactly one valid `field_name` or `field_id`.',
   ALTER_COLLECTION_SCHEMA_STATUS_IS_REQUIRED:

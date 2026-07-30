@@ -311,19 +311,30 @@ export const formatStructArrayFieldSchema = (
   field: FieldType,
   schemaTypes: Record<string, Type>
 ) => {
+  const formattedField = assignTypeParams(field);
+  const structTypeParams = { ...formattedField.type_params };
+  delete structTypeParams.max_capacity;
+  const maxCapacity = field.max_capacity ?? field.type_params?.max_capacity;
+
   return schemaTypes.structArrayFieldSchemaType.create({
     name: field.name,
     description: field.description,
+    nullable: field.nullable === true,
+    typeParams: parseToKeyValue(structTypeParams),
     fields: field.fields!.map((f: FieldType) => {
-      // convert the field to array field, and set the max capacity
-      f.element_type = f.data_type;
-      f.data_type = isVectorType(convertToDataType(f.data_type as DataType)!)
-        ? DataType.ArrayOfVector
-        : DataType.Array;
-      f.max_capacity = field.max_capacity;
+      const childDataType = convertToDataType(f.data_type as DataType)!;
+      const childField: FieldType = {
+        ...f,
+        element_type: childDataType,
+        data_type: isVectorType(childDataType)
+          ? DataType.ArrayOfVector
+          : DataType.Array,
+        max_capacity: maxCapacity,
+        nullable: field.nullable === true,
+      };
 
       // format schema
-      return formatFieldSchema(f, schemaTypes);
+      return formatFieldSchema(childField, schemaTypes);
     }),
   });
 };

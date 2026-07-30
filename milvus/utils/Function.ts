@@ -164,9 +164,10 @@ export const getQueryIteratorExpr = (params: {
   expr: string;
   pkField: FieldSchema;
   lastPKId: string | number;
+  lastElementOffset?: string | number;
 }) => {
   // get params
-  const { expr, lastPKId, pkField } = params;
+  const { expr, lastPKId, lastElementOffset, pkField } = params;
 
   // If cache does not exist, return expression based on primaryKey type
   let compareValue = '';
@@ -185,7 +186,7 @@ export const getQueryIteratorExpr = (params: {
     pkField,
     value: compareValue,
     expr,
-    condition: '>',
+    condition: typeof lastElementOffset === 'undefined' ? '>' : '>=',
   });
 };
 
@@ -201,7 +202,9 @@ export const getPKFieldExpr = (data: {
     pkField?.data_type === DataTypeStringEnum.VarChar
       ? `'${value}'`
       : `${value}`;
-  return `${pkField?.name} ${condition} ${pkValue}${expr ? ` && ${expr}` : ''}`;
+  return `${pkField?.name} ${condition} ${pkValue}${
+    expr ? ` && (${expr})` : ''
+  }`;
 };
 // get biggest size of sparse vector array
 export const getSparseDim = (data: SparseFloatVector[]) => {

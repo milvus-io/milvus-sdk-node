@@ -104,7 +104,7 @@ describe('Function API testing', () => {
 
     const result = getQueryIteratorExpr(params);
 
-    expect(result).toBe("id > '' && field > 10");
+    expect(result).toBe("id > '' && (field > 10)");
   });
 
   it('should return int64 expression when cache does not exist', () => {
@@ -149,7 +149,21 @@ describe('Function API testing', () => {
 
     const result = getQueryIteratorExpr(params);
 
-    expect(result).toBe('id > 10 && field > 10');
+    expect(result).toBe('id > 10 && (field > 10)');
+  });
+
+  it('keeps element_filter right-most and resumes the last element offset', () => {
+    const result = getQueryIteratorExpr({
+      expr: 'element_filter(items, $[score] >= 10)',
+      pkField: {
+        name: 'id',
+        data_type: DataTypeStringEnum.Int64,
+      } as any,
+      lastPKId: 7,
+      lastElementOffset: 1,
+    });
+
+    expect(result).toBe('id >= 7 && (element_filter(items, $[score] >= 10))');
   });
 
   it('should return the correct dimension of the sparse vector', () => {

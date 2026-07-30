@@ -403,6 +403,10 @@ export class Data extends Collection {
             break;
 
           case DataType.ArrayOfVector: {
+            const vectorRows =
+              field.nullable === true
+                ? field.data.filter(v => v !== undefined && v !== null)
+                : field.data;
             const buildVectorArrayData = (vector: any) => {
               switch (field.elementType) {
                 case DataType.FloatVector:
@@ -449,7 +453,7 @@ export class Data extends Collection {
             keyValue = {
               [dataKey]: {
                 dim: field.dim,
-                data: field.data.map(buildVectorArrayData),
+                data: vectorRows.map(buildVectorArrayData),
                 element_type: field.elementType,
               },
             };
@@ -967,12 +971,20 @@ export class Data extends Collection {
    * }
    */
   async queryIterator(data: QueryIteratorReq): Promise<any> {
-    // get collection info
-    const pkField = await this.getPkField(data);
     // store client;
     const client = this;
     // expr
     const userExpr = data.expr || data.filter || '';
+    const isElementFilter = /element_filter\s*\(/i.test(userExpr);
+    const collectionInfo = isElementFilter
+      ? await this.describeCollection({
+          collection_name: data.collection_name,
+          db_name: data.db_name,
+        })
+      : undefined;
+    const pkField = isElementFilter
+      ? collectionInfo!.schema.fields.find(field => field.is_primary_key)!
+      : await this.getPkField(data);
     // get count
     const count = await client.count({
       collection_name: data.collection_name,
@@ -998,7 +1010,15 @@ export class Data extends Collection {
     let expr = userExpr;
     let lastBatchRes: Record<string, any> = [];
     let lastPKId: string | number = '';
+    let lastElementOffset: string | number | undefined;
     let currentBatchSize = batchSize; // Store the current batch size
+    const iteratorParams: Record<string, any> | undefined = isElementFilter
+      ? {
+          ...data.params,
+          iterator: true,
+          collection_id: collectionInfo!.collectionID,
+        }
+      : undefined;
 
     // return iterator
     return {
@@ -1019,15 +1039,32 @@ export class Data extends Collection {
               expr: expr,
               pkField,
               lastPKId,
+              lastElementOffset,
             });
+            if (iteratorParams) {
+              queryData.params = { ...iteratorParams };
+              if (
+                lastPKId !== '' &&
+                typeof lastElementOffset !== 'undefined'
+              ) {
+                queryData.params.query_iter_last_pk = lastPKId;
+                queryData.params.query_iter_last_element_offset =
+                  lastElementOffset;
+              }
+            }
 
             // search data
             const res = await client.query(queryData as QueryReq);
+
+            if (!res.data.length) {
+              return { done: true, value: null };
+            }
 
             // get last item of the data
             const lastItem = res.data[res.data.length - 1];
             // update last pk id
             lastPKId = lastItem && lastItem[pkField.name];
+            lastElementOffset = isElementFilter ? lastItem?.offset : undefined;
 
             // store last batch result
             lastBatchRes = res.data;
@@ -1178,7 +1215,11 @@ export class Data extends Collection {
       offset = { offset: data.offset };
     }
 
-    const queryParams: { [key: string]: any } = { ...limits, ...offset };
+    const queryParams: { [key: string]: any } = {
+      ...data.params,
+      ...limits,
+      ...offset,
+    };
     if (data.group_by_fields !== undefined) {
       if (!Array.isArray(data.group_by_fields)) {
         throw new Error('Invalid group_by_fields format');

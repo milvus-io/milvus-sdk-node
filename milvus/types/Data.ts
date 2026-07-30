@@ -96,6 +96,7 @@ type BaseQueryReq = collectionNameReq & {
   consistency_level?: ConsistencyLevelEnum; // consistency level
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
   exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
+  params?: keyValueObj; // additional query parameters
 };
 
 export type QueryReq = BaseQueryReq &

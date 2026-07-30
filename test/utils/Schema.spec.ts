@@ -555,45 +555,54 @@ describe('utils/Schema', () => {
       'milvus.proto.schema.StructArrayFieldSchema'
     );
 
-    const payload = formatCollectionSchema(
-      {
-        collection_name: 'structCollection',
-        fields: [
-          {
-            name: 'id',
-            data_type: DataType.Int64,
-            is_primary_key: true,
-          },
-          {
-            name: 'vector',
-            data_type: DataType.FloatVector,
-            dim: 4,
-          },
-          {
-            name: 'metadata',
-            data_type: DataType.Array,
-            element_type: DataType.Struct,
-            max_capacity: 2,
-            fields: [
-              {
-                name: 'score',
-                data_type: DataType.Float,
-              },
-              {
-                name: 'embedding',
-                data_type: DataType.FloatVector,
-                dim: 4,
-              },
-            ],
-          },
-        ],
-      } as CreateCollectionReq,
-      { fieldSchemaType, structArrayFieldSchemaType }
-    );
+    const request = {
+      collection_name: 'structCollection',
+      fields: [
+        {
+          name: 'id',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'vector',
+          data_type: DataType.FloatVector,
+          dim: 4,
+        },
+        {
+          name: 'metadata',
+          data_type: DataType.Array,
+          element_type: DataType.Struct,
+          max_capacity: 2,
+          nullable: true,
+          type_params: { 'mmap.enabled': true },
+          fields: [
+            {
+              name: 'score',
+              data_type: DataType.Float,
+            },
+            {
+              name: 'embedding',
+              data_type: DataType.FloatVector,
+              dim: 4,
+            },
+          ],
+        },
+      ],
+    } as CreateCollectionReq;
+    const originalRequest = JSON.parse(JSON.stringify(request));
+
+    const payload = formatCollectionSchema(request, {
+      fieldSchemaType,
+      structArrayFieldSchemaType,
+    });
 
     expect(payload.fields).toHaveLength(2);
     expect(payload.structArrayFields).toHaveLength(1);
     expect(payload.structArrayFields[0].name).toBe('metadata');
+    expect(payload.structArrayFields[0].nullable).toBe(true);
+    expect(payload.structArrayFields[0].typeParams).toEqual([
+      { key: 'mmap.enabled', value: true },
+    ]);
     expect(payload.structArrayFields[0].fields[0]).toMatchObject({
       name: 'score',
       dataType: DataType.Array,
@@ -608,6 +617,7 @@ describe('utils/Schema', () => {
         { key: 'max_capacity', value: '2' },
       ],
     });
+    expect(request).toEqual(originalRequest);
   });
 
   it('adds a dataType property to each field object in the schema', () => {

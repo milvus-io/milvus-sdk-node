@@ -77,12 +77,13 @@ export const processVectorData = (
       return physicalData;
     }
 
+    const isRowDense = physicalData.length === item.valid_data.length;
     let physicalIndex = 0;
-    return item.valid_data.map((valid: boolean) => {
+    return item.valid_data.map((valid: boolean, logicalIndex: number) => {
       if (!valid) {
         return null;
       }
-      return physicalData[physicalIndex++];
+      return physicalData[isRowDense ? logicalIndex : physicalIndex++];
     });
   };
 
@@ -215,13 +216,18 @@ export const processScalarData = (item: any): any => {
       break;
   }
 
-  // set the field data with null if item.valid_data is not empty array, it the item in valid_data is false, set the field data with null
-  if (item.valid_data && item.valid_data.length) {
-    item.valid_data.forEach((v: any, i: number) => {
-      if (!v) {
-        field_data[i] = null;
-      }
-    });
+  // Insert payloads are compact, while query/search payloads may already be
+  // row-dense. Support both representations without shifting valid values.
+  if (
+    item.valid_data &&
+    item.valid_data.length &&
+    !item.valid_data.every(Boolean)
+  ) {
+    const isRowDense = field_data.length === item.valid_data.length;
+    let physicalIndex = 0;
+    field_data = item.valid_data.map((valid: boolean, logicalIndex: number) =>
+      valid ? field_data[isRowDense ? logicalIndex : physicalIndex++] : null
+    );
   }
 
   return field_data;
@@ -247,15 +253,25 @@ export const processStructArraysData = (item: any): any => {
   });
 
   // Get the number of rows from the first processed field
-  const rowCount = processedFields[0].fieldData.length;
+  const rowCount =
+    item.valid_data?.length || processedFields[0].fieldData.length;
 
   // Initialize result array
   const result = [];
 
   // Process each row
   for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    if (item.valid_data?.length && !item.valid_data[rowIndex]) {
+      result.push(null);
+      continue;
+    }
+
     // Get the length of arrays in this row (assuming all fields have same array length)
     const firstFieldArray = processedFields[0].fieldData[rowIndex];
+    if (firstFieldArray === null || typeof firstFieldArray === 'undefined') {
+      result.push(null);
+      continue;
+    }
     const arrayLength = firstFieldArray.length;
 
     // Create an array of struct objects for this row
@@ -275,15 +291,6 @@ export const processStructArraysData = (item: any): any => {
     }
 
     result.push(rowArray);
-  }
-
-  // Apply valid_data filtering if present
-  if (item.valid_data && item.valid_data.length) {
-    item.valid_data.forEach((v: any, i: number) => {
-      if (!v) {
-        result[i] = null;
-      }
-    });
   }
 
   return result;
@@ -354,9 +361,9 @@ export const buildFieldData = (
         ? f16Transformer(rowData[name] as Float16Vector)
         : rowData[name];
     case DataType.JSON:
-      return rowData[name]
-        ? Buffer.from(JSON.stringify(rowData[name] || {}))
-        : Buffer.alloc(0);
+      return rowData[name] === null || typeof rowData[name] === 'undefined'
+        ? undefined
+        : Buffer.from(JSON.stringify(rowData[name]));
 
     case DataType.ArrayOfVector:
       switch (elementType) {
@@ -381,6 +388,20 @@ export const buildFieldData = (
 
       // Special handling for struct types
       if (elementType == DataType.Struct) {
+        if (rowData[name] === null || typeof rowData[name] === 'undefined') {
+          fieldMap.forEach(structField => {
+            structField.data[rowIndex!] = undefined;
+          });
+          return undefined;
+        }
+
+        if ((rowData[name] as Struct[]).length === 0) {
+          fieldMap.forEach(structField => {
+            structField.data[rowIndex!] = [];
+          });
+          return rowData[name];
+        }
+
         // Process each struct element as if it were fields_data
         (rowData[name] as Struct[]).forEach((structElement, elementIndex) => {
           // get field names
