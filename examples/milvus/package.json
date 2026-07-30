@@ -16,10 +16,12 @@
     "autocannon": "^7.15.0"
   },
   "resolutions": {
+    "@grpc/grpc-js": "^1.14.4",
+    "body-parser": "^1.20.6",
     "cookie": "^0.7.2",
-    "form-data": "^4.0.4",
+    "form-data": "^4.0.6",
     "path-to-regexp": "0.1.13",
-    "protobufjs": "^7.5.8",
+    "protobufjs": "^7.6.5",
     "qs": "^6.15.2",
     "uuid": "^14.0.0"
   }

@@ -8,9 +8,11 @@
     "langchain": "^1.2.3"
   },
   "resolutions": {
+    "@grpc/grpc-js": "^1.14.4",
     "handlebars": "^4.7.9",
+    "js-yaml": "^4.3.0",
     "langsmith": "^0.7.3",
-    "protobufjs": "^7.5.8",
+    "protobufjs": "^7.6.5",
     "yaml": "^2.8.3",
     "uuid": "^14.0.0"
   }
