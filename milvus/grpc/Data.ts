@@ -86,6 +86,43 @@ import {
 } from '../';
 import { Collection } from './Collection';
 
+// Detect function calls without treating quoted text as executable syntax.
+const hasElementFilterExpression = (expr: string): boolean => {
+  let quote: "'" | '"' | undefined;
+  let escaped = false;
+
+  for (let index = 0; index < expr.length; index++) {
+    const char = expr[index];
+
+    if (quote) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === quote) {
+        quote = undefined;
+      }
+      continue;
+    }
+
+    if (char === "'" || char === '"') {
+      quote = char;
+      continue;
+    }
+
+    const previousChar = index > 0 ? expr[index - 1] : '';
+    if (/[A-Za-z0-9_]/.test(previousChar)) {
+      continue;
+    }
+
+    if (/^element_filter\b\s*\(/i.test(expr.slice(index))) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 export class Data extends Collection {
   /**
    * Upsert data into Milvus, view _insert for detail
@@ -556,8 +593,7 @@ export class Data extends Collection {
 
       if (typeof op === 'number') {
         const opName = FieldPartialUpdateOpType[op] as
-          | keyof typeof FieldPartialUpdateOpType
-          | undefined;
+          keyof typeof FieldPartialUpdateOpType | undefined;
         if (typeof opName === 'undefined') {
           throw new Error(`unsupported field partial update op: ${op}`);
         }
@@ -833,9 +869,9 @@ export class Data extends Collection {
       ? formatSearchAggregationResult(originSearchResult)
       : undefined;
     const formattedAggBuckets = aggBuckets
-      ? ((nq === 1 ? aggBuckets[0] || [] : aggBuckets) as SearchResults<T>[
-          'agg_buckets'
-        ])
+      ? ((nq === 1
+          ? aggBuckets[0] || []
+          : aggBuckets) as SearchResults<T>['agg_buckets'])
       : undefined;
 
     return {
@@ -850,9 +886,7 @@ export class Data extends Collection {
         originSearchResult.results.search_iterator_v2_results,
       _search_iterator_v2_results:
         originSearchResult.results._search_iterator_v2_results,
-      ...(formattedAggBuckets
-        ? { agg_buckets: formattedAggBuckets }
-        : {}),
+      ...(formattedAggBuckets ? { agg_buckets: formattedAggBuckets } : {}),
     };
   }
 
@@ -975,7 +1009,7 @@ export class Data extends Collection {
     const client = this;
     // expr
     const userExpr = data.expr || data.filter || '';
-    const isElementFilter = /element_filter\s*\(/i.test(userExpr);
+    const isElementFilter = hasElementFilterExpression(userExpr);
     const collectionInfo = isElementFilter
       ? await this.describeCollection({
           collection_name: data.collection_name,
@@ -1007,9 +1041,9 @@ export class Data extends Collection {
         : queryData.batchSize;
 
     // local variables
-    let expr = userExpr;
-    let lastBatchRes: Record<string, any> = [];
-    let lastPKId: string | number = '';
+    const expr = userExpr;
+    let lastBatchRes: RowData[] = [];
+    let lastPKId: string | number | undefined;
     let lastElementOffset: string | number | undefined;
     let currentBatchSize = batchSize; // Store the current batch size
     const iteratorParams: Record<string, any> | undefined = isElementFilter
@@ -1044,7 +1078,7 @@ export class Data extends Collection {
             if (iteratorParams) {
               queryData.params = { ...iteratorParams };
               if (
-                lastPKId !== '' &&
+                typeof lastPKId !== 'undefined' &&
                 typeof lastElementOffset !== 'undefined'
               ) {
                 queryData.params.query_iter_last_pk = lastPKId;
@@ -1183,7 +1217,7 @@ export class Data extends Collection {
    * @param {string[]} [data.group_by_fields] - Scalar fields used to group aggregation results. Aggregation expressions such as `count(*)`, `min(price)`, `max(price)`, `sum(price)`, and `avg(price)` are specified in `output_fields`.
    * @param {OrderByFields} [data.order_by_fields] - Fields to sort query results by, for example `price:asc` or `[{ field: 'price', order: 'asc' }]` (optional).
    * @param {OrderByFields} [data.order_by] - Alias for data.order_by_fields (optional).
-   * @param {{key: value}[]} [data.params] - An optional key pair json array of search parameters.
+   * @param {Record<string, unknown>} [data.params] - Additional query parameters as a key-value object.
    * @param {OutputTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
    *
    * @returns {Promise<QueryResults>} The result of the operation.

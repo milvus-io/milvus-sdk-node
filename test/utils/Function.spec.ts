@@ -68,7 +68,7 @@ describe('Function API testing', () => {
         name: 'id',
         data_type: DataTypeStringEnum.VarChar,
       },
-      lastPkId: '',
+      lastPKId: undefined,
     } as any;
 
     const result = getQueryIteratorExpr(params);
@@ -98,8 +98,7 @@ describe('Function API testing', () => {
         name: 'id',
         data_type: DataTypeStringEnum.VarChar,
       },
-      page: 1,
-      lastPkId: '',
+      lastPKId: undefined,
     } as any;
 
     const result = getQueryIteratorExpr(params);
@@ -114,7 +113,7 @@ describe('Function API testing', () => {
         name: 'id',
         data_type: DataTypeStringEnum.Int64,
       },
-      lastPkId: '',
+      lastPKId: undefined,
     } as any;
 
     const result = getQueryIteratorExpr(params);
@@ -164,6 +163,20 @@ describe('Function API testing', () => {
     });
 
     expect(result).toBe('id >= 7 && (element_filter(items, $[score] >= 10))');
+  });
+
+  it('preserves an Int64 primary key cursor with value zero', () => {
+    const result = getQueryIteratorExpr({
+      expr: 'element_filter(items, $[score] >= 10)',
+      pkField: {
+        name: 'id',
+        data_type: DataTypeStringEnum.Int64,
+      } as any,
+      lastPKId: 0,
+      lastElementOffset: 1,
+    });
+
+    expect(result).toBe('id >= 0 && (element_filter(items, $[score] >= 10))');
   });
 
   it('should return the correct dimension of the sparse vector', () => {

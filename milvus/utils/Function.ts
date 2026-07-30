@@ -17,9 +17,7 @@ import { Metadata, status as grpcStatus } from '@grpc/grpc-js';
  * after all interceptor retries are exhausted.
  * Should return a new pool to retry with, or null if no failover occurred.
  */
-export type FailoverHandler = (
-  error: any
-) => Promise<Pool<any> | null>;
+export type FailoverHandler = (error: any) => Promise<Pool<any> | null>;
 
 /** Well-known property key for attaching a failover handler to a pool. */
 export const FAILOVER_HANDLER_KEY = '__failoverHandler';
@@ -116,8 +114,9 @@ export async function promisify(
     return await executeCall(pool, target, params, timeout, requestMetadata);
   } catch (error: any) {
     // Check for global cluster failover handler
-    const handler: FailoverHandler | undefined =
-      (pool as any)[FAILOVER_HANDLER_KEY];
+    const handler: FailoverHandler | undefined = (pool as any)[
+      FAILOVER_HANDLER_KEY
+    ];
 
     if (handler && isUnavailableError(error)) {
       logger.debug(
@@ -156,29 +155,29 @@ export const sleep = (time: number) => {
  * @param params - The parameters for generating the query iterator expression.
  * @param params.expr - The expression to be combined with the iterator expression.
  * @param params.pkField - The primary key field schema.
- * @param params.page - The current page number.
- * @param params.pageCache - The cache of previous pages.
+ * @param params.lastPKId - The primary key cursor from the previous batch.
+ * @param params.lastElementOffset - The struct element cursor from the previous batch.
  * @returns The query iterator expression.
  */
 export const getQueryIteratorExpr = (params: {
   expr: string;
   pkField: FieldSchema;
-  lastPKId: string | number;
+  lastPKId?: string | number;
   lastElementOffset?: string | number;
 }) => {
   // get params
   const { expr, lastPKId, lastElementOffset, pkField } = params;
 
   // If cache does not exist, return expression based on primaryKey type
-  let compareValue = '';
-  if (!lastPKId) {
+  let compareValue: string | number = '';
+  if (typeof lastPKId === 'undefined') {
     // get default value
     compareValue =
       pkField?.data_type === DataTypeStringEnum.VarChar
         ? ''
         : `${DEFAULT_MIN_INT64}`;
   } else {
-    compareValue = lastPKId as string;
+    compareValue = lastPKId;
   }
 
   // return expr combined with iteratorExpr

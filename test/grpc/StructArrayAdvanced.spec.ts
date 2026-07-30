@@ -142,7 +142,7 @@ describe('StructArray advanced integration', () => {
         `Initial insert failed: ${JSON.stringify(oldInsert.status)}`
       );
     }
-    await client.flush({ collection_names: [COLLECTION_NAME] });
+    await client.flushSync({ collection_names: [COLLECTION_NAME] });
 
     const addField = await client.addCollectionField({
       collection_name: COLLECTION_NAME,
@@ -276,7 +276,7 @@ describe('StructArray advanced integration', () => {
       throw new Error(`Bulk insert failed: ${JSON.stringify(insert.status)}`);
     }
     expect(insert.succ_index).toHaveLength(rows.length);
-    await client.flush({ collection_names: [COLLECTION_NAME] });
+    await client.flushSync({ collection_names: [COLLECTION_NAME] });
 
     const indexes = await client.createIndex([
       {
@@ -577,6 +577,16 @@ describe('StructArray advanced integration', () => {
   });
 
   it('supports element-level search and query iterators without losing offsets', async () => {
+    const zeroPrimaryKeyIterator = await client.queryIterator({
+      collection_name: COLLECTION_NAME,
+      filter: 'id >= 0',
+      output_fields: ['id'],
+      batchSize: 1,
+      limit: 2,
+    });
+    const zeroPrimaryKeyRows = await drain(zeroPrimaryKeyIterator);
+    expect(zeroPrimaryKeyRows.map(row => Number(row.id))).toEqual([0, 1]);
+
     const searchIterator = await client.searchIterator({
       collection_name: COLLECTION_NAME,
       anns_field: 'profile[embedding]',

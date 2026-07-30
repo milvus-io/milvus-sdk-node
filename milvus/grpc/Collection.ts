@@ -103,11 +103,9 @@ import {
   collectionNameReq,
 } from '../';
 
-const formatGrpcFieldSchema = (
-  field: FieldType,
-  schemaTypes: { fieldSchemaType: any }
+const formatFormattedGrpcFieldSchema = (
+  schema: Record<string, any>
 ): Record<string, any> => {
-  const schema = formatFieldSchema(field, schemaTypes);
   let defaultValue = schema.defaultValue;
   if (defaultValue) {
     defaultValue = {
@@ -137,6 +135,13 @@ const formatGrpcFieldSchema = (
   };
 };
 
+const formatGrpcFieldSchema = (
+  field: FieldType,
+  schemaTypes: { fieldSchemaType: any }
+): Record<string, any> => {
+  return formatFormattedGrpcFieldSchema(formatFieldSchema(field, schemaTypes));
+};
+
 const formatGrpcStructArrayFieldSchema = (
   field: FieldType,
   schemaTypes: {
@@ -152,25 +157,7 @@ const formatGrpcStructArrayFieldSchema = (
     description: schema.description,
     type_params: schema.typeParams,
     nullable: schema.nullable,
-    fields: schema.fields.map((child: any) => ({
-      fieldID: child.fieldID,
-      name: child.name,
-      is_primary_key: child.isPrimaryKey,
-      description: child.description,
-      data_type: child.dataType,
-      type_params: child.typeParams,
-      index_params: child.indexParams,
-      autoID: child.autoID,
-      state: child.state,
-      element_type: child.elementType,
-      default_value: child.defaultValue,
-      is_dynamic: child.isDynamic,
-      is_partition_key: child.isPartitionKey,
-      is_clustering_key: child.isClusteringKey,
-      nullable: child.nullable,
-      is_function_output: child.isFunctionOutput,
-      external_field: child.externalField,
-    })),
+    fields: schema.fields.map(formatFormattedGrpcFieldSchema),
   };
 };
 

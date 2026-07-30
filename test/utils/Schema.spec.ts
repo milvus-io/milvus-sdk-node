@@ -574,7 +574,7 @@ describe('utils/Schema', () => {
           element_type: DataType.Struct,
           max_capacity: 2,
           nullable: true,
-          type_params: { 'mmap.enabled': true },
+          'mmap.enabled': true,
           fields: [
             {
               name: 'score',
@@ -601,7 +601,7 @@ describe('utils/Schema', () => {
     expect(payload.structArrayFields[0].name).toBe('metadata');
     expect(payload.structArrayFields[0].nullable).toBe(true);
     expect(payload.structArrayFields[0].typeParams).toEqual([
-      { key: 'mmap.enabled', value: true },
+      { key: 'mmap.enabled', value: 'true' },
     ]);
     expect(payload.structArrayFields[0].fields[0]).toMatchObject({
       name: 'score',
