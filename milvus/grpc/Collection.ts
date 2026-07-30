@@ -161,6 +161,9 @@ const formatGrpcStructArrayFieldSchema = (
   };
 };
 
+const EXTERNAL_COLLECTION_ALTER_SCHEMA_UNSUPPORTED =
+  'alter collection schema operation is not supported for external collection';
+
 /**
  * @see [collection operation examples](https://github.com/milvus-io/milvus-sdk-node/blob/main/example/Collection.ts)
  */
@@ -462,7 +465,13 @@ export class Collection extends Database {
           ],
         },
       });
-      return result.alter_status;
+      if (
+        !result.alter_status.reason?.includes(
+          EXTERNAL_COLLECTION_ALTER_SCHEMA_UNSUPPORTED
+        )
+      ) {
+        return result.alter_status;
+      }
     } catch (error) {
       if ((error as { code?: number })?.code !== grpcStatus.UNIMPLEMENTED) {
         throw error;

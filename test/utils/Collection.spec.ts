@@ -34,6 +34,17 @@ const failedStatus: ResStatus = {
   detail: '',
 };
 
+const externalCollectionAlterUnsupportedStatus: ResStatus = {
+  error_code: ErrorCode.IllegalArgument,
+  reason:
+    'alter collection schema operation is not supported for external collection schema_alter_collection',
+  code: 1100,
+  extra_info: { is_input_error: 'true' },
+  retriable: false,
+  detail:
+    'alter collection schema operation is not supported for external collection schema_alter_collection',
+};
+
 const respondWith =
   (response: any) => (_request: any, _options: any, callback: RpcCallback) =>
     callback(null, response);
@@ -216,6 +227,49 @@ describe('collection schema alteration', () => {
         timestamptzData: (new Date(defaultValue).getTime() * 1000).toString(),
       });
       expect(field.default_value).toBe(defaultValue);
+      expect(cache.has(cacheKey())).toBe(false);
+    });
+
+    it('falls back to AddCollectionField when alter schema rejects an external collection', async () => {
+      const { client, rpcClient } = createTestClient();
+      rpcClient.AlterCollectionSchema.mockImplementation(
+        respondWith({ alter_status: externalCollectionAlterUnsupportedStatus })
+      );
+      rpcClient.AddCollectionField.mockImplementation(
+        respondWith(successStatus)
+      );
+      const cache = seedCollectionCache(client);
+
+      const result = await client.addCollectionField({
+        collection_name: COLLECTION_NAME,
+        field: {
+          name: 'nullable_vector',
+          data_type: DataType.FloatVector,
+          dim: 8,
+          nullable: true,
+          external_field: 'external_vector',
+        },
+      });
+
+      expect(result).toEqual(successStatus);
+      expect(rpcClient.AlterCollectionSchema).toHaveBeenCalledTimes(1);
+      expect(rpcClient.AddCollectionField).toHaveBeenCalledTimes(1);
+      const legacyRequest = rpcClient.AddCollectionField.mock.calls[0][0];
+      const fieldSchemaType = (client as any).schemaProto.lookupType(
+        (client as any).protoInternalPath.fieldSchema
+      );
+      const decoded = fieldSchemaType.toObject(
+        fieldSchemaType.decode(legacyRequest.schema),
+        { longs: String }
+      );
+      expect(decoded).toEqual(
+        expect.objectContaining({
+          name: 'nullable_vector',
+          dataType: DataType.FloatVector,
+          nullable: true,
+          externalField: 'external_vector',
+        })
+      );
       expect(cache.has(cacheKey())).toBe(false);
     });
 
