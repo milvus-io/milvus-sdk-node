@@ -4,6 +4,7 @@
   "milvusVersion": "v3.0.0",
   "version": "3.0.3",
   "main": "dist/milvus",
+  "types": "dist/milvus/index.d.ts",
   "files": [
     "dist"
   ],
