@@ -167,6 +167,16 @@ export enum IndexType {
   IVF_RABITQ = 'IVF_RABITQ',
   MINHASH_LSH = 'MINHASH_LSH',
   RTREE = 'RTREE',
+  // quantized HNSW variants
+  HNSW_SQ = 'HNSW_SQ',
+  HNSW_PQ = 'HNSW_PQ',
+  HNSW_PRQ = 'HNSW_PRQ',
+  // DiskANN variant keeping PQ codes inline with the graph
+  AISAQ = 'AISAQ',
+  // scalar: n-gram index for VARCHAR / JSON path, accelerates LIKE
+  NGRAM = 'NGRAM',
+  // scalar: FM-index for VARCHAR, exact anchored LIKE with no recheck
+  FMINDEX = 'FMINDEX',
 }
 
 // MsgType
