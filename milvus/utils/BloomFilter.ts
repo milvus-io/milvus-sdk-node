@@ -276,6 +276,12 @@ export class BloomFilterBuilder {
   private readonly buf: Uint8Array;
   private readonly view: DataView;
   private readonly numBlocks: number;
+  /**
+   * `numBlocks` as a BigInt. The block index needs the full 64-bit product, so it has to be
+   * BigInt arithmetic; converting the block count inside addHash would allocate one BigInt
+   * per inserted member.
+   */
+  private readonly numBlocksBig: bigint;
   private readonly nDeclared: number;
   private readonly fpr: number;
   private domains = 0;
@@ -291,6 +297,7 @@ export class BloomFilterBuilder {
     this.buf = new Uint8Array(BLOOM_FILTER_HEADER_SIZE + numBytes);
     this.view = new DataView(this.buf.buffer);
     this.numBlocks = numBytes / BLOOM_FILTER_BYTES_PER_BLOCK;
+    this.numBlocksBig = BigInt(this.numBlocks);
     this.nDeclared = n;
     this.fpr = fpr;
   }
@@ -356,7 +363,7 @@ export class BloomFilterBuilder {
    */
   private addHash(hash: bigint): void {
     const blockIndex = Number(
-      ((hash >> SHIFT[32]) * BigInt(this.numBlocks)) >> SHIFT[32]
+      ((hash >> SHIFT[32]) * this.numBlocksBig) >> SHIFT[32]
     );
     const offset =
       BLOOM_FILTER_HEADER_SIZE + blockIndex * BLOOM_FILTER_BYTES_PER_BLOCK;
