@@ -4,6 +4,7 @@ export * from './Schema';
 export * from './Data';
 export * from './Search';
 export * from './SearchAggregation';
+export * from './BloomFilter';
 export * from './Bytes';
 export * from './Format';
 export * from './Validate';

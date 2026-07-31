@@ -1,0 +1,261 @@
+import {
+  buildBloomFilter,
+  BloomFilterBuilder,
+  estimateBloomFilterSize,
+  xxh64,
+  xxh64Int64,
+  formatExprValues,
+  BLOOM_FILTER_DEFAULT_FPR,
+  BLOOM_FILTER_MIN_FPR,
+  BLOOM_FILTER_MAX_FPR,
+  BLOOM_FILTER_HEADER_SIZE,
+  BLOOM_FILTER_MIN_BYTES,
+  BLOOM_FILTER_MAX_BYTES,
+  BLOOM_FILTER_BYTES_PER_BLOCK,
+  BLOOM_FILTER_DOMAIN_INT64,
+  BLOOM_FILTER_DOMAIN_UTF8,
+} from '../../milvus';
+
+import goldenVectors from './testdata/golden_vectors.json';
+import cppFixture from './testdata/cpp_generated_100_int64.json';
+
+const hex = (bytes: Uint8Array) => Buffer.from(bytes).toString('hex');
+
+describe('utils/BloomFilter', () => {
+  // The blob is the whole contract: SDKs interoperate only if they emit the same bytes for
+  // the same members, since the server embeds the blob verbatim and never rebuilds it.
+  // These fixtures are the ones the Go SDK (client/sbbf/testdata) and the segcore C++ unit
+  // tests check themselves against, so comparing full hex pins this implementation to the
+  // wire format rather than merely to a self-consistent one.
+  it('matches the shared golden vectors byte for byte', () => {
+    expect(goldenVectors.cases.length).toBeGreaterThanOrEqual(3);
+
+    goldenVectors.cases.forEach(testCase => {
+      const builder = new BloomFilterBuilder(
+        testCase.int_values.length + testCase.string_values.length,
+        testCase.fpr
+      );
+      testCase.int_values.forEach(v => builder.addInt64(BigInt(v)));
+      testCase.string_values.forEach(v => builder.addString(v));
+
+      expect(`${testCase.name}:${hex(builder.build())}`).toEqual(
+        `${testCase.name}:${testCase.blob_hex}`
+      );
+    });
+  });
+
+  it('matches the blob Arrow C++ generates for 100 int64 values', () => {
+    expect(cppFixture.generator).toEqual(
+      'apache_arrow_parquet_block_split_bloom_filter'
+    );
+    expect(cppFixture.int_values.length).toEqual(100);
+
+    const members = cppFixture.int_values.map(v => BigInt(v));
+    expect(hex(buildBloomFilter(members, cppFixture.fpr))).toEqual(
+      cppFixture.blob_hex
+    );
+  });
+
+  // The int64 fast path skips the generic hash's stripe and tail loops on the grounds that
+  // an 8-byte input can never reach them. If that ever breaks, every int64 filter goes
+  // silently wrong while the string ones stay correct.
+  it('int64 fast path agrees with the generic hash', () => {
+    const values = [
+      BigInt(0),
+      BigInt(1),
+      BigInt(-1),
+      BigInt(42),
+      BigInt('-9223372036854775808'),
+      BigInt('9223372036854775807'),
+    ];
+    // Deterministic pseudo-random sweep (LCG) so a failure is reproducible.
+    let seed = BigInt('20260731');
+    const MASK64 = (BigInt(1) << BigInt(64)) - BigInt(1);
+    for (let i = 0; i < 2000; i++) {
+      seed =
+        (seed * BigInt('6364136223846793005') + BigInt('1442695040888963407')) &
+        MASK64;
+      values.push(seed);
+    }
+
+    values.forEach(value => {
+      const buf = new Uint8Array(8);
+      new DataView(buf.buffer).setBigInt64(0, BigInt.asIntN(64, value), true);
+      expect(`${value}:${xxh64Int64(value)}`).toEqual(`${value}:${xxh64(buf)}`);
+    });
+  });
+
+  it('computes the reference XXH64 digests', () => {
+    // Known answers from the reference C implementation (libxxhash, seed 0); the
+    // empty-input digest is the value published in the xxHash spec itself.
+    const enc = (s: string) => new TextEncoder().encode(s);
+    expect(xxh64(new Uint8Array(0)).toString(16)).toEqual('ef46db3751d8e999');
+    expect(xxh64(enc('a')).toString(16)).toEqual('d24ec4f1a98c6e5b');
+    expect(xxh64(enc('abc')).toString(16)).toEqual('44bc2cf5ad770999');
+    expect(xxh64(enc('milvus')).toString(16)).toEqual('d8ec969d7fa9836f');
+  });
+
+  it('walks every length-dependent branch of the generic hash', () => {
+    // Four branches depend on length: 32-byte stripes, then 8/4/1-byte tails. Lengths
+    // 0..80 cover every combination; the golden vectors only reach a couple.
+    for (let length = 0; length <= 80; length++) {
+      const data = new Uint8Array(length);
+      for (let i = 0; i < length; i++) {
+        data[i] = (i * 37 + 11) & 0xff;
+      }
+      expect(xxh64(data)).toEqual(xxh64(Uint8Array.from(data)));
+    }
+  });
+
+  it('records the value domains in the envelope', () => {
+    expect(buildBloomFilter([1])[28]).toEqual(BLOOM_FILTER_DOMAIN_INT64);
+    expect(buildBloomFilter(['a'])[28]).toEqual(BLOOM_FILTER_DOMAIN_UTF8);
+
+    // An empty set records no domain, so the server skips the probe entirely and the
+    // filter matches nothing, rather than aliasing into whichever domain is probed.
+    const empty = buildBloomFilter([]);
+    expect(empty[28]).toEqual(0);
+    expect(empty.length).toEqual(
+      BLOOM_FILTER_HEADER_SIZE + BLOOM_FILTER_MIN_BYTES
+    );
+
+    // A builder may record both domains; the convenience function may not.
+    const mixed = new BloomFilterBuilder(2, 0.001).addInt64(1).addString('a');
+    expect(mixed.getDomains()).toEqual(
+      BLOOM_FILTER_DOMAIN_INT64 | BLOOM_FILTER_DOMAIN_UTF8
+    );
+  });
+
+  it('lays out the MBF1 header as specified', () => {
+    const blob = buildBloomFilter([42], 0.01);
+    const view = new DataView(blob.buffer, blob.byteOffset, blob.byteLength);
+
+    expect(Buffer.from(blob.slice(0, 4)).toString('ascii')).toEqual('MBF1');
+    expect(view.getUint16(4, true)).toEqual(1);
+    expect(view.getUint16(6, true)).toEqual(1);
+    expect(view.getBigUint64(8, true)).toEqual(BigInt(1));
+    expect(view.getFloat64(16, true)).toEqual(0.01);
+    expect(blob[28]).toEqual(BLOOM_FILTER_DOMAIN_INT64);
+    // Reserved bytes must be zero: the server rejects a blob that sets them.
+    expect([blob[29], blob[30], blob[31]]).toEqual([0, 0, 0]);
+
+    const numBlocks = view.getUint32(24, true);
+    expect(blob.length - BLOOM_FILTER_HEADER_SIZE).toEqual(
+      numBlocks * BLOOM_FILTER_BYTES_PER_BLOCK
+    );
+    expect(numBlocks & (numBlocks - 1)).toEqual(0);
+  });
+
+  it('treats number and bigint members identically', () => {
+    expect(hex(buildBloomFilter([1, 2, 3], 0.001))).toEqual(
+      hex(buildBloomFilter([BigInt(1), BigInt(2), BigInt(3)], 0.001))
+    );
+  });
+
+  it('estimates the blob size exactly', () => {
+    const fprs = [
+      BLOOM_FILTER_MIN_FPR,
+      0.001,
+      BLOOM_FILTER_DEFAULT_FPR,
+      BLOOM_FILTER_MAX_FPR,
+    ];
+    const counts = [0, 1, 2, 100, 5000];
+    fprs.forEach(fpr => {
+      counts.forEach(count => {
+        const members = Array.from({ length: count }, (_, i) => i);
+        expect(estimateBloomFilterSize(count, fpr)).toEqual(
+          buildBloomFilter(members, fpr).length
+        );
+      });
+    });
+    // The estimate is what callers check against the proxy's 64 MiB body limit, so the
+    // clamp at the top end has to hold.
+    expect(estimateBloomFilterSize(1e12, BLOOM_FILTER_MIN_FPR)).toEqual(
+      BLOOM_FILTER_HEADER_SIZE + BLOOM_FILTER_MAX_BYTES
+    );
+  });
+
+  it('accepts the fpr boundaries and rejects everything outside them', () => {
+    [BLOOM_FILTER_MIN_FPR, BLOOM_FILTER_MAX_FPR].forEach(fpr => {
+      const blob = buildBloomFilter([1], fpr);
+      const view = new DataView(blob.buffer, blob.byteOffset, blob.byteLength);
+      expect(view.getFloat64(16, true)).toEqual(fpr);
+    });
+
+    [0.00009, 0.051, NaN, Infinity, -Infinity, 0, -1].forEach(fpr => {
+      expect(() => buildBloomFilter([1], fpr)).toThrow();
+      expect(() => estimateBloomFilterSize(1, fpr)).toThrow();
+      expect(() => new BloomFilterBuilder(1, fpr)).toThrow();
+    });
+  });
+
+  it('rejects invalid members', () => {
+    // Mixed domains: a filter recording both would match members of either type, which is
+    // never what a single-field bloom_match wants.
+    expect(() => buildBloomFilter([1, 'mixed'])).toThrow(
+      /all integer or all string/
+    );
+    expect(() => buildBloomFilter(['mixed', 1])).toThrow(
+      /all integer or all string/
+    );
+    expect(() => buildBloomFilter([true as any])).toThrow(
+      /all integer or all string/
+    );
+    expect(() => buildBloomFilter([null as any])).toThrow(
+      /all integer or all string/
+    );
+
+    // Past 2^53 a number silently rounds, so accepting one would build a filter for a value
+    // the caller never asked for and the row would never match.
+    expect(() => buildBloomFilter([2 ** 53])).toThrow(/safe integers/);
+    expect(() => buildBloomFilter([1.5])).toThrow(/safe integers/);
+    expect(() => buildBloomFilter([BigInt('9223372036854775808')])).toThrow(
+      /signed int64/
+    );
+  });
+
+  describe('formatExprValues integration', () => {
+    it('ships a blob as bytes_val, not as a string', () => {
+      const blob = buildBloomFilter(['alice', 'bob', '小明'], 0.01);
+
+      const formatted = formatExprValues({ bf: blob });
+
+      expect(formatted.bf).toEqual({ bytes_val: blob });
+    });
+
+    it('accepts a Buffer too', () => {
+      const blob = Buffer.from(buildBloomFilter([1, 2, 3]));
+
+      expect(formatExprValues({ bf: blob })).toEqual({
+        bf: { bytes_val: blob },
+      });
+    });
+
+    it('still handles the existing primitive and array types', () => {
+      expect(
+        formatExprValues({
+          b: true,
+          i: 3,
+          f: 1.5,
+          s: 'x',
+          arr: [1, 2],
+        })
+      ).toEqual({
+        b: { bool_val: true },
+        i: { int64_val: 3 },
+        f: { float_val: 1.5 },
+        s: { string_val: 'x' },
+        arr: { array_val: { long_data: { data: [1, 2] } } },
+      });
+    });
+
+    // Previously an unsupported type fell through silently and the key was dropped, so the
+    // query ran without that template value instead of failing.
+    it('throws on an unsupported value type instead of dropping the key', () => {
+      expect(() => formatExprValues({ bad: { nested: 1 } })).toThrow(
+        /Unsupported expr value type for key "bad"/
+      );
+      expect(() => formatExprValues({ bad: null })).toThrow(/null/);
+    });
+  });
+});
