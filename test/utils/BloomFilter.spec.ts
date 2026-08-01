@@ -3,6 +3,7 @@ import {
   BloomFilterBuilder,
   estimateBloomFilterSize,
   xxh64,
+  xxh64Pairs,
   xxh64Int64,
   formatExprValues,
   BLOOM_FILTER_DEFAULT_FPR,
@@ -105,6 +106,27 @@ describe('utils/BloomFilter', () => {
       }
       expect(xxh64(data)).toEqual(xxh64(Uint8Array.from(data)));
     }
+  });
+
+  // The string path runs the 32-bit-pair hash; xxh64 above is the BigInt reference it has to
+  // agree with. Every length below reaches a different combination of the stripe loop and the
+  // 8/4/1-byte tails, so this pins the port branch by branch rather than on a few samples.
+  it('pair hash agrees with the BigInt reference at every input length', () => {
+    let seed = 20260731;
+    const next = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff);
+    for (let length = 0; length <= 140; length++) {
+      const data = new Uint8Array(length);
+      for (let i = 0; i < length; i++) data[i] = next() & 0xff;
+      expect(`${length}:${xxh64Pairs(data)}`).toEqual(
+        `${length}:${xxh64(data)}`
+      );
+    }
+    // Non-zero byteOffset: Buffer.from hands out views into a pooled ArrayBuffer, so the
+    // hash must read through the view rather than from the start of its backing store.
+    const backing = new Uint8Array(64);
+    for (let i = 0; i < 64; i++) backing[i] = next() & 0xff;
+    const slice = backing.subarray(7, 45);
+    expect(xxh64Pairs(slice)).toEqual(xxh64(slice));
   });
 
   it('records the value domains in the envelope', () => {
