@@ -331,8 +331,7 @@ const avalanchePair = (h: number, l: number): void => {
  * {@link xxh64} is kept as the reference this is tested against rather than deleted: the two
  * are checked against each other across every input length that reaches a different branch.
  */
-const hashBytesPair = (data: Uint8Array): void => {
-  const length = data.length;
+const hashBytesPair = (data: Uint8Array, length: number): void => {
   let index = 0;
   let h: number;
   let l: number;
@@ -460,8 +459,36 @@ const hashBytesPair = (data: Uint8Array): void => {
  * BigInt reference kept to check it against. Exported so that check can be a test.
  */
 export const xxh64Pairs = (data: Uint8Array): bigint => {
-  hashBytesPair(data);
+  hashBytesPair(data, data.length);
   return (BigInt(pairHi >>> 0) << SHIFT[32]) | BigInt(pairLo >>> 0);
+};
+
+/**
+ * Scratch buffer the UTF-8 domain encodes into, so inserting a member allocates nothing.
+ *
+ * `Buffer.from` per member is 10M allocations for a 10M-member filter. Its own cost is real
+ * (0.46s against 0.25s for writing into a reused buffer) but the garbage it makes costs more,
+ * and it lands on whatever runs next: the block-setting loop measures 0.15s in isolation and
+ * roughly ten times that when it follows a `Buffer.from` in the same loop.
+ *
+ * Grown, never shrunk, and shared across builders — one buffer the size of the longest member
+ * ever encoded, rather than one per insert.
+ */
+let scratch = Buffer.allocUnsafe(256);
+
+/**
+ * Encodes `value` into {@link scratch} and returns its byte length.
+ *
+ * A UTF-16 code unit is at most three UTF-8 bytes — a surrogate pair is two units and four
+ * bytes, so 3x the string length is a safe bound — and `Buffer.write` truncates silently
+ * rather than throwing, so capacity has to be assured before the write, not checked after.
+ */
+const encodeIntoScratch = (value: string): number => {
+  const needed = value.length * 3;
+  if (scratch.length < needed) {
+    scratch = Buffer.allocUnsafe(needed);
+  }
+  return scratch.write(value, 0, 'utf8');
 };
 
 /** Splits a member into the 32-bit halves the pair domain works in, validating as it goes. */
@@ -602,7 +629,11 @@ export class BloomFilterBuilder {
    */
   addString(value: string): this {
     this.domains |= BLOOM_FILTER_DOMAIN_UTF8;
-    hashBytesPair(Buffer.from(value, 'utf8'));
+    // scratch is read after encodeIntoScratch, never in the same argument list: the encoder
+    // may replace the buffer when it has to grow, and an argument evaluated first would be
+    // the old one.
+    const length = encodeIntoScratch(value);
+    hashBytesPair(scratch, length);
     this.addHash(pairHi, pairLo);
     return this;
   }

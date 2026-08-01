@@ -281,3 +281,70 @@ describe('utils/BloomFilter', () => {
     });
   });
 });
+
+describe('scratch buffer encoding', () => {
+  // The UTF-8 domain encodes into a reused buffer rather than allocating per member, which
+  // introduces failure modes the golden vectors cannot reach: a member too long for the
+  // buffer, and a short member following a long one. Comparing one builder against another
+  // would not catch either -- both would run the same broken encoder and agree -- so the
+  // reference hashes a freshly allocated Buffer and places the bits from the spec directly.
+  const referenceBlob = (members: string[], fpr: number): Uint8Array => {
+    const blob = new BloomFilterBuilder(members.length, fpr).build();
+    const out = Uint8Array.from(blob);
+    const view = new DataView(out.buffer, out.byteOffset, out.byteLength);
+    const numBlocks = view.getUint32(24, true);
+    const SALT = [
+      0x47b6137b, 0x44974d91, 0x8824ad5b, 0xa2b7289d, 0x705495c7, 0x2df1424b,
+      0x9efc4947, 0x5c6bfb31,
+    ];
+    for (const member of members) {
+      const hash = xxh64Pairs(Buffer.from(member, 'utf8'));
+      const block = Number(
+        ((hash >> BigInt(32)) * BigInt(numBlocks)) >> BigInt(32)
+      );
+      const key = Number(hash & BigInt(0xffffffff)) | 0;
+      for (let i = 0; i < 8; i++) {
+        const p = 32 + block * 32 + i * 4;
+        const mask = 1 << (Math.imul(key, SALT[i]) >>> 27);
+        view.setUint32(p, view.getUint32(p, true) | mask, true);
+      }
+    }
+    out[28] = 2; // DOMAIN_UTF8
+    return out;
+  };
+
+  it('handles members longer than the scratch buffer', () => {
+    // The buffer starts at 256 bytes and grows; the multi-byte cases make the byte length
+    // differ from the string length, which is what a 1x capacity bound would truncate.
+    // Order matters. The scratch buffer is shared and only grows, so a case can only prove
+    // anything about capacity if its byte length exceeds every case before it -- put the big
+    // ASCII strings first and the multi-byte ones are never forced to grow, which is exactly
+    // how an undersized capacity bound slips through.
+    const members = [
+      'x'.repeat(255), // fits the initial buffer
+      'x'.repeat(257), // first growth
+      '\u65e5'.repeat(300), // 900 bytes from a 300-unit string
+      '\ud83d\ude80'.repeat(300), // surrogate pairs: 600 units, 1200 bytes
+      'a'.repeat(5000),
+      '\u65e5'.repeat(6000), // 18000 bytes, past anything the ASCII cases reserved
+    ];
+    for (const member of members) {
+      const builder = new BloomFilterBuilder(1, 0.001);
+      builder.addString(member);
+      expect(Array.from(builder.build())).toEqual(
+        Array.from(referenceBlob([member], 0.001))
+      );
+    }
+  });
+
+  it('does not hash the tail of a previous longer member', () => {
+    // If the encoder returned the buffer length rather than the bytes written, a short member
+    // following a long one would hash the leftovers and produce a filter nothing matches.
+    const builder = new BloomFilterBuilder(2, 0.001);
+    builder.addString('z'.repeat(1000)).addString('ab');
+
+    expect(Array.from(builder.build())).toEqual(
+      Array.from(referenceBlob(['z'.repeat(1000), 'ab'], 0.001))
+    );
+  });
+});
