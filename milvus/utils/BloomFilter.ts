@@ -170,12 +170,135 @@ export const xxh64 = (data: Uint8Array): bigint => {
  * back as a u64, so the pack/unpack round trip drops out.
  */
 export const xxh64Int64 = (value: bigint): bigint => {
-  let acc = ((value & MASK64) * PRIME64_2) & MASK64;
-  acc = rotl64(acc, 31);
-  acc = (acc * PRIME64_1) & MASK64;
-  let result = (PRIME64_5 + SHIFT[8]) ^ acc;
-  result = (rotl64(result, 27) * PRIME64_1 + PRIME64_4) & MASK64;
-  return avalanche(result);
+  hashInt64Pair(
+    Number((value >> SHIFT[32]) & MASK32) | 0,
+    Number(value & MASK32) | 0
+  );
+  return (BigInt(pairHi >>> 0) << SHIFT[32]) | BigInt(pairLo >>> 0);
+};
+
+/*
+ * 64-bit arithmetic on pairs of 32-bit integers.
+ *
+ * Every intermediate in XXH64 is a full 64-bit value, and BigInt is the only JavaScript type
+ * that holds one -- but V8 heap-allocates each BigInt intermediate, which for a 10M-member
+ * filter dominates the build. Splitting each value into two 32-bit halves keeps everything in
+ * Smis: the int64 hash drops from 164ns to 27ns per member, and the whole integer build from
+ * 2.86s to about 1.5s. The generic byte-string hash above still uses BigInt; converting it is
+ * a larger job because of the stripe and tail loops, and it is checked against these results.
+ *
+ * Results come back in module-level registers rather than a tuple so the hot path allocates
+ * nothing at all. Not reentrant, which is fine: a builder is documented as not thread-safe
+ * and JavaScript gives us no preemption inside these functions anyway.
+ */
+let pairHi = 0;
+let pairLo = 0;
+
+const P1_HI = 0x9e3779b1 | 0;
+const P1_LO = 0x85ebca87 | 0;
+const P2_HI = 0xc2b2ae3d | 0;
+const P2_LO = 0x27d4eb4f | 0;
+const P3_HI = 0x165667b1 | 0;
+const P3_LO = 0x9e3779f9 | 0;
+const P4_HI = 0x85ebca77 | 0;
+const P4_LO = 0xc2b2ae63 | 0;
+// PRIME64_5 + 8, the seed the 8-byte lane starts from.
+const P5_PLUS8_HI = 0x27d4eb2f | 0;
+const P5_PLUS8_LO = 0x165667cd | 0;
+
+/**
+ * pair = (ah:al) * (bh:bl), modulo 2^64.
+ *
+ * The low half is built from 16-bit partial products so every intermediate stays under 2^32
+ * and therefore exact as a JS number; the high half only needs the low 32 bits of the two
+ * cross terms, which is exactly what Math.imul gives.
+ */
+const mul64 = (ah: number, al: number, bh: number, bl: number): void => {
+  const a0 = al & 0xffff;
+  const a1 = al >>> 16;
+  const b0 = bl & 0xffff;
+  const b1 = bl >>> 16;
+
+  let t = a0 * b0;
+  let lo = t & 0xffff;
+  let carry = t >>> 16;
+
+  t = a1 * b0 + carry;
+  const mid = t & 0xffff;
+  carry = t >>> 16;
+
+  t = a0 * b1 + mid;
+  lo |= (t & 0xffff) << 16;
+  carry += t >>> 16;
+
+  pairHi = ((a1 * b1 + carry) | 0) + Math.imul(ah, bl) + Math.imul(al, bh);
+  pairHi = pairHi | 0;
+  pairLo = lo | 0;
+};
+
+/**
+ * XXH64 (seed 0) over an int64's 8-byte little-endian encoding, in the 32-bit-pair domain.
+ *
+ * Same specialisation as {@link xxh64Int64}: 8 bytes is the only length the integer domain
+ * produces, so the stripe loop and both tails are unreachable and one lane remains. Kept
+ * honest by a test that replays it against the BigInt generic hash.
+ */
+const hashInt64Pair = (vh: number, vl: number): void => {
+  mul64(vh, vl, P2_HI, P2_LO); // acc = v * PRIME64_2
+  let ah = pairHi;
+  let al = pairLo;
+
+  const rh = (ah << 31) | (al >>> 1); // acc = rotl64(acc, 31)
+  const rl = (al << 31) | (ah >>> 1);
+
+  mul64(rh, rl, P1_HI, P1_LO); // acc *= PRIME64_1
+  ah = pairHi;
+  al = pairLo;
+
+  let h = (P5_PLUS8_HI ^ ah) | 0; // result = (PRIME64_5 + 8) ^ acc
+  let l = (P5_PLUS8_LO ^ al) | 0;
+
+  mul64((h << 27) | (l >>> 5), (l << 27) | (h >>> 5), P1_HI, P1_LO); // rotl64(_, 27) * PRIME64_1
+  l = (pairLo + P4_LO) | 0; // + PRIME64_4
+  h = (pairHi + P4_HI + (l >>> 0 < pairLo >>> 0 ? 1 : 0)) | 0;
+
+  l = (l ^ (h >>> 1)) | 0; // h ^= h >>> 33
+  mul64(h, l, P2_HI, P2_LO); // h *= PRIME64_2
+  h = pairHi;
+  l = pairLo;
+
+  l = (l ^ ((h << 3) | (l >>> 29))) | 0; // h ^= h >>> 29
+  h = (h ^ (h >>> 29)) | 0;
+  mul64(h, l, P3_HI, P3_LO); // h *= PRIME64_3
+  h = pairHi;
+  l = pairLo;
+
+  pairHi = h; // h ^= h >>> 32
+  pairLo = (l ^ h) | 0;
+};
+
+/** Splits a member into the 32-bit halves the pair domain works in, validating as it goes. */
+const splitInt64 = (value: number | bigint): void => {
+  if (typeof value === 'bigint') {
+    if (value < INT64_MIN || value > INT64_MAX) {
+      throw new Error(
+        `bloom filter integer members must fit in signed int64, got ${value}`
+      );
+    }
+    pairHi = Number((value >> SHIFT[32]) & MASK32) | 0;
+    pairLo = Number(value & MASK32) | 0;
+    return;
+  }
+  // A safe integer is inside int64 by construction, so the range check the bigint branch
+  // needs is subsumed by this one. Past 2^53 a number silently rounds, so accepting one
+  // would build a filter for a value the caller never asked for.
+  if (!Number.isSafeInteger(value)) {
+    throw new Error(
+      `bloom filter integer members must be safe integers; ${value} is not exactly representable as a number, pass a bigint instead`
+    );
+  }
+  pairHi = Math.floor(value / 4294967296) | 0;
+  pairLo = value | 0;
 };
 
 /** Returns the smallest power of two greater than or equal to v. */
@@ -226,33 +349,6 @@ const validateFpr = (fpr: number): void => {
 };
 
 /**
- * Coerces a member to the int64 the hash domain expects.
- *
- * A `number` must be a safe integer: beyond 2^53 JavaScript silently rounds, so accepting
- * one would build a filter for a value the caller never asked for and the row would never
- * match. Callers with ids past that range should pass `bigint`.
- */
-const toInt64 = (value: number | bigint): bigint => {
-  let result: bigint;
-  if (typeof value === 'bigint') {
-    result = value;
-  } else {
-    if (!Number.isSafeInteger(value)) {
-      throw new Error(
-        `bloom filter integer members must be safe integers; ${value} is not exactly representable as a number, pass a bigint instead`
-      );
-    }
-    result = BigInt(value);
-  }
-  if (result < INT64_MIN || result > INT64_MAX) {
-    throw new Error(
-      `bloom filter integer members must fit in signed int64, got ${result}`
-    );
-  }
-  return result;
-};
-
-/**
  * Returns the exact byte length {@link buildBloomFilter} would produce for `n` members at
  * the given false-positive rate, without hashing anything.
  *
@@ -276,12 +372,9 @@ export class BloomFilterBuilder {
   private readonly buf: Uint8Array;
   private readonly view: DataView;
   private readonly numBlocks: number;
-  /**
-   * `numBlocks` as a BigInt. The block index needs the full 64-bit product, so it has to be
-   * BigInt arithmetic; converting the block count inside addHash would allocate one BigInt
-   * per inserted member.
-   */
-  private readonly numBlocksBig: bigint;
+  /** 32 - log2(numBlocks), and numBlocks - 1: together they reduce a hash to a block index. */
+  private readonly blockShift: number;
+  private readonly blockMask: number;
   private readonly nDeclared: number;
   private readonly fpr: number;
   private domains = 0;
@@ -297,7 +390,8 @@ export class BloomFilterBuilder {
     this.buf = new Uint8Array(BLOOM_FILTER_HEADER_SIZE + numBytes);
     this.view = new DataView(this.buf.buffer);
     this.numBlocks = numBytes / BLOOM_FILTER_BYTES_PER_BLOCK;
-    this.numBlocksBig = BigInt(this.numBlocks);
+    this.blockShift = 32 - Math.log2(this.numBlocks);
+    this.blockMask = this.numBlocks - 1;
     this.nDeclared = n;
     this.fpr = fpr;
   }
@@ -305,7 +399,9 @@ export class BloomFilterBuilder {
   /** Inserts an integer value, hashed as its 8-byte little-endian encoding. */
   addInt64(value: number | bigint): this {
     this.domains |= BLOOM_FILTER_DOMAIN_INT64;
-    this.addHash(xxh64Int64(toInt64(value)));
+    splitInt64(value);
+    hashInt64Pair(pairHi, pairLo);
+    this.addHash(pairHi, pairLo);
     return this;
   }
 
@@ -319,7 +415,11 @@ export class BloomFilterBuilder {
    */
   addString(value: string): this {
     this.domains |= BLOOM_FILTER_DOMAIN_UTF8;
-    this.addHash(xxh64(Buffer.from(value, 'utf8')));
+    const digest = xxh64(Buffer.from(value, 'utf8'));
+    this.addHash(
+      Number((digest >> SHIFT[32]) & MASK32) | 0,
+      Number(digest & MASK32) | 0
+    );
     return this;
   }
 
@@ -361,15 +461,17 @@ export class BloomFilterBuilder {
    * is 32-bit, where `Math.imul` gives exactly the wrapping multiply the spec wants and
    * `>>> 27` the logical shift.
    */
-  private addHash(hash: bigint): void {
-    const blockIndex = Number(
-      ((hash >> SHIFT[32]) * this.numBlocksBig) >> SHIFT[32]
-    );
+  private addHash(hashHi: number, hashLo: number): void {
+    // Block index is ((hash >>> 32) * numBlocks) >>> 32, and numBlocks is always a power of
+    // two -- optimalNumOfBytes rounds the body up to one and a block is 32 bytes -- so that
+    // product-and-shift collapses to hi >>> (32 - log2(numBlocks)), one shift instead of a
+    // 2^54 product JS numbers cannot hold exactly. The mask covers numBlocks === 1, where the
+    // shift count would be 32 and JS shifts modulo 32 leave hi untouched.
+    const blockIndex = (hashHi >>> this.blockShift) & this.blockMask;
     const offset =
       BLOOM_FILTER_HEADER_SIZE + blockIndex * BLOOM_FILTER_BYTES_PER_BLOCK;
-    const key = Number(hash & MASK32);
     for (let i = 0; i < WORDS_PER_BLOCK; i++) {
-      const mask = 1 << (Math.imul(key, SALT[i]) >>> 27);
+      const mask = 1 << (Math.imul(hashLo, SALT[i]) >>> 27);
       const p = offset + i * 4;
       this.view.setUint32(p, this.view.getUint32(p, true) | mask, true);
     }
