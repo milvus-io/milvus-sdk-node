@@ -38,6 +38,8 @@ import {
   getPrimaryCluster,
   TopologyRefresher,
   setPoolFailoverHandler,
+  setPoolTelemetryManager,
+  ClientTelemetryManager,
 } from '../';
 import { User } from './User';
 
@@ -56,6 +58,9 @@ export const LOADER_OPTIONS = {
 export class GRPCClient extends User {
   // Store the gRPC service constructor for pool rebuild on failover
   private _MilvusService!: ServiceClientConstructor;
+  private _ClientTelemetryService!: ServiceClientConstructor;
+  private telemetryClient?: Client;
+  private readonly telemetry: ClientTelemetryManager;
   // Store sdkVersion for reconnection
   private _sdkVersion: string = '';
 
@@ -84,6 +89,27 @@ export class GRPCClient extends User {
       },
       { ...LOADER_OPTIONS, ...this.config.loaderOptions }
     );
+    this._ClientTelemetryService = getGRPCService(
+      {
+        serviceName: 'milvus.proto.milvus.ClientTelemetryService',
+      },
+      { ...LOADER_OPTIONS, ...this.config.loaderOptions }
+    );
+
+    this.telemetry = new ClientTelemetryManager({
+      sender: request => this.sendTelemetryHeartbeat(request),
+      config: this.config.telemetry,
+      userProvider: () => this.config.username || '',
+      databaseProvider: () =>
+        this.metadata.get(METADATA.DATABASE) || DEFAULT_DB,
+      configProvider: () => ({
+        address: this.config.address,
+        username: this.config.username,
+        database: this.metadata.get(METADATA.DATABASE) || DEFAULT_DB,
+        ssl: this.config.ssl,
+        timeout: this.config.timeout,
+      }),
+    });
 
     // setup auth if necessary
     const auth = getAuthString(this.config);
@@ -140,11 +166,13 @@ export class GRPCClient extends User {
   // create a grpc service client(connect)
   connect(sdkVersion: string) {
     this._sdkVersion = sdkVersion;
+    this.telemetry.setSdkVersion(sdkVersion);
     if (this.isGlobal) {
       // For global cluster: fetch topology → create pool → connect
       this.connectPromise = this._initGlobalConnection(sdkVersion);
     } else {
       // Normal connection
+      this.replaceTelemetryClient();
       this.connectPromise = this._getServerInfo(sdkVersion);
     }
   }
@@ -173,6 +201,7 @@ export class GRPCClient extends User {
     );
 
     this.channelPool = this.createChannelPool();
+    this.replaceTelemetryClient();
     this._attachFailoverHandler();
 
     // Start background topology refresher
@@ -245,13 +274,12 @@ export class GRPCClient extends User {
         const oldPool = this.channelPool;
         this.config.address = newPrimary.endpoint;
         this.channelPool = this.createChannelPool();
+        this.replaceTelemetryClient();
         this._attachFailoverHandler();
 
         // Now drain old pool (non-critical, best-effort)
         if (oldPool) {
-          logger.debug(
-            `\x1b[36m[Global]\x1b[0m Draining old channel pool`
-          );
+          logger.debug(`\x1b[36m[Global]\x1b[0m Draining old channel pool`);
           try {
             await oldPool.drain();
             await oldPool.clear();
@@ -326,7 +354,7 @@ export class GRPCClient extends User {
    */
   private createChannelPool() {
     const ServiceClientConstructor = this._MilvusService;
-    return createPool<Client>(
+    const pool = createPool<Client>(
       {
         create: async () => {
           // Create a new gRPC service client
@@ -349,6 +377,39 @@ export class GRPCClient extends User {
         max: DEFAULT_POOL_MAX,
       }
     );
+    setPoolTelemetryManager(pool, this.telemetry);
+    return pool;
+  }
+
+  private replaceTelemetryClient() {
+    if (this.telemetryClient) {
+      this.telemetryClient.close();
+    }
+    this.telemetryClient = new this._ClientTelemetryService(
+      formatAddress(this.config.address),
+      this.creds,
+      this.channelOptions
+    );
+  }
+
+  private sendTelemetryHeartbeat(request: Record<string, unknown>) {
+    return new Promise<any>((resolve, reject) => {
+      if (!this.telemetryClient) {
+        reject(new Error('telemetry client is not connected'));
+        return;
+      }
+      (this.telemetryClient as any).ClientHeartbeat(
+        request,
+        { deadline: new Date(Date.now() + 10_000) },
+        (error: any, response: any) =>
+          error ? reject(error) : resolve(response)
+      );
+    });
+  }
+
+  /** Returns the telemetry manager for inspection and custom command handlers. */
+  getTelemetry() {
+    return this.telemetry;
   }
 
   /**
@@ -424,6 +485,9 @@ export class GRPCClient extends User {
           f && f.identifier
             ? CONNECT_STATUS.CONNECTED
             : CONNECT_STATUS.UNIMPLEMENTED;
+        if (f && f.identifier) {
+          this.telemetry.start();
+        }
       }
     );
   }
@@ -434,6 +498,11 @@ export class GRPCClient extends User {
    * @returns {Promise<CONNECT_STATUS>} The updated connection status.
    */
   async closeConnection() {
+    this.telemetry.stop();
+    if (this.telemetryClient) {
+      this.telemetryClient.close();
+      this.telemetryClient = undefined;
+    }
     // Stop topology refresher if running (global cluster)
     if (this.topologyRefresher) {
       logger.debug(

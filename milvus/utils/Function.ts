@@ -21,6 +21,25 @@ export type FailoverHandler = (error: any) => Promise<Pool<any> | null>;
 
 /** Well-known property key for attaching a failover handler to a pool. */
 export const FAILOVER_HANDLER_KEY = '__failoverHandler';
+export const TELEMETRY_MANAGER_KEY = '__telemetryManager';
+
+type TelemetryRecorder = {
+  recordOperation(record: {
+    operation: string;
+    collection: string;
+    startTime: number;
+    error?: unknown;
+    requestId?: string;
+  }): void;
+};
+
+/** Attach the telemetry recorder used by the common RPC path. */
+export function setPoolTelemetryManager(
+  pool: Pool<any>,
+  manager: TelemetryRecorder
+): void {
+  (pool as any)[TELEMETRY_MANAGER_KEY] = manager;
+}
 
 /**
  * Attach a failover handler to a pool for global cluster support.
@@ -53,6 +72,11 @@ function executeCall(
 
   return (async () => {
     const client = await pool.acquire();
+    const operation = telemetryOperation(target);
+    const telemetry: TelemetryRecorder | undefined = (pool as any)[
+      TELEMETRY_MANAGER_KEY
+    ];
+    const startTime = performance.now();
 
     let finalRequestMetadata = requestMetadata;
     if (!finalRequestMetadata && params) {
@@ -75,6 +99,16 @@ function executeCall(
         }
 
         client[target](params, callOptions, (err: any, result: any) => {
+          if (operation && telemetry) {
+            const businessError = err || getBusinessError(result);
+            telemetry.recordOperation({
+              operation,
+              collection: String(params?.collection_name || ''),
+              startTime,
+              error: businessError,
+              requestId: getClientRequestId(finalRequestMetadata),
+            });
+          }
           if (err) {
             reject(err);
           } else {
@@ -85,6 +119,15 @@ function executeCall(
           }
         });
       } catch (e: any) {
+        if (operation && telemetry) {
+          telemetry.recordOperation({
+            operation,
+            collection: String(params?.collection_name || ''),
+            startTime,
+            error: e,
+            requestId: getClientRequestId(finalRequestMetadata),
+          });
+        }
         reject(e);
         if (client) {
           pool.release(client);
@@ -92,6 +135,39 @@ function executeCall(
       }
     });
   })();
+}
+
+const TELEMETRY_OPERATIONS = new Set([
+  'Insert',
+  'Delete',
+  'Upsert',
+  'Search',
+  'HybridSearch',
+  'Query',
+  'RunAnalyzer',
+]);
+
+function telemetryOperation(target: string): string | undefined {
+  return TELEMETRY_OPERATIONS.has(target) ? target : undefined;
+}
+
+function getBusinessError(result: any): Error | undefined {
+  const responseStatus = result?.status || result;
+  if (!responseStatus) {
+    return undefined;
+  }
+  const code = Number(responseStatus.code || 0);
+  const errorCode = responseStatus.error_code;
+  const success =
+    code === 0 &&
+    (errorCode === undefined ||
+      errorCode === 0 ||
+      errorCode === '0' ||
+      errorCode === 'Success' ||
+      errorCode === 'SUCCESS');
+  return success
+    ? undefined
+    : new Error(responseStatus.reason || 'Milvus operation failed');
 }
 
 /**

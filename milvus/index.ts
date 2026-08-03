@@ -4,6 +4,7 @@ export * from './const';
 export * from './utils';
 // types
 export * from './types';
+export * from './telemetry';
 // clients
 export * from './grpc/GrpcClient';
 export * from './MilvusClient';
