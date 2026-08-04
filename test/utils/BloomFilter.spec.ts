@@ -273,6 +273,15 @@ describe('utils/BloomFilter', () => {
 
     // Previously an unsupported type fell through silently and the key was dropped, so the
     // query ran without that template value instead of failing.
+    // Rejecting an unsupported type is the point, but `undefined` is not one: spreading an
+    // optional field into an object leaves the key present with no value, and that used to be
+    // ignored. Throwing there would break callers who were doing nothing wrong.
+    it('skips undefined values rather than rejecting them', () => {
+      expect(formatExprValues({ a: 1, b: undefined })).toEqual({
+        a: { int64_val: 1 },
+      });
+    });
+
     it('throws on an unsupported value type instead of dropping the key', () => {
       expect(() => formatExprValues({ bad: { nested: 1 } })).toThrow(
         /Unsupported expr value type for key "bad"/

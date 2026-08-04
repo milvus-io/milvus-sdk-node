@@ -815,6 +815,12 @@ export const formatExprValues = (
   const result: Record<string, TemplateValue> = {};
 
   for (const [key, value] of Object.entries(exprValues)) {
+    if (value === undefined) {
+      // A key whose value is undefined means "not provided" in JavaScript -- `{...opts, x:
+      // maybeMissing}` is routine -- so it is skipped rather than rejected. Everything else,
+      // including null, is a value the caller wrote deliberately and has to be representable.
+      continue;
+    }
     if (Array.isArray(value)) {
       // Handle arrays
       result[key] = { array_val: convertArray(value) };
