@@ -199,9 +199,12 @@ export class ClientTelemetryManager {
     this.databaseProvider = options.databaseProvider || (() => '');
     this.configProvider = options.configProvider || (() => ({}));
     this.enabled = config.enabled ?? true;
-    this.heartbeatIntervalMs = config.heartbeatIntervalMs ?? 30_000;
-    if (this.heartbeatIntervalMs <= 0) {
-      throw new Error('heartbeatIntervalMs must be positive');
+    this.heartbeatIntervalMs = Number(config.heartbeatIntervalMs ?? 30_000);
+    if (
+      !Number.isFinite(this.heartbeatIntervalMs) ||
+      this.heartbeatIntervalMs <= 0
+    ) {
+      throw new Error('heartbeatIntervalMs must be a finite positive number');
     }
     this.samplingRate = clamp(config.samplingRate ?? 1, 0, 1);
     this.errorMaxCount = Math.max(1, config.errorMaxCount ?? 100);
@@ -465,15 +468,20 @@ export class ClientTelemetryManager {
   private registerDefaultHandlers() {
     this.registerCommandHandler('push_config', command => {
       const payload = parsePayload(command);
+      let heartbeatIntervalMs: number | undefined;
+      if ('heartbeat_interval_ms' in payload) {
+        heartbeatIntervalMs = Number(payload.heartbeat_interval_ms);
+        if (!Number.isFinite(heartbeatIntervalMs) || heartbeatIntervalMs <= 0) {
+          throw new Error(
+            'heartbeat_interval_ms must be a finite positive number'
+          );
+        }
+      }
       if ('enabled' in payload) {
         this.enabled = Boolean(payload.enabled);
       }
-      if ('heartbeat_interval_ms' in payload) {
-        const interval = Number(payload.heartbeat_interval_ms);
-        if (interval <= 0) {
-          throw new Error('heartbeat_interval_ms must be positive');
-        }
-        this.heartbeatIntervalMs = interval;
+      if (heartbeatIntervalMs !== undefined) {
+        this.heartbeatIntervalMs = heartbeatIntervalMs;
       }
       if ('sampling_rate' in payload) {
         this.samplingRate = clamp(Number(payload.sampling_rate), 0, 1);
@@ -584,7 +592,10 @@ export class ClientTelemetryManager {
         snapshot => snapshot.end_time >= start && snapshot.timestamp <= end
       );
       const body = payload.detail
-        ? { snapshots, total_snapshots: snapshots.length }
+        ? {
+            snapshots: detailSnapshots(snapshots),
+            total_snapshots: snapshots.length,
+          }
         : aggregateSnapshots(snapshots, start, end);
       const encoded = Buffer.from(JSON.stringify(body));
       if (encoded.length > MAX_REPLY_BYTES) {
@@ -707,4 +718,18 @@ function aggregateSnapshots(
     aggregated: { start_time: start, end_time: end, metrics },
     snapshot_count: snapshots.length,
   };
+}
+
+function detailSnapshots(snapshots: TelemetrySnapshot[]) {
+  return snapshots.map(snapshot => {
+    const metrics: Record<string, TelemetryMetric> = {};
+    for (const operation of snapshot.metrics) {
+      metrics[operation.operation] = operation.global;
+    }
+    return {
+      timestamp: snapshot.timestamp,
+      end_time: snapshot.end_time,
+      metrics,
+    };
+  });
 }

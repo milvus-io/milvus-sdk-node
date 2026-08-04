@@ -67,6 +67,69 @@ describe('ClientTelemetryManager', () => {
     manager.stop();
   });
 
+  it('rejects invalid heartbeat intervals without changing the current interval', async () => {
+    expect(
+      () =>
+        new ClientTelemetryManager({
+          sender: async () => ({ status: { error_code: 'Success' } }),
+          config: { heartbeatIntervalMs: Number.NaN },
+        })
+    ).toThrow('heartbeatIntervalMs must be a finite positive number');
+
+    const manager = new ClientTelemetryManager({
+      sender: async () => ({ status: { error_code: 'Success' } }),
+      config: { enabled: false, heartbeatIntervalMs: 5000 },
+    });
+    const reply = await (manager as any).handleCommand({
+      command_id: 'invalid-config',
+      command_type: 'push_config',
+      payload: Buffer.from('{"heartbeat_interval_ms":"not-a-number"}'),
+    });
+
+    expect(reply.success).toBe(false);
+    expect(reply.error_message).toContain('finite positive number');
+    expect(manager.getConfig().heartbeatIntervalMs).toBe(5000);
+    manager.stop();
+  });
+
+  it('returns operation-keyed latency detail metrics', async () => {
+    const manager = new ClientTelemetryManager({
+      sender: async () => ({ status: { error_code: 'Success' } }),
+    });
+    manager.recordOperation({
+      operation: 'Search',
+      collection: 'books',
+      startTime: performance.now() - 5,
+    });
+    (manager as any).createSnapshot();
+    const snapshot = manager.getMetricsSnapshots()[0];
+
+    const reply = await (manager as any).handleCommand({
+      command_id: 'latency-detail',
+      command_type: 'show_latency_history',
+      payload: Buffer.from(
+        JSON.stringify({
+          start_time: new Date(snapshot.timestamp - 1).toISOString(),
+          end_time: new Date(snapshot.end_time + 1).toISOString(),
+          detail: true,
+        })
+      ),
+    });
+    const body = JSON.parse(reply.payload.toString());
+
+    expect(reply.success).toBe(true);
+    expect(body.total_snapshots).toBe(1);
+    expect(Array.isArray(body.snapshots[0].metrics)).toBe(false);
+    expect(body.snapshots[0].metrics.Search).toEqual(
+      expect.objectContaining({
+        request_count: 1,
+        success_count: 1,
+        error_count: 0,
+      })
+    );
+    manager.stop();
+  });
+
   it('generates a lowercase 128-bit client request ID', () => {
     expect(newClientRequestId()).toMatch(/^[0-9a-f]{32}$/);
   });
