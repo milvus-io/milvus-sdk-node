@@ -2,20 +2,24 @@ import {
   buildBloomFilter,
   BloomFilterBuilder,
   estimateBloomFilterSize,
-  xxh64,
-  xxh64Pairs,
-  xxh64Int64,
   formatExprValues,
   BLOOM_FILTER_DEFAULT_FPR,
   BLOOM_FILTER_MIN_FPR,
   BLOOM_FILTER_MAX_FPR,
+} from '../../milvus';
+// Not part of the package's public surface -- imported from the module so the
+// reference hash can be cross-checked against the one the builder actually runs.
+import {
+  xxh64,
+  xxh64Pairs,
+  xxh64Int64,
   BLOOM_FILTER_HEADER_SIZE,
   BLOOM_FILTER_MIN_BYTES,
   BLOOM_FILTER_MAX_BYTES,
   BLOOM_FILTER_BYTES_PER_BLOCK,
   BLOOM_FILTER_DOMAIN_INT64,
   BLOOM_FILTER_DOMAIN_UTF8,
-} from '../../milvus';
+} from '../../milvus/utils/BloomFilter';
 
 import goldenVectors from './testdata/golden_vectors.json';
 import cppFixture from './testdata/cpp_generated_100_int64.json';
