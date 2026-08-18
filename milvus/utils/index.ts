@@ -16,6 +16,13 @@ export {
   BLOOM_FILTER_MAX_FPR,
   BLOOM_FILTER_DEFAULT_FPR,
 } from './BloomFilter';
+// Named for the same reason: the module also exports the MRB1 layout constants, which exist
+// so the tests can assert the envelope and are not part of the supported surface.
+export {
+  buildRoaringBitmap,
+  RoaringBitmapBuilder,
+  RoaringBitmapMember,
+} from './RoaringFilter';
 export * from './Bytes';
 export * from './Format';
 export * from './Validate';
