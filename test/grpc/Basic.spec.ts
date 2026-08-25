@@ -1,4 +1,10 @@
-import { MilvusClient, ErrorCode, DataType, FieldType } from '../../milvus';
+import {
+  MilvusClient,
+  ErrorCode,
+  DataType,
+  FieldType,
+  newClientRequestId,
+} from '../../milvus';
 import { IP, GENERATE_NAME, generateInsertData } from '../tools';
 
 const milvusClient = new MilvusClient({
@@ -162,7 +168,7 @@ describe(`Basic API without database`, () => {
   });
 
   it(`Create collection with traceid should be successful`, async () => {
-    const traceId = 'test-trace-id-' + Date.now();
+    const traceId = newClientRequestId();
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME + '_trace',
       fields: schema,
@@ -172,7 +178,7 @@ describe(`Basic API without database`, () => {
   });
 
   it(`Create collection with traceid (alternative format) should be successful`, async () => {
-    const traceId = 'test-trace-id-alt-' + Date.now();
+    const traceId = newClientRequestId();
     const res = await milvusClient.createCollection({
       collection_name: COLLECTION_NAME + '_trace_alt',
       fields: schema,

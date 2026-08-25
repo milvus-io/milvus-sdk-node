@@ -33,12 +33,8 @@ describe('Global connection lifecycle', () => {
   });
 
   it('should detect global cluster from address', () => {
-    expect(
-      isGlobalEndpoint('https://glo-xxx.global-cluster.xyz')
-    ).toBe(true);
-    expect(
-      isGlobalEndpoint('https://in01-xxx.zilliz.com')
-    ).toBe(false);
+    expect(isGlobalEndpoint('https://glo-xxx.global-cluster.xyz')).toBe(true);
+    expect(isGlobalEndpoint('https://in01-xxx.zilliz.com')).toBe(false);
   });
 
   it('should resolve primary endpoint during initialization', async () => {
@@ -56,9 +52,7 @@ describe('Global connection lifecycle', () => {
 
     // The client should be detected as global
     expect(client.isGlobal).toBe(true);
-    expect(client.globalEndpoint).toBe(
-      'https://glo-xxx.global-cluster.xyz'
-    );
+    expect(client.globalEndpoint).toBe('https://glo-xxx.global-cluster.xyz');
   });
 
   it('should not treat regular addresses as global', () => {
@@ -318,7 +312,11 @@ describe('Global connection lifecycle', () => {
             data: {
               version: '2',
               clusters: [
-                { clusterId: 'c3', endpoint: 'new-primary:19530', capability: 3 },
+                {
+                  clusterId: 'c3',
+                  endpoint: 'new-primary:19530',
+                  capability: 3,
+                },
               ],
             },
           }),
@@ -332,27 +330,76 @@ describe('Global connection lifecycle', () => {
       __SKIP_CONNECT__: true,
     });
 
-    // Mock _getServerInfo BEFORE init so it doesn't hang on real gRPC
-    (client as any)._getServerInfo = jest.fn().mockResolvedValue(undefined);
+    const oldPool = {
+      drain: jest.fn().mockResolvedValue(undefined),
+      clear: jest.fn().mockResolvedValue(undefined),
+    } as any;
+    const candidatePool = {
+      drain: jest.fn().mockResolvedValue(undefined),
+      clear: jest.fn().mockResolvedValue(undefined),
+    } as any;
+    (client as any).createChannelPool = jest
+      .fn()
+      .mockReturnValueOnce(oldPool)
+      .mockReturnValueOnce(candidatePool);
+    const oldTelemetryClient = { close: jest.fn() } as any;
+    const candidateTelemetryClient = { close: jest.fn() } as any;
+    (client as any).createTelemetryClient = jest
+      .fn()
+      .mockReturnValueOnce(oldTelemetryClient)
+      .mockReturnValueOnce(candidateTelemetryClient);
+    (client as any)._getServerInfo = jest
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({
+        identifier: 'new-client-id',
+        server_info: { build_tags: 'new-primary' },
+      });
 
     await (client as any)._initGlobalConnection('test');
 
     expect(client.config.address).toBe('primary-host:19530');
-
-    // Mock old pool drain/clear
-    const oldPool = client.channelPool;
-    oldPool.drain = jest.fn().mockResolvedValue(undefined);
-    oldPool.clear = jest.fn().mockResolvedValue(undefined);
+    expect(client.channelPool).toBe(oldPool);
+    const oldRefresher = client.topologyRefresher;
+    const telemetry = client.getTelemetry();
+    await telemetry.processCommands([
+      {
+        command_id: 'preserved-state',
+        command_type: 'push_config',
+        payload: Buffer.from('{"sampling_rate":0.5}'),
+        create_time: 1,
+        persistent: true,
+      },
+    ]);
+    const oldTelemetryState = {
+      config: telemetry.getConfig(),
+      configHash: telemetry.configHash,
+      lastCommandTimestamp: telemetry.lastCommandTimestamp,
+    };
 
     const changed = await client.reconnectToPrimary();
     expect(changed).toBe(true);
     expect(client.config.address).toBe('new-primary:19530');
+    expect(client.channelPool).toBe(candidatePool);
+    expect((client as any).telemetryClient).toBe(candidateTelemetryClient);
+    expect(client.connectStatus).toBe(CONNECT_STATUS.CONNECTED);
+    expect(client.serverInfo).toEqual({ build_tags: 'new-primary' });
+    expect(client.topologyRefresher).not.toBe(oldRefresher);
+    expect(client.topologyRefresher?.isRunning()).toBe(true);
+    expect(oldRefresher?.isRunning()).toBe(false);
+    expect(oldTelemetryClient.close).toHaveBeenCalledTimes(1);
+    expect(candidateTelemetryClient.close).not.toHaveBeenCalled();
+    expect(oldPool.drain).toHaveBeenCalledTimes(1);
+    expect(oldPool.clear).toHaveBeenCalledTimes(1);
+    expect(candidatePool.drain).not.toHaveBeenCalled();
+    expect(telemetry.getConfig()).toEqual(oldTelemetryState.config);
+    expect(telemetry.configHash).toBe(oldTelemetryState.configHash);
+    expect(telemetry.lastCommandTimestamp).toBe(
+      oldTelemetryState.lastCommandTimestamp
+    );
 
     // Clean up
     client.topologyRefresher?.stop();
-    if (client.channelPool) {
-      try { await client.channelPool.drain(); await client.channelPool.clear(); } catch {}
-    }
   });
 
   it('should return false from reconnectToPrimary when primary unchanged', async () => {
@@ -381,7 +428,7 @@ describe('Global connection lifecycle', () => {
     client.topologyRefresher?.stop();
   });
 
-  it('should clean up on failover failure', async () => {
+  it('should preserve the live lifecycle when candidate validation fails', async () => {
     let fetchCount = 0;
     global.fetch = jest.fn().mockImplementation(() => {
       fetchCount++;
@@ -399,7 +446,11 @@ describe('Global connection lifecycle', () => {
             data: {
               version: '2',
               clusters: [
-                { clusterId: 'c3', endpoint: 'failing-host:19530', capability: 3 },
+                {
+                  clusterId: 'c3',
+                  endpoint: 'failing-host:19530',
+                  capability: 3,
+                },
               ],
             },
           }),
@@ -413,33 +464,165 @@ describe('Global connection lifecycle', () => {
       __SKIP_CONNECT__: true,
     });
 
-    // Mock _getServerInfo: succeed on init, fail on reconnect
-    let getServerInfoCallCount = 0;
-    (client as any)._getServerInfo = jest.fn().mockImplementation(() => {
-      getServerInfoCallCount++;
-      if (getServerInfoCallCount <= 1) {
-        return Promise.resolve(undefined);
-      }
-      return Promise.reject(new Error('connection failed'));
-    });
+    const oldPool = {
+      drain: jest.fn().mockResolvedValue(undefined),
+      clear: jest.fn().mockResolvedValue(undefined),
+    } as any;
+    const candidatePool = {
+      drain: jest.fn().mockResolvedValue(undefined),
+      clear: jest.fn().mockResolvedValue(undefined),
+    } as any;
+    (client as any).createChannelPool = jest
+      .fn()
+      .mockReturnValueOnce(oldPool)
+      .mockReturnValueOnce(candidatePool);
+    const oldTelemetryClient = { close: jest.fn() } as any;
+    const candidateTelemetryClient = { close: jest.fn() } as any;
+    (client as any).createTelemetryClient = jest
+      .fn()
+      .mockReturnValueOnce(oldTelemetryClient)
+      .mockReturnValueOnce(candidateTelemetryClient);
+    (client as any)._getServerInfo = jest
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('connection failed'));
 
     await (client as any)._initGlobalConnection('test');
+    client.connectStatus = CONNECT_STATUS.CONNECTED;
+    client.serverInfo = { build_tags: 'old-primary' };
+    const oldAddress = client.config.address;
+    const oldTopology = client.globalTopology;
+    const oldRefresher = client.topologyRefresher;
+    const oldEpoch = (client as any).telemetryEndpointEpoch;
+    const telemetry = client.getTelemetry();
+    await telemetry.processCommands([
+      {
+        command_id: 'preserved-state',
+        command_type: 'push_config',
+        payload: Buffer.from('{"sampling_rate":0.5}'),
+        create_time: 1,
+        persistent: true,
+      },
+    ]);
+    const oldTelemetryState = {
+      config: telemetry.getConfig(),
+      configHash: telemetry.configHash,
+      lastCommandTimestamp: telemetry.lastCommandTimestamp,
+    };
 
-    // Mock old pool drain/clear
-    const oldPool = client.channelPool;
-    oldPool.drain = jest.fn().mockResolvedValue(undefined);
-    oldPool.clear = jest.fn().mockResolvedValue(undefined);
+    await expect(client.reconnectToPrimary()).rejects.toThrow(
+      'connection failed'
+    );
 
-    // Reconnect will fail at _getServerInfo (second call)
-    try {
-      await client.reconnectToPrimary();
-    } catch {
-      // Expected
+    expect(client.config.address).toBe(oldAddress);
+    expect(client.channelPool).toBe(oldPool);
+    expect((client as any).telemetryClient).toBe(oldTelemetryClient);
+    expect((client as any).telemetryEndpointEpoch).toBe(oldEpoch);
+    expect(client.globalTopology).toBe(oldTopology);
+    expect(client.topologyRefresher).toBe(oldRefresher);
+    expect(oldRefresher?.isRunning()).toBe(true);
+    expect(client.connectStatus).toBe(CONNECT_STATUS.CONNECTED);
+    expect(client.serverInfo).toEqual({ build_tags: 'old-primary' });
+    expect(oldTelemetryClient.close).not.toHaveBeenCalled();
+    expect(oldPool.drain).not.toHaveBeenCalled();
+    expect(oldPool.clear).not.toHaveBeenCalled();
+    expect(candidateTelemetryClient.close).toHaveBeenCalledTimes(1);
+    expect(candidatePool.drain).toHaveBeenCalledTimes(1);
+    expect(candidatePool.clear).toHaveBeenCalledTimes(1);
+    expect(telemetry.getConfig()).toEqual(oldTelemetryState.config);
+    expect(telemetry.configHash).toBe(oldTelemetryState.configHash);
+    expect(telemetry.lastCommandTimestamp).toBe(
+      oldTelemetryState.lastCommandTimestamp
+    );
+
+    oldRefresher?.stop();
+  });
+
+  it('discards and cleans a blocked failover candidate released after close', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          code: 0,
+          data: {
+            version: '2',
+            clusters: [
+              {
+                clusterId: 'new',
+                endpoint: 'new-primary:19530',
+                capability: 3,
+              },
+            ],
+          },
+        }),
+    }) as any;
+    const client = new MilvusClient({
+      address: 'https://glo-xxx.global-cluster.xyz',
+      token: 'test-token',
+      pool: { min: 0, max: 1 },
+      __SKIP_CONNECT__: true,
+    });
+    client.config.address = 'old-primary:19530';
+    const oldTopology = {
+      version: '1',
+      clusters: [
+        {
+          clusterId: 'old',
+          endpoint: 'old-primary:19530',
+          capability: 3,
+        },
+      ],
+    } as any;
+    client.globalTopology = oldTopology;
+
+    const oldPool = {
+      drain: jest.fn().mockResolvedValue(undefined),
+      clear: jest.fn().mockResolvedValue(undefined),
+    } as any;
+    const candidatePool = {
+      drain: jest.fn().mockResolvedValue(undefined),
+      clear: jest.fn().mockResolvedValue(undefined),
+    } as any;
+    client.channelPool = oldPool;
+    (client as any).createChannelPool = jest.fn(() => candidatePool);
+    const oldTelemetryClient = { close: jest.fn() } as any;
+    const candidateTelemetryClient = { close: jest.fn() } as any;
+    (client as any).telemetryClient = oldTelemetryClient;
+    (client as any).createTelemetryClient = jest.fn(
+      () => candidateTelemetryClient
+    );
+    let releaseCandidate!: (value: any) => void;
+    const candidateValidation = new Promise(resolve => {
+      releaseCandidate = resolve;
+    });
+    (client as any)._getServerInfo = jest.fn(() => candidateValidation);
+    const oldEpoch = (client as any).telemetryEndpointEpoch;
+
+    const reconnect = client.reconnectToPrimary();
+    while (!(client as any)._getServerInfo.mock.calls.length) {
+      await Promise.resolve();
     }
+    const concurrentReconnect = client.reconnectToPrimary();
+    await client.closeConnection();
+    releaseCandidate({
+      identifier: 'candidate-client',
+      server_info: { build_tags: 'candidate' },
+    });
 
-    // After failure, refresher should be cleaned up
-    expect(client.topologyRefresher).toBeNull();
+    await expect(reconnect).resolves.toBe(false);
+    await expect(concurrentReconnect).resolves.toBe(false);
     expect(client.connectStatus).toBe(CONNECT_STATUS.SHUTDOWN);
+    expect(client.config.address).toBe('old-primary:19530');
+    expect(client.channelPool).toBe(oldPool);
+    expect(client.globalTopology).toBe(oldTopology);
+    expect((client as any).telemetryClient).toBeUndefined();
+    expect((client as any).telemetryEndpointEpoch).toBe(oldEpoch + 1);
+    expect(oldTelemetryClient.close).toHaveBeenCalledTimes(1);
+    expect(oldPool.drain).toHaveBeenCalledTimes(1);
+    expect(oldPool.clear).toHaveBeenCalledTimes(1);
+    expect(candidateTelemetryClient.close).toHaveBeenCalledTimes(1);
+    expect(candidatePool.drain).toHaveBeenCalledTimes(1);
+    expect(candidatePool.clear).toHaveBeenCalledTimes(1);
   });
 
   it('should serialize concurrent reconnect via isReconnecting flag', async () => {
@@ -469,14 +652,14 @@ describe('Global connection lifecycle', () => {
 
     // Simulate an ongoing reconnect by setting the flag
     c.isReconnecting = true;
-    let resolveReconnect!: () => void;
-    c.reconnectingPromise = new Promise((resolve: any) => {
+    let resolveReconnect!: (changed: boolean) => void;
+    c.reconnectingPromise = new Promise<boolean>(resolve => {
       resolveReconnect = resolve;
     });
 
     // Second call should wait for the existing promise, not start a new one
     const waitPromise = client.reconnectToPrimary();
-    resolveReconnect();
+    resolveReconnect(true);
     const result = await waitPromise;
 
     // Should return true (reconnect was handled by the first caller)

@@ -83,6 +83,9 @@ import {
   FieldPartialUpdateOpType,
   FieldPartialUpdateOp,
   CLUSTER_ID,
+  isHybridSearchRequest,
+  withTelemetryLogicalOperation,
+  withTelemetrySuppressed,
 } from '../';
 import { Collection } from './Collection';
 
@@ -128,14 +131,18 @@ export class Data extends Collection {
    * Upsert data into Milvus, view _insert for detail
    */
   async upsert(data: UpsertReq): Promise<MutationResult> {
-    return this._insert(data, true);
+    return withTelemetryLogicalOperation(this.channelPool, 'Upsert', data, () =>
+      this._insert(data, true)
+    );
   }
 
   /**
    * Insert data into Milvus, view _insert for detail
    */
   async insert(data: InsertReq): Promise<MutationResult> {
-    return this._insert(data);
+    return withTelemetryLogicalOperation(this.channelPool, 'Insert', data, () =>
+      this._insert(data)
+    );
   }
 
   /**
@@ -632,6 +639,14 @@ export class Data extends Collection {
    * ```
    */
   async deleteEntities(data: DeleteEntitiesReq): Promise<MutationResult> {
+    return withTelemetryLogicalOperation(this.channelPool, 'Delete', data, () =>
+      this._deleteEntities(data)
+    );
+  }
+
+  private async _deleteEntities(
+    data: DeleteEntitiesReq
+  ): Promise<MutationResult> {
     if (!data || !data.collection_name) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
@@ -695,6 +710,12 @@ export class Data extends Collection {
    * ```
    */
   async delete(data: DeleteReq): Promise<MutationResult> {
+    return withTelemetryLogicalOperation(this.channelPool, 'Delete', data, () =>
+      this._delete(data)
+    );
+  }
+
+  private async _delete(data: DeleteReq): Promise<MutationResult> {
     if (!data || !data.collection_name) {
       throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
     }
@@ -798,6 +819,18 @@ export class Data extends Collection {
   async search<T extends SearchReq | SearchSimpleReq | HybridSearchReq>(
     params: T
   ): Promise<SearchResults<T>> {
+    const operation = isHybridSearchRequest(params) ? 'HybridSearch' : 'Search';
+    return withTelemetryLogicalOperation(
+      this.channelPool,
+      operation,
+      params,
+      () => this._search(params)
+    );
+  }
+
+  private async _search<
+    T extends SearchReq | SearchSimpleReq | HybridSearchReq,
+  >(params: T): Promise<SearchResults<T>> {
     // default collection request
     const describeCollectionRequest = {
       collection_name: params.collection_name,
@@ -893,13 +926,16 @@ export class Data extends Collection {
   async searchIterator(param: SearchIteratorReq): Promise<any> {
     const client = this;
 
-    // Get available count
-    const count = await client.count({
-      collection_name: param.collection_name,
-      expr: param.expr || param.filter || '',
-      db_name: param.db_name,
-      cluster_id: param.cluster_id,
-    });
+    // Iterators are not logical operations: suppress telemetry for the setup
+    // count and for every per-page internal search below.
+    const count = await withTelemetrySuppressed(() =>
+      client.count({
+        collection_name: param.collection_name,
+        expr: param.expr || param.filter || '',
+        db_name: param.db_name,
+        cluster_id: param.cluster_id,
+      })
+    );
 
     // get collection Info
     const collectionInfo = await this.describeCollection({
@@ -949,11 +985,13 @@ export class Data extends Collection {
             }
 
             try {
-              const batchRes = await client.search({
-                ...param,
-                params,
-                limit: batchSize,
-              });
+              const batchRes = await withTelemetrySuppressed(() =>
+                client.search({
+                  ...param,
+                  params,
+                  limit: batchSize,
+                })
+              );
 
               // update current total and batch size
               currentTotal += batchRes.results.length;
@@ -1019,13 +1057,16 @@ export class Data extends Collection {
     const pkField = isElementFilter
       ? collectionInfo!.schema.fields.find(field => field.is_primary_key)!
       : await this.getPkField(data);
-    // get count
-    const count = await client.count({
-      collection_name: data.collection_name,
-      expr: userExpr,
-      db_name: data.db_name,
-      cluster_id: data.cluster_id,
-    });
+    // Iterators are not logical operations: suppress telemetry for the setup
+    // count and for every per-page internal query below.
+    const count = await withTelemetrySuppressed(() =>
+      client.count({
+        collection_name: data.collection_name,
+        expr: userExpr,
+        db_name: data.db_name,
+        cluster_id: data.cluster_id,
+      })
+    );
     // remove filter field to avoid conflict with expr in query method
     const queryData = { ...data };
     delete queryData.filter;
@@ -1088,7 +1129,9 @@ export class Data extends Collection {
             }
 
             // search data
-            const res = await client.query(queryData as QueryReq);
+            const res = await withTelemetrySuppressed(() =>
+              client.query(queryData as QueryReq)
+            );
 
             if (!res.data.length) {
               return { done: true, value: null };
@@ -1236,6 +1279,12 @@ export class Data extends Collection {
    * ```
    */
   async query(data: QueryReq): Promise<QueryResults> {
+    return withTelemetryLogicalOperation(this.channelPool, 'Query', data, () =>
+      this._query(data)
+    );
+  }
+
+  private async _query(data: QueryReq): Promise<QueryResults> {
     checkCollectionName(data);
 
     // Set up limits and offset for the query

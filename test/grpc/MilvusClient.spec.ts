@@ -252,6 +252,17 @@ describe(`Milvus client`, () => {
     expect(client.channelOptions.interceptors.length).toBeGreaterThanOrEqual(3);
   });
 
+  it(`should omit the ordinary retry interceptor from telemetry heartbeats`, async () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+
+    expect((client as any).telemetryChannelOptions.interceptors).toHaveLength(
+      client.channelOptions.interceptors.length - 1
+    );
+  });
+
   it(`Expect get node sdk info`, async () => {
     expect(MilvusClient.sdkInfo.version).toEqual(sdkInfo.version);
     expect(MilvusClient.sdkInfo.recommendMilvus).toEqual(sdkInfo.milvusVersion);

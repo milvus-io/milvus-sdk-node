@@ -18,9 +18,214 @@ import {
   findKeyValue,
   FieldPartialUpdateOpType,
   CLUSTER_ID,
+  setPoolTelemetryManager,
 } from '../../milvus';
 
 describe('utils/Data', () => {
+  it('records public validation failures before any RPC is attempted', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const pool: any = {
+      acquire: jest.fn(),
+      release: jest.fn(),
+    };
+    const telemetry = { recordOperation: jest.fn() };
+    (client as any).channelPool = pool;
+    setPoolTelemetryManager(pool, telemetry);
+
+    await expect(
+      client.insert({ collection_name: 'test_collection' } as any)
+    ).rejects.toThrow(ERROR_REASONS.INSERT_CHECK_FIELD_DATA_IS_REQUIRED);
+
+    expect(pool.acquire).not.toHaveBeenCalled();
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'Insert',
+        collection: 'test_collection',
+        error: expect.any(Error),
+      })
+    );
+  });
+
+  it.each([
+    ['Insert', 'insert'],
+    ['Upsert', 'upsert'],
+  ] as const)(
+    'records one %s outcome across a SchemaMismatch rebuild',
+    async (operation, method) => {
+      const client = new MilvusClient({
+        address: 'localhost:19530',
+        __SKIP_CONNECT__: true,
+      });
+      (client as any).describeCollection = jest.fn().mockResolvedValue({
+        status: { error_code: ErrorCode.SUCCESS, reason: '' },
+        schema: {
+          enable_dynamic_field: false,
+          fields: [
+            {
+              name: 'id',
+              data_type: DataType.Int64,
+              is_primary_key: true,
+              autoID: false,
+              nullable: false,
+              element_type: DataType.None,
+            },
+          ],
+        },
+        properties: [],
+      });
+      let rpcCalls = 0;
+      const rpc = jest.fn((params: any, options: any, callback: any) => {
+        rpcCalls += 1;
+        callback(null, {
+          status: {
+            error_code:
+              rpcCalls === 1 ? ErrorCode.SchemaMismatch : ErrorCode.SUCCESS,
+            reason: rpcCalls === 1 ? 'stale schema' : '',
+          },
+        });
+      });
+      const pool: any = {
+        acquire: jest.fn().mockResolvedValue({ [operation]: rpc }),
+        release: jest.fn(),
+      };
+      const telemetry = { recordOperation: jest.fn() };
+      (client as any).channelPool = pool;
+      setPoolTelemetryManager(pool, telemetry);
+
+      await (client as any)[method]({
+        collection_name: 'test_collection',
+        fields_data: [{ id: 1 }],
+      });
+
+      expect(rpc).toHaveBeenCalledTimes(2);
+      expect(telemetry.recordOperation).toHaveBeenCalledTimes(1);
+      expect(telemetry.recordOperation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          operation,
+          collection: 'test_collection',
+          error: undefined,
+        })
+      );
+    }
+  );
+
+  it('records response postprocessing failures at the Query boundary', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const pool: any = {
+      acquire: jest.fn().mockResolvedValue({
+        Query: (params: any, options: any, callback: any) =>
+          callback(null, {
+            status: { error_code: ErrorCode.SUCCESS, reason: '' },
+          }),
+      }),
+      release: jest.fn(),
+    };
+    const telemetry = { recordOperation: jest.fn() };
+    (client as any).channelPool = pool;
+    setPoolTelemetryManager(pool, telemetry);
+
+    await expect(
+      client.query({ collection_name: 'test_collection' })
+    ).rejects.toThrow();
+
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'Query',
+        collection: 'test_collection',
+        error: expect.any(Error),
+      })
+    );
+  });
+
+  it('classifies public Search and HybridSearch logical operations', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const pool: any = {};
+    const telemetry = { recordOperation: jest.fn() };
+    (client as any).channelPool = pool;
+    (client as any)._search = jest.fn().mockResolvedValue({
+      status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      results: [],
+    });
+    setPoolTelemetryManager(pool, telemetry);
+
+    await client.search({
+      collection_name: 'dense_collection',
+      data: [[0.1, 0.2]],
+    } as any);
+    await client.hybridSearch({
+      collection_name: 'hybrid_collection',
+      data: [{ anns_field: 'vector', data: [[0.1, 0.2]] }],
+    } as any);
+
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(2);
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'Search',
+        collection: 'dense_collection',
+      })
+    );
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'HybridSearch',
+        collection: 'hybrid_collection',
+      })
+    );
+  });
+
+  it('records Delete validation and RunAnalyzer preprocessing at public boundaries', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const runAnalyzer = jest.fn((params: any, options: any, callback: any) =>
+      callback(null, { status: { error_code: ErrorCode.SUCCESS, reason: '' } })
+    );
+    const pool: any = {
+      acquire: jest.fn().mockResolvedValue({ RunAnalyzer: runAnalyzer }),
+      release: jest.fn(),
+    };
+    const telemetry = { recordOperation: jest.fn() };
+    (client as any).channelPool = pool;
+    setPoolTelemetryManager(pool, telemetry);
+
+    await expect(
+      client.deleteEntities({ collection_name: 'test_collection' } as any)
+    ).rejects.toThrow(ERROR_REASONS.FILTER_EXPR_REQUIRED);
+    await client.runAnalyzer({
+      collection_name: 'test_collection',
+      text: 'hello',
+      analyzer_params: { tokenizer: 'standard' },
+    });
+
+    expect(runAnalyzer).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(2);
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'Delete',
+        collection: 'test_collection',
+        error: expect.any(Error),
+      })
+    );
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'RunAnalyzer',
+        collection: '',
+        error: undefined,
+      })
+    );
+  });
+
   it('should pass query grouping and order by fields through query params', async () => {
     const client = new MilvusClient({
       address: 'localhost:19530',

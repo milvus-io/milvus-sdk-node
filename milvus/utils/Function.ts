@@ -10,6 +10,7 @@ import {
 import { logger } from './logger';
 import { Pool } from 'generic-pool';
 import { Metadata, status as grpcStatus } from '@grpc/grpc-js';
+import { AsyncLocalStorage } from 'async_hooks';
 
 /**
  * Failover handler type for global cluster support.
@@ -21,6 +22,25 @@ export type FailoverHandler = (error: any) => Promise<Pool<any> | null>;
 
 /** Well-known property key for attaching a failover handler to a pool. */
 export const FAILOVER_HANDLER_KEY = '__failoverHandler';
+export const TELEMETRY_MANAGER_KEY = '__telemetryManager';
+
+type TelemetryRecorder = {
+  recordOperation(record: {
+    operation: string;
+    collection: string;
+    startTime: number;
+    error?: unknown;
+    requestId?: string;
+  }): void;
+};
+
+/** Attach the telemetry recorder used by the common RPC path. */
+export function setPoolTelemetryManager(
+  pool: Pool<any>,
+  manager: TelemetryRecorder
+): void {
+  (pool as any)[TELEMETRY_MANAGER_KEY] = manager;
+}
 
 /**
  * Attach a failover handler to a pool for global cluster support.
@@ -59,22 +79,17 @@ function executeCall(
       finalRequestMetadata = extractRequestMetadata(params);
     }
 
-    const metadata = finalRequestMetadata ? new Metadata() : undefined;
-    if (metadata && finalRequestMetadata) {
-      const clientRequestId = getClientRequestId(finalRequestMetadata);
-      if (clientRequestId) {
-        metadata.add(METADATA.CLIENT_REQUEST_ID, String(clientRequestId));
-      }
+    const clientRequestId = getClientRequestId(finalRequestMetadata);
+    let metadata: Metadata | undefined;
+    if (clientRequestId) {
+      metadata = new Metadata();
+      metadata.add(METADATA.CLIENT_REQUEST_ID, clientRequestId);
     }
 
     return new Promise((resolve, reject) => {
       try {
         const callOptions: any = { deadline: new Date(Date.now() + t) };
-        if (metadata) {
-          callOptions.metadata = metadata;
-        }
-
-        client[target](params, callOptions, (err: any, result: any) => {
+        const callback = (err: any, result: any) => {
           if (err) {
             reject(err);
           } else {
@@ -83,7 +98,16 @@ function executeCall(
           if (client) {
             pool.release(client);
           }
-        });
+        };
+        // grpc-js unary calls accept either (request, options, callback) or
+        // (request, metadata, options, callback). Metadata is not an option field:
+        // putting it inside callOptions silently drops it on a real channel even though
+        // loose unit-test doubles may appear to accept it.
+        if (metadata) {
+          client[target](params, metadata, callOptions, callback);
+        } else {
+          client[target](params, callOptions, callback);
+        }
       } catch (e: any) {
         reject(e);
         if (client) {
@@ -92,6 +116,128 @@ function executeCall(
       }
     });
   })();
+}
+
+const TELEMETRY_OPERATIONS = new Set([
+  'Insert',
+  'Delete',
+  'Upsert',
+  'Search',
+  'HybridSearch',
+  'Query',
+  'RunAnalyzer',
+]);
+
+type TelemetryLogicalScope = {
+  operation: string;
+  // Set by withTelemetrySuppressed: internal SDK machinery (iterator setup
+  // queries and per-page fetches) must not emit telemetry at any level.
+  suppress?: boolean;
+};
+
+// A process-wide store is safe here: AsyncLocalStorage isolates concurrent promise
+// chains, while nested public helpers (for example delete -> deleteEntities) inherit
+// the current logical operation and therefore do not emit a second measurement.
+const telemetryLogicalScope = new AsyncLocalStorage<TelemetryLogicalScope>();
+
+function telemetryOperation(target: string): string | undefined {
+  return TELEMETRY_OPERATIONS.has(target) ? target : undefined;
+}
+
+function getBusinessError(result: any): Error | undefined {
+  const responseStatus = result?.status || result;
+  if (!responseStatus) {
+    return undefined;
+  }
+  const code = Number(responseStatus.code || 0);
+  const errorCode = responseStatus.error_code;
+  const success =
+    code === 0 &&
+    (errorCode === undefined ||
+      errorCode === 0 ||
+      errorCode === '0' ||
+      errorCode === 'Success' ||
+      errorCode === 'SUCCESS');
+  return success
+    ? undefined
+    : new Error(responseStatus.reason || 'Milvus operation failed');
+}
+
+/**
+ * Measure one complete public SDK operation, including validation, request
+ * preprocessing, retries, response formatting, and postprocessing.
+ *
+ * promisify remains instrumented as a fallback for direct/internal callers, but
+ * suppresses its RPC-level measurement while the same logical operation is active.
+ */
+export async function withTelemetryLogicalOperation<T>(
+  pool: Pool<any> | undefined,
+  operation: string,
+  params: any,
+  call: () => Promise<T>
+): Promise<T> {
+  const activeScope = telemetryLogicalScope.getStore();
+  if (activeScope?.suppress || activeScope?.operation === operation) {
+    return call();
+  }
+
+  const telemetry: TelemetryRecorder | undefined = pool
+    ? (pool as any)[TELEMETRY_MANAGER_KEY]
+    : undefined;
+  const startTime = performance.now();
+  const requestId = getTelemetryRequestId(extractRequestMetadata(params));
+  let result: T | undefined;
+  let finalError: unknown;
+  let failed = false;
+
+  try {
+    result = await telemetryLogicalScope.run({ operation }, call);
+  } catch (error) {
+    failed = true;
+    finalError = error;
+  }
+
+  if (telemetry) {
+    try {
+      telemetry.recordOperation({
+        operation,
+        collection:
+          operation === 'RunAnalyzer'
+            ? ''
+            : String(params?.collection_name || ''),
+        startTime,
+        error: failed ? finalError : getBusinessError(result),
+        requestId,
+      });
+    } catch {
+      // Optional telemetry must never replace the business result, including when a
+      // thrown value has a hostile coercion hook or logging itself is unavailable.
+    }
+  }
+
+  if (failed) {
+    throw finalError;
+  }
+  return result as T;
+}
+
+/**
+ * Run internal SDK machinery without emitting telemetry. Iterators are not
+ * logical operations, so neither their setup queries nor their per-page
+ * internal RPCs may be measured: wrapping them here suppresses both the
+ * logical-operation wrapper and the promisify RPC-level fallback.
+ */
+export async function withTelemetrySuppressed<T>(
+  call: () => Promise<T>
+): Promise<T> {
+  const activeScope = telemetryLogicalScope.getStore();
+  if (activeScope?.suppress) {
+    return call();
+  }
+  return telemetryLogicalScope.run(
+    { operation: activeScope?.operation ?? '', suppress: true },
+    call
+  );
 }
 
 /**
@@ -110,36 +256,91 @@ export async function promisify(
   timeout: number,
   requestMetadata?: { 'client-request-id'?: string; client_request_id?: string }
 ): Promise<any> {
-  try {
-    return await executeCall(pool, target, params, timeout, requestMetadata);
-  } catch (error: any) {
-    // Check for global cluster failover handler
-    const handler: FailoverHandler | undefined = (pool as any)[
-      FAILOVER_HANDLER_KEY
-    ];
+  const operation = telemetryOperation(target);
+  const activeScope = telemetryLogicalScope.getStore();
+  const recordRpcOperation =
+    operation !== undefined &&
+    !activeScope?.suppress &&
+    activeScope?.operation !== operation;
+  const telemetry: TelemetryRecorder | undefined = (pool as any)[
+    TELEMETRY_MANAGER_KEY
+  ];
+  const startTime = performance.now();
+  const finalRequestMetadata =
+    requestMetadata || (params ? extractRequestMetadata(params) : undefined);
+  const requestId = getTelemetryRequestId(finalRequestMetadata);
+  let result: any;
+  let finalError: any;
+  let failed = false;
 
-    if (handler && isUnavailableError(error)) {
+  try {
+    try {
+      result = await executeCall(
+        pool,
+        target,
+        params,
+        timeout,
+        finalRequestMetadata
+      );
+    } catch (error: any) {
+      // Check for global cluster failover handler. Instrumentation stays outside both
+      // attempts so one logical SDK call contributes exactly one telemetry outcome.
+      const handler: FailoverHandler | undefined = (pool as any)[
+        FAILOVER_HANDLER_KEY
+      ];
+
+      if (!handler || !isUnavailableError(error)) {
+        throw error;
+      }
+
       logger.debug(
         `\x1b[36m[Global]\x1b[0m UNAVAILABLE error on \x1b[1m${target}\x1b[0m, triggering failover handler`
       );
       const newPool = await handler(error);
-      if (newPool) {
-        logger.debug(
-          `\x1b[36m[Global]\x1b[0m Failover complete, retrying \x1b[1m${target}\x1b[0m with new pool`
-        );
-        // Retry once with the new pool (after failover)
-        return await executeCall(
-          newPool,
-          target,
-          params,
-          timeout,
-          requestMetadata
-        );
+      if (!newPool) {
+        throw error;
       }
+      logger.debug(
+        `\x1b[36m[Global]\x1b[0m Failover complete, retrying \x1b[1m${target}\x1b[0m with new pool`
+      );
+      result = await executeCall(
+        newPool,
+        target,
+        params,
+        timeout,
+        finalRequestMetadata
+      );
     }
-
-    throw error;
+  } catch (error: any) {
+    failed = true;
+    finalError = error;
   }
+
+  if (recordRpcOperation && operation && telemetry) {
+    const businessError = failed ? finalError : getBusinessError(result);
+    try {
+      telemetry.recordOperation({
+        operation,
+        // Go intentionally records RunAnalyzer globally even though its request happens to
+        // carry a collection_name field.
+        collection:
+          operation === 'RunAnalyzer'
+            ? ''
+            : String(params?.collection_name || ''),
+        startTime,
+        error: businessError,
+        requestId,
+      });
+    } catch {
+      // Optional telemetry must never replace the business result, including when a
+      // thrown value has a hostile coercion hook or logging itself is unavailable.
+    }
+  }
+
+  if (failed) {
+    throw finalError;
+  }
+  return result;
 }
 
 export const findKeyValue = (obj: KeyValuePair[], key: string) =>
@@ -238,8 +439,27 @@ const getClientRequestId = (metadata?: {
   if (!metadata) {
     return undefined;
   }
-  // Priority: client_request_id > client-request-id (JavaScript/TypeScript convention)
-  return metadata.client_request_id || metadata['client-request-id'];
+  // Preserve the established wire contract: arbitrary non-empty string IDs were
+  // documented and sent before client telemetry existed. New telemetry correlation has
+  // stricter OpenTelemetry requirements, but must not silently remove metadata from
+  // existing applications.
+  const value = metadata.client_request_id ?? metadata['client-request-id'];
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+};
+
+/** Returns whether value is a non-zero lowercase 128-bit OpenTelemetry trace ID. */
+export const isValidClientRequestId = (value: unknown): value is string =>
+  typeof value === 'string' &&
+  /^[0-9a-f]{32}$/.test(value) &&
+  value !== '00000000000000000000000000000000';
+
+/** Returns a request ID only when it is safe to expose as an OTel trace ID. */
+const getTelemetryRequestId = (metadata?: {
+  'client-request-id'?: string;
+  client_request_id?: string;
+}): string | undefined => {
+  const value = getClientRequestId(metadata);
+  return isValidClientRequestId(value) ? value : undefined;
 };
 
 /**
@@ -257,7 +477,5 @@ export const extractRequestMetadata = (
     }
   | undefined => {
   const clientRequestId = getClientRequestId(data);
-  return clientRequestId
-    ? { 'client-request-id': String(clientRequestId) }
-    : undefined;
+  return clientRequestId ? { 'client-request-id': clientRequestId } : undefined;
 };

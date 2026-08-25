@@ -11,8 +11,19 @@ import {
   DataType,
   getValidDataArray,
   extractRequestMetadata,
+  setPoolFailoverHandler,
+  setPoolTelemetryManager,
+  withTelemetryLogicalOperation,
+  withTelemetrySuppressed,
+  getGRPCService,
+  LOADER_OPTIONS,
 } from '../../milvus';
-import { Metadata } from '@grpc/grpc-js';
+import {
+  credentials,
+  Metadata,
+  Server,
+  ServerCredentials,
+} from '@grpc/grpc-js';
 
 describe('Function API testing', () => {
   let pool: any;
@@ -278,15 +289,15 @@ describe('Function API testing', () => {
 
   describe('promisify with traceid', () => {
     it('should extract client_request_id from params automatically', async () => {
-      const traceId = 'test-trace-id-123';
+      const traceId = '11111111111111111111111111111111';
       const params = {
         collection_name: 'test_collection',
         client_request_id: traceId,
       };
 
       let capturedMetadata: Metadata | undefined;
-      client.testFunction = jest.fn((params, options, callback) => {
-        capturedMetadata = options.metadata;
+      client.testFunction = jest.fn((params, metadata, options, callback) => {
+        capturedMetadata = metadata;
         callback(null, 'success');
       });
 
@@ -297,15 +308,15 @@ describe('Function API testing', () => {
     });
 
     it('should extract client-request-id from params automatically', async () => {
-      const traceId = 'test-trace-id-456';
+      const traceId = '22222222222222222222222222222222';
       const params = {
         collection_name: 'test_collection',
         'client-request-id': traceId,
       };
 
       let capturedMetadata: Metadata | undefined;
-      client.testFunction = jest.fn((params, options, callback) => {
-        capturedMetadata = options.metadata;
+      client.testFunction = jest.fn((params, metadata, options, callback) => {
+        capturedMetadata = metadata;
         callback(null, 'success');
       });
 
@@ -318,13 +329,13 @@ describe('Function API testing', () => {
     it('should prefer client_request_id over client-request-id when both exist', async () => {
       const params = {
         collection_name: 'test_collection',
-        client_request_id: 'preferred-id',
-        'client-request-id': 'alternative-id',
+        client_request_id: '33333333333333333333333333333333',
+        'client-request-id': '44444444444444444444444444444444',
       };
 
       let capturedMetadata: Metadata | undefined;
-      client.testFunction = jest.fn((params, options, callback) => {
-        capturedMetadata = options.metadata;
+      client.testFunction = jest.fn((params, metadata, options, callback) => {
+        capturedMetadata = metadata;
         callback(null, 'success');
       });
 
@@ -332,22 +343,22 @@ describe('Function API testing', () => {
 
       expect(capturedMetadata).toBeDefined();
       expect(capturedMetadata?.get('client-request-id')).toEqual([
-        'preferred-id',
+        '33333333333333333333333333333333',
       ]);
     });
 
     it('should use explicit requestMetadata when provided', async () => {
       const params = {
         collection_name: 'test_collection',
-        client_request_id: 'params-id',
+        client_request_id: '55555555555555555555555555555555',
       };
       const explicitMetadata = {
-        'client-request-id': 'explicit-id',
+        'client-request-id': '66666666666666666666666666666666',
       };
 
       let capturedMetadata: Metadata | undefined;
-      client.testFunction = jest.fn((params, options, callback) => {
-        capturedMetadata = options.metadata;
+      client.testFunction = jest.fn((params, metadata, options, callback) => {
+        capturedMetadata = metadata;
         callback(null, 'success');
       });
 
@@ -355,7 +366,7 @@ describe('Function API testing', () => {
 
       expect(capturedMetadata).toBeDefined();
       expect(capturedMetadata?.get('client-request-id')).toEqual([
-        'explicit-id',
+        '66666666666666666666666666666666',
       ]);
     });
 
@@ -374,35 +385,120 @@ describe('Function API testing', () => {
 
       expect(capturedMetadata).toBeUndefined();
     });
+
+    it('preserves documented legacy request IDs on the wire', async () => {
+      for (const clientRequestId of [
+        'not-a-trace-id',
+        'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        '00000000000000000000000000000000',
+      ]) {
+        let capturedMetadata: Metadata | undefined;
+        client.testFunction = jest.fn((params, metadata, options, callback) => {
+          capturedMetadata = metadata;
+          callback(null, 'success');
+        });
+
+        await promisify(
+          pool,
+          'testFunction',
+          { client_request_id: clientRequestId },
+          1000
+        );
+
+        expect(capturedMetadata?.get('client-request-id')).toEqual([
+          clientRequestId,
+        ]);
+      }
+    });
+
+    it('sends a legacy request ID through a real grpc-js channel', async () => {
+      const Service = getGRPCService(
+        { serviceName: 'milvus.proto.milvus.MilvusService' },
+        LOADER_OPTIONS
+      );
+      const server = new Server();
+      let wireRequestId: string[] = [];
+      server.addService((Service as any).service, {
+        GetVersion: (call: any, callback: Function) => {
+          wireRequestId = call.metadata.get('client-request-id');
+          callback(null, {
+            status: { error_code: 'Success', reason: '' },
+            version: 'test',
+          });
+        },
+      });
+      const port = await new Promise<number>((resolve, reject) => {
+        server.bindAsync(
+          '127.0.0.1:0',
+          ServerCredentials.createInsecure(),
+          (error, boundPort) => (error ? reject(error) : resolve(boundPort))
+        );
+      });
+      const grpcClient = new Service(
+        `127.0.0.1:${port}`,
+        credentials.createInsecure()
+      );
+      const grpcPool: any = {
+        acquire: jest.fn().mockResolvedValue(grpcClient),
+        release: jest.fn(),
+      };
+
+      try {
+        await promisify(
+          grpcPool,
+          'GetVersion',
+          { client_request_id: 'legacy-wire-id' },
+          1000
+        );
+        expect(wireRequestId).toEqual(['legacy-wire-id']);
+      } finally {
+        grpcClient.close();
+        await new Promise<void>(resolve => server.tryShutdown(() => resolve()));
+      }
+    });
   });
 
   describe('extractRequestMetadata', () => {
     it('should extract client_request_id from data', () => {
       const data = {
         collection_name: 'test',
-        client_request_id: 'trace-123',
+        client_request_id: '77777777777777777777777777777777',
       };
       const result = extractRequestMetadata(data);
-      expect(result).toEqual({ 'client-request-id': 'trace-123' });
+      expect(result).toEqual({
+        'client-request-id': '77777777777777777777777777777777',
+      });
+    });
+
+    it('should preserve a documented arbitrary string request ID', () => {
+      expect(
+        extractRequestMetadata({
+          client_request_id: 'insert-trace-123',
+        })
+      ).toEqual({ 'client-request-id': 'insert-trace-123' });
     });
 
     it('should extract client-request-id from data', () => {
       const data = {
         collection_name: 'test',
-        'client-request-id': 'trace-456',
+        'client-request-id': '88888888888888888888888888888888',
       };
       const result = extractRequestMetadata(data);
-      expect(result).toEqual({ 'client-request-id': 'trace-456' });
+      expect(result).toEqual({
+        'client-request-id': '88888888888888888888888888888888',
+      });
     });
 
     it('should prefer client_request_id over client-request-id', () => {
       const data = {
         collection_name: 'test',
-        client_request_id: 'preferred',
-        'client-request-id': 'alternative',
+        client_request_id: '99999999999999999999999999999999',
+        'client-request-id': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       };
       const result = extractRequestMetadata(data);
-      expect(result).toEqual({ 'client-request-id': 'preferred' });
+      expect(result).toEqual({
+        'client-request-id': '99999999999999999999999999999999',
+      });
     });
 
     it('should return undefined when no traceid is provided', () => {
@@ -419,13 +515,251 @@ describe('Function API testing', () => {
       expect(extractRequestMetadata({})).toBeUndefined();
     });
 
-    it('should convert traceid to string', () => {
+    it('should reject non-string trace IDs', () => {
       const data = {
         collection_name: 'test',
         client_request_id: 12345,
       };
       const result = extractRequestMetadata(data);
-      expect(result).toEqual({ 'client-request-id': '12345' });
+      expect(result).toBeUndefined();
     });
+  });
+
+  it('records one telemetry outcome across global failover', async () => {
+    const unavailable = Object.assign(new Error('unavailable'), {
+      code: 14,
+    });
+    client.Search = jest.fn((params, options, callback) =>
+      callback(unavailable)
+    );
+    const failoverClient = {
+      Search: jest.fn((params, options, callback) =>
+        callback(null, { status: { error_code: 'Success' } })
+      ),
+    };
+    const failoverPool: any = {
+      acquire: jest.fn().mockResolvedValue(failoverClient),
+      release: jest.fn(),
+    };
+    const telemetry = { recordOperation: jest.fn() };
+    setPoolTelemetryManager(pool, telemetry);
+    setPoolTelemetryManager(failoverPool, telemetry);
+    setPoolFailoverHandler(pool, async () => failoverPool);
+
+    await promisify(pool, 'Search', { collection_name: 'books' }, 1000);
+
+    expect(client.Search).toHaveBeenCalledTimes(1);
+    expect(failoverClient.Search).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'Search',
+        collection: 'books',
+        error: undefined,
+      })
+    );
+  });
+
+  it('keeps a legacy wire ID out of OTel telemetry correlation', async () => {
+    let capturedMetadata: Metadata | undefined;
+    client.Search = jest.fn((params, metadata, options, callback) => {
+      capturedMetadata = metadata;
+      callback(null, { status: { error_code: 'Success' } });
+    });
+    const telemetry = { recordOperation: jest.fn() };
+    setPoolTelemetryManager(pool, telemetry);
+
+    await promisify(
+      pool,
+      'Search',
+      {
+        collection_name: 'books',
+        client_request_id: 'insert-trace-123',
+      },
+      1000
+    );
+
+    expect(capturedMetadata?.get('client-request-id')).toEqual([
+      'insert-trace-123',
+    ]);
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ requestId: undefined })
+    );
+  });
+
+  it('records RunAnalyzer globally even when the request carries a collection', async () => {
+    client.RunAnalyzer = jest.fn((params, options, callback) =>
+      callback(null, { status: { error_code: 'Success' } })
+    );
+    const telemetry = { recordOperation: jest.fn() };
+    setPoolTelemetryManager(pool, telemetry);
+
+    await promisify(pool, 'RunAnalyzer', { collection_name: 'books' }, 1000);
+
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ operation: 'RunAnalyzer', collection: '' })
+    );
+  });
+
+  it('does not let a telemetry recorder failure change the logical result', async () => {
+    const hostileFailure = {
+      toString: () => {
+        throw new Error('coercion must never run');
+      },
+    };
+    const telemetry = {
+      recordOperation: jest.fn(() => {
+        throw hostileFailure;
+      }),
+    };
+    setPoolTelemetryManager(pool, telemetry);
+
+    await expect(
+      withTelemetryLogicalOperation(
+        pool,
+        'Search',
+        { collection_name: 'books' },
+        async () => 'business-result'
+      )
+    ).resolves.toBe('business-result');
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(1);
+  });
+
+  it('records a monitored RPC once at the enclosing public logical boundary', async () => {
+    client.Search = jest.fn((params, options, callback) =>
+      callback(null, { status: { error_code: 'Success' } })
+    );
+    const telemetry = { recordOperation: jest.fn() };
+    setPoolTelemetryManager(pool, telemetry);
+
+    await withTelemetryLogicalOperation(
+      pool,
+      'Search',
+      { collection_name: 'books' },
+      () => promisify(pool, 'Search', { collection_name: 'books' }, 1000)
+    );
+
+    expect(client.Search).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: 'Search',
+        collection: 'books',
+        error: undefined,
+      })
+    );
+  });
+
+  it('coalesces nested helpers for the same logical operation', async () => {
+    client.Delete = jest.fn((params, options, callback) =>
+      callback(null, { status: { error_code: 'Success' } })
+    );
+    const telemetry = { recordOperation: jest.fn() };
+    setPoolTelemetryManager(pool, telemetry);
+
+    await withTelemetryLogicalOperation(
+      pool,
+      'Delete',
+      { collection_name: 'books' },
+      () =>
+        withTelemetryLogicalOperation(
+          pool,
+          'Delete',
+          { collection_name: 'books' },
+          () => promisify(pool, 'Delete', { collection_name: 'books' }, 1000)
+        )
+    );
+
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(1);
+  });
+
+  it('isolates concurrent logical operations', async () => {
+    client.Search = jest.fn((params, options, callback) =>
+      setTimeout(() => callback(null, { status: { error_code: 'Success' } }), 5)
+    );
+    client.Query = jest.fn((params, options, callback) =>
+      setTimeout(() => callback(null, { status: { error_code: 'Success' } }), 1)
+    );
+    const telemetry = { recordOperation: jest.fn() };
+    setPoolTelemetryManager(pool, telemetry);
+
+    await Promise.all([
+      withTelemetryLogicalOperation(
+        pool,
+        'Search',
+        { collection_name: 'books' },
+        () => promisify(pool, 'Search', { collection_name: 'books' }, 1000)
+      ),
+      withTelemetryLogicalOperation(
+        pool,
+        'Query',
+        { collection_name: 'authors' },
+        () => promisify(pool, 'Query', { collection_name: 'authors' }, 1000)
+      ),
+    ]);
+
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(2);
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ operation: 'Search', collection: 'books' })
+    );
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ operation: 'Query', collection: 'authors' })
+    );
+  });
+
+  it('suppresses logical-operation and RPC-level telemetry inside iterators', async () => {
+    client.Search = jest.fn((params, options, callback) =>
+      callback(null, { status: { error_code: 'Success' } })
+    );
+    const telemetry = { recordOperation: jest.fn() };
+    setPoolTelemetryManager(pool, telemetry);
+
+    await withTelemetrySuppressed(() =>
+      withTelemetryLogicalOperation(
+        pool,
+        'Search',
+        { collection_name: 'books' },
+        () => promisify(pool, 'Search', { collection_name: 'books' }, 1000)
+      )
+    );
+
+    expect(client.Search).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).not.toHaveBeenCalled();
+  });
+
+  it('suppresses the promisify RPC-level fallback for internal page fetches', async () => {
+    client.Query = jest.fn((params, options, callback) =>
+      callback(null, { status: { error_code: 'Success' } })
+    );
+    const telemetry = { recordOperation: jest.fn() };
+    setPoolTelemetryManager(pool, telemetry);
+
+    await withTelemetrySuppressed(() =>
+      promisify(pool, 'Query', { collection_name: 'books' }, 1000)
+    );
+
+    expect(client.Query).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).not.toHaveBeenCalled();
+  });
+
+  it('resumes recording after the suppressed section exits', async () => {
+    client.Search = jest.fn((params, options, callback) =>
+      callback(null, { status: { error_code: 'Success' } })
+    );
+    const telemetry = { recordOperation: jest.fn() };
+    setPoolTelemetryManager(pool, telemetry);
+
+    await withTelemetrySuppressed(() =>
+      withTelemetrySuppressed(() =>
+        promisify(pool, 'Search', { collection_name: 'books' }, 1000)
+      )
+    );
+    expect(telemetry.recordOperation).not.toHaveBeenCalled();
+
+    await promisify(pool, 'Search', { collection_name: 'books' }, 1000);
+    expect(telemetry.recordOperation).toHaveBeenCalledTimes(1);
+    expect(telemetry.recordOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ operation: 'Search', collection: 'books' })
+    );
   });
 });

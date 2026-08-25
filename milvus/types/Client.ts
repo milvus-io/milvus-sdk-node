@@ -2,6 +2,7 @@ import { ChannelOptions } from '@grpc/grpc-js';
 import { Options as LoaderOption } from '@grpc/proto-loader';
 import { Options } from 'generic-pool';
 import { GrpcTimeOut, ResStatus } from './Common';
+import type { TelemetryConfig } from '../telemetry';
 
 /**
  * Configuration options for the Milvus client.
@@ -71,6 +72,9 @@ export interface ClientConfig {
 
   // enable trace
   trace?: boolean;
+
+  // Client metrics, heartbeat, and server-pushed command configuration.
+  telemetry?: TelemetryConfig;
 
   // Explicitly enable/disable global cluster mode.
   // When true, the SDK fetches topology from the endpoint and routes to the primary cluster.

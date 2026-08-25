@@ -160,7 +160,8 @@ export const getRetryInterceptor = ({
             // fall back to the legacy AddCollectionField RPC.
             if (
               status.code === grpcStatus.UNIMPLEMENTED &&
-              methodName !== 'AlterCollectionSchema'
+              methodName !== 'AlterCollectionSchema' &&
+              methodName !== 'ClientHeartbeat'
             ) {
               savedReceiveMessage = {};
               status.code = grpcStatus.OK;

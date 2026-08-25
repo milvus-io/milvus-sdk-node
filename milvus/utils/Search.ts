@@ -259,6 +259,19 @@ export const createFunctionScore = (
  * @returns {Number[][]} return.searchVectors - The search vectors used in the operation.
  * @returns {number} return.round_decimal - The score precision.
  */
+export const isHybridSearchRequest = (
+  params: SearchReq | SearchSimpleReq | HybridSearchReq | undefined
+): boolean => {
+  const data = (params as HybridSearchReq | undefined)?.data;
+  const firstRequest = Array.isArray(data) ? data[0] : undefined;
+  return !!(
+    firstRequest &&
+    typeof firstRequest === 'object' &&
+    'anns_field' in firstRequest &&
+    firstRequest.anns_field
+  );
+};
+
 export const buildSearchRequest = (
   params: SearchReq | SearchSimpleReq | HybridSearchReq,
   collectionInfo: DescribeCollectionResponse,
@@ -274,12 +287,7 @@ export const buildSearchRequest = (
   const requests: FormatedSearchRequest[] = [];
 
   // detect if the request is hybrid search request
-  const isHybridSearch = !!(
-    searchHybridReq.data &&
-    searchHybridReq.data.length &&
-    typeof searchHybridReq.data[0] === 'object' &&
-    searchHybridReq.data[0].anns_field
-  );
+  const isHybridSearch = isHybridSearchRequest(searchHybridReq);
 
   const searchAggregation =
     searchSimpleReq.search_aggregation || searchReq.search_aggregation;

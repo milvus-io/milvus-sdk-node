@@ -60,7 +60,7 @@ export class BaseClient {
   // Mutex flag to serialize failover reconnections
   protected isReconnecting: boolean = false;
   // Promise that concurrent callers can await during reconnection
-  protected reconnectingPromise: Promise<void> | null = null;
+  protected reconnectingPromise: Promise<boolean> | null = null;
 
   // ChannelCredentials object used for authenticating the client on the gRPC channel.
   protected creds!: ChannelCredentials;
@@ -207,18 +207,18 @@ export class BaseClient {
         const rootCertBuff: Buffer | null = rootCert
           ? rootCert
           : rootCertPath
-          ? readFileSync(rootCertPath)
-          : null;
+            ? readFileSync(rootCertPath)
+            : null;
         const privateKeyBuff: Buffer | null = privateKey
           ? privateKey
           : privateKeyPath
-          ? readFileSync(privateKeyPath)
-          : null;
+            ? readFileSync(privateKeyPath)
+            : null;
         const certChainBuff: Buffer | null = certChain
           ? certChain
           : certChainPath
-          ? readFileSync(certChainPath)
-          : null;
+            ? readFileSync(certChainPath)
+            : null;
         this.creds = credentials.createSsl(
           rootCertBuff,
           privateKeyBuff,

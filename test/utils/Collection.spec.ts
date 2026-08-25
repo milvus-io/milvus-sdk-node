@@ -46,12 +46,16 @@ const externalCollectionAlterUnsupportedStatus: ResStatus = {
 };
 
 const respondWith =
-  (response: any) => (_request: any, _options: any, callback: RpcCallback) =>
+  (response: any) => (...args: any[]) => {
+    const callback = args[args.length - 1] as RpcCallback;
     callback(null, response);
+  };
 
 const failWith =
-  (error: any) => (_request: any, _options: any, callback: RpcCallback) =>
+  (error: any) => (...args: any[]) => {
+    const callback = args[args.length - 1] as RpcCallback;
     callback(error);
+  };
 
 const createTestClient = () => {
   const rpcClient = {
@@ -104,7 +108,7 @@ describe('collection schema alteration', () => {
       const result = await client.addCollectionField({
         collection_name: COLLECTION_NAME,
         db_name: 'db1',
-        client_request_id: 'request-1',
+        client_request_id: '11111111111111111111111111111111',
         field: {
           name: 'age',
           data_type: DataType.Int64,
@@ -150,10 +154,8 @@ describe('collection schema alteration', () => {
           .default_value
       ).toEqual(expect.objectContaining({ long_data: '42' }));
       expect(
-        rpcClient.AlterCollectionSchema.mock.calls[0][1].metadata.get(
-          'client-request-id'
-        )
-      ).toEqual(['request-1']);
+        rpcClient.AlterCollectionSchema.mock.calls[0][1].get('client-request-id')
+      ).toEqual(['11111111111111111111111111111111']);
       expect(cache.has(cacheKey('db1'))).toBe(false);
     });
 

@@ -38,6 +38,9 @@ import {
   getPrimaryCluster,
   TopologyRefresher,
   setPoolFailoverHandler,
+  setPoolTelemetryManager,
+  ClientTelemetryManager,
+  withTelemetryLogicalOperation,
 } from '../';
 import { User } from './User';
 
@@ -56,6 +59,23 @@ export const LOADER_OPTIONS = {
 export class GRPCClient extends User {
   // Store the gRPC service constructor for pool rebuild on failover
   private _MilvusService!: ServiceClientConstructor;
+  private _ClientTelemetryService!: ServiceClientConstructor;
+  private telemetryClient?: Client;
+  private telemetryChannelOptions!: ChannelOptions;
+  // Incremented whenever the live telemetry endpoint changes. The telemetry
+  // manager uses this epoch to discard a response that arrives from an old
+  // endpoint after a successful global-cluster failover.
+  private telemetryEndpointEpoch = 0;
+  private readonly telemetry: ClientTelemetryManager;
+  // Operation RPCs use the effective default database in their metadata, but telemetry
+  // must distinguish an omitted database from an explicitly selected database named
+  // "default". The server reserves an absent db_name for the former.
+  private telemetryDatabaseExplicit: boolean;
+  // Async topology discovery and candidate validation can complete after close(). Fence
+  // their publication so a released candidate can never resurrect a closed client.
+  private lifecycleGeneration = 0;
+  private closed = false;
+  private closePromise?: Promise<CONNECT_STATUS>;
   // Store sdkVersion for reconnection
   private _sdkVersion: string = '';
 
@@ -84,6 +104,31 @@ export class GRPCClient extends User {
       },
       { ...LOADER_OPTIONS, ...this.config.loaderOptions }
     );
+    this._ClientTelemetryService = getGRPCService(
+      {
+        serviceName: 'milvus.proto.milvus.ClientTelemetryService',
+      },
+      { ...LOADER_OPTIONS, ...this.config.loaderOptions }
+    );
+    this.telemetryDatabaseExplicit = Boolean(this.config.database);
+
+    this.telemetry = new ClientTelemetryManager({
+      sender: request => this.sendTelemetryHeartbeat(request),
+      config: this.config.telemetry,
+      userProvider: () => this.config.username || '',
+      databaseProvider: () =>
+        this.telemetryDatabaseExplicit
+          ? this.metadata.get(METADATA.DATABASE) || DEFAULT_DB
+          : '',
+      configProvider: () => ({
+        address: this.config.address,
+        username: this.config.username,
+        database: this.metadata.get(METADATA.DATABASE) || DEFAULT_DB,
+        ssl: this.config.ssl,
+        timeout: this.config.timeout,
+      }),
+      senderEpochProvider: () => this.telemetryEndpointEpoch,
+    });
 
     // setup auth if necessary
     const auth = getAuthString(this.config);
@@ -124,11 +169,16 @@ export class GRPCClient extends User {
       interceptors.push(getTraceInterceptor());
     }
 
-    // add retry interceptor
-    interceptors.push(retryInterceptor);
+    // Heartbeats are best-effort: keep auth/request metadata/trace propagation, but do not
+    // let the ordinary RPC retry interceptor turn one heartbeat into a retry burst. The
+    // telemetry manager owns its own next-heartbeat/backoff policy.
+    this.telemetryChannelOptions = {
+      ...this.channelOptions,
+      interceptors: [...interceptors],
+    };
 
-    // add interceptors
-    this.channelOptions.interceptors = interceptors;
+    // Ordinary Milvus RPCs retain the configured retry behavior.
+    this.channelOptions.interceptors = [...interceptors, retryInterceptor];
 
     // For global cluster, skip pool creation here — pool will be created
     // in connect() after topology is fetched and primary endpoint is resolved.
@@ -139,13 +189,28 @@ export class GRPCClient extends User {
 
   // create a grpc service client(connect)
   connect(sdkVersion: string) {
+    if (this.closed) {
+      return;
+    }
+    this.lifecycleGeneration += 1;
+    const lifecycleGeneration = this.lifecycleGeneration;
     this._sdkVersion = sdkVersion;
+    this.telemetry.setSdkVersion(sdkVersion);
     if (this.isGlobal) {
       // For global cluster: fetch topology → create pool → connect
-      this.connectPromise = this._initGlobalConnection(sdkVersion);
+      this.connectPromise = this._initGlobalConnection(
+        sdkVersion,
+        lifecycleGeneration
+      );
     } else {
       // Normal connection
-      this.connectPromise = this._getServerInfo(sdkVersion);
+      this.replaceTelemetryClient();
+      this.connectPromise = this._getServerInfo(
+        sdkVersion,
+        this.channelPool,
+        true,
+        lifecycleGeneration
+      );
     }
   }
 
@@ -153,7 +218,10 @@ export class GRPCClient extends User {
    * Initializes a global cluster connection.
    * Fetches topology, resolves primary endpoint, creates pool, starts refresher.
    */
-  private async _initGlobalConnection(sdkVersion: string) {
+  private async _initGlobalConnection(
+    sdkVersion: string,
+    lifecycleGeneration = this.lifecycleGeneration
+  ) {
     const token = this.config.token || '';
 
     logger.debug(
@@ -162,6 +230,9 @@ export class GRPCClient extends User {
 
     // Fetch topology to discover primary cluster
     const topology = await fetchTopology(this.globalEndpoint, token);
+    if (!this.isLifecycleCurrent(lifecycleGeneration)) {
+      return;
+    }
     this.globalTopology = topology;
 
     // Resolve primary endpoint and create pool
@@ -173,6 +244,7 @@ export class GRPCClient extends User {
     );
 
     this.channelPool = this.createChannelPool();
+    this.replaceTelemetryClient();
     this._attachFailoverHandler();
 
     // Start background topology refresher
@@ -186,8 +258,18 @@ export class GRPCClient extends User {
     });
     this.topologyRefresher.start();
 
-    // Now connect to the primary
-    return this._getServerInfo(sdkVersion);
+    // Now connect to the primary. Validate without side effects first because close may
+    // run while the RPC is awaiting a response.
+    const serverInfo = await this._getServerInfo(
+      sdkVersion,
+      this.channelPool,
+      false
+    );
+    if (!this.isLifecycleCurrent(lifecycleGeneration)) {
+      return serverInfo;
+    }
+    this.applyServerInfo(serverInfo);
+    return serverInfo;
   }
 
   /**
@@ -196,21 +278,30 @@ export class GRPCClient extends User {
    * @returns true if primary changed and reconnection happened, false if primary unchanged
    */
   async reconnectToPrimary(): Promise<boolean> {
+    if (this.closed) {
+      return false;
+    }
     // Serialize concurrent failover attempts
     if (this.isReconnecting) {
       logger.debug(
         `\x1b[36m[Global]\x1b[0m Reconnect already in progress, waiting for completion`
       );
       if (this.reconnectingPromise) {
-        await this.reconnectingPromise;
+        return this.reconnectingPromise;
       }
-      return true;
+      return false;
     }
 
     let primaryChanged = false;
+    const lifecycleGeneration = this.lifecycleGeneration;
 
     this.isReconnecting = true;
     this.reconnectingPromise = (async () => {
+      let candidatePool:
+        | ReturnType<GRPCClient['createChannelPool']>
+        | undefined;
+      let candidateTelemetryClient: Client | undefined;
+      let candidateRefresher: TopologyRefresher | undefined;
       try {
         const token = this.config.token || '';
 
@@ -220,6 +311,9 @@ export class GRPCClient extends User {
 
         // Fetch fresh topology
         const newTopology = await fetchTopology(this.globalEndpoint, token);
+        if (!this.isLifecycleCurrent(lifecycleGeneration)) {
+          return false;
+        }
         const newPrimary = getPrimaryCluster(newTopology);
 
         // Check if primary actually changed
@@ -228,46 +322,41 @@ export class GRPCClient extends User {
             `\x1b[36m[Global]\x1b[0m Primary unchanged (${this.config.address}), no reconnect needed`
           );
           this.globalTopology = newTopology;
-          return; // Primary hasn't changed, no reconnect needed
+          return false; // Primary hasn't changed, no reconnect needed
         }
-
-        primaryChanged = true;
 
         logger.info(
           `Global cluster failover: ${this.config.address} -> ${newPrimary.endpoint}`
         );
 
-        // Create new pool BEFORE draining old pool, so if creation fails
-        // the old pool is still usable
+        // Build and validate a complete candidate lifecycle without mutating the live
+        // address, pool, telemetry transport, topology, or connection status. In
+        // particular, pool factories must capture the candidate address rather than
+        // reading this.config.address later when generic-pool creates a client.
         logger.debug(
           `\x1b[36m[Global]\x1b[0m Creating new channel pool for ${newPrimary.endpoint}`
         );
-        const oldPool = this.channelPool;
-        this.config.address = newPrimary.endpoint;
-        this.channelPool = this.createChannelPool();
-        this._attachFailoverHandler();
-
-        // Now drain old pool (non-critical, best-effort)
-        if (oldPool) {
-          logger.debug(
-            `\x1b[36m[Global]\x1b[0m Draining old channel pool`
-          );
+        candidatePool = this.createChannelPool(newPrimary.endpoint);
+        candidateTelemetryClient = this.createTelemetryClient(
+          newPrimary.endpoint
+        );
+        const candidateServerInfo = await this._getServerInfo(
+          this._sdkVersion,
+          candidatePool,
+          false
+        );
+        if (!this.isLifecycleCurrent(lifecycleGeneration)) {
           try {
-            await oldPool.drain();
-            await oldPool.clear();
+            candidateTelemetryClient.close();
           } catch {
-            // ignore cleanup errors on old pool
+            // ignore cleanup errors on an unpublished stale candidate
           }
+          candidateTelemetryClient = undefined;
+          await this.disposeChannelPool(candidatePool);
+          candidatePool = undefined;
+          return false;
         }
-
-        // Update state
-        this.globalTopology = newTopology;
-
-        // Update topology refresher
-        if (this.topologyRefresher) {
-          this.topologyRefresher.stop();
-        }
-        this.topologyRefresher = new TopologyRefresher({
+        candidateRefresher = new TopologyRefresher({
           globalEndpoint: this.globalEndpoint,
           token,
           topology: newTopology,
@@ -275,28 +364,106 @@ export class GRPCClient extends User {
             this.globalTopology = t;
           },
         });
-        this.topologyRefresher.start();
+        // Attaching the handler only mutates the isolated candidate pool and makes it
+        // ready for publication without exposing it to ordinary operations yet.
+        this._attachFailoverHandler(candidatePool);
 
-        // Re-establish server info
-        this.connectStatus = CONNECT_STATUS.CONNECTING;
-        await this._getServerInfo(this._sdkVersion);
+        const oldAddress = this.config.address;
+        const oldPool = this.channelPool;
+        const oldTelemetryClient = this.telemetryClient;
+        const oldRefresher = this.topologyRefresher;
+
+        // JavaScript runs this assignment block without interleaving another promise
+        // continuation. Advance the epoch before publishing the candidate telemetry
+        // client so any late response from the old endpoint is ignored as a whole.
+        this.telemetryEndpointEpoch += 1;
+        this.config.address = newPrimary.endpoint;
+        this.channelPool = candidatePool;
+        this.telemetryClient = candidateTelemetryClient;
+        this.applyServerInfo(candidateServerInfo, false);
+        this.globalTopology = newTopology;
+        this.topologyRefresher = candidateRefresher;
+        primaryChanged = true;
+
+        // Candidate resources are now owned by the live lifecycle and must not be
+        // cleaned up by the failure path.
+        candidatePool = undefined;
+        candidateTelemetryClient = undefined;
+        candidateRefresher = undefined;
+
+        // Everything below is post-commit cleanup/startup. None of it may enter the
+        // candidate-validation catch path and pretend the already-published lifecycle
+        // was rolled back.
+        try {
+          this.topologyRefresher?.start();
+        } catch (error: any) {
+          logger.warn(`Failed to start topology refresher: ${error.message}`);
+        }
+        if (candidateServerInfo?.identifier) {
+          try {
+            this.telemetry.start();
+          } catch (error: any) {
+            logger.warn(`Failed to start client telemetry: ${error.message}`);
+          }
+        }
+        try {
+          oldRefresher?.stop();
+        } catch (error: any) {
+          logger.warn(
+            `Failed to stop old topology refresher: ${error.message}`
+          );
+        }
+        try {
+          oldTelemetryClient?.close();
+        } catch (error: any) {
+          logger.warn(`Failed to close old telemetry client: ${error.message}`);
+        }
+
+        // Existing operations may still hold a client from the old pool. drain() waits
+        // for those borrowers before clear() closes the channels, so late operations can
+        // finish while all new operations use the newly published pool.
+        if (oldPool) {
+          logger.debug(
+            `\x1b[36m[Global]\x1b[0m Draining old channel pool for ${oldAddress}`
+          );
+          await this.disposeChannelPool(oldPool);
+        }
       } catch (e: any) {
+        if (primaryChanged) {
+          // Publication is the commit point. An unexpected post-commit cleanup error
+          // must not close the new live resources or report a rollback that did not
+          // happen.
+          logger.warn(
+            `Global cluster failover committed with a cleanup error: ${e.message}`
+          );
+          return true;
+        }
         logger.warn(`Global cluster failover failed: ${e.message}`);
 
-        // Clean up resources created during failed failover
-        if (this.topologyRefresher) {
-          this.topologyRefresher.stop();
-          this.topologyRefresher = null;
+        // The live lifecycle was not touched unless the synchronous publication block
+        // completed. Candidate validation failures therefore leave the old address,
+        // pool, telemetry manager/client/state, topology refresher, and status usable.
+        try {
+          candidateRefresher?.stop();
+        } catch {
+          // ignore cleanup errors on an unpublished candidate
         }
-        this.connectStatus = CONNECT_STATUS.SHUTDOWN;
+        try {
+          candidateTelemetryClient?.close();
+        } catch {
+          // ignore cleanup errors on an unpublished candidate
+        }
+        if (candidatePool) {
+          await this.disposeChannelPool(candidatePool);
+        }
 
         throw e;
       }
+      return primaryChanged;
     })();
 
     try {
-      await this.reconnectingPromise;
-      return primaryChanged;
+      return await this.reconnectingPromise;
     } finally {
       this.isReconnecting = false;
       this.reconnectingPromise = null;
@@ -308,8 +475,8 @@ export class GRPCClient extends User {
    * When promisify encounters a gRPC UNAVAILABLE error after all retries,
    * this handler triggers topology refresh and pool rebuild.
    */
-  private _attachFailoverHandler() {
-    setPoolFailoverHandler(this.channelPool, async () => {
+  private _attachFailoverHandler(pool = this.channelPool) {
+    setPoolFailoverHandler(pool, async () => {
       // Trigger topology refresh
       if (this.topologyRefresher) {
         this.topologyRefresher.triggerRefresh();
@@ -324,14 +491,15 @@ export class GRPCClient extends User {
    * Creates a pool of gRPC service clients.
    * @returns {Pool} - A pool of gRPC service clients.
    */
-  private createChannelPool() {
+  private createChannelPool(address = this.config.address) {
     const ServiceClientConstructor = this._MilvusService;
-    return createPool<Client>(
+    const formattedAddress = formatAddress(address);
+    const pool = createPool<Client>(
       {
         create: async () => {
           // Create a new gRPC service client
           return new ServiceClientConstructor(
-            formatAddress(this.config.address), // format the address
+            formattedAddress,
             this.creds,
             this.channelOptions
           );
@@ -349,6 +517,57 @@ export class GRPCClient extends User {
         max: DEFAULT_POOL_MAX,
       }
     );
+    setPoolTelemetryManager(pool, this.telemetry);
+    return pool;
+  }
+
+  private createTelemetryClient(address: string): Client {
+    return new this._ClientTelemetryService(
+      formatAddress(address),
+      this.creds,
+      this.telemetryChannelOptions
+    );
+  }
+
+  private replaceTelemetryClient(address = this.config.address) {
+    const replacement = this.createTelemetryClient(address);
+    const previous = this.telemetryClient;
+    this.telemetryEndpointEpoch += 1;
+    this.telemetryClient = replacement;
+    previous?.close();
+  }
+
+  private async disposeChannelPool(
+    pool: ReturnType<GRPCClient['createChannelPool']>
+  ) {
+    try {
+      await pool.drain();
+      await pool.clear();
+    } catch {
+      // Pool cleanup is best-effort. A cleanup failure must neither roll back a
+      // successful publication nor hide the original candidate validation error.
+    }
+  }
+
+  private sendTelemetryHeartbeat(request: Record<string, unknown>) {
+    return new Promise<any>((resolve, reject) => {
+      if (!this.telemetryClient) {
+        reject(new Error('telemetry client is not connected'));
+        return;
+      }
+      (this.telemetryClient as any).ClientHeartbeat(
+        request,
+        new Metadata(),
+        { deadline: new Date(Date.now() + 10_000) },
+        (error: any, response: any) =>
+          error ? reject(error) : resolve(response)
+      );
+    });
+  }
+
+  /** Returns the telemetry manager for inspection and custom command handlers. */
+  getTelemetry() {
+    return this.telemetry;
   }
 
   /**
@@ -377,6 +596,7 @@ export class GRPCClient extends User {
           `No database name provided, using default database: ${DEFAULT_DB}`
         );
       }
+      this.telemetryDatabaseExplicit = Boolean(data?.db_name);
       // update database
       this.metadata.set(
         METADATA.DATABASE,
@@ -394,7 +614,12 @@ export class GRPCClient extends User {
    * @param {string} sdkVersion - The version of the SDK being used.
    * @returns {Promise<void>} - A Promise that resolves when the server information has been retrieved.
    */
-  private async _getServerInfo(sdkVersion: string) {
+  private async _getServerInfo(
+    sdkVersion: string,
+    pool = this.channelPool,
+    apply = true,
+    lifecycleGeneration = this.lifecycleGeneration
+  ) {
     // build user info
     const userInfo = {
       client_info: {
@@ -406,26 +631,28 @@ export class GRPCClient extends User {
       },
     };
 
-    // update connect status
-    this.connectStatus = CONNECT_STATUS.CONNECTING;
+    if (apply) {
+      this.connectStatus = CONNECT_STATUS.CONNECTING;
+    }
 
-    return promisify(this.channelPool, 'Connect', userInfo, this.timeout).then(
-      f => {
-        // add new identifier interceptor
-        if (f && f.identifier) {
-          // update identifier
-          this.metadata.set(METADATA.CLIENT_ID, f.identifier);
+    const response = await promisify(pool, 'Connect', userInfo, this.timeout);
+    if (apply && this.isLifecycleCurrent(lifecycleGeneration)) {
+      this.applyServerInfo(response);
+    }
+    return response;
+  }
 
-          // setup identifier
-          this.serverInfo = f.server_info;
-        }
-        // update connect status
-        this.connectStatus =
-          f && f.identifier
-            ? CONNECT_STATUS.CONNECTED
-            : CONNECT_STATUS.UNIMPLEMENTED;
-      }
-    );
+  private applyServerInfo(response: any, startTelemetry = true) {
+    if (response?.identifier) {
+      this.metadata.set(METADATA.CLIENT_ID, response.identifier);
+      this.serverInfo = response.server_info;
+    }
+    this.connectStatus = response?.identifier
+      ? CONNECT_STATUS.CONNECTED
+      : CONNECT_STATUS.UNIMPLEMENTED;
+    if (response?.identifier && startTelemetry) {
+      this.telemetry.start();
+    }
   }
 
   /**
@@ -434,24 +661,54 @@ export class GRPCClient extends User {
    * @returns {Promise<CONNECT_STATUS>} The updated connection status.
    */
   async closeConnection() {
-    // Stop topology refresher if running (global cluster)
-    if (this.topologyRefresher) {
-      logger.debug(
-        `\x1b[36m[Global]\x1b[0m Stopping topology refresher on connection close`
-      );
-      this.topologyRefresher.stop();
-      this.topologyRefresher = null;
+    if (this.closePromise) {
+      return this.closePromise;
     }
 
-    // Close all connections in the pool
-    if (this.channelPool) {
-      await this.channelPool.drain();
-      await this.channelPool.clear();
+    // Publish the close fence before touching resources. Any topology/candidate promise
+    // released from this point on observes a different generation and may only clean up.
+    this.closed = true;
+    this.lifecycleGeneration += 1;
+    this.telemetryEndpointEpoch += 1;
+    this.connectStatus = CONNECT_STATUS.SHUTDOWN;
 
-      // update status
-      this.connectStatus = CONNECT_STATUS.SHUTDOWN;
-    }
-    return this.connectStatus;
+    const telemetryClient = this.telemetryClient;
+    this.telemetryClient = undefined;
+    const topologyRefresher = this.topologyRefresher;
+    this.topologyRefresher = null;
+    const channelPool = this.channelPool;
+
+    this.closePromise = (async () => {
+      try {
+        this.telemetry.stop();
+      } catch {
+        // best-effort telemetry shutdown must not prevent channel cleanup
+      }
+      try {
+        telemetryClient?.close();
+      } catch {
+        // best-effort cleanup
+      }
+      if (topologyRefresher) {
+        logger.debug(
+          `\x1b[36m[Global]\x1b[0m Stopping topology refresher on connection close`
+        );
+        try {
+          topologyRefresher.stop();
+        } catch {
+          // best-effort cleanup
+        }
+      }
+      if (channelPool) {
+        await this.disposeChannelPool(channelPool);
+      }
+      return this.connectStatus;
+    })();
+    return this.closePromise;
+  }
+
+  private isLifecycleCurrent(generation: number) {
+    return !this.closed && generation === this.lifecycleGeneration;
   }
 
   /**
@@ -480,24 +737,31 @@ export class GRPCClient extends User {
    * @returns {Promise<RunAnalyzerResponse>} - A Promise that resolves with the analyzer response.
    */
   async runAnalyzer(data: RunAnalyzerRequest): Promise<RunAnalyzerResponse> {
-    return await promisify(
+    return withTelemetryLogicalOperation(
       this.channelPool,
       'RunAnalyzer',
-      {
-        analyzer_params: data.analyzer_params
-          ? JSON.stringify(data.analyzer_params)
-          : '',
-        placeholder: (Array.isArray(data.text) ? data.text : [data.text]).map(
-          d => new TextEncoder().encode(String(d))
-        ),
-        with_detail: data.with_detail,
-        with_hash: data.with_hash,
-        db_name: data.db_name,
-        collection_name: data.collection_name,
-        field_name: data.field_name,
-        analyzer_names: data.analyzer_names,
-      },
-      this.timeout
+      data,
+      async () =>
+        promisify(
+          this.channelPool,
+          'RunAnalyzer',
+          {
+            analyzer_params: data.analyzer_params
+              ? JSON.stringify(data.analyzer_params)
+              : '',
+            placeholder: (Array.isArray(data.text)
+              ? data.text
+              : [data.text]
+            ).map(d => new TextEncoder().encode(String(d))),
+            with_detail: data.with_detail,
+            with_hash: data.with_hash,
+            db_name: data.db_name,
+            collection_name: data.collection_name,
+            field_name: data.field_name,
+            analyzer_names: data.analyzer_names,
+          },
+          this.timeout
+        )
     );
   }
 
