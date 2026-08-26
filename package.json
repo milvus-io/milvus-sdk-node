@@ -28,7 +28,7 @@
     "@grpc/proto-loader": "^0.8.0",
     "@opentelemetry/api": "^1.9.0",
     "@petamoriken/float16": "^3.8.6",
-    "@shanghaikid/parquetjs": "1.8.8",
+    "@shanghaikid/parquetjs": "1.8.9",
     "dayjs": "^1.11.7",
     "generic-pool": "^3.9.0",
     "lru-cache": "^9.1.2",
@@ -62,7 +62,7 @@
     "protobufjs": "^7.6.5",
     "lodash": "^4.18.1",
     "picomatch": "^2.3.2",
-    "thrift": "^0.23.0",
+    "thrift": "0.24.0",
     "thrift/uuid": "11.1.1"
   },
   "publishConfig": {
