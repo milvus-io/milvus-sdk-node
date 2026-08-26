@@ -13,14 +13,14 @@ const COLLECTION = GENERATE_NAME();
 const dbParam = {
   db_name: 'TextEmbedding',
 };
-const hasOpenAICredentials =
-  process.env.MILVUS_OPENAI_ENABLED === '1' ||
-  Boolean(process.env.MILVUS_OPENAI_API_KEY);
-const describeIfOpenAIConfigured = hasOpenAICredentials
+const hasSiliconFlowCredentials =
+  process.env.MILVUS_SILICONFLOW_ENABLED === '1' ||
+  Boolean(process.env.MILVUS_SILICONFLOW_API_KEY);
+const describeIfSiliconFlowConfigured = hasSiliconFlowCredentials
   ? describe
   : describe.skip;
 
-describeIfOpenAIConfigured(`Text Embedding Function API`, () => {
+describeIfSiliconFlowConfigured(`Text Embedding Function API`, () => {
   beforeAll(async () => {
     milvusClient = new MilvusClient({ address: IP, logLevel: 'info' });
     await milvusClient.createDatabase(dbParam);
@@ -53,20 +53,20 @@ describeIfOpenAIConfigured(`Text Embedding Function API`, () => {
         {
           name: 'dense',
           data_type: DataType.FloatVector,
-          dim: 1536,
+          dim: 1024,
           is_function_output: true,
         },
       ],
       functions: [
         {
-          name: 'openai',
-          description: 'openai text embedding function',
+          name: 'siliconflow',
+          description: 'siliconflow text embedding function',
           type: FunctionType.TEXTEMBEDDING,
           input_field_names: ['text'],
           output_field_names: ['dense'],
           params: {
-            provider: 'openai',
-            model_name: 'text-embedding-3-small',
+            provider: 'siliconflow',
+            model_name: 'BAAI/bge-large-zh-v1.5',
           },
         },
       ],
@@ -79,7 +79,7 @@ describeIfOpenAIConfigured(`Text Embedding Function API`, () => {
     const denseField = describe.schema.fields.find(f => f.name === 'dense');
     expect(denseField!.is_function_output).toEqual(true);
 
-    const func = describe.schema.functions.find(f => f.name === 'openai');
+    const func = describe.schema.functions.find(f => f.name === 'siliconflow');
     expect(func).toBeDefined();
     expect(func!.input_field_names).toEqual(['text']);
     expect(func!.output_field_names).toEqual(['dense']);
@@ -89,16 +89,16 @@ describeIfOpenAIConfigured(`Text Embedding Function API`, () => {
   it(`Alter text embedding function should success`, async () => {
     const alter = await milvusClient.alterCollectionFunction({
       collection_name: COLLECTION,
-      function_name: 'openai',
+      function_name: 'siliconflow',
       function: {
-        name: 'openai',
-        description: 'openai text embedding function altered via API',
+        name: 'siliconflow',
+        description: 'siliconflow text embedding function altered via API',
         type: FunctionType.TEXTEMBEDDING,
         input_field_names: ['text'],
         output_field_names: ['dense'],
         params: {
-          provider: 'openai',
-          model_name: 'text-embedding-3-small',
+          provider: 'siliconflow',
+          model_name: 'BAAI/bge-large-zh-v1.5',
         },
       },
     });
@@ -108,10 +108,10 @@ describeIfOpenAIConfigured(`Text Embedding Function API`, () => {
       collection_name: COLLECTION,
       cache: false,
     });
-    const func = describe.schema.functions.find(f => f.name === 'openai');
+    const func = describe.schema.functions.find(f => f.name === 'siliconflow');
     expect(func).toBeDefined();
     expect(func!.description).toEqual(
-      'openai text embedding function altered via API'
+      'siliconflow text embedding function altered via API'
     );
   });
 
