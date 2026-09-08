@@ -56,6 +56,7 @@
     "**/typedoc/minimatch/brace-expansion": "5.0.8",
     "@babel/core": "^7.29.7",
     "@babel/helpers": "^7.26.10",
+    "browserslist": "^4.28.7",
     "diff": "^4.0.4",
     "fast-xml-parser": "^5.7.0",
     "fast-xml-builder": "^1.2.0",
