@@ -126,6 +126,11 @@ export default defineConfig({
               slug: 'advanced/full-text-search',
               label: 'Full-Text Search',
             },
+            {
+              slug: 'advanced/membership-filters',
+              label: 'Membership Filters',
+            },
+            { slug: 'advanced/client-telemetry', label: 'Client Telemetry' },
             { slug: 'advanced/global-cluster', label: 'Global Cluster' },
             { slug: 'advanced/cloudflare', label: 'Cloudflare Workers' },
             { slug: 'advanced/vercel', label: 'Vercel' },
@@ -174,6 +179,7 @@ export default defineConfig({
           label: 'Resources',
           collapsed: false,
           items: [
+            { slug: 'reference/release-notes', label: 'Release Notes' },
             { slug: 'reference/troubleshooting', label: 'Troubleshooting' },
             {
               slug: 'reference/migration-compatibility',

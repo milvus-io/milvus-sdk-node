@@ -1,6 +1,6 @@
 # @zilliz/milvus2-sdk-node
 
-> Official Node.js/TypeScript SDK for Milvus and Zilliz Cloud vector databases. Use it for semantic search, RAG retrieval, recommendation, hybrid dense+sparse retrieval, metadata filtering, and collection/index/user/resource management. Package version in this repo: `2.6.14`. Requires Node.js 18+.
+> Official Node.js/TypeScript SDK for Milvus and Zilliz Cloud vector databases. Use it for semantic search, RAG retrieval, recommendation, hybrid dense+sparse retrieval, metadata filtering, and collection/index/user/resource management. Latest documented SDK release: `3.0.5`. Requires Node.js 18+.
 
 ## Install
 
@@ -603,4 +603,15 @@ try {
 
 ## Full API Reference
 
-See `README.md` for current method signatures and examples. Source lives under `milvus/`; generated docs live under `docs/`.
+See `README.md` for current method signatures and examples. Source lives under `milvus/`; handwritten Astro/Starlight documentation lives under `docs/src/content/docs/`.
+
+
+## SDK 3.0.4–3.0.5
+
+- `buildBloomFilter(members, fpr = 0.005)` returns Uint8Array for `filter: 'bloom_match(field, {blob})', exprValues: { blob }`. Members must all be integers (`number`/`bigint`) or strings; decimal strings are UTF-8, not integer IDs. False positives are possible; this is not an authorization filter. FPR range: 0.0001–0.05.
+- `buildRoaringBitmap(members)` returns Uint8Array for `roaring_match(field, {blob})` with the same exprValues shape. Exact integer membership accepts safe numbers, bigint or decimal int64 strings. Reuse blobs; do not JSON/base64 encode them. Server expression support is required. Incremental builders: `BloomFilterBuilder`, `RoaringBitmapBuilder`.
+- `ClientConfig.telemetry` defaults to `{ enabled: true, heartbeatIntervalMs: 10000, samplingRate: 1, errorMaxCount: 100 }`. Set `enabled: false` at construction to prevent startup. `client.getTelemetry().getConfig()` inspects effective settings; `closeConnection()` stops heartbeats. Telemetry is separate from `trace` and sends metrics/client metadata to the connected server.
+- `DataType.Text = 25` requires StorageV3, has no `max_length`, and cannot be a primary/partition key or array element. Values are JavaScript strings.
+- `addFunctionField` backfills existing sealed segments asynchronously. Check `getCollectionStatistics().data.schema_version_consistent_segments` against `schema_version_total_segments`, then bound index readiness. Success of the schema RPC does not mean completion. `do_physical_backfill` is not a function-field option.
+- New index constants: `HNSW_SQ`, `HNSW_PQ`, `HNSW_PRQ`, `AISAQ`, `NGRAM`, `FMINDEX`; server availability varies.
+- Release details: https://milvus-io.github.io/milvus-sdk-node/reference/release-notes

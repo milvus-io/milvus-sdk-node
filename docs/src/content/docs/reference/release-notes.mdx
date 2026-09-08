@@ -1,0 +1,22 @@
+---
+title: 'Release Notes'
+---
+
+These docs cover **SDK 3.0.5**, published on **August 26, 2026**. Both the npm `latest` tag and the [GitHub release](https://github.com/milvus-io/milvus-sdk-node/releases/tag/v3.0.5) pointed to this version when checked on September 8, 2026. Server feature availability is separate from SDK version; see [Migration & Compatibility](/milvus-sdk-node/reference/migration-compatibility).
+
+## 3.0.5
+
+- [Bloom and Roaring filters](/milvus-sdk-node/advanced/membership-filters): build binary membership parameters locally with `buildBloomFilter`, `BloomFilterBuilder`, `buildRoaringBitmap` and `RoaringBitmapBuilder`.
+- [Client telemetry](/milvus-sdk-node/advanced/client-telemetry): configure collection and heartbeat reporting, inspect effective settings, and handle server commands. Telemetry is enabled by default.
+- [Index enums](/milvus-sdk-node/management/index-management#additional-index-enums-in-sdk-305): `HNSW_SQ`, `HNSW_PQ`, `HNSW_PRQ`, `AISAQ`, `NGRAM` and `FMINDEX` now have `IndexType` constants. This exposes names already accepted as strings; availability depends on the server.
+- Dependency updates: Parquet writer dependency updated to 1.8.9; js-yaml updated. Text embedding tests switched provider; this does not change the public SDK API.
+
+[Full 3.0.5 changelog](https://github.com/milvus-io/milvus-sdk-node/compare/v3.0.4...v3.0.5)
+
+## 3.0.4 additions covered here
+
+- [Text fields](/milvus-sdk-node/core-concepts/data-types-schemas#text): `DataType.Text`, without VarChar's `max_length` setting; requires StorageV3.
+- [Function-field backfill](/milvus-sdk-node/management/collection-management#function-field-backfill): adding a BM25 or MinHash output field starts asynchronous server backfill; monitor schema and index readiness.
+- External collection field additions preserve `external_field` mappings.
+
+[Full 3.0.4 changelog](https://github.com/milvus-io/milvus-sdk-node/compare/v3.0.3...v3.0.4)

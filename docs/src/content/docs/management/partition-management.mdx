@@ -1,5 +1,5 @@
 ---
-title: "Partition Management"
+title: 'Partition Management'
 ---
 
 Partitions allow you to organize data within a collection for better performance and management. This guide covers all partition operations.
@@ -109,7 +109,9 @@ await client.insert({
   partition_name: 'partition_1',
   data: [
     {
-      vector: [/* ... */],
+      vector: [
+        /* ... */
+      ],
       text: 'data for partition 1',
     },
   ],
@@ -136,7 +138,9 @@ Search within specific partitions:
 ```javascript
 const results = await client.search({
   collection_name: 'my_collection',
-  data: [/* vector */],
+  data: [
+    /* vector */
+  ],
   partition_names: ['partition_1', 'partition_2'],
   limit: 10,
 });
@@ -150,14 +154,18 @@ Every collection has a default partition named `_default`. Data inserted without
 // Data goes to _default partition
 await client.insert({
   collection_name: 'my_collection',
-  data: [/* ... */],
+  data: [
+    /* ... */
+  ],
 });
 
 // Explicitly specify partition
 await client.insert({
   collection_name: 'my_collection',
   partition_name: 'partition_1',
-  data: [/* ... */],
+  data: [
+    /* ... */
+  ],
 });
 ```
 
@@ -172,5 +180,5 @@ await client.insert({
 ## Next Steps
 
 - Learn about [Collection Management](./collection-management)
-- Explore [Data Operations](./data-operations-insert)
-- Check out [Best Practices](./best-practices)
+- Explore [Data Operations](/milvus-sdk-node/operations/data-operations-insert)
+- Check out [Best Practices](/milvus-sdk-node/advanced/best-practices)

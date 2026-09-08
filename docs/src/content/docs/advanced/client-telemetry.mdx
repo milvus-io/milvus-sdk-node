@@ -1,0 +1,57 @@
+---
+title: 'Client Telemetry'
+---
+
+SDK 3.0.5 adds client telemetry to `MilvusClient` (gRPC). It sends operation metrics to the connected Milvus deployment through `ClientHeartbeat`. This is separate from OpenTelemetry tracing configured with `trace`.
+
+## Configuration and defaults
+
+```typescript
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  telemetry: {
+    enabled: true,
+    heartbeatIntervalMs: 10_000,
+    samplingRate: 1,
+    errorMaxCount: 100,
+    // clientId: 'recommendation-worker-1',
+  },
+});
+await client.connectPromise;
+console.log(client.getTelemetry().getConfig());
+// Call during application shutdown to stop telemetry and close channels.
+await client.closeConnection();
+```
+
+| Option                | Default        | Meaning                                                                              |
+| --------------------- | -------------- | ------------------------------------------------------------------------------------ |
+| `enabled`             | `true`         | Enable metric collection and start heartbeats                                        |
+| `heartbeatIntervalMs` | `10000`        | Positive finite heartbeat interval, in milliseconds                                  |
+| `samplingRate`        | `1`            | Fraction of logical operations sampled; finite numbers are clamped to 0–1            |
+| `errorMaxCount`       | `100`          | Positive integer cap on retained errors                                              |
+| `clientId`            | Generated UUID | Optional stable identity across process restarts; use a distinct identity per client |
+
+Disable telemetry at construction if you do not want it to start:
+
+```typescript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  telemetry: { enabled: false },
+});
+```
+
+## Collected information
+
+Telemetry records request, success and error counts, plus average, p99 and maximum latency for supported data operations. High-level operations include their retries in a single logical operation; iterator setup and batches are excluded. Sampling reduces recorded operations rather than extrapolating counts to all requests.
+
+Heartbeats include SDK version, client identity, hostname, user and database context. The server can request collection metrics, recent errors and latency history, inspect configuration, and push changes to enabled state, heartbeat interval or sampling rate. Error details can include operation, collection, request ID and error text.
+
+Server-pushed disabling of collection keeps the heartbeat control channel active, so it differs from `enabled: false` at construction. Metrics arrive in windows and are not an instantaneous view of requests.
+
+## Inspection and server compatibility
+
+`client.getTelemetry()` returns the public `ClientTelemetryManager`. Use `getConfig()` for effective settings and `getMetricsSnapshots()` for retained snapshots. Advanced integrations can register a command handler with `registerCommandHandler(type, handler)`; handlers return a `CommandReply` or a promise of one.
+
+Servers without `ClientHeartbeat` return `UNIMPLEMENTED`. The SDK backs off retries, up to 30 minutes, without blocking ordinary data operations. Transport failures also use heartbeat backoff. Call `closeConnection()` during shutdown to stop timers and release channels.

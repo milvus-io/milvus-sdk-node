@@ -19,9 +19,10 @@
     "coverage": "NODE_ENV=dev jest --coverage=true --config jest.config.js --no-cache",
     "build-test": " yarn build && NODE_ENV=dev jest test/build/Collection.spec.ts --testPathIgnorePatterns=none",
     "example": "npx ts-node",
-    "doc": "rm -rf docs && npx typedoc",
+    "doc": "npm --prefix docs run build",
     "doc-json": "npx typedoc milvus --json",
-    "proto:json": "yarn test test/utils/ProtoJson.spec.ts"
+    "proto:json": "yarn test test/utils/ProtoJson.spec.ts",
+    "doc:dev": "npm --prefix docs run dev"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",

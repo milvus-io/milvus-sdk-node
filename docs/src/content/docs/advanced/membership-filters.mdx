@@ -1,0 +1,86 @@
+---
+title: 'Bloom and Roaring Membership Filters'
+---
+
+SDK 3.0.5 exports helpers that encode large membership sets as binary filter parameters for the gRPC client. Your Milvus deployment must support `bloom_match` or `roaring_match`; upgrading the SDK alone does not add these server expressions.
+
+## Choose a filter
+
+| Helper                            | Members                                              | Semantics                                            |
+| --------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+| `buildBloomFilter(members, fpr?)` | All integers (`number`/`bigint`) or all strings      | Approximate membership; false positives are possible |
+| `buildRoaringBitmap(members)`     | Signed integers (`number`/`bigint`/decimal `string`) | Exact membership; duplicates collapse                |
+
+Both return `Uint8Array`. Build once and reuse the blob in `exprValues` for query or search. Pass the bytes directly, without JSON stringification or base64 encoding. Empty sets match nothing.
+
+## Exact integer membership
+
+Assume `documents` is loaded and contains an integer `user_id` field:
+
+```typescript
+import { buildRoaringBitmap } from '@zilliz/milvus2-sdk-node';
+
+const ids = buildRoaringBitmap([1, 2, '9223372036854775807']);
+const result = await client.query({
+  collection_name: 'documents',
+  filter: 'roaring_match(user_id, {ids})',
+  exprValues: { ids },
+  output_fields: ['user_id'],
+  limit: 100,
+});
+console.log(result.data);
+```
+
+Numbers must be safe integers. Use `bigint` or decimal strings for larger signed int64 values. Roaring does not support VarChar membership: `'123'` here means integer 123. The builder validates signed int64 range and serialized/decoded size limits; compactness depends on the distribution of IDs.
+
+## Approximate integer or string membership
+
+```typescript
+import { buildBloomFilter } from '@zilliz/milvus2-sdk-node';
+
+const members = buildBloomFilter(['alice', 'bob'], 0.005);
+const result = await client.query({
+  collection_name: 'documents',
+  filter: 'bloom_match(owner, {members})',
+  exprValues: { members },
+  output_fields: ['owner'],
+  limit: 100,
+});
+```
+
+The target `owner` field must be VarChar for this string blob. Integer fields require integer members. Use `BigInt('9223372036854775807')` for large Bloom integer members: decimal strings are hashed as UTF-8, not parsed as integers. Mixing strings and integers in `buildBloomFilter` is rejected.
+
+The default false-positive rate is `0.005`; accepted values are `0.0001` through `0.05`. A lower rate generally needs a larger blob. Bloom membership is suitable for candidate filtering; verify candidates against the original set when exact inclusion matters. Do not use approximate membership as an authorization check or negate it for exact exclusion.
+
+## Estimate Bloom payload size
+
+`estimateBloomFilterSize(n, fpr)` returns the serialized byte length, including the envelope, without building the filter. Both arguments are required. Compare the estimate with your deployment's Bloom-filter and overall request limits before allocating a large set.
+
+```typescript
+import {
+  estimateBloomFilterSize,
+  BLOOM_FILTER_DEFAULT_FPR,
+} from '@zilliz/milvus2-sdk-node';
+
+console.log(estimateBloomFilterSize(100_000, BLOOM_FILTER_DEFAULT_FPR));
+```
+
+The package also exports `BLOOM_FILTER_MIN_FPR` and `BLOOM_FILTER_MAX_FPR` for input validation.
+
+## Incremental builders
+
+`BloomFilterBuilder` accepts an expected member count and optional false-positive rate. Add members with `addInt64()` or `addString()`, then call `build()`. Its returned bytes share the builder's buffer; copy them before adding more members if you need an immutable snapshot.
+
+`RoaringBitmapBuilder` accepts `add()` and `addMany()` before `build()`. It retains the members for sorting and deduplication, so incremental input still requires memory proportional to the membership set.
+
+```typescript
+import {
+  BloomFilterBuilder,
+  RoaringBitmapBuilder,
+} from '@zilliz/milvus2-sdk-node';
+
+const bloom = new BloomFilterBuilder(2).addInt64(1).addInt64(2).build();
+const roaring = new RoaringBitmapBuilder().addMany([1, 2]).build();
+```
+
+See [Query & Search](/milvus-sdk-node/operations/data-operations-query) for combining these predicates with other filters.

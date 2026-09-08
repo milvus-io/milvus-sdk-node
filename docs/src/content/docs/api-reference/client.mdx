@@ -71,6 +71,7 @@ interface ClientConfig {
   };
   pool?: Options;
   loaderOptions?: LoaderOption;
+  telemetry?: TelemetryConfig;
   trace?: boolean;
   isGlobal?: boolean;
 }
@@ -266,3 +267,7 @@ const client = new MilvusClient({
 - [API Reference overview](/milvus-sdk-node/api-reference)
 - [Collection Operations](/milvus-sdk-node/api-reference/collections)
 - [Client Configuration](/milvus-sdk-node/core-concepts/client-configuration)
+
+## Client telemetry (SDK 3.0.5)
+
+`telemetry` configures heartbeat reporting and is enabled by default. See [Client Telemetry](/milvus-sdk-node/advanced/client-telemetry) for defaults, collected information, disabling, and `getTelemetry()` inspection. `TelemetryConfig` is exported from the package root.

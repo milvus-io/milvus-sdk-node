@@ -423,6 +423,19 @@ const results = await client.search({
 
 ## Next Steps
 
-- Learn about [Data Operations](./data-operations-insert)
-- Explore [Search Operations](./data-operations-query)
-- Check out [Best Practices](./best-practices)
+- Learn about [Data Operations](/milvus-sdk-node/operations/data-operations-insert)
+- Explore [Search Operations](/milvus-sdk-node/operations/data-operations-query)
+- Check out [Best Practices](/milvus-sdk-node/advanced/best-practices)
+
+## Additional index enums in SDK 3.0.5
+
+| Enum                 | Purpose                                                         |
+| -------------------- | --------------------------------------------------------------- |
+| `IndexType.HNSW_SQ`  | HNSW with scalar quantization                                   |
+| `IndexType.HNSW_PQ`  | HNSW with product quantization                                  |
+| `IndexType.HNSW_PRQ` | HNSW with product residual quantization                         |
+| `IndexType.AISAQ`    | DiskANN variant with PQ codes stored with the graph             |
+| `IndexType.NGRAM`    | N-gram scalar index for VarChar / JSON paths, accelerating LIKE |
+| `IndexType.FMINDEX`  | FM-index for VarChar pattern matching                           |
+
+Use these constants as `createIndex({ index_type: IndexType.HNSW_SQ, ... })` values. The enum additions do not enable an index on older servers; consult your server's supported index types and parameters. Legacy enum members remain for compatibility and do not guarantee current server support.
