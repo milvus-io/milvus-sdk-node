@@ -20,9 +20,11 @@
   "resolutions": {
     "devalue": "^5.8.1",
     "esbuild": "^0.28.1",
-    "fast-uri": "^3.1.4",
-    "js-yaml": "^4.3.0",
+    "fast-uri": "^3.1.6",
+    "js-yaml": "^4.3.1",
+    "nanoid": "^3.3.18",
     "postcss": "^8.5.25",
+    "postcss-selector-parser": "^6.1.3",
     "sharp": "^0.35.3",
     "svgo": "^4.0.2",
     "yaml": "^2.8.3"
