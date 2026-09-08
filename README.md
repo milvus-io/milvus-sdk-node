@@ -8,6 +8,10 @@ Official Node.js SDK for [Milvus](https://github.com/milvus-io/milvus) vector da
 [![downloads](https://img.shields.io/npm/dw/@zilliz/milvus2-sdk-node)](https://www.npmjs.com/package/@zilliz/milvus2-sdk-node)
 [![codecov](https://codecov.io/gh/milvus-io/milvus-sdk-node/branch/main/graph/badge.svg?token=Zu5FwWstwI)](https://codecov.io/gh/milvus-io/milvus-sdk-node)
 
+Documentation: [Guides & API reference](https://milvus-io.github.io/milvus-sdk-node/) · [3.0.5 release notes](https://milvus-io.github.io/milvus-sdk-node/reference/release-notes)
+
+The latest documented release is **3.0.5**. New features include Bloom/Roaring membership helpers, client telemetry (enabled by default), and six additional index enum values. SDK 3.0.4 also added Text fields and asynchronous function-field backfill.
+
 ## Installation
 
 ```bash
@@ -18,11 +22,12 @@ yarn add @zilliz/milvus2-sdk-node
 
 ## Compatibility
 
-| Milvus version | SDK version | Install command                             |
-| :------------: | :---------: | :------------------------------------------ |
-|    v2.6.0+     |  **latest** | `yarn add @zilliz/milvus2-sdk-node@latest`  |
-|    v2.5.0+     |   v2.5.0    | `yarn add @zilliz/milvus2-sdk-node@2.5.12`  |
-|    v2.4.0+     |   v2.4.9    | `yarn add @zilliz/milvus2-sdk-node@2.4.9`   |
+| Milvus version | SDK version | Install command                            |
+| :------------: | :---------: | :----------------------------------------- |
+|    v3.0.0+     |  **3.0.x**  | `yarn add @zilliz/milvus2-sdk-node@3`      |
+|    v2.6.0+     |  **2.6.x**  | `yarn add @zilliz/milvus2-sdk-node@2.6`    |
+|    v2.5.0+     |   v2.5.0    | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
+|    v2.4.0+     |   v2.4.9    | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
 
 ## Quick Start
 
@@ -43,7 +48,7 @@ const client = new MilvusClient({
 
 // Zilliz Cloud
 const client = new MilvusClient({
-  address: 'your-endpoint.zillizcloud.com',
+  address: 'https://your-endpoint.zillizcloud.com',
   token: 'your-api-key',
 });
 
@@ -54,11 +59,7 @@ await client.connectPromise;
 ### Create Collection, Insert, and Search
 
 ```typescript
-import {
-  MilvusClient,
-  DataType,
-  MetricType,
-} from '@zilliz/milvus2-sdk-node';
+import { MilvusClient, DataType, MetricType } from '@zilliz/milvus2-sdk-node';
 
 const client = new MilvusClient({ address: 'localhost:19530' });
 
@@ -66,7 +67,12 @@ const client = new MilvusClient({ address: 'localhost:19530' });
 await client.createCollection({
   collection_name: 'my_collection',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
     { name: 'text', data_type: DataType.VarChar, max_length: 512 },
     { name: 'vector', data_type: DataType.FloatVector, dim: 128 },
   ],
@@ -82,7 +88,7 @@ await client.createCollection({
 });
 
 // 2. Load into memory (required before search/query)
-await client.loadCollection({ collection_name: 'my_collection' });
+await client.loadCollectionSync({ collection_name: 'my_collection' });
 
 // 3. Insert data
 await client.insert({
@@ -98,6 +104,7 @@ const results = await client.search({
   collection_name: 'my_collection',
   data: [Array(128).fill(0.1)],
   limit: 10,
+  consistency_level: 'Strong', // Include the rows just inserted
   output_fields: ['text'],
 });
 console.log(results.results);
@@ -139,10 +146,11 @@ new MilvusClient({
   password?: string;            // Password for auth
   ssl?: boolean;                // Enable SSL/TLS
   database?: string;            // Default database name
-  timeout?: number | string;    // Request timeout in ms (or string like '30s')
+  timeout?: number | string;    // Request timeout in milliseconds
   maxRetries?: number;          // Max retry attempts (default: 3)
   retryDelay?: number;          // Retry delay in ms (default: 10)
   logLevel?: string;            // 'debug' | 'info' | 'warn' | 'error'
+  telemetry?: TelemetryConfig;  // Heartbeat metrics; enabled by default
   trace?: boolean;              // Enable OpenTelemetry tracing
   tls?: {                       // TLS certificate configuration
     rootCertPath?: string;
@@ -552,7 +560,12 @@ await client.createResourceGroup({ resource_group, config });
 await client.listResourceGroups();
 await client.describeResourceGroup({ resource_group });
 await client.dropResourceGroup({ resource_group });
-await client.transferReplica({ source_resource_group, target_resource_group, collection_name, num_replica });
+await client.transferReplica({
+  source_resource_group,
+  target_resource_group,
+  collection_name,
+  num_replica,
+});
 ```
 
 ---
@@ -572,9 +585,9 @@ const writer = new BulkWriter({
       { name: 'title', data_type: DataType.VarChar, max_length: 256 },
     ],
   },
-  format: 'parquet',  // 'json' or 'parquet'
+  format: 'parquet', // 'json' or 'parquet'
   localPath: './bulk_data',
-  chunkSize: 128 * 1024 * 1024,  // 128 MB per file
+  chunkSize: 128 * 1024 * 1024, // 128 MB per file
 });
 
 // Append rows
@@ -616,10 +629,10 @@ await client.getCompactionState({ compactionID });
 ### System Operations
 
 ```typescript
-await client.getVersion();                        // Milvus server version
-await client.checkHealth();                       // Server health status
-await client.reconnectToPrimary();                // Force reconnect to primary node
-await client.runAnalyzer({ text, analyzer });     // Test text analyzer tokenization
+await client.getVersion(); // Milvus server version
+await client.checkHealth(); // Server health status
+await client.reconnectToPrimary(); // Force reconnect to primary node
+await client.runAnalyzer({ text, analyzer }); // Test text analyzer tokenization
 ```
 
 ---
@@ -628,29 +641,29 @@ await client.runAnalyzer({ text, analyzer });     // Test text analyzer tokeniza
 
 ### Scalar Types
 
-| DataType enum        | TypeScript value  | Notes                                 |
-| -------------------- | ----------------- | ------------------------------------- |
-| `DataType.Bool`      | `boolean`         |                                       |
-| `DataType.Int8`      | `number`          |                                       |
-| `DataType.Int16`     | `number`          |                                       |
-| `DataType.Int32`     | `number`          |                                       |
-| `DataType.Int64`     | `number \| string` | Use string for values > 2^53         |
-| `DataType.Float`     | `number`          |                                       |
-| `DataType.Double`    | `number`          |                                       |
-| `DataType.VarChar`   | `string`          | Requires `max_length`                 |
-| `DataType.JSON`      | `object`          |                                       |
-| `DataType.Array`     | `any[]`           | Requires `element_type`, `max_capacity` |
+| DataType enum      | TypeScript value   | Notes                                   |
+| ------------------ | ------------------ | --------------------------------------- |
+| `DataType.Bool`    | `boolean`          |                                         |
+| `DataType.Int8`    | `number`           |                                         |
+| `DataType.Int16`   | `number`           |                                         |
+| `DataType.Int32`   | `number`           |                                         |
+| `DataType.Int64`   | `number \| string` | Use string for values > 2^53            |
+| `DataType.Float`   | `number`           |                                         |
+| `DataType.Double`  | `number`           |                                         |
+| `DataType.VarChar` | `string`           | Requires `max_length`                   |
+| `DataType.JSON`    | `object`           |                                         |
+| `DataType.Array`   | `any[]`            | Requires `element_type`, `max_capacity` |
 
 ### Vector Types
 
-| DataType enum                | Data format                        | Field param   |
-| ---------------------------- | ---------------------------------- | ------------- |
-| `DataType.FloatVector`       | `number[]`                         | `dim: number` |
-| `DataType.BinaryVector`      | `number[]` (uint8 bytes)           | `dim: number` |
-| `DataType.Float16Vector`     | `number[]`                         | `dim: number` |
-| `DataType.BFloat16Vector`    | `number[]`                         | `dim: number` |
-| `DataType.Int8Vector`        | `number[]`                         | `dim: number` |
-| `DataType.SparseFloatVector` | `Record<number, number>` or array  | no dim needed |
+| DataType enum                | Data format                       | Field param   |
+| ---------------------------- | --------------------------------- | ------------- |
+| `DataType.FloatVector`       | `number[]`                        | `dim: number` |
+| `DataType.BinaryVector`      | `number[]` (uint8 bytes)          | `dim: number` |
+| `DataType.Float16Vector`     | `number[]`                        | `dim: number` |
+| `DataType.BFloat16Vector`    | `number[]`                        | `dim: number` |
+| `DataType.Int8Vector`        | `number[]`                        | `dim: number` |
+| `DataType.SparseFloatVector` | `Record<number, number>` or array | no dim needed |
 
 ### Field Definition
 
@@ -660,13 +673,13 @@ interface FieldType {
   data_type: DataType;
   is_primary_key?: boolean;
   autoID?: boolean;
-  dim?: number;                    // Required for vector types
-  max_length?: number;             // Required for VarChar
-  element_type?: DataType;         // Required for Array
-  max_capacity?: number;           // Required for Array
+  dim?: number; // Required for vector types
+  max_length?: number; // Required for VarChar
+  element_type?: DataType; // Required for Array
+  max_capacity?: number; // Required for Array
   default_value?: any;
   is_partition_key?: boolean;
-  enable_analyzer?: boolean;       // For full-text search
+  enable_analyzer?: boolean; // For full-text search
   analyzer_params?: object;
 }
 ```
@@ -678,47 +691,47 @@ interface FieldType {
 ### MetricType
 
 ```typescript
-MetricType.L2          // Euclidean distance (smaller = more similar)
-MetricType.IP          // Inner product (larger = more similar)
-MetricType.COSINE      // Cosine similarity (larger = more similar)
-MetricType.HAMMING     // Hamming distance (binary vectors)
-MetricType.JACCARD     // Jaccard distance (binary vectors)
-MetricType.BM25        // BM25 relevance (sparse/text)
+MetricType.L2; // Euclidean distance (smaller = more similar)
+MetricType.IP; // Inner product (larger = more similar)
+MetricType.COSINE; // Cosine similarity (larger = more similar)
+MetricType.HAMMING; // Hamming distance (binary vectors)
+MetricType.JACCARD; // Jaccard distance (binary vectors)
+MetricType.BM25; // BM25 relevance (sparse/text)
 ```
 
 ### IndexType
 
 ```typescript
-IndexType.AUTOINDEX    // Automatic selection (recommended)
-IndexType.HNSW         // High recall, in-memory
-IndexType.IVF_FLAT     // Balanced speed/recall
-IndexType.IVF_SQ8      // Compressed IVF
-IndexType.IVF_PQ       // High compression IVF
-IndexType.FLAT         // Brute-force (exact)
-IndexType.DISKANN      // On-disk index
-IndexType.BIN_FLAT     // Binary brute-force
-IndexType.BIN_IVF_FLAT // Binary IVF
-IndexType.SPARSE_INVERTED_INDEX  // Sparse vectors
-IndexType.SPARSE_WAND           // Sparse vectors (WAND)
+IndexType.AUTOINDEX; // Automatic selection (recommended)
+IndexType.HNSW; // High recall, in-memory
+IndexType.IVF_FLAT; // Balanced speed/recall
+IndexType.IVF_SQ8; // Compressed IVF
+IndexType.IVF_PQ; // High compression IVF
+IndexType.FLAT; // Brute-force (exact)
+IndexType.DISKANN; // On-disk index
+IndexType.BIN_FLAT; // Binary brute-force
+IndexType.BIN_IVF_FLAT; // Binary IVF
+IndexType.SPARSE_INVERTED_INDEX; // Sparse vectors
+IndexType.SPARSE_WAND; // Sparse vectors (WAND)
 ```
 
 ### ConsistencyLevelEnum
 
 ```typescript
-ConsistencyLevelEnum.Strong      // Read-after-write guarantee
-ConsistencyLevelEnum.Session     // Session-level consistency
-ConsistencyLevelEnum.Bounded     // Bounded staleness
-ConsistencyLevelEnum.Eventually  // Best performance
+ConsistencyLevelEnum.Strong; // Read-after-write guarantee
+ConsistencyLevelEnum.Session; // Session-level consistency
+ConsistencyLevelEnum.Bounded; // Bounded staleness
+ConsistencyLevelEnum.Eventually; // Best performance
 ```
 
 ### ErrorCode
 
 ```typescript
-ErrorCode.SUCCESS             // Operation succeeded
-ErrorCode.UnexpectedError     // Internal error
-ErrorCode.CollectionNotExists // Collection not found
-ErrorCode.IllegalArgument     // Invalid argument
-ErrorCode.RateLimit           // Rate limited
+ErrorCode.SUCCESS; // Operation succeeded
+ErrorCode.UnexpectedError; // Internal error
+ErrorCode.CollectionNotExists; // Collection not found
+ErrorCode.IllegalArgument; // Invalid argument
+ErrorCode.RateLimit; // Rate limited
 ```
 
 ---
@@ -859,7 +872,12 @@ await client.query({
 await client.createCollection({
   collection_name: 'docs',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
     { name: 'sparse_vector', data_type: DataType.SparseFloatVector },
   ],
 });
@@ -867,7 +885,7 @@ await client.createCollection({
 await client.insert({
   collection_name: 'docs',
   data: [
-    { sparse_vector: { 0: 0.5, 10: 0.3, 200: 0.8 } },   // dict format
+    { sparse_vector: { 0: 0.5, 10: 0.3, 200: 0.8 } }, // dict format
     { sparse_vector: { 1: 0.1, 50: 0.9 } },
   ],
 });
@@ -886,8 +904,18 @@ await client.search({
 await client.createCollection({
   collection_name: 'multi_tenant',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
-    { name: 'tenant', data_type: DataType.VarChar, max_length: 64, is_partition_key: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'tenant',
+      data_type: DataType.VarChar,
+      max_length: 64,
+      is_partition_key: true,
+    },
     { name: 'vector', data_type: DataType.FloatVector, dim: 128 },
   ],
   num_partitions: 16,
@@ -897,7 +925,7 @@ await client.createCollection({
 await client.search({
   collection_name: 'multi_tenant',
   data: [queryVector],
-  filter: 'tenant == "user_123"',   // Scoped to partition
+  filter: 'tenant == "user_123"', // Scoped to partition
   limit: 10,
 });
 ```

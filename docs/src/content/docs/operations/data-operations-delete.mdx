@@ -1,5 +1,5 @@
 ---
-title: "Data Operations - Delete"
+title: 'Data Operations - Delete'
 ---
 
 This guide covers deleting data from Milvus collections.
@@ -91,33 +91,33 @@ Use the same filter expression syntax as queries:
 ### Comparison Operators
 
 ```javascript
-'age > 25'
-'age >= 25'
-'age < 25'
-'age <= 25'
-'age == 25'
-'age != 25'
+'age > 25';
+'age >= 25';
+'age < 25';
+'age <= 25';
+'age == 25';
+'age != 25';
 ```
 
 ### Logical Operators
 
 ```javascript
-'age > 25 AND category == "tech"'
-'age > 25 OR age < 18'
-'NOT (age > 25)'
+'age > 25 AND category == "tech"';
+'age > 25 OR age < 18';
+'NOT (age > 25)';
 ```
 
 ### In Operator
 
 ```javascript
-'id in [1, 2, 3, 4, 5]'
-'category in ["old", "deprecated"]'
+'id in [1, 2, 3, 4, 5]';
+'category in ["old", "deprecated"]';
 ```
 
 ### String Operations
 
 ```javascript
-'text like "%deprecated%"'
+'text like "%deprecated%"';
 ```
 
 ## Batch Deletion
@@ -126,7 +126,9 @@ Delete large numbers of entities efficiently:
 
 ```javascript
 // Delete by IDs in batches
-const idsToDelete = [/* large array of IDs */];
+const idsToDelete = [
+  /* large array of IDs */
+];
 const batchSize = 1000;
 
 for (let i = 0; i < idsToDelete.length; i += batchSize) {
@@ -227,4 +229,4 @@ console.log('Remaining entities:', count.data);
 
 - Learn about [Data Management](./data-management)
 - Explore [Query Operations](./data-operations-query)
-- Check out [Best Practices](./best-practices)
+- Check out [Best Practices](/milvus-sdk-node/advanced/best-practices)

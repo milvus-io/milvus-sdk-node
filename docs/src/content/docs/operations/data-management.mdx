@@ -1,5 +1,5 @@
 ---
-title: "Data Management"
+title: 'Data Management'
 ---
 
 This guide covers data management operations including flushing, compaction, bulk import, and segment management.
@@ -156,7 +156,7 @@ const tasks = await client.listImportTasks({
   collection_name: 'my_collection',
 });
 
-tasks.tasks.forEach(task => {
+tasks.tasks.forEach((task) => {
   console.log('Task ID:', task.taskID);
   console.log('State:', task.state);
   console.log('Progress:', task.progress);
@@ -187,7 +187,7 @@ const info = await client.getQuerySegmentInfo({
   dbName: 'default',
 });
 
-info.infos.forEach(segment => {
+info.infos.forEach((segment) => {
   console.log('Segment ID:', segment.segmentID);
   console.log('State:', segment.state);
   console.log('Level:', segment.level);
@@ -206,7 +206,7 @@ const info = await client.getPersistentSegmentInfo({
   dbName: 'default',
 });
 
-info.infos.forEach(segment => {
+info.infos.forEach((segment) => {
   console.log('Segment ID:', segment.segmentID);
   console.log('State:', segment.state);
   console.log('Level:', segment.level);
@@ -237,5 +237,5 @@ console.log('Metrics:', metrics);
 
 ## Next Steps
 
-- Learn about [Collection Management](./collection-management)
-- Explore [Best Practices](./best-practices)
+- Learn about [Collection Management](/milvus-sdk-node/management/collection-management)
+- Explore [Best Practices](/milvus-sdk-node/advanced/best-practices)

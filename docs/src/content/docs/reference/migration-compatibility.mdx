@@ -11,7 +11,7 @@ This guide covers version compatibility, migration paths, and breaking changes.
 | Milvus version |   Node SDK version   | Installation                               |
 | :------------: | :------------------: | :----------------------------------------- |
 |    v3.0.0+     | v3.0.0+ / **latest** | `yarn add @zilliz/milvus2-sdk-node@latest` |
-|    v2.6.0+     |        v2.6.x        | `yarn add @zilliz/milvus2-sdk-node@2.6.9`  |
+|    v2.6.0+     |        v2.6.x        | `yarn add @zilliz/milvus2-sdk-node@2.6`    |
 |    v2.5.0+     |        v2.5.x        | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
 |    v2.4.0+     |        v2.4.9        | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
 |    v2.3.0+     |        v2.3.5        | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
@@ -20,7 +20,7 @@ This guide covers version compatibility, migration paths, and breaking changes.
 ### Node.js Compatibility
 
 - **Minimum**: Node.js 18+
-- **Recommended**: Node.js 20+ (LTS)
+- **Recommended**: A currently supported Node.js LTS release
 
 ## Checking Versions
 
@@ -57,7 +57,7 @@ const info = await client.getMetric({
 ```bash
 yarn add @zilliz/milvus2-sdk-node@latest
 # or specific version
-yarn add @zilliz/milvus2-sdk-node@2.6.9
+yarn add @zilliz/milvus2-sdk-node@2.6
 ```
 
 3. **Test Thoroughly**:
@@ -94,7 +94,11 @@ The following SDK features require a Milvus 3.0 server. They are marked with the
 | MinHash function and index     | `FunctionType.MINHASH`, `IndexType.MINHASH_LSH`, `MetricType.MHJACCARD`, atomic function-field/index creation                                                                                                                 | [Collection Management](../management/collection-management#add-a-function-output-field-and-index), [Index Management](../management/index-management#minhash_lsh) |
 | Analyzer file resources        | `addFileResource()`, `listFileResources()`, `removeFileResource()`                                                                                                                                                            | [Full-Text Search](../advanced/full-text-search#custom-dictionary-files), [System Operations](../api-reference/system#file-resources)                              |
 
-Not all Milvus 3.0 proto additions are public Node SDK APIs yet. Client telemetry, WAL dump/data-salvage APIs, `ComputePhraseMatchSlop`, `BatchUpdateManifest`, and full molecular data helpers are currently proto-level/internal surfaces unless explicitly exposed in a later SDK release.
+Not all Milvus 3.0 proto additions are public Node SDK APIs yet. WAL dump/data-salvage APIs, `ComputePhraseMatchSlop`, `BatchUpdateManifest`, and full molecular data helpers are currently proto-level/internal surfaces unless explicitly exposed in a later SDK release.
+
+## SDK 3.0.4–3.0.5 additions
+
+See [Release Notes](/milvus-sdk-node/reference/release-notes) for Text fields, asynchronous function-field backfill, membership-filter builders, additional index enums and public client telemetry.
 
 ## Breaking Changes
 
@@ -164,7 +168,7 @@ yarn add @zilliz/milvus2-sdk-node@latest
 1. Update SDK:
 
 ```bash
-yarn add @zilliz/milvus2-sdk-node@latest
+yarn add @zilliz/milvus2-sdk-node@2.6
 ```
 
 2. Update code (if needed):
@@ -177,7 +181,7 @@ yarn add @zilliz/milvus2-sdk-node@latest
 1. Update SDK:
 
 ```bash
-yarn add @zilliz/milvus2-sdk-node@latest
+yarn add @zilliz/milvus2-sdk-node@2.6
 ```
 
 2. Test new features:

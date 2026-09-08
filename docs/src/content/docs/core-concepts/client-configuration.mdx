@@ -1,5 +1,5 @@
 ---
-title: "Client Configuration"
+title: 'Client Configuration'
 ---
 
 The Milvus client can be configured with various options to suit your needs. This guide covers all available configuration options.
@@ -40,7 +40,7 @@ const client = new MilvusClient({
 
 ```javascript
 const client = new MilvusClient({
-  address: 'your-endpoint.zillizcloud.com:443',
+  address: 'https://your-endpoint.zillizcloud.com:443',
   token: 'your-api-key', // Can be 'username:password' or API key
 });
 ```
@@ -223,7 +223,7 @@ For Zilliz Cloud, use the endpoint and API key:
 
 ```javascript
 const client = new MilvusClient({
-  address: 'your-endpoint.zillizcloud.com:443',
+  address: 'https://your-endpoint.zillizcloud.com:443',
   token: 'your-api-key',
   ssl: true,
 });
@@ -301,6 +301,7 @@ interface ClientConfig {
   };
   pool?: Options;
   loaderOptions?: LoaderOption;
+  telemetry?: TelemetryConfig;
   trace?: boolean;
 }
 ```
@@ -337,5 +338,9 @@ For more details, see [Request Tracing](../advanced/advanced-features#request-tr
 ## Next Steps
 
 - Learn about [Data Types & Schemas](./data-types-schemas)
-- Explore [Collection Management](./collection-management)
-- Check out [Best Practices](./best-practices) for production configurations
+- Explore [Collection Management](/milvus-sdk-node/management/collection-management)
+- Check out [Best Practices](/milvus-sdk-node/advanced/best-practices) for production configurations
+
+## Client telemetry (SDK 3.0.5)
+
+`telemetry` configures heartbeat reporting and is enabled by default. See [Client Telemetry](/milvus-sdk-node/advanced/client-telemetry) for defaults, collected information, disabling, and `getTelemetry()` inspection. `TelemetryConfig` is exported from the package root.

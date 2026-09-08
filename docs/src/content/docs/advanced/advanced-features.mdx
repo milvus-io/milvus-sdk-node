@@ -1,5 +1,5 @@
 ---
-title: "Advanced Features"
+title: 'Advanced Features'
 ---
 
 This guide covers advanced features including connection pooling, retry mechanisms, error handling, logging, and iterator patterns.
@@ -14,8 +14,8 @@ The SDK uses connection pooling to manage gRPC connections efficiently.
 const client = new MilvusClient({
   address: 'localhost:19530',
   pool: {
-    min: 2,              // Minimum pool size
-    max: 10,             // Maximum pool size
+    min: 2, // Minimum pool size
+    max: 10, // Maximum pool size
     idleTimeoutMillis: 30000, // Idle timeout
   },
 });
@@ -36,14 +36,15 @@ Configure automatic retries for failed operations.
 ```javascript
 const client = new MilvusClient({
   address: 'localhost:19530',
-  maxRetries: 3,        // Maximum retry attempts
-  retryDelay: 1000,     // Delay between retries (ms)
+  maxRetries: 3, // Maximum retry attempts
+  retryDelay: 1000, // Delay between retries (ms)
 });
 ```
 
 ### Retry Behavior
 
 The SDK automatically retries on:
+
 - Network errors
 - Transient server errors
 - Timeout errors
@@ -56,7 +57,9 @@ The SDK automatically retries on:
 import { ErrorCode } from '@zilliz/milvus2-sdk-node';
 
 try {
-  await client.createCollection({ /* ... */ });
+  await client.createCollection({
+    /* ... */
+  });
 } catch (error) {
   switch (error.error_code) {
     case ErrorCode.CollectionNotExists:
@@ -178,9 +181,7 @@ All API methods that extend `GrpcTimeOut` support trace IDs:
 // Insert with trace ID
 await client.insert({
   collection_name: 'my_collection',
-  data: [
-    { id: 1, vector: [0.1, 0.2, 0.3] },
-  ],
+  data: [{ id: 1, vector: [0.1, 0.2, 0.3] }],
   client_request_id: 'insert-trace-123',
 });
 
@@ -240,7 +241,7 @@ const iterator = await client.queryIterator({
 while (true) {
   const batch = await iterator.next();
   if (batch.done) break;
-  
+
   console.log('Batch:', batch.value);
 }
 ```
@@ -260,7 +261,7 @@ const iterator = await client.searchIterator({
 while (true) {
   const batch = await iterator.next();
   if (batch.done) break;
-  
+
   console.log('Batch:', batch.value);
 }
 ```
@@ -274,7 +275,7 @@ Work with sparse vector data:
 const sparseVector = [1.0, undefined, undefined, 2.5, undefined];
 
 // Dictionary format
-const sparseVector = { '0': 1.0, '3': 2.5 };
+const sparseVector = { 0: 1.0, 3: 2.5 };
 
 // CSR format
 const sparseVector = {
@@ -365,9 +366,11 @@ await client.insert({
   collection_name: 'my_collection',
   data: [
     {
-      vector: [/* ... */],
+      vector: [
+        /* ... */
+      ],
       dynamic_field_1: 'value1', // Automatically added
-      dynamic_field_2: 123,      // Automatically added
+      dynamic_field_2: 123, // Automatically added
     },
   ],
 });
@@ -416,4 +419,4 @@ console.log('Replicas:', replicas.replicas);
 
 - Learn about [Best Practices](./best-practices)
 - Explore [HTTP Client](./http-client)
-- Check out [Examples & Tutorials](./examples-tutorials)
+- Check out [Examples & Tutorials](/milvus-sdk-node/getting-started/examples-tutorials)

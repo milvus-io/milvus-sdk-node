@@ -1,5 +1,5 @@
 ---
-title: "Contributing"
+title: 'Contributing'
 ---
 
 Thank you for your interest in contributing to the Milvus Node.js SDK!
@@ -59,6 +59,7 @@ yarn coverage
 ### Test Structure
 
 Tests are located in the `test/` directory:
+
 - `test/grpc/`: gRPC client tests
 - `test/http/`: HTTP client tests
 - `test/utils/`: Utility tests
@@ -186,7 +187,7 @@ describe('createCollection', () => {
       collection_name: 'test_collection',
       fields: schema,
     });
-    
+
     expect(result.error_code).toBe('Success');
   });
 });
@@ -197,6 +198,7 @@ describe('createCollection', () => {
 ### Update Documentation
 
 When adding features:
+
 1. Update relevant documentation files
 2. Add code examples
 3. Update API reference if needed
@@ -212,6 +214,7 @@ When adding features:
 ### Bug Reports
 
 Include:
+
 - SDK version
 - Node.js version
 - Steps to reproduce
@@ -221,6 +224,7 @@ Include:
 ### Feature Requests
 
 Include:
+
 - Use case description
 - Proposed solution
 - Benefits
@@ -240,3 +244,17 @@ Please follow the [Code of Conduct](https://github.com/milvus-io/milvus-sdk-node
 - Read [Best Practices](../advanced/best-practices)
 - Check [API Reference](../api-reference)
 - Explore [Examples & Tutorials](../getting-started/examples-tutorials)
+
+## Build and preview the documentation site
+
+Install the documentation dependencies separately from SDK dependencies:
+
+```bash
+yarn --cwd docs install --frozen-lockfile
+npm run doc
+npm run doc:dev
+```
+
+The site uses Astro/Starlight and writes production output to `docs/out/`. Edit MDX under `docs/src/content/docs/`; `npm run doc` preserves these source files. For production preview, run `npm --prefix docs run preview` after building. Use Node.js 22.12.0 or newer, as required by the installed Astro version; the documentation toolchain can require a newer runtime than the SDK.
+
+When releasing, compare the published tag with the last documented version, update guides and API reference, add release notes, and synchronize README compatibility and `llms.txt`. Verify example imports against package exports and check site links after building.

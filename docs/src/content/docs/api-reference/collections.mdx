@@ -447,7 +447,6 @@ alterCollectionSchema(
 - `collection_name`: Collection name.
 - `field`: Function output field schema.
 - `function`: Function schema.
-- `do_physical_backfill?`: Backfill existing rows.
 - `index_name?`: Name of the bound index.
 - `extra_params?`: Bound index parameters.
 - `db_name?`: Database name.
@@ -714,3 +713,24 @@ unpinSnapshotData(data: UnpinSnapshotDataReq): Promise<ResStatus>
 - [API Reference overview](/milvus-sdk-node/api-reference)
 - [Collection Management guide](/milvus-sdk-node/management/collection-management)
 - [Data Operations](/milvus-sdk-node/api-reference/data)
+
+## Function-field backfill
+
+In SDK 3.0.4+, `addFunctionField()` returns after the schema change is accepted. Milvus asynchronously backfills existing sealed segments through schema-bump compaction. The wrapper supports BM25 → SparseFloatVector and MINHASH → BinaryVector; provide an explicit bound `index_type` other than `AUTOINDEX`.
+
+`do_physical_backfill` is not an `addFunctionField` / `alterCollectionSchema` option. It remains a separate external-collection creation option.
+
+```typescript
+const stats = await client.getCollectionStatistics({
+  collection_name: 'documents',
+});
+if (stats.status.error_code !== ErrorCode.SUCCESS) {
+  throw new Error(stats.status.reason);
+}
+console.log({
+  consistent: stats.data.schema_version_consistent_segments,
+  total: stats.data.schema_version_total_segments,
+});
+```
+
+For an existing collection with sealed segments, poll these values with a timeout until `total > 0` and `consistent === total` after numeric conversion. Missing counters do not prove completion. Also check `getIndexState({ collection_name, index_name })` reaches `Finished` (stop on `Failed`) before loading and searching the new field. Empty collections need no historical backfill.

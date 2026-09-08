@@ -524,6 +524,23 @@ The SDK validates schemas before creating collections. Common validation errors:
 
 ## Next Steps
 
-- Learn about [Collection Management](./collection-management)
-- Explore [Data Operations](./data-operations-insert)
-- Check out [Best Practices](./best-practices)
+- Learn about [Collection Management](/milvus-sdk-node/management/collection-management)
+- Explore [Data Operations](/milvus-sdk-node/operations/data-operations-insert)
+- Check out [Best Practices](/milvus-sdk-node/advanced/best-practices)
+
+## Text
+
+SDK 3.0.4 adds `DataType.Text` (25) for variable-length text without a `max_length` setting. It requires a Milvus deployment using **StorageV3**. Use VarChar for primary/partition keys and array string elements; Text cannot be used for these roles. Do not set `max_length` on Text fields.
+
+```typescript
+const contentField = {
+  name: 'content',
+  data_type: DataType.Text,
+  nullable: true,
+  enable_analyzer: true,
+  enable_match: true,
+  analyzer_params: { tokenizer: 'standard' },
+};
+```
+
+Add this field alongside a primary key and vector field in `createCollection({ fields })`. Insert and upsert ordinary JavaScript strings (or `null` for nullable fields), and include `content` in `output_fields` to retrieve it. Text supports analyzer-based matching and BM25 input. Request and server resource limits still apply even though the schema has no VarChar length limit.

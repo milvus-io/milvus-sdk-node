@@ -7,10 +7,17 @@ import { Card, CardGrid, LinkButton } from '@astrojs/starlight/components';
 Build fast vector search applications in TypeScript with the official Milvus Node.js SDK. Connect to Milvus or Zilliz Cloud, manage schemas and indexes, and ship search workflows from one typed client.
 
 <div className="hero-actions not-content">
-  <LinkButton href="./getting-started/getting-started" icon="right-arrow">
+  <LinkButton
+    href="/milvus-sdk-node/getting-started/getting-started"
+    icon="right-arrow"
+  >
     Get started
   </LinkButton>
-  <LinkButton href="./api-reference" variant="secondary" icon="document">
+  <LinkButton
+    href="/milvus-sdk-node/api-reference"
+    variant="secondary"
+    icon="document"
+  >
     API reference
   </LinkButton>
 </div>
@@ -25,6 +32,10 @@ Build fast vector search applications in TypeScript with the official Milvus Nod
     serverless-friendly HTTP integrations.
   </Card>
 </CardGrid>
+
+## Latest documented release
+
+SDK **3.0.5** adds membership-filter builders, client telemetry and six index enum values. See [Release Notes](/milvus-sdk-node/reference/release-notes) for examples and the 3.0.4 additions.
 
 ## What is Milvus?
 
@@ -69,7 +80,7 @@ Features that require a Milvus 3.0 server are marked with the `Milvus 3.0` tag t
 - Element-level result metadata: read `offset` values from query/search results and `group_by_field_values` from grouped search results.
 - Schema and function management: add fields/functions and manage collection functions from the SDK.
 
-See [Migration & Compatibility](./reference/migration-compatibility) for the detailed coverage matrix, including Milvus 3.0 proto additions that are not exposed as public SDK methods.
+See [Migration & Compatibility](/milvus-sdk-node/reference/migration-compatibility) for the detailed coverage matrix, including Milvus 3.0 proto additions that are not exposed as public SDK methods.
 
 ## Prerequisites
 
@@ -95,52 +106,52 @@ console.log('Connected to Milvus!');
 
 ### Getting Started
 
-- **[Getting Started](./getting-started/getting-started)**: Installation and basic usage
-- **[Examples & Tutorials](./getting-started/examples-tutorials)**: Code examples and tutorials
+- **[Getting Started](/milvus-sdk-node/getting-started/getting-started)**: Installation and basic usage
+- **[Examples & Tutorials](/milvus-sdk-node/getting-started/examples-tutorials)**: Code examples and tutorials
 
 ### Core Concepts
 
-- **[Client Configuration](./core-concepts/client-configuration)**: Connection and configuration options
-- **[Data Types & Schemas](./core-concepts/data-types-schemas)**: Understanding data types and schema definition
+- **[Client Configuration](/milvus-sdk-node/core-concepts/client-configuration)**: Connection and configuration options
+- **[Data Types & Schemas](/milvus-sdk-node/core-concepts/data-types-schemas)**: Understanding data types and schema definition
 
 ### Data Operations
 
-- **[Database Operations](./operations/database-operations)**: Database-level operations
-- **[Insert & Update](./operations/data-operations-insert)**: Inserting and updating data
-- **[Query & Search](./operations/data-operations-query)**: Querying and searching vectors
-- **[Delete](./operations/data-operations-delete)**: Deleting data
-- **[Data Management](./operations/data-management)**: Data management operations
+- **[Database Operations](/milvus-sdk-node/operations/database-operations)**: Database-level operations
+- **[Insert & Update](/milvus-sdk-node/operations/data-operations-insert)**: Inserting and updating data
+- **[Query & Search](/milvus-sdk-node/operations/data-operations-query)**: Querying and searching vectors
+- **[Delete](/milvus-sdk-node/operations/data-operations-delete)**: Deleting data
+- **[Data Management](/milvus-sdk-node/operations/data-management)**: Data management operations
 
 ### Management
 
-- **[Collection Management](./management/collection-management)**: Creating and managing collections
-- **[Partition Management](./management/partition-management)**: Managing partitions
-- **[Index Management](./management/index-management)**: Creating and managing indexes
-- **[User & Role Management](./management/user-role-management)**: Managing users and roles
-- **[Resource Management](./management/resource-management)**: Resource management
+- **[Collection Management](/milvus-sdk-node/management/collection-management)**: Creating and managing collections
+- **[Partition Management](/milvus-sdk-node/management/partition-management)**: Managing partitions
+- **[Index Management](/milvus-sdk-node/management/index-management)**: Creating and managing indexes
+- **[User & Role Management](/milvus-sdk-node/management/user-role-management)**: Managing users and roles
+- **[Resource Management](/milvus-sdk-node/management/resource-management)**: Resource management
 
 ### Advanced
 
-- **[Advanced Features](./advanced/advanced-features)**: Connection pooling, retries, and more
-- **[HTTP Client](./advanced/http-client)**: Using HTTP client for serverless environments
-- **[Best Practices](./advanced/best-practices)**: Production-ready patterns and optimizations
+- **[Advanced Features](/milvus-sdk-node/advanced/advanced-features)**: Connection pooling, retries, and more
+- **[HTTP Client](/milvus-sdk-node/advanced/http-client)**: Using HTTP client for serverless environments
+- **[Best Practices](/milvus-sdk-node/advanced/best-practices)**: Production-ready patterns and optimizations
 
 ### API Reference
 
-- **[API Reference](./api-reference)**: Complete method signatures, request types, response types, and enums
+- **[API Reference](/milvus-sdk-node/api-reference)**: Complete method signatures, request types, response types, and enums
 
 ### Resources
 
-- **[Troubleshooting](./reference/troubleshooting)**: Common issues and solutions
-- **[Migration & Compatibility](./reference/migration-compatibility)**: Version migration guides
-- **[Contributing](./reference/contributing)**: How to contribute to the SDK
-- **[Additional Resources](./reference/additional-resources)**: Additional learning resources
+- **[Troubleshooting](/milvus-sdk-node/reference/troubleshooting)**: Common issues and solutions
+- **[Migration & Compatibility](/milvus-sdk-node/reference/migration-compatibility)**: Version migration guides
+- **[Contributing](/milvus-sdk-node/reference/contributing)**: How to contribute to the SDK
+- **[Additional Resources](/milvus-sdk-node/reference/additional-resources)**: Additional learning resources
 
 ## Next Steps
 
-- Read the [Getting Started Guide](./getting-started/getting-started)
-- Explore [Examples & Tutorials](./getting-started/examples-tutorials)
-- Check out the [API Reference](./api-reference)
+- Read the [Getting Started Guide](/milvus-sdk-node/getting-started/getting-started)
+- Explore [Examples & Tutorials](/milvus-sdk-node/getting-started/examples-tutorials)
+- Check out the [API Reference](/milvus-sdk-node/api-reference)
 
 ## Resources
 
