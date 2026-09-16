@@ -1,8 +1,9 @@
 /**
- * Client-side roaring bitmap construction for the `roaring_match(field, {blob})` filter
+ * Client-side roaring bitmap construction for the `membership_match(field, {blob}, type=roaring)` filter
  * expression.
  *
- * `roaring_match` is the exact-membership sibling of `bloom_match`: the client compresses the
+ * `membership_match(..., type=roaring)` is the exact-membership sibling of
+ * `membership_match(..., type=bloom)`: the client compresses the
  * membership set into a roaring bitmap and ships the blob, so a set that would blow past the
  * proxy gRPC receive limit as an `in [...]` list rides the wire in a fraction of the space --
  * and, unlike a bloom filter, with no false positives. Only int64-domain fields are
@@ -517,7 +518,7 @@ const serialize = (
 };
 
 /**
- * Builds an MRB1-wrapped roaring bitmap over a membership set, for `roaring_match`.
+ * Builds an MRB1-wrapped roaring bitmap over a membership set, for `membership_match(..., type=roaring)`.
  *
  * Members are signed integers -- `number`, `bigint`, or a decimal `string` for values a
  * number cannot hold exactly. They map by sign extension to int64 and then by two's-
@@ -525,7 +526,7 @@ const serialize = (
  * `INT8(-1)` are the same key; duplicates collapse and order does not matter. An empty set
  * produces a valid 40-byte blob that matches nothing.
  *
- * The target field must be an int64-domain field: unlike `bloom_match` there is no string
+ * The target field must be an int64-domain field: unlike `membership_match(..., type=bloom)` there is no string
  * form, because a roaring bitmap indexes integers.
  *
  * Building the blob is the expensive part, so keep it and reuse it across queries rather than
@@ -535,7 +536,7 @@ const serialize = (
  * const blob = buildRoaringBitmap(userIds);
  * await client.query({
  *   collection_name: 'docs',
- *   filter: 'roaring_match(user_id, {ids})',
+ *   filter: 'membership_match(user_id, {ids}, type=roaring)',
  *   exprValues: { ids: blob },
  * });
  * ```
