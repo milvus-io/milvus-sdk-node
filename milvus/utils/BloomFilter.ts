@@ -1,6 +1,6 @@
 /**
  * Client-side Split-Block Bloom Filter (SBBF) construction for the
- * `bloom_match(field, {blob})` filter expression.
+ * `membership_match(field, {blob}, type=bloom)` filter expression.
  *
  * Building the filter on the client and shipping the compact blob lets large membership
  * sets pass the proxy gRPC receive limit, which a raw value list would exceed: 10M int64
@@ -708,7 +708,7 @@ export class BloomFilterBuilder {
  * const blob = buildBloomFilter(userIds);
  * await client.query({
  *   collection_name: 'docs',
- *   filter: 'bloom_match(user_id, {bf})',
+ *   filter: 'membership_match(user_id, {bf}, type=bloom)',
  *   exprValues: { bf: blob },
  * });
  * ```
