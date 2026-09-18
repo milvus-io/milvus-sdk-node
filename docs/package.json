@@ -12,21 +12,22 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@astrojs/starlight": "^0.41.5",
-    "astro": "^7.1.6",
+    "astro": "^7.2.8",
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.0.0"
   },
   "resolutions": {
-    "devalue": "^5.8.1",
+    "devalue": "^5.9.2",
     "esbuild": "^0.28.1",
     "fast-uri": "^3.1.6",
     "js-yaml": "^4.3.1",
     "nanoid": "^3.3.18",
     "postcss": "^8.5.25",
     "postcss-selector-parser": "^6.1.3",
-    "sharp": "^0.35.3",
-    "svgo": "^4.0.2",
+    "sharp": "^0.35.4",
+    "smol-toml": "^1.7.1",
+    "svgo": "^4.1.0",
     "yaml": "^2.8.3"
   }
 }
