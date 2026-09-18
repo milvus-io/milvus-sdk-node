@@ -2,7 +2,7 @@
   "name": "@zilliz/milvus2-sdk-node",
   "author": "Zilliz",
   "milvusVersion": "v3.0.0",
-  "version": "3.0.5",
+  "version": "3.0.6",
   "main": "dist/milvus",
   "types": "dist/milvus/index.d.ts",
   "files": [
