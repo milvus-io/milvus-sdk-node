@@ -993,4 +993,103 @@ describe('utils/Schema', () => {
     expect(formatted.schema).toHaveProperty('struct_array_fields');
     expect(formatted.schema.struct_array_fields).toHaveLength(2);
   });
+
+  it('categorizes a function-output field (e.g. BM25/embedding) into function_fields', () => {
+    const response: any = {
+      virtual_channel_names: [],
+      physical_channel_names: [],
+      aliases: [],
+      start_positions: [],
+      properties: [],
+      status: {
+        extra_info: {},
+        error_code: 'Success',
+        reason: '',
+        code: 0,
+        retriable: false,
+        detail: '',
+      },
+      schema: {
+        fields: [
+          {
+            type_params: [],
+            index_params: [],
+            fieldID: '100',
+            name: 'id',
+            is_primary_key: true,
+            description: 'id field',
+            data_type: 'Int64',
+            autoID: true,
+            state: 'FieldCreated',
+            element_type: 'None',
+            default_value: null,
+            is_dynamic: false,
+            is_partition_key: false,
+            is_clustering_key: false,
+            nullable: false,
+            is_function_output: false,
+          },
+          {
+            type_params: [],
+            index_params: [],
+            fieldID: '101',
+            name: 'sparse_embedding',
+            is_primary_key: false,
+            description: 'BM25-generated sparse vector, output of a function',
+            data_type: 'SparseFloatVector',
+            autoID: false,
+            state: 'FieldCreated',
+            element_type: 'None',
+            default_value: null,
+            is_dynamic: false,
+            is_partition_key: false,
+            is_clustering_key: false,
+            nullable: false,
+            is_function_output: true,
+          },
+        ],
+        properties: [],
+        functions: [],
+        name: 'collection_with_function_field',
+        description: '',
+        autoID: false,
+        enable_dynamic_field: false,
+        dbName: '',
+      },
+      collectionID: '1',
+      created_timestamp: '1',
+      created_utc_timestamp: '1',
+      shards_num: 1,
+      consistency_level: 'Strong',
+      collection_name: 'collection_with_function_field',
+      db_name: '',
+      num_partitions: '1',
+      db_id: '0',
+      request_time: '0',
+      update_timestamp: 1,
+      update_timestamp_str: '1',
+    };
+
+    const formatted = formatDescribedCol(response);
+
+    // Regression test: the field-categorization loop previously checked
+    // f.isFunctionOutput (never set - always undefined) instead of the
+    // raw f.is_function_output the field actually carries, so
+    // function_fields was unconditionally empty regardless of the real
+    // schema.
+    expect(Object.keys(formatted.function_fields)).toHaveLength(1);
+    expect('sparse_embedding' in formatted.function_fields).toBe(true);
+    expect(formatted.function_fields.sparse_embedding).toHaveProperty(
+      'is_function_output',
+      true
+    );
+
+    // The function-output field is still a vector type, so it's also
+    // categorized into anns_fields - function_fields is additive, not
+    // exclusive.
+    expect('sparse_embedding' in formatted.anns_fields).toBe(true);
+
+    // The non-function field must not be miscategorized.
+    expect('id' in formatted.function_fields).toBe(false);
+  });
 });
