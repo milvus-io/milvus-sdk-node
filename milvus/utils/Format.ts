@@ -398,7 +398,7 @@ export const formatDescribedCol = (
       scalar_fields[f.name] = f;
     }
 
-    if (f.isFunctionOutput) {
+    if (f.is_function_output) {
       function_fields[f.name] = f;
     }
   });
