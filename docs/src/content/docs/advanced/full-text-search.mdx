@@ -89,6 +89,7 @@ import {
   FunctionType,
   IndexType,
   MetricType,
+  ConsistencyLevelEnum,
 } from '@zilliz/milvus2-sdk-node';
 
 const client = new MilvusClient({ address: 'localhost:19530' });
@@ -158,7 +159,7 @@ await client.addFunctionField({
 
 ## Searching with Full-Text
 
-Pass a text string as the search data. Milvus uses the BM25 function to convert it to a sparse vector automatically:
+Pass a text string as the search data. Milvus uses the BM25 function to convert it to a sparse vector automatically. The example uses Strong consistency and flushes the inserted documents before searching so that the small test dataset is ready for BM25 retrieval. Avoid flushing after every insert in a production ingestion pipeline.
 
 ```javascript
 // Create index and load
@@ -186,11 +187,16 @@ await client.insert({
   ],
 });
 
+// Wait for the example documents to be flushed before searching
+await client.flushSync({ collection_names: ['articles'] });
+
 // Search by text
 const results = await client.search({
   collection_name: 'articles',
   data: ['machine learning algorithms'],
   anns_field: 'sparse_vector',
+  metric_type: 'BM25',
+  consistency_level: ConsistencyLevelEnum.Strong,
   limit: 10,
   output_fields: ['title', 'body'],
 });
@@ -204,17 +210,27 @@ Use the `highlighter` parameter to highlight matched text fragments in search re
 
 ### Lexical Highlighting
 
-Highlights exact keyword matches:
+Highlights keyword matches using the text field's analyzer. Set
+`highlight_search_text: true` to highlight the BM25 search terms, and explicitly
+set `metric_type: 'BM25'` on the search request. Creating a BM25 index alone does
+not supply this request parameter to the highlighter.
+
+In this collection, the BM25 function takes `body` as its input, so search-term
+highlighting applies to `body`. Including `title` in `output_fields` returns its
+source text but does not automatically highlight it.
 
 ```javascript
 const results = await client.search({
   collection_name: 'articles',
   data: ['machine learning'],
   anns_field: 'sparse_vector',
+  metric_type: 'BM25',
+  consistency_level: ConsistencyLevelEnum.Strong,
   limit: 10,
   output_fields: ['title', 'body'],
   highlighter: {
     type: 0, // HighlightType.Lexical
+    highlight_search_text: true,
     pre_tags: ['<em>'],
     post_tags: ['</em>'],
     fragment_size: 100,
@@ -223,19 +239,39 @@ const results = await client.search({
 });
 ```
 
+For the first example document, `results.results[0].highlight.body` contains:
+
+```json
+{
+  "fragments": ["<em>Machine</em> <em>learning</em> is a branch of AI..."],
+  "scores": []
+}
+```
+
 ### Semantic Highlighting
 
-Highlights semantically similar text:
+Highlights semantically similar text through a model service. Milvus must have
+the Zilliz model-service provider endpoint configured on the server, with access
+to an appropriate highlighting model deployment. The `highlighter` parameter
+does not configure or start that service.
+
+A standalone Milvus instance without this provider configuration returns an
+error such as `Create SemanticHighlight failed: zilliz client config error, lost
+endpoint config`. Use the following example only after configuring the service,
+and replace `YOUR_HIGHLIGHT_MODEL_DEPLOYMENT_ID` with your deployment ID:
 
 ```javascript
 const results = await client.search({
   collection_name: 'articles',
   data: ['machine learning'],
   anns_field: 'sparse_vector',
+  metric_type: 'BM25',
+  consistency_level: ConsistencyLevelEnum.Strong,
   limit: 10,
   output_fields: ['title', 'body'],
   highlighter: {
     type: 1, // HighlightType.Semantic
+    model_deployment_id: 'YOUR_HIGHLIGHT_MODEL_DEPLOYMENT_ID',
     queries: ['machine learning'],
     input_fields: ['body'],
     pre_tags: ['<mark>'],
@@ -245,9 +281,17 @@ const results = await client.search({
 });
 ```
 
+`queries` must contain one string for each search query. Set
+`highlight_only: true` to request only highlighted fragments from the model
+service. The source fields requested through `output_fields` are still returned
+in the search hits.
+
 ### Highlight Results
 
-Search hits include highlight data when highlighting is enabled. Each highlighted field contains text fragments and optional scores.
+Search hits include highlight data for the fields processed by the highlighter.
+Each highlighted field contains `fragments` and `scores` arrays. Lexical
+highlighting returns an empty `scores` array; semantic highlighting can return
+scores from the model service.
 
 ```javascript
 results.results.forEach((hit) => {
@@ -257,12 +301,13 @@ results.results.forEach((hit) => {
   const bodyHighlight = hit.highlight?.body;
   bodyHighlight?.fragments.forEach((fragment, index) => {
     console.log('Fragment:', fragment);
-    console.log('Score:', bodyHighlight.scores?.[index]);
+    const score = bodyHighlight.scores[index];
+    if (score !== undefined) {
+      console.log('Score:', score);
+    }
   });
 });
 ```
-
-For lexical highlighting, set `highlight_search_text: true` to include the matched search text in highlight output when supported by Milvus. For semantic highlighting, set `highlight_only: true` to return only highlighted fragments instead of the full source text.
 
 ## Managing Collection Functions
 
