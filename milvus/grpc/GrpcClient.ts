@@ -505,11 +505,9 @@ export class GRPCClient extends User {
           );
         },
         destroy: async (client: Client) => {
-          // Close the gRPC service client
-          return new Promise<any>((resolve, reject) => {
-            client.close();
-            resolve(client.getChannel().getConnectivityState(true));
-          });
+          // Only close: getConnectivityState(true) on the closed channel would
+          // make it dial again, leaving a connection nothing ever closes
+          client.close();
         },
       },
       this.config.pool ?? {
