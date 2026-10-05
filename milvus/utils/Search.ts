@@ -167,6 +167,7 @@ type FormatedSearchRequest = {
   ids?: { int_id?: { data: number[] }; str_id?: { data: string[] } };
   search_params?: KeyValuePair[];
   consistency_level: ConsistencyLevelEnum;
+  guarantee_timestamp?: string | number;
   expr?: string;
   expr_template_values?: keyValueObj;
   rank_params?: KeyValuePair[];
@@ -465,6 +466,9 @@ export const buildSearchRequest = (
       ),
       consistency_level:
         params.consistency_level || (collectionInfo.consistency_level as any),
+      ...(params.guarantee_timestamp !== undefined
+        ? { guarantee_timestamp: params.guarantee_timestamp }
+        : {}),
       ...(searchAggregation
         ? { search_aggregation: buildSearchAggregation(searchAggregation) }
         : {}),

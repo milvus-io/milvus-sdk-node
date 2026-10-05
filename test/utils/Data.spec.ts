@@ -422,7 +422,7 @@ describe('utils/Data', () => {
     const searchSpy = jest.spyOn(client, 'search').mockResolvedValue({
       status: { error_code: ErrorCode.SUCCESS, reason: '' },
       results: [{ id: '1' }],
-      search_iterator_v2_results: { token: 'token', last_bound: 'bound' },
+      search_iterator_v2_results: { token: 'token', last_bound: 0.5 },
       session_ts: 123,
     } as any);
 
@@ -438,14 +438,7 @@ describe('utils/Data', () => {
     const page = await iterator[Symbol.asyncIterator]().next();
 
     expect(page.value).toEqual([{ id: '1' }]);
-    expect(countSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        collection_name: 'test_collection',
-        expr: 'id > 0',
-        db_name: 'db1',
-        cluster_id: 'in07-xxx',
-      })
-    );
+    expect(countSpy).not.toHaveBeenCalled();
     expect(describeSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         collection_name: 'test_collection',
