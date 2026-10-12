@@ -205,6 +205,64 @@ describe('utils/format', () => {
       expect(error.message).toContain(ERROR_REASONS.DATE_TYPE_CHECK);
     }
   });
+
+  it(`datetimeToHybrids should keep the milliseconds of a Date`, async () => {
+    // hybridts = physical time in milliseconds << 18
+    const ms = Date.parse('2024-01-01T00:00:00.500Z');
+    const expected = (BigInt(ms) << BigInt(18)).toString();
+    expect(datetimeToHybrids(new Date('2024-01-01T00:00:00.500Z'))).toEqual(
+      expected
+    );
+    expect(datetimeToHybrids(new Date('2024-01-01T00:00:00.500Z'))).toEqual(
+      '446710992207872000'
+    );
+    expect(datetimeToHybrids(new Date('2024-01-01T12:34:56.789Z'))).toEqual(
+      '446722866358255616'
+    );
+
+    // a whole-second Date is unchanged
+    expect(datetimeToHybrids(new Date('2024-01-01T00:00:00.000Z'))).toEqual(
+      '446710992076800000'
+    );
+
+    // the milliseconds are the only difference, 1 ms = 2^18
+    expect(
+      BigInt(datetimeToHybrids(new Date('2024-01-01T00:00:00.001Z'))) -
+        BigInt(datetimeToHybrids(new Date('2024-01-01T00:00:00.000Z')))
+    ).toEqual(BigInt(1) << BigInt(18));
+
+    // round trip back to unix seconds (floored)
+    expect(
+      hybridtsToUnixtime(
+        datetimeToHybrids(new Date('2024-01-01T12:34:56.789Z'))
+      )
+    ).toEqual('1704112496');
+  });
+
+  it(`datetimeToHybrids should throw error for an invalid Date`, async () => {
+    expect(() => datetimeToHybrids(new Date('not a date'))).toThrow(
+      ERROR_REASONS.TIMESTAMP_PARAM_CHECK
+    );
+  });
+
+  it(`unixtimeToHybridts should floor fractional seconds`, async () => {
+    expect(unixtimeToHybridts('1704067200.5')).toEqual('446710992076800000');
+    expect(unixtimeToHybridts('1704067200.999')).toEqual('446710992076800000');
+    expect(unixtimeToHybridts('1704067200.0')).toEqual('446710992076800000');
+    expect(() => unixtimeToHybridts('Infinity')).toThrow(
+      ERROR_REASONS.TIMESTAMP_PARAM_CHECK
+    );
+  });
+
+  it(`unixtimeToHybridts should keep whole-second results unchanged`, async () => {
+    expect(unixtimeToHybridts('1638957092')).toEqual('429642767925248000');
+    expect(unixtimeToHybridts(BigInt(1638957092))).toEqual(
+      '429642767925248000'
+    );
+    expect(unixtimeToHybridts('1704067200')).toEqual('446710992076800000');
+    expect(unixtimeToHybridts('0')).toEqual('0');
+    expect(unixtimeToHybridts('-5')).toEqual('-1310720000');
+  });
   it('parses time tokens correctly', () => {
     expect(parseTimeToken('1s')).toBe(1000);
     expect(parseTimeToken('2m')).toBe(120000);
