@@ -151,7 +151,8 @@ export const hybridtsToUnixtime = (hybridts: bigint | string) => {
 
 /**
  * Converts a Unix timestamp to a hybrid timestamp.
- * @param unixtime - The Unix timestamp to convert.
+ * @param unixtime - The Unix timestamp (in seconds) to convert. A fractional
+ * value such as `'1704067200.5'` is truncated down to whole seconds.
  * @returns The hybrid timestamp as a string.
  * @throws An error if the unixtime parameter fails the check.
  */
@@ -159,7 +160,21 @@ export const unixtimeToHybridts = (unixtime: bigint | string) => {
   if (!checkTimeParam(unixtime)) {
     throw new Error(`hybridts ${ERROR_REASONS.TIMESTAMP_PARAM_CHECK}`);
   }
-  const timestamp = typeof unixtime === 'bigint' ? unixtime : BigInt(unixtime);
+  let timestamp: bigint;
+  if (typeof unixtime === 'bigint') {
+    timestamp = unixtime;
+  } else {
+    try {
+      timestamp = BigInt(unixtime);
+    } catch (e) {
+      // not an integer string (e.g. a fractional unix time), drop the fraction
+      const seconds = Math.floor(Number(unixtime));
+      if (!Number.isFinite(seconds)) {
+        throw new Error(`hybridts ${ERROR_REASONS.TIMESTAMP_PARAM_CHECK}`);
+      }
+      timestamp = BigInt(seconds);
+    }
+  }
 
   const physical = (timestamp * BigInt(1000)) << LOGICAL_BITS;
   return physical.toString();
@@ -175,7 +190,13 @@ export const datetimeToHybrids = (datetime: Date) => {
   if (!(datetime instanceof Date)) {
     throw new Error(`hybridts ${ERROR_REASONS.DATE_TYPE_CHECK}`);
   }
-  return unixtimeToHybridts((datetime.getTime() / 1000).toString());
+  const milliseconds = datetime.getTime();
+  // an invalid Date has a NaN time value
+  if (isNaN(milliseconds)) {
+    throw new Error(`hybridts ${ERROR_REASONS.TIMESTAMP_PARAM_CHECK}`);
+  }
+  // hybridts = physical time in milliseconds << LOGICAL_BITS (logical part 0)
+  return (BigInt(milliseconds) << LOGICAL_BITS).toString();
 };
 
 /**
