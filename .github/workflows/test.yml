@@ -54,7 +54,7 @@ jobs:
           cat > docker-compose.override.yml << EOF
           services:
             minio:
-              image: quay.io/minio/minio:RELEASE.2024-05-28T17-19-04Z
+              image: milvusdb/minio:RELEASE.2024-12-18T13-15-44Z
             standalone:
               environment:
                 MQ_TYPE: rocksmq
