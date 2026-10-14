@@ -6,12 +6,8 @@ import {
   ERROR_REASONS,
   sleep,
 } from '../../milvus';
-import {
-  IP,
-  VECTOR_FIELD_NAME,
-  GENERATE_NAME,
-} from '../tools';
-import * as Minio from 'minio';
+import { IP, VECTOR_FIELD_NAME, GENERATE_NAME } from '../tools';
+import { TestS3Client } from '../tools/s3';
 
 // MinIO config — matches docker-compose defaults
 const MINIO_ADDRESS = process.env.MINIO_ADDRESS || '127.0.0.1';
@@ -25,7 +21,7 @@ const dbParam = { db_name: 'Import' };
 const IMPORT_DIM = 4;
 const IMPORT_ROW_COUNT = 10;
 
-const minioClient = new Minio.Client({
+const minioClient = new TestS3Client({
   endPoint: MINIO_ADDRESS,
   port: 9000,
   useSSL: false,
@@ -120,9 +116,7 @@ describe(`Import API`, () => {
         collection_name: COLLECTION_NAME,
       } as any);
     } catch (error) {
-      expect((error as Error).message).toEqual(
-        ERROR_REASONS.IMPORT_FILE_CHECK
-      );
+      expect((error as Error).message).toEqual(ERROR_REASONS.IMPORT_FILE_CHECK);
     }
   });
 
