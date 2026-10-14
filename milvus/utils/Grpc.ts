@@ -115,6 +115,18 @@ export const getRetryInterceptor = ({
     // get method name
     const methodName = extractMethodName(options.method_definition.path);
 
+    // Credential and RBAC payloads contain passwords (including reversible
+    // base64 values). Omit the entire payload, including retry status details,
+    // so logs cannot expose secrets through nested fields or server echoes.
+    const sensitiveMethod = [
+      'CreateCredential',
+      'UpdateCredential',
+      'BackupRBAC',
+      'RestoreRBAC',
+    ].includes(methodName);
+    const serializeForLog = (message: unknown): string =>
+      sensitiveMethod ? '[REDACTED]' : JSON.stringify(message) || '';
+
     // for logger
     const startTime = new Date();
     let dbname = '';
@@ -183,13 +195,13 @@ export const getRetryInterceptor = ({
               logger.debug(
                 `\x1b[31m[Response(${
                   Date.now() - startTime.getTime()
-                }ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${JSON.stringify(
+                }ms)]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: ${serializeForLog(
                   savedReceiveMessage
                 )}`
               );
 
               logger.debug(
-                `\x1b[35m[Retry Delay ${_retryDelay}ms]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: status: ${JSON.stringify(
+                `\x1b[35m[Retry Delay ${_retryDelay}ms]\x1b[0m\x1b[2m${clientId}\x1b[0m>${dbname}>\x1b[1m${methodName}\x1b[0m: status: ${serializeForLog(
                   status
                 )}`
               );
@@ -207,7 +219,7 @@ export const getRetryInterceptor = ({
                 const newCall = nextCall(options);
                 newCall.start(savedMetadata, retryListener);
                 // Log retry request message
-                const string = JSON.stringify(savedSendMessage);
+                const string = serializeForLog(savedSendMessage);
                 const msg =
                   string.length > 4096 ? string.slice(0, 4096) + '...' : string;
                 logger.debug(
@@ -216,7 +228,7 @@ export const getRetryInterceptor = ({
                 newCall.sendMessage(savedSendMessage);
               }, _retryDelay);
             } else {
-              const string = JSON.stringify(savedReceiveMessage) || '';
+              const string = serializeForLog(savedReceiveMessage);
               const msg =
                 string.length > 4096 ? string.slice(0, 4096) + '...' : string;
 
@@ -249,7 +261,7 @@ export const getRetryInterceptor = ({
         savedNext(metadata, retryListener);
       },
       sendMessage: (message: any, next: Function) => {
-        const string = JSON.stringify(message);
+        const string = serializeForLog(message);
         // if string is too big, just show 1000 characters
         const msg =
           string.length > 4096 ? string.slice(0, 4096) + '...' : string;

@@ -25,7 +25,7 @@
     "doc:dev": "npm --prefix docs run dev"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.14.4",
+    "@grpc/grpc-js": "^1.14.5",
     "@grpc/proto-loader": "^0.8.0",
     "@opentelemetry/api": "^1.9.0",
     "@petamoriken/float16": "^3.8.6",
@@ -37,12 +37,12 @@
     "winston": "^3.9.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1151.0",
     "@babel/plugin-transform-modules-commonjs": "^7.21.5",
     "@types/jest": "^29.5.1",
     "@types/node-fetch": "^2.6.8",
     "jest": "^29.5.0",
     "long": "^5.2.3",
-    "minio": "^8.0.7",
     "node-fetch": "2",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
@@ -51,9 +51,12 @@
   },
   "resolutions": {
     "**/glob/minimatch": "3.1.5",
+    "**/glob/minimatch/brace-expansion": "1.1.21",
     "**/test-exclude/minimatch": "3.1.5",
+    "**/test-exclude/minimatch/brace-expansion": "1.1.21",
     "**/typedoc/minimatch": "9.0.8",
-    "**/typedoc/minimatch/brace-expansion": "5.0.8",
+    "**/typedoc/minimatch/brace-expansion": "5.0.12",
+    "**/@istanbuljs/load-nyc-config/js-yaml": "^4.3.1",
     "@babel/core": "^7.29.7",
     "@babel/helpers": "^7.26.10",
     "browserslist": "^4.28.7",
