@@ -237,8 +237,9 @@ export const sparseRowsToBytes = (data: SparseFloatVector[]): Uint8Array[] => {
  */
 export const f32ArrayToInt8Bytes = (array: Int8Vector) => {
   // if array is Int8Array, return it directly
+  // (respect byteOffset/byteLength: it may be a view, e.g. from subarray())
   if (array instanceof Int8Array) {
-    return Buffer.from(array.buffer);
+    return Buffer.from(array.buffer, array.byteOffset, array.byteLength);
   }
 
   const int8Array = new Int8Array(array.length);

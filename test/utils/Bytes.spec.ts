@@ -122,4 +122,44 @@ describe('Data <-> Bytes Test', () => {
     const int8Array2 = Array.from(int8Bytes2);
     expect(int8Array2).toEqual(data);
   });
+
+  it(`should only use the viewed bytes of an Int8Array (byteOffset/byteLength)`, () => {
+    // 3 rows x dim 4, cut from one batch of quantized embeddings
+    const batch = new Int8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    const row0 = batch.subarray(0, 4);
+    const row1 = batch.subarray(4, 8);
+    const row2 = batch.subarray(8, 12);
+
+    expect(Array.from(f32ArrayToInt8Bytes(row0))).toEqual([1, 2, 3, 4]);
+    expect(Array.from(f32ArrayToInt8Bytes(row1))).toEqual([5, 6, 7, 8]);
+    expect(Array.from(f32ArrayToInt8Bytes(row2))).toEqual([9, 10, 11, 12]);
+
+    // a view into the middle of a larger ArrayBuffer
+    const ab = new ArrayBuffer(16);
+    new Int8Array(ab).set([9, 9, 9, 9, -1, 2, -3, 4, 9, 9, 9, 9, 9, 9, 9, 9]);
+    const bytes = f32ArrayToInt8Bytes(new Int8Array(ab, 4, 4));
+    expect(bytes.length).toEqual(4);
+    expect(Array.from(new Int8Array(bytes))).toEqual([-1, 2, -3, 4]);
+
+    // a whole-buffer Int8Array is unchanged
+    expect(Array.from(f32ArrayToInt8Bytes(new Int8Array([1, 2, 3])))).toEqual([
+      1, 2, 3,
+    ]);
+  });
+
+  it(`should concatenate Int8Array row views with int8VectorRowsToBytes`, () => {
+    const batch = new Int8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    const rows = [
+      batch.subarray(0, 4),
+      batch.subarray(4, 8),
+      batch.subarray(8, 12),
+    ];
+    const bytes = int8VectorRowsToBytes(rows);
+    expect(bytes.length).toEqual(12);
+    expect(Array.from(bytes)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+
+    // mixed number[] and Int8Array view rows
+    const mixed = int8VectorRowsToBytes([[1, 2, 3, 4], batch.subarray(4, 8)]);
+    expect(Array.from(mixed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+  });
 });

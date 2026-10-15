@@ -10,7 +10,7 @@ import {
   sleep,
 } from '../../milvus';
 import { GENERATE_NAME, IP } from '../tools';
-import * as Minio from 'minio';
+import { TestS3Client } from '../tools/s3';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -42,7 +42,7 @@ const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || 'minioadmin';
 const MILVUS_MINIO_ADDRESS =
   process.env.EXTERNAL_COLLECTION_MINIO_ADDRESS || 'minio:9000';
 
-const minioClient = new Minio.Client({
+const minioClient = new TestS3Client({
   endPoint: MINIO_ADDRESS,
   port: 9000,
   useSSL: false,
@@ -275,11 +275,7 @@ describe('External Collection API', () => {
         const files = (await writer.close()).flat();
         for (const localFile of files) {
           const objectName = `${objectPrefix}/${path.basename(localFile)}`;
-          await minioClient.fPutObject(
-            MINIO_BUCKET,
-            objectName,
-            localFile
-          );
+          await minioClient.fPutObject(MINIO_BUCKET, objectName, localFile);
           uploadedObjects.push(objectName);
         }
       } finally {

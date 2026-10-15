@@ -9,6 +9,7 @@ import {
   getMetaInterceptor,
   getRequestMetadataInterceptor,
   getRetryInterceptor,
+  logger,
   LOADER_OPTIONS,
 } from '../../milvus';
 // mock
@@ -30,7 +31,11 @@ describe(`utils/grpc`, () => {
     jest.clearAllMocks();
   });
 
-  const createRetryCall = (methodName: string) => {
+  const createRetryCall = (
+    methodName: string,
+    message: any = {},
+    maxRetries = 3
+  ) => {
     let retryListener: any;
     const nextCall = jest.fn(() => ({
       start: jest.fn(),
@@ -49,7 +54,7 @@ describe(`utils/grpc`, () => {
     );
 
     const interceptor = getRetryInterceptor({
-      maxRetries: 3,
+      maxRetries,
       retryDelay: 0,
       clientId: 'test-client',
     });
@@ -64,10 +69,72 @@ describe(`utils/grpc`, () => {
     ) as any;
 
     interceptedCall.start(new Metadata(), jest.fn(), startNext);
-    interceptedCall.sendMessage({}, jest.fn());
+    interceptedCall.sendMessage(message, jest.fn());
 
     return { nextCall, retryListener };
   };
+
+  it.each([
+    'CreateCredential',
+    'UpdateCredential',
+    'BackupRBAC',
+    'RestoreRBAC',
+  ])('should omit %s payloads from initial and retry logs', methodName => {
+    jest.useFakeTimers();
+    const debug = jest.spyOn(logger, 'debug').mockImplementation(() => logger);
+    try {
+      const request = {
+        username: 'security-test-user',
+        password: 'encoded-password-sentinel',
+        oldPassword: 'encoded-old-password-sentinel',
+        newPassword: 'encoded-new-password-sentinel',
+        RBAC_meta: { users: [{ password: 'rbac-password-sentinel' }] },
+      };
+      const response = {
+        error_code: 'Success',
+        RBAC_meta: { users: [{ password: 'response-password-sentinel' }] },
+      };
+      const { nextCall, retryListener } = createRetryCall(
+        methodName,
+        request,
+        1
+      );
+      const messageNext = jest.fn();
+      const statusNext = jest.fn();
+      retryListener.onReceiveMessage(response, messageNext);
+      retryListener.onReceiveStatus(
+        {
+          code: grpcStatus.UNAVAILABLE,
+          details: 'retry-status-sentinel',
+          metadata: new Metadata(),
+        },
+        statusNext
+      );
+      jest.runOnlyPendingTimers();
+      retryListener.onReceiveStatus(
+        {
+          code: grpcStatus.UNAVAILABLE,
+          details: 'final-status-sentinel',
+          metadata: new Metadata(),
+        },
+        statusNext
+      );
+
+      const logs = debug.mock.calls.map(([message]) => message).join('\n');
+      expect(logs).toContain(methodName);
+      expect(logs).toContain('[REDACTED]');
+      expect(logs).not.toContain('sentinel');
+      expect(logs).not.toContain('security-test-user');
+      expect(nextCall).toHaveBeenCalledTimes(2);
+      expect(nextCall.mock.results[1].value.sendMessage).toHaveBeenCalledWith(
+        request
+      );
+      expect(messageNext).toHaveBeenCalledWith(response);
+    } finally {
+      debug.mockRestore();
+      jest.useRealTimers();
+    }
+  });
 
   it(`should return a service client constructor`, () => {
     const protoPath = path.resolve(__dirname, '../../proto/proto/milvus.proto');

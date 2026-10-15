@@ -1,4 +1,4 @@
-import { Client as MinioClient } from 'minio';
+import { TestS3Client as MinioClient } from '../tools/s3';
 import { execSync } from 'child_process';
 import { ErrorCode, MilvusClient } from '../../milvus';
 import { GENERATE_NAME, IP } from '../tools';

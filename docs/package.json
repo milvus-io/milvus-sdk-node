@@ -18,15 +18,17 @@
     "typescript": "^5.0.0"
   },
   "resolutions": {
-    "devalue": "^5.9.2",
+    "devalue": "^5.9.3",
     "esbuild": "^0.28.1",
-    "fast-uri": "^3.1.6",
+    "fast-uri": "^3.1.8",
+    "http-cache-semantics": "^4.3.0",
     "js-yaml": "^4.3.1",
     "nanoid": "^3.3.18",
     "postcss": "^8.5.25",
-    "postcss-selector-parser": "^6.1.3",
-    "sharp": "^0.35.4",
-    "smol-toml": "^1.7.1",
+    "postcss-selector-parser": "^7.1.6",
+    "sharp": "^0.35.5",
+    "smol-toml": "^1.9.0",
+    "source-map-js": "^1.2.2",
     "svgo": "^4.1.0",
     "yaml": "^2.8.3"
   }

@@ -20,7 +20,7 @@ import {
   BulkWriter,
 } from '../../milvus';
 import { IP, GENERATE_NAME, VECTOR_FIELD_NAME } from '../tools';
-import * as Minio from 'minio';
+import { TestS3Client } from '../tools/s3';
 import * as fs from 'fs';
 import * as path from 'path';
 import Long from 'long';
@@ -34,7 +34,7 @@ const dbParam = { db_name: 'BulkWriterIterE2E' };
 const DIM = 4;
 const ROW_COUNT = 100;
 
-const minioClient = new Minio.Client({
+const minioClient = new TestS3Client({
   endPoint: MINIO_ADDRESS,
   port: 9000,
   useSSL: false,

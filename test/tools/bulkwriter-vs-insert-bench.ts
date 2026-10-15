@@ -22,7 +22,7 @@ import {
   sleep,
   BulkWriter,
 } from '../../milvus';
-import * as Minio from 'minio';
+import { TestS3Client } from './s3';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -39,7 +39,7 @@ const DIM = 128;
 const INSERT_BATCH_SIZE = 5000;
 
 const milvusClient = new MilvusClient({ address: MILVUS_ADDRESS });
-const minioClient = new Minio.Client({
+const minioClient = new TestS3Client({
   endPoint: MINIO_ADDRESS,
   port: 9000,
   useSSL: false,
