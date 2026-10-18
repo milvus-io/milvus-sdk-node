@@ -1,3 +1,4 @@
+import { util as protobufUtil } from 'protobufjs';
 import {
   DataType,
   VectorDataTypes,
@@ -44,6 +45,7 @@ import {
   SearchRes,
   SearchSimpleReq,
   SearchIteratorReq,
+  SearchResultData,
   HybridSearchReq,
   promisify,
   sleep,
@@ -127,6 +129,47 @@ const hasElementFilterExpression = (expr: string): boolean => {
 };
 
 export class Data extends Collection {
+  private readonly searchIteratorCursorInfo = new WeakMap<
+    object,
+    {
+      pkType?: string;
+      lastPk?: unknown;
+      primaryKeys: unknown[];
+      nq: number;
+      topks: number[];
+      idCount: number;
+      scoreCount: number;
+      lastScore?: number;
+      finiteScores: boolean;
+    }
+  >();
+
+  private retainSearchIteratorCursor<T extends object>(
+    result: T,
+    response: SearchRes
+  ): T {
+    if (response.status?.extra_info?.search_iter_cursor_version !== '2') {
+      return result;
+    }
+    const ids = response.results?.ids;
+    const pkType =
+      ids?.id_field ||
+      (ids?.int_id ? 'int_id' : ids?.str_id ? 'str_id' : undefined);
+    const values = pkType === 'int_id' ? ids?.int_id?.data : ids?.str_id?.data;
+    this.searchIteratorCursorInfo.set(result, {
+      pkType,
+      lastPk: values?.[values.length - 1],
+      primaryKeys: values ? [...values] : [],
+      nq: Number(response.results?.num_queries),
+      topks: (response.results?.topks || []).map(Number),
+      idCount: values?.length || 0,
+      scoreCount: response.results?.scores?.length || 0,
+      lastScore: response.results?.scores?.[response.results.scores.length - 1],
+      finiteScores: (response.results?.scores || []).every(Number.isFinite),
+    });
+    return result;
+  }
+
   /**
    * Upsert data into Milvus, view _insert for detail
    */
@@ -600,7 +643,8 @@ export class Data extends Collection {
 
       if (typeof op === 'number') {
         const opName = FieldPartialUpdateOpType[op] as
-          keyof typeof FieldPartialUpdateOpType | undefined;
+          | keyof typeof FieldPartialUpdateOpType
+          | undefined;
         if (typeof opName === 'undefined') {
           throw new Error(`unsupported field partial update op: ${op}`);
         }
@@ -876,19 +920,22 @@ export class Data extends Collection {
       originSearchResult.status.error_code !== ErrorCode.SUCCESS ||
       (originSearchResult.results.scores.length === 0 && !hasSearchAggregation)
     ) {
-      return {
-        status: originSearchResult.status,
-        results: [],
-        recalls: [],
-        session_ts: -1,
-        collection_name: params.collection_name,
-        search_iterator_v2_results:
-          originSearchResult.results &&
-          originSearchResult.results.search_iterator_v2_results,
-        _search_iterator_v2_results:
-          originSearchResult.results &&
-          originSearchResult.results._search_iterator_v2_results,
-      };
+      return this.retainSearchIteratorCursor(
+        {
+          status: originSearchResult.status,
+          results: [],
+          recalls: [],
+          session_ts: originSearchResult.session_ts,
+          collection_name: params.collection_name,
+          search_iterator_v2_results:
+            originSearchResult.results &&
+            originSearchResult.results.search_iterator_v2_results,
+          _search_iterator_v2_results:
+            originSearchResult.results &&
+            originSearchResult.results._search_iterator_v2_results,
+        },
+        originSearchResult
+      );
     }
 
     // build final results array
@@ -907,116 +954,335 @@ export class Data extends Collection {
           : aggBuckets) as SearchResults<T>['agg_buckets'])
       : undefined;
 
-    return {
-      status: originSearchResult.status,
-      // nq === 1, return the first object of results array
-      results: nq === 1 ? results[0] || [] : results,
-      recalls: originSearchResult.results.recalls,
-      session_ts: originSearchResult.session_ts,
-      collection_name: params.collection_name,
-      all_search_count: originSearchResult.results.all_search_count,
-      search_iterator_v2_results:
-        originSearchResult.results.search_iterator_v2_results,
-      _search_iterator_v2_results:
-        originSearchResult.results._search_iterator_v2_results,
-      ...(formattedAggBuckets ? { agg_buckets: formattedAggBuckets } : {}),
-    };
+    return this.retainSearchIteratorCursor(
+      {
+        status: originSearchResult.status,
+        // nq === 1, return the first object of results array
+        results: nq === 1 ? results[0] || [] : results,
+        recalls: originSearchResult.results.recalls,
+        session_ts: originSearchResult.session_ts,
+        collection_name: params.collection_name,
+        all_search_count: originSearchResult.results.all_search_count,
+        search_iterator_v2_results:
+          originSearchResult.results.search_iterator_v2_results,
+        _search_iterator_v2_results:
+          originSearchResult.results._search_iterator_v2_results,
+        ...(formattedAggBuckets ? { agg_buckets: formattedAggBuckets } : {}),
+      },
+      originSearchResult
+    );
   }
 
   async searchIterator(param: SearchIteratorReq): Promise<any> {
     const client = this;
-
-    // Iterators are not logical operations: suppress telemetry for the setup
-    // count and for every per-page internal search below.
-    const count = await withTelemetrySuppressed(() =>
-      client.count({
-        collection_name: param.collection_name,
-        expr: param.expr || param.filter || '',
-        db_name: param.db_name,
-        cluster_id: param.cluster_id,
-      })
-    );
-
-    // get collection Info
-    const collectionInfo = await this.describeCollection({
-      collection_name: param.collection_name,
-      db_name: param.db_name,
-    });
-
-    // if limit not set, set it to count
-    if (!param.limit || param.limit === NO_LIMIT) {
-      param.limit = count.data;
+    if (!Number.isInteger(param.batchSize) || param.batchSize <= 0) {
+      throw new Error('Search iterator batchSize must be a positive integer');
     }
-
-    // Ensure limit does not exceed the total count
-    const total = Math.min(param.limit, count.data);
-
-    // Ensure batch size does not exceed the total count or max search size
-    let batchSize = Math.min(param.batchSize, total, DEFAULT_MAX_SEARCH_SIZE);
-
-    // Iterator fields
-    const ITERATOR_FIELD = 'iterator';
-    const ITER_SEARCH_V2_KEY = 'search_iter_v2';
-    const ITER_SEARCH_ID_KEY = 'search_iter_id';
-    const ITER_SEARCH_BATCH_SIZE_KEY = 'search_iter_batch_size';
-    const ITER_SEARCH_LAST_BOUND_KEY = 'search_iter_last_bound';
-    const GUARANTEE_TIMESTAMP_KEY = 'guarantee_timestamp';
-    const COLLECTION_ID = 'collection_id';
-
+    const requestParam = { ...param, params: { ...param.params } };
+    const preference = requestParam.params.search_iter_cursor_version;
+    if (
+      preference !== undefined &&
+      preference !== null &&
+      preference !== '' &&
+      String(preference) !== '2'
+    ) {
+      throw new Error('Unsupported search iterator cursor version');
+    }
+    const requestPkCursor =
+      preference !== undefined &&
+      preference !== null &&
+      String(preference) === '2';
+    const hasLegacyCursor =
+      requestParam.params.search_iter_last_bound !== undefined ||
+      !!requestParam.params.search_iter_id;
+    if (requestPkCursor && hasLegacyCursor) {
+      throw new Error(
+        'A legacy search iterator continuation cannot opt into a PK cursor'
+      );
+    }
+    const collectionInfo = await client.describeCollection({
+      collection_name: requestParam.collection_name,
+      db_name: requestParam.db_name,
+    });
+    if (
+      collectionInfo.status.error_code !== ErrorCode.SUCCESS ||
+      (collectionInfo.status.code || 0) !== 0
+    ) {
+      throw new Error(
+        collectionInfo.status.reason ||
+          'Failed to describe search iterator collection'
+      );
+    }
+    // The caller's limit counts raw rows before the external predicate. A
+    // separate count can observe another snapshot and must not cap this scan.
+    const total =
+      !requestParam.limit || requestParam.limit === NO_LIMIT
+        ? Infinity
+        : requestParam.limit;
+    let batchSize = Math.min(
+      requestParam.batchSize,
+      total,
+      DEFAULT_MAX_SEARCH_SIZE
+    );
+    const VERSION = 'search_iter_cursor_version';
+    const LAST_PK_TYPE = 'search_iter_last_pk_type';
+    const LAST_PK = 'search_iter_last_pk';
+    const ID = 'search_iter_id';
+    const BOUND = 'search_iter_last_bound';
+    const params: Record<string, any> = { ...requestParam.params };
+    let guaranteeTimestamp: string | number =
+      requestParam.guarantee_timestamp ?? params.guarantee_timestamp ?? 0;
+    for (const key of [VERSION, LAST_PK_TYPE, LAST_PK, 'guarantee_timestamp'])
+      delete params[key];
+    Object.assign(params, {
+      ...(requestParam.cluster_id
+        ? { [CLUSTER_ID]: requestParam.cluster_id }
+        : {}),
+      iterator: true,
+      search_iter_v2: true,
+      search_iter_batch_size: batchSize,
+      collection_id: collectionInfo.collectionID,
+      ...(requestPkCursor ? { [VERSION]: '2' } : {}),
+    });
+    const pkField = collectionInfo.schema?.fields.find(
+      field => field.is_primary_key
+    );
+    const schemaPkType = pkField
+      ? convertToDataType(pkField.data_type)
+      : undefined;
     let currentTotal = 0;
-
-    // search iterator special params
-    const params: any = {
-      ...param.params,
-      ...(param.cluster_id ? { [CLUSTER_ID]: param.cluster_id } : {}),
-      [ITERATOR_FIELD]: true,
-      [ITER_SEARCH_V2_KEY]: true,
-      [ITER_SEARCH_BATCH_SIZE_KEY]: batchSize,
-      [GUARANTEE_TIMESTAMP_KEY]: 0,
-      [COLLECTION_ID]: collectionInfo.collectionID,
+    const seenPrimaryKeys = new Set<string>();
+    let negotiated = !requestPkCursor;
+    let cursorVersion: string | undefined;
+    let exhausted = false;
+    let pending: Awaited<ReturnType<typeof client.search>> | undefined;
+    const iterator = {
+      async next() {
+        if (exhausted || currentTotal >= total)
+          return { done: true, value: null };
+        while (true) {
+          if (!pending) {
+            pending = await withTelemetrySuppressed(() =>
+              client.search({
+                ...requestParam,
+                params: { ...params },
+                limit: batchSize,
+                guarantee_timestamp: guaranteeTimestamp,
+              })
+            );
+          }
+          const response = pending;
+          // Bad RPC/status/protocol responses are retryable without moving the cursor.
+          // Callback failures retain the valid pending page instead of fetching again.
+          const fail = (message: string): never => {
+            pending = undefined;
+            throw new Error(message);
+          };
+          if (
+            response.status.error_code !== ErrorCode.SUCCESS ||
+            (response.status.code || 0) !== 0
+          ) {
+            fail(response.status.reason || 'Search iterator request failed');
+          }
+          const info = response.search_iterator_v2_results;
+          if (!info?.token)
+            fail('Server response does not support Search Iterator V2');
+          const metadata = response.status.extra_info || {};
+          const version = metadata[VERSION];
+          if (version !== undefined && version !== '2')
+            fail('Unsupported search iterator cursor version');
+          if (negotiated && version !== cursorVersion)
+            fail('Search iterator cursor version changed during iteration');
+          if (version === '2' && params[ID] && params[ID] !== info!.token)
+            fail('Search iterator token changed during iteration');
+          const hits = response.results as SearchResultData[];
+          if (!Array.isArray(hits))
+            fail('Search iterator response must contain one query');
+          if (version === '2') {
+            const shape = client.searchIteratorCursorInfo.get(response);
+            const count = shape?.topks[0];
+            if (
+              !shape ||
+              shape.nq !== 1 ||
+              shape.topks.length !== 1 ||
+              !Number.isInteger(count) ||
+              count! < 0 ||
+              count !== shape.idCount ||
+              count !== shape.scoreCount ||
+              count !== hits.length ||
+              !shape.finiteScores ||
+              (count! > 0 && Number(info!.last_bound) !== shape.lastScore)
+            ) {
+              fail(
+                'Search iterator cursor does not match raw result shape or score'
+              );
+            }
+          }
+          const validSnapshot = (value: unknown, allowZero = false) => {
+            const isLong = (
+              protobufUtil.Long as typeof protobufUtil.Long & {
+                isLong(value: unknown): boolean;
+              }
+            )?.isLong(value);
+            if (
+              (typeof value === 'number' && !Number.isSafeInteger(value)) ||
+              (typeof value !== 'number' &&
+                typeof value !== 'string' &&
+                !isLong) ||
+              !/^(0|[1-9][0-9]*)$/.test(String(value))
+            )
+              return false;
+            const snapshot = BigInt(String(value));
+            return (
+              snapshot >= BigInt(allowZero ? 0 : 1) &&
+              snapshot < BigInt(1) << BigInt(64)
+            );
+          };
+          if (version === '2' && !validSnapshot(guaranteeTimestamp, true))
+            fail(
+              'PK search iterator requires an exact uint64 snapshot timestamp'
+            );
+          let timestamp = guaranteeTimestamp;
+          if (!(Number(timestamp) > 0)) {
+            timestamp = response.session_ts;
+            if (!(Number(timestamp) > 0)) {
+              if (version === '2')
+                fail(
+                  'PK search iterator requires a positive snapshot timestamp'
+                );
+              timestamp = (BigInt(Date.now() + 1000) << BigInt(18)).toString();
+            }
+          }
+          if (version === '2' && !validSnapshot(timestamp))
+            fail(
+              'PK search iterator requires an exact uint64 snapshot timestamp'
+            );
+          const updates: Record<string, any> = {};
+          if (hits.length) {
+            if (!Number.isFinite(Number(info!.last_bound)))
+              fail('Search iterator returned a non-finite bound');
+            updates[BOUND] = info!.last_bound;
+            if (version === '2') {
+              const type = metadata[LAST_PK_TYPE];
+              const value = metadata[LAST_PK];
+              const raw = client.searchIteratorCursorInfo.get(response);
+              const expected =
+                schemaPkType === DataType.Int64
+                  ? 'int64'
+                  : schemaPkType === DataType.VarChar
+                    ? 'varchar'
+                    : undefined;
+              if (
+                type !== expected ||
+                !expected ||
+                typeof value !== 'string' ||
+                !raw
+              )
+                fail(
+                  'Search iterator PK cursor does not match the collection schema'
+                );
+              if (type === 'int64') {
+                if (
+                  raw!.pkType !== 'int_id' ||
+                  !/^-?(0|[1-9][0-9]*)$/.test(value)
+                )
+                  fail('Invalid int64 search iterator PK cursor');
+                const pk = BigInt(value);
+                if (
+                  pk < -(BigInt(1) << BigInt(63)) ||
+                  pk >= BigInt(1) << BigInt(63) ||
+                  (typeof raw!.lastPk === 'number' &&
+                    !Number.isSafeInteger(raw!.lastPk)) ||
+                  String(raw!.lastPk) !== value
+                ) {
+                  fail(
+                    'Search iterator PK cursor does not match raw response IDs'
+                  );
+                }
+              } else if (raw!.pkType !== 'str_id' || raw!.lastPk !== value) {
+                fail(
+                  'Search iterator PK cursor does not match raw response IDs'
+                );
+              }
+              updates[LAST_PK_TYPE] = type;
+              updates[LAST_PK] = value;
+            }
+          }
+          // The predicate is allowed to throw; leave pending and all cursor state
+          // unchanged so the same immutable server response can be processed again.
+          const pageKeys = new Set<string>();
+          const distinctHits =
+            version === '2'
+              ? hits.filter((row, index) => {
+                  const rawKey =
+                    client.searchIteratorCursorInfo.get(response)!.primaryKeys[
+                      index
+                    ];
+                  let key = String(rawKey);
+                  if (schemaPkType === DataType.Int64) {
+                    if (
+                      (typeof rawKey === 'number' &&
+                        !Number.isSafeInteger(rawKey)) ||
+                      !/^-?(0|[1-9][0-9]*)$/.test(key)
+                    ) {
+                      fail(
+                        'Search iterator deduplication requires exact raw response IDs'
+                      );
+                    }
+                    const pk = BigInt(key);
+                    if (
+                      pk < -(BigInt(1) << BigInt(63)) ||
+                      pk >= BigInt(1) << BigInt(63)
+                    ) {
+                      fail(
+                        'Search iterator deduplication requires exact raw response IDs'
+                      );
+                    }
+                    key = pk.toString();
+                  } else if (typeof rawKey !== 'string') {
+                    fail(
+                      'Search iterator deduplication requires exact raw response IDs'
+                    );
+                  }
+                  if (seenPrimaryKeys.has(key) || pageKeys.has(key))
+                    return false;
+                  pageKeys.add(key);
+                  return true;
+                })
+              : hits;
+          const value = requestParam.external_filter_fn
+            ? distinctHits
+                .map(row => ({ ...row }))
+                .filter(requestParam.external_filter_fn)
+            : distinctHits;
+          Object.assign(params, updates);
+          if (!negotiated) {
+            cursorVersion = version;
+            negotiated = true;
+            if (version === undefined) {
+              delete params[VERSION];
+              delete params[LAST_PK_TYPE];
+              delete params[LAST_PK];
+            }
+          }
+          if (!params[ID]) params[ID] = info!.token;
+          guaranteeTimestamp = timestamp;
+          for (const key of pageKeys) seenPrimaryKeys.add(key);
+          currentTotal += distinctHits.length;
+          batchSize = Math.min(batchSize, total - currentTotal);
+          params.search_iter_batch_size = batchSize;
+          exhausted = hits.length === 0;
+          pending = undefined;
+          if (!exhausted && hits.length > 0 && distinctHits.length === 0) {
+            continue;
+          }
+          return { done: exhausted, value };
+        }
+      },
     };
-
     return {
       [Symbol.asyncIterator]() {
-        return {
-          async next() {
-            if (currentTotal >= total) {
-              return { done: true, value: null };
-            }
-
-            try {
-              const batchRes = await withTelemetrySuppressed(() =>
-                client.search({
-                  ...param,
-                  params,
-                  limit: batchSize,
-                })
-              );
-
-              // update current total and batch size
-              currentTotal += batchRes.results.length;
-              batchSize = Math.min(batchSize, total - currentTotal);
-
-              // update search params
-              params[ITER_SEARCH_ID_KEY] =
-                batchRes.search_iterator_v2_results!.token;
-              params[ITER_SEARCH_LAST_BOUND_KEY] =
-                batchRes.search_iterator_v2_results?.last_bound;
-              params[GUARANTEE_TIMESTAMP_KEY] = batchRes.session_ts;
-              params[ITER_SEARCH_BATCH_SIZE_KEY] = batchSize;
-
-              return {
-                done: currentTotal > total || !batchRes.results.length,
-                value: param.external_filter_fn
-                  ? batchRes.results.filter(param.external_filter_fn)
-                  : batchRes.results,
-              };
-            } catch (error) {
-              console.error('Error during search iteration:', error);
-              return { done: true, value: null };
-            }
-          },
-        };
+        return iterator;
       },
     };
   }

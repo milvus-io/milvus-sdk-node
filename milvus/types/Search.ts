@@ -92,6 +92,7 @@ export interface SearchReq extends collectionNameReq {
   vectors?: SearchData | SearchData[]; // vectors to search
   output_fields?: string[]; // fields to return
   travel_timestamp?: string; // time travel
+  guarantee_timestamp?: string | number; // iterator snapshot timestamp
   vector_type: DataType.BinaryVector | DataType.FloatVector; // vector field type
   nq?: number; // number of query vectors
   consistency_level?: ConsistencyLevelEnum; // consistency level
@@ -108,6 +109,7 @@ export interface FunctionScore {
 
 // simplified search api parameter type
 export interface SearchSimpleReq extends collectionNameReq {
+  guarantee_timestamp?: string | number; // iterator snapshot timestamp
   partition_names?: string[]; // partition names
   anns_field?: string; // your vector field name，required if you are searching on multiple vector fields collection
   data?: SearchData | SearchData[]; // vector or text to search
