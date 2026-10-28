@@ -194,6 +194,12 @@ export const sparseToBytes = (data: SparseFloatVector): Uint8Array => {
       break;
   }
 
+  if (indices.length !== values.length) {
+    throw new Error(
+      'Sparse vector indices and values must have the same length'
+    );
+  }
+
   // create a buffer to store the bytes
   const bytes = new Uint8Array(8 * indices.length);
 
