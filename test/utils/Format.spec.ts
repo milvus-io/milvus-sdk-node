@@ -161,6 +161,33 @@ describe('utils/format', () => {
     expect(res2).toBe(-3.123);
   });
 
+  it(`formatNumberPrecision should keep the magnitude of exponent notation numbers`, () => {
+    expect(formatNumberPrecision(3.14e-7, 8)).toBe(3.1e-7);
+    expect(formatNumberPrecision(3.14e-7, 9)).toBe(3.14e-7);
+    expect(formatNumberPrecision(3.14e-7, 2)).toBe(0);
+    expect(formatNumberPrecision(1.2345e-9, 11)).toBe(1.23e-9);
+    expect(formatNumberPrecision(1.2345e-9, 3)).toBe(0);
+    expect(formatNumberPrecision(5e-7, 7)).toBe(5e-7);
+    expect(formatNumberPrecision(-2.5e-8, 8)).toBe(-2e-8);
+    expect(formatNumberPrecision(-2.5e-8, 9)).toBe(-2.5e-8);
+    expect(Math.abs(formatNumberPrecision(-2.5e-8, 1))).toBe(0);
+  });
+
+  it(`formatNumberPrecision should not change numbers of 1e21 and above`, () => {
+    expect(formatNumberPrecision(1e21, 2)).toBe(1e21);
+    expect(formatNumberPrecision(1.5e300, 1)).toBe(1.5e300);
+    expect(formatNumberPrecision(-1.5e300, 1)).toBe(-1.5e300);
+  });
+
+  it(`formatNumberPrecision should keep truncating ordinary numbers`, () => {
+    expect(formatNumberPrecision(0.5, 2)).toBe(0.5);
+    expect(formatNumberPrecision(5, 2)).toBe(5);
+    expect(formatNumberPrecision(0.000001, 3)).toBe(0);
+    expect(formatNumberPrecision(0.0000012345, 8)).toBe(0.00000123);
+    expect(formatNumberPrecision(3.1738998889923096, 3)).toBe(3.173);
+    expect(formatNumberPrecision(3.19, 0)).toBe(3);
+  });
+
   it(`hybridtsToUnixtime should success`, async () => {
     let unixtime = hybridtsToUnixtime('429642767925248000');
     expect(unixtime).toEqual('1638957092');
