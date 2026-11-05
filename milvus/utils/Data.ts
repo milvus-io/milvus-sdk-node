@@ -14,7 +14,6 @@ import {
   f32ArrayToF16Bytes,
   bf16BytesToF32Array,
   f16BytesToF32Array,
-  cloneObj,
   Struct,
   VectorDataTypes,
 } from '../';
@@ -33,22 +32,27 @@ export const buildDynamicRow = (
   dynamicFieldName: string,
   functionOutputFields: string[]
 ) => {
-  const originRow = cloneObj(rowData);
-
   const row: RowData = {};
 
   // iterate through each key in the input data object
-  for (let key in originRow) {
+  // (no JSON deep copy here: it turns typed array vectors such as Int8Array
+  // or Uint8Array into plain objects)
+  for (let key in rowData) {
     row[dynamicFieldName] = row[dynamicFieldName] || ({} as JSON); // initialize the dynamic field object
+
+    // skip undefined values, like the JSON deep copy did
+    if (rowData[key] === undefined) {
+      continue;
+    }
 
     if (fieldMap.has(key)) {
       // if the key is in the fieldMap, add it to the non-dynamic fields
-      row[key] = originRow[key];
+      row[key] = rowData[key];
     } else {
       if (!functionOutputFields.includes(key)) {
         const obj: JSON = row[dynamicFieldName] as JSON;
         // otherwise, add it to the dynamic field
-        obj[key] = originRow[key];
+        obj[key] = rowData[key];
       }
     }
   }
