@@ -1395,6 +1395,96 @@ describe('utils/Data', () => {
     });
   });
 
+  it('should keep typed array vectors when building a dynamic row', () => {
+    const int8 = new Int8Array([1, -2, 3, -4]);
+    const f16 = new Uint8Array([1, 2, 3, 4]);
+    const fieldsDataMap = new Map([
+      ['int8', { name: 'int8', type: DataType.Int8Vector } as _Field],
+      ['f16', { name: 'f16', type: DataType.Float16Vector } as _Field],
+    ]);
+    const result = buildDynamicRow(
+      { int8, f16, extra: 1 },
+      fieldsDataMap,
+      'dynamic',
+      []
+    );
+    expect(result.int8).toBeInstanceOf(Int8Array);
+    expect(result.int8).toEqual(int8);
+    expect(result.f16).toBeInstanceOf(Uint8Array);
+    expect(result.f16).toEqual(f16);
+    expect(result.dynamic).toEqual({ extra: 1 });
+  });
+
+  it('should insert typed array vectors into a collection with dynamic field', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    (client as any).describeCollection = jest.fn().mockResolvedValue({
+      status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      schema: {
+        enable_dynamic_field: true,
+        fields: [
+          {
+            name: 'id',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+            autoID: false,
+            nullable: false,
+            element_type: DataType.None,
+          },
+          {
+            name: 'int8',
+            data_type: DataType.Int8Vector,
+            dim: 4,
+            nullable: false,
+            element_type: DataType.None,
+          },
+          {
+            name: 'f16',
+            data_type: DataType.Float16Vector,
+            dim: 2,
+            nullable: false,
+            element_type: DataType.None,
+          },
+        ],
+      },
+      properties: [],
+    });
+    let request: any;
+    const rpc = jest.fn((params: any, options: any, callback: any) => {
+      request = params;
+      callback(null, {
+        status: { error_code: ErrorCode.SUCCESS, reason: '' },
+      });
+    });
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({ Insert: rpc }),
+      release: jest.fn(),
+    };
+
+    await client.insert({
+      collection_name: 'test_collection',
+      fields_data: [
+        {
+          id: 1,
+          int8: new Int8Array([1, -2, 3, -4]),
+          f16: new Uint8Array([1, 2, 3, 4]),
+          extra: 'a',
+        },
+      ],
+    });
+
+    const getField = (name: string) =>
+      request.fields_data.find((f: any) => f.field_name === name);
+    expect(Array.from(getField('int8').vectors.int8_vector)).toEqual([
+      1, 254, 3, 252,
+    ]);
+    expect(Array.from(getField('f16').vectors.float16_vector)).toEqual([
+      1, 2, 3, 4,
+    ]);
+  });
+
   describe('buildFieldData', () => {
     describe('Basic scalar types', () => {
       it('should handle Bool type', () => {
