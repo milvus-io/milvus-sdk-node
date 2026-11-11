@@ -22,7 +22,6 @@ const checkFieldsRecursive = (
   fields: FieldType[],
   result: {
     hasPrimaryKey: boolean;
-    hasVectorField: boolean;
     partitionKeyCount: number;
   }
 ) => {
@@ -69,8 +68,6 @@ const checkFieldsRecursive = (
       if (dataType === DataType.BinaryVector && dim % 8 !== 0) {
         throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM);
       }
-
-      result.hasVectorField = true;
     }
 
     // if this is a varchar field, check max_length
@@ -93,9 +90,10 @@ const checkFieldsRecursive = (
 };
 
 /**
- * when create collection, field must contain 2 Fields.
- * Type is int64 or varchar and primary_key = true
- * Type is one of float_vector and binary_vector
+ * when create collection, fields must contain a primary key field:
+ * Type is int64 or varchar and primary_key = true.
+ * A vector field is optional: whether a collection without a vector field
+ * is accepted is decided by the server.
  * Will check fields
  * @param fields
  */
@@ -109,7 +107,6 @@ export const checkCollectionFieldsWithOptions = (
 ) => {
   const result = {
     hasPrimaryKey: false,
-    hasVectorField: false,
     partitionKeyCount: 0,
   };
 
@@ -122,11 +119,6 @@ export const checkCollectionFieldsWithOptions = (
   // if no primary key field is found, throw error
   if (!result.hasPrimaryKey) {
     throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY);
-  }
-
-  // if no vector field is found, throw error
-  if (!result.hasVectorField) {
-    throw new Error(ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST);
   }
 
   if (result.partitionKeyCount > MAX_PARTITION_KEY_FIELD_COUNT) {

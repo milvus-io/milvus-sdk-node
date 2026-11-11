@@ -17,6 +17,7 @@ import {
   CLUSTER_ID,
   findKeyValue,
   RRFRanker,
+  DslType,
 } from '../../milvus';
 describe('utils/Search', () => {
   it('should build single search request correctly', () => {
@@ -1062,6 +1063,89 @@ describe('utils/Search', () => {
       // console.log(err);
       expect(err.message).toEqual(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
     }
+  });
+
+  describe('collection without a vector field', () => {
+    const milvusProto = protobuf.loadSync(
+      path.resolve(__dirname, '../../proto/proto/milvus.proto')
+    );
+    const collectionInfo = {
+      collection_name: 'no_vector',
+      consistency_level: 'Bounded',
+      schema: {
+        name: 'no_vector',
+        fields: [
+          {
+            name: 'id',
+            dataType: DataType.Int64,
+            data_type: 'Int64',
+            is_primary_key: true,
+          },
+          {
+            name: 'text',
+            dataType: DataType.VarChar,
+            data_type: 'VarChar',
+            is_primary_key: false,
+          },
+        ],
+      },
+      anns_fields: {},
+    } as any;
+
+    it('should send a search without search vectors', () => {
+      const result = buildSearchRequest(
+        {
+          collection_name: 'no_vector',
+          data: [1, 2, 3, 4],
+          anns_field: 'vector',
+          filter: 'id > 0',
+          output_fields: ['text'],
+        },
+        collectionInfo,
+        milvusProto
+      );
+      expect(result.isHybridSearch).toBe(false);
+      expect(result.request).toEqual({
+        collection_name: 'no_vector',
+        partition_names: [],
+        output_fields: ['text'],
+        dsl: 'id > 0',
+        dsl_type: DslType.BoolExprV1,
+        consistency_level: 'Bounded',
+      });
+    });
+
+    it('should send a search by ids without the ids', () => {
+      const result = buildSearchRequest(
+        { collection_name: 'no_vector', ids: [1, 2] } as any,
+        collectionInfo,
+        milvusProto
+      );
+      expect(result.request).not.toHaveProperty('ids');
+      expect(result.request).not.toHaveProperty('placeholder_group');
+    });
+
+    it('should send a hybrid search without search vectors', () => {
+      const result = buildSearchRequest(
+        {
+          collection_name: 'no_vector',
+          data: [
+            { data: [1, 2, 3, 4], anns_field: 'vector' },
+            { data: [1, 2, 3, 4], anns_field: 'vector1' },
+          ],
+          limit: 2,
+        },
+        collectionInfo,
+        milvusProto
+      );
+      expect(result.isHybridSearch).toBe(true);
+      const requests = (result.request as any).requests;
+      expect(requests).toHaveLength(2);
+      requests.forEach((r: any) => {
+        expect(r).not.toHaveProperty('placeholder_group');
+        expect(r).not.toHaveProperty('search_params');
+      });
+    });
   });
 
   it('should build search params correctly', () => {

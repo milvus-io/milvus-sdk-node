@@ -417,24 +417,6 @@ describe(`Collection API`, () => {
         ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY
       );
     }
-
-    try {
-      await milvusClient.createCollection({
-        collection_name: 'zxc',
-        fields: [
-          {
-            name: 'id',
-            description: '',
-            data_type: DataType.Int64,
-            is_primary_key: true,
-          },
-        ],
-      });
-    } catch (error) {
-      expect(error.message).toEqual(
-        ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST
-      );
-    }
   });
 
   it(`Create Collection expect dim error`, async () => {
