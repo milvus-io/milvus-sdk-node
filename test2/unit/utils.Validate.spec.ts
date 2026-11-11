@@ -129,17 +129,20 @@ describe('utils/validate', () => {
     );
   });
 
-  it('should throw an error if a vector field is missing or has an unsupported data type', () => {
+  it('should allow fields without a vector field', () => {
     const fields: FieldType[] = [
       {
         name: 'field1',
         data_type: DataType.Int64,
         is_primary_key: true,
       },
+      {
+        name: 'field2',
+        data_type: DataType.VarChar,
+        max_length: 100,
+      },
     ];
-    expect(() => checkCollectionFields(fields)).toThrowError(
-      ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST
-    );
+    expect(() => checkCollectionFields(fields)).not.toThrow();
   });
 
   it('should throw an error if a vector field is missing the dimension property', () => {
@@ -415,7 +418,7 @@ describe('utils/validate', () => {
     expect(checkCollectionFields(fields)).toBe(true);
   });
 
-  it('should throw error if no vector field exists in struct sub-fields', () => {
+  it('should allow struct sub-fields without a vector field', () => {
     const fields: FieldType[] = [
       {
         name: 'id',
@@ -438,9 +441,7 @@ describe('utils/validate', () => {
         ],
       },
     ];
-    expect(() => checkCollectionFields(fields)).toThrowError(
-      ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST
-    );
+    expect(() => checkCollectionFields(fields)).not.toThrow();
   });
 
   it('should allow external collection fields without primary key or vector field', () => {
