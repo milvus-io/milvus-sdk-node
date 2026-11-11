@@ -993,6 +993,11 @@ export class Data extends Collection {
                 })
               );
 
+              // a failed search has no iterator token: report the server's reason
+              if (batchRes.status.error_code !== ErrorCode.SUCCESS) {
+                throw new Error(batchRes.status.reason);
+              }
+
               // update current total and batch size
               currentTotal += batchRes.results.length;
               batchSize = Math.min(batchSize, total - currentTotal);

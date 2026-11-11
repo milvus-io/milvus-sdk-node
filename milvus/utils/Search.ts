@@ -368,12 +368,30 @@ export const buildSearchRequest = (
     ? pkField.dataType || DataTypeMap[pkField.data_type]
     : undefined;
 
+  const hasVectorField =
+    Object.keys(collectionInfo.anns_fields || {}).length > 0;
+
   for (const userRequest of userRequests) {
     const { data, anns_field } = userRequest;
-    const annsField = collectionInfo.anns_fields[anns_field];
+    const annsField = collectionInfo.anns_fields?.[anns_field];
 
     if (!annsField) {
-      throw new Error(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
+      if (hasVectorField) {
+        throw new Error(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
+      }
+      // The collection has no vector field, so there is no field to build the
+      // search vectors for. The request is sent without them and the server
+      // rejects it: "collection <name> has no vector field, search is not supported".
+      requests.push({
+        collection_name: params.collection_name,
+        partition_names: params.partition_names || [],
+        output_fields: params.output_fields || default_output_fields,
+        dsl: userRequest.expr || searchReq.expr || searchSimpleReq.filter || '',
+        dsl_type: DslType.BoolExprV1,
+        consistency_level:
+          params.consistency_level || (collectionInfo.consistency_level as any),
+      });
+      continue;
     }
 
     // get ids from request
