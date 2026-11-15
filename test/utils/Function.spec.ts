@@ -84,7 +84,7 @@ describe('Function API testing', () => {
 
     const result = getQueryIteratorExpr(params);
 
-    expect(result).toBe("id > ''");
+    expect(result).toBe('id > ""');
   });
 
   it('should return varchar expression when cache exists', () => {
@@ -99,7 +99,7 @@ describe('Function API testing', () => {
 
     const result = getQueryIteratorExpr(params);
 
-    expect(result).toBe("id > 'abc'");
+    expect(result).toBe('id > "abc"');
   });
 
   it('should return varchar expression combined with iteratorExpr when expr is provided', () => {
@@ -114,7 +114,7 @@ describe('Function API testing', () => {
 
     const result = getQueryIteratorExpr(params);
 
-    expect(result).toBe("id > '' && (field > 10)");
+    expect(result).toBe('id > "" && (field > 10)');
   });
 
   it('should return int64 expression when cache does not exist', () => {

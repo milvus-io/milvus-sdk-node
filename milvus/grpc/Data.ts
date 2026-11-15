@@ -600,7 +600,8 @@ export class Data extends Collection {
 
       if (typeof op === 'number') {
         const opName = FieldPartialUpdateOpType[op] as
-          keyof typeof FieldPartialUpdateOpType | undefined;
+          | keyof typeof FieldPartialUpdateOpType
+          | undefined;
         if (typeof opName === 'undefined') {
           throw new Error(`unsupported field partial update op: ${op}`);
         }
@@ -729,7 +730,7 @@ export class Data extends Collection {
     if ((data as DeleteByIdsReq).ids) {
       expr =
         DataTypeMap[pkFieldType] === DataType.VarChar
-          ? `${pkField} in ["${(data as DeleteByIdsReq).ids.join('","')}"]`
+          ? `${pkField} in ${JSON.stringify((data as DeleteByIdsReq).ids.map(String))}`
           : `${pkField} in [${(data as DeleteByIdsReq).ids.join(',')}]`;
     }
 
@@ -1330,7 +1331,7 @@ export class Data extends Collection {
       // generate expr by different type of pk
       primaryKeyInIdsExpression =
         DataTypeMap[pkFieldType] === DataType.VarChar
-          ? `${pkField} in ["${data.ids.join('","')}"]`
+          ? `${pkField} in ${JSON.stringify(data.ids.map(String))}`
           : `${pkField} in [${data.ids.join(',')}]`;
     }
 

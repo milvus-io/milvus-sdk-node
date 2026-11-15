@@ -400,7 +400,7 @@ export const getPKFieldExpr = (data: {
   const { pkField, value, condition = '!=', expr = '' } = data;
   const pkValue =
     pkField?.data_type === DataTypeStringEnum.VarChar
-      ? `'${value}'`
+      ? JSON.stringify(String(value))
       : `${value}`;
   return `${pkField?.name} ${condition} ${pkValue}${
     expr ? ` && (${expr})` : ''
