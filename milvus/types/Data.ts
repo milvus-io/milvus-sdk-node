@@ -14,6 +14,9 @@ import {
 export interface CountReq extends collectionNameReq {
   expr?: string; // filter expression
   filter?: string; // alias for expr
+  exprValues?: keyValueObj; // template values for filter expression
+  partition_names?: string[]; // partition names
+  consistency_level?: ConsistencyLevelEnum; // consistency level
 }
 
 interface BaseDeleteReq extends collectionNameReq {

@@ -19,6 +19,8 @@ import {
   FieldPartialUpdateOpType,
   CLUSTER_ID,
   setPoolTelemetryManager,
+  ConsistencyLevelEnum,
+  CountReq,
 } from '../../milvus';
 
 describe('utils/Data', () => {
@@ -312,10 +314,10 @@ describe('utils/Data', () => {
                   field_name === 'count(price)'
                     ? ['2', '1']
                     : field_name === 'min(price)'
-                    ? ['10', '30']
-                    : field_name === 'max(price)'
-                    ? ['20', '30']
-                    : ['30', '30'],
+                      ? ['10', '30']
+                      : field_name === 'max(price)'
+                        ? ['20', '30']
+                        : ['30', '30'],
               },
               data: 'long_data',
             },
@@ -403,6 +405,75 @@ describe('utils/Data', () => {
       })
     );
   });
+
+  it.each(['client_request_id', 'client-request-id'] as const)(
+    'should preserve count query options and %s through the RPC',
+    async requestIdKey => {
+      const client = new MilvusClient({
+        address: 'localhost:19530',
+        __SKIP_CONNECT__: true,
+      });
+      const status = { error_code: ErrorCode.SUCCESS, reason: '' };
+      const query = jest.fn((...args: any[]) => {
+        args[args.length - 1](null, {
+          status,
+          fields_data: [
+            {
+              type: 'Int64',
+              field_name: 'count(*)',
+              field: 'scalars',
+              scalars: { data: 'long_data', long_data: { data: ['7'] } },
+            },
+          ],
+        });
+      });
+      (client as any).channelPool = {
+        acquire: jest.fn().mockResolvedValue({ Query: query }),
+        release: jest.fn(),
+      };
+      const request: CountReq = {
+        collection_name: 'test_collection',
+        filter: 'id in {ids}',
+        expr: 'ignored when filter is present',
+        exprValues: { ids: [1, 2, 3] },
+        partition_names: ['p1'],
+        consistency_level: ConsistencyLevelEnum.Strong,
+        timeout: 5000,
+        db_name: 'db1',
+        cluster_id: 'in07-xxx',
+        [requestIdKey]: 'count-request-id',
+      };
+      Object.freeze(request);
+      const now = jest.spyOn(Date, 'now').mockReturnValue(1700000000000);
+
+      try {
+        const result = await client.count(request);
+        expect(result).toEqual({ status, data: 7 });
+        expect(query).toHaveBeenCalledTimes(1);
+        const [params, metadata, options] = query.mock.calls[0];
+        expect(params).toEqual(
+          expect.objectContaining({
+            collection_name: 'test_collection',
+            expr: 'id in {ids}',
+            expr_template_values: {
+              ids: { array_val: { long_data: { data: [1, 2, 3] } } },
+            },
+            partition_names: ['p1'],
+            consistency_level: ConsistencyLevelEnum.Strong,
+            db_name: 'db1',
+            output_fields: ['count(*)'],
+          })
+        );
+        expect(findKeyValue(params.query_params, CLUSTER_ID)).toBe('in07-xxx');
+        expect(metadata.get('client-request-id')).toEqual(['count-request-id']);
+        expect(options.deadline.getTime()).toBe(1700000005000);
+        expect(request.expr).toBe('ignored when filter is present');
+        expect(request).not.toHaveProperty('expr_template_values');
+      } finally {
+        now.mockRestore();
+      }
+    }
+  );
 
   it('should forward cluster_id through search iterator requests', async () => {
     const client = new MilvusClient({
