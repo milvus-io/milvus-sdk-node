@@ -21,6 +21,39 @@ describe('Data <-> Bytes Test', () => {
     expect(() => sparseToBytes(invalidIndexData)).toThrow();
   });
 
+  it('should throw error if csr indices and values have different lengths', () => {
+    const message =
+      'Sparse vector indices and values must have the same length';
+    expect(() => sparseToBytes({ indices: [1, 2, 3], values: [0.5] })).toThrow(
+      message
+    );
+    expect(() =>
+      sparseToBytes({ indices: [1], values: [0.5, 0.25, 0.75] })
+    ).toThrow(message);
+    expect(() => sparseToBytes({ indices: [], values: [0.5] })).toThrow(
+      message
+    );
+    expect(() => sparseToBytes({ indices: [1], values: [] })).toThrow(message);
+  });
+
+  it('should convert csr with matching lengths and keep other shapes working', () => {
+    const csr = sparseToBytes({ indices: [1, 2], values: [0.5, 0.25] });
+    expect(csr.length).toBe(16);
+    expect(bytesToSparseRow(Buffer.from(csr))).toEqual({ '1': 0.5, '2': 0.25 });
+    expect(sparseToBytes({ indices: [], values: [] })).toEqual(
+      new Uint8Array(0)
+    );
+    expect(sparseToBytes([0.5, 0.25])).toEqual(
+      sparseToBytes({ 0: 0.5, 1: 0.25 })
+    );
+    expect(
+      sparseToBytes([
+        { index: 1, value: 0.5 },
+        { index: 2, value: 0.25 },
+      ])
+    ).toEqual(csr);
+  });
+
   it('should return empty Uint8Array if data is empty', () => {
     expect(sparseToBytes({})).toEqual(new Uint8Array(0));
   });
