@@ -86,7 +86,10 @@ function VectorCell({ value, fieldName }: { value: any; fieldName: string }) {
   );
 }
 
-export function CollectionData({ dbName, collectionName }: CollectionDataProps) {
+export function CollectionData({
+  dbName,
+  collectionName,
+}: CollectionDataProps) {
   const [data, setData] = useState<any[]>([]);
   const [schema, setSchema] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -134,6 +137,8 @@ export function CollectionData({ dbName, collectionName }: CollectionDataProps) 
   }, [collectionName, dbName, limit, offset]);
 
   useEffect(() => {
+    // Start the external request and show its loading state on page changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 
@@ -182,7 +187,7 @@ export function CollectionData({ dbName, collectionName }: CollectionDataProps) 
             <Table>
               <TableHeader>
                 <TableRow>
-                  {columns.map((col) => (
+                  {columns.map(col => (
                     <TableHead key={col}>{col}</TableHead>
                   ))}
                 </TableRow>
@@ -190,7 +195,7 @@ export function CollectionData({ dbName, collectionName }: CollectionDataProps) 
               <TableBody>
                 {data.map((row, idx) => (
                   <TableRow key={idx}>
-                    {columns.map((col) => {
+                    {columns.map(col => {
                       const value = row[col];
                       const isVector = isVectorField(col, schema);
 
@@ -242,4 +247,3 @@ export function CollectionData({ dbName, collectionName }: CollectionDataProps) 
     </Card>
   );
 }
-
