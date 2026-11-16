@@ -12,6 +12,7 @@ export const ERROR_REASONS = {
     'The `fields` or `collection_name` property is missing.',
   CREATE_COLLECTION_CHECK_PRIMARY_KEY:
     'The `data_type` for the primary key field must be DataType.Int64.',
+  // No longer thrown: a collection without a vector field is validated by the server.
   CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST:
     'The `data_type` of a vector field  must be either DataType.FloatVector or DataType.BinaryVector.',
   CREATE_COLLECTION_CHECK_MISS_DIM: 'The `dim` property is missing.',
