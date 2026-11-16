@@ -259,8 +259,13 @@ count(data: CountReq): Promise<CountResult>
 
 - `collection_name`: Collection name.
 - `expr?`: Filter expression. Defaults to all rows when omitted.
+- `filter?`: Alias for `expr`.
+- `exprValues?`: Values for placeholders in the filter expression.
+- `partition_names?`: Partition names to count within.
+- `consistency_level?`: Query consistency level (`ConsistencyLevelEnum`).
 - `db_name?`: Database name.
 - `timeout?`: Request timeout in milliseconds.
+- `client_request_id?` / `client-request-id?`: Request ID for tracing.
 
 **Response**:
 

@@ -600,7 +600,8 @@ export class Data extends Collection {
 
       if (typeof op === 'number') {
         const opName = FieldPartialUpdateOpType[op] as
-          keyof typeof FieldPartialUpdateOpType | undefined;
+          | keyof typeof FieldPartialUpdateOpType
+          | undefined;
         if (typeof opName === 'undefined') {
           throw new Error(`unsupported field partial update op: ${op}`);
         }
@@ -1423,18 +1424,12 @@ export class Data extends Collection {
   }
 
   async count(data: CountReq): Promise<CountResult> {
-    const req: any = {
-      collection_name: data.collection_name,
-      expr: data.filter || data.expr || '',
+    const { filter, expr, ...options } = data;
+    const req: QueryReq = {
+      ...options,
+      expr: filter || expr || '',
       output_fields: [DEFAULT_COUNT_QUERY_STRING],
     };
-
-    if (data.db_name) {
-      req.db_name = data.db_name;
-    }
-    if (data.cluster_id) {
-      req.cluster_id = data.cluster_id;
-    }
     const queryResult = await this.query(req);
 
     return {
