@@ -100,9 +100,18 @@ export const normalizeOrderByFields = (orderByFields?: OrderByFields) => {
  * @returns
  */
 export const formatNumberPrecision = (number: number, precision: number) => {
+  const str = number.toString();
+  // numbers >= 1e21 print as e+N and are always whole numbers
+  if (str.includes('e+')) {
+    return number;
+  }
+  // numbers < 1e-6 print as d.ddde-N, expand them to plain decimal notation
+  const small = /^(-?)(\d)(?:\.(\d+))?e-(\d+)$/.exec(str);
+  const plain = small
+    ? `${small[1]}0.${'0'.repeat(Number(small[4]) - 1)}${small[2]}${small[3] ?? ''}`
+    : str;
   return Number(
-    number
-      .toString()
+    plain
       .split('.')
       .map((v, i) => {
         if (i === 1) {
