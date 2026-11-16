@@ -508,7 +508,7 @@ describe('StructArray advanced integration', () => {
     expect(search.results.map(hit => Number(hit.id))).toEqual([1]);
   });
 
-  it('rejects nested Array children with the server limitation', async () => {
+  it('rejects nested Array children without type_schema', async () => {
     await expect(
       client.createCollection({
         collection_name: NESTED_ARRAY_COLLECTION,
@@ -541,7 +541,10 @@ describe('StructArray advanced integration', () => {
       })
     ).rejects.toMatchObject({
       error_code: ErrorCode.IllegalArgument,
-      reason: expect.stringMatching(/nested array is not supported/i),
+      // Older servers reject nested arrays outright; newer servers require type_schema.
+      reason: expect.stringMatching(
+        /nested array (?:is not supported|field nested must specify type_schema)/i
+      ),
     });
   });
 
