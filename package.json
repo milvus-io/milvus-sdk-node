@@ -54,21 +54,21 @@
     "**/glob/minimatch/brace-expansion": "1.1.21",
     "**/test-exclude/minimatch": "3.1.5",
     "**/test-exclude/minimatch/brace-expansion": "1.1.21",
-    "**/typedoc/minimatch": "9.0.8",
-    "**/typedoc/minimatch/brace-expansion": "5.0.12",
+    "**/typedoc/minimatch": "6.2.3",
     "**/@istanbuljs/load-nyc-config/js-yaml": "^4.3.1",
     "@babel/core": "^7.29.7",
     "@babel/helpers": "^7.26.10",
     "browserslist": "^4.28.7",
     "diff": "^4.0.4",
-    "fast-xml-parser": "^5.7.0",
+    "fast-xml-parser": "^5.12.0",
     "fast-xml-builder": "^1.2.0",
     "form-data": "^4.0.6",
     "protobufjs": "^7.6.5",
     "lodash": "^4.18.1",
     "picomatch": "^2.3.2",
     "thrift": "0.24.0",
-    "thrift/uuid": "11.1.1"
+    "thrift/uuid": "11.1.1",
+    "**/jest-config/deepmerge": "npm:@shivammathur/deepmerge@4.3.2"
   },
   "publishConfig": {
     "access": "public"
