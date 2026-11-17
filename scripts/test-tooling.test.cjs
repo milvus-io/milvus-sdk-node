@@ -5,6 +5,51 @@ const { tmpdir } = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
+test('SDK runner isolates global mutations, preserves all suites and honors serial reproduction', async () => {
+  const BaseRunner = require('jest-runner').default;
+  const SDKRunner = require('../test2/support/runner.cjs');
+  const original = BaseRunner.prototype.runTests;
+  const root = path.join(__dirname, '../test2');
+  const tests = [
+    'e2e/VectorMatrix.spec.ts',
+    'integration/User.spec.ts',
+    'unit/utils.Collection.spec.ts',
+    'integration/Resource.spec.ts',
+    'e2e/fetch.spec.ts',
+    'integration/FlushAll.spec.ts',
+  ].map(file => ({ path: path.join(root, file) }));
+  try {
+    for (const serial of [false, true]) {
+      const phases = [];
+      let active = false;
+      BaseRunner.prototype.runTests = async (suites, _watcher, options) => {
+        assert.equal(active, false, 'exclusive and parallel phases overlap');
+        active = true;
+        phases.push({ suites, serial: options.serial });
+        await new Promise(resolve => setImmediate(resolve));
+        active = false;
+      };
+      await new SDKRunner({}, {}).runTests(tests, {}, { serial });
+      assert.deepEqual(
+        phases.map(phase => phase.serial),
+        [true, serial]
+      );
+      assert.deepEqual(
+        phases[0].suites.map(suite => path.basename(suite.path)),
+        ['User.spec.ts', 'Resource.spec.ts', 'FlushAll.spec.ts']
+      );
+      assert.deepEqual(
+        phases
+          .flatMap(phase => phase.suites)
+          .sort((a, b) => a.path.localeCompare(b.path)),
+        [...tests].sort((a, b) => a.path.localeCompare(b.path))
+      );
+    }
+  } finally {
+    BaseRunner.prototype.runTests = original;
+  }
+});
+
 const metrics = covered =>
   Object.fromEntries(
     ['statements', 'branches', 'functions', 'lines'].map(name => [

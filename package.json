@@ -43,7 +43,7 @@
     "test2:cloud": "NODE_ENV=dev jest --config jest.test2.cloud.config.js",
     "test:package": "NODE_ENV=dev jest --testPathPattern=test2/package/",
     "test:audit": "node scripts/check-test2.cjs",
-    "test:ci": "npm run test:audit && npm run test:tooling && npm run build && npm run coverage -- --runInBand && npm run coverage:check"
+    "test:ci": "npm run test:audit && npm run test:tooling && npm run build && npm run coverage && npm run coverage:check"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.5",

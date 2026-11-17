@@ -91,7 +91,8 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
-          files: ./coverage/lcov.info
+          # Match main's report formats: LCOV alone changes Codecov's line/partial mapping.
+          files: ./coverage/clover.xml,./coverage/coverage-final.json,./coverage/lcov.info
           disable_search: true
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}

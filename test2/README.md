@@ -20,7 +20,7 @@
 npm run pre
 npm run build
 npm run test:env:up
-npm run coverage -- --runInBand
+npm run coverage
 npm run test:env:down
 ```
 
@@ -44,6 +44,10 @@ npm run test:ci
 This audits the suite, verifies failure logging and coverage guards, builds the SDK, runs all default tests with coverage, and checks `coverage-baseline.json`. The baseline records the measured coverage of the new suite for each source file. Equal coverage is allowed; regressions in statements, branches, functions or lines are rejected globally and per file. Review baseline updates alongside intentional source/suite changes. Generated protobuf definitions are excluded from both measurements.
 
 Reports are written to `coverage/`. GitHub Actions prints failures and service diagnostics, retains logs and coverage artifacts even on failure, and cleans up services. The required test result does not depend on an external model key or successful Codecov upload. External-service contracts remain opt-in.
+
+Codecov receives Clover, Istanbul JSON and LCOV from the same run, matching main's historical uploader. Uploading only LCOV changes Codecov's source-line and partial-branch mapping, so its project percentage cannot be compared to the historical merged reports. The local gate always compares the four unrounded Istanbul metrics for SDK sources; test helpers and generated protobuf definitions do not contribute to that gate.
+
+The suite uses two Jest workers by default. Database/collection-isolated contracts run concurrently; `User`, `Resource` and `FlushAll` mutate cluster-wide state and the custom runner completes them in an exclusive serial phase. Tests within each file retain their order. Use `--runInBand` for serial reproduction or `--maxWorkers=1` on memory-constrained machines.
 
 `test2:*` commands remain compatibility aliases; `test:*` and the default Jest configuration all select the same suite. Benchmarks are in `benchmarks/` and are not included in the suite.
 
