@@ -10,3 +10,9 @@ yarn-error.log
 .github/prompts/
 .github/skills/
 openspec/
+
+# Local and CI test reports
+test-results/
+.coverage-base/
+
+coverage-test2/

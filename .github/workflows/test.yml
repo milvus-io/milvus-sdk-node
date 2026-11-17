@@ -2,139 +2,101 @@ name: Run tests and coverage
 
 on:
   pull_request:
-    branches:
-      - main
-      - 2.4
-      - 2.5
-    types: [opened, synchronize]
-    paths-ignore:
-      - '*.md'
-      - 'examples/**'
-      - 'docs/**'
+    types: [opened, synchronize, reopened, ready_for_review]
+  merge_group:
   push:
-    branches:
-      - main
-      - 2.4
-      - 2.5
-    paths-ignore:
-      - '*.md'
-      - 'examples/**'
-      - 'docs/**'
+    branches: [main, '2.4', '2.5']
+  workflow_dispatch:
+  schedule:
+    - cron: '17 19 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-tests-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # Preserve the existing job ID for repositories requiring this check.
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: ${{ fromJSON(github.event_name == 'schedule' && '[20261117,20261118,20261119]' || '[20261117]') }}
+    env:
+      NODE_ENV: dev
+      TZ: UTC
+      MILVUS_ADDRESS: '127.0.0.1:19530'
+      MILVUS_TELEMETRY_API: 'http://127.0.0.1:9091/api/v1/_telemetry'
+      MILVUS_TELEMETRY_E2E: 'true'
+      MILVUS_OPENAI_ENABLED: '0'
+      MILVUS_TEST_SEED: ${{ matrix.seed }}
+      MILVUS_TEST_GRPC_PORT: '19530'
+      MILVUS_TEST_HEALTH_PORT: '9091'
+      MILVUS_TEST_MINIO_PORT: '9000'
     steps:
       - uses: actions/checkout@v5
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: yarn
 
-      - name: Read package.json
-        uses: jaywcjlove/github-action-package@main
-        id: info
+      - name: Install locked dependencies
+        run: yarn install --frozen-lockfile
 
-      - name: Show target Milvus version
-        run: echo "Milvus Version is ${{ steps.info.outputs.milvusVersion }}"
+      - name: Prepare protobuf dependencies
+        run: npm run pre
 
-      - name: Run target Milvus
-        env:
-          MILVUS_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: Select SDK target Milvus version
+        run: node -e "require('fs').appendFileSync(process.env.GITHUB_ENV, 'MILVUS_VERSION=' + require('./package.json').milvusVersion + '\n')"
+
+      - name: Start Milvus and MinIO and wait for health
+        run: npm run test:env:up
+
+      - name: Run SDK checks, full suite, package lifecycle and coverage gate
+        shell: bash
         run: |
-          if [ -n "${MILVUS_OPENAI_API_KEY}" ]; then
-            echo "MILVUS_OPENAI_ENABLED=1" >> "$GITHUB_ENV"
-          else
-            echo "MILVUS_OPENAI_ENABLED=0" >> "$GITHUB_ENV"
-          fi
+          set -o pipefail
+          mkdir -p test-results
+          npm run test:ci 2>&1 | tee test-results/tests.log
 
-          wget https://raw.githubusercontent.com/milvus-io/milvus/master/deployments/docker/standalone/docker-compose.yml -O docker-compose.yml
-          sed -i -e "s/milvusdb.*$/milvusdb\/milvus:${{ steps.info.outputs.milvusVersion }}/g" docker-compose.yml
-
-          # Pass the OpenAI key and enable StorageV3, which is required by Text fields.
-          cat > docker-compose.override.yml << EOF
-          services:
-            minio:
-              image: milvusdb/minio:RELEASE.2024-12-18T13-15-44Z
-            standalone:
-              environment:
-                MQ_TYPE: rocksmq
-                MILVUS_OPENAI_API_KEY: ${MILVUS_OPENAI_API_KEY}
-                COMMON_STORAGE_USELOONFFI: "true"
-                DATACOORD_COMPACTION_BUMPSCHEMAVERSION_ENABLED: "true"
-                DATACOORD_COMPACTION_STORAGEVERSION_ENABLED: "true"
-          EOF
-
-          mkdir -p volumes/etcd volumes/minio volumes/milvus
-          chmod -R 777 volumes
-
-          docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
-          docker compose -f docker-compose.yml -f docker-compose.override.yml ps
-
-      - name: Verify function-field Backfill configuration
-        run: |
-          envs="$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' milvus-standalone)"
-          grep -qx 'COMMON_STORAGE_USELOONFFI=true' <<< "$envs"
-          grep -qx 'DATACOORD_COMPACTION_BUMPSCHEMAVERSION_ENABLED=true' <<< "$envs"
-          grep -qx 'DATACOORD_COMPACTION_STORAGEVERSION_ENABLED=true' <<< "$envs"
-
-      - name: Wait for MinIO to be ready
-        run: |
-          echo "Waiting for MinIO..."
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:9000/minio/health/live > /dev/null 2>&1; then
-              echo "MinIO is ready"
-              exit 0
-            fi
-            echo "Attempt $i/30..."
-            sleep 2
-          done
-          echo "MinIO did not become ready"
-          docker compose -f docker-compose.yml -f docker-compose.override.yml ps
-          docker logs milvus-minio
-          exit 1
-
-      - name: Wait for Milvus to be ready
-        run: |
-          echo "Waiting for Milvus..."
-          for i in $(seq 1 90); do
-            if curl -sf http://localhost:9091/healthz > /dev/null 2>&1 && timeout 1 bash -c '</dev/tcp/127.0.0.1/19530' > /dev/null 2>&1; then
-              echo "Milvus is ready"
-              exit 0
-            fi
-            echo "Attempt $i/90..."
-            if [ $((i % 10)) -eq 0 ]; then
-              docker compose -f docker-compose.yml -f docker-compose.override.yml ps
-            fi
-            sleep 2
-          done
-          echo "Milvus did not become ready"
-          docker compose -f docker-compose.yml -f docker-compose.override.yml ps
-          docker logs milvus-standalone
-          exit 1
-
-      - name: Dump Milvus logs on failure
+      - name: Dump service state and errors on failure
         if: failure()
         run: |
-          docker compose -f docker-compose.yml -f docker-compose.override.yml ps
-          docker logs milvus-standalone
-          docker logs milvus-etcd
-          docker logs milvus-minio
+          docker compose -f test2/environment/compose.yml ps -a
+          docker compose -f test2/environment/compose.yml logs --no-color --tail=300
 
-      - name: Install dependencies
-        run: yarn
-
-      - name: update submodules
+      - name: Save service logs
+        if: always()
         run: |
-          git submodule init
-          yarn pre
+          mkdir -p test-results
+          docker compose -f test2/environment/compose.yml logs --no-color > test-results/services.log 2>&1
 
-      - name: Run Test coverage
-        run: |
-          yarn build-test
-          NODE_ENV=dev npx jest test/grpc/FunctionFieldBackfill.e2e.spec.ts --runInBand
-          yarn coverage
+      - name: Preserve test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.seed }}
+          path: |
+            test-results/
+            coverage/
+          retention-days: 14
 
-      - name: send to codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        run: bash <(curl -s https://codecov.io/bash)
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          # Match main's report formats: LCOV alone changes Codecov's line/partial mapping.
+          files: ./coverage/clover.xml,./coverage/coverage-final.json,./coverage/lcov.info
+          disable_search: true
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Stop test services
+        if: always()
+        run: npm run test:env:down

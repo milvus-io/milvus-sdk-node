@@ -50,7 +50,7 @@ yarn build
 yarn test
 
 # Run specific test file
-yarn test -- test/Collection.spec.ts
+yarn test -- test2/integration/Collection.spec.ts
 
 # Run with coverage
 yarn coverage
@@ -58,11 +58,11 @@ yarn coverage
 
 ### Test Structure
 
-Tests are located in the `test/` directory:
+Tests are located in the `test2/` directory:
 
-- `test/grpc/`: gRPC client tests
-- `test/http/`: HTTP client tests
-- `test/utils/`: Utility tests
+- `test2/integration/`: gRPC client tests
+- `test2/e2e/`: HTTP client tests
+- `test2/unit/`: Utility tests
 
 ## Code Style
 
@@ -157,7 +157,8 @@ milvus-sdk-node/
 │   ├── http/        # HTTP client
 │   ├── types/       # TypeScript types
 │   └── utils/       # Utilities
-├── test/            # Tests
+├── test2/           # Tests
+├── benchmarks/      # Manual performance benchmarks
 ├── examples/        # Examples
 └── docs/           # Documentation
 ```

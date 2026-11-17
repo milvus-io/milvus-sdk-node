@@ -1,0 +1,485 @@
+[
+  {
+    "source": "test/build/Collection.spec.ts",
+    "destination": "test2/package/Collection.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/bulkwriter/BulkWriter.spec.ts",
+    "destination": "test2/unit/bulkwriter.BulkWriter.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/bulkwriter/ParquetFormatter.spec.ts",
+    "destination": "test2/unit/bulkwriter.ParquetFormatter.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/bulkwriter/VolumeManager.spec.ts",
+    "destination": "test2/unit/bulkwriter.VolumeManager.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/e2e/MixedLifecycle.spec.ts",
+    "destination": "test2/e2e/MixedLifecycle.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Alias.spec.ts",
+    "destination": "test2/integration/Alias.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/BFloat16Vector.spec.ts",
+    "destination": "test2/e2e/VectorMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/Basic.spec.ts",
+    "destination": "test2/integration/Basic.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/BatchDescribeCollection.spec.ts",
+    "destination": "test2/integration/BatchDescribeCollection.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/BinaryVector.spec.ts",
+    "destination": "test2/e2e/VectorMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/BulkWriter.e2e.spec.ts",
+    "destination": "test2/e2e/BulkWriter.e2e.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/BulkWriterIterator.e2e.spec.ts",
+    "destination": "test2/e2e/BulkWriterIterator.e2e.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/BulkWriterNullable.e2e.spec.ts",
+    "destination": "test2/e2e/BulkWriterNullable.e2e.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/BulkWriterParquet.e2e.spec.ts",
+    "destination": "test2/e2e/BulkWriterParquet.e2e.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/ClusteringKey.spec.ts",
+    "destination": "test2/integration/ClusteringKey.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Collection.spec.ts",
+    "destination": "test2/integration/Collection.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Compaction.spec.ts",
+    "destination": "test2/integration/Compaction.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Data.spec.ts",
+    "destination": "test2/integration/Data.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Database.spec.ts",
+    "destination": "test2/integration/Database.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/DynamicSchema.spec.ts",
+    "destination": "test2/integration/DynamicSchema.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/ElementLevel.spec.ts",
+    "destination": "test2/integration/ElementLevel.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/ExternalCollection.spec.ts",
+    "destination": "test2/integration/ExternalCollection.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/FileResource.spec.ts",
+    "destination": "test2/integration/FileResource.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Float16Vector.spec.ts",
+    "destination": "test2/e2e/VectorMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/FlushAll.spec.ts",
+    "destination": "test2/integration/FlushAll.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/FullTextSearch.spec.ts",
+    "destination": "test2/integration/FullTextSearch.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/FunctionFieldBackfill.e2e.spec.ts",
+    "destination": "test2/e2e/FunctionFieldBackfill.e2e.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Geometry.spec.ts",
+    "destination": "test2/e2e/ScalarMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/GlobalCluster.spec.ts",
+    "destination": "test2/cloud/GlobalCluster.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/HighLevel.spec.ts",
+    "destination": "test2/integration/HighLevel.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Highlight.spec.ts",
+    "destination": "test2/integration/Highlight.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Import.spec.ts",
+    "destination": "test2/integration/Import.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Index.spec.ts",
+    "destination": "test2/integration/Index.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Insert.spec.ts",
+    "destination": "test2/integration/Insert.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Int8Vector.spec.ts",
+    "destination": "test2/e2e/VectorMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/Iterator.spec.ts",
+    "destination": "test2/integration/Iterator.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/KeywordMatch.spec.ts",
+    "destination": "test2/integration/KeywordMatch.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/MilvusClient.spec.ts",
+    "destination": "test2/integration/MilvusClient.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/MultipleVectors.spec.ts",
+    "destination": "test2/integration/MultipleVectors.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/NullableVector.spec.ts",
+    "destination": "test2/integration/NullableVector.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/PartialLoad.spec.ts",
+    "destination": "test2/integration/PartialLoad.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Partition.spec.ts",
+    "destination": "test2/integration/Partition.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/PartitionKey.spec.ts",
+    "destination": "test2/integration/PartitionKey.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Replica.spec.ts",
+    "destination": "test2/integration/Replica.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Resource.spec.ts",
+    "destination": "test2/integration/Resource.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/SearchAggregation.spec.ts",
+    "destination": "test2/integration/SearchAggregation.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Segment.spec.ts",
+    "destination": "test2/integration/Segment.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Snapshot.spec.ts",
+    "destination": "test2/integration/Snapshot.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/SparseVector.array.spec.ts",
+    "destination": "test2/e2e/VectorMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/SparseVector.coo.spec.ts",
+    "destination": "test2/e2e/VectorMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/SparseVector.csr.spec.ts",
+    "destination": "test2/e2e/VectorMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/SparseVector.dict.spec.ts",
+    "destination": "test2/e2e/VectorMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/Struct.spec.ts",
+    "destination": "test2/integration/Struct.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/StructArrayAdvanced.spec.ts",
+    "destination": "test2/integration/StructArrayAdvanced.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Text.spec.ts",
+    "destination": "test2/integration/Text.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/TextEmbedding.spec.ts",
+    "destination": "test2/integration/TextEmbedding.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Timestamptz.spec.ts",
+    "destination": "test2/e2e/ScalarMatrix.spec.ts",
+    "approach": "replace repeated lifecycle steps with independent parameterized scenarios"
+  },
+  {
+    "source": "test/grpc/TruncateCollection.spec.ts",
+    "destination": "test2/integration/TruncateCollection.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/Upsert.spec.ts",
+    "destination": "test2/integration/Upsert.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/UpsertArrayPartialOp.spec.ts",
+    "destination": "test2/integration/UpsertArrayPartialOp.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/grpc/User.spec.ts",
+    "destination": "test2/integration/User.spec.ts",
+    "approach": "retain user/role API contracts; move genuine denial tests to an explicitly configured authorization-enabled deployment",
+    "additionalDestinations": [
+      "test2/cloud/AuthDenial.spec.ts"
+    ]
+  },
+  {
+    "source": "test/http/client.spec.ts",
+    "destination": "test2/unit/http.client.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/http/cloud.spec.ts",
+    "destination": "test2/cloud/cloud.spec.ts",
+    "approach": "replace placeholder config with explicit environment-gated shared HTTP lifecycle"
+  },
+  {
+    "source": "test/http/fetch.spec.ts",
+    "destination": "test2/e2e/fetch.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/http/import.spec.ts",
+    "destination": "test2/unit/http.import.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/http/node-fetch.spec.ts",
+    "destination": "test2/e2e/node-fetch.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/http/serverless.spec.ts",
+    "destination": "test2/cloud/serverless.spec.ts",
+    "approach": "replace placeholder config with explicit environment-gated shared HTTP lifecycle"
+  },
+  {
+    "source": "test/telemetry/ClientTelemetry.e2e.spec.ts",
+    "destination": "test2/e2e/ClientTelemetry.e2e.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/telemetry/ClientTelemetry.spec.ts",
+    "destination": "test2/unit/telemetry.ClientTelemetry.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/telemetry/GrpcClientTelemetry.spec.ts",
+    "destination": "test2/unit/telemetry.GrpcClientTelemetry.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/BloomFilter.spec.ts",
+    "destination": "test2/unit/utils.BloomFilter.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Bytes.spec.ts",
+    "destination": "test2/unit/utils.Bytes.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/ChannelPool.spec.ts",
+    "destination": "test2/unit/utils.ChannelPool.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Collection.spec.ts",
+    "destination": "test2/unit/utils.Collection.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Compaction.spec.ts",
+    "destination": "test2/unit/utils.Compaction.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Connection.spec.ts",
+    "destination": "test2/unit/utils.Connection.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Data.spec.ts",
+    "destination": "test2/unit/utils.Data.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/FixtureData.spec.ts",
+    "destination": "test2/unit/utils.FixtureData.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Format.spec.ts",
+    "destination": "test2/unit/utils.Format.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Function.spec.ts",
+    "destination": "test2/unit/utils.Function.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/GetValidation.spec.ts",
+    "destination": "test2/unit/utils.GetValidation.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/GlobalConnection.spec.ts",
+    "destination": "test2/unit/utils.GlobalConnection.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/GlobalTopology.spec.ts",
+    "destination": "test2/unit/utils.GlobalTopology.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Grpc.spec.ts",
+    "destination": "test2/unit/utils.Grpc.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/PrimaryKeyExpr.spec.ts",
+    "destination": "test2/unit/utils.PrimaryKeyExpr.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/ProtoJson.spec.ts",
+    "destination": "test2/unit/utils.ProtoJson.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/ReplicateConfiguration.spec.ts",
+    "destination": "test2/unit/utils.ReplicateConfiguration.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Rerank.spec.ts",
+    "destination": "test2/unit/utils.Rerank.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/RoaringFilter.spec.ts",
+    "destination": "test2/unit/utils.RoaringFilter.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Scenario.spec.ts",
+    "destination": "test2/unit/utils.Scenario.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Schema.spec.ts",
+    "destination": "test2/unit/utils.Schema.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Search.spec.ts",
+    "destination": "test2/unit/utils.Search.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/SearchAggregation.spec.ts",
+    "destination": "test2/unit/utils.SearchAggregation.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Test.spec.ts",
+    "destination": "test2/unit/utils.Test.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/Validate.spec.ts",
+    "destination": "test2/unit/utils.Validate.spec.ts",
+    "approach": "retain dedicated assertions; use test2 fixtures and diagnostics"
+  },
+  {
+    "source": "test/utils/DependencySecurity.spec.ts",
+    "destination": "test2/unit/utils.DependencySecurity.spec.ts",
+    "approach": "retain upstream dependency-security regression assertions"
+  }
+]

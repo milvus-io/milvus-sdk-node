@@ -1,0 +1,49 @@
+name: milvus-sdk-test2
+services:
+  minio:
+    image: milvusdb/minio:RELEASE.2024-12-18T13-15-44Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    command: minio server /minio_data
+    ports:
+      - '127.0.0.1:${MILVUS_TEST_MINIO_PORT:-9000}:9000'
+    healthcheck:
+      test: [CMD, curl, -f, http://localhost:9000/minio/health/live]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  standalone:
+    image: milvusdb/milvus:${MILVUS_VERSION:-v3.0.6}
+    command: [milvus, run, standalone]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_USE_EMBED: 'true'
+      ETCD_DATA_DIR: /var/lib/milvus/etcd
+      ETCD_CONFIG_PATH: /milvus/configs/embedEtcd.yaml
+      COMMON_STORAGETYPE: remote
+      MINIO_ADDRESS: minio
+      MINIO_PORT: '9000'
+      MINIO_ACCESSKEYID: minioadmin
+      MINIO_SECRETACCESSKEY: minioadmin
+      MQ_TYPE: rocksmq
+      DEPLOY_MODE: STANDALONE
+      COMMON_STORAGE_USELOONFFI: 'true'
+      DATACOORD_COMPACTION_BUMPSCHEMAVERSION_ENABLED: 'true'
+      DATACOORD_COMPACTION_STORAGEVERSION_ENABLED: 'true'
+      MILVUS_OPENAI_API_KEY: ${MILVUS_OPENAI_API_KEY:-}
+    volumes:
+      - ./embedEtcd.yaml:/milvus/configs/embedEtcd.yaml:ro
+    ports:
+      - '127.0.0.1:${MILVUS_TEST_GRPC_PORT:-29530}:19530'
+      - '127.0.0.1:${MILVUS_TEST_HEALTH_PORT:-29091}:9091'
+    depends_on:
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, -f, http://localhost:9091/healthz]
+      interval: 5s
+      timeout: 3s
+      start_period: 90s
+      retries: 60

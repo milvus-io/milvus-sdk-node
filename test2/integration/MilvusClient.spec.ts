@@ -1,0 +1,416 @@
+import path from 'path';
+import { readFileSync } from 'fs';
+import {
+  MilvusClient,
+  MilvusClientSession,
+  ERROR_REASONS,
+  CONNECT_STATUS,
+  TLS_MODE,
+} from '../../milvus';
+import sdkInfo from '../../sdk.json';
+import { IP } from '../fixtures';
+
+const milvusClient = new MilvusClient({
+  address: IP,
+});
+
+// path
+const milvusProtoPath = path.resolve(
+  __dirname,
+  '../../proto/proto/milvus.proto'
+);
+const schemaProtoPath = path.resolve(
+  __dirname,
+  '../../proto/proto/schema.proto'
+);
+
+describe(`Milvus client`, () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    await milvusClient.closeConnection();
+  });
+
+  it(`should create a grpc client with cert file path successfully`, async () => {
+    const m1 = new MilvusClient({
+      address: IP,
+      tls: {
+        rootCertPath: `test2/assets/cert/ca.pem`,
+        privateKeyPath: `test2/assets/cert/client.key`,
+        certChainPath: `test2/assets/cert/client.pem`,
+        serverName: IP,
+      },
+      id: '1',
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(await m1.channelPool).toBeDefined();
+    expect(m1.tlsMode).toEqual(TLS_MODE.TWO_WAY);
+    expect(m1.clientId).toEqual('1');
+  });
+
+  it(`should create a grpc client with cert file successfully`, async () => {
+    const m1s = new MilvusClient({
+      address: IP,
+      tls: {
+        rootCert: readFileSync(`test2/assets/cert/ca.pem`),
+        privateKey: readFileSync(`test2/assets/cert/client.key`),
+        certChain: readFileSync(`test2/assets/cert/client.pem`),
+        serverName: IP,
+      },
+      id: '1',
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(await m1s.channelPool).toBeDefined();
+    expect(m1s.tlsMode).toEqual(TLS_MODE.TWO_WAY);
+    expect(m1s.clientId).toEqual('1');
+  });
+
+  it(`should create a grpc client with skipCertCheck option successfully`, async () => {
+    const m1u = new MilvusClient({
+      address: IP,
+      tls: {
+        skipCertCheck: true,
+      },
+      id: '1',
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(await m1u.channelPool).toBeDefined();
+    expect(m1u.tlsMode).toEqual(TLS_MODE.UNAUTHORIZED);
+    expect(m1u.clientId).toEqual('1');
+  });
+
+  it(`should create a grpc client without SSL credentials when ssl is false`, async () => {
+    const m2 = new MilvusClient({
+      address: IP,
+      ssl: true,
+      username: 'username',
+      password: 'password',
+      id: '1',
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(m2.clientId).toEqual('1');
+    expect(m2.tlsMode).toEqual(TLS_MODE.ONE_WAY);
+  });
+
+  it(`should create a grpc client without authentication when username and password are not provided`, async () => {
+    const m3 = new MilvusClient(IP, false);
+    await m3.connectPromise;
+
+    expect(m3.channelPool).toBeDefined();
+    await m3.closeConnection();
+    expect(m3.connectStatus).toEqual(CONNECT_STATUS.SHUTDOWN);
+  });
+
+  it(`should have connect promise and connectStatus`, async () => {
+    const m4 = new MilvusClient(IP, false);
+    expect(m4.connectPromise).toBeDefined();
+
+    await m4.connectPromise;
+    expect(m4.connectStatus).not.toEqual(CONNECT_STATUS.NOT_CONNECTED);
+    await m4.closeConnection();
+    expect(m4.connectStatus).toEqual(CONNECT_STATUS.SHUTDOWN);
+  });
+
+  it(`should create a grpc client with authentication when username and password are provided`, async () => {
+    const m5 = new MilvusClient({
+      address: IP,
+      username: 'username',
+      password: 'password',
+      id: '1',
+      __SKIP_CONNECT__: true,
+    });
+    expect(await m5.channelPool).toBeDefined();
+  });
+
+  it(`should set tls to 1 if root cert provided`, async () => {
+    const m7 = new MilvusClient({
+      address: IP,
+      ssl: true,
+      username: 'username',
+      password: 'password',
+      id: '1',
+      tls: {
+        rootCertPath: `test2/assets/cert/ca.pem`,
+      },
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(m7.tlsMode).toEqual(TLS_MODE.ONE_WAY);
+  });
+
+  it(`should set tls to 2 if root cert and others provided`, async () => {
+    const m7s = new MilvusClient({
+      address: IP,
+      ssl: true,
+      username: 'username',
+      password: 'password',
+      id: '1',
+      tls: {
+        rootCertPath: `test2/assets/cert/ca.pem`,
+        privateKeyPath: `test2/assets/cert/client.key`,
+        certChainPath: `test2/assets/cert/client.pem`,
+      },
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(m7s.tlsMode).toEqual(TLS_MODE.TWO_WAY);
+  });
+
+  it(`it should setup maxRetries and retryDelay successfully`, async () => {
+    const m8 = new MilvusClient({
+      address: IP,
+      ssl: true,
+      username: 'username',
+      password: 'password',
+      id: '1',
+      retryDelay: 300,
+      maxRetries: 3,
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(m8.config.maxRetries).toEqual(3);
+    expect(m8.config.retryDelay).toEqual(300);
+  });
+
+  it(`it should setup string timeout successfully`, async () => {
+    const m9 = new MilvusClient({
+      address: IP,
+      timeout: '1h',
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(m9.timeout).toEqual(3600000);
+  });
+
+  it(`Should throw MILVUS_ADDRESS_IS_REQUIRED`, async () => {
+    expect(() => new MilvusClient(undefined as any)).toThrow(
+      new Error(ERROR_REASONS.MILVUS_ADDRESS_IS_REQUIRED)
+    );
+  });
+
+  it(`should have default keepalive options set to 10s interval and 5s timeout`, async () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(client.channelOptions['grpc.keepalive_time_ms']).toEqual(10000);
+    expect(client.channelOptions['grpc.keepalive_timeout_ms']).toEqual(5000);
+    expect(
+      client.channelOptions['grpc.keepalive_permit_without_calls']
+    ).toEqual(1);
+  });
+
+  it(`should allow overriding keepalive options via channelOptions`, async () => {
+    const client = new MilvusClient({
+      address: IP,
+      channelOptions: {
+        'grpc.keepalive_time_ms': 20000,
+        'grpc.keepalive_timeout_ms': 8000,
+      },
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(client.channelOptions['grpc.keepalive_time_ms']).toEqual(20000);
+    expect(client.channelOptions['grpc.keepalive_timeout_ms']).toEqual(8000);
+    expect(
+      client.channelOptions['grpc.keepalive_permit_without_calls']
+    ).toEqual(1);
+  });
+
+  it(`should add trace interceptor if enableTrace is true`, async () => {
+    const nonTraceClient = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+    // meta interceptor + request metadata interceptor + retry interceptor = 3
+    expect(nonTraceClient.channelOptions.interceptors.length).toEqual(3);
+    const traceClient = new MilvusClient({
+      address: IP,
+      trace: true,
+      __SKIP_CONNECT__: true,
+    });
+
+    // meta interceptor + request metadata interceptor + trace interceptor + retry interceptor = 4
+    expect(traceClient.channelOptions.interceptors.length).toEqual(4);
+  });
+
+  it(`should add request metadata interceptor by default`, async () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+    // Should have request metadata interceptor (adds client-request-unixmsec)
+    expect(client.channelOptions.interceptors.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it(`should omit the ordinary retry interceptor from telemetry heartbeats`, async () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+
+    expect((client as any).telemetryChannelOptions.interceptors).toHaveLength(
+      client.channelOptions.interceptors.length - 1
+    );
+  });
+
+  it(`Expect get node sdk info`, async () => {
+    expect(MilvusClient.sdkInfo.version).toEqual(sdkInfo.version);
+    expect(MilvusClient.sdkInfo.recommendMilvus).toEqual(sdkInfo.milvusVersion);
+  });
+
+  it('should create a session that injects cluster_id into DQL methods', async () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+    const session = client.session('in07-xxx');
+    const expected = { status: { error_code: 'Success', reason: '' } };
+
+    const searchSpy = jest
+      .spyOn(client, 'search')
+      .mockResolvedValue(expected as any);
+    const hybridSearchSpy = jest
+      .spyOn(client, 'hybridSearch')
+      .mockResolvedValue(expected as any);
+    const querySpy = jest
+      .spyOn(client, 'query')
+      .mockResolvedValue(expected as any);
+    const getSpy = jest.spyOn(client, 'get').mockResolvedValue(expected as any);
+    const searchIteratorSpy = jest
+      .spyOn(client, 'searchIterator')
+      .mockResolvedValue(expected as any);
+    const queryIteratorSpy = jest
+      .spyOn(client, 'queryIterator')
+      .mockResolvedValue(expected as any);
+
+    await session.search({
+      collection_name: 'col',
+      data: [0.1, 0.2],
+      cluster_id: 'ignored',
+    });
+    await session.hybridSearch({
+      collection_name: 'col',
+      data: [{ data: [0.1, 0.2], anns_field: 'vector' }],
+    });
+    await session.query({ collection_name: 'col', filter: 'id > 0' });
+    await session.get({ collection_name: 'col', ids: [1, 2] });
+    await session.searchIterator({
+      collection_name: 'col',
+      data: [0.1, 0.2],
+      batchSize: 10,
+    });
+    await session.queryIterator({
+      collection_name: 'col',
+      filter: 'id > 0',
+      batchSize: 10,
+    });
+
+    expect(searchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(hybridSearchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(getSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(searchIteratorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+    expect(queryIteratorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ cluster_id: 'in07-xxx' })
+    );
+
+    session.close();
+    expect(() =>
+      session.query({ collection_name: 'col', filter: 'id > 0' })
+    ).toThrow('session is closed');
+  });
+
+  it('should reject an invalid cluster id when creating a session', () => {
+    const client = new MilvusClient({
+      address: IP,
+      __SKIP_CONNECT__: true,
+    });
+
+    expect(() => client.session('')).toThrow(
+      'clusterId must be a non-empty string'
+    );
+    expect(() => client.session(undefined as any)).toThrow(
+      'clusterId must be a non-empty string'
+    );
+  });
+
+  it(`Get milvus version`, async () => {
+    const res = await milvusClient.getVersion();
+    expect(res).toHaveProperty('version');
+  });
+
+  it(`Expect checkHealth success`, async () => {
+    const res = await milvusClient.checkHealth();
+
+    expect(typeof res.isHealthy).toEqual('boolean');
+    expect(Array.isArray(res.reasons)).toBe(true);
+  });
+
+  it(`Should throw when server is unavailable`, async () => {
+    const m10 = new MilvusClient({ address: IP.replace(/:\d+$/, ':19539') });
+    // Await the connection promise and assert the error
+    await expect(m10.connectPromise).rejects.toThrow('UNAVAILABLE');
+
+    // Sequentially test the other methods, ensuring each is awaited
+    await expect(m10.getVersion()).rejects.toThrow('UNAVAILABLE');
+    await expect(m10.checkCompatibility()).rejects.toThrow('UNAVAILABLE');
+    await expect(m10.checkHealth()).rejects.toThrow('UNAVAILABLE');
+    await m10.closeConnection();
+  });
+
+  it(`Expect close connection success`, async () => {
+    expect(milvusClient.channelPool.size).toBeGreaterThan(0);
+
+    const res = await milvusClient.closeConnection();
+    expect(milvusClient.channelPool.size).toBe(0);
+    expect(res).toBe(CONNECT_STATUS.SHUTDOWN);
+  });
+
+  // it(`should create a grpc client with cert file successfully`, async () => {
+  //   const mc = new MilvusClient({
+  //     address: 'localhost:19530',
+  //     tls: {
+  //       rootCertPath: `test2/assets/cert/ca.pem`,
+  //       privateKeyPath: `test2/assets/cert/client.key`,
+  //       certChainPath: `test2/assets/cert/client.pem`,
+  //       serverName: 'localhost',
+  //     },
+  //     logLevel: 'debug',
+  //   });
+
+  //   const healthy = await mc.checkHealth();
+  //   expect(healthy.isHealthy).toEqual(true);
+
+  //   const mc2 = new MilvusClient({
+  //     address: 'localhost:19530',
+  //     tls: {
+  //       rootCert: readFileSync(`test2/assets/cert/ca.pem`),
+  //       privateKey: readFileSync(`test2/assets/cert/client.key`),
+  //       certChain: readFileSync(`test2/assets/cert/client.pem`),
+  //       serverName: 'localhost',
+  //     },
+  //     logLevel: 'debug',
+  //   });
+
+  //   const healthy2 = await mc2.checkHealth();
+  //   expect(healthy2.isHealthy).toEqual(true);
+  // });
+});

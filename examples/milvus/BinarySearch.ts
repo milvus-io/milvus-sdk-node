@@ -1,16 +1,16 @@
 import { MilvusClient, DataType, InsertReq } from '@zilliz/milvus2-sdk-node';
 import {
   IP,
-  genCollectionParams,
+  collectionSchema,
   VECTOR_FIELD_NAME,
   GENERATE_NAME,
   generateInsertData,
-} from '../../test/tools';
+} from '../../test2/fixtures';
 const milvusClient = new MilvusClient(IP);
 const COLLECTION_NAME = GENERATE_NAME();
 
 (async () => {
-  const createParams = genCollectionParams({
+  const createParams = collectionSchema({
     collectionName: COLLECTION_NAME,
     dim: ['128'],
     vectorType: [DataType.BinaryVector],

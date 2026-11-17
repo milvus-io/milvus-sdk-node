@@ -19,7 +19,7 @@ yarn build
 yarn test
 
 # Run a single test file (NODE_ENV=dev is required)
-NODE_ENV=dev npx jest test/grpc/SomeTest.spec.ts
+NODE_ENV=dev npx jest test2/integration/SomeTest.spec.ts
 
 # Test coverage
 yarn coverage
@@ -69,8 +69,8 @@ Each class in `milvus/grpc/` adds one domain of Milvus operations. `MilvusClient
 - `milvus/utils/` — Utilities (schema building, data formatting, gRPC helpers, validation)
 - `milvus/proto-json/` — Generated proto definitions (from `yarn proto:json`)
 - `proto/` — Git submodule with upstream Milvus `.proto` files
-- `test/grpc/`, `test/http/`, `test/utils/` — Tests organized by transport/domain
-- `test/tools/` — Test helpers (collection param generators, data generators)
+- `test2/integration/`, `test2/e2e/`, `test2/unit/` — Tests organized by transport/domain
+- `test2/fixtures/` — Test helpers (collection param generators, data generators)
 
 ### Key Patterns
 
@@ -80,7 +80,7 @@ Each class in `milvus/grpc/` adds one domain of Milvus operations. `MilvusClient
 3. Implement method in the appropriate `milvus/grpc/` class
 4. Wrap gRPC calls with `promisify(this.grpcClient.methodName.bind(this.grpcClient), metadata, timeout)`
 5. Check results against `ErrorCode.SUCCESS`
-6. Add tests in `test/grpc/`
+6. Add tests in `test2/integration/`
 7. Add JSDoc for public methods (include `@param` and `@returns`)
 
 **Error handling:**

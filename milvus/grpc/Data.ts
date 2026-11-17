@@ -600,8 +600,7 @@ export class Data extends Collection {
 
       if (typeof op === 'number') {
         const opName = FieldPartialUpdateOpType[op] as
-          | keyof typeof FieldPartialUpdateOpType
-          | undefined;
+          keyof typeof FieldPartialUpdateOpType | undefined;
         if (typeof opName === 'undefined') {
           throw new Error(`unsupported field partial update op: ${op}`);
         }
@@ -1465,6 +1464,10 @@ export class Data extends Collection {
    * ```
    */
   async get(data: GetReq): Promise<QueryResults> {
+    checkCollectionName(data);
+    if (!Array.isArray(data.ids) || data.ids.length === 0) {
+      throw new Error(ERROR_REASONS.IDS_REQUIRED);
+    }
     return this.query(data);
   }
 
