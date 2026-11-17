@@ -55,6 +55,8 @@ import {
   getDataKey,
   _Field,
   buildFieldData,
+  encodeTypedArrayNode,
+  FieldData,
   BinaryVector,
   RowData,
   CountReq,
@@ -257,6 +259,15 @@ export class Data extends Collection {
                     nullable: field.nullable,
                     default_value: field.default_value,
                     fieldMap: new Map(),
+                    // Array sub-field: each element's value is itself an array.
+                    // Its described `nullable` is element-level; the column's
+                    // valid_data follows the struct row, as for other children
+                    ...(field.type_schema?.array_element?.array_element
+                      ? {
+                          typeSchema: field.type_schema,
+                          nullable: field.type_schema.nullable,
+                        }
+                      : {}),
                   },
                 ])
               );
@@ -509,6 +520,22 @@ export class Data extends Collection {
               // For struct arrays, recursively build column data for struct fields
               keyValue = {
                 fields: buildColumnData(field.fieldMap),
+              };
+            } else if (field.typeSchema) {
+              // Array sub-field of a struct: one nested array_data per row
+              keyValue = {
+                [dataKey]: {
+                  data: field.data
+                    .filter(v => v !== undefined)
+                    .map(row =>
+                      encodeTypedArrayNode(
+                        row as FieldData[],
+                        field.typeSchema!,
+                        field.name
+                      )
+                    ),
+                  element_type: DataType.Array,
+                },
               };
             } else {
               keyValue = {

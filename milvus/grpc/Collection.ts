@@ -104,6 +104,25 @@ import {
   collectionNameReq,
 } from '../';
 
+// convert a protobufjs (camelCase) TypeSchema to the grpc (snake_case) shape
+const formatGrpcTypeSchema = (
+  typeSchema?: Record<string, any>
+): Record<string, any> | undefined => {
+  if (!typeSchema) {
+    return undefined;
+  }
+  const result: Record<string, any> = {
+    type_params: typeSchema.typeParams,
+    nullable: !!typeSchema.nullable,
+  };
+  if (typeSchema.arrayElement) {
+    result.array_element = formatGrpcTypeSchema(typeSchema.arrayElement);
+  } else {
+    result.leaf_type = typeSchema.leafType;
+  }
+  return result;
+};
+
 const formatFormattedGrpcFieldSchema = (
   schema: Record<string, any>
 ): Record<string, any> => {
@@ -115,7 +134,12 @@ const formatFormattedGrpcFieldSchema = (
     };
   }
 
+  const typeSchema = formatGrpcTypeSchema(schema.typeSchema);
+
   return {
+    ...(typeSchema
+      ? { type_schema: typeSchema, element_nullable: !!schema.elementNullable }
+      : {}),
     fieldID: schema.fieldID,
     name: schema.name,
     is_primary_key: schema.isPrimaryKey,

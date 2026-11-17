@@ -16,6 +16,9 @@ import {
   f16BytesToF32Array,
   Struct,
   VectorDataTypes,
+  TypeSchema,
+  convertToDataType,
+  getDataKey,
 } from '../';
 
 /**
@@ -192,6 +195,39 @@ export const processVectorData = (
 };
 
 /**
+ * Expands compact values to one value per position, using `valid_data`.
+ * Row-dense payloads (one value per position) are also accepted.
+ */
+const applyScalarValidData = (values: any[], validData?: boolean[]) => {
+  if (!validData || !validData.length || validData.every(Boolean)) {
+    return values;
+  }
+  const isRowDense = values.length === validData.length;
+  let physicalIndex = 0;
+  return validData.map((valid: boolean, logicalIndex: number) =>
+    valid ? values[isRowDense ? logicalIndex : physicalIndex++] : null
+  );
+};
+
+/**
+ * Decodes one `ScalarField` of an array column into a JS array. Nested
+ * `array_data` (Array sub-fields of a struct field) is decoded recursively.
+ * @param f - The `ScalarField` from the gRPC response
+ * @returns The decoded array
+ */
+export const decodeArrayScalarField = (f: any): any[] => {
+  const dataKey = f?.data;
+  if (!dataKey) {
+    return [];
+  }
+  const values =
+    dataKey === 'array_data'
+      ? (f.array_data.data || []).map(decodeArrayScalarField)
+      : f[dataKey].data;
+  return applyScalarValidData(values, f.valid_data);
+};
+
+/**
  * Processes scalar data from gRPC response format
  * @param item - The scalar field item from gRPC response
  * @returns Processed scalar data
@@ -203,10 +239,7 @@ export const processScalarData = (item: any): any => {
 
   // we need to handle array element specifically here
   if (dataKey === 'array_data') {
-    field_data = field_data.map((f: any) => {
-      const dataKey = f.data;
-      return dataKey ? f[dataKey].data : [];
-    });
+    field_data = field_data.map(decodeArrayScalarField);
   }
 
   switch (dataKey) {
@@ -329,6 +362,76 @@ export const buildFieldDataMap = (
   });
 
   return fieldsDataMap;
+};
+
+/**
+ * Drops nulls from `values`, returning the compact values and, for a nullable
+ * level, the validity of each position. Throws on a null at a non-nullable level.
+ */
+const compactArrayValues = (
+  values: any,
+  nullable: boolean,
+  name: string
+): { values: any[]; validData: boolean[] } => {
+  if (!Array.isArray(values)) {
+    throw new Error(`Array field ${name} expects an array`);
+  }
+  const validData = values.map(v => v !== null && typeof v !== 'undefined');
+  if (!nullable && !validData.every(Boolean)) {
+    throw new Error(`Array field ${name} does not allow null elements`);
+  }
+  return {
+    values: values.filter((_, i) => validData[i]),
+    validData: nullable ? validData : [],
+  };
+};
+
+/**
+ * Encodes one row of a typed (nested) array as a gRPC `ScalarField`,
+ * following `schema` (a `TypeSchema` from describeCollection).
+ *
+ * For an Array sub-field of a struct field, `schema` is the sub-field's
+ * `type_schema` and `values` holds one array per struct element:
+ * `[['a', 'b'], []]` becomes
+ * `{ array_data: { element_type: VarChar, data: [{ string_data: ['a', 'b'] }, { string_data: [] }] } }`.
+ *
+ * @param values - The row's values
+ * @param schema - The TypeSchema describing `values`
+ * @param name - The field name, for error messages
+ * @returns The `ScalarField` payload
+ */
+export const encodeTypedArrayNode = (
+  values: any,
+  schema: TypeSchema,
+  name: string
+): Record<string, any> => {
+  const element = schema.array_element;
+  if (!element) {
+    throw new Error(`Array field ${name} has no element type`);
+  }
+  const compact = compactArrayValues(values, !!element.nullable, name);
+
+  if (typeof element.leaf_type !== 'undefined' && !element.array_element) {
+    const leafType = convertToDataType(element.leaf_type);
+    const leafKey =
+      leafType === DataType.Timestamptz ? 'string_data' : getDataKey(leafType);
+    return {
+      [leafKey]: { data: compact.values },
+      valid_data: compact.validData,
+    };
+  }
+
+  const elementLeafType = element.array_element?.leaf_type;
+  return {
+    array_data: {
+      element_type:
+        typeof elementLeafType !== 'undefined'
+          ? convertToDataType(elementLeafType)
+          : DataType.Array,
+      data: compact.values.map(v => encodeTypedArrayNode(v, element, name)),
+    },
+    valid_data: compact.validData,
+  };
 };
 
 /**
@@ -455,6 +558,10 @@ export const buildFieldData = (
           });
         });
         // Return the original data for Array of Struct
+        return rowData[name];
+      } else if (field.typeSchema) {
+        // Array sub-field of a struct field: keep the element's array as-is,
+        // it is encoded per row in buildColumnData (nulls are checked there)
         return rowData[name];
       } else {
         // Regular array field

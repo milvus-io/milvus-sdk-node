@@ -15,6 +15,7 @@ jest.setTimeout(180000);
 const client = createClient({ address: IP, logLevel: 'info' });
 const COLLECTION_NAME = GENERATE_NAME('struct_array_advanced');
 const NESTED_ARRAY_COLLECTION = GENERATE_NAME('struct_array_nested');
+const NULLABLE_NESTED_COLLECTION = GENERATE_NAME('struct_array_nested_null');
 const DB_NAME = GENERATE_NAME('struct_array_advanced_db');
 const DIM = 8;
 const BACKGROUND_ROWS = 1200;
@@ -344,6 +345,9 @@ describe('StructArray advanced integration', () => {
     await client
       .dropCollection({ collection_name: NESTED_ARRAY_COLLECTION })
       .catch(() => undefined);
+    await client
+      .dropCollection({ collection_name: NULLABLE_NESTED_COLLECTION })
+      .catch(() => undefined);
     await client.dropDatabase({ db_name: DB_NAME }).catch(() => undefined);
   });
 
@@ -510,44 +514,333 @@ describe('StructArray advanced integration', () => {
     expect(search.results.map(hit => Number(hit.id))).toEqual([1]);
   });
 
-  it('rejects nested Array children without type_schema', async () => {
-    await expect(
-      client.createCollection({
+  it('round-trips Array children of a StructArray field', async () => {
+    const create = await client.createCollection({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      consistency_level: 'Strong',
+      fields: [
+        {
+          name: 'id',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'vector',
+          data_type: DataType.FloatVector,
+          dim: DIM,
+        },
+        {
+          name: 'items',
+          data_type: DataType.Array,
+          element_type: DataType.Struct,
+          max_capacity: 4,
+          fields: [
+            { name: 'label', data_type: DataType.VarChar, max_length: 16 },
+            {
+              name: 'tags',
+              data_type: DataType.Array,
+              element_type: DataType.VarChar,
+              max_capacity: 3,
+              max_length: 16,
+            },
+            {
+              name: 'nested',
+              data_type: DataType.Array,
+              element_type: DataType.Int64,
+              max_capacity: 2,
+            },
+          ],
+        },
+      ],
+    });
+    expectSuccess(create);
+    expectSuccess(
+      await client.createIndex({
         collection_name: NESTED_ARRAY_COLLECTION,
-        fields: [
+        field_name: 'vector',
+        index_type: IndexType.FLAT,
+        metric_type: MetricType.L2,
+      })
+    );
+    expectSuccess(
+      await client.loadCollectionSync({
+        collection_name: NESTED_ARRAY_COLLECTION,
+      })
+    );
+
+    const describe = await client.describeCollection({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      cache: false,
+    });
+    const items = describe.schema.fields.find(f => f.name === 'items')!;
+    expect(items.max_capacity).toEqual('4');
+    expect(items.fields!.find(f => f.name === 'tags')).toMatchObject({
+      data_type: 'Array',
+      element_type: 'VarChar',
+      max_capacity: '3',
+      max_length: '16',
+    });
+
+    const insert = await client.insert({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      data: [
+        {
+          id: 1,
+          vector: unitVector(0),
+          items: [
+            { label: 'a', tags: ['red', 'blue'], nested: [1, 2] },
+            { label: 'b', tags: [], nested: [3] },
+          ],
+        },
+        {
+          id: 2,
+          vector: unitVector(1),
+          items: [{ label: 'c', tags: ['green'], nested: [] }],
+        },
+        { id: 3, vector: unitVector(2), items: [] },
+      ],
+    });
+    expectSuccess(insert.status);
+    expect(Number(insert.insert_cnt)).toBe(3);
+
+    const query = await client.query({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      filter: 'id > 0',
+      output_fields: ['id', 'items'],
+    });
+    expectSuccess(query.status);
+    const byId = Object.fromEntries(
+      query.data.map(row => [Number(row.id), row.items])
+    );
+    expect(byId[1]).toEqual([
+      { label: 'a', tags: ['red', 'blue'], nested: ['1', '2'] },
+      { label: 'b', tags: [], nested: ['3'] },
+    ]);
+    expect(byId[2]).toEqual([{ label: 'c', tags: ['green'], nested: [] }]);
+    expect(byId[3]).toEqual([]);
+
+    const filtered = await client.query({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      filter: 'MATCH_ANY(items, ARRAY_CONTAINS($[tags], {tag}))',
+      exprValues: { tag: 'green' },
+      output_fields: ['id'],
+    });
+    expectSuccess(filtered.status);
+    expect(filtered.data.map(row => Number(row.id))).toEqual([2]);
+
+    const search = await client.search({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      data: unitVector(0),
+      limit: 1,
+      output_fields: ['items'],
+    });
+    expectSuccess(search.status);
+    expect(search.results[0].items[0].tags).toEqual(['red', 'blue']);
+
+    const upsert = await client.upsert({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      data: [
+        {
+          id: 2,
+          vector: unitVector(1),
+          items: [{ label: 'c', tags: ['green', 'gold'], nested: [7] }],
+        },
+      ],
+    });
+    expectSuccess(upsert.status);
+    const get = await client.get({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      ids: [2],
+      output_fields: ['items'],
+    });
+    expectSuccess(get.status);
+    expect(get.data[0].items).toEqual([
+      { label: 'c', tags: ['green', 'gold'], nested: ['7'] },
+    ]);
+
+    await expect(
+      client.insert({
+        collection_name: NESTED_ARRAY_COLLECTION,
+        data: [
           {
-            name: 'id',
-            data_type: DataType.Int64,
-            is_primary_key: true,
-          },
-          {
-            name: 'vector',
-            data_type: DataType.FloatVector,
-            dim: DIM,
-          },
-          {
-            name: 'items',
-            data_type: DataType.Array,
-            element_type: DataType.Struct,
-            max_capacity: 4,
-            fields: [
-              {
-                name: 'nested',
-                data_type: DataType.Array,
-                element_type: DataType.Int64,
-                max_capacity: 2,
-              },
-            ],
+            id: 4,
+            vector: unitVector(3),
+            items: [{ label: 'd', tags: ['x', null], nested: [] }],
           },
         ],
       })
-    ).rejects.toMatchObject({
-      error_code: ErrorCode.IllegalArgument,
-      // Older servers reject nested arrays outright; newer servers require type_schema.
-      reason: expect.stringMatching(
-        /nested array (?:is not supported|field nested must specify type_schema)/i
-      ),
+    ).rejects.toThrow('Array field tags does not allow null elements');
+  });
+
+  it('round-trips nullable Array children, iterators, and added struct fields', async () => {
+    const create = await client.createCollection({
+      collection_name: NULLABLE_NESTED_COLLECTION,
+      consistency_level: 'Strong',
+      fields: [
+        { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+        { name: 'vector', data_type: DataType.FloatVector, dim: DIM },
+        {
+          name: 'items',
+          data_type: DataType.Array,
+          element_type: DataType.Struct,
+          max_capacity: 4,
+          nullable: true,
+          fields: [
+            { name: 'label', data_type: DataType.VarChar, max_length: 16 },
+            {
+              name: 'tags',
+              data_type: DataType.Array,
+              element_type: DataType.VarChar,
+              max_capacity: 3,
+              max_length: 16,
+              nullable: true,
+            },
+            {
+              name: 'scores',
+              data_type: DataType.Array,
+              element_type: DataType.Int32,
+              max_capacity: 3,
+              element_nullable: true,
+            },
+          ],
+        },
+      ],
     });
+    expectSuccess(create);
+    expectSuccess(
+      await client.createIndex({
+        collection_name: NULLABLE_NESTED_COLLECTION,
+        field_name: 'vector',
+        index_type: IndexType.FLAT,
+        metric_type: MetricType.L2,
+      })
+    );
+    expectSuccess(
+      await client.loadCollectionSync({
+        collection_name: NULLABLE_NESTED_COLLECTION,
+      })
+    );
+
+    // describe reports the same nullability keys that create accepted
+    const describe = await client.describeCollection({
+      collection_name: NULLABLE_NESTED_COLLECTION,
+      cache: false,
+    });
+    const items = describe.schema.fields.find(f => f.name === 'items')!;
+    const describedChild = (name: string) =>
+      items.fields!.find(f => f.name === name);
+    expect(describedChild('tags')).toMatchObject({
+      nullable: true,
+      element_nullable: false,
+    });
+    expect(describedChild('scores')).toMatchObject({
+      nullable: false,
+      element_nullable: true,
+    });
+
+    const rows = [
+      {
+        id: 1,
+        vector: unitVector(0),
+        items: [
+          { label: 'a', tags: ['red'], scores: [1, null, 3] },
+          { label: 'b', tags: null, scores: [] },
+        ],
+      },
+      { id: 2, vector: unitVector(1), items: null },
+      { id: 3, vector: unitVector(2), items: [] },
+    ];
+    const insert = await client.insert({
+      collection_name: NULLABLE_NESTED_COLLECTION,
+      data: rows,
+    });
+    expectSuccess(insert.status);
+
+    const expected: Record<number, any> = {
+      1: [
+        { label: 'a', tags: ['red'], scores: [1, null, 3] },
+        { label: 'b', tags: null, scores: [] },
+      ],
+      2: null,
+      3: [],
+    };
+    const query = await client.query({
+      collection_name: NULLABLE_NESTED_COLLECTION,
+      filter: 'id > 0',
+      output_fields: ['id', 'items'],
+    });
+    expectSuccess(query.status);
+    expect(
+      Object.fromEntries(query.data.map(row => [Number(row.id), row.items]))
+    ).toEqual(expected);
+
+    const iterated = await drain(
+      await client.queryIterator({
+        collection_name: NULLABLE_NESTED_COLLECTION,
+        filter: 'id > 0',
+        output_fields: ['id', 'items'],
+        batchSize: 1,
+        limit: 3,
+      })
+    );
+    expect(
+      Object.fromEntries(iterated.map(row => [Number(row.id), row.items]))
+    ).toEqual(expected);
+
+    // a null where the level is not nullable is rejected client-side
+    await expect(
+      client.insert({
+        collection_name: NULLABLE_NESTED_COLLECTION,
+        data: [
+          {
+            id: 4,
+            vector: unitVector(3),
+            items: [{ label: 'c', tags: ['x', null], scores: [] }],
+          },
+        ],
+      })
+    ).rejects.toThrow('Array field tags does not allow null elements');
+
+    // add a StructArray field with an Array child to the existing collection
+    expectSuccess(
+      await client.addCollectionField({
+        collection_name: NULLABLE_NESTED_COLLECTION,
+        field: {
+          name: 'extra',
+          data_type: DataType.Array,
+          element_type: DataType.Struct,
+          max_capacity: 2,
+          nullable: true,
+          fields: [
+            {
+              name: 'codes',
+              data_type: DataType.Array,
+              element_type: DataType.Int64,
+              max_capacity: 2,
+            },
+          ],
+        },
+      })
+    );
+    const added = await client.insert({
+      collection_name: NULLABLE_NESTED_COLLECTION,
+      data: [
+        {
+          id: 5,
+          vector: unitVector(4),
+          items: [],
+          extra: [{ codes: [7, 8] }],
+        },
+      ],
+    });
+    expectSuccess(added.status);
+    const addedGet = await client.get({
+      collection_name: NULLABLE_NESTED_COLLECTION,
+      ids: [5],
+      output_fields: ['extra'],
+    });
+    expectSuccess(addedGet.status);
+    expect(addedGet.data[0].extra).toEqual([{ codes: ['7', '8'] }]);
   });
 
   it('supports element-level filter, query, and same-named struct paths', async () => {

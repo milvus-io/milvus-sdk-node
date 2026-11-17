@@ -302,6 +302,64 @@ export const formatFunctionSchema = (
 };
 
 /**
+ * Builds the nested `TypeSchema` for an Array sub-field of a StructArray field.
+ * Level 1 is the struct row (struct max_capacity), level 2 is the sub-field's
+ * own array (its max_capacity), level 3 is the leaf scalar (e.g. max_length).
+ *
+ * @param {FieldType} field - The Array sub-field.
+ * @param {TypeParam | undefined} structMaxCapacity - The struct's max_capacity.
+ * @param {boolean} rowNullable - Whether the struct field is nullable.
+ * @returns {Object} The TypeSchema payload (protobufjs, camelCase).
+ */
+export const buildStructArraySubFieldTypeSchema = (
+  field: FieldType,
+  structMaxCapacity: TypeParam | undefined,
+  rowNullable: boolean
+) => {
+  if (typeof field.element_type === 'undefined') {
+    throw new Error(
+      `element_type is required for Array sub-field ${field.name}`
+    );
+  }
+  const leafType = convertToDataType(field.element_type);
+  if (leafType === DataType.Array || leafType === DataType.Struct) {
+    throw new Error(
+      `Array sub-field ${field.name} only supports scalar element types`
+    );
+  }
+  const innerCapacity = field.max_capacity ?? field.type_params?.max_capacity;
+  if (typeof innerCapacity === 'undefined') {
+    throw new Error(
+      `max_capacity is required for Array sub-field ${field.name}`
+    );
+  }
+  const maxLength = field.max_length ?? field.type_params?.max_length;
+  const toParams = (params: Record<string, TypeParam | undefined>) => {
+    const defined: Record<string, TypeParam> = {};
+    Object.keys(params).forEach(key => {
+      if (typeof params[key] !== 'undefined') {
+        defined[key] = params[key]!;
+      }
+    });
+    return parseToKeyValue(defined, true);
+  };
+
+  return {
+    nullable: rowNullable,
+    typeParams: toParams({ max_capacity: structMaxCapacity }),
+    arrayElement: {
+      nullable: field.nullable === true,
+      typeParams: toParams({ max_capacity: innerCapacity }),
+      arrayElement: {
+        leafType,
+        nullable: field.element_nullable === true,
+        typeParams: toParams({ max_length: maxLength }),
+      },
+    },
+  };
+};
+
+/**
  * Formats a struct array field schema by converting its properties to the appropriate types and adding additional properties.
  *
  * @param {FieldType} field - The field to format.
@@ -324,6 +382,39 @@ export const formatStructArrayFieldSchema = (
     typeParams: parseToKeyValue(structTypeParams),
     fields: field.fields!.map((f: FieldType) => {
       const childDataType = convertToDataType(f.data_type as DataType)!;
+
+      // Array sub-field: Array<Array<scalar>> on the wire, described by type_schema
+      if (childDataType === DataType.Array) {
+        const typeSchema = buildStructArraySubFieldTypeSchema(
+          f,
+          maxCapacity,
+          field.nullable === true
+        );
+        const {
+          max_length,
+          element_nullable,
+          type_params: childTypeParams,
+          ...childRest
+        } = f;
+        const restTypeParams = { ...childTypeParams };
+        delete restTypeParams.max_length;
+        delete restTypeParams.max_capacity;
+        const childField: FieldType = {
+          ...childRest,
+          type_params: restTypeParams,
+          data_type: DataType.Array,
+          element_type: DataType.Array,
+          max_capacity: maxCapacity,
+          nullable: field.nullable === true,
+        };
+        const schema = formatFieldSchema(childField, schemaTypes) as any;
+        schema.typeSchema = typeSchema;
+        if (f.nullable === true) {
+          schema.elementNullable = true;
+        }
+        return schema;
+      }
+
       const childField: FieldType = {
         ...f,
         element_type: childDataType,

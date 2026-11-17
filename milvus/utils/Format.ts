@@ -289,6 +289,52 @@ export const cloneObj = <T>(obj: T): T => {
 };
 
 /**
+ * An Array sub-field of a StructArray field is described by a nested
+ * `type_schema` (struct row -> sub-field array -> leaf scalar). Expose it with
+ * the same keys and meanings as the create request, so a described field can
+ * be passed back to createCollection:
+ * - `element_type`, `max_capacity` and `max_length` of the sub-field's array
+ * - `nullable`: one struct element's array may be null
+ * - `element_nullable`: items inside that array may be null
+ * The raw `type_schema` is kept; its top-level `nullable` is the struct row's.
+ *
+ * @param {any} childField - The described struct sub-field, modified in place.
+ */
+export const formatStructArraySubField = (childField: any) => {
+  const inner = childField.type_schema?.array_element;
+  const leaf = inner?.array_element;
+  if (!inner || !leaf || typeof leaf.leaf_type === 'undefined') {
+    return;
+  }
+  const findParam = (params: KeyValuePair[] | undefined, key: string) =>
+    (params || []).find(keyValuePair => keyValuePair.key === key)?.value;
+
+  childField.data_type = 'Array';
+  childField.dataType = DataType.Array;
+  childField._placeholderType = DataType.Array;
+  childField.element_type = leaf.leaf_type;
+  childField.elementType = DataTypeMap[leaf.leaf_type];
+  childField.nullable = !!inner.nullable;
+  childField.element_nullable = !!leaf.nullable;
+
+  const innerCapacity = findParam(inner.type_params, 'max_capacity');
+  const maxLength = findParam(leaf.type_params, 'max_length');
+  [
+    ['max_capacity', innerCapacity],
+    ['max_length', maxLength],
+  ].forEach(([key, value]) => {
+    if (typeof value === 'undefined') {
+      return;
+    }
+    childField[key as string] = value;
+    childField.type_params = (childField.type_params || []).filter(
+      (keyValuePair: KeyValuePair) => keyValuePair.key !== key
+    );
+    childField.type_params.push({ key, value });
+  });
+};
+
+/**
  * Formats a `DescribeCollectionResponse` object by adding a `dataType` property to each field object in its `schema` array.
  * The `dataType` property represents the numerical value of the `data_type` property.
  *
@@ -399,6 +445,9 @@ export const formatDescribedCol = (
         childField.type_params = childField.type_params.filter(
           (keyValuePair: any) => keyValuePair.key !== 'max_capacity'
         );
+
+        // Array sub-field: expose its element type and own limits from type_schema
+        formatStructArraySubField(childField);
       });
     }
   };

@@ -237,6 +237,63 @@ describe('collection schema alteration', () => {
       expect(cache.has(cacheKey())).toBe(false);
     });
 
+    it('sends type_schema for Array sub-fields of an added StructArray field', async () => {
+      const { client, rpcClient } = createTestClient();
+      (rpcClient as any).AddCollectionStructField = jest.fn(
+        respondWith(successStatus)
+      );
+
+      const result = await client.addCollectionField({
+        collection_name: COLLECTION_NAME,
+        field: {
+          name: 'posts',
+          data_type: DataType.Array,
+          element_type: DataType.Struct,
+          max_capacity: 5,
+          nullable: true,
+          fields: [
+            { name: 'post_id', data_type: DataType.VarChar, max_length: 16 },
+            {
+              name: 'tags',
+              data_type: DataType.Array,
+              element_type: DataType.VarChar,
+              max_capacity: 4,
+              max_length: 16,
+              nullable: true,
+            },
+          ],
+        },
+      });
+
+      expect(result).toEqual(successStatus);
+      const request = (rpcClient as any).AddCollectionStructField.mock
+        .calls[0][0];
+      const [postId, tags] = request.struct_array_field_schema.fields;
+      expect(postId.type_schema).toBeUndefined();
+      expect(tags).toEqual(
+        expect.objectContaining({
+          name: 'tags',
+          data_type: DataType.Array,
+          element_type: DataType.Array,
+          nullable: true,
+          element_nullable: true,
+          type_schema: {
+            nullable: true,
+            type_params: [{ key: 'max_capacity', value: '5' }],
+            array_element: {
+              nullable: true,
+              type_params: [{ key: 'max_capacity', value: '4' }],
+              array_element: {
+                nullable: false,
+                leaf_type: DataType.VarChar,
+                type_params: [{ key: 'max_length', value: '16' }],
+              },
+            },
+          },
+        })
+      );
+    });
+
     it('falls back to AddCollectionField when alter schema rejects an external collection', async () => {
       const { client, rpcClient } = createTestClient();
       rpcClient.AlterCollectionSchema.mockImplementation(
