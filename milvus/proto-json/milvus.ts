@@ -524,6 +524,26 @@ export default {
                       "requestType": "ListRowPoliciesRequest",
                       "responseType": "ListRowPoliciesResponse"
                     },
+                    "UpdateRowPolicy": {
+                      "requestType": "UpdateRowPolicyRequest",
+                      "responseType": "common.Status"
+                    },
+                    "SetRLSPrincipalTags": {
+                      "requestType": "SetRLSPrincipalTagsRequest",
+                      "responseType": "common.Status"
+                    },
+                    "GetRLSPrincipalTags": {
+                      "requestType": "GetRLSPrincipalTagsRequest",
+                      "responseType": "GetRLSPrincipalTagsResponse"
+                    },
+                    "ListRLSPrincipals": {
+                      "requestType": "ListRLSPrincipalsRequest",
+                      "responseType": "ListRLSPrincipalsResponse"
+                    },
+                    "DeleteRLSPrincipalTags": {
+                      "requestType": "DeleteRLSPrincipalTagsRequest",
+                      "responseType": "common.Status"
+                    },
                     "UpdateReplicateConfiguration": {
                       "requestType": "UpdateReplicateConfigurationRequest",
                       "responseType": "common.Status"
@@ -578,6 +598,10 @@ export default {
                     "ExportSnapshot": {
                       "requestType": "ExportSnapshotRequest",
                       "responseType": "ExportSnapshotResponse"
+                    },
+                    "GetExportSnapshotState": {
+                      "requestType": "GetExportSnapshotStateRequest",
+                      "responseType": "GetExportSnapshotStateResponse"
                     },
                     "GetRestoreSnapshotState": {
                       "requestType": "GetRestoreSnapshotStateRequest",
@@ -1639,6 +1663,11 @@ export default {
                   }
                 },
                 "GetPartitionStatisticsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeGetStatistics",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
                   "fields": {
                     "base": {
                       "type": "common.MsgBase",
@@ -2454,6 +2483,14 @@ export default {
                       "options": {
                         "proto3_optional": true
                       }
+                    },
+                    "rls_principal": {
+                      "type": "string",
+                      "id": 10
+                    },
+                    "skip_rls": {
+                      "type": "bool",
+                      "id": 11
                     }
                   }
                 },
@@ -2669,6 +2706,14 @@ export default {
                       "rule": "repeated",
                       "type": "schema.FieldPartialUpdateOp",
                       "id": 11
+                    },
+                    "rls_principal": {
+                      "type": "string",
+                      "id": 12
+                    },
+                    "skip_rls": {
+                      "type": "bool",
+                      "id": 13
                     }
                   }
                 },
@@ -2768,6 +2813,14 @@ export default {
                       "options": {
                         "proto3_optional": true
                       }
+                    },
+                    "rls_principal": {
+                      "type": "string",
+                      "id": 10
+                    },
+                    "skip_rls": {
+                      "type": "bool",
+                      "id": 11
                     }
                   }
                 },
@@ -2812,6 +2865,11 @@ export default {
                       "options": {
                         "proto3_optional": true
                       }
+                    },
+                    "function_chains": {
+                      "rule": "repeated",
+                      "type": "schema.FunctionChain",
+                      "id": 8
                     }
                   }
                 },
@@ -2942,6 +3000,14 @@ export default {
                       "rule": "repeated",
                       "type": "schema.FunctionChain",
                       "id": 24
+                    },
+                    "rls_principal": {
+                      "type": "string",
+                      "id": 25
+                    },
+                    "skip_rls": {
+                      "type": "bool",
+                      "id": 26
                     }
                   }
                 },
@@ -3065,6 +3131,14 @@ export default {
                       "rule": "repeated",
                       "type": "schema.FunctionChain",
                       "id": 15
+                    },
+                    "rls_principal": {
+                      "type": "string",
+                      "id": 16
+                    },
+                    "skip_rls": {
+                      "type": "bool",
+                      "id": 17
                     }
                   }
                 },
@@ -3203,6 +3277,14 @@ export default {
                       "options": {
                         "proto3_optional": true
                       }
+                    },
+                    "rls_principal": {
+                      "type": "string",
+                      "id": 15
+                    },
+                    "skip_rls": {
+                      "type": "bool",
+                      "id": 16
                     }
                   }
                 },
@@ -3524,6 +3606,15 @@ export default {
                     "storage_version": {
                       "type": "int64",
                       "id": 8
+                    },
+                    "insert_channel": {
+                      "type": "string",
+                      "id": 9
+                    },
+                    "compaction_from": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 10
                     }
                   }
                 },
@@ -3540,6 +3631,11 @@ export default {
                     "collectionName": {
                       "type": "string",
                       "id": 3
+                    },
+                    "states": {
+                      "rule": "repeated",
+                      "type": "common.SegmentState",
+                      "id": 4
                     }
                   }
                 },
@@ -3887,6 +3983,18 @@ export default {
                     "compactionID": {
                       "type": "int64",
                       "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collection_id": {
+                      "type": "int64",
+                      "id": 4
                     }
                   }
                 },
@@ -3917,6 +4025,43 @@ export default {
                     "target": {
                       "type": "int64",
                       "id": 2
+                    },
+                    "plan_id": {
+                      "type": "int64",
+                      "id": 3
+                    },
+                    "trigger_id": {
+                      "type": "int64",
+                      "id": 4
+                    },
+                    "collection_id": {
+                      "type": "int64",
+                      "id": 5
+                    },
+                    "partition_id": {
+                      "type": "int64",
+                      "id": 6
+                    },
+                    "channel": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "type": {
+                      "type": "common.CompactionType",
+                      "id": 8
+                    },
+                    "state": {
+                      "type": "common.CompactionTaskState",
+                      "id": 9
+                    },
+                    "failure_reason": {
+                      "type": "string",
+                      "id": 10
+                    },
+                    "targets": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 11
                     }
                   }
                 },
@@ -5852,7 +5997,17 @@ export default {
                     "Search": 1,
                     "Insert": 2,
                     "Delete": 3,
-                    "Upsert": 4
+                    "Upsert": 4,
+                    "QueryIterator": 5,
+                    "SearchIterator": 6,
+                    "HybridSearch": 7
+                  }
+                },
+                "RowPolicyType": {
+                  "values": {
+                    "RowPolicyTypeUnknown": 0,
+                    "RowPolicyTypePermissive": 1,
+                    "RowPolicyTypeRestrictive": 2
                   }
                 },
                 "AddUserTagsRequest": {
@@ -5966,7 +6121,96 @@ export default {
                 "CreateRowPolicyRequest": {
                   "options": {
                     "(common.privilege_ext_obj).object_type": "Collection",
-                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCreateOwnership",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeManageRLS",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "oneofs": {
+                    "_policy_type": {
+                      "oneof": [
+                        "policy_type"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "policy_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "actions": {
+                      "rule": "repeated",
+                      "type": "RowPolicyAction",
+                      "id": 5
+                    },
+                    "roles": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 6,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "using_expr": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "check_expr": {
+                      "type": "string",
+                      "id": 8
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 9
+                    },
+                    "policy_type": {
+                      "type": "RowPolicyType",
+                      "id": 10,
+                      "options": {
+                        "proto3_optional": true
+                      }
+                    }
+                  }
+                },
+                "DropRowPolicyRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeManageRLS",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "policy_name": {
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "UpdateRowPolicyRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeManageRLS",
                     "(common.privilege_ext_obj).object_name_index": 3
                   },
                   "fields": {
@@ -5994,7 +6238,10 @@ export default {
                     "roles": {
                       "rule": "repeated",
                       "type": "string",
-                      "id": 6
+                      "id": 6,
+                      "options": {
+                        "deprecated": true
+                      }
                     },
                     "using_expr": {
                       "type": "string",
@@ -6007,38 +6254,17 @@ export default {
                     "description": {
                       "type": "string",
                       "id": 9
-                    }
-                  }
-                },
-                "DropRowPolicyRequest": {
-                  "options": {
-                    "(common.privilege_ext_obj).object_type": "Collection",
-                    "(common.privilege_ext_obj).object_privilege": "PrivilegeDropOwnership",
-                    "(common.privilege_ext_obj).object_name_index": 3
-                  },
-                  "fields": {
-                    "base": {
-                      "type": "common.MsgBase",
-                      "id": 1
                     },
-                    "db_name": {
-                      "type": "string",
-                      "id": 2
-                    },
-                    "collection_name": {
-                      "type": "string",
-                      "id": 3
-                    },
-                    "policy_name": {
-                      "type": "string",
-                      "id": 4
+                    "policy_type": {
+                      "type": "RowPolicyType",
+                      "id": 10
                     }
                   }
                 },
                 "ListRowPoliciesRequest": {
                   "options": {
                     "(common.privilege_ext_obj).object_type": "Collection",
-                    "(common.privilege_ext_obj).object_privilege": "PrivilegeSelectOwnership",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeViewRLS",
                     "(common.privilege_ext_obj).object_name_index": 3
                   },
                   "fields": {
@@ -6070,7 +6296,10 @@ export default {
                     "roles": {
                       "rule": "repeated",
                       "type": "string",
-                      "id": 3
+                      "id": 3,
+                      "options": {
+                        "deprecated": true
+                      }
                     },
                     "using_expr": {
                       "type": "string",
@@ -6087,6 +6316,10 @@ export default {
                     "created_at": {
                       "type": "int64",
                       "id": 7
+                    },
+                    "policy_type": {
+                      "type": "RowPolicyType",
+                      "id": 8
                     }
                   }
                 },
@@ -6108,6 +6341,164 @@ export default {
                     "collection_name": {
                       "type": "string",
                       "id": 4
+                    }
+                  }
+                },
+                "SetRLSPrincipalTagsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeManageRLS",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "principal_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "tags": {
+                      "type": "string",
+                      "id": 5
+                    }
+                  }
+                },
+                "GetRLSPrincipalTagsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeViewRLS",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "principal_name": {
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "GetRLSPrincipalTagsResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "tags": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "principal_name": {
+                      "type": "string",
+                      "id": 5
+                    }
+                  }
+                },
+                "ListRLSPrincipalsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeViewRLS",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "count": {
+                      "type": "bool",
+                      "id": 4
+                    }
+                  }
+                },
+                "ListRLSPrincipalsResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "principal_names": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 2
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "principal_cnt": {
+                      "type": "int64",
+                      "id": 5
+                    }
+                  }
+                },
+                "DeleteRLSPrincipalTagsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Collection",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeManageRLS",
+                    "(common.privilege_ext_obj).object_name_index": 3
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "principal_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "tag_keys": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 5
                     }
                   }
                 },
@@ -6423,6 +6814,11 @@ export default {
                       "rule": "repeated",
                       "type": "string",
                       "id": 2
+                    },
+                    "snapshot_summaries": {
+                      "rule": "repeated",
+                      "type": "SnapshotSummary",
+                      "id": 3
                     }
                   }
                 },
@@ -6615,7 +7011,14 @@ export default {
                     },
                     "snapshot_metadata_uri": {
                       "type": "string",
-                      "id": 2
+                      "id": 2,
+                      "options": {
+                        "deprecated": true
+                      }
+                    },
+                    "job_id": {
+                      "type": "int64",
+                      "id": 3
                     }
                   }
                 },
@@ -7253,6 +7656,120 @@ export default {
                       "id": 2
                     }
                   }
+                },
+                "ExportSnapshotState": {
+                  "values": {
+                    "ExportSnapshotNone": 0,
+                    "ExportSnapshotPending": 1,
+                    "ExportSnapshotExecuting": 2,
+                    "ExportSnapshotCompleted": 3,
+                    "ExportSnapshotFailed": 4
+                  }
+                },
+                "ExportSnapshotInfo": {
+                  "fields": {
+                    "job_id": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "snapshot_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "state": {
+                      "type": "ExportSnapshotState",
+                      "id": 5
+                    },
+                    "progress": {
+                      "type": "int32",
+                      "id": 6
+                    },
+                    "reason": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "start_time": {
+                      "type": "uint64",
+                      "id": 8
+                    },
+                    "time_cost": {
+                      "type": "uint64",
+                      "id": 9
+                    },
+                    "total_files": {
+                      "type": "int64",
+                      "id": 10
+                    },
+                    "copied_files": {
+                      "type": "int64",
+                      "id": 11
+                    },
+                    "snapshot_metadata_uri": {
+                      "type": "string",
+                      "id": 12
+                    },
+                    "total_bytes": {
+                      "type": "int64",
+                      "id": 13
+                    }
+                  }
+                },
+                "GetExportSnapshotStateRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeExportSnapshot",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "job_id": {
+                      "type": "int64",
+                      "id": 2
+                    }
+                  }
+                },
+                "GetExportSnapshotStateResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "info": {
+                      "type": "ExportSnapshotInfo",
+                      "id": 2
+                    }
+                  }
+                },
+                "SnapshotSummary": {
+                  "fields": {
+                    "name": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "create_ts": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "description": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "create_utc_ts": {
+                      "type": "int64",
+                      "id": 4
+                    }
+                  }
                 }
               }
             },
@@ -7637,7 +8154,16 @@ export default {
                     "AlterCollectionSchema": 2200,
                     "RefreshExternalCollection": 2300,
                     "GetRefreshExternalCollectionProgress": 2301,
-                    "ListRefreshExternalCollectionJobs": 2302
+                    "ListRefreshExternalCollectionJobs": 2302,
+                    "CreateRowPolicy": 2400,
+                    "DropRowPolicy": 2401,
+                    "ListRowPolicies": 2402,
+                    "UpdateRowPolicy": 2403,
+                    "SetRLSPrincipalTags": 2404,
+                    "GetRLSPrincipalTags": 2405,
+                    "ListRLSPrincipals": 2406,
+                    "DeleteRLSPrincipalTags": 2407,
+                    "GetExportSnapshotState": 2111
                   }
                 },
                 "MsgBase": {
@@ -7727,6 +8253,43 @@ export default {
                     "Executing": 1,
                     "Completed": 2
                   }
+                },
+                "CompactionTaskState": {
+                  "values": {
+                    "CompactionTaskStateUnknown": 0,
+                    "CompactionTaskStateExecuting": 1,
+                    "CompactionTaskStatePipelining": 2,
+                    "CompactionTaskStateCompleted": 3,
+                    "CompactionTaskStateFailed": 4,
+                    "CompactionTaskStateTimeout": 5,
+                    "CompactionTaskStateAnalyzing": 6,
+                    "CompactionTaskStateIndexing": 7,
+                    "CompactionTaskStateCleaned": 8,
+                    "CompactionTaskStateMetaSaved": 9,
+                    "CompactionTaskStateStatistic": 10
+                  }
+                },
+                "CompactionType": {
+                  "values": {
+                    "CompactionTypeUndefined": 0,
+                    "CompactionTypeMerge": 2,
+                    "CompactionTypeMix": 3,
+                    "CompactionTypeSingle": 4,
+                    "CompactionTypeMinor": 5,
+                    "CompactionTypeMajor": 6,
+                    "CompactionTypeLevel0Delete": 7,
+                    "CompactionTypeClustering": 8,
+                    "CompactionTypeSort": 9,
+                    "CompactionTypePartitionKeySort": 10,
+                    "CompactionTypeClusteringPartitionKeySort": 11,
+                    "CompactionTypeBumpSchemaVersion": 12
+                  },
+                  "reserved": [
+                    [
+                      1,
+                      1
+                    ]
+                  ]
                 },
                 "ConsistencyLevel": {
                   "values": {
@@ -7844,7 +8407,11 @@ export default {
                     "PrivilegePinSnapshotData": 87,
                     "PrivilegeUnpinSnapshotData": 88,
                     "PrivilegeRestoreExternalSnapshot": 89,
-                    "PrivilegeExportSnapshot": 90
+                    "PrivilegeExportSnapshot": 90,
+                    "PrivilegeSkipRLS": 91,
+                    "PrivilegeViewRLS": 92,
+                    "PrivilegeManageRLS": 93,
+                    "PrivilegeImportBinlog": 94
                   }
                 },
                 "PrivilegeExt": {
@@ -8325,6 +8892,18 @@ export default {
                       "id": 7
                     }
                   }
+                },
+                "IDRange": {
+                  "fields": {
+                    "begin": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "end": {
+                      "type": "int64",
+                      "id": 2
+                    }
+                  }
                 }
               }
             },
@@ -8522,6 +9101,14 @@ export default {
                     "external_field": {
                       "type": "string",
                       "id": 17
+                    },
+                    "type_schema": {
+                      "type": "TypeSchema",
+                      "id": 18
+                    },
+                    "element_nullable": {
+                      "type": "bool",
+                      "id": 19
                     }
                   }
                 },
@@ -9145,6 +9732,11 @@ export default {
                     "time_data": {
                       "type": "TimeArray",
                       "id": 16
+                    },
+                    "valid_data": {
+                      "rule": "repeated",
+                      "type": "bool",
+                      "id": 17
                     }
                   }
                 },
@@ -9207,6 +9799,11 @@ export default {
                     "vector_array": {
                       "type": "VectorArray",
                       "id": 8
+                    },
+                    "valid_data": {
+                      "rule": "repeated",
+                      "type": "bool",
+                      "id": 9
                     }
                   }
                 },
@@ -9245,6 +9842,10 @@ export default {
                     "op": {
                       "type": "OpType",
                       "id": 2
+                    },
+                    "path": {
+                      "type": "string",
+                      "id": 3
                     }
                   },
                   "nested": {
@@ -9252,7 +9853,8 @@ export default {
                       "values": {
                         "REPLACE": 0,
                         "ARRAY_APPEND": 1,
-                        "ARRAY_REMOVE": 2
+                        "ARRAY_REMOVE": 2,
+                        "PATH_REPLACE": 3
                       }
                     }
                   }
@@ -9725,6 +10327,35 @@ export default {
                       "rule": "repeated",
                       "type": "TemplateArrayValue",
                       "id": 1
+                    }
+                  }
+                },
+                "TypeSchema": {
+                  "oneofs": {
+                    "kind": {
+                      "oneof": [
+                        "leaf_type",
+                        "array_element"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "leaf_type": {
+                      "type": "DataType",
+                      "id": 1
+                    },
+                    "array_element": {
+                      "type": "TypeSchema",
+                      "id": 2
+                    },
+                    "type_params": {
+                      "rule": "repeated",
+                      "type": "common.KeyValuePair",
+                      "id": 3
+                    },
+                    "nullable": {
+                      "type": "bool",
+                      "id": 4
                     }
                   }
                 }
@@ -10228,6 +10859,10 @@ export default {
                       "rule": "repeated",
                       "type": "string",
                       "id": 2
+                    },
+                    "pre_allocated_auto_ids": {
+                      "type": "common.IDRange",
+                      "id": 3
                     }
                   }
                 },
@@ -10271,6 +10906,10 @@ export default {
                     "jobID": {
                       "type": "int64",
                       "id": 9
+                    },
+                    "version": {
+                      "type": "int64",
+                      "id": 10
                     }
                   }
                 }

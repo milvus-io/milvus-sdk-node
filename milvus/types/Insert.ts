@@ -20,6 +20,7 @@ import {
   BFloat16Vector,
   Float16Vector,
   FieldPartialUpdateOpType,
+  TypeSchema,
 } from '../';
 
 // Represents the possible data types for a field(cell)
@@ -53,6 +54,7 @@ export interface _Field {
   nullable?: boolean;
   default_value?: FieldData;
   fieldMap: Map<string, _Field>; // for struct field
+  typeSchema?: TypeSchema; // for Array sub-fields of a struct field
 }
 
 // because in javascript, there is no float16 and bfloat16 type

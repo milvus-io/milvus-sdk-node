@@ -55,6 +55,8 @@ import {
   getDataKey,
   _Field,
   buildFieldData,
+  encodeTypedArrayNode,
+  FieldData,
   BinaryVector,
   RowData,
   CountReq,
@@ -88,6 +90,9 @@ import {
   withTelemetrySuppressed,
 } from '../';
 import { Collection } from './Collection';
+
+// schema.proto DataType.ArrayOfStruct, the wire type of a StructArray column
+const ARRAY_OF_STRUCT_DATA_TYPE = 200;
 
 // Detect function calls without treating quoted text as executable syntax.
 const hasElementFilterExpression = (expr: string): boolean => {
@@ -257,6 +262,15 @@ export class Data extends Collection {
                     nullable: field.nullable,
                     default_value: field.default_value,
                     fieldMap: new Map(),
+                    // Array sub-field: each element's value is itself an array.
+                    // Its described `nullable` is element-level; the column's
+                    // valid_data follows the struct row, as for other children
+                    ...(field.type_schema?.array_element?.array_element
+                      ? {
+                          typeSchema: field.type_schema,
+                          nullable: field.type_schema.nullable,
+                        }
+                      : {}),
                   },
                 ])
               );
@@ -510,6 +524,22 @@ export class Data extends Collection {
               keyValue = {
                 fields: buildColumnData(field.fieldMap),
               };
+            } else if (field.typeSchema) {
+              // Array sub-field of a struct: one nested array_data per row
+              keyValue = {
+                [dataKey]: {
+                  data: field.data
+                    .filter(v => v !== undefined)
+                    .map(row =>
+                      encodeTypedArrayNode(
+                        row as FieldData[],
+                        field.typeSchema!,
+                        field.name
+                      )
+                    ),
+                  element_type: DataType.Array,
+                },
+              };
             } else {
               keyValue = {
                 [dataKey]: {
@@ -538,7 +568,10 @@ export class Data extends Collection {
         }
 
         return {
-          type: field.type,
+          // a StructArray column is typed ArrayOfStruct on the wire; partial
+          // upsert rejects it as plain Array
+          type:
+            key === 'struct_arrays' ? ARRAY_OF_STRUCT_DATA_TYPE : field.type,
           field_name: field.name,
           is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
           [key]: keyValue,

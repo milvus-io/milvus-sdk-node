@@ -51,6 +51,16 @@ export type TypeParamKey =
   | 'multi_analyzer_params'
   | 'mmap.enabled';
 
+// recursive type description (schema.proto TypeSchema), returned from milvus
+// for Array sub-fields of a StructArray field
+export type TypeSchema = {
+  kind?: 'leaf_type' | 'array_element';
+  leaf_type?: keyof typeof DataType;
+  array_element?: TypeSchema;
+  type_params: KeyValuePair<TypeParamKey, TypeParam>[];
+  nullable: boolean;
+};
+
 // returned from milvus
 export type FieldSchema = {
   type_params: KeyValuePair<TypeParamKey, TypeParam>[];
@@ -72,6 +82,8 @@ export type FieldSchema = {
   is_function_output: boolean;
   external_field?: string;
   fields?: FieldSchema[];
+  type_schema?: TypeSchema | null;
+  element_nullable?: boolean;
 } & Partial<Record<TypeParamKey, TypeParam>>;
 
 // create collection
@@ -88,6 +100,8 @@ export type FieldType = {
   autoID?: boolean;
   default_value?: number | string | boolean;
   nullable?: boolean;
+  // Array sub-fields of a StructArray field only: allow null array elements
+  element_nullable?: boolean;
   external_field?: string;
   fields?: FieldType[];
 } & Partial<Record<TypeParamKey, TypeParam>>;

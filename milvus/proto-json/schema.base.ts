@@ -135,6 +135,14 @@ export default {
                     "externalField": {
                       "type": "string",
                       "id": 17
+                    },
+                    "typeSchema": {
+                      "type": "TypeSchema",
+                      "id": 18
+                    },
+                    "elementNullable": {
+                      "type": "bool",
+                      "id": 19
                     }
                   }
                 },
@@ -758,6 +766,11 @@ export default {
                     "timeData": {
                       "type": "TimeArray",
                       "id": 16
+                    },
+                    "validData": {
+                      "rule": "repeated",
+                      "type": "bool",
+                      "id": 17
                     }
                   }
                 },
@@ -820,6 +833,11 @@ export default {
                     "vectorArray": {
                       "type": "VectorArray",
                       "id": 8
+                    },
+                    "validData": {
+                      "rule": "repeated",
+                      "type": "bool",
+                      "id": 9
                     }
                   }
                 },
@@ -858,6 +876,10 @@ export default {
                     "op": {
                       "type": "OpType",
                       "id": 2
+                    },
+                    "path": {
+                      "type": "string",
+                      "id": 3
                     }
                   },
                   "nested": {
@@ -865,7 +887,8 @@ export default {
                       "values": {
                         "REPLACE": 0,
                         "ARRAY_APPEND": 1,
-                        "ARRAY_REMOVE": 2
+                        "ARRAY_REMOVE": 2,
+                        "PATH_REPLACE": 3
                       }
                     }
                   }
@@ -1340,6 +1363,35 @@ export default {
                       "id": 1
                     }
                   }
+                },
+                "TypeSchema": {
+                  "oneofs": {
+                    "kind": {
+                      "oneof": [
+                        "leafType",
+                        "arrayElement"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "leafType": {
+                      "type": "DataType",
+                      "id": 1
+                    },
+                    "arrayElement": {
+                      "type": "TypeSchema",
+                      "id": 2
+                    },
+                    "typeParams": {
+                      "rule": "repeated",
+                      "type": "common.KeyValuePair",
+                      "id": 3
+                    },
+                    "nullable": {
+                      "type": "bool",
+                      "id": 4
+                    }
+                  }
                 }
               }
             },
@@ -1724,7 +1776,16 @@ export default {
                     "AlterCollectionSchema": 2200,
                     "RefreshExternalCollection": 2300,
                     "GetRefreshExternalCollectionProgress": 2301,
-                    "ListRefreshExternalCollectionJobs": 2302
+                    "ListRefreshExternalCollectionJobs": 2302,
+                    "CreateRowPolicy": 2400,
+                    "DropRowPolicy": 2401,
+                    "ListRowPolicies": 2402,
+                    "UpdateRowPolicy": 2403,
+                    "SetRLSPrincipalTags": 2404,
+                    "GetRLSPrincipalTags": 2405,
+                    "ListRLSPrincipals": 2406,
+                    "DeleteRLSPrincipalTags": 2407,
+                    "GetExportSnapshotState": 2111
                   }
                 },
                 "MsgBase": {
@@ -1814,6 +1875,43 @@ export default {
                     "Executing": 1,
                     "Completed": 2
                   }
+                },
+                "CompactionTaskState": {
+                  "values": {
+                    "CompactionTaskStateUnknown": 0,
+                    "CompactionTaskStateExecuting": 1,
+                    "CompactionTaskStatePipelining": 2,
+                    "CompactionTaskStateCompleted": 3,
+                    "CompactionTaskStateFailed": 4,
+                    "CompactionTaskStateTimeout": 5,
+                    "CompactionTaskStateAnalyzing": 6,
+                    "CompactionTaskStateIndexing": 7,
+                    "CompactionTaskStateCleaned": 8,
+                    "CompactionTaskStateMetaSaved": 9,
+                    "CompactionTaskStateStatistic": 10
+                  }
+                },
+                "CompactionType": {
+                  "values": {
+                    "CompactionTypeUndefined": 0,
+                    "CompactionTypeMerge": 2,
+                    "CompactionTypeMix": 3,
+                    "CompactionTypeSingle": 4,
+                    "CompactionTypeMinor": 5,
+                    "CompactionTypeMajor": 6,
+                    "CompactionTypeLevel0Delete": 7,
+                    "CompactionTypeClustering": 8,
+                    "CompactionTypeSort": 9,
+                    "CompactionTypePartitionKeySort": 10,
+                    "CompactionTypeClusteringPartitionKeySort": 11,
+                    "CompactionTypeBumpSchemaVersion": 12
+                  },
+                  "reserved": [
+                    [
+                      1,
+                      1
+                    ]
+                  ]
                 },
                 "ConsistencyLevel": {
                   "values": {
@@ -1931,7 +2029,11 @@ export default {
                     "PrivilegePinSnapshotData": 87,
                     "PrivilegeUnpinSnapshotData": 88,
                     "PrivilegeRestoreExternalSnapshot": 89,
-                    "PrivilegeExportSnapshot": 90
+                    "PrivilegeExportSnapshot": 90,
+                    "PrivilegeSkipRLS": 91,
+                    "PrivilegeViewRLS": 92,
+                    "PrivilegeManageRLS": 93,
+                    "PrivilegeImportBinlog": 94
                   }
                 },
                 "PrivilegeExt": {
@@ -2410,6 +2512,18 @@ export default {
                     "searchSize": {
                       "type": "int64",
                       "id": 7
+                    }
+                  }
+                },
+                "IDRange": {
+                  "fields": {
+                    "begin": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "end": {
+                      "type": "int64",
+                      "id": 2
                     }
                   }
                 }
