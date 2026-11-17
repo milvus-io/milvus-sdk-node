@@ -1,0 +1,839 @@
+import { status as grpcStatus } from '@grpc/grpc-js';
+import {
+  checkSearchParams,
+  isInIgnoreRetryCodes,
+  isInvalidMessage,
+  ERROR_REASONS,
+  checkCollectionFields,
+  checkCollectionFieldsWithOptions,
+  checkTimeParam,
+  DataType,
+  FieldType,
+  checkCreateCollectionCompatibility,
+  CreateCollectionReq,
+  isVectorType,
+  MilvusClient,
+  CONNECT_STATUS,
+} from '../../milvus';
+
+describe('utils/validate', () => {
+  it('throws an error if vectors and vector are undefined', () => {
+    const data = {
+      collection_name: 'my_collection',
+    };
+
+    expect(() => checkSearchParams(data)).toThrowError(
+      ERROR_REASONS.VECTORS_OR_VECTOR_IS_MISSING
+    );
+  });
+
+  it('does not throw an error if vectors or vector is defined', () => {
+    const data1 = {
+      collection_name: 'my_collection',
+      data: [[]],
+    };
+
+    const data2 = {
+      collection_name: 'my_collection',
+      data: [],
+    };
+
+    expect(() => checkSearchParams(data1)).not.toThrow();
+    expect(() => checkSearchParams(data2)).not.toThrow();
+  });
+
+  it('code exists in codesToCheck array', () => {
+    expect(isInIgnoreRetryCodes(grpcStatus.DEADLINE_EXCEEDED)).toBe(true);
+  });
+
+  it('code does not exist in codesToCheck array', () => {
+    expect(isInIgnoreRetryCodes(1234)).toBe(false);
+  });
+
+  it('omit codesToCheck array', () => {
+    // The default codesToCheck array should include all gRPC status codes
+    expect(isInIgnoreRetryCodes(grpcStatus.OK)).toBe(true);
+    expect(isInIgnoreRetryCodes(1234)).toBe(false);
+  });
+
+  it('custom codesToCheck array', () => {
+    // Custom codesToCheck array
+    const customCodesToCheck = [
+      grpcStatus.DEADLINE_EXCEEDED,
+      grpcStatus.UNAUTHENTICATED,
+      grpcStatus.OK,
+    ];
+
+    expect(
+      isInIgnoreRetryCodes(grpcStatus.DEADLINE_EXCEEDED, customCodesToCheck)
+    ).toBe(true);
+    expect(
+      isInIgnoreRetryCodes(grpcStatus.PERMISSION_DENIED, customCodesToCheck)
+    ).toBe(false);
+  });
+
+  it('message is invalid', () => {
+    const invalidMessage = {
+      code: 1234,
+      status: { code: 5678 },
+    };
+    expect(isInvalidMessage(invalidMessage)).toBe(false);
+  });
+
+  it('message code matches codesToCheck', () => {
+    const validMessage = {
+      code: 2200,
+      status: undefined,
+    };
+    expect(isInvalidMessage(validMessage, [2200])).toBe(true);
+  });
+
+  it('message status code matches codesToCheck', () => {
+    const validMessage = {
+      code: 222,
+      status: { code: 2200 },
+    };
+    expect(isInvalidMessage(validMessage, [2200])).toBe(true);
+  });
+
+  it('message code and status code match codesToCheck', () => {
+    const validMessage = {
+      code: 2200,
+      status: { code: 2200 },
+    };
+    expect(isInvalidMessage(validMessage, [2200])).toBe(true);
+  });
+
+  it('should throw an error if a field is missing the data_type property', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        is_primary_key: true,
+      } as any,
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_MISS_DATA_TYPE
+    );
+  });
+
+  it('should throw an error if a primary key is missing or has an unsupported data type', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.Float,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_PRIMARY_KEY
+    );
+  });
+
+  it('should throw an error if a vector field is missing or has an unsupported data type', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST
+    );
+  });
+
+  it('should throw an error if a vector field is missing the dimension property', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.BinaryVector,
+        is_primary_key: false,
+      },
+      {
+        name: 'field2',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM
+    );
+  });
+
+  it('should throw an error if a binary vector field has a dimension that is not a multiple of 8', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.BinaryVector,
+        is_primary_key: false,
+        type_params: {
+          dim: 7,
+        },
+      },
+      {
+        name: 'field2',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_BINARY_DIM
+    );
+  });
+
+  it('should throw an error if a varchar field is missing the max_length property', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.VarChar,
+        is_primary_key: false,
+      },
+      {
+        name: 'field1',
+        data_type: 'BinaryVector',
+        is_primary_key: false,
+        type_params: {
+          dim: 7,
+        },
+      },
+      {
+        name: 'field2',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAX_LENGTH
+    );
+  });
+
+  it('should accept a Text field without max_length', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'content',
+        data_type: DataType.Text,
+      },
+      {
+        name: 'vector',
+        data_type: DataType.FloatVector,
+        dim: 4,
+      },
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should return true if all fields are valid', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'field1',
+        data_type: DataType.BinaryVector,
+        is_primary_key: false,
+        type_params: {
+          dim: 16,
+        },
+      },
+      {
+        name: 'field2',
+        data_type: DataType.VarChar,
+        is_primary_key: false,
+        type_params: {
+          max_length: 10,
+        },
+      },
+      {
+        name: 'field3',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should return true if vector field is in struct sub-field', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 128,
+          },
+          {
+            name: 'other_field',
+            data_type: DataType.Int32,
+          },
+        ],
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should return true if vector field is in array of struct sub-field', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'array_of_struct',
+        data_type: DataType.Array,
+        element_type: DataType.Struct,
+        max_capacity: 10,
+        fields: [
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 128,
+          },
+          {
+            name: 'other_field',
+            data_type: DataType.Int32,
+          },
+        ],
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should throw error if vector field in struct sub-field is missing dimension', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+          },
+        ],
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_DIM
+    );
+  });
+
+  it('should throw error if varchar field in struct sub-field is missing max_length', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 128,
+          },
+          {
+            name: 'varchar_field',
+            data_type: DataType.VarChar,
+          },
+        ],
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAX_LENGTH
+    );
+  });
+
+  it('should return true if vector field is in nested struct sub-field', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'nested_struct',
+            data_type: DataType.Struct,
+            fields: [
+              {
+                name: 'vector',
+                data_type: DataType.FloatVector,
+                dim: 128,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should return true if multiple vector fields exist in struct sub-fields', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'vector1',
+            data_type: DataType.FloatVector,
+            dim: 128,
+          },
+          {
+            name: 'vector2',
+            data_type: DataType.BinaryVector,
+            dim: 16,
+          },
+        ],
+      },
+    ];
+    expect(checkCollectionFields(fields)).toBe(true);
+  });
+
+  it('should throw error if no vector field exists in struct sub-fields', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'struct_field',
+        data_type: DataType.Struct,
+        fields: [
+          {
+            name: 'int_field',
+            data_type: DataType.Int32,
+          },
+          {
+            name: 'string_field',
+            data_type: DataType.VarChar,
+            max_length: 100,
+          },
+        ],
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.CREATE_COLLECTION_CHECK_VECTOR_FIELD_EXIST
+    );
+  });
+
+  it('should allow external collection fields without primary key or vector field', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'external_id',
+        data_type: DataType.Int64,
+        external_field: 'row_id',
+      },
+      {
+        name: 'title',
+        data_type: DataType.VarChar,
+        max_length: 100,
+        external_field: 'title',
+      },
+    ];
+
+    expect(
+      checkCollectionFieldsWithOptions(fields, { isExternalCollection: true })
+    ).toBe(true);
+  });
+
+  it('should still validate external collection field type parameters', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'title',
+        data_type: DataType.VarChar,
+        external_field: 'title',
+      },
+    ];
+
+    expect(() =>
+      checkCollectionFieldsWithOptions(fields, { isExternalCollection: true })
+    ).toThrowError(ERROR_REASONS.CREATE_COLLECTION_CHECK_MISS_MAX_LENGTH);
+  });
+
+  it('should throw an error if external collection enables auto id', async () => {
+    const milvusClient = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+
+    await expect(
+      milvusClient._createCollection({
+        collection_name: 'external_collection',
+        external_source: 's3://bucket/path',
+        auto_id: true,
+        fields: [
+          {
+            name: 'external_id',
+            data_type: DataType.Int64,
+            external_field: 'row_id',
+          },
+        ],
+      } as any)
+    ).rejects.toThrowError(ERROR_REASONS.CREATE_EXTERNAL_COLLECTION_AUTO_ID);
+
+    await expect(
+      milvusClient._createCollection({
+        collection_name: 'external_collection',
+        external_source: 's3://bucket/path',
+        fields: [
+          {
+            name: 'external_id',
+            data_type: DataType.Int64,
+            external_field: 'row_id',
+            autoID: true,
+          },
+        ],
+      })
+    ).rejects.toThrowError(ERROR_REASONS.CREATE_EXTERNAL_COLLECTION_AUTO_ID);
+  });
+
+  it('should throw an error if external collection defines primary key', async () => {
+    const milvusClient = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+
+    await expect(
+      milvusClient._createCollection({
+        collection_name: 'external_collection',
+        external_source: 's3://bucket/path',
+        fields: [
+          {
+            name: 'external_id',
+            data_type: DataType.Int64,
+            is_primary_key: true,
+            external_field: 'row_id',
+          },
+          {
+            name: 'vector',
+            data_type: DataType.FloatVector,
+            dim: 4,
+            external_field: 'vector',
+          },
+        ],
+      })
+    ).rejects.toThrowError(
+      ERROR_REASONS.CREATE_EXTERNAL_COLLECTION_PRIMARY_KEY
+    );
+  });
+
+  it('should call refresh external collection APIs with expected requests', async () => {
+    const grpcClient = {
+      RefreshExternalCollection: jest.fn((params, options, callback) =>
+        callback(null, {
+          status: { error_code: 'Success', reason: '' },
+          job_id: '42',
+        })
+      ),
+      GetRefreshExternalCollectionProgress: jest.fn(
+        (params, options, callback) =>
+          callback(null, {
+            status: { error_code: 'Success', reason: '' },
+            job_info: {
+              job_id: '42',
+              collection_name: 'external_collection',
+              state: 'RefreshCompleted',
+              progress: '100',
+              reason: '',
+              external_source: 's3://bucket/path',
+              start_time: '1',
+              end_time: '2',
+            },
+          })
+      ),
+      ListRefreshExternalCollectionJobs: jest.fn((params, options, callback) =>
+        callback(null, {
+          status: { error_code: 'Success', reason: '' },
+          jobs: [],
+        })
+      ),
+    };
+    const channelPool = {
+      acquire: jest.fn().mockResolvedValue(grpcClient),
+      release: jest.fn(),
+    };
+    const milvusClient = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    (milvusClient as any).channelPool = channelPool;
+
+    await expect(
+      milvusClient.refreshExternalCollection({} as any)
+    ).rejects.toThrowError(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
+
+    const refresh = await milvusClient.refreshExternalCollection({
+      db_name: 'default',
+      collection_name: 'external_collection',
+      external_source: 's3://bucket/path',
+      external_spec: '{"format":"parquet"}',
+    });
+    expect(refresh.job_id).toBe('42');
+    expect(grpcClient.RefreshExternalCollection).toHaveBeenCalledWith(
+      {
+        db_name: 'default',
+        collection_name: 'external_collection',
+        external_source: 's3://bucket/path',
+        external_spec: '{"format":"parquet"}',
+      },
+      expect.any(Object),
+      expect.any(Function)
+    );
+
+    await expect(
+      milvusClient.getRefreshExternalCollectionProgress({} as any)
+    ).rejects.toThrowError('The `job_id` property is missing.');
+
+    const progress = await milvusClient.getRefreshExternalCollectionProgress({
+      job_id: 42,
+    });
+    expect(progress.job_info.collection_name).toBe('external_collection');
+    expect(
+      grpcClient.GetRefreshExternalCollectionProgress
+    ).toHaveBeenCalledWith(
+      { job_id: 42 },
+      expect.any(Object),
+      expect.any(Function)
+    );
+
+    await milvusClient.listRefreshExternalCollectionJobs({
+      db_name: 'default',
+      collection_name: 'external_collection',
+    });
+    expect(grpcClient.ListRefreshExternalCollectionJobs).toHaveBeenCalledWith(
+      {
+        db_name: 'default',
+        collection_name: 'external_collection',
+      },
+      expect.any(Object),
+      expect.any(Function)
+    );
+  });
+
+  it(`should return true for a bigint input`, () => {
+    expect(checkTimeParam(BigInt(123))).toBe(true);
+  });
+
+  it(`should return true for a string input that can be converted to a number`, () => {
+    expect(checkTimeParam(`123`)).toBe(true);
+  });
+
+  it(`should return false for a string input that cannot be converted to a number`, () => {
+    expect(checkTimeParam(`abc`)).toBe(false);
+  });
+
+  it(`should return false for other types of input`, () => {
+    expect(checkTimeParam(null)).toBe(false);
+    expect(checkTimeParam(undefined)).toBe(false);
+    expect(checkTimeParam({})).toBe(false);
+    expect(checkTimeParam([])).toBe(false);
+    expect(checkTimeParam(() => {})).toBe(false);
+  });
+
+  it('throws an error if the SDK and server are incompatible', () => {
+    const data: CreateCollectionReq = {
+      collection_name: 'test_collection',
+      fields: [
+        {
+          name: 'test_field',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'test_field_2',
+          data_type: DataType.BinaryVector,
+          is_primary_key: false,
+          is_partition_key: false,
+          type_params: {
+            dim: 128,
+          },
+        },
+        {
+          name: 'test_field_3',
+          data_type: DataType.JSON,
+          is_primary_key: false,
+          is_partition_key: false,
+        },
+      ],
+    };
+
+    expect(() => checkCreateCollectionCompatibility(data)).toThrow(
+      `Your milvus server doesn't support JSON data type, please upgrade your server.`
+    );
+
+    const data2: CreateCollectionReq = {
+      collection_name: 'test_collection',
+      fields: [
+        {
+          name: 'test_field',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'test_field_2',
+          data_type: DataType.BinaryVector,
+          is_primary_key: false,
+          type_params: {
+            dim: 128,
+          },
+        },
+        {
+          name: 'test_field_3',
+          data_type: DataType.Int64,
+          is_primary_key: false,
+          is_partition_key: true,
+        },
+      ],
+    };
+    expect(() => checkCreateCollectionCompatibility(data2)).toThrow(
+      `Your milvus server doesn't support partition key, please upgrade your server.`
+    );
+
+    const data3: CreateCollectionReq = {
+      collection_name: 'test_collection',
+      fields: [
+        {
+          name: 'test_field',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'test_field_2',
+          data_type: DataType.BinaryVector,
+          is_primary_key: false,
+          is_partition_key: true,
+          type_params: {
+            dim: 128,
+          },
+        },
+      ],
+      enable_dynamic_field: true,
+    };
+
+    expect(() => checkCreateCollectionCompatibility(data3)).toThrow(
+      `Your milvus server doesn't support dynamic schema, please upgrade your server.`
+    );
+  });
+
+  it('does not throw an error if the SDK and server are compatible', () => {
+    const data: CreateCollectionReq = {
+      collection_name: 'test_collection',
+      fields: [
+        {
+          name: 'test_field',
+          data_type: DataType.Int64,
+          is_primary_key: true,
+        },
+        {
+          name: 'test_field_2',
+          data_type: DataType.BinaryVector,
+          is_primary_key: false,
+          is_partition_key: false,
+          type_params: {
+            dim: 128,
+          },
+        },
+        {
+          name: 'test_field_3',
+          data_type: DataType.Int32,
+          is_primary_key: false,
+          is_partition_key: false,
+        },
+      ],
+    };
+
+    expect(() => checkCreateCollectionCompatibility(data)).not.toThrow();
+  });
+
+  it('should return true for vector types', () => {
+    expect(isVectorType(DataType.BinaryVector)).toBe(true);
+    expect(isVectorType(DataType.FloatVector)).toBe(true);
+    expect(isVectorType(DataType.Float16Vector)).toBe(true);
+    expect(isVectorType(DataType.BFloat16Vector)).toBe(true);
+    expect(isVectorType(DataType.SparseFloatVector)).toBe(true);
+    expect(isVectorType(DataType.Int8Vector)).toBe(true);
+    expect(isVectorType(DataType.Int64)).toBe(false);
+    expect(isVectorType(DataType.Int8)).toBe(false);
+    expect(isVectorType(DataType.Int32)).toBe(false);
+  });
+});
+
+/** Old-server compatibility must reject unsupported features before issuing an RPC. */
+describe('client compatibility boundary', () => {
+  it.each(['dynamic fields', 'partition keys'])(
+    'rejects %s on pre-Connect servers',
+    async feature => {
+      const client = new MilvusClient({
+        address: 'localhost:19530',
+        __SKIP_CONNECT__: true,
+      });
+      client.connectStatus = CONNECT_STATUS.UNIMPLEMENTED;
+      const acquire = jest.spyOn(client.channelPool, 'acquire');
+      try {
+        await expect(
+          client.createCollection({
+            collection_name: 'compatibility',
+            fields: [
+              { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+              { name: 'vector', data_type: DataType.FloatVector, dim: 4 },
+              {
+                name: 'group',
+                data_type: DataType.VarChar,
+                max_length: 32,
+                is_partition_key: feature === 'partition keys',
+              },
+            ],
+            enable_dynamic_field: feature === 'dynamic fields',
+          })
+        ).rejects.toThrow(/server doesn't support/);
+        expect(acquire).not.toHaveBeenCalled();
+      } finally {
+        await client.closeConnection();
+      }
+    }
+  );
+  it.each([undefined, 'custom incompatibility reason'])(
+    'reports incompatibility with reason %p',
+    async message => {
+      const client = new MilvusClient({
+        address: 'localhost:19530',
+        __SKIP_CONNECT__: true,
+      });
+      client.connectStatus = CONNECT_STATUS.UNIMPLEMENTED;
+      try {
+        await expect(
+          client.checkCompatibility(message ? { message } : undefined)
+        ).rejects.toThrow(message || 'incompatible with the server');
+      } finally {
+        await client.closeConnection();
+      }
+    }
+  );
+});

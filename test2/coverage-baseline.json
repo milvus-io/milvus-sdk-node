@@ -1,0 +1,1588 @@
+{
+  "total": {
+    "statements": {
+      "total": 5209,
+      "covered": 5065,
+      "skipped": 0,
+      "pct": 97.23
+    },
+    "branches": {
+      "total": 3266,
+      "covered": 2996,
+      "skipped": 0,
+      "pct": 91.73
+    },
+    "functions": {
+      "total": 838,
+      "covered": 826,
+      "skipped": 0,
+      "pct": 98.56
+    },
+    "lines": {
+      "total": 4991,
+      "covered": 4856,
+      "skipped": 0,
+      "pct": 97.29
+    }
+  },
+  "milvus/HttpClient.ts": {
+    "statements": {
+      "total": 60,
+      "covered": 60,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 76,
+      "covered": 76,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 14,
+      "covered": 14,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 57,
+      "covered": 57,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/MilvusClient.ts": {
+    "statements": {
+      "total": 75,
+      "covered": 69,
+      "skipped": 0,
+      "pct": 92
+    },
+    "branches": {
+      "total": 35,
+      "covered": 29,
+      "skipped": 0,
+      "pct": 82.85
+    },
+    "functions": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 75,
+      "covered": 69,
+      "skipped": 0,
+      "pct": 92
+    }
+  },
+  "milvus/index.ts": {
+    "statements": {
+      "total": 8,
+      "covered": 8,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 8,
+      "covered": 8,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/types.ts": {
+    "statements": {
+      "total": 18,
+      "covered": 18,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 18,
+      "covered": 18,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/bulkwriter/BulkWriter.ts": {
+    "statements": {
+      "total": 147,
+      "covered": 143,
+      "skipped": 0,
+      "pct": 97.27
+    },
+    "branches": {
+      "total": 120,
+      "covered": 107,
+      "skipped": 0,
+      "pct": 89.16
+    },
+    "functions": {
+      "total": 18,
+      "covered": 18,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 135,
+      "covered": 135,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/bulkwriter/ColumnBuffer.ts": {
+    "statements": {
+      "total": 79,
+      "covered": 78,
+      "skipped": 0,
+      "pct": 98.73
+    },
+    "branches": {
+      "total": 53,
+      "covered": 53,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 11,
+      "covered": 11,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 72,
+      "covered": 71,
+      "skipped": 0,
+      "pct": 98.61
+    }
+  },
+  "milvus/bulkwriter/JsonFormatter.ts": {
+    "statements": {
+      "total": 100,
+      "covered": 95,
+      "skipped": 0,
+      "pct": 95
+    },
+    "branches": {
+      "total": 61,
+      "covered": 55,
+      "skipped": 0,
+      "pct": 90.16
+    },
+    "functions": {
+      "total": 10,
+      "covered": 10,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 92,
+      "covered": 89,
+      "skipped": 0,
+      "pct": 96.73
+    }
+  },
+  "milvus/bulkwriter/LocalStorage.ts": {
+    "statements": {
+      "total": 2,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 2,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/bulkwriter/ParquetFormatter.ts": {
+    "statements": {
+      "total": 140,
+      "covered": 133,
+      "skipped": 0,
+      "pct": 95
+    },
+    "branches": {
+      "total": 102,
+      "covered": 95,
+      "skipped": 0,
+      "pct": 93.13
+    },
+    "functions": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 131,
+      "covered": 125,
+      "skipped": 0,
+      "pct": 95.41
+    }
+  },
+  "milvus/bulkwriter/VolumeManager.ts": {
+    "statements": {
+      "total": 61,
+      "covered": 61,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 103,
+      "covered": 88,
+      "skipped": 0,
+      "pct": 85.43
+    },
+    "functions": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 56,
+      "covered": 56,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/bulkwriter/index.ts": {
+    "statements": {
+      "total": 12,
+      "covered": 12,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 6,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 33.33
+    },
+    "lines": {
+      "total": 6,
+      "covered": 6,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/const/client.ts": {
+    "statements": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 6,
+      "covered": 6,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/const/defaults.ts": {
+    "statements": {
+      "total": 22,
+      "covered": 22,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 22,
+      "covered": 22,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/const/error.ts": {
+    "statements": {
+      "total": 13,
+      "covered": 13,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 4,
+      "covered": 4,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 2,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 13,
+      "covered": 13,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/const/highLevel.ts": {
+    "statements": {
+      "total": 7,
+      "covered": 7,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 2,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/const/index.ts": {
+    "statements": {
+      "total": 5,
+      "covered": 5,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 5,
+      "covered": 5,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/const/limits.ts": {
+    "statements": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/const/milvus.ts": {
+    "statements": {
+      "total": 367,
+      "covered": 367,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 60,
+      "covered": 60,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 30,
+      "covered": 30,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 367,
+      "covered": 367,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/grpc/BaseClient.ts": {
+    "statements": {
+      "total": 66,
+      "covered": 65,
+      "skipped": 0,
+      "pct": 98.48
+    },
+    "branches": {
+      "total": 77,
+      "covered": 72,
+      "skipped": 0,
+      "pct": 93.5
+    },
+    "functions": {
+      "total": 3,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 66.66
+    },
+    "lines": {
+      "total": 66,
+      "covered": 65,
+      "skipped": 0,
+      "pct": 98.48
+    }
+  },
+  "milvus/grpc/Collection.ts": {
+    "statements": {
+      "total": 393,
+      "covered": 384,
+      "skipped": 0,
+      "pct": 97.7
+    },
+    "branches": {
+      "total": 311,
+      "covered": 289,
+      "skipped": 0,
+      "pct": 92.92
+    },
+    "functions": {
+      "total": 63,
+      "covered": 63,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 384,
+      "covered": 375,
+      "skipped": 0,
+      "pct": 97.65
+    }
+  },
+  "milvus/grpc/Data.ts": {
+    "statements": {
+      "total": 387,
+      "covered": 381,
+      "skipped": 0,
+      "pct": 98.44
+    },
+    "branches": {
+      "total": 355,
+      "covered": 339,
+      "skipped": 0,
+      "pct": 95.49
+    },
+    "functions": {
+      "total": 71,
+      "covered": 70,
+      "skipped": 0,
+      "pct": 98.59
+    },
+    "lines": {
+      "total": 382,
+      "covered": 376,
+      "skipped": 0,
+      "pct": 98.42
+    }
+  },
+  "milvus/grpc/Database.ts": {
+    "statements": {
+      "total": 19,
+      "covered": 19,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 24,
+      "covered": 21,
+      "skipped": 0,
+      "pct": 87.5
+    },
+    "functions": {
+      "total": 7,
+      "covered": 7,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 19,
+      "covered": 19,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/grpc/GrpcClient.ts": {
+    "statements": {
+      "total": 241,
+      "covered": 226,
+      "skipped": 0,
+      "pct": 93.77
+    },
+    "branches": {
+      "total": 134,
+      "covered": 114,
+      "skipped": 0,
+      "pct": 85.07
+    },
+    "functions": {
+      "total": 46,
+      "covered": 44,
+      "skipped": 0,
+      "pct": 95.65
+    },
+    "lines": {
+      "total": 238,
+      "covered": 223,
+      "skipped": 0,
+      "pct": 93.69
+    }
+  },
+  "milvus/grpc/MilvusIndex.ts": {
+    "statements": {
+      "total": 53,
+      "covered": 53,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 25,
+      "covered": 25,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 15,
+      "covered": 15,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 51,
+      "covered": 51,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/grpc/Partition.ts": {
+    "statements": {
+      "total": 47,
+      "covered": 45,
+      "skipped": 0,
+      "pct": 95.74
+    },
+    "branches": {
+      "total": 24,
+      "covered": 22,
+      "skipped": 0,
+      "pct": 91.66
+    },
+    "functions": {
+      "total": 10,
+      "covered": 10,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 47,
+      "covered": 45,
+      "skipped": 0,
+      "pct": 95.74
+    }
+  },
+  "milvus/grpc/Resource.ts": {
+    "statements": {
+      "total": 28,
+      "covered": 28,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 26,
+      "covered": 22,
+      "skipped": 0,
+      "pct": 84.61
+    },
+    "functions": {
+      "total": 8,
+      "covered": 8,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 27,
+      "covered": 27,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/grpc/User.ts": {
+    "statements": {
+      "total": 83,
+      "covered": 83,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 94,
+      "covered": 92,
+      "skipped": 0,
+      "pct": 97.87
+    },
+    "functions": {
+      "total": 30,
+      "covered": 30,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 83,
+      "covered": 83,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/Alias.ts": {
+    "statements": {
+      "total": 13,
+      "covered": 13,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 7,
+      "covered": 7,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 13,
+      "covered": 13,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/Collection.ts": {
+    "statements": {
+      "total": 43,
+      "covered": 43,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 7,
+      "covered": 6,
+      "skipped": 0,
+      "pct": 85.71
+    },
+    "functions": {
+      "total": 20,
+      "covered": 20,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 43,
+      "covered": 43,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/Database.ts": {
+    "statements": {
+      "total": 15,
+      "covered": 15,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 8,
+      "covered": 8,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 15,
+      "covered": 15,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/Import.ts": {
+    "statements": {
+      "total": 9,
+      "covered": 9,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 5,
+      "covered": 5,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 9,
+      "covered": 9,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/MilvusIndex.ts": {
+    "statements": {
+      "total": 15,
+      "covered": 15,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 8,
+      "covered": 8,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 15,
+      "covered": 15,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/Partition.ts": {
+    "statements": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 9,
+      "covered": 9,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/Role.ts": {
+    "statements": {
+      "total": 15,
+      "covered": 15,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 8,
+      "covered": 8,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 15,
+      "covered": 15,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/User.ts": {
+    "statements": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 9,
+      "covered": 9,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/Vector.ts": {
+    "statements": {
+      "total": 26,
+      "covered": 26,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 9,
+      "covered": 9,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 25,
+      "covered": 25,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/http/index.ts": {
+    "statements": {
+      "total": 9,
+      "covered": 9,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 9,
+      "covered": 9,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/telemetry/ClientTelemetry.ts": {
+    "statements": {
+      "total": 537,
+      "covered": 483,
+      "skipped": 0,
+      "pct": 89.94
+    },
+    "branches": {
+      "total": 317,
+      "covered": 251,
+      "skipped": 0,
+      "pct": 79.17
+    },
+    "functions": {
+      "total": 83,
+      "covered": 81,
+      "skipped": 0,
+      "pct": 97.59
+    },
+    "lines": {
+      "total": 525,
+      "covered": 473,
+      "skipped": 0,
+      "pct": 90.09
+    }
+  },
+  "milvus/telemetry/index.ts": {
+    "statements": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/types/Collection.ts": {
+    "statements": {
+      "total": 11,
+      "covered": 11,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 4,
+      "covered": 4,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 2,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 11,
+      "covered": 11,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/types/GlobalCluster.ts": {
+    "statements": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/types/Insert.ts": {
+    "statements": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/types/Search.ts": {
+    "statements": {
+      "total": 4,
+      "covered": 4,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 2,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 4,
+      "covered": 4,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/types/Volume.ts": {
+    "statements": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 2,
+      "covered": 2,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 3,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/types/index.ts": {
+    "statements": {
+      "total": 20,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 0
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 20,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 0
+    }
+  },
+  "milvus/utils/BloomFilter.ts": {
+    "statements": {
+      "total": 337,
+      "covered": 335,
+      "skipped": 0,
+      "pct": 99.4
+    },
+    "branches": {
+      "total": 40,
+      "covered": 37,
+      "skipped": 0,
+      "pct": 92.5
+    },
+    "functions": {
+      "total": 29,
+      "covered": 29,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 328,
+      "covered": 326,
+      "skipped": 0,
+      "pct": 99.39
+    }
+  },
+  "milvus/utils/Bytes.ts": {
+    "statements": {
+      "total": 161,
+      "covered": 161,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 55,
+      "covered": 55,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 25,
+      "covered": 25,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 139,
+      "covered": 139,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/utils/Connection.ts": {
+    "statements": {
+      "total": 7,
+      "covered": 7,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 7,
+      "covered": 7,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 6,
+      "covered": 6,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/utils/Data.ts": {
+    "statements": {
+      "total": 176,
+      "covered": 175,
+      "skipped": 0,
+      "pct": 99.43
+    },
+    "branches": {
+      "total": 146,
+      "covered": 138,
+      "skipped": 0,
+      "pct": 94.52
+    },
+    "functions": {
+      "total": 21,
+      "covered": 21,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 166,
+      "covered": 165,
+      "skipped": 0,
+      "pct": 99.39
+    }
+  },
+  "milvus/utils/Format.ts": {
+    "statements": {
+      "total": 175,
+      "covered": 175,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 103,
+      "covered": 99,
+      "skipped": 0,
+      "pct": 96.11
+    },
+    "functions": {
+      "total": 25,
+      "covered": 25,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 161,
+      "covered": 161,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/utils/Function.ts": {
+    "statements": {
+      "total": 148,
+      "covered": 146,
+      "skipped": 0,
+      "pct": 98.64
+    },
+    "branches": {
+      "total": 154,
+      "covered": 136,
+      "skipped": 0,
+      "pct": 88.31
+    },
+    "functions": {
+      "total": 26,
+      "covered": 26,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 137,
+      "covered": 135,
+      "skipped": 0,
+      "pct": 98.54
+    }
+  },
+  "milvus/utils/GlobalTopology.ts": {
+    "statements": {
+      "total": 102,
+      "covered": 101,
+      "skipped": 0,
+      "pct": 99.01
+    },
+    "branches": {
+      "total": 46,
+      "covered": 41,
+      "skipped": 0,
+      "pct": 89.13
+    },
+    "functions": {
+      "total": 19,
+      "covered": 18,
+      "skipped": 0,
+      "pct": 94.73
+    },
+    "lines": {
+      "total": 99,
+      "covered": 98,
+      "skipped": 0,
+      "pct": 98.98
+    }
+  },
+  "milvus/utils/Grpc.ts": {
+    "statements": {
+      "total": 36,
+      "covered": 36,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 5,
+      "covered": 5,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 11,
+      "covered": 11,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 33,
+      "covered": 33,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/utils/RoaringFilter.ts": {
+    "statements": {
+      "total": 229,
+      "covered": 227,
+      "skipped": 0,
+      "pct": 99.12
+    },
+    "branches": {
+      "total": 53,
+      "covered": 50,
+      "skipped": 0,
+      "pct": 94.33
+    },
+    "functions": {
+      "total": 14,
+      "covered": 14,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 210,
+      "covered": 208,
+      "skipped": 0,
+      "pct": 99.04
+    }
+  },
+  "milvus/utils/Schema.ts": {
+    "statements": {
+      "total": 142,
+      "covered": 140,
+      "skipped": 0,
+      "pct": 98.59
+    },
+    "branches": {
+      "total": 111,
+      "covered": 97,
+      "skipped": 0,
+      "pct": 87.38
+    },
+    "functions": {
+      "total": 17,
+      "covered": 17,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 132,
+      "covered": 130,
+      "skipped": 0,
+      "pct": 98.48
+    }
+  },
+  "milvus/utils/Search.ts": {
+    "statements": {
+      "total": 248,
+      "covered": 246,
+      "skipped": 0,
+      "pct": 99.19
+    },
+    "branches": {
+      "total": 351,
+      "covered": 335,
+      "skipped": 0,
+      "pct": 95.44
+    },
+    "functions": {
+      "total": 32,
+      "covered": 31,
+      "skipped": 0,
+      "pct": 96.87
+    },
+    "lines": {
+      "total": 232,
+      "covered": 230,
+      "skipped": 0,
+      "pct": 99.13
+    }
+  },
+  "milvus/utils/SearchAggregation.ts": {
+    "statements": {
+      "total": 121,
+      "covered": 121,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 83,
+      "covered": 76,
+      "skipped": 0,
+      "pct": 91.56
+    },
+    "functions": {
+      "total": 23,
+      "covered": 23,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 119,
+      "covered": 119,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/utils/Validate.ts": {
+    "statements": {
+      "total": 91,
+      "covered": 89,
+      "skipped": 0,
+      "pct": 97.8
+    },
+    "branches": {
+      "total": 83,
+      "covered": 80,
+      "skipped": 0,
+      "pct": 96.38
+    },
+    "functions": {
+      "total": 15,
+      "covered": 15,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 80,
+      "covered": 78,
+      "skipped": 0,
+      "pct": 97.5
+    }
+  },
+  "milvus/utils/index.ts": {
+    "statements": {
+      "total": 22,
+      "covered": 22,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    },
+    "functions": {
+      "total": 8,
+      "covered": 8,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 22,
+      "covered": 22,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "milvus/utils/logger.ts": {
+    "statements": {
+      "total": 4,
+      "covered": 4,
+      "skipped": 0,
+      "pct": 100
+    },
+    "branches": {
+      "total": 4,
+      "covered": 3,
+      "skipped": 0,
+      "pct": 75
+    },
+    "functions": {
+      "total": 1,
+      "covered": 1,
+      "skipped": 0,
+      "pct": 100
+    },
+    "lines": {
+      "total": 4,
+      "covered": 4,
+      "skipped": 0,
+      "pct": 100
+    }
+  }
+}

@@ -86,7 +86,7 @@ export type FieldType = {
   is_clustering_key?: boolean;
   type_params?: Partial<Record<TypeParamKey, TypeParam>>;
   autoID?: boolean;
-  default_value?: number | string;
+  default_value?: number | string | boolean;
   nullable?: boolean;
   external_field?: string;
   fields?: FieldType[];

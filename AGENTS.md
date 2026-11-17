@@ -5,7 +5,7 @@ This document provides essential instructions for AI agents operating within the
 ## 1. Project Overview & Structure
 - **Root Directory:** `/Users/ryjiang/workspace/milvus-sdk-node`
 - **Source Code:** `milvus/` (Top-level source directory, not `src/`)
-- **Tests:** `test/` (Subdirectories: `grpc`, `http`, `utils`, `build`)
+- **Tests:** `test2/` (Subdirectories: `unit`, `integration`, `e2e`, `package`)
 - **Build Output:** `dist/`
 - **Dependencies:** Managed via `yarn`.
 
@@ -21,7 +21,7 @@ This document provides essential instructions for AI agents operating within the
 - **Run All Tests:** `npm test`
 - **Run a Single Test File:**
   ```bash
-  NODE_ENV=dev npx jest test/grpc/YourTestFile.spec.ts
+  NODE_ENV=dev npx jest test2/integration/YourTestFile.spec.ts
   ```
   *Note: Always set `NODE_ENV=dev` to ensure correct configuration.*
 - **Run Tests with Coverage:** `npm run coverage`
@@ -78,7 +78,7 @@ This document provides essential instructions for AI agents operating within the
 1.  **Analyze:** Read `package.json` and related source files (`milvus/`) to understand context.
 2.  **Verify:** Before editing, run relevant tests to establish a baseline.
 3.  **Edit:** Make changes ensuring strict type safety and adherence to style.
-4.  **Test:** Run specific tests for the modified module. Create new tests in `test/` if adding features.
+4.  **Test:** Run specific tests for the modified module. Create new tests in `test2/` if adding features.
 5.  **Format:** Run `npx prettier --write <file>` on changed files.
 
 ## 5. Specific Rules
