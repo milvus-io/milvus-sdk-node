@@ -91,6 +91,9 @@ import {
 } from '../';
 import { Collection } from './Collection';
 
+// schema.proto DataType.ArrayOfStruct, the wire type of a StructArray column
+const ARRAY_OF_STRUCT_DATA_TYPE = 200;
+
 // Detect function calls without treating quoted text as executable syntax.
 const hasElementFilterExpression = (expr: string): boolean => {
   let quote: "'" | '"' | undefined;
@@ -565,7 +568,10 @@ export class Data extends Collection {
         }
 
         return {
-          type: field.type,
+          // a StructArray column is typed ArrayOfStruct on the wire; partial
+          // upsert rejects it as plain Array
+          type:
+            key === 'struct_arrays' ? ARRAY_OF_STRUCT_DATA_TYPE : field.type,
           field_name: field.name,
           is_dynamic: field.name === DEFAULT_DYNAMIC_FIELD,
           [key]: keyValue,

@@ -658,6 +658,24 @@ describe('StructArray advanced integration', () => {
       { label: 'c', tags: ['green', 'gold'], nested: ['7'] },
     ]);
 
+    // partial update rewrites only the struct array and keeps the vector
+    const partial = await client.upsert({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      partial_update: true,
+      data: [{ id: 1, items: [{ label: 'z', tags: ['new'], nested: [] }] }],
+    });
+    expectSuccess(partial.status);
+    const partialGet = await client.get({
+      collection_name: NESTED_ARRAY_COLLECTION,
+      ids: [1],
+      output_fields: ['vector', 'items'],
+    });
+    expectSuccess(partialGet.status);
+    expect(partialGet.data[0].items).toEqual([
+      { label: 'z', tags: ['new'], nested: [] },
+    ]);
+    expect(partialGet.data[0].vector).toEqual(unitVector(0));
+
     await expect(
       client.insert({
         collection_name: NESTED_ARRAY_COLLECTION,
