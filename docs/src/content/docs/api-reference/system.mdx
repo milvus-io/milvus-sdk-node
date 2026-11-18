@@ -63,6 +63,14 @@ if (!health.isHealthy) {
 
 These gRPC methods accept an optional timeout in milliseconds and were verified on Milvus 3.0.6.
 
+## Client telemetry administration
+
+Use `getClientTelemetry({ client_id, database, include_metrics })` to query server-reported client telemetry. The default gRPC loader returns counters and heartbeat timestamps as decimal strings.
+
+Use `pushClientCommand()` to queue a command. Pass `target_client_id` or `target_database` to scope delivery, and pass the payload as bytes. Use the returned `command_id` with `deleteClientCommand()` to remove the command. Milvus supports persistent `push_config` commands.
+
+Milvus 3.0.6 requires a root connection for these methods when authorization is enabled.
+
 ## runAnalyzer
 
 Test a text analyzer/tokenizer without inserting data.

@@ -2,7 +2,7 @@ import { ChannelOptions } from '@grpc/grpc-js';
 import { Options as LoaderOption } from '@grpc/proto-loader';
 import { Options } from 'generic-pool';
 import { GrpcTimeOut, KeyValuePair, ResStatus } from './Common';
-import type { TelemetryConfig } from '../telemetry';
+import type { TelemetryConfig, TelemetryMetric } from '../telemetry';
 
 /**
  * Configuration options for the Milvus client.
@@ -123,6 +123,70 @@ export interface DummyReq extends GrpcTimeOut {
 export interface DummyResponse {
   /** JSON string reporting the diagnostic result. */
   response: string;
+}
+
+export interface GetClientTelemetryReq extends GrpcTimeOut {
+  database?: string;
+  client_id?: string;
+  include_metrics?: boolean;
+}
+
+type TelemetryCounter = 'request_count' | 'success_count' | 'error_count';
+
+/** Metrics returned by the gRPC loader, with exact int64 counters. */
+export interface ClientTelemetryMetrics
+  extends Omit<TelemetryMetric, TelemetryCounter> {
+  request_count: string;
+  success_count: string;
+  error_count: string;
+}
+
+export interface ClientTelemetryInfo {
+  client_info: {
+    sdk_type: string;
+    sdk_version: string;
+    local_time: string;
+    user: string;
+    host: string;
+    reserved: Record<string, string>;
+  } | null;
+  last_heartbeat_time: string;
+  status: string;
+  databases: string[];
+  metrics: {
+    operation: string;
+    global: ClientTelemetryMetrics | null;
+    collection_metrics: Record<string, ClientTelemetryMetrics>;
+  }[];
+}
+
+export interface GetClientTelemetryResponse {
+  status: ResStatus;
+  clients: ClientTelemetryInfo[];
+  aggregated: ClientTelemetryMetrics | null;
+}
+
+export interface PushClientCommandReq extends GrpcTimeOut {
+  command_type: string;
+  /** Command payload as bytes or a base64 string. */
+  payload?: Uint8Array | string;
+  target_client_id?: string;
+  target_database?: string;
+  ttl_seconds?: number | string;
+  persistent?: boolean;
+}
+
+export interface PushClientCommandResponse {
+  status: ResStatus;
+  command_id: string;
+}
+
+export interface DeleteClientCommandReq extends GrpcTimeOut {
+  command_id: string;
+}
+
+export interface DeleteClientCommandResponse {
+  status: ResStatus;
 }
 
 export interface RunAnalyzerRequest {

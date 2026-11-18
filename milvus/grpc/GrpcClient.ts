@@ -23,6 +23,12 @@ import {
   DumpMessagesResponse,
   GetReplicateInfoReq,
   GetReplicateInfoResponse,
+  GetClientTelemetryReq,
+  GetClientTelemetryResponse,
+  PushClientCommandReq,
+  PushClientCommandResponse,
+  DeleteClientCommandReq,
+  DeleteClientCommandResponse,
   ReplicateStreamRequest,
   ReplicateStreamResponse,
   extractRequestMetadata,
@@ -97,7 +103,7 @@ export class GRPCClient extends User {
   // Store the gRPC service constructor for pool rebuild on failover
   private _MilvusService!: ServiceClientConstructor;
   private _ClientTelemetryService!: ServiceClientConstructor;
-  private telemetryClient?: Client;
+  private telemetryClient?: InstanceType<ServiceClientConstructor>;
   private nonRetryChannelOptions!: ChannelOptions;
   private readonly replicationStreams = new Set<ReplicateStream | DumpStream>();
   // Incremented whenever the live telemetry endpoint changes. The telemetry
@@ -337,7 +343,7 @@ export class GRPCClient extends User {
       let candidatePool:
         | ReturnType<GRPCClient['createChannelPool']>
         | undefined;
-      let candidateTelemetryClient: Client | undefined;
+      let candidateTelemetryClient: typeof this.telemetryClient;
       let candidateRefresher: TopologyRefresher | undefined;
       try {
         const token = this.config.token || '';
@@ -556,7 +562,7 @@ export class GRPCClient extends User {
     return pool;
   }
 
-  private createTelemetryClient(address: string): Client {
+  private createTelemetryClient(address: string) {
     return new this._ClientTelemetryService(
       formatAddress(address),
       this.creds,
@@ -585,19 +591,75 @@ export class GRPCClient extends User {
   }
 
   private sendTelemetryHeartbeat(request: Record<string, unknown>) {
-    return new Promise<any>((resolve, reject) => {
+    return this.callTelemetry('ClientHeartbeat', request, 10_000);
+  }
+
+  private callTelemetry<T>(
+    method:
+      | 'ClientHeartbeat'
+      | 'GetClientTelemetry'
+      | 'PushClientCommand'
+      | 'DeleteClientCommand',
+    request: object,
+    timeout: number
+  ): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
       if (!this.telemetryClient) {
         reject(new Error('telemetry client is not connected'));
         return;
       }
-      (this.telemetryClient as any).ClientHeartbeat(
+      const metadata = new Metadata();
+      const requestId = extractRequestMetadata(request)?.['client-request-id'];
+      if (requestId) {
+        metadata.set(METADATA.CLIENT_REQUEST_ID, requestId);
+      }
+      const deadline = new Date(
+        Date.now() + (timeout === 0 ? 86_400_000 : timeout)
+      );
+      this.telemetryClient[method](
         request,
-        new Metadata(),
-        { deadline: new Date(Date.now() + 10_000) },
-        (error: any, response: any) =>
+        metadata,
+        { deadline },
+        (error: Error | null, response: T) =>
           error ? reject(error) : resolve(response)
       );
     });
+  }
+
+  /** Lists connected clients and optionally their aggregated telemetry metrics. */
+  async getClientTelemetry(
+    data: GetClientTelemetryReq = {}
+  ): Promise<GetClientTelemetryResponse> {
+    await this.connectPromise;
+    return this.callTelemetry(
+      'GetClientTelemetry',
+      data,
+      data.timeout ?? this.timeout
+    );
+  }
+
+  /** Queues a telemetry command for the selected clients or database. */
+  async pushClientCommand(
+    data: PushClientCommandReq
+  ): Promise<PushClientCommandResponse> {
+    await this.connectPromise;
+    return this.callTelemetry(
+      'PushClientCommand',
+      data,
+      data.timeout ?? this.timeout
+    );
+  }
+
+  /** Removes a previously queued or persistent telemetry command. */
+  async deleteClientCommand(
+    data: DeleteClientCommandReq
+  ): Promise<DeleteClientCommandResponse> {
+    await this.connectPromise;
+    return this.callTelemetry(
+      'DeleteClientCommand',
+      data,
+      data.timeout ?? this.timeout
+    );
   }
 
   /** Returns the telemetry manager for inspection and custom command handlers. */
