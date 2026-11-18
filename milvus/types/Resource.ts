@@ -1,6 +1,7 @@
 import {
   GrpcTimeOut,
   resStatusResponse,
+  ResStatus,
   collectionNameReq,
   KeyValuePair,
 } from './Common';
@@ -95,3 +96,63 @@ export interface GetReplicateConfigurationReq extends GrpcTimeOut {}
 export interface GetReplicateConfigurationResponse extends resStatusResponse {
   configuration: ReplicateConfiguration;
 }
+
+export interface ReplicateMessageId {
+  id: string;
+  WAL_name: 'Unknown' | 'RocksMQ' | 'Pulsar' | 'Kafka' | 'WoodPecker' | 'Test';
+}
+
+export interface ReplicateCheckpoint {
+  cluster_id: string;
+  pchannel: string;
+  message_id: ReplicateMessageId | null;
+  /** Source time tick, returned as a decimal string by default. */
+  time_tick: string;
+}
+
+export interface GetReplicateInfoReq extends GrpcTimeOut {
+  target_pchannel: string;
+  source_cluster_id?: string;
+}
+
+export interface GetReplicateInfoResponse {
+  checkpoint: ReplicateCheckpoint | null;
+  salvage_checkpoint: ReplicateCheckpoint | null;
+}
+
+export interface ImmutableReplicateMessage {
+  id: ReplicateMessageId | null;
+  payload: Buffer;
+  properties: Record<string, string>;
+}
+
+export interface CreateReplicateStreamReq extends GrpcTimeOut {
+  /** The target cluster ID forwarded in gRPC metadata. */
+  cluster_id: string;
+}
+
+export interface ReplicateStreamRequest {
+  replicate_message: {
+    source_cluster_id: string;
+    message: ImmutableReplicateMessage;
+  };
+}
+
+export interface ReplicateStreamResponse {
+  response: 'replicate_confirmed_message_info';
+  replicate_confirmed_message_info: {
+    confirmed_time_tick: string;
+  };
+}
+
+export interface DumpMessagesReq extends GrpcTimeOut {
+  pchannel: string;
+  start_message_id: ReplicateMessageId;
+  start_timetick?: string | number;
+  end_timetick?: string | number;
+  include_start_message?: boolean;
+}
+
+export type DumpMessagesResponse =
+  | { response: 'message'; message: ImmutableReplicateMessage }
+  | { response: 'status'; status: ResStatus };

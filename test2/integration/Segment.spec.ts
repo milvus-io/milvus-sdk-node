@@ -1,3 +1,5 @@
+import { once } from 'events';
+import { status } from '@grpc/grpc-js';
 import { createClient } from '../support/client';
 import { expectHttpSuccess, expectSuccess } from '../support/assertions';
 import { waitFor } from '../support/wait';
@@ -33,11 +35,16 @@ const createCollectionParams = collectionSchema({
 });
 
 describe(`Segment API`, () => {
+  let writeStartTimestamp: string;
+
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);
     await milvusClient.createCollection(createCollectionParams);
 
+    const beforeWrite = await milvusClient.allocTimestamp();
+    expectSuccess(beforeWrite.status);
+    writeStartTimestamp = beforeWrite.timestamp;
     await milvusClient.insert({
       collection_name: COLLECTION_NAME,
       data: generateInsertData(createCollectionParams.fields, 1024),
@@ -173,6 +180,53 @@ describe(`Segment API`, () => {
     const response = await client.getQuotaMetrics();
     expectHttpSuccess(response);
     expect(JSON.parse(response.data)).toHaveProperty('QueryNodeMetrics');
+  });
+
+  it('reads replication metadata and WAL messages from Milvus', async () => {
+    const description = await milvusClient.describeCollection({
+      collection_name: COLLECTION_NAME,
+    });
+    expectSuccess(description.status);
+    const [pchannel] = description.physical_channel_names;
+    expect(pchannel).toBeTruthy();
+
+    const info = await milvusClient.getReplicateInfo({
+      target_pchannel: pchannel,
+      source_cluster_id: 'sdk_test_source',
+    });
+    expect(info).toEqual({ checkpoint: null, salvage_checkpoint: null });
+
+    const replication = await milvusClient.createReplicateStream({
+      cluster_id: 'sdk_test_target',
+      timeout: 5000,
+    });
+    const ended = once(replication, 'status');
+    replication.end();
+    expect((await ended)[0]).toMatchObject({ code: status.OK });
+
+    const end = await milvusClient.allocTimestamp();
+    expectSuccess(end.status);
+    // Zero is the beginning of this test's RocksMQ WAL. The time bound
+    // gives the server a finite range even when the channel is still active.
+    const dump = await milvusClient.dumpMessages({
+      pchannel,
+      start_message_id: { id: '0', WAL_name: 'RocksMQ' },
+      start_timetick: writeStartTimestamp,
+      end_timetick: end.timestamp,
+      timeout: 10000,
+    });
+    try {
+      for await (const entry of dump) {
+        expect(entry).toMatchObject({
+          response: 'message',
+          message: { payload: expect.any(Buffer) },
+        });
+        return;
+      }
+      throw new Error('The WAL did not return any messages');
+    } finally {
+      dump.cancel();
+    }
   });
 
   it(`loadBalance should throw LOAD_BALANCE_CHECK_PARAMS`, async () => {

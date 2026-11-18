@@ -3,6 +3,9 @@ import {
   ServiceClientConstructor,
   ChannelOptions,
   Client,
+  ClientDuplexStream,
+  ClientReadableStream,
+  CallOptions,
 } from '@grpc/grpc-js';
 import dayjs from 'dayjs';
 import { createPool } from 'generic-pool';
@@ -15,6 +18,14 @@ import {
   GetComponentStatesResponse,
   GrpcTimeOut,
   RegisterLinkResponse,
+  CreateReplicateStreamReq,
+  DumpMessagesReq,
+  DumpMessagesResponse,
+  GetReplicateInfoReq,
+  GetReplicateInfoResponse,
+  ReplicateStreamRequest,
+  ReplicateStreamResponse,
+  extractRequestMetadata,
   DEFAULT_MAX_RETRIES,
   DEFAULT_RETRY_DELAY,
   promisify,
@@ -52,6 +63,24 @@ import {
 } from '../';
 import { User } from './User';
 
+type ReplicateStream = ClientDuplexStream<
+  ReplicateStreamRequest,
+  ReplicateStreamResponse
+>;
+type DumpStream = ClientReadableStream<DumpMessagesResponse>;
+
+type ReplicationService = InstanceType<ServiceClientConstructor> & {
+  CreateReplicateStream(
+    metadata: Metadata,
+    options: CallOptions
+  ): ReplicateStream;
+  DumpMessages(
+    request: DumpMessagesReq,
+    metadata: Metadata,
+    options: CallOptions
+  ): DumpStream;
+};
+
 // default loader options
 export const LOADER_OPTIONS = {
   keepCase: true, // preserve field names
@@ -69,7 +98,8 @@ export class GRPCClient extends User {
   private _MilvusService!: ServiceClientConstructor;
   private _ClientTelemetryService!: ServiceClientConstructor;
   private telemetryClient?: Client;
-  private telemetryChannelOptions!: ChannelOptions;
+  private nonRetryChannelOptions!: ChannelOptions;
+  private readonly replicationStreams = new Set<ReplicateStream | DumpStream>();
   // Incremented whenever the live telemetry endpoint changes. The telemetry
   // manager uses this epoch to discard a response that arrives from an old
   // endpoint after a successful global-cluster failover.
@@ -177,10 +207,9 @@ export class GRPCClient extends User {
       interceptors.push(getTraceInterceptor());
     }
 
-    // Heartbeats are best-effort: keep auth/request metadata/trace propagation, but do not
-    // let the ordinary RPC retry interceptor turn one heartbeat into a retry burst. The
-    // telemetry manager owns its own next-heartbeat/backoff policy.
-    this.telemetryChannelOptions = {
+    // Heartbeats own their backoff policy. Streaming replication must not replay
+    // partially consumed streams. Both still need auth and request metadata.
+    this.nonRetryChannelOptions = {
       ...this.channelOptions,
       interceptors: [...interceptors],
     };
@@ -531,7 +560,7 @@ export class GRPCClient extends User {
     return new this._ClientTelemetryService(
       formatAddress(address),
       this.creds,
-      this.telemetryChannelOptions
+      this.nonRetryChannelOptions
     );
   }
 
@@ -685,6 +714,10 @@ export class GRPCClient extends User {
     const channelPool = this.channelPool;
 
     this.closePromise = (async () => {
+      for (const stream of this.replicationStreams) {
+        stream.cancel();
+      }
+
       try {
         this.telemetry.stop();
       } catch {
@@ -783,6 +816,87 @@ export class GRPCClient extends User {
       data,
       data.timeout ?? this.timeout
     );
+  }
+
+  /** Gets a secondary's live or post-failover salvage checkpoint for a physical channel. */
+  async getReplicateInfo(
+    data: GetReplicateInfoReq
+  ): Promise<GetReplicateInfoResponse> {
+    await this.connectPromise;
+    return promisify(
+      this.channelPool,
+      'GetReplicateInfo',
+      data,
+      data.timeout ?? this.timeout
+    );
+  }
+
+  /** Opens a duplex stream to send replication messages and receive acknowledgements. */
+  async createReplicateStream(
+    options: CreateReplicateStreamReq
+  ): Promise<ReplicateStream> {
+    return this.openReplicationStream(
+      options,
+      (client, metadata, callOptions) => {
+        metadata.set('cluster-id', options.cluster_id);
+        return client.CreateReplicateStream(metadata, callOptions);
+      }
+    );
+  }
+
+  /** Streams immutable WAL messages in the specified physical channel and time range. */
+  async dumpMessages(request: DumpMessagesReq): Promise<DumpStream> {
+    return this.openReplicationStream(
+      request,
+      (client, metadata, callOptions) =>
+        client.DumpMessages(request, metadata, callOptions)
+    );
+  }
+
+  private async openReplicationStream<T extends ReplicateStream | DumpStream>(
+    options: GrpcTimeOut,
+    start: (
+      client: ReplicationService,
+      metadata: Metadata,
+      callOptions: CallOptions
+    ) => T
+  ): Promise<T> {
+    await this.connectPromise;
+    if (this.closed) {
+      throw new Error('Milvus client is closed.');
+    }
+
+    const timeout = options.timeout ?? this.timeout;
+    const deadline = timeout === 0 ? Infinity : new Date(Date.now() + timeout);
+    const metadata = new Metadata();
+    const requestId = extractRequestMetadata(options)?.['client-request-id'];
+    if (requestId) {
+      metadata.set(METADATA.CLIENT_REQUEST_ID, requestId);
+    }
+    const client = new this._MilvusService(
+      formatAddress(this.config.address),
+      this.creds,
+      { ...this.nonRetryChannelOptions, 'grpc.enable_retries': 0 }
+    ) as ReplicationService;
+
+    try {
+      const stream = start(client, metadata, { deadline });
+      this.replicationStreams.add(stream);
+      const close = () => {
+        if (this.replicationStreams.delete(stream)) {
+          client.close();
+        }
+      };
+      stream.once('status', close);
+      stream.once('close', close);
+      // Prevent an unhandled error when the SDK closes a stream that the caller
+      // has stopped reading. The stream still emits the original error.
+      stream.on('error', close);
+      return stream;
+    } catch (error) {
+      client.close();
+      throw error;
+    }
   }
 
   /**

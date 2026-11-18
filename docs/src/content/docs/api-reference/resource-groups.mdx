@@ -305,3 +305,13 @@ console.log(config.configuration.clusters);
 - [API Reference overview](/milvus-sdk-node/api-reference)
 - [Resource Management guide](/milvus-sdk-node/management/resource-management)
 - [Collection Operations](/milvus-sdk-node/api-reference/collections)
+
+## Replication streams and WAL recovery
+
+Use `getReplicateInfo({ target_pchannel, source_cluster_id })` to read a live or salvage checkpoint. Either checkpoint may be `null`, including on a standalone primary without a matching salvage checkpoint.
+
+Use `createReplicateStream({ cluster_id })` to open a duplex gRPC stream to the target. Write `{ replicate_message: { source_cluster_id, message } }` and read `replicate_confirmed_message_info` acknowledgements. Call `end()` once there are no more messages to send. Each stream stays on the endpoint that opened it.
+
+Use `dumpMessages({ pchannel, start_message_id, start_timetick, end_timetick })` to read WAL messages from the old primary. Pass the salvage checkpoint's message ID and time tick as the starting position. Messages carry a binary `payload` and string `properties`. Use decimal strings for large time ticks.
+
+Both streams support `for await...of` and `cancel()`. The SDK uses its configured timeout by default. Pass `timeout: 0` to stream without a deadline. Closing the SDK closes its active streams. These RPCs were verified on Milvus 3.0.6.
