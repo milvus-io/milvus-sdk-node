@@ -181,6 +181,63 @@ describe('SearchAggregation API', () => {
     ]);
   });
 
+  it('returns REST bucket metrics, top hits, and subgroups for each query', async () => {
+    const http = new HttpClient({
+      endpoint: `http://${IP}`,
+      acceptInt64: false,
+    });
+    const result = await http.search({
+      collectionName: COLLECTION_NAME,
+      data: [
+        [1, 0],
+        [0.9, 0.1],
+      ],
+      annsField: 'vector',
+      outputFields: ['category', 'brand', 'price'],
+      limit: rows.length,
+      filter: 'in_stock == {available}',
+      exprParams: { available: true },
+      searchAggregation: {
+        fields: ['category'],
+        size: 2,
+        searchSize: 4,
+        metrics: { total_price: { op: 'sum', fieldName: 'price' } },
+        order: [{ key: 'total_price', direction: 'desc' }],
+        topHits: {
+          size: 2,
+          sort: [{ fieldName: 'price', direction: 'asc' }],
+        },
+        subAggregation: { fields: ['brand'], size: 2 },
+      },
+    });
+    expectHttpSuccess(result);
+    expect(result.aggTopks).toEqual([2, 2]);
+    expect(result.data).toHaveLength(2);
+    for (const query of result.data) {
+      expect(query.buckets.map(bucket => bucket.key[0].value)).toEqual([
+        'music',
+        'books',
+      ]);
+      const [music, books] = query.buckets;
+      expect(music).toMatchObject({
+        count: '4',
+        metrics: { total_price: '260' },
+      });
+      expect(books).toMatchObject({
+        count: '4',
+        metrics: { total_price: '100' },
+      });
+      expect(music.hits.map(hit => hit.price)).toEqual(['50', '60']);
+      expect(books.hits.map(hit => hit.price)).toEqual(['10', '20']);
+      for (const bucket of query.buckets) {
+        expect(
+          bucket.subGroups.map(group => group.key[0].value).sort()
+        ).toEqual(['acme', 'zen']);
+        expect(bucket.subGroups.map(group => group.count)).toEqual(['2', '2']);
+      }
+    }
+  });
+
   it('returns bucket metrics, top hits, and nested aggregation per query', async () => {
     const result = await milvusClient.search({
       collection_name: COLLECTION_NAME,

@@ -9,6 +9,10 @@ import type { FieldPartialUpdateOpName } from './Insert';
 import type { KeyValuePair } from './Common';
 import type { SegmentLevel } from '../const';
 import type { SparseVectorCSR, SparseVectorDic } from './DataTypes';
+import type {
+  AggregationDirection,
+  AggregationMetricOp,
+} from './SearchAggregation';
 type Fetch = (input: any, init?: any) => Promise<any>;
 
 // Class types
@@ -473,6 +477,7 @@ export interface HttpVectorSearchReq
   searchParams?: Record<string, any>;
   functionScore?: HttpFunctionScore;
   functionChains?: HttpFunctionChain[];
+  searchAggregation?: never;
 }
 
 export interface HttpVectorSearchByIdsReq
@@ -511,18 +516,70 @@ export interface HttpVectorHybridSearchReq
   functionChains?: HttpFunctionChain[];
 }
 
-type QueryResultWithDistance = {
-  distance: number | string;
-} & QueryResult;
+export interface HttpSearchAggregation {
+  fields: string[];
+  size: number;
+  searchSize?: number;
+  metrics?: Record<string, { op: AggregationMetricOp; fieldName: string }>;
+  order?: { key: string; direction: AggregationDirection }[];
+  topHits?: {
+    size: number;
+    sort?: { fieldName: string; direction: AggregationDirection }[];
+  };
+  subAggregation?: HttpSearchAggregation;
+}
 
-export interface HttpVectorSearchResponse extends HttpVectorQueryResponse {
-  data: QueryResultWithDistance | QueryResultWithDistance[];
-  topks: number[];
+export interface HttpVectorSearchAggregationReq
+  extends Omit<
+    HttpVectorSearchReq,
+    | 'searchAggregation'
+    | 'groupingField'
+    | 'groupSize'
+    | 'strictGroupSize'
+    | 'orderByFields'
+    | 'offset'
+  > {
+  searchAggregation: HttpSearchAggregation;
+}
+
+type HttpSearchAggregationValue = string | number | boolean | null;
+
+export interface HttpSearchAggregationBucket {
+  key: {
+    fieldName?: string;
+    fieldId?: string | number;
+    value?: HttpSearchAggregationValue;
+  }[];
+  count: string | number;
+  metrics: Record<string, HttpSearchAggregationValue>;
+  hits: (Record<string, unknown> & { distance?: number })[];
+  subGroups: HttpSearchAggregationBucket[];
+}
+
+interface HttpSearchMetrics {
   cost?: number;
   recalls?: number[];
   scanned_remote_bytes?: number;
   scanned_total_bytes?: number;
   cache_hit_ratio?: number;
+}
+
+export interface HttpVectorSearchAggregationResponse
+  extends HttpBaseResponse<{ buckets: HttpSearchAggregationBucket[] }[]>,
+    HttpSearchMetrics {
+  /** The number of buckets for each query vector, when returned by Milvus. */
+  aggTopks?: number[];
+}
+
+type QueryResultWithDistance = {
+  distance: number | string;
+} & QueryResult;
+
+export interface HttpVectorSearchResponse
+  extends HttpVectorQueryResponse,
+    HttpSearchMetrics {
+  data: QueryResultWithDistance | QueryResultWithDistance[];
+  topks: number[];
 }
 
 /* partition operation */

@@ -8,6 +8,8 @@ import {
   HttpVectorQueryResponse,
   HttpVectorSearchReq,
   HttpVectorSearchByIdsReq,
+  HttpVectorSearchAggregationReq,
+  HttpVectorSearchAggregationResponse,
   HttpVectorDeleteReq,
   HttpVectorSearchResponse,
   HttpBaseResponse,
@@ -73,12 +75,33 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       return await this.POST<HttpVectorQueryResponse>(url, data, options);
     }
 
+    /** Searches and returns bucket aggregations for each query input. */
+    search(
+      data: HttpVectorSearchAggregationReq,
+      options?: FetchOptions
+    ): Promise<HttpVectorSearchAggregationResponse>;
+
     /** Searches by input vectors, text, or stored primary keys. */
-    async search(
+    search(
       data: HttpVectorSearchReq | HttpVectorSearchByIdsReq,
       options?: FetchOptions
-    ): Promise<HttpVectorSearchResponse> {
+    ): Promise<HttpVectorSearchResponse>;
+
+    async search(
+      data:
+        | HttpVectorSearchReq
+        | HttpVectorSearchByIdsReq
+        | HttpVectorSearchAggregationReq,
+      options?: FetchOptions
+    ): Promise<HttpVectorSearchResponse | HttpVectorSearchAggregationResponse> {
       const url = `${this.vectorPrefix}/search`;
+      if (data.searchAggregation) {
+        return this.POST<HttpVectorSearchAggregationResponse>(
+          url,
+          data,
+          options
+        );
+      }
       const res = await this.POST<HttpVectorSearchResponse>(url, data, options);
 
       if (res.topks && res.topks.length > 1) {

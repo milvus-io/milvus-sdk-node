@@ -146,6 +146,8 @@ REST `search()` accepts a batch of vectors or text in `data`, or searches using 
 
 Use `functionChains` for REST search and hybrid reranking. A chain sends the protobuf stage name as a string such as `'FunctionChainStageL2Rerank'`, followed by its `ops`. In an expression argument, send a column as `{ column: '$score' }` or a JSON literal as `{ literal: 2 }`. Hybrid search accepts chains on the full request and on each sub-search. These options were verified on Milvus 3.0.6.
 
+Pass `searchAggregation` to `search()` to return buckets for each query vector. Set `fields` and `size`, and use `metrics`, `order`, `topHits`, or `subAggregation` to customize the buckets. The response returns each query's `buckets` in `data` and the corresponding counts in `aggTopks`. Int64 bucket values and counts are decimal strings with the default `acceptInt64: false`. Milvus 3.0.6 supports this option on vector search.
+
 ## Database APIs
 
 | Method                                    | Description                                |
