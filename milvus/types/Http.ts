@@ -6,6 +6,7 @@ import type {
   RestoreSnapshotState,
 } from './Collection';
 import type { FieldPartialUpdateOpName } from './Insert';
+import type { KeyValuePair } from './Common';
 type Fetch = (input: any, init?: any) => Promise<any>;
 
 // Class types
@@ -696,4 +697,54 @@ export interface HttpRefreshExternalCollectionJobInfo {
   startTime: string;
   endTime: string;
   reason?: string;
+}
+
+export interface HttpResourceGroupReq {
+  name: string;
+}
+
+export interface HttpResourceGroupConfig {
+  requests: { node_num: number };
+  limits: { node_num: number };
+  transfer_from?: { resource_group: string }[];
+  transfer_to?: { resource_group: string }[];
+  node_filter?: { node_labels: Record<string, string> };
+}
+
+export interface HttpCreateResourceGroupReq extends HttpResourceGroupReq {
+  config?: HttpResourceGroupConfig;
+}
+
+export interface HttpUpdateResourceGroupsReq {
+  resource_groups: Record<string, HttpResourceGroupConfig>;
+}
+
+export interface HttpTransferReplicaReq {
+  sourceRgName: string;
+  targetRgName: string;
+  collectionName: string;
+  replicaNum: number;
+}
+
+export interface HttpResourceGroupInfo {
+  name: string;
+  capacity?: number;
+  num_available_node?: number;
+  num_loaded_replica?: Record<string, number>;
+  num_outgoing_node?: Record<string, number>;
+  num_incoming_node?: Record<string, number>;
+  config?: {
+    requests?: { node_num?: number };
+    limits?: { node_num?: number };
+    transfer_from?: { resource_group: string }[];
+    transfer_to?: { resource_group: string }[];
+    node_filter?: { node_labels?: KeyValuePair[] };
+  };
+  nodes?: { node_id?: string; address?: string; hostname?: string }[];
+}
+
+export interface HttpDescribeResourceGroupResponse {
+  resource_group?: HttpResourceGroupInfo;
+  code?: number;
+  message?: string;
 }

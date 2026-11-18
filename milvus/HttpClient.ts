@@ -10,6 +10,7 @@ import {
   Alias,
   Import,
   Snapshot,
+  ResourceGroup,
 } from './http';
 import {
   DEFAULT_DB,
@@ -230,14 +231,17 @@ export class HttpBaseClient {
  * - MilvusIndex
  * - Import
  * - Snapshot
+ * - ResourceGroup
  * - Role
  * - User APIs.
  */
-export class HttpClient extends Snapshot(
-  User(
-    Role(
-      MilvusIndex(
-        Import(Alias(Partition(Collection(Database(Vector(HttpBaseClient))))))
+export class HttpClient extends ResourceGroup(
+  Snapshot(
+    User(
+      Role(
+        MilvusIndex(
+          Import(Alias(Partition(Collection(Database(Vector(HttpBaseClient))))))
+        )
       )
     )
   )
