@@ -7,7 +7,8 @@ module.exports = {
   testTimeout: 60000,
   // Database/collection fixtures are isolated; global administrative contracts run alone.
   runner: '<rootDir>/test2/support/runner.cjs',
-  maxWorkers: 2,
+  testSequencer: '<rootDir>/test2/support/sequencer.cjs',
+  maxWorkers: Number(process.env.MILVUS_TEST_WORKERS || 2),
   collectCoverageFrom: ['milvus/**/*.ts', '!milvus/proto-json/**'],
   coveragePathIgnorePatterns: ['/dist/', '/milvus/proto-json/'],
   coverageDirectory: '<rootDir>/coverage',

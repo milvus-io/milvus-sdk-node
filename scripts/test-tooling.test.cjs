@@ -5,6 +5,31 @@ const { tmpdir } = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
+test('sequencer schedules lifecycle specs early without dropping tests or reordering either group', () => {
+  const BaseSequencer = require('@jest/test-sequencer').default;
+  const SDKSequencer = require('../test2/support/sequencer.cjs');
+  const original = BaseSequencer.prototype.sort;
+  const tests = [
+    'unit/utils.Data.spec.ts',
+    'e2e/BulkWriterNullable.e2e.spec.ts',
+    'integration/User.spec.ts',
+    'e2e/VectorMatrix.spec.ts',
+    'package/Artifact.spec.ts',
+  ].map(file => ({ path: path.join(__dirname, '../test2', file) }));
+  try {
+    BaseSequencer.prototype.sort = input => input;
+    assert.deepEqual(new SDKSequencer().sort(tests), [
+      tests[1],
+      tests[3],
+      tests[0],
+      tests[2],
+      tests[4],
+    ]);
+  } finally {
+    BaseSequencer.prototype.sort = original;
+  }
+});
+
 test('SDK runner isolates global mutations, preserves all suites and honors serial reproduction', async () => {
   const BaseRunner = require('jest-runner').default;
   const SDKRunner = require('../test2/support/runner.cjs');
