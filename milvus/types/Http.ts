@@ -463,6 +463,36 @@ export interface HttpRoleBaseReq {
   roleName: string;
 }
 
+export interface HttpCreateRoleReq extends HttpRoleBaseReq {
+  description?: string;
+}
+
+export interface HttpAlterRoleReq extends HttpRoleBaseReq {
+  description: string;
+}
+
+export interface HttpDescribeRoleReq extends HttpRoleBaseReq {
+  dbName?: string;
+}
+
+export interface HttpRolePrivilegeV2Req extends HttpDescribeRoleReq {
+  collectionName: string;
+  privilege: string;
+}
+
+export interface HttpPrivilegeGroupReq {
+  privilegeGroupName: string;
+}
+
+export interface HttpOperatePrivilegeGroupReq extends HttpPrivilegeGroupReq {
+  privileges: string[];
+}
+
+export interface HttpPrivilegeGroupInfo extends HttpPrivilegeGroupReq {
+  /** Comma-separated privilege names returned by Milvus. */
+  privileges: string;
+}
+
 export interface HttpRolePrivilegeReq extends HttpRoleBaseReq {
   objectType: string;
   objectName: string;
@@ -470,7 +500,11 @@ export interface HttpRolePrivilegeReq extends HttpRoleBaseReq {
 }
 
 export interface HttpRoleDescribeResponse
-  extends HttpBaseResponse<HttpRolePrivilegeReq[]> {}
+  extends HttpBaseResponse<
+    (HttpRolePrivilegeReq & { dbName?: string; grantor?: string })[]
+  > {
+  description?: string;
+}
 
 /* index operation */
 export interface HttpIndexCreateReq extends HttpBaseReq {
