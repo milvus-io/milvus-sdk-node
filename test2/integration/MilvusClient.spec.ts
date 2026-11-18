@@ -257,7 +257,7 @@ describe(`Milvus client`, () => {
       __SKIP_CONNECT__: true,
     });
 
-    expect((client as any).telemetryChannelOptions.interceptors).toHaveLength(
+    expect((client as any).nonRetryChannelOptions.interceptors).toHaveLength(
       client.channelOptions.interceptors.length - 1
     );
   });
