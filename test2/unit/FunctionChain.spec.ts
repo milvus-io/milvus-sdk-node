@@ -16,6 +16,7 @@ import {
   RRFRanker,
 } from '../../milvus';
 import proto from '../../milvus/proto-json/milvus';
+import { FunctionChainStage as IndexedFunctionChainStage } from '../../milvus/types/index';
 
 const service = getGRPCService(
   { serviceName: 'milvus.proto.milvus.MilvusService' },
@@ -42,6 +43,21 @@ function decodeRequest(method: string, request: object) {
 }
 
 describe('FunctionChain builder', () => {
+  it('exports the same stage enum from the SDK and types entry points', () => {
+    expect(IndexedFunctionChainStage).toBe(FunctionChainStage);
+  });
+
+  it('maps a custom expression with no positional arguments', () => {
+    const expr = { name: 'custom_expr' };
+    const chain = new FunctionChain(FunctionChainStage.L2_RERANK).map(
+      '$score',
+      expr
+    );
+    expect(chain.toProto().ops).toEqual([
+      { op: 'map', expr, outputs: ['$score'] },
+    ]);
+  });
+
   it('encodes ordered operations, numeric oneofs, and the tie-break column', () => {
     const chain = new FunctionChain(FunctionChainStage.L2_RERANK, {
       name: 'fresh',
@@ -211,8 +227,14 @@ describe('FunctionChain builder', () => {
     expect(() => fn.roundDecimal('$score', { decimal: 4 })).toThrow(
       'col("field")'
     );
+    expect(() => fn.roundDecimal(null as never, { decimal: 4 })).toThrow(
+      'col("field")'
+    );
     expect(() =>
       fn.numCombine([col('a'), col('b')], { mode: 'weighted', weights: [1] })
+    ).toThrow('column count');
+    expect(() =>
+      fn.numCombine([col('a'), col('b')], { mode: 'weighted' })
     ).toThrow('column count');
     expect(() => fn.rerankModel(col('text'), { queries: [] })).toThrow(
       'non-empty array'
@@ -290,6 +312,12 @@ describe('FunctionChain builder', () => {
       'unnamed expression',
       () =>
         new FunctionChain(FunctionChainStage.L2_RERANK).map('x', { name: '' }),
+      'named expression',
+    ],
+    [
+      'missing expression',
+      () =>
+        new FunctionChain(FunctionChainStage.L2_RERANK).map('x', null as never),
       'named expression',
     ],
     [
