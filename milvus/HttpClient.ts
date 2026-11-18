@@ -11,6 +11,7 @@ import {
   Import,
   Snapshot,
   ResourceGroup,
+  Analyzer,
 } from './http';
 import {
   DEFAULT_DB,
@@ -232,15 +233,20 @@ export class HttpBaseClient {
  * - Import
  * - Snapshot
  * - ResourceGroup
+ * - Analyzer
  * - Role
  * - User APIs.
  */
-export class HttpClient extends ResourceGroup(
-  Snapshot(
-    User(
-      Role(
-        MilvusIndex(
-          Import(Alias(Partition(Collection(Database(Vector(HttpBaseClient))))))
+export class HttpClient extends Analyzer(
+  ResourceGroup(
+    Snapshot(
+      User(
+        Role(
+          MilvusIndex(
+            Import(
+              Alias(Partition(Collection(Database(Vector(HttpBaseClient)))))
+            )
+          )
         )
       )
     )
