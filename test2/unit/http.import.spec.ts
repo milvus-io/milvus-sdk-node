@@ -91,4 +91,20 @@ describe('HTTP Import API', () => {
       })
     );
   });
+
+  it.each([
+    ['commitImportJob', 'commit'],
+    ['abortImportJob', 'abort'],
+  ] as const)(
+    'should send %s with the original job ID',
+    async (method, route) => {
+      const { client, requests } = createClient();
+      await client[method]({ dbName: 'imports', jobId: '470549153632548307' });
+
+      expect(requests[0]).toEqual({
+        url: `${baseURL}/vectordb/jobs/import/${route}`,
+        body: { dbName: 'imports', jobId: '470549153632548307' },
+      });
+    }
+  );
 });
