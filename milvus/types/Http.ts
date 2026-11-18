@@ -367,9 +367,23 @@ export interface HttpVectorGetReq extends HttpBaseReq {
   outputFields: string[];
 }
 
+type HttpExpressionScalar = boolean | number | string;
+type HttpExpressionArray = readonly (
+  | HttpExpressionScalar
+  | HttpExpressionArray
+  | Record<string, unknown>
+)[];
+
+/** JSON values used to fill placeholders in a REST filter. */
+export type HttpExpressionParams = Record<
+  string,
+  HttpExpressionScalar | HttpExpressionArray
+>;
+
 // delete vector request
 export interface HttpVectorDeleteReq extends HttpBaseReq {
   filter: string;
+  exprParams?: HttpExpressionParams;
   partitionName?: string;
 }
 
@@ -377,6 +391,11 @@ export interface HttpVectorDeleteReq extends HttpBaseReq {
 export interface HttpVectorQueryReq extends HttpBaseReq {
   outputFields: string[];
   filter?: string;
+  exprParams?: HttpExpressionParams;
+  /** Group by these scalar fields when outputFields contains aggregations. */
+  groupByFields?: string[];
+  /** Scalar sort keys in fieldName or fieldName:asc/desc form. */
+  orderByFields?: string[];
   limit?: number;
   offset?: number;
   partitionNames?: string[];
@@ -390,7 +409,8 @@ export interface HttpVectorQueryResponse
   extends HttpBaseResponse<QueryResult> {}
 
 // search request
-export interface HttpVectorSearchReq extends HttpVectorQueryReq {
+export interface HttpVectorSearchReq
+  extends Omit<HttpVectorQueryReq, 'groupByFields'> {
   data: FloatVector[];
   annsField?: string;
   groupingField?: string;
@@ -402,6 +422,7 @@ interface HttpVectorHybridSearchParams {
   data: FloatVector[];
   limit: number;
   filter?: string;
+  exprParams?: HttpExpressionParams;
   outputFields?: string[];
   offset?: number;
   annsField?: string;

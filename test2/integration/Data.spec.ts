@@ -1,6 +1,7 @@
 import { createClient } from '../support/client';
-import { expectSuccess } from '../support/assertions';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
 import {
+  HttpClient,
   MilvusClient,
   DataType,
   ErrorCode,
@@ -633,6 +634,78 @@ describe(`Data.API`, () => {
         'desc'
       )
     ).toBe(true);
+  });
+
+  it('binds REST filter parameters, sorts, groups, and deletes matching rows', async () => {
+    const client = new HttpClient({
+      endpoint: `http://${IP}`,
+      database: dbParam.db_name,
+    });
+    const inserted = generateInsertData(createCollectionParams.fields, 3).map(
+      (row, index) => ({
+        ...row,
+        id: index + 1,
+        varChar2: index < 2 ? 'fruit' : 'vegetable',
+      })
+    );
+    expectSuccess(
+      await milvusClient.insert({
+        collection_name: COLLECTION_NAME,
+        partition_name: PARTITION_NAME,
+        data: inserted,
+      })
+    );
+    const scope = {
+      collectionName: COLLECTION_NAME,
+      partitionNames: [PARTITION_NAME],
+      filter: 'id in {ids}',
+      exprParams: { ids: [1, 2, 3] },
+      consistencyLevel: 'Strong',
+    };
+
+    try {
+      const sorted = await client.query({
+        ...scope,
+        outputFields: ['id'],
+        orderByFields: ['id:desc'],
+        limit: 2,
+        offset: 1,
+      });
+      expectHttpSuccess(sorted);
+      expect(sorted.data.map(row => Number(row.id))).toEqual([2, 1]);
+
+      const grouped = await client.query({
+        ...scope,
+        outputFields: ['varChar2', 'count(*)'],
+        groupByFields: ['varChar2'],
+      });
+      expectHttpSuccess(grouped);
+      expect(
+        Object.fromEntries(
+          grouped.data.map(row => [row.varChar2, Number(row['count(*)'])])
+        )
+      ).toEqual({ fruit: 2, vegetable: 1 });
+
+      expectHttpSuccess(
+        await client.delete({
+          collectionName: COLLECTION_NAME,
+          partitionName: PARTITION_NAME,
+          filter: scope.filter,
+          exprParams: { ids: [2, 3] },
+        })
+      );
+      const after = await client.query({ ...scope, outputFields: ['id'] });
+      expectHttpSuccess(after);
+      expect(after.data.map(row => Number(row.id))).toEqual([1]);
+    } finally {
+      expectSuccess(
+        await milvusClient.delete({
+          collection_name: COLLECTION_NAME,
+          partition_name: PARTITION_NAME,
+          ids: [1, 2, 3],
+        })
+      );
+    }
   });
 
   it(`Query withouth output fields should success`, async () => {

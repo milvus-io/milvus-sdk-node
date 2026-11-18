@@ -63,7 +63,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       return await this.POST<HttpVectorUpsertResponse>(url, data, options);
     }
 
-    // POST query data
+    /** Queries rows with optional filter parameters, scalar ordering, and grouping. */
     async query(
       data: HttpVectorQueryReq,
       options?: FetchOptions
@@ -104,7 +104,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       return await this.POST<HttpVectorSearchResponse>(url, data, options);
     }
 
-    // POST delete collection
+    /** Deletes rows matching a filter and its optional expression parameters. */
     async delete(
       data: HttpVectorDeleteReq,
       options?: FetchOptions
