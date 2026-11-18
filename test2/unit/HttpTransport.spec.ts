@@ -175,6 +175,52 @@ describe('HTTP endpoint contracts', () => {
     }
   );
 
+  it('preserves REST segment and binlog IDs beyond the safe integer range', async () => {
+    const { client, fetch } = transport();
+    fetch.mockResolvedValueOnce(
+      new Response(
+        '{"code":0,"data":{"segmentInfos":[{"segmentID":9223372036854775807,' +
+          '"numRows":17,"insertLogs":[{"fieldID":101,"logIDs":[9007199254740993,9223372036854775807]}],' +
+          '"deltaLogs":[{"fieldID":101,"logIDs":null}],"statsLogs":[{"fieldID":101,"logIDs":[]}]}]}}'
+      )
+    );
+
+    const result = await client.getSegmentsInfo({
+      dbName: 'tenant',
+      collectionID: 18,
+      segmentIDs: ['9223372036854775807'],
+    });
+    const [url, init] = fetch.mock.calls[0];
+    expect(url).toBe(`${endpoint}/vectordb/segments/describe`);
+    expect(init?.body).toBe(
+      '{"dbName":"tenant","collectionID":18,"segmentIDs":[9223372036854775807]}'
+    );
+    expect(result.data.segmentInfos[0]).toEqual({
+      segmentID: '9223372036854775807',
+      numRows: '17',
+      insertLogs: [
+        { fieldID: '101', logIDs: ['9007199254740993', '9223372036854775807'] },
+      ],
+      deltaLogs: [{ fieldID: '101', logIDs: null }],
+      statsLogs: [{ fieldID: '101', logIDs: [] }],
+    });
+    await client.getSegmentsInfo({ segmentIDs: [11, 12] });
+    expect(fetch.mock.calls[1][1]?.body).toBe(
+      '{"dbName":"fixture_db","collectionID":0,"segmentIDs":[11,12]}'
+    );
+  });
+
+  it.each([Number.MAX_SAFE_INTEGER + 1, '9223372036854775808', '1,2', -1])(
+    'rejects out-of-range or malformed segment ID %s',
+    segmentID => {
+      const { client, fetch } = transport();
+      expect(() => client.getSegmentsInfo({ segmentIDs: [segmentID] })).toThrow(
+        'nonnegative int64'
+      );
+      expect(fetch).not.toHaveBeenCalled();
+    }
+  );
+
   it('preserves HttpError identity and metadata', () => {
     const error = new HttpError('bad request', 400, 'Bad Request', '/items');
     expect(error).toBeInstanceOf(Error);

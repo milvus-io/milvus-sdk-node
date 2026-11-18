@@ -295,6 +295,12 @@ Use `runAnalyzer({ text, analyzerParams })` to preview tokens for an array of st
 
 Use `addFileResource({ name, path })` to register a path in the server's storage, `listFileResources()` to list registrations, and `removeFileResource({ name })` to remove one. File resource IDs are returned as decimal strings. These methods were verified on Milvus 3.0.6.
 
+## Diagnostics APIs
+
+Use `getSegmentsInfo({ collectionID, segmentIDs })` for segment state, row counts, and binlog IDs. Pass large IDs as decimal strings. The response returns int64 IDs and row counts as decimal strings to preserve their precision.
+
+Use `getQuotaMetrics()` to inspect quota center metrics. The response's `data` is the server's JSON text. These methods were verified on Milvus 3.0.6.
+
 ## Errors
 
 Non-2xx responses throw `HttpError`.

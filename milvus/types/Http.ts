@@ -7,6 +7,7 @@ import type {
 } from './Collection';
 import type { FieldPartialUpdateOpName } from './Insert';
 import type { KeyValuePair } from './Common';
+import type { SegmentLevel } from '../const';
 type Fetch = (input: any, init?: any) => Promise<any>;
 
 // Class types
@@ -815,4 +816,34 @@ export interface HttpAnalyzerToken {
 
 export interface HttpRunAnalyzerResult {
   results: { tokens: HttpAnalyzerToken[] }[];
+}
+
+export interface HttpGetSegmentsInfoReq {
+  dbName?: string;
+  collectionID?: string | number;
+  segmentIDs: (string | number)[];
+}
+
+export interface HttpSegmentLogInfo {
+  fieldID: string;
+  logIDs: string[] | null;
+}
+
+export interface HttpSegmentInfo {
+  segmentID: string;
+  collectionID: string;
+  partitionID: string;
+  vChannel: string;
+  numRows: string;
+  /** Numeric protobuf segment state returned by REST. */
+  state: number;
+  level: SegmentLevel;
+  isSorted: boolean;
+  insertLogs: HttpSegmentLogInfo[];
+  deltaLogs: HttpSegmentLogInfo[];
+  statsLogs: HttpSegmentLogInfo[];
+}
+
+export interface HttpGetSegmentsInfoResult {
+  segmentInfos: HttpSegmentInfo[];
 }
