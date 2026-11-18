@@ -135,6 +135,36 @@ describe(`FulltextSearch API`, () => {
     expect(runAnalyzer2.results[1].tokens.length).toEqual(3);
   });
 
+  it('reports the minimum slop and preserves input order', async () => {
+    const result = await milvusClient.computePhraseMatchSlop({
+      analyzer_params: { type: 'standard' },
+      query_text: 'red fox',
+      data_texts: ['red fox', 'red swift fox', 'a fox'],
+      timeout: 10_000,
+    });
+    expectSuccess(result.status);
+    expect(result.is_match).toEqual([true, true, false]);
+    expect(result.slops).toEqual(['0', '1', '-1']);
+  });
+
+  it('uses the default analyzer and supports an empty batch', async () => {
+    const result = await milvusClient.computePhraseMatchSlop({
+      query_text: 'red fox',
+      data_texts: ['red swift fox'],
+    });
+    expectSuccess(result.status);
+    expect(result.is_match).toEqual([true]);
+    expect(result.slops).toEqual(['1']);
+
+    const empty = await milvusClient.computePhraseMatchSlop({
+      query_text: 'red fox',
+      data_texts: [],
+    });
+    expectSuccess(empty.status);
+    expect(empty.is_match).toEqual([]);
+    expect(empty.slops).toEqual([]);
+  });
+
   it(`Create schema with function collection should success`, async () => {
     const create = await milvusClient.createCollection(createCollectionParams);
 

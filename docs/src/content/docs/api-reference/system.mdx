@@ -117,6 +117,20 @@ const analyzed = await client.runAnalyzer({
 });
 ```
 
+## computePhraseMatchSlop
+
+Measure how far phrase terms are separated in each input text using the specified analyzer. An omitted `analyzer_params` uses Milvus's default analyzer. The response keeps the input order and returns decimal slop strings. A nonmatch has `is_match: false` and slop `'-1'`.
+
+```typescript
+const result = await client.computePhraseMatchSlop({
+  analyzer_params: { type: 'standard' },
+  query_text: 'red fox',
+  data_texts: ['red fox', 'red swift fox', 'a fox'],
+});
+// result.is_match is [true, true, false]
+// result.slops is ['0', '1', '-1']
+```
+
 ## File resources
 
 <span className="version-tag">Milvus 3.0</span>
