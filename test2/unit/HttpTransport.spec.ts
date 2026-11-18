@@ -151,6 +151,30 @@ describe('HTTP endpoint contracts', () => {
     expect(init?.method).toBe('post');
     expect(JSON.parse(init?.body as string).dbName).toBe('fixture_db');
   });
+  it.each([
+    ['grantPrivilegeV2', 'grant_privilege_v2'],
+    ['revokePrivilegeV2', 'revoke_privilege_v2'],
+  ] as const)(
+    '%s sends the privilege group and collection scope',
+    async (method, route) => {
+      const { client, fetch } = transport();
+      const grant = {
+        roleName: 'reader',
+        dbName: 'tenant',
+        collectionName: 'books',
+        privilege: 'BookReader',
+      };
+
+      expectHttpSuccess(await client[method](grant));
+      const [url, init] = fetch.mock.calls[0];
+      expect(url).toBe(`${endpoint}/vectordb/roles/${route}`);
+      expect(JSON.parse(init?.body as string)).toEqual(grant);
+      expect(init?.headers).toMatchObject({
+        Authorization: 'Bearer test-token',
+      });
+    }
+  );
+
   it('preserves HttpError identity and metadata', () => {
     const error = new HttpError('bad request', 400, 'Bad Request', '/items');
     expect(error).toBeInstanceOf(Error);

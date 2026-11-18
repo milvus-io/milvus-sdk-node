@@ -1,6 +1,7 @@
 import { createClient } from '../support/client';
-import { expectSuccess } from '../support/assertions';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
 import {
+  HttpClient,
   MilvusClient,
   ERROR_REASONS,
   ErrorCode,
@@ -224,6 +225,63 @@ describe(`User Api`, () => {
     expect(describe.results[0].role.description).toEqual(
       UPDATED_ROLE_DESCRIPTION
     );
+  });
+
+  it('manages roles and privilege groups over REST', async () => {
+    const http = new HttpClient({
+      endpoint: `http://${IP}`,
+      token: 'root:Milvus',
+    });
+    const roleName = GENERATE_NAME('http_role');
+    const privilegeGroupName = GENERATE_NAME('http_privilege');
+    const group = { privilegeGroupName };
+    const role = { roleName, dbName: 'another_db' };
+    expectHttpSuccess(
+      await http.createRole({ roleName, description: ROLE_DESCRIPTION })
+    );
+    try {
+      expectHttpSuccess(
+        await http.alterRole({
+          roleName,
+          description: UPDATED_ROLE_DESCRIPTION,
+        })
+      );
+      expectHttpSuccess(await http.createPrivilegeGroup(group));
+      try {
+        expectHttpSuccess(
+          await http.addPrivilegesToGroup({
+            ...group,
+            privileges: [Privileges.Query, Privileges.Search],
+          })
+        );
+        expectHttpSuccess(
+          await http.removePrivilegesFromGroup({
+            ...group,
+            privileges: [Privileges.Query],
+          })
+        );
+        const groups = await http.listPrivilegeGroups();
+        expectHttpSuccess(groups);
+        expect(groups.data.privilegeGroups).toContainEqual({
+          privilegeGroupName,
+          privileges: Privileges.Search,
+        });
+
+        const description = await http.describeRole(role);
+        expectHttpSuccess(description);
+        expect(description.description).toBe(UPDATED_ROLE_DESCRIPTION);
+        expect(description.data).toEqual([]);
+      } finally {
+        expectHttpSuccess(await http.dropPrivilegeGroup(group));
+      }
+      const afterDrop = await http.listPrivilegeGroups();
+      expectHttpSuccess(afterDrop);
+      expect(afterDrop.data.privilegeGroups).not.toContainEqual(
+        expect.objectContaining({ privilegeGroupName })
+      );
+    } finally {
+      expectHttpSuccess(await http.dropRole({ roleName }));
+    }
   });
 
   it(`It should get user successfully`, async () => {
