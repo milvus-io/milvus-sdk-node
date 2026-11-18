@@ -57,6 +57,17 @@ export interface GePersistentSegmentInfoResponse extends resStatusResponse {
   infos: PersistentSegmentInfo[];
 }
 
+export interface BatchUpdateManifestItem {
+  /** Pass int64 values as decimal strings when they exceed JavaScript's safe integer range. */
+  segment_id: number | string;
+  manifest_version: number | string;
+}
+
+export interface BatchUpdateManifestReq extends collectionNameReq {
+  items: BatchUpdateManifestItem[];
+  field_names?: string[];
+}
+
 export interface ListIndexedSegmentReq extends collectionNameReq {
   index_name: string; // index name
 }

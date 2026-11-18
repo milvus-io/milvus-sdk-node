@@ -1,5 +1,6 @@
 import { createClient } from '../support/client';
 import { expectSuccess } from '../support/assertions';
+import { waitFor } from '../support/wait';
 import {
   MilvusClient,
   DataType,
@@ -137,6 +138,44 @@ describe(`Segment API`, () => {
     await expect(milvusClient.loadBalance({} as any)).rejects.toThrow(
       ERROR_REASONS.LOAD_BALANCE_CHECK_PARAMS
     );
+  });
+
+  it('requires a nonempty manifest update batch', async () => {
+    await expect(
+      milvusClient.batchUpdateManifest({
+        collection_name: COLLECTION_NAME,
+        items: [],
+      })
+    ).rejects.toThrow(
+      'The `items` property must contain at least one segment.'
+    );
+  });
+
+  it('accepts a manifest update for a persisted Storage V3 segment', async () => {
+    const [segment] = await waitFor(
+      'a persisted Storage V3 segment',
+      async () => {
+        const result = await milvusClient.getPersistentSegmentInfo({
+          collectionName: COLLECTION_NAME,
+        });
+        expectSuccess(result.status);
+        return result.infos.filter(info => Number(info.storage_version) === 3);
+      },
+      segments => segments.length > 0
+    );
+
+    // The first committed version is already present. Reapplying it leaves the segment intact.
+    const result = await milvusClient.batchUpdateManifest({
+      collection_name: COLLECTION_NAME,
+      items: [{ segment_id: String(segment.segmentID), manifest_version: '1' }],
+    });
+    expectSuccess(result);
+
+    const count = await milvusClient.count({
+      collection_name: COLLECTION_NAME,
+    });
+    expectSuccess(count.status);
+    expect(count.data).toBe(1024);
   });
 
   // Load balance only working in cluster, so we can only do the error test
