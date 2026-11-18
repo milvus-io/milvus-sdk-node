@@ -1,5 +1,6 @@
 import { IP } from '../fixtures/ip';
 import { createClient } from '../support/client';
+import { expectSuccess } from '../support/assertions';
 import crypto from 'crypto';
 import fetch from 'node-fetch';
 import { MilvusClient, newClientRequestId } from '../../milvus';
@@ -24,6 +25,65 @@ runE2E('client telemetry local E2E', () => {
         manager.clientId,
         state => state.status === 'active'
       );
+    } finally {
+      await client.closeConnection();
+    }
+  });
+
+  it('reads telemetry and manages a targeted persistent command over gRPC', async () => {
+    const clientId = `e2e-grpc-admin-${crypto.randomUUID()}`;
+    const client = createClient({
+      address,
+      telemetry: { clientId, heartbeatIntervalMs: 500, samplingRate: 1 },
+    });
+    try {
+      await waitFor(
+        'client registration',
+        clientId,
+        state => state.status === 'active'
+      );
+      const analyzer = await client.runAnalyzer({ text: 'telemetry metrics' });
+      expectSuccess(analyzer.status);
+      await waitFor('analyzer metric', clientId, state =>
+        hasMetric(state, 'RunAnalyzer', 'success_count', 1)
+      );
+
+      const telemetry = await client.getClientTelemetry({
+        client_id: clientId,
+        include_metrics: true,
+        client_request_id: newClientRequestId(),
+        timeout: 0,
+      });
+      expectSuccess(telemetry.status);
+      expect(telemetry.clients).toHaveLength(1);
+      const [reported] = telemetry.clients;
+      expect(reported.client_info?.sdk_type).toBe('nodejs');
+      expect(reported.last_heartbeat_time).toMatch(/^\d+$/);
+      expect(reported.metrics).toContainEqual(
+        expect.objectContaining({
+          operation: 'RunAnalyzer',
+          global: expect.objectContaining({ success_count: '1' }),
+        })
+      );
+
+      const pushed = await client.pushClientCommand({
+        command_type: 'push_config',
+        target_client_id: clientId,
+        payload: Buffer.from(JSON.stringify({ sampling_rate: 0.8 })),
+        persistent: true,
+      });
+      expectSuccess(pushed.status);
+      expect(pushed.command_id).toBeTruthy();
+      try {
+        expect((await waitForReply(clientId, pushed.command_id)).success).toBe(
+          true
+        );
+      } finally {
+        expectSuccess(
+          (await client.deleteClientCommand({ command_id: pushed.command_id }))
+            .status
+        );
+      }
     } finally {
       await client.closeConnection();
     }
