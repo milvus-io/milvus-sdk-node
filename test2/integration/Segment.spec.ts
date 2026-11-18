@@ -1,7 +1,8 @@
 import { createClient } from '../support/client';
-import { expectSuccess } from '../support/assertions';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
 import { waitFor } from '../support/wait';
 import {
+  HttpClient,
   MilvusClient,
   DataType,
   ErrorCode,
@@ -132,6 +133,46 @@ describe(`Segment API`, () => {
       expect(info).toHaveProperty('state');
       expect(info).toHaveProperty('level');
     }
+  });
+
+  it('describes a persisted segment and its binlog IDs over REST', async () => {
+    const [segment] = await waitFor(
+      'a persisted segment',
+      async () => {
+        const result = await milvusClient.getPersistentSegmentInfo({
+          collectionName: COLLECTION_NAME,
+        });
+        expectSuccess(result.status);
+        return result.infos;
+      },
+      segments => segments.length > 0
+    );
+    const client = new HttpClient({
+      endpoint: `http://${IP}`,
+      database: dbParam.db_name,
+    });
+    const response = await client.getSegmentsInfo({
+      collectionID: String(segment.collectionID),
+      segmentIDs: [String(segment.segmentID)],
+    });
+    expectHttpSuccess(response);
+    expect(response.data.segmentInfos).toEqual([
+      expect.objectContaining({
+        segmentID: String(segment.segmentID),
+        collectionID: String(segment.collectionID),
+        partitionID: String(segment.partitionID),
+        numRows: String(segment.num_rows),
+        state: expect.any(Number),
+        insertLogs: expect.any(Array),
+      }),
+    ]);
+  });
+
+  it('gets quota center metrics over REST', async () => {
+    const client = new HttpClient({ endpoint: `http://${IP}` });
+    const response = await client.getQuotaMetrics();
+    expectHttpSuccess(response);
+    expect(JSON.parse(response.data)).toHaveProperty('QueryNodeMetrics');
   });
 
   it(`loadBalance should throw LOAD_BALANCE_CHECK_PARAMS`, async () => {
