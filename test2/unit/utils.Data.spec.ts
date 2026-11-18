@@ -21,9 +21,56 @@ import {
   setPoolTelemetryManager,
   ConsistencyLevelEnum,
   CountReq,
+  getGRPCService,
+  LOADER_OPTIONS,
 } from '../../milvus';
 
 describe('utils/Data', () => {
+  it('keeps both manifest update int64 fields exact on the wire', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const status = { error_code: ErrorCode.SUCCESS, code: 0 };
+    const update = jest.fn((_request, _options, callback) =>
+      callback(null, status)
+    );
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({ BatchUpdateManifest: update }),
+      release: jest.fn(),
+    };
+
+    const items = [
+      {
+        segment_id: '470549153632548307',
+        manifest_version: '9007199254740993',
+      },
+    ];
+    await expect(
+      client.batchUpdateManifest({
+        collection_name: 'test_collection',
+        db_name: 'storage',
+        items,
+        field_names: ['value'],
+        timeout: 2000,
+      })
+    ).resolves.toEqual(status);
+
+    const method = getGRPCService(
+      { serviceName: 'milvus.proto.milvus.MilvusService' },
+      LOADER_OPTIONS
+    ).service.BatchUpdateManifest;
+    const request = method.requestDeserialize(
+      method.requestSerialize(update.mock.calls[0][0])
+    );
+    expect(request).toMatchObject({
+      collection_name: 'test_collection',
+      db_name: 'storage',
+      items,
+      field_names: ['value'],
+    });
+  });
+
   it('records public validation failures before any RPC is attempted', async () => {
     const client = new MilvusClient({
       address: 'localhost:19530',

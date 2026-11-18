@@ -12,6 +12,7 @@ import {
   GetFlushAllStateResponse,
   GetQuerySegmentInfoReq,
   GePersistentSegmentInfoReq,
+  BatchUpdateManifestReq,
   InsertReq,
   UpsertReq,
   LoadBalanceReq,
@@ -85,6 +86,7 @@ import {
   FieldPartialUpdateOpType,
   FieldPartialUpdateOp,
   CLUSTER_ID,
+  METADATA,
   isHybridSearchRequest,
   FunctionChainStage,
   withTelemetryLogicalOperation,
@@ -1806,6 +1808,23 @@ export class Data extends Collection {
       data.timeout || this.timeout
     );
     return res;
+  }
+
+  /** Publish already-written manifest versions for persisted Storage V3 segments. */
+  async batchUpdateManifest(data: BatchUpdateManifestReq): Promise<ResStatus> {
+    checkCollectionName(data);
+    if (!Array.isArray(data.items) || data.items.length === 0) {
+      throw new Error(
+        'The `items` property must contain at least one segment.'
+      );
+    }
+
+    return await promisify(
+      this.channelPool,
+      'BatchUpdateManifest',
+      { ...data, db_name: data.db_name ?? this.metadata.get(METADATA.DATABASE) },
+      data.timeout ?? this.timeout
+    );
   }
 
   /**

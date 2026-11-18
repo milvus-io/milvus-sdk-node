@@ -213,6 +213,19 @@ info.infos.forEach((segment) => {
 });
 ```
 
+### Publish Segment Manifest Updates
+
+`batchUpdateManifest()` publishes already-written Storage V3 manifest versions to Milvus metadata. Pass the segment ID and manifest version as decimal strings to preserve their full int64 precision. This API was verified with Milvus 3.0.6.
+
+```typescript
+await client.batchUpdateManifest({
+  collection_name: 'my_collection',
+  items: [
+    { segment_id: segmentId, manifest_version: publishedManifestVersion },
+  ],
+});
+```
+
 ## Metrics
 
 Get collection metrics:
