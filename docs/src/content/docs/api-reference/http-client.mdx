@@ -211,6 +211,12 @@ On Milvus 3.0.6, create a manual-commit job with `options: { auto_commit: 'false
 
 For Zilliz Cloud import workflows, include `projectId` and `regionId` when required by the cloud endpoint.
 
+## Collection Schema Changes
+
+Use `addCollectionStructField()` to add a nullable StructArray. Use `dropCollectionField()` with either `fieldName` or `fieldId`. `addFunctionField()` adds a function, its output field, and the bound index together. `dropFunctionField()` removes them together, and `alterCollectionFunction()` updates the settings supported by the server for an existing function.
+
+`truncateCollection()` removes all rows while preserving the schema and indexes. These REST APIs were verified on Milvus 3.0.6.
+
 ## External Collection Refresh
 
 Use `refreshExternalCollection()` to submit a refresh, `getRefreshExternalCollectionProgress()` to check its state, and `listRefreshExternalCollectionJobs()` to list jobs for a collection or database. This workflow was verified with Milvus 3.0.6.
