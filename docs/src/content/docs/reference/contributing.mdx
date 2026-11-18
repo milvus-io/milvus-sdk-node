@@ -4,147 +4,11 @@ title: 'Contributing'
 
 Thank you for your interest in contributing to the Milvus Node.js SDK!
 
-## Development Setup
+## Develop and submit a change
 
-### Prerequisites
+Use the [repository contribution guide](https://github.com/milvus-io/milvus-sdk-node/blob/main/CONTRIBUTING.md) for development setup, test commands, and the pull request process. It explains how to install the locked dependencies, initialize the pinned protobuf sources, and sign off each commit for DCO.
 
-- Node.js 18+
-- Yarn package manager
-- Git
-
-### Clone Repository
-
-```bash
-git clone https://github.com/milvus-io/milvus-sdk-node.git
-cd milvus-sdk-node
-```
-
-### Install Dependencies
-
-```bash
-yarn install
-```
-
-### Fetch Milvus Proto
-
-```bash
-# Initialize submodules (first time)
-git submodule init
-
-# Update submodules
-git submodule update --remote
-```
-
-### Build
-
-```bash
-yarn build
-```
-
-## Testing
-
-### Run Tests
-
-```bash
-# Run all tests
-yarn test
-
-# Run specific test file
-yarn test -- test2/integration/Collection.spec.ts
-
-# Run with coverage
-yarn coverage
-```
-
-### Test Structure
-
-Tests are located in the `test2/` directory:
-
-- `test2/integration/`: gRPC client tests
-- `test2/e2e/`: HTTP client tests
-- `test2/unit/`: Utility tests
-
-## Code Style
-
-### TypeScript
-
-- Use TypeScript strict mode
-- Follow existing code style
-- Use meaningful variable names
-- Add JSDoc comments for public APIs
-
-### Formatting
-
-Code is automatically formatted. Ensure your editor uses the project's formatting settings.
-
-### Linting
-
-```bash
-# Check linting
-yarn lint
-```
-
-## Adding Features
-
-### 1. Create Feature Branch
-
-```bash
-git checkout -b feature/your-feature-name
-```
-
-### 2. Implement Feature
-
-- Add code in appropriate directory
-- Write tests for your feature
-- Update documentation if needed
-
-### 3. Test Your Changes
-
-```bash
-yarn test
-yarn build
-```
-
-### 4. Commit Changes
-
-Follow conventional commit format:
-
-```
-feat: add new feature
-fix: fix bug
-docs: update documentation
-test: add tests
-```
-
-### 5. Push and Create PR
-
-```bash
-git push origin feature/your-feature-name
-```
-
-Then create a pull request on GitHub.
-
-## Pull Request Process
-
-### Before Submitting
-
-1. **Update Tests**: Ensure all tests pass
-2. **Update Documentation**: Add/update docs for new features
-3. **Check Linting**: Fix any linting errors
-4. **Review Changes**: Review your own changes
-
-### PR Requirements
-
-- Clear description of changes
-- Reference to related issues
-- Tests for new features
-- Documentation updates
-
-### Review Process
-
-- Maintainers will review your PR
-- Address any feedback
-- Once approved, your PR will be merged
+For SDK changes, run the relevant tests under `test2/` and report the results in your pull request. The [test suite guide](https://github.com/milvus-io/milvus-sdk-node/blob/main/test2/README.md) covers unit tests, server-backed tests, the npm package lifecycle, and the coverage gate.
 
 ## Code Structure
 
@@ -169,30 +33,6 @@ milvus-sdk-node/
 - `milvus/grpc/`: gRPC implementation
 - `milvus/http/`: HTTP implementation
 - `milvus/types/`: TypeScript type definitions
-
-## Testing Guidelines
-
-### Write Tests
-
-- Test happy paths
-- Test error cases
-- Test edge cases
-- Mock external dependencies
-
-### Test Example
-
-```typescript
-describe('createCollection', () => {
-  it('should create collection successfully', async () => {
-    const result = await client.createCollection({
-      collection_name: 'test_collection',
-      fields: schema,
-    });
-
-    expect(result.error_code).toBe('Success');
-  });
-});
-```
 
 ## Documentation
 
@@ -242,9 +82,9 @@ Please follow the [Code of Conduct](https://github.com/milvus-io/milvus-sdk-node
 
 ## Next Steps
 
-- Read [Best Practices](../advanced/best-practices)
-- Check [API Reference](../api-reference)
-- Explore [Examples & Tutorials](../getting-started/examples-tutorials)
+- Read [Best Practices](/milvus-sdk-node/advanced/best-practices)
+- Check [API Reference](/milvus-sdk-node/api-reference)
+- Explore [Examples & Tutorials](/milvus-sdk-node/getting-started/examples-tutorials)
 
 ## Build and preview the documentation site
 
@@ -256,6 +96,6 @@ npm run doc
 npm run doc:dev
 ```
 
-The site uses Astro/Starlight and writes production output to `docs/out/`. Edit MDX under `docs/src/content/docs/`; `npm run doc` preserves these source files. For production preview, run `npm --prefix docs run preview` after building. Use Node.js 22.12.0 or newer, as required by the installed Astro version; the documentation toolchain can require a newer runtime than the SDK.
+The site uses Astro/Starlight and writes production output to `docs/out/`. Edit MDX under `docs/src/content/docs/`; `npm run doc` preserves these source files. For production preview, run `npm --prefix docs run preview` after building. Use Node.js 22.23.4 or newer for the current locked Astro version; the documentation toolchain can require a newer runtime than the SDK.
 
 When releasing, compare the published tag with the last documented version, update guides and API reference, add release notes, and synchronize README compatibility and `llms.txt`. Verify example imports against package exports and check site links after building.

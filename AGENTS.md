@@ -1,102 +1,62 @@
-# Agentic Coding Guidelines
+# Milvus Node.js SDK contributor guide
 
-This document provides essential instructions for AI agents operating within the `milvus-sdk-node` repository.
+The npm package is `@zilliz/milvus2-sdk-node`. Run commands from the repository root unless a command specifies another directory.
 
-## 1. Project Overview & Structure
-- **Root Directory:** `/Users/ryjiang/workspace/milvus-sdk-node`
-- **Source Code:** `milvus/` (Top-level source directory, not `src/`)
-- **Tests:** `test2/` (Subdirectories: `unit`, `integration`, `e2e`, `package`)
-- **Build Output:** `dist/`
-- **Dependencies:** Managed via `yarn`.
+## Where to work
 
-## 2. Build, Test, and Lint Commands
+- `milvus/MilvusClient.ts` and `milvus/HttpClient.ts` are the public client entry points. Domain implementations live under `milvus/grpc/` and `milvus/http/`. Request and response types live under `milvus/types/`. Check `milvus/index.ts` and the relevant index files when adding public exports.
+- `proto/` pins the upstream Milvus protobuf submodule. `milvus/proto-json/` contains generated definitions. `dist/` is build output.
+- `test2/` contains the SDK tests. `examples/` contains consumer examples, `benchmarks/` contains manual benchmarks, and `docs/src/content/docs/` contains the documentation site.
 
-### Build
-- **Full Build:** `npm run build`
-  - Cleans `dist/`, compiles TypeScript with declarations, and runs `build.js`.
-- **Proto Generation:** `npm run proto:json`
-  - Updates `milvus/proto-json/` by converting `.proto` files to JSON/TS. Use this if the `proto/` submodule is updated.
+## Submit a feature or fix
 
-### Testing (Jest)
-- **Run All Tests:** `npm test`
-- **Run a Single Test File:**
-  ```bash
-  NODE_ENV=dev npx jest test2/integration/YourTestFile.spec.ts
-  ```
-  *Note: Always set `NODE_ENV=dev` to ensure correct configuration.*
-- **Run Tests with Coverage:** `npm run coverage`
-- **Test Configuration:** `jest.config.js` uses `ts-jest`.
+1. Branch from the current upstream `main` unless the task targets a maintenance branch. Use a fork when upstream push access is unavailable. Check the behavior you're changing with a focused baseline test when practical.
+2. Implement the change in the relevant client or domain module. Follow the adjacent RPC, validation, and status-handling patterns. Preserve existing request and response behavior, and state any new server version or feature requirements.
+3. Add coverage in the test layer that observes the change. For a public API change, update its TypeScript exports, JSDoc, and the relevant guide or example. Keep strict TypeScript and follow [.prettierrc](.prettierrc). Format changed SDK files with `npx prettier --write <changed-files>`.
+4. Commit with `git commit -s` using your configured identity. Every commit in a PR needs a valid `Signed-off-by: Name <email>` trailer. Before pushing or updating the PR, check the entire range against the actual upstream base. For an `origin/main` base, run the following command. Fix missing trailers on your own commits and use `--force-with-lease` for a necessary rewrite of your pushed branch.
 
-### Linting & Formatting
-- **Formatter:** Prettier is used. Configuration in `.prettierrc`.
-  - Check formatting: `npx prettier --check .`
-  - Fix formatting: `npx prettier --write .`
-- **Linting:** No explicit `lint` script in `package.json`. Follow existing code style strictly.
+   ```bash
+   git log --format='%h %s%n%(trailers:key=Signed-off-by,valueonly)' origin/main..HEAD
+   ```
 
-## 3. Code Style & Conventions
+5. Open a PR against the intended base. Explain the user-facing behavior, link the issue if applicable, note server compatibility, and report the checks you ran and any relevant checks you skipped. Review the DCO and SDK CI results before merging.
 
-### General
-- **Language:** TypeScript (Target `ES2015`, CommonJS modules).
-- **Strictness:** `strict: true` in `tsconfig.json`. Ensure no implicit `any`.
+## Build and test
 
-### Formatting (Prettier Rules)
-- **Indentation:** 2 spaces.
-- **Quotes:** Single quotes (`'`).
-- **Semicolons:** Yes (`semi: true`).
-- **Trailing Commas:** ES5 (`trailingComma: "es5"`).
-- **Bracket Spacing:** Yes (`bracketSpacing: true`).
-- **Arrow Parens:** Avoid (`arrowParens: "avoid"`).
+Use Node.js 22 to match [SDK CI](.github/workflows/test.yml) and Yarn Classic with the checked-in lockfile. From a fresh checkout:
 
-### Naming Conventions
-- **Classes:** `PascalCase` (e.g., `MilvusClient`, `GRPCClient`).
-- **Methods & Variables:** `camelCase` (e.g., `createCollection`, `indexParams`).
-- **Constants:** `UPPER_CASE` (e.g., `DEFAULT_PRIMARY_KEY_FIELD`, `ERROR_REASONS`).
-- **Filenames:** Match the primary class/module name (e.g., `MilvusClient.ts`, `DataType.ts`). Tests follow `*.spec.ts`.
+```bash
+yarn install --frozen-lockfile
+npm run pre
+npm run build
+```
 
-### Imports
-- Use absolute imports or relative imports consistent with existing files.
-- In tests, import from the SDK root or specific submodules as seen in examples:
-  ```typescript
-  import { MilvusClient } from '../../milvus';
-  ```
+`npm run pre` initializes the pinned submodule and installs the Protobuf descriptor. If the submodule revision changes, run `npm run pre` followed by `npm run proto:json`, then include the gitlink and generated changes in the same PR. Build output includes the SDK's declarations and `dist/sdk.json`, which reads the SDK and target server versions from `package.json`.
 
-### Error Handling
-- Use `async/await` pattern.
-- Throw `Error` objects with descriptive messages or specific error codes.
-- Check operation results against `ErrorCode.SUCCESS`:
-  ```typescript
-  if (res.error_code !== ErrorCode.SUCCESS) {
-    throw new Error(res.reason);
-  }
-  ```
+| What to verify                 | Command                                                                    | Environment                                 |
+| ------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------- |
+| SDK logic and mocked RPCs      | `npm run test:unit`                                                        | No Milvus required                          |
+| A single spec                  | `npm test -- --runTestsByPath test2/unit/utils.Schema.spec.ts --runInBand` | Match the spec's dependencies               |
+| Server contracts               | `npm run test:integration`                                                 | Milvus, plus storage where the tests use it |
+| End-to-end lifecycles          | `npm run test:e2e`                                                         | Local test stack                            |
+| Built package and declarations | `npm run build-test`                                                       | Local test stack                            |
+| CI suite and coverage gate     | `npm run test:ci`                                                          | Local test stack                            |
+| External cloud contracts       | `npm run test-cloud`                                                       | Opt-in endpoints and credentials            |
 
-### Documentation
-- Use JSDoc for public methods and classes.
-- Include `@param` and `@returns` tags.
+For local server-backed tests, use Docker Compose and the server version in `package.json`:
 
-## 4. Development Workflow for Agents
-1.  **Analyze:** Read `package.json` and related source files (`milvus/`) to understand context.
-2.  **Verify:** Before editing, run relevant tests to establish a baseline.
-3.  **Edit:** Make changes ensuring strict type safety and adherence to style.
-4.  **Test:** Run specific tests for the modified module. Create new tests in `test2/` if adding features.
-5.  **Format:** Run `npx prettier --write <file>` on changed files.
+```bash
+MILVUS_VERSION="$(node -p "require('./package.json').milvusVersion")" npm run test:env:up
+npm run test:ci
+npm run test:env:down
+```
 
-## 5. Specific Rules
-- **No `src` folder:** Source code lives in `milvus/`.
-- **Proto Files:**
-  - Protocol buffers are in `proto/` (a git submodule).
-  - Run `git submodule update --init --recursive` to fetch them.
-  - If `.proto` files change, run `npm run proto:json` to regenerate the JSON definitions in `milvus/proto-json/`.
-- **Environment:** Node.js environment.
+Tear down the test stack you started even if testing fails. Local defaults are Milvus on `127.0.0.1:29530`, health and telemetry on port `29091`, and MinIO on port `9000`. Keep the SDK test endpoints and Compose bindings aligned when overriding ports. The npm test scripts set `NODE_ENV=dev`. Set it yourself if running Jest directly.
 
-## 6. Testing Guidelines
-- Use `describe` blocks to group tests by class or functionality.
-- Use `it` blocks for specific test cases.
-- Mock external dependencies where appropriate, but integration tests (connecting to a mock or real Milvus instance) are common in this repo.
-- Clean up resources (e.g., close connections) in `afterAll`.
+CI builds the SDK, runs the suite and package lifecycle with coverage, and checks the global and per-file baseline. Reuse `test2/fixtures/` and `test2/support/` for isolated resources and cleanup. See the [test suite guide](test2/README.md) for seeds, coverage, Docker overrides, and cloud setup.
 
-## 7. Configuration Files
-- `package.json`: Scripts and dependencies.
-- `tsconfig.json`: TypeScript compiler options.
-- `jest.config.js`: Test runner configuration.
-- `.prettierrc`: Code formatting rules.
+## Release the SDK
+
+The maintainer workflow is documented in the [milvus-node-release skill](.agents/skills/milvus-node-release/SKILL.md). Prepare and merge the version bump, publish the matching GitHub Release, approve the staged npm package with maintainer 2FA, and verify the exact version and dist-tag on the public registry. The [release workflow](.github/workflows/release.yml) builds on Node.js 24 and reports a Stage ID after submission.
+
+For documentation-site edits, install its dependencies using the [site build instructions](docs/src/content/docs/reference/contributing.mdx#build-and-preview-the-documentation-site). Format MDX with `yarn --cwd docs prettier --write src/content/docs/<file>.mdx` so Prettier can load the Astro plugin.

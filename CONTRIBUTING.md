@@ -10,6 +10,8 @@ We appreciate your interest in contributing to Milvus SDK Node! This document ou
   - [Feature Requests](#feature-requests)
   - [Pull Requests](#pull-requests)
 - [Development Setup](#development-setup)
+- [Testing](#testing)
+- [Releases](#releases)
 - [License](#license)
 
 ## Code of Conduct
@@ -28,13 +30,23 @@ If you have a feature request, please open an issue in the [issue tracker](https
 
 ### Pull Requests
 
-If you would like to contribute code to Milvus SDK Node, please submit a pull request. Here are the steps to follow:
+1. Create a feature branch from upstream `main`. If `origin` is your fork, use an `upstream` remote for `milvus-io/milvus-sdk-node` as the base. For a direct checkout of the upstream repository:
 
-1. Fork the repository and create a new branch from `main`.
-2. Make your changes and write unit tests if applicable.
-3. Run the tests by executing `npm test` from the project root.
-4. Commit your changes and push your branch to your fork.
-5. Open a pull request against the `main` branch of the Milvus SDK Node repository.
+   ```bash
+   git fetch origin main
+   git switch -c feat/short-name origin/main
+   ```
+
+2. Add tests for the changed behavior under `test2/`. For public API changes, update TypeScript exports, JSDoc, and the relevant docs or examples.
+3. Run the relevant tests and format changed SDK files with `npx prettier --write <changed-files>`.
+4. Sign off every commit with your configured Git identity. Each commit needs a `Signed-off-by: Name <email>` DCO trailer.
+
+   ```bash
+   git commit -s -m 'feat: describe the change'
+   git push -u origin HEAD
+   ```
+
+5. Open a PR against upstream `main` or the requested maintenance branch. Explain the change, link the related issue, note any server requirements, and list the checks you ran. Check DCO for every commit in the PR and review the CI results.
 
 Your pull request will be reviewed by the maintainers, and we may request changes before merging.
 
@@ -42,10 +54,37 @@ Your pull request will be reviewed by the maintainers, and we may request change
 
 Here's how you can set up a development environment for Milvus SDK Node:
 
-1. Install Node.js and npm if you haven't already.
-2. Clone the repository: `git clone https://github.com/milvus-io/milvus-sdk-node.git`.
-3. Install the dependencies by running `npm install` from the project root.
-4. You're ready to start developing!
+Use Node.js 22 to match SDK CI, Yarn Classic, and Git. For server-backed tests, install Docker Compose.
+
+```bash
+yarn install --frozen-lockfile
+npm run pre
+npm run build
+```
+
+`npm run pre` prepares the pinned `proto/` submodule and its descriptor. If a feature updates the submodule revision, regenerate its SDK definitions with `npm run proto:json` and include them in the same PR.
+
+## Testing
+
+Run `npm run test:unit` for tests that don't need a Milvus server. To run a single spec, pass its path to Jest through the npm script:
+
+```bash
+npm test -- --runTestsByPath test2/unit/utils.Schema.spec.ts
+```
+
+For server-backed tests and the coverage gate, start the local stack and run the same command as CI:
+
+```bash
+MILVUS_VERSION="$(node -p "require('./package.json').milvusVersion")" npm run test:env:up
+npm run test:ci
+npm run test:env:down
+```
+
+Tear down the stack after testing. See the [test suite guide](test2/README.md) for test layers, port configuration, and opt-in cloud tests.
+
+## Releases
+
+The [release guide](.agents/skills/milvus-node-release/SKILL.md) covers the version bump, GitHub Release, npm staging and maintainer approval, and public package verification.
 
 ## License
 
