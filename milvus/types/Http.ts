@@ -1,5 +1,9 @@
 import { FloatVector } from '..';
-import type { Properties } from './Collection';
+import type {
+  ExportSnapshotState,
+  Properties,
+  RestoreSnapshotState,
+} from './Collection';
 import type { FieldPartialUpdateOpName } from './Insert';
 type Fetch = (input: any, init?: any) => Promise<any>;
 
@@ -531,3 +535,87 @@ export interface HttpImportProgressResponse
     details?: ImportJobDetailType[];
     reason?: string;
   }> {}
+
+export interface HttpSnapshotReq extends HttpBaseReq {
+  snapshotName: string;
+}
+
+export interface HttpCreateSnapshotReq extends HttpSnapshotReq {
+  description?: string;
+  compactionProtectionSeconds?: number;
+}
+
+export interface HttpSnapshotSummary {
+  name: string;
+  description: string;
+  createTs: string;
+  createUtcTs: string;
+}
+
+export interface HttpListSnapshotsResponse extends HttpBaseResponse<string[]> {
+  snapshotSummaries?: HttpSnapshotSummary[];
+}
+
+export interface HttpDescribeSnapshotResponse
+  extends HttpBaseResponse<{
+    snapshotName: string;
+    collectionName: string;
+    description: string;
+    partitionNames: string[] | null;
+    createTs: string;
+    s3Location: string;
+  }> {}
+
+export interface HttpRestoreSnapshotReq {
+  snapshotName: string;
+  sourceCollectionName: string;
+  targetCollectionName: string;
+  sourceDbName?: string;
+  targetDbName?: string;
+}
+
+export interface HttpExportSnapshotReq extends HttpSnapshotReq {
+  targetS3Path: string;
+  externalSpec?: string;
+}
+
+export interface HttpRestoreExternalSnapshotReq {
+  targetCollectionName: string;
+  snapshotMetadataURI: string;
+  dbName?: string;
+  externalSpec?: string;
+}
+
+export interface HttpSnapshotJobReq {
+  jobId: string;
+}
+
+export interface HttpSnapshotJobResponse
+  extends HttpBaseResponse<{ jobId: string }> {}
+
+interface HttpSnapshotJobInfo {
+  jobId: string;
+  snapshotName: string;
+  dbName: string;
+  collectionName: string;
+  progress: number;
+  reason: string;
+  startTime: string;
+  timeCost: string;
+}
+
+export interface HttpRestoreSnapshotJobInfo extends HttpSnapshotJobInfo {
+  state: keyof typeof RestoreSnapshotState;
+}
+
+export interface HttpExportSnapshotJobInfo extends HttpSnapshotJobInfo {
+  state: keyof typeof ExportSnapshotState;
+  totalFiles: string;
+  copiedFiles: string;
+  totalBytes: string;
+  snapshotMetadataURI: string;
+}
+
+export interface HttpPinSnapshotDataReq extends HttpSnapshotReq {
+  ttlSeconds?: number;
+}

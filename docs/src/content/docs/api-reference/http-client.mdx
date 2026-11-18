@@ -211,6 +211,23 @@ On Milvus 3.0.6, create a manual-commit job with `options: { auto_commit: 'false
 
 For Zilliz Cloud import workflows, include `projectId` and `regionId` when required by the cloud endpoint.
 
+## Snapshot APIs
+
+The REST snapshot lifecycle supports create, list, describe, drop, pin, and unpin. A snapshot restore returns a job ID for `getRestoreSnapshotState()` and `listRestoreSnapshotJobs()`. For portability, use `exportSnapshot()`, wait for `getExportSnapshotState()` to report completion, then pass the returned `snapshotMetadataURI` to `restoreExternalSnapshot()`.
+
+```typescript
+const {
+  data: { jobId },
+} = await client.exportSnapshot({
+  collectionName: 'books',
+  snapshotName: 'before_migration',
+  targetS3Path: 'exports/books',
+});
+const { data } = await client.getExportSnapshotState({ jobId });
+```
+
+Snapshot job IDs, pin IDs, and int64 metadata are decimal strings so they can be passed to later requests without losing precision. Snapshot restore defaults both source and target databases to the configured database. This workflow was verified with Milvus 3.0.6.
+
 ## User and Role APIs
 
 | Method                                    | Description                     |

@@ -6,4 +6,5 @@ export * from './Role';
 export * from './Partition';
 export * from './Alias';
 export * from './MilvusIndex';
-export * from './Import'
+export * from './Import';
+export * from './Snapshot';

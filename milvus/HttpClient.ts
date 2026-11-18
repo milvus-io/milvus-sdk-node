@@ -9,6 +9,7 @@ import {
   MilvusIndex,
   Alias,
   Import,
+  Snapshot,
 } from './http';
 import {
   DEFAULT_DB,
@@ -122,7 +123,11 @@ export class HttpBaseClient {
    * Handles HTTP response and throws HttpError if response is not ok.
    * @internal
    */
-  async _handleResponse<T>(response: Response, url: string): Promise<T> {
+  async _handleResponse<T>(
+    response: Response,
+    url: string,
+    decode?: (body: string) => T
+  ): Promise<T> {
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
       const message = `HTTP ${response.status} ${response.statusText}: ${url}${
@@ -130,14 +135,15 @@ export class HttpBaseClient {
       }`;
       throw new HttpError(message, response.status, response.statusText, url);
     }
-    return response.json() as T;
+    return decode ? decode(await response.text()) : (response.json() as T);
   }
 
   // POST API
   async POST<T>(
     url: string,
     data: Record<string, any> = {},
-    options?: FetchOptions
+    options?: FetchOptions,
+    decode?: (body: string) => T
   ): Promise<T> {
     let id: ReturnType<typeof setTimeout> | undefined;
     try {
@@ -159,7 +165,7 @@ export class HttpBaseClient {
         signal: abortController.signal,
       });
 
-      return this._handleResponse<T>(response, fullUrl);
+      return this._handleResponse<T>(response, fullUrl, decode);
     } catch (error) {
       if (error.name === 'AbortError') {
         console.warn(`post ${url} request was timeout`);
@@ -222,13 +228,16 @@ export class HttpBaseClient {
  * - Partition
  * - MilvusIndex
  * - Import
+ * - Snapshot
  * - Role
  * - User APIs.
  */
-export class HttpClient extends User(
-  Role(
-    MilvusIndex(
-      Import(Alias(Partition(Collection(Database(Vector(HttpBaseClient))))))
+export class HttpClient extends Snapshot(
+  User(
+    Role(
+      MilvusIndex(
+        Import(Alias(Partition(Collection(Database(Vector(HttpBaseClient))))))
+      )
     )
   )
 ) {}
