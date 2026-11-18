@@ -211,6 +211,21 @@ On Milvus 3.0.6, create a manual-commit job with `options: { auto_commit: 'false
 
 For Zilliz Cloud import workflows, include `projectId` and `regionId` when required by the cloud endpoint.
 
+## External Collection Refresh
+
+Use `refreshExternalCollection()` to submit a refresh, `getRefreshExternalCollectionProgress()` to check its state, and `listRefreshExternalCollectionJobs()` to list jobs for a collection or database. This workflow was verified with Milvus 3.0.6.
+
+```typescript
+const {
+  data: { jobId },
+} = await client.refreshExternalCollection({
+  collectionName: 'external_books',
+});
+const { data } = await client.getRefreshExternalCollectionProgress({ jobId });
+```
+
+Return the decimal job ID as-is when polling to preserve its full precision.
+
 ## Snapshot APIs
 
 The REST snapshot lifecycle supports create, list, describe, drop, pin, and unpin. A snapshot restore returns a job ID for `getRestoreSnapshotState()` and `listRestoreSnapshotJobs()`. For portability, use `exportSnapshot()`, wait for `getExportSnapshotState()` to report completion, then pass the returned `snapshotMetadataURI` to `restoreExternalSnapshot()`.

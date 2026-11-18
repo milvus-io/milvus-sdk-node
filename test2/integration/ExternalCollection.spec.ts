@@ -1,10 +1,12 @@
 import { createClient } from '../support/client';
-import { expectSuccess } from '../support/assertions';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
+import { waitFor } from '../support/wait';
 import {
   BulkWriter,
   DataType,
   ErrorCode,
   FunctionType,
+  HttpClient,
   IndexType,
   MetricType,
   MilvusClient,
@@ -355,6 +357,45 @@ describe('External Collection API', () => {
           // best-effort cleanup
         }
       }
+    });
+
+    it('refreshes MinIO data over REST and round-trips the refresh job ID', async () => {
+      const http = new HttpClient({
+        endpoint: `http://${IP}`,
+        username: process.env.MILVUS_USERNAME || 'root',
+        password: process.env.MILVUS_PASSWORD || 'Milvus',
+      });
+      const refresh = await http.refreshExternalCollection({
+        collectionName: functionCollection,
+      });
+      expectHttpSuccess(refresh);
+      const { jobId } = refresh.data;
+      const job = await waitFor(
+        'REST external collection refresh',
+        async () => {
+          const result = await http.getRefreshExternalCollectionProgress({
+            jobId,
+          });
+          expectHttpSuccess(result);
+          return result.data;
+        },
+        result =>
+          result.state === RefreshExternalCollectionState.RefreshCompleted ||
+          result.state === RefreshExternalCollectionState.RefreshFailed,
+        { timeout: 90_000, interval: 500 }
+      );
+      expect(job).toMatchObject({
+        jobId,
+        collectionName: functionCollection,
+        state: RefreshExternalCollectionState.RefreshCompleted,
+      });
+
+      const jobs = await http.listRefreshExternalCollectionJobs({
+        collectionName: functionCollection,
+      });
+      expectHttpSuccess(jobs);
+      expect(jobs.data.records.map(record => record.jobId)).toContain(jobId);
+      expectHttpSuccess(await http.listRefreshExternalCollectionJobs());
     });
 
     it('exposes the BM25 function in the external collection schema', async () => {
