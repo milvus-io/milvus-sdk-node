@@ -54,6 +54,15 @@ if (!health.isHealthy) {
 }
 ```
 
+## Proxy administration
+
+- `allocTimestamp()` returns a Milvus hybrid timestamp as a decimal string with the default gRPC loader settings.
+- `getComponentStates()` returns the proxy role, node ID, and health state.
+- `registerLink()` returns status from the legacy proxy link registration RPC. Millvus 3.0.6 may omit the address.
+- `dummy({ request_type })` sends a JSON string to the legacy diagnostic RPC and returns the server's JSON response string.
+
+These gRPC methods accept an optional timeout in milliseconds and were verified on Milvus 3.0.6.
+
 ## runAnalyzer
 
 Test a text analyzer/tokenizer without inserting data.

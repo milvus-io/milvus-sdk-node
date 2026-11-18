@@ -9,6 +9,12 @@ import { createPool } from 'generic-pool';
 import {
   GetVersionResponse,
   CheckHealthResponse,
+  AllocTimestampResponse,
+  DummyReq,
+  DummyResponse,
+  GetComponentStatesResponse,
+  GrpcTimeOut,
+  RegisterLinkResponse,
   DEFAULT_MAX_RETRIES,
   DEFAULT_RETRY_DELAY,
   promisify,
@@ -729,6 +735,54 @@ export class GRPCClient extends User {
     // wait until connecting finished
     await this.connectPromise;
     return await promisify(this.channelPool, 'CheckHealth', {}, this.timeout);
+  }
+
+  /** Allocates a Milvus hybrid logical timestamp. */
+  async allocTimestamp(
+    data: GrpcTimeOut = {}
+  ): Promise<AllocTimestampResponse> {
+    await this.connectPromise;
+    return promisify(
+      this.channelPool,
+      'AllocTimestamp',
+      data,
+      data.timeout ?? this.timeout
+    );
+  }
+
+  /** Gets the proxy's component state. */
+  async getComponentStates(
+    data: GrpcTimeOut = {}
+  ): Promise<GetComponentStatesResponse> {
+    await this.connectPromise;
+    return promisify(
+      this.channelPool,
+      'GetComponentStates',
+      data,
+      data.timeout ?? this.timeout
+    );
+  }
+
+  /** Calls the legacy proxy link registration RPC. */
+  async registerLink(data: GrpcTimeOut = {}): Promise<RegisterLinkResponse> {
+    await this.connectPromise;
+    return promisify(
+      this.channelPool,
+      'RegisterLink',
+      data,
+      data.timeout ?? this.timeout
+    );
+  }
+
+  /** Runs the legacy JSON diagnostic on servers that expose the Dummy RPC. */
+  async dummy(data: DummyReq): Promise<DummyResponse> {
+    await this.connectPromise;
+    return promisify(
+      this.channelPool,
+      'Dummy',
+      data,
+      data.timeout ?? this.timeout
+    );
   }
 
   /**
