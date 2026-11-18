@@ -1,6 +1,6 @@
 import { createClient } from '../support/client';
-import { expectSuccess } from '../support/assertions';
-import { MilvusClient } from '../../milvus';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
+import { HttpClient } from '../../milvus';
 import {
   IP,
   collectionSchema,
@@ -22,6 +22,63 @@ let runRgTransferTest = false;
 
 describe(`Resource API`, () => {
   let queryNodeNum = 0;
+
+  it('manages a resource group over REST', async () => {
+    const http = new HttpClient({ endpoint: `http://${IP}` });
+    const name = GENERATE_NAME('http_rg');
+    expectHttpSuccess(await http.createResourceGroup({ name }));
+
+    try {
+      const listed = await http.listResourceGroups();
+      expectHttpSuccess(listed);
+      expect(listed.data).toContain(name);
+      expectHttpSuccess(
+        await http.updateResourceGroups({
+          resource_groups: {
+            [name]: {
+              requests: { node_num: 0 },
+              limits: { node_num: 1 },
+              transfer_from: [{ resource_group: DEFAULT_RESOURCE_GROUP }],
+              transfer_to: [{ resource_group: DEFAULT_RESOURCE_GROUP }],
+              node_filter: { node_labels: { purpose: 'sdk-rest-test' } },
+            },
+          },
+        })
+      );
+
+      const described = await http.describeResourceGroup({ name });
+      expect(described.resource_group).toMatchObject({
+        name,
+        config: {
+          limits: { node_num: 1 },
+          node_filter: {
+            node_labels: [{ key: 'purpose', value: 'sdk-rest-test' }],
+          },
+        },
+      });
+      const rejected = await http.transferReplica({
+        sourceRgName: DEFAULT_RESOURCE_GROUP,
+        targetRgName: name,
+        collectionName: GENERATE_NAME('missing_collection'),
+        replicaNum: 1,
+      });
+      expect(rejected.code).not.toBe(0);
+      expect(rejected.message).toMatch(/collection/i);
+    } finally {
+      expectHttpSuccess(
+        await http.updateResourceGroups({
+          resource_groups: {
+            [name]: { requests: { node_num: 0 }, limits: { node_num: 0 } },
+          },
+        })
+      );
+      expectHttpSuccess(await http.dropResourceGroup({ name }));
+    }
+
+    const remaining = await http.listResourceGroups();
+    expectHttpSuccess(remaining);
+    expect(remaining.data).not.toContain(name);
+  });
   beforeAll(async () => {
     await milvusClient.createDatabase(dbParam);
     await milvusClient.use(dbParam);

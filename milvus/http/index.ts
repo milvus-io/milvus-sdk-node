@@ -8,3 +8,4 @@ export * from './Alias';
 export * from './MilvusIndex';
 export * from './Import';
 export * from './Snapshot';
+export * from './ResourceGroup';

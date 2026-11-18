@@ -249,6 +249,12 @@ const { data } = await client.getExportSnapshotState({ jobId });
 
 Snapshot job IDs, pin IDs, and int64 metadata are decimal strings so they can be passed to later requests without losing precision. Snapshot restore defaults both source and target databases to the configured database. This workflow was verified with Milvus 3.0.6.
 
+## Resource Group APIs
+
+`createResourceGroup()`, `describeResourceGroup()`, `listResourceGroups()`, and `dropResourceGroup()` manage resource groups over REST. Use `updateResourceGroups({ resource_groups })` to update group requests, limits, transfer preferences, and node labels. `transferReplica()` accepts `sourceRgName`, `targetRgName`, `collectionName`, and `replicaNum`.
+
+Describe returns the server's `resource_group` object. Query node IDs in this response are decimal strings. These methods were verified on Milvus 3.0.6.
+
 ## User and Role APIs
 
 | Method                                    | Description                     |
