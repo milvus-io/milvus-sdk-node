@@ -9,3 +9,4 @@ export * from './MilvusIndex';
 export * from './Import';
 export * from './Snapshot';
 export * from './ResourceGroup';
+export * from './Analyzer';

@@ -782,3 +782,37 @@ export interface HttpDescribeResourceGroupResponse {
   code?: number;
   message?: string;
 }
+
+export interface HttpFileResourceNameReq {
+  name: string;
+}
+
+export interface HttpAddFileResourceReq extends HttpFileResourceNameReq {
+  /** A path to an object in the Milvus server's storage. */
+  path: string;
+}
+
+export interface HttpRunAnalyzerReq {
+  text: string[];
+  /** Analyzer settings or their JSON representation. */
+  analyzerParams?: Record<string, unknown> | string;
+  withDetail?: boolean;
+  withHash?: boolean;
+  dbName?: string;
+  collectionName?: string;
+  fieldName?: string;
+  analyzerNames?: string[];
+}
+
+export interface HttpAnalyzerToken {
+  token: string;
+  startOffset?: number;
+  endOffset?: number;
+  position?: number;
+  positionLength?: number;
+  hash?: number;
+}
+
+export interface HttpRunAnalyzerResult {
+  results: { tokens: HttpAnalyzerToken[] }[];
+}

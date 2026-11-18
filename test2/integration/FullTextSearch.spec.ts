@@ -1,6 +1,7 @@
 import { createClient } from '../support/client';
-import { expectSuccess } from '../support/assertions';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
 import {
+  HttpClient,
   MilvusClient,
   DataType,
   ErrorCode,
@@ -261,6 +262,51 @@ describe(`FulltextSearch API`, () => {
     });
 
     expectSuccess(load);
+  });
+
+  it('runs inline and field analyzers over REST', async () => {
+    const client = new HttpClient({
+      endpoint: `http://${IP}`,
+      database: dbParam.db_name,
+    });
+    const analyzerParams = { tokenizer: 'standard', filter: ['lowercase'] };
+    const detailed = await client.runAnalyzer({
+      text: ['Hello WORLD', 'Another line'],
+      analyzerParams,
+      withDetail: true,
+      withHash: true,
+    });
+    expectHttpSuccess(detailed);
+    expect(
+      detailed.data.results.map(result =>
+        result.tokens.map(token => token.token)
+      )
+    ).toEqual([
+      ['hello', 'world'],
+      ['another', 'line'],
+    ]);
+    expect(detailed.data.results[0].tokens[1]).toMatchObject({
+      token: 'world',
+      startOffset: 6,
+      endOffset: 11,
+      position: 1,
+      positionLength: 1,
+      hash: expect.any(Number),
+    });
+    const inline = await client.runAnalyzer({
+      text: ['HELLO'],
+      analyzerParams: JSON.stringify(analyzerParams),
+    });
+    expectHttpSuccess(inline);
+    expect(inline.data.results).toEqual([{ tokens: [{ token: 'hello' }] }]);
+
+    const field = await client.runAnalyzer({
+      text: ['hello world'],
+      collectionName: COLLECTION,
+      fieldName: 'text',
+    });
+    expectHttpSuccess(field);
+    expect(field.data.results[0].tokens.length).toBeGreaterThan(0);
   });
 
   it(`run analyzer with collection_name and field_name should success`, async () => {

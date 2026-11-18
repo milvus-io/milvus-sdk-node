@@ -1,8 +1,8 @@
 import { createClient } from '../support/client';
-import { expectSuccess } from '../support/assertions';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
 import { TestS3Client as MinioClient } from '../fixtures/s3';
 import { execSync } from 'child_process';
-import { ErrorCode, MilvusClient } from '../../milvus';
+import { ErrorCode, HttpClient, MilvusClient } from '../../milvus';
 import { GENERATE_NAME, IP } from '../fixtures';
 
 const milvusClient = createClient({ address: IP, logLevel: 'info' });
@@ -87,6 +87,35 @@ describe('FileResource API', () => {
     });
 
     expect(res.error_code).not.toEqual(ErrorCode.SUCCESS);
+  });
+
+  it('registers and lists file resources over REST with exact IDs', async () => {
+    const client = new HttpClient({
+      endpoint: `http://${IP}`,
+      acceptInt64: true,
+    });
+    const name = RESOURCE_NAME;
+    expectHttpSuccess(
+      await client.addFileResource({ name, path: OBJECT_NAME })
+    );
+
+    try {
+      const grpc = await milvusClient.listFileResources();
+      expectSuccess(grpc.status);
+      const resources = await client.listFileResources();
+      expectHttpSuccess(resources);
+      expect(resources.data.find(resource => resource.name === name)).toEqual({
+        id: grpc.resources.find(resource => resource.name === name)?.id,
+        name,
+        path: OBJECT_NAME,
+      });
+    } finally {
+      expectHttpSuccess(await client.removeFileResource({ name }));
+    }
+
+    const remaining = await client.listFileResources();
+    expectHttpSuccess(remaining);
+    expect(remaining.data.some(resource => resource.name === name)).toBe(false);
   });
 
   it('should add, list, and remove file resource', async () => {

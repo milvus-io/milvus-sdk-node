@@ -289,6 +289,12 @@ Use `grantPrivilegeV2({ roleName, dbName, collectionName, privilege })` and `rev
 
 Use `createPrivilegeGroup()`, `addPrivilegesToGroup()`, `removePrivilegesFromGroup()`, `listPrivilegeGroups()`, and `dropPrivilegeGroup()` to manage privilege groups. Group mutations take `privilegeGroupName`; adding or removing privileges also takes a `privileges` array. `listPrivilegeGroups()` returns each group's privilege names as a comma-separated string, matching the server response. These methods were verified on Milvus 3.0.6.
 
+## Analyzer and File Resource APIs
+
+Use `runAnalyzer({ text, analyzerParams })` to preview tokens for an array of strings. Pass `collectionName` and `fieldName` to use a field's analyzer. Set `withDetail` for token offsets and positions, or `withHash` for token hashes.
+
+Use `addFileResource({ name, path })` to register a path in the server's storage, `listFileResources()` to list registrations, and `removeFileResource({ name })` to remove one. File resource IDs are returned as decimal strings. These methods were verified on Milvus 3.0.6.
+
 ## Errors
 
 Non-2xx responses throw `HttpError`.
