@@ -119,6 +119,20 @@ export interface RunAnalyzerResponse {
   results: AnalyzerResult[];
 }
 
+export interface ComputePhraseMatchSlopReq extends GrpcTimeOut {
+  /** Analyzer settings. An empty object uses the server's default analyzer. */
+  analyzer_params?: RunAnalyzerRequest['analyzer_params'];
+  query_text: string;
+  data_texts: string[];
+}
+
+export interface ComputePhraseMatchSlopResponse {
+  status: ResStatus;
+  is_match: boolean[];
+  /** Minimum slop for each input as a decimal string, or '-1' for no match. */
+  slops: string[];
+}
+
 export interface AddFileResourceReq extends GrpcTimeOut {
   name: string;
   path: string;

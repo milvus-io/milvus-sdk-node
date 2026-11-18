@@ -29,6 +29,8 @@ import {
   DEFAULT_POOL_MIN,
   RunAnalyzerRequest,
   RunAnalyzerResponse,
+  ComputePhraseMatchSlopReq,
+  ComputePhraseMatchSlopResponse,
   ResStatus,
   AddFileResourceReq,
   RemoveFileResourceReq,
@@ -760,6 +762,25 @@ export class GRPCClient extends User {
           },
           this.timeout
         )
+    );
+  }
+
+  /** Compute the minimum phrase-match slop for each text. Verified on Milvus 3.0.6. */
+  async computePhraseMatchSlop({
+    analyzer_params = {},
+    query_text,
+    data_texts,
+    timeout = this.timeout,
+  }: ComputePhraseMatchSlopReq): Promise<ComputePhraseMatchSlopResponse> {
+    return await promisify(
+      this.channelPool,
+      'ComputePhraseMatchSlop',
+      {
+        analyzer_params: JSON.stringify(analyzer_params),
+        query_text,
+        data_texts,
+      },
+      timeout
     );
   }
 
