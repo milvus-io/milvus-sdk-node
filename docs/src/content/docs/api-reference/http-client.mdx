@@ -140,6 +140,8 @@ const results = await client.search({
 });
 ```
 
+Use `exprParams` to bind filter placeholders such as `label in {labels}` in query, delete, search, or individual hybrid search requests. For query results, use `orderByFields` with keys such as `'price:desc'`. To group rows, pass scalar `groupByFields` and aggregation expressions such as `'count(*)'` in `outputFields`. These options were verified on Milvus 3.0.6.
+
 ## Database APIs
 
 | Method                                    | Description                                |
