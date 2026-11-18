@@ -193,6 +193,8 @@ HTTP import APIs are separate from the gRPC `bulkInsert`, `getImportState`, and 
 | `listImportJobs(data, options?)`       | List REST import jobs for a collection.    |
 | `createImportJobs(data, options?)`     | Create REST import jobs from staged files. |
 | `getImportJobProgress(data, options?)` | Get progress for a REST import job.        |
+| `commitImportJob(data, options?)`      | Commit an `Uncommitted` import job.        |
+| `abortImportJob(data, options?)`       | Abort an import job before it commits.     |
 
 ```typescript
 const job = await client.createImportJobs({
@@ -204,6 +206,8 @@ const progress = await client.getImportJobProgress({
   jobId: job.data.jobId,
 });
 ```
+
+On Milvus 3.0.6, create a manual-commit job with `options: { auto_commit: 'false' }`. Poll `getImportJobProgress()` until the state is `Uncommitted`, then call `commitImportJob({ jobId })` to make the imported rows visible. To discard a staged import, call `abortImportJob({ jobId })` before committing. Poll the job again for its final state.
 
 For Zilliz Cloud import workflows, include `projectId` and `regionId` when required by the cloud endpoint.
 

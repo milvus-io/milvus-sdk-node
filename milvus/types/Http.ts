@@ -496,8 +496,12 @@ export interface HttpImportCreateReq
   extends HttpBaseReq,
     HttpImportProjectRegionReq {
   files: string[][];
+  partitionName?: string;
   options?: {
-    timeout: string;
+    timeout?: string;
+    /** Set to 'false' for manual commit. Verified on Milvus 3.0.6. */
+    auto_commit?: 'true' | 'false';
+    [key: string]: string | undefined;
   };
 }
 
@@ -506,11 +510,13 @@ export interface HttpImportCreateResponse
     jobId: string;
   }> {}
 
-export interface HttpImportProgressReq
+export interface HttpImportJobReq
   extends Pick<HttpBaseReq, 'dbName'>,
     HttpImportProjectRegionReq {
   jobId: string;
 }
+
+export interface HttpImportProgressReq extends HttpImportJobReq {}
 
 export interface HttpImportProgressResponse
   extends HttpBaseResponse<{

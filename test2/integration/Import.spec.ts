@@ -1,7 +1,8 @@
 import { createClient } from '../support/client';
-import { expectSuccess } from '../support/assertions';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
 import {
-  MilvusClient,
+  HttpClient,
+  ConsistencyLevelEnum,
   DataType,
   ImportState,
   ERROR_REASONS,
@@ -9,6 +10,7 @@ import {
 } from '../../milvus';
 import { IP, VECTOR_FIELD_NAME, GENERATE_NAME } from '../fixtures';
 import { TestS3Client } from '../fixtures/s3';
+import { waitFor } from '../support/wait';
 
 // MinIO config — matches docker-compose defaults
 const MINIO_ADDRESS = process.env.MINIO_ADDRESS || '127.0.0.1';
@@ -16,7 +18,7 @@ const MINIO_BUCKET = 'a-bucket';
 
 const milvusClient = createClient({ address: IP });
 const COLLECTION_NAME = GENERATE_NAME('import');
-const dbParam = { db_name: 'Import' };
+const dbParam = { db_name: GENERATE_NAME('import_db') };
 
 // simple collection with just vector + id + age
 const IMPORT_DIM = 4;
@@ -183,4 +185,79 @@ describe(`Import API`, () => {
     });
     expect(count.data).toEqual(IMPORT_ROW_COUNT);
   });
+
+  it('commits one staged import and aborts another without making its rows visible', async () => {
+    const httpClient = new HttpClient({
+      endpoint: `http://${IP}`,
+      database: dbParam.db_name,
+    });
+    expectSuccess(
+      await milvusClient.loadCollectionSync({
+        collection_name: COLLECTION_NAME,
+      })
+    );
+
+    const countRows = async () => {
+      const result = await milvusClient.count({
+        collection_name: COLLECTION_NAME,
+        consistency_level: ConsistencyLevelEnum.Strong,
+      });
+      expectSuccess(result.status);
+      return result.data;
+    };
+    const initialCount = await countRows();
+
+    const stageImport = async () => {
+      const result = await httpClient.createImportJobs({
+        collectionName: COLLECTION_NAME,
+        files: [[IMPORT_FILE_PATH]],
+        options: { auto_commit: 'false' },
+      });
+      expectHttpSuccess(result);
+      return result.data.jobId;
+    };
+    const waitForImport = (jobId: string, state: string) =>
+      waitFor(
+        `import ${jobId} to reach ${state}`,
+        async () => {
+          const result = await httpClient.getImportJobProgress({ jobId });
+          expectHttpSuccess(result);
+          return result.data;
+        },
+        result => result.state === state || result.state === 'Failed',
+        { timeout: 90_000, interval: 500 }
+      );
+
+    const [commitId, abortId] = await Promise.all([
+      stageImport(),
+      stageImport(),
+    ]);
+    const staged = await Promise.all([
+      waitForImport(commitId, 'Uncommitted'),
+      waitForImport(abortId, 'Uncommitted'),
+    ]);
+    for (const result of staged) {
+      expect(result).toMatchObject({ state: 'Uncommitted' });
+    }
+    expect(await countRows()).toBe(initialCount);
+
+    expectHttpSuccess(await httpClient.commitImportJob({ jobId: commitId }));
+    expectHttpSuccess(await httpClient.abortImportJob({ jobId: abortId }));
+
+    expect(await waitForImport(commitId, 'Completed')).toMatchObject({
+      state: 'Completed',
+      importedRows: IMPORT_ROW_COUNT,
+    });
+    expect(await waitForImport(abortId, 'Failed')).toMatchObject({
+      state: 'Failed',
+      reason: expect.stringMatching(/abort/i),
+    });
+    expectSuccess(
+      await milvusClient.releaseCollection({ collection_name: COLLECTION_NAME })
+    );
+    expectSuccess(
+      await milvusClient.loadCollectionSync({ collection_name: COLLECTION_NAME })
+    );
+    expect(await countRows()).toBe(initialCount + IMPORT_ROW_COUNT);
+  }, 200_000);
 });

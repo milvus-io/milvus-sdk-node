@@ -1,5 +1,7 @@
 import { HttpBaseClient } from '../HttpClient';
 import {
+  HttpBaseResponse,
+  HttpImportJobReq,
   Constructor,
   FetchOptions,
   HttpImportListResponse,
@@ -44,6 +46,24 @@ export function Import<T extends Constructor<HttpBaseClient>>(Base: T) {
     ) {
       const url = `${this.importPrefix}/get_progress`;
       return await this.POST<HttpImportProgressResponse>(url, params, options);
+    }
+
+    /** Commit a manual import in the Uncommitted state. */
+    async commitImportJob(params: HttpImportJobReq, options?: FetchOptions) {
+      return await this.POST<HttpBaseResponse>(
+        `${this.importPrefix}/commit`,
+        params,
+        options
+      );
+    }
+
+    /** Abort an import before it commits. */
+    async abortImportJob(params: HttpImportJobReq, options?: FetchOptions) {
+      return await this.POST<HttpBaseResponse>(
+        `${this.importPrefix}/abort`,
+        params,
+        options
+      );
     }
   };
 }
