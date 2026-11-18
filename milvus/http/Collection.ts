@@ -16,6 +16,11 @@ import {
   HttpCollectionLoadStateResponse,
   HttpCollectionAddFieldReq,
   HttpCollectionAddFieldResponse,
+  HttpCollectionAddFunctionFieldReq,
+  HttpCollectionAddStructFieldReq,
+  HttpCollectionAlterFunctionReq,
+  HttpCollectionDropFieldReq,
+  HttpCollectionFunctionReq,
   HttpCollectionAlterPropertiesReq,
   HttpCollectionAlterPropertiesResponse,
   HttpCollectionAlterFieldPropertiesReq,
@@ -84,6 +89,72 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
     get collectionPrefix() {
       return '/vectordb/collections';
+    }
+
+    /** Remove all data while preserving the collection schema and indexes. */
+    truncateCollection(params: HttpBaseReq, options?: FetchOptions) {
+      return this.POST<HttpBaseResponse>(
+        `${this.collectionPrefix}/truncate`,
+        params,
+        options
+      );
+    }
+
+    addCollectionStructField(
+      params: HttpCollectionAddStructFieldReq,
+      options?: FetchOptions
+    ) {
+      return this.POST<HttpBaseResponse>(
+        `${this.collectionPrefix}/struct_fields/add`,
+        params,
+        options
+      );
+    }
+
+    dropCollectionField(
+      params: HttpCollectionDropFieldReq,
+      options?: FetchOptions
+    ) {
+      return this.POST<HttpBaseResponse>(
+        `${this.collectionPrefix}/fields/drop`,
+        params,
+        options
+      );
+    }
+
+    /** Add a function, its output field and its index together. */
+    addFunctionField(
+      params: HttpCollectionAddFunctionFieldReq,
+      options?: FetchOptions
+    ) {
+      return this.POST<HttpBaseResponse>(
+        `${this.collectionPrefix}/add_function_field`,
+        params,
+        options
+      );
+    }
+
+    alterCollectionFunction(
+      params: HttpCollectionAlterFunctionReq,
+      options?: FetchOptions
+    ) {
+      return this.POST<HttpBaseResponse>(
+        `${this.collectionPrefix}/alter_function`,
+        params,
+        options
+      );
+    }
+
+    /** Drop a function and its output field together. */
+    dropFunctionField(
+      params: HttpCollectionFunctionReq,
+      options?: FetchOptions
+    ) {
+      return this.POST<HttpBaseResponse>(
+        `${this.collectionPrefix}/drop_function_field`,
+        params,
+        options
+      );
     }
 
     get externalCollectionJobPrefix() {
