@@ -86,9 +86,11 @@ import {
   FieldPartialUpdateOp,
   CLUSTER_ID,
   isHybridSearchRequest,
+  FunctionChainStage,
   withTelemetryLogicalOperation,
   withTelemetrySuppressed,
 } from '../';
+import { serializeFunctionChains } from '../FunctionChain';
 import { Collection } from './Collection';
 
 // schema.proto DataType.ArrayOfStruct, the wire type of a StructArray column
@@ -781,6 +783,7 @@ export class Data extends Collection {
    * @param {SearchReq | SearchSimpleReq | HybridSearchReq} params - The request parameters.
    * @param {string} params.collection_name - The name of the collection.
    * @param {string} [params.db_name] - The name of the database (optional).
+   * @param {FunctionChains} [params.function_chains] - Optional server-side chains. A hybrid search can also set chains on individual ANN requests.
    *
    * For SearchSimpleReq:
    * @param {SearchData | SearchData[]} [params.data] - Vector or text to search. Not required when ids is provided.
@@ -881,11 +884,8 @@ export class Data extends Collection {
     );
 
     // build search params
-    const { request, nq, round_decimal, isHybridSearch } = buildSearchRequest(
-      params,
-      collectionInfo,
-      this.milvusProto
-    );
+    const { request, nq, round_decimal, isHybridSearch, hasFunctionChains } =
+      buildSearchRequest(params, collectionInfo, this.milvusProto);
 
     // if db_name exist, pass it to the request
     if (params.db_name) {
@@ -929,6 +929,7 @@ export class Data extends Collection {
       ? formatSearchResult(originSearchResult, {
           round_decimal: round_decimal || -1,
           transformers: params.transformers,
+          preserveScore: hasFunctionChains,
         })
       : [];
     const aggBuckets = hasSearchAggregation
@@ -1294,6 +1295,7 @@ export class Data extends Collection {
    * @param {OrderByFields} [data.order_by_fields] - Fields to sort query results by, for example `price:asc` or `[{ field: 'price', order: 'asc' }]` (optional).
    * @param {OrderByFields} [data.order_by] - Alias for data.order_by_fields (optional).
    * @param {Record<string, unknown>} [data.params] - Additional query parameters as a key-value object.
+   * @param {FunctionChains} [data.function_chains] - Optional QUERY_SCAN chain.
    * @param {OutputTransformers} data.transformers - The transformers for bf16 or f16 data, it accept bytes or sparse dic vector, it can ouput f32 array or other format(optional)
    *
    * @returns {Promise<QueryResults>} The result of the operation.
@@ -1319,6 +1321,18 @@ export class Data extends Collection {
 
   private async _query(data: QueryReq): Promise<QueryResults> {
     checkCollectionName(data);
+    const chains = serializeFunctionChains(data.function_chains);
+    if (chains.length > 1) {
+      throw new Error('query supports at most one QUERY_SCAN function chain');
+    }
+    if (chains.length && chains[0].stage !== FunctionChainStage.QUERY_SCAN) {
+      throw new Error('query function_chains requires the QUERY_SCAN stage');
+    }
+    if (chains.length && !chains[0].ops.length) {
+      throw new Error(
+        'query function chain must contain at least one operation'
+      );
+    }
 
     // Set up limits and offset for the query
     let limits: { limit: number } | undefined;
@@ -1380,11 +1394,13 @@ export class Data extends Collection {
       queryParams[CLUSTER_ID] = data.cluster_id;
     }
 
+    const { function_chains, ...requestData } = data;
     const promise: QueryRes = await promisify(
       this.channelPool,
       'Query',
       {
-        ...data,
+        ...requestData,
+        ...(chains.length ? { function_chains: chains } : {}),
         output_fields: data.output_fields || ['*'],
         query_params: parseToKeyValue(queryParams),
       },

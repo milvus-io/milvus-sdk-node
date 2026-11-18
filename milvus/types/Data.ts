@@ -10,6 +10,7 @@ import {
   OutputTransformers,
   OrderByFields,
 } from '../';
+import { FunctionChains } from './FunctionChain';
 
 export interface CountReq extends collectionNameReq {
   expr?: string; // filter expression
@@ -100,6 +101,7 @@ type BaseQueryReq = collectionNameReq & {
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
   exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
   params?: keyValueObj; // additional query parameters
+  function_chains?: FunctionChains; // optional QUERY_SCAN chain
 };
 
 export type QueryReq = BaseQueryReq &
@@ -107,7 +109,7 @@ export type QueryReq = BaseQueryReq &
 
 export interface QueryIteratorReq extends Omit<
   QueryReq,
-  'ids' | 'offset' | 'limit'
+  'ids' | 'offset' | 'limit' | 'function_chains'
 > {
   limit?: number; // Optional. Specifies the maximum number of items. Default is no limit (-1 or if not set).
   batchSize: number; // Specifies the number of items to return in each batch. if it exceeds 16384, it will be set to 16384
