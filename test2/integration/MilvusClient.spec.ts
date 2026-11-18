@@ -9,6 +9,7 @@ import {
 } from '../../milvus';
 import sdkInfo from '../../sdk.json';
 import { IP } from '../fixtures';
+import { expectSuccess } from '../support/assertions';
 
 const milvusClient = new MilvusClient({
   address: IP,
@@ -362,6 +363,37 @@ describe(`Milvus client`, () => {
 
     expect(typeof res.isHealthy).toEqual('boolean');
     expect(Array.isArray(res.reasons)).toBe(true);
+  });
+
+  it('allocates increasing hybrid timestamps as decimal strings', async () => {
+    const first = await milvusClient.allocTimestamp({ timeout: 5000 });
+    const second = await milvusClient.allocTimestamp();
+    expectSuccess(first.status);
+    expectSuccess(second.status);
+    expect(first.timestamp).toMatch(/^\d+$/);
+    expect(second.timestamp).toMatch(/^\d+$/);
+    expect(BigInt(second.timestamp)).toBeGreaterThan(BigInt(first.timestamp));
+  });
+
+  it('reports the proxy state and accepts legacy link registration', async () => {
+    const component = await milvusClient.getComponentStates();
+    expectSuccess(component.status);
+    expect(component.state).toMatchObject({
+      nodeID: expect.stringMatching(/^\d+$/),
+      role: 'proxy',
+      state_code: 'Healthy',
+    });
+    expect(component.subcomponent_states).toEqual([]);
+
+    const link = await milvusClient.registerLink();
+    expectSuccess(link.status);
+  });
+
+  it('returns the server diagnostic response for an unsupported request type', async () => {
+    const result = await milvusClient.dummy({
+      request_type: JSON.stringify({ request_type: 'unsupported' }),
+    });
+    expect(JSON.parse(result.response)).toEqual({ status: 'fail' });
   });
 
   it(`Should throw when server is unavailable`, async () => {

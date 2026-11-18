@@ -1,7 +1,7 @@
 import { ChannelOptions } from '@grpc/grpc-js';
 import { Options as LoaderOption } from '@grpc/proto-loader';
 import { Options } from 'generic-pool';
-import { GrpcTimeOut, ResStatus } from './Common';
+import { GrpcTimeOut, KeyValuePair, ResStatus } from './Common';
 import type { TelemetryConfig } from '../telemetry';
 
 /**
@@ -89,6 +89,40 @@ export interface ServerInfo {
   go_version?: string;
   deploy_mode?: string;
   reserved?: { [key: string]: any };
+}
+
+export interface AllocTimestampResponse {
+  status: ResStatus;
+  /** Milvus hybrid timestamp, returned as a decimal string by default. */
+  timestamp: string;
+}
+
+export interface MilvusComponentInfo {
+  nodeID: string;
+  role: string;
+  state_code: 'Initializing' | 'Healthy' | 'Abnormal' | 'StandBy' | 'Stopping';
+  extra_info: KeyValuePair<string, string>[];
+}
+
+export interface GetComponentStatesResponse {
+  status: ResStatus;
+  state: MilvusComponentInfo | null;
+  subcomponent_states: MilvusComponentInfo[];
+}
+
+export interface RegisterLinkResponse {
+  status: ResStatus;
+  address: { ip: string; port: string } | null;
+}
+
+export interface DummyReq extends GrpcTimeOut {
+  /** JSON diagnostic query accepted by Milvus's legacy Dummy RPC. */
+  request_type: string;
+}
+
+export interface DummyResponse {
+  /** JSON string reporting the diagnostic result. */
+  response: string;
 }
 
 export interface RunAnalyzerRequest {
