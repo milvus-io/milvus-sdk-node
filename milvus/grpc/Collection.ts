@@ -91,6 +91,11 @@ import {
   DescribeSnapshotResponse,
   RestoreSnapshotReq,
   RestoreSnapshotResponse,
+  ExportSnapshotReq,
+  ExportSnapshotResponse,
+  GetExportSnapshotStateReq,
+  GetExportSnapshotStateResponse,
+  RestoreExternalSnapshotReq,
   GetRestoreSnapshotStateReq,
   GetRestoreSnapshotStateResponse,
   ListRestoreSnapshotJobsReq,
@@ -2373,6 +2378,70 @@ export class Collection extends Database {
       'RestoreSnapshot',
       req,
       timeout || this.timeout
+    );
+  }
+
+  /**
+   * Export a snapshot as a self-contained bundle and return its job ID.
+   * Requires Milvus 3.0.6 or later.
+   */
+  async exportSnapshot(
+    data: ExportSnapshotReq
+  ): Promise<ExportSnapshotResponse> {
+    checkCollectionName(data);
+    const { snapshot_name, target_s3_path, timeout, ...rest } = data;
+    if (!snapshot_name) {
+      throw new Error('The `snapshot_name` property is missing.');
+    }
+    if (!target_s3_path) {
+      throw new Error('The `target_s3_path` property is missing.');
+    }
+
+    return await promisify(
+      this.channelPool,
+      'ExportSnapshot',
+      { ...rest, name: snapshot_name, target_s3_path },
+      timeout || this.timeout
+    );
+  }
+
+  /**
+   * Get progress and the completed bundle's metadata URI. Requires Milvus 3.0.6 or later.
+   */
+  async getExportSnapshotState(
+    data: GetExportSnapshotStateReq
+  ): Promise<GetExportSnapshotStateResponse> {
+    if (data?.job_id === undefined) {
+      throw new Error('The `job_id` property is missing.');
+    }
+
+    return await promisify(
+      this.channelPool,
+      'GetExportSnapshotState',
+      data,
+      data.timeout || this.timeout
+    );
+  }
+
+  /**
+   * Restore an exported snapshot into a new collection and return its restore job ID.
+   * Requires Milvus 3.0.6 or later.
+   */
+  async restoreExternalSnapshot(
+    data: RestoreExternalSnapshotReq
+  ): Promise<RestoreSnapshotResponse> {
+    if (!data?.target_collection_name) {
+      throw new Error('The `target_collection_name` property is missing.');
+    }
+    if (!data.snapshot_metadata_uri) {
+      throw new Error('The `snapshot_metadata_uri` property is missing.');
+    }
+
+    return await promisify(
+      this.channelPool,
+      'RestoreExternalSnapshot',
+      data,
+      data.timeout || this.timeout
     );
   }
 

@@ -68,6 +68,7 @@ const createTestClient = () => {
     DropCollection: jest.fn(),
     DescribeCollection: jest.fn(),
     GetCollectionStatistics: jest.fn(),
+    GetExportSnapshotState: jest.fn(),
   };
   const channelPool = {
     acquire: jest.fn().mockResolvedValue(rpcClient),
@@ -97,6 +98,38 @@ const bm25Function = {
   output_field_names: ['sparse_vector'],
   params: { analyzer: 'standard' },
 };
+
+describe('portable snapshot requests', () => {
+  it('rejects missing request objects before acquiring a channel', async () => {
+    const { client, channelPool } = createTestClient();
+    await expect(
+      client.getExportSnapshotState(undefined as any)
+    ).rejects.toThrow('The `job_id` property is missing.');
+    await expect(
+      client.restoreExternalSnapshot(undefined as any)
+    ).rejects.toThrow('The `target_collection_name` property is missing.');
+    expect(channelPool.acquire).not.toHaveBeenCalled();
+  });
+
+  it('passes the decimal export job ID and explicit deadline to gRPC', async () => {
+    const { client, rpcClient } = createTestClient();
+    const jobId = '470549153632548307';
+    const response = { status: successStatus, info: { job_id: jobId } };
+    rpcClient.GetExportSnapshotState.mockImplementation(respondWith(response));
+
+    const timeout = 2000;
+    const start = Date.now();
+    await expect(
+      client.getExportSnapshotState({ job_id: jobId, timeout })
+    ).resolves.toEqual(response);
+
+    const [request, { deadline }] =
+      rpcClient.GetExportSnapshotState.mock.calls[0];
+    expect(request.job_id).toBe(jobId);
+    expect(deadline.getTime()).toBeGreaterThanOrEqual(start + timeout);
+    expect(deadline.getTime()).toBeLessThanOrEqual(Date.now() + timeout);
+  });
+});
 
 describe('collection schema alteration', () => {
   describe('addCollectionField', () => {

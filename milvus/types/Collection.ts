@@ -478,6 +478,15 @@ export interface ListSnapshotsReq extends collectionNameReq {}
 
 export interface ListSnapshotsResponse extends resStatusResponse {
   snapshots: string[];
+  snapshot_summaries?: SnapshotSummary[];
+}
+
+export interface SnapshotSummary {
+  name: string;
+  create_ts: string;
+  description: string;
+  /** Creation time as Unix milliseconds. */
+  create_utc_ts: string;
 }
 
 export interface DescribeSnapshotReq extends collectionNameReq {
@@ -503,6 +512,59 @@ export interface RestoreSnapshotReq extends GrpcTimeOut {
 
 export interface RestoreSnapshotResponse extends resStatusResponse {
   job_id: string;
+}
+
+export interface ExportSnapshotReq extends collectionNameReq {
+  snapshot_name: string;
+  /** Destination root for the self-contained export bundle. */
+  target_s3_path: string;
+  /** Optional JSON external storage configuration. */
+  external_spec?: string;
+}
+
+export interface ExportSnapshotResponse extends resStatusResponse {
+  job_id: string;
+}
+
+export enum ExportSnapshotState {
+  ExportSnapshotNone = 'ExportSnapshotNone',
+  ExportSnapshotPending = 'ExportSnapshotPending',
+  ExportSnapshotExecuting = 'ExportSnapshotExecuting',
+  ExportSnapshotCompleted = 'ExportSnapshotCompleted',
+  ExportSnapshotFailed = 'ExportSnapshotFailed',
+}
+
+export interface ExportSnapshotJobInfo {
+  job_id: string;
+  snapshot_name: string;
+  db_name: string;
+  collection_name: string;
+  state: ExportSnapshotState | keyof typeof ExportSnapshotState;
+  progress: number;
+  reason: string;
+  start_time: string;
+  time_cost: string;
+  total_files: string;
+  copied_files: string;
+  total_bytes: string;
+  /** Metadata URI for a completed export. */
+  snapshot_metadata_uri: string;
+}
+
+export interface GetExportSnapshotStateReq extends GrpcTimeOut {
+  job_id: number | string;
+}
+
+export interface GetExportSnapshotStateResponse extends resStatusResponse {
+  info: ExportSnapshotJobInfo;
+}
+
+export interface RestoreExternalSnapshotReq extends GrpcTimeOut {
+  db_name?: string;
+  target_collection_name: string;
+  snapshot_metadata_uri: string;
+  /** Optional JSON external storage configuration. */
+  external_spec?: string;
 }
 
 export interface GetRestoreSnapshotStateReq extends GrpcTimeOut {

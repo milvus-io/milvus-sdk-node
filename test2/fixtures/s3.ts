@@ -5,6 +5,7 @@ import {
   HeadBucketCommand,
   PutObjectCommand,
   S3Client,
+  paginateListObjectsV2,
 } from '@aws-sdk/client-s3';
 import { createReadStream } from 'fs';
 import { stat } from 'fs/promises';
@@ -66,6 +67,17 @@ export class TestS3Client {
     return this.client.send(
       new DeleteObjectCommand({ Bucket: bucket, Key: key })
     );
+  }
+
+  async removePrefix(bucket: string, prefix: string) {
+    for await (const page of paginateListObjectsV2(
+      { client: this.client },
+      { Bucket: bucket, Prefix: prefix }
+    )) {
+      for (const { Key } of page.Contents ?? []) {
+        if (Key) await this.removeObject(bucket, Key);
+      }
+    }
   }
 
   async bucketExists(bucket: string) {
