@@ -75,9 +75,12 @@ type FieldPartialUpdateOp = {
     | FieldPartialUpdateOpType.REPLACE
     | FieldPartialUpdateOpType.ARRAY_APPEND
     | FieldPartialUpdateOpType.ARRAY_REMOVE
+    | FieldPartialUpdateOpType.PATH_REPLACE
     | 'REPLACE'
     | 'ARRAY_APPEND'
-    | 'ARRAY_REMOVE';
+    | 'ARRAY_REMOVE'
+    | 'PATH_REPLACE';
+  path?: string; // Required for PATH_REPLACE on Milvus 3.0.6+
 };
 ```
 

@@ -1,10 +1,11 @@
 import { createClient } from '../support/client';
 import { expectSuccess } from '../support/assertions';
 import {
+  ConsistencyLevelEnum,
   DataType,
   ErrorCode,
   FieldPartialUpdateOpType,
-  MilvusClient,
+  HttpClient,
 } from '../../milvus';
 import { GENERATE_NAME, IP, VECTOR_FIELD_NAME } from '../fixtures';
 
@@ -43,6 +44,18 @@ describe('Upsert array partial ops', () => {
           element_type: DataType.Int64,
           max_capacity: 8,
         },
+        { name: 'attributes', data_type: DataType.JSON, nullable: true },
+        {
+          name: 'items',
+          data_type: DataType.Array,
+          element_type: DataType.Struct,
+          max_capacity: 4,
+          nullable: true,
+          fields: [
+            { name: 'label', data_type: DataType.VarChar, max_length: 32 },
+            { name: 'rank', data_type: DataType.Int32 },
+          ],
+        },
       ],
     });
 
@@ -69,6 +82,23 @@ describe('Upsert array partial ops', () => {
           [VECTOR_FIELD_NAME]: [0.2, 0.3, 0.4, 0.5],
           tags: ['blue'],
           scores: [10, 20],
+        },
+        {
+          id: 3,
+          [VECTOR_FIELD_NAME]: [0.1, 0.2, 0.3, 0.4],
+          tags: ['red', 'green'],
+          scores: [3, 4],
+          attributes: { nested: { color: 'green', size: 2 } },
+          items: [
+            { label: 'green', rank: 1 },
+            { label: 'red', rank: 2 },
+          ],
+        },
+        {
+          id: 4,
+          [VECTOR_FIELD_NAME]: [0.1, 0.2, 0.3, 0.4],
+          tags: ['red', 'green'],
+          scores: [3, 4],
         },
       ],
     });
@@ -140,5 +170,64 @@ describe('Upsert array partial ops', () => {
     expectSuccess(query.status);
     expect(query.data[0].tags).toEqual(['red', 'blue']);
     expect(query.data[0].scores).toEqual(['1', '3', '4']);
+  });
+
+  it('replaces Array, JSON, and StructArray values at their paths over gRPC', async () => {
+    const upsert = await milvusClient.upsert({
+      collection_name: COLLECTION_NAME,
+      data: [
+        { id: 3, scores: [9], attributes: null, items: [{ label: 'blue' }] },
+      ],
+      field_ops: [
+        {
+          field_name: 'scores',
+          op: FieldPartialUpdateOpType.PATH_REPLACE,
+          path: '[1]',
+        },
+        {
+          field_name: 'attributes',
+          op: 'PATH_REPLACE',
+          path: '["nested"]["color"]',
+        },
+        { field_name: 'items', op: 'PATH_REPLACE', path: '[0][label]' },
+      ],
+    });
+    expectSuccess(upsert.status);
+
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      filter: 'id == 3',
+      output_fields: ['scores', 'attributes', 'items'],
+      consistency_level: ConsistencyLevelEnum.Strong,
+    });
+    expectSuccess(query.status);
+    expect(query.data).toHaveLength(1);
+    expect(query.data[0]).toMatchObject({
+      scores: ['3', '9'],
+      attributes: { nested: { color: null, size: 2 } },
+      items: [
+        { label: 'blue', rank: 1 },
+        { label: 'red', rank: 2 },
+      ],
+    });
+  });
+
+  it('replaces an Array element through the typed REST upsert method', async () => {
+    const httpClient = new HttpClient({ endpoint: `http://${IP}` });
+    const upsert = await httpClient.upsert({
+      collectionName: COLLECTION_NAME,
+      data: [{ id: 4, tags: ['yellow'] }],
+      fieldOps: [{ fieldName: 'tags', op: 'PATH_REPLACE', path: '[0]' }],
+    });
+    expect(upsert).toMatchObject({ code: 0, data: { upsertCount: 1 } });
+
+    const query = await milvusClient.query({
+      collection_name: COLLECTION_NAME,
+      filter: 'id == 4',
+      output_fields: ['tags'],
+      consistency_level: ConsistencyLevelEnum.Strong,
+    });
+    expectSuccess(query.status);
+    expect(query.data[0].tags).toEqual(['yellow', 'green']);
   });
 });

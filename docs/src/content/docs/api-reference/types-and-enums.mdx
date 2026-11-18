@@ -229,13 +229,14 @@ enum FunctionType {
 
 ## Partial update enums <span className="version-tag">Milvus 3.0</span>
 
-`FieldPartialUpdateOpType` is used by `upsert({ field_ops })` to control Array field partial updates.
+`FieldPartialUpdateOpType` is used by `upsert({ field_ops })` to control partial updates. `PATH_REPLACE` requires Milvus 3.0.6 or later.
 
 ```typescript
 enum FieldPartialUpdateOpType {
   REPLACE = 0,
   ARRAY_APPEND = 1,
   ARRAY_REMOVE = 2,
+  PATH_REPLACE = 3,
 }
 ```
 

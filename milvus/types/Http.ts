@@ -1,5 +1,6 @@
 import { FloatVector } from '..';
 import type { Properties } from './Collection';
+import type { FieldPartialUpdateOpName } from './Insert';
 type Fetch = (input: any, init?: any) => Promise<any>;
 
 // Class types
@@ -266,6 +267,17 @@ export interface HttpCollectionLoadStateResponse
 // insert data request
 export interface HttpVectorInsertReq extends HttpBaseReq {
   data: Record<string, any>[];
+}
+
+export interface HttpVectorUpsertReq extends HttpVectorInsertReq {
+  partitionName?: string;
+  partialUpdate?: boolean;
+  fieldOps?: {
+    fieldName: string;
+    op: FieldPartialUpdateOpName;
+    /** Required for PATH_REPLACE (Milvus 3.0.6+). */
+    path?: string;
+  }[];
 }
 
 // insert data response

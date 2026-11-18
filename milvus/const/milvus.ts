@@ -315,11 +315,12 @@ export enum DataType {
   Struct = 201,
 }
 
-// partial update operation enum for array fields in upsert
+// Field operations for partial upsert.
 export enum FieldPartialUpdateOpType {
   REPLACE = 0,
   ARRAY_APPEND = 1,
   ARRAY_REMOVE = 2,
+  PATH_REPLACE = 3,
 }
 
 export enum PlaceholderType {
