@@ -2,6 +2,7 @@ import { FloatVector } from '..';
 import type {
   ExportSnapshotState,
   Properties,
+  RefreshExternalCollectionState,
   RestoreSnapshotState,
 } from './Collection';
 import type { FieldPartialUpdateOpName } from './Insert';
@@ -618,4 +619,21 @@ export interface HttpExportSnapshotJobInfo extends HttpSnapshotJobInfo {
 
 export interface HttpPinSnapshotDataReq extends HttpSnapshotReq {
   ttlSeconds?: number;
+}
+
+export interface HttpRefreshExternalCollectionReq extends HttpBaseReq {
+  externalSource?: string;
+  externalSpec?: string;
+}
+
+export interface HttpRefreshExternalCollectionJobInfo {
+  jobId: string;
+  collectionName: string;
+  state: keyof typeof RefreshExternalCollectionState;
+  progress: number;
+  externalSource: string;
+  externalSpec: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
 }

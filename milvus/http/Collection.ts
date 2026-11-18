@@ -27,6 +27,8 @@ import {
   HttpCollectionGetCompactionStateReq,
   HttpCollectionGetCompactionStateResponse,
   HttpCollectionRefreshLoadReq,
+  HttpRefreshExternalCollectionReq,
+  HttpRefreshExternalCollectionJobInfo,
 } from '../types';
 import {
   DEFAULT_PRIMARY_KEY_FIELD,
@@ -34,6 +36,31 @@ import {
   DEFAULT_VECTOR_FIELD,
   DEFAULT_DB,
 } from '../const';
+import { parseInt64Fields } from './parseInt64Fields';
+
+const externalRefreshInt64Fields = new Set(['jobId', 'startTime', 'endTime']);
+
+const decodeExternalRefresh = <T>(body: string) =>
+  parseInt64Fields<T>(body, externalRefreshInt64Fields);
+
+const encodeExternalRefreshProgress = ({
+  jobId,
+  ...rest
+}: Record<string, any>) => {
+  if (
+    typeof jobId !== 'string' ||
+    !/^[1-9]\d{0,18}$/.test(jobId) ||
+    BigInt(jobId) > BigInt('9223372036854775807')
+  ) {
+    throw new Error('jobId must be a positive int64 decimal string');
+  }
+
+  // This route binds jobId to a Go int64 and requires an unquoted JSON integer.
+  return JSON.stringify({ ...rest, jobId }).replace(
+    /"jobId":"(\d+)"}$/,
+    '"jobId":$1}'
+  );
+};
 
 /**
  * Collection is a mixin function that extends the functionality of a base class.
@@ -57,6 +84,51 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
     get collectionPrefix() {
       return '/vectordb/collections';
+    }
+
+    get externalCollectionJobPrefix() {
+      return '/vectordb/jobs/external_collection';
+    }
+
+    /** Start a refresh and return its decimal job ID. */
+    refreshExternalCollection(
+      params: HttpRefreshExternalCollectionReq,
+      options?: FetchOptions
+    ) {
+      return this.POST<HttpBaseResponse<{ jobId: string }>>(
+        `${this.externalCollectionJobPrefix}/refresh`,
+        params,
+        options,
+        decodeExternalRefresh
+      );
+    }
+
+    /** Read refresh progress with the exact job ID returned at submission. */
+    getRefreshExternalCollectionProgress(
+      params: { jobId: string },
+      options?: FetchOptions
+    ) {
+      return this.POST<HttpBaseResponse<HttpRefreshExternalCollectionJobInfo>>(
+        `${this.externalCollectionJobPrefix}/describe`,
+        params,
+        options,
+        decodeExternalRefresh,
+        encodeExternalRefreshProgress
+      );
+    }
+
+    listRefreshExternalCollectionJobs(
+      params: Partial<HttpBaseReq> = {},
+      options?: FetchOptions
+    ) {
+      return this.POST<
+        HttpBaseResponse<{ records: HttpRefreshExternalCollectionJobInfo[] }>
+      >(
+        `${this.externalCollectionJobPrefix}/list`,
+        params,
+        options,
+        decodeExternalRefresh
+      );
     }
 
     // POST create collection

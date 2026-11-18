@@ -143,7 +143,8 @@ export class HttpBaseClient {
     url: string,
     data: Record<string, any> = {},
     options?: FetchOptions,
-    decode?: (body: string) => T
+    decode?: (body: string) => T,
+    encode?: (data: Record<string, any>) => string
   ): Promise<T> {
     let id: ReturnType<typeof setTimeout> | undefined;
     try {
@@ -161,7 +162,7 @@ export class HttpBaseClient {
       const response = await this.fetch(fullUrl, {
         method: 'post',
         headers: this.headers,
-        body: JSON.stringify(data),
+        body: encode ? encode(data) : JSON.stringify(data),
         signal: abortController.signal,
       });
 
