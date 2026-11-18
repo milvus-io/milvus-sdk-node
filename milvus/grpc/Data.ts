@@ -135,7 +135,8 @@ const hasElementFilterExpression = (expr: string): boolean => {
 
 export class Data extends Collection {
   /**
-   * Upsert data into Milvus, view _insert for detail
+   * Upsert data into Milvus. Use `field_ops` with `PATH_REPLACE` to replace
+   * an existing Array, StructArray, or JSON value by path (Milvus 3.0.6+).
    */
   async upsert(data: UpsertReq): Promise<MutationResult> {
     return withTelemetryLogicalOperation(this.channelPool, 'Upsert', data, () =>
@@ -202,6 +203,11 @@ export class Data extends Collection {
     const fieldOps = upsert
       ? this.normalizeFieldOps((data as UpsertReq).field_ops)
       : [];
+    const pathReplaceFields = new Set(
+      fieldOps
+        .filter(({ op }) => op === 'PATH_REPLACE')
+        .map(op => op.field_name)
+    );
 
     const describeReq = { collection_name, cache: enable_cache };
     if (data.db_name) {
@@ -333,12 +339,12 @@ export class Data extends Collection {
             `${ERROR_REASONS.INSERT_CHECK_WRONG_FIELD} ${rowIndex}`
           );
         }
-        const fieldData = buildFieldData(
-          rowData,
-          field,
-          data.transformers,
-          rowIndex
-        );
+        const fieldData =
+          field.type === DataType.JSON &&
+          pathReplaceFields.has(name) &&
+          rowData[name] === null
+            ? Buffer.from('null')
+            : buildFieldData(rowData, field, data.transformers, rowIndex);
 
         if (field.type === DataType.BinaryVector && fieldData != null) {
           if ((fieldData as BinaryVector).length !== field.dim! / 8) {
@@ -378,7 +384,7 @@ export class Data extends Collection {
     }
 
     // build column data, row based data to column based data
-    const buildColumnData = (fields: Map<string, _Field>): any[] => {
+    const buildColumnData = (fields: Iterable<_Field>): any[] => {
       const getDataKeyWithTimestamptz = (
         type: DataType | undefined
       ): string => {
@@ -386,7 +392,7 @@ export class Data extends Collection {
         return type === DataType.Timestamptz ? 'string_data' : getDataKey(type);
       };
 
-      return Array.from(fields.values()).map(field => {
+      return Array.from(fields, field => {
         let key = [...VectorDataTypes, DataType.ArrayOfVector].includes(
           field.type
         )
@@ -522,9 +528,18 @@ export class Data extends Collection {
 
           case DataType.Array:
             if (field.elementType === DataType.Struct) {
-              // For struct arrays, recursively build column data for struct fields
+              const children = Array.from(field.fieldMap.values());
+              // A path operand carries only the children supplied by the caller.
               keyValue = {
-                fields: buildColumnData(field.fieldMap),
+                fields: buildColumnData(
+                  pathReplaceFields.has(field.name)
+                    ? children.filter(child =>
+                        child.data.some(
+                          row => Array.isArray(row) && row.length > 0
+                        )
+                      )
+                    : children
+                ),
               };
             } else if (field.typeSchema) {
               // Array sub-field of a struct: one nested array_data per row
@@ -582,7 +597,7 @@ export class Data extends Collection {
       });
     };
 
-    params.fields_data = buildColumnData(fieldMap).filter(f => {
+    params.fields_data = buildColumnData(fieldMap.values()).filter(f => {
       // For partial updates, only include fields that were present in the original data.
       // Always include DEFAULT_DYNAMIC_FIELD to preserve dynamic field updates.
       if (isPartialUpdate) {
@@ -621,31 +636,30 @@ export class Data extends Collection {
     return promise;
   }
 
-  private normalizeFieldOps(
-    fieldOps?: FieldPartialUpdateOp[]
-  ): { field_name: string; op: keyof typeof FieldPartialUpdateOpType }[] {
-    if (!fieldOps || fieldOps.length === 0) {
-      return [];
-    }
-
-    return fieldOps.map(({ field_name, op }) => {
+  private normalizeFieldOps(fieldOps?: FieldPartialUpdateOp[]) {
+    return (fieldOps ?? []).map(({ field_name, op, path }) => {
       if (!field_name) {
         throw new Error('field_ops field_name is required');
       }
 
-      if (typeof op === 'number') {
-        const opName = FieldPartialUpdateOpType[op] as
-          keyof typeof FieldPartialUpdateOpType | undefined;
-        if (typeof opName === 'undefined') {
-          throw new Error(`unsupported field partial update op: ${op}`);
-        }
-        return { field_name, op: opName };
-      }
-
-      if (typeof FieldPartialUpdateOpType[op] === 'undefined') {
+      const opName = typeof op === 'number' ? FieldPartialUpdateOpType[op] : op;
+      if (
+        typeof FieldPartialUpdateOpType[
+          opName as keyof typeof FieldPartialUpdateOpType
+        ] !== 'number'
+      ) {
         throw new Error(`unsupported field partial update op: ${op}`);
       }
-      return { field_name, op };
+      if (opName === 'PATH_REPLACE') {
+        if (typeof path !== 'string' || !path) {
+          throw new Error('PATH_REPLACE requires a path');
+        }
+        return { field_name, op: opName, path };
+      }
+      if (path) {
+        throw new Error('path is only supported for PATH_REPLACE');
+      }
+      return { field_name, op: opName };
     });
   }
 

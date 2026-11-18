@@ -12,6 +12,7 @@ import {
   HttpBaseResponse,
   FetchOptions,
   HttpVectorUpsertResponse,
+  HttpVectorUpsertReq,
   HttpVectorHybridSearchReq,
 } from '../types';
 
@@ -53,9 +54,9 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       return await this.POST<HttpVectorInsertResponse>(url, data, options);
     }
 
-    // POST insert data
+    /** Upsert rows, optionally updating individual field paths on Milvus 3.0.6+. */
     async upsert(
-      data: HttpVectorInsertReq,
+      data: HttpVectorUpsertReq,
       options?: FetchOptions
     ): Promise<HttpVectorUpsertResponse> {
       const url = `${this.vectorPrefix}/upsert`;

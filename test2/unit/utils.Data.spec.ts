@@ -706,6 +706,40 @@ describe('utils/Data', () => {
     ).rejects.toThrow('unsupported field partial update op: INVALID_OP');
   });
 
+  it('should serialize PATH_REPLACE with its path and enable partial update', async () => {
+    const upsertParams = await captureUpsertParams(
+      arrayPartialDescribeResponse,
+      [{ id: 1, tags: ['new'], scores: [2] }],
+      {
+        field_ops: [
+          { field_name: 'tags', op: 'PATH_REPLACE', path: '[0]' },
+          { field_name: 'scores', op: 3, path: '[1]' },
+        ],
+      }
+    );
+
+    expect(upsertParams.partial_update).toBe(true);
+    expect(upsertParams.field_ops).toEqual([
+      { field_name: 'tags', op: 'PATH_REPLACE', path: '[0]' },
+      { field_name: 'scores', op: 'PATH_REPLACE', path: '[1]' },
+    ]);
+  });
+
+  it('should require a path for PATH_REPLACE and reject paths on other ops', async () => {
+    const rows = [{ id: 1, tags: ['new'] }];
+    await expect(
+      captureUpsertParams(arrayPartialDescribeResponse, rows, {
+        field_ops: [{ field_name: 'tags', op: 'PATH_REPLACE' }],
+      })
+    ).rejects.toThrow('PATH_REPLACE requires a path');
+
+    await expect(
+      captureUpsertParams(arrayPartialDescribeResponse, rows, {
+        field_ops: [{ field_name: 'tags', op: 'ARRAY_APPEND', path: '[0]' }],
+      })
+    ).rejects.toThrow('path is only supported for PATH_REPLACE');
+  });
+
   it('should reject field_ops without field_name', async () => {
     await expect(
       captureUpsertParams(

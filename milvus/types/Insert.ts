@@ -83,6 +83,8 @@ export type FieldPartialUpdateOpValue =
 export interface FieldPartialUpdateOp {
   field_name: string;
   op: FieldPartialUpdateOpValue;
+  /** Required for PATH_REPLACE (Milvus 3.0.6+), for example `[0]` or `["key"]`. */
+  path?: string;
 }
 
 export type UpsertReq = (DataInsertReq | FieldsDataInsertReq) & {

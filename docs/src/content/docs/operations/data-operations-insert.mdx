@@ -236,12 +236,34 @@ await client.upsert({
 Notes:
 
 - `field_ops` is supported only by `upsert()`.
-- Each `field_ops[].field_name` must refer to an Array field.
+- `ARRAY_APPEND` and `ARRAY_REMOVE` apply to Array fields.
 - The primary key must be included in each upsert row.
 - Fields not included in the upsert row remain unchanged.
 - `ARRAY_APPEND` must not make the array exceed its `max_capacity`.
 - `ARRAY_REMOVE` removes matching values from the existing array.
 - When `field_ops` is provided, the SDK automatically sends `partial_update: true`.
+
+### Replace a Value by Path <span className="version-tag">Milvus 3.0.6</span>
+
+Use `PATH_REPLACE` to replace one value in an existing row. Each Array or StructArray operand contains one element. A JSON operand is the new value itself.
+
+```typescript
+await client.upsert({
+  collection_name: 'my_collection',
+  data: [
+    { id: 1, scores: [100], items: [{ label: 'updated' }], settings: false },
+  ],
+  field_ops: [
+    { field_name: 'scores', op: 'PATH_REPLACE', path: '[0]' },
+    { field_name: 'items', op: 'PATH_REPLACE', path: '[0][label]' },
+    { field_name: 'settings', op: 'PATH_REPLACE', path: '["enabled"]' },
+  ],
+});
+```
+
+Use zero-based indexes like `[0]`. For a whole StructArray element, supply all its children. For a single child, use `[0][child]` and supply only that child. Quote JSON object keys, as in `["settings"][0]["enabled"]`. The primary key and the selected value must already exist.
+
+With `HttpClient`, use `collectionName` and pass operations as `fieldOps: [{ fieldName: 'scores', op: 'PATH_REPLACE', path: '[0]' }]`.
 
 ## Insert Transformers
 
