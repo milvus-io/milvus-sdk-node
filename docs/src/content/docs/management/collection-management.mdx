@@ -715,6 +715,33 @@ await client.dropSnapshot({
 });
 ```
 
+### Export and Restore a Portable Snapshot <span className="version-tag">Milvus 3.0.6</span>
+
+Export a snapshot to an object-storage path to create a self-contained bundle. Use the completed export's metadata URI to restore into a new collection.
+
+```typescript
+import { ExportSnapshotState } from '@zilliz/milvus2-sdk-node';
+
+const job = await client.exportSnapshot({
+  collection_name: 'my_collection',
+  snapshot_name: 'my_collection_snapshot_001',
+  target_s3_path: 'exports/my_collection_snapshot_001',
+});
+
+const { info } = await client.getExportSnapshotState({ job_id: job.job_id });
+if (info.state === ExportSnapshotState.ExportSnapshotCompleted) {
+  const restore = await client.restoreExternalSnapshot({
+    target_collection_name: 'my_collection_from_export',
+    snapshot_metadata_uri: info.snapshot_metadata_uri,
+  });
+  const restoreState = await client.getRestoreSnapshotState({
+    job_id: restore.job_id,
+  });
+}
+```
+
+A relative destination uses the cluster's configured storage. Export and restore accept an optional `external_spec` JSON string for configuring external object storage. Poll the job methods until the state is completed or failed. `listSnapshots()` also exposes snapshot descriptions and Unix creation times in `snapshot_summaries` when the server provides them.
+
 ## Collection Functions
 
 Collection functions are auto-processing pipelines that transform data at insert and query time. The most common use case is BM25 full-text search, where a function automatically converts text to sparse vectors.

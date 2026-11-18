@@ -682,6 +682,16 @@ restoreSnapshot(data: RestoreSnapshotReq): Promise<RestoreSnapshotResponse>
 getRestoreSnapshotState(data: GetRestoreSnapshotStateReq): Promise<GetRestoreSnapshotStateResponse>
 ```
 
+### exportSnapshot, getExportSnapshotState, restoreExternalSnapshot
+
+These methods require Milvus 3.0.6 or later. Export copies a snapshot into a standalone bundle. Export state provides the bundle's metadata URI when the job completes. External restore creates a new collection and returns a job ID for `getRestoreSnapshotState()`.
+
+```typescript
+exportSnapshot(data: ExportSnapshotReq): Promise<ExportSnapshotResponse>
+getExportSnapshotState(data: GetExportSnapshotStateReq): Promise<GetExportSnapshotStateResponse>
+restoreExternalSnapshot(data: RestoreExternalSnapshotReq): Promise<RestoreSnapshotResponse>
+```
+
 ### listRestoreSnapshotJobs
 
 ```typescript

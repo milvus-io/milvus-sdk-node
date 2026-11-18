@@ -3,7 +3,7 @@ import { resStatusResponse, collectionNameReq, GrpcTimeOut } from './Common';
 
 export interface GetFlushStateReq extends GrpcTimeOut {
   segmentIDs?: number[]; // segment id array
-  flush_ts?: number; // flush timestamp
+  flush_ts?: number | string; // flush timestamp as a decimal string for full precision
   db_name?: string; // database name
   collection_name?: string; // collection name
 }
@@ -15,6 +15,7 @@ export interface FlushReq extends GrpcTimeOut {
 
 export interface FlushResult extends resStatusResponse {
   coll_segIDs: any; // collection segment id array
+  coll_flush_ts?: Record<string, string>;
 }
 
 export interface GetFlushStateResponse extends resStatusResponse {
