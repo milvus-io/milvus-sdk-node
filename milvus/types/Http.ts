@@ -8,6 +8,7 @@ import type {
 import type { FieldPartialUpdateOpName } from './Insert';
 import type { KeyValuePair } from './Common';
 import type { SegmentLevel } from '../const';
+import type { SparseVectorCSR, SparseVectorDic } from './DataTypes';
 type Fetch = (input: any, init?: any) => Promise<any>;
 
 // Class types
@@ -408,18 +409,82 @@ type QueryResult = Record<string, any>[];
 export interface HttpVectorQueryResponse
   extends HttpBaseResponse<QueryResult> {}
 
+/** JSON inputs for dense, sparse, text, or embedding-list search. */
+export type HttpSearchDatum =
+  | FloatVector
+  | FloatVector[]
+  | SparseVectorDic
+  | SparseVectorCSR
+  | string
+  | string[];
+
+type HttpFunctionParam =
+  | HttpExpressionScalar
+  | readonly HttpFunctionParam[]
+  | { [key: string]: HttpFunctionParam };
+
+type HttpFunctionChainArg =
+  | { column: string; literal?: never }
+  | { column?: never; literal: HttpFunctionParam };
+
+export interface HttpFunctionChainOp {
+  op: string;
+  expr?: {
+    name: string;
+    args?: HttpFunctionChainArg[];
+    params?: Record<string, HttpFunctionParam>;
+  };
+  inputs?: string[];
+  outputs?: string[];
+  params?: Record<string, HttpFunctionParam>;
+}
+
+export interface HttpFunctionChain {
+  name?: string;
+  stage:
+    | 'FunctionChainStageIngestion'
+    | 'FunctionChainStagePreProcess'
+    | 'FunctionChainStageL0Rerank'
+    | 'FunctionChainStageL1Rerank'
+    | 'FunctionChainStageL2Rerank'
+    | 'FunctionChainStagePostProcess'
+    | 'FunctionChainStageQueryScan';
+  ops: HttpFunctionChainOp[];
+}
+
+export interface HttpFunctionScore {
+  functions: HttpCollectionFunction[];
+  params?: Record<string, unknown>;
+}
+
+interface HttpSearchGrouping {
+  groupingField?: string;
+  groupSize?: number;
+  strictGroupSize?: boolean;
+}
+
 // search request
 export interface HttpVectorSearchReq
-  extends Omit<HttpVectorQueryReq, 'groupByFields'> {
-  data: FloatVector[];
+  extends Omit<HttpVectorQueryReq, 'groupByFields'>,
+    HttpSearchGrouping {
+  data: HttpSearchDatum[];
+  ids?: never;
   annsField?: string;
-  groupingField?: string;
   searchParams?: Record<string, any>;
+  functionScore?: HttpFunctionScore;
+  functionChains?: HttpFunctionChain[];
+}
+
+export interface HttpVectorSearchByIdsReq
+  extends Omit<HttpVectorSearchReq, 'data' | 'ids'> {
+  data?: never;
+  /** Pass decimal strings for int64 primary keys beyond the safe integer range. */
+  ids: (number | string)[];
 }
 
 // hybrid search request
 interface HttpVectorHybridSearchParams {
-  data: FloatVector[];
+  data: HttpSearchDatum[];
   limit: number;
   filter?: string;
   exprParams?: HttpExpressionParams;
@@ -428,15 +493,22 @@ interface HttpVectorHybridSearchParams {
   annsField?: string;
   ignoreGrowing?: boolean;
   metricType?: string;
-  params?: Record<string, string | number>;
+  params?: Record<string, unknown>;
+  functionChains?: HttpFunctionChain[];
 }
 
-export interface HttpVectorHybridSearchReq extends HttpBaseReq {
+export interface HttpVectorHybridSearchReq
+  extends HttpBaseReq,
+    HttpSearchGrouping {
   search: HttpVectorHybridSearchParams[];
-  rerank: Record<string, any>;
+  rerank?: Record<string, any>;
   partitionNames?: string[];
   outputFields?: string[];
   limit?: number;
+  offset?: number;
+  consistencyLevel?: string;
+  functionScore?: HttpFunctionScore;
+  functionChains?: HttpFunctionChain[];
 }
 
 type QueryResultWithDistance = {
@@ -446,6 +518,11 @@ type QueryResultWithDistance = {
 export interface HttpVectorSearchResponse extends HttpVectorQueryResponse {
   data: QueryResultWithDistance | QueryResultWithDistance[];
   topks: number[];
+  cost?: number;
+  recalls?: number[];
+  scanned_remote_bytes?: number;
+  scanned_total_bytes?: number;
+  cache_hit_ratio?: number;
 }
 
 /* partition operation */

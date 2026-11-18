@@ -221,6 +221,29 @@ describe('HTTP endpoint contracts', () => {
     }
   );
 
+  it('splits REST search responses using cumulative hit counts', async () => {
+    const { client, fetch } = transport();
+    const first = { id: 1, distance: 1 };
+    const second = { id: 2, distance: 2 };
+    const third = { id: 3, distance: 3 };
+    fetch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          code: 0,
+          topks: [2, 0, 1],
+          data: [first, second, third],
+        })
+      )
+    );
+
+    const result = await client.search({
+      collectionName: 'books',
+      ids: [1, 2, 3],
+      outputFields: ['id'],
+    });
+    expect(result.data).toEqual([[first, second], [], [third]]);
+  });
+
   it('preserves HttpError identity and metadata', () => {
     const error = new HttpError('bad request', 400, 'Bad Request', '/items');
     expect(error).toBeInstanceOf(Error);

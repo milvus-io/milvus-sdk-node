@@ -362,6 +362,36 @@ describe(`FulltextSearch API`, () => {
     expect(query2.data.length).toEqual(10);
   });
 
+  it('searches a BM25 output field with REST text inputs', async () => {
+    const http = new HttpClient({
+      endpoint: `http://${IP}`,
+      database: dbParam.db_name,
+    });
+    const sample = await http.query({
+      collectionName: COLLECTION,
+      filter: 'text != ""',
+      outputFields: ['text'],
+      consistencyLevel: 'Strong',
+      limit: 1,
+    });
+    expectHttpSuccess(sample);
+    const [{ text }] = sample.data;
+    const result = await http.search({
+      collectionName: COLLECTION,
+      data: [text, text],
+      annsField: 'sparse',
+      outputFields: ['text'],
+      limit: 10,
+      consistencyLevel: 'Strong',
+    });
+    expectHttpSuccess(result);
+    expect(result.topks).toHaveLength(2);
+    const expected = expect.arrayContaining([
+      expect.objectContaining({ text }),
+    ]);
+    expect(result.data).toEqual([expected, expected]);
+  });
+
   it(`search with varchar should success`, async () => {
     // search nq = 1
     const search = await milvusClient.search({

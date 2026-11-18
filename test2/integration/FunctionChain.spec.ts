@@ -4,11 +4,12 @@ import {
   fn,
   FunctionChain,
   FunctionChainStage,
+  HttpClient,
   IndexType,
   MetricType,
 } from '../../milvus';
 import { GENERATE_NAME, IP } from '../fixtures';
-import { expectSuccess } from '../support/assertions';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
 import { createClient } from '../support/client';
 
 describe('Function chains', () => {
@@ -124,5 +125,129 @@ describe('Function chains', () => {
     expect(hits[0].score).toBeCloseTo(1 / 61 + 1 / 62, 6);
     expect(hits[1].score).toBeCloseTo(1 / 61 + 1 / 62, 6);
     expect(hits[2].score).toBeCloseTo(2 / 63, 6);
+  });
+
+  it('rewrites and sorts REST search results with a function chain', async () => {
+    const http = new HttpClient({ endpoint: `http://${IP}` });
+    const result = await http.search({
+      collectionName: collection_name,
+      data: [[1, 0]],
+      annsField: 'vector',
+      outputFields: ['id', 'boost'],
+      limit: 3,
+      functionChains: [
+        {
+          stage: 'FunctionChainStageL2Rerank',
+          ops: [
+            {
+              op: 'map',
+              outputs: ['$score'],
+              expr: {
+                name: 'num_combine',
+                args: [{ column: '$score' }, { column: 'boost' }],
+                params: { mode: 'weighted', weights: [0, 1] },
+              },
+            },
+            {
+              op: 'sort',
+              inputs: ['$score'],
+              params: { desc: true, tie_break_col: '$id' },
+            },
+            { op: 'limit', params: { limit: 2 } },
+          ],
+        },
+      ],
+    });
+    expectHttpSuccess(result);
+    expect(result.data).toEqual([
+      expect.objectContaining({ id: '2', boost: 5, distance: 5 }),
+      expect.objectContaining({ id: '3', boost: 5, distance: 5 }),
+    ]);
+  });
+
+  it('runs REST hybrid sub-search and fusion chains with parameterized filters', async () => {
+    const http = new HttpClient({ endpoint: `http://${IP}` });
+    const result = await http.hybridSearch({
+      collectionName: collection_name,
+      limit: 2,
+      outputFields: ['id'],
+      search: [
+        {
+          data: [[1, 0]],
+          annsField: 'vector',
+          filter: 'id > {min}',
+          exprParams: { min: 1 },
+          limit: 3,
+          functionChains: [
+            {
+              stage: 'FunctionChainStageL0Rerank',
+              ops: [
+                {
+                  op: 'map',
+                  outputs: ['$score'],
+                  expr: {
+                    name: 'num_combine',
+                    args: [{ column: '$score' }, { column: 'boost' }],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          data: [[0, 1]],
+          annsField: 'vector',
+          filter: 'id > {min}',
+          exprParams: { min: 1 },
+          limit: 3,
+        },
+      ],
+      functionChains: [
+        {
+          stage: 'FunctionChainStageL2Rerank',
+          ops: [
+            { op: 'merge', params: { strategy: 'rrf' } },
+            {
+              op: 'sort',
+              inputs: ['$score'],
+              params: { desc: true, tie_break_col: '$id' },
+            },
+          ],
+        },
+      ],
+    });
+    expectHttpSuccess(result);
+    expect(result.data).toEqual([
+      expect.objectContaining({ id: '2' }),
+      expect.objectContaining({ id: '3' }),
+    ]);
+  });
+
+  it('searches by an exact int64 primary key with scalar ordering and filter parameters', async () => {
+    const http = new HttpClient({ endpoint: `http://${IP}` });
+    const id = '9007199254740993';
+    expectSuccess(
+      await client.insert({
+        collection_name,
+        data: [{ id, vector: [0.1, 0.2], boost: 4, score: 40 }],
+      })
+    );
+    const result = await http.search({
+      collectionName: collection_name,
+      ids: [id],
+      annsField: 'vector',
+      filter: 'boost >= {min}',
+      exprParams: { min: 4 },
+      outputFields: ['id'],
+      orderByFields: ['id:desc'],
+      limit: 3,
+      consistencyLevel: 'Strong',
+    });
+    expectHttpSuccess(result);
+    expect(result.data).toEqual([
+      expect.objectContaining({ id }),
+      expect.objectContaining({ id: '3' }),
+      expect.objectContaining({ id: '2' }),
+    ]);
   });
 });

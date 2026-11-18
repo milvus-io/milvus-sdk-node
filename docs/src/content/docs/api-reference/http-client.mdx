@@ -142,6 +142,10 @@ const results = await client.search({
 
 Use `exprParams` to bind filter placeholders such as `label in {labels}` in query, delete, search, or individual hybrid search requests. For query results, use `orderByFields` with keys such as `'price:desc'`. To group rows, pass scalar `groupByFields` and aggregation expressions such as `'count(*)'` in `outputFields`. These options were verified on Milvus 3.0.6.
 
+REST `search()` accepts a batch of vectors or text in `data`, or searches using stored primary keys in `ids`. Pass large int64 primary keys as decimal strings. Use `orderByFields` for scalar ordering and `groupingField`, `groupSize`, and `strictGroupSize` for grouped search. Hybrid search also accepts the grouping options.
+
+Use `functionChains` for REST search and hybrid reranking. A chain sends the protobuf stage name as a string such as `'FunctionChainStageL2Rerank'`, followed by its `ops`. In an expression argument, send a column as `{ column: '$score' }` or a JSON literal as `{ literal: 2 }`. Hybrid search accepts chains on the full request and on each sub-search. These options were verified on Milvus 3.0.6.
+
 ## Database APIs
 
 | Method                                    | Description                                |

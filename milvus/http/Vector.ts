@@ -7,6 +7,7 @@ import {
   HttpVectorQueryReq,
   HttpVectorQueryResponse,
   HttpVectorSearchReq,
+  HttpVectorSearchByIdsReq,
   HttpVectorDeleteReq,
   HttpVectorSearchResponse,
   HttpBaseResponse,
@@ -72,30 +73,29 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       return await this.POST<HttpVectorQueryResponse>(url, data, options);
     }
 
-    // POST search data
+    /** Searches by input vectors, text, or stored primary keys. */
     async search(
-      data: HttpVectorSearchReq,
+      data: HttpVectorSearchReq | HttpVectorSearchByIdsReq,
       options?: FetchOptions
     ): Promise<HttpVectorSearchResponse> {
       const url = `${this.vectorPrefix}/search`;
       const res = await this.POST<HttpVectorSearchResponse>(url, data, options);
 
-      // if topks > 1, we need to split the results with topk
-      // for example, if topks = [5,5], we need to split the res.data into 2 groups, each one with 5
       if (res.topks && res.topks.length > 1) {
-        const topks = res.topks;
         const results = res.data;
-        const newResults = [];
-        for (let i = 0; i < topks.length; i++) {
-          newResults.push(results.slice(i * topks[i], (i + 1) * topks[i]));
+        let offset = 0;
+        const groups = [];
+        for (const count of res.topks) {
+          groups.push(results.slice(offset, offset + count));
+          offset += count;
         }
-        // Store split results in a new property instead of overwriting data
-        (res as any).data = newResults;
+        (res as any).data = groups;
       }
 
       return res;
     }
 
+    /** Fuses sub-searches with a reranker or a function chain. */
     async hybridSearch(
       data: HttpVectorHybridSearchReq,
       options?: FetchOptions
