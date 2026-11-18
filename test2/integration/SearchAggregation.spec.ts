@@ -1,8 +1,9 @@
 import { createClient } from '../support/client';
-import { expectSuccess } from '../support/assertions';
+import { expectHttpSuccess, expectSuccess } from '../support/assertions';
 import {
   AggregationBucket,
   DataType,
+  HttpClient,
   IndexType,
   MetricType,
   MilvusClient,
@@ -157,6 +158,27 @@ describe('SearchAggregation API', () => {
       .dropCollection({ collection_name: COLLECTION_NAME })
       .catch(() => undefined);
     await milvusClient.closeConnection();
+  });
+
+  it('applies strict group sizes to REST search results', async () => {
+    const http = new HttpClient({ endpoint: `http://${IP}` });
+    const result = await http.search({
+      collectionName: COLLECTION_NAME,
+      data: [[1, 0]],
+      annsField: 'vector',
+      outputFields: ['category'],
+      groupingField: 'category',
+      groupSize: 2,
+      strictGroupSize: true,
+      limit: 2,
+    });
+    expectHttpSuccess(result);
+    expect(result.data).toEqual([
+      expect.objectContaining({ category: 'books' }),
+      expect.objectContaining({ category: 'books' }),
+      expect.objectContaining({ category: 'music' }),
+      expect.objectContaining({ category: 'music' }),
+    ]);
   });
 
   it('returns bucket metrics, top hits, and nested aggregation per query', async () => {
