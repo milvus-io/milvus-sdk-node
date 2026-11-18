@@ -1,17 +1,17 @@
-name: Publish package to npm
+name: Stage package for npm
 
 on:
   release:
-    types: [released, prereleased]
+    types: [published]
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Run npm publish without publishing'
+        description: 'Check the npm package contents without uploading'
         required: true
         default: true
         type: boolean
       npm_tag:
-        description: 'npm dist-tag to use when publishing manually'
+        description: 'npm dist-tag to apply after approval of a manual submission'
         required: true
         default: 'latest'
         type: string
@@ -19,6 +19,10 @@ on:
 permissions:
   id-token: write # Required for OIDC
   contents: read
+
+concurrency:
+  group: npm-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -33,7 +37,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: yarn
+        run: yarn install --frozen-lockfile
 
       - name: update submodules
         run: |
@@ -48,32 +52,52 @@ jobs:
         run: |
           yarn build
 
-      - name: Publish to npm
+      - name: Check npm package contents
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        run: |
+          npm pack --dry-run
+          echo 'npm package contents checked (dry run).' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stage package for npm approval
+        if: github.event_name == 'release' || !inputs.dry_run
         env:
           GH_TOKEN: ${{ github.token }}
+          MANUAL_NPM_TAG: ${{ inputs.npm_tag }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-            echo "🔍 Testing npm authentication (dry run)..."
-            npm publish --dry-run
-            echo "✅ Authentication successful! Trusted publishing is working."
-          else
-            VERSION=$(node -p "require('./package.json').version")
-            VERSION_TAG=$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')")
+          PACKAGE=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
 
-            echo "📦 Publishing to npm..."
-            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-              NPM_TAG="${{ inputs.npm_tag }}"
-            elif [ "${{ github.event.release.prerelease }}" = "true" ]; then
-              NPM_TAG=next
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            NPM_TAG="$MANUAL_NPM_TAG"
+          elif [ "$PRERELEASE" = "true" ]; then
+            NPM_TAG=next
+          else
+            LATEST_RELEASE_TAG=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name')
+            if [ "$RELEASE_TAG" = "$LATEST_RELEASE_TAG" ]; then
+              NPM_TAG=latest
             else
-              LATEST_RELEASE_TAG=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name')
-              if [ "${{ github.event.release.tag_name }}" = "$LATEST_RELEASE_TAG" ]; then
-                NPM_TAG=latest
-              else
-                NPM_TAG="release-$VERSION_TAG"
-              fi
+              VERSION_TAG=$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')")
+              NPM_TAG="release-$VERSION_TAG"
             fi
-            echo "Publishing version $VERSION with npm dist-tag $NPM_TAG"
-            npm publish --tag "$NPM_TAG"
-            echo "✅ Published successfully!"
           fi
+
+          echo "Staging $PACKAGE@$VERSION with npm dist-tag $NPM_TAG"
+          if ! RESULT=$(npm stage publish --tag "$NPM_TAG" --json); then
+            printf '%s\n' "$RESULT" >&2
+            exit 1
+          fi
+          if ! STAGE_ID=$(jq -er --arg package "$PACKAGE" '.[$package].stageId | strings | select(length > 0)' <<< "$RESULT"); then
+            echo '::error::npm accepted the request without a Stage ID. Check Staged Packages before retrying.'
+            exit 1
+          fi
+
+          {
+            echo '### npm package staged for approval'
+            echo
+            printf -- '- Package `%s@%s`\n- dist-tag `%s`\n- Stage ID `%s`\n' "$PACKAGE" "$VERSION" "$NPM_TAG" "$STAGE_ID"
+            echo
+            printf 'A package maintainer can approve this submission with `npm stage approve %s` and npm 2FA.\n' "$STAGE_ID"
+            printf 'After approval, check `npm view %s@%s version --prefer-online` and confirm `npm view %s@%s version --prefer-online` returns `%s`.\n' "$PACKAGE" "$VERSION" "$PACKAGE" "$NPM_TAG" "$VERSION"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
