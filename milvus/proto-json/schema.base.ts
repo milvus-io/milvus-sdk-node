@@ -35,6 +35,7 @@ export default {
                     "Date": 28,
                     "Time": 29,
                     "Decimal": 30,
+                    "UUID": 31,
                     "BinaryVector": 100,
                     "FloatVector": 101,
                     "Float16Vector": 102,
@@ -213,7 +214,8 @@ export default {
                     "FunctionChainStageL0Rerank": 3,
                     "FunctionChainStageL1Rerank": 4,
                     "FunctionChainStageL2Rerank": 5,
-                    "FunctionChainStagePostProcess": 6
+                    "FunctionChainStagePostProcess": 6,
+                    "FunctionChainStageQueryScan": 7
                   }
                 },
                 "FunctionChain": {
@@ -230,6 +232,11 @@ export default {
                       "rule": "repeated",
                       "type": "FunctionChainOp",
                       "id": 3
+                    },
+                    "outputColumns": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 4
                     }
                   }
                 },
@@ -530,6 +537,15 @@ export default {
                     "data": {
                       "rule": "repeated",
                       "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
+                "UUIDArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "bytes",
                       "id": 1
                     }
                   }
@@ -944,7 +960,8 @@ export default {
                     "idField": {
                       "oneof": [
                         "intId",
-                        "strId"
+                        "strId",
+                        "uuidId"
                       ]
                     }
                   },
@@ -956,6 +973,10 @@ export default {
                     "strId": {
                       "type": "StringArray",
                       "id": 2
+                    },
+                    "uuidId": {
+                      "type": "UUIDArray",
+                      "id": 3
                     }
                   }
                 },
@@ -1392,6 +1413,50 @@ export default {
                       "id": 4
                     }
                   }
+                },
+                "ShardState": {
+                  "values": {
+                    "ShardNormal": 0,
+                    "ShardCreating": 1,
+                    "ShardSplitting": 2,
+                    "ShardDropped": 3
+                  }
+                },
+                "CollectionShardInfo": {
+                  "oneofs": {
+                    "routing": {
+                      "oneof": [
+                        "hashRouting"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "lastTruncateTimeTick": {
+                      "type": "uint64",
+                      "id": 1
+                    },
+                    "state": {
+                      "type": "ShardState",
+                      "id": 2
+                    },
+                    "vchannelName": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "hashRouting": {
+                      "type": "HashRouting",
+                      "id": 4
+                    }
+                  }
+                },
+                "HashRouting": {
+                  "fields": {
+                    "buckets": {
+                      "rule": "repeated",
+                      "type": "uint64",
+                      "id": 1
+                    }
+                  }
                 }
               }
             },
@@ -1659,6 +1724,7 @@ export default {
                     "AlterCollectionFunction": 117,
                     "DropCollectionFunction": 118,
                     "TruncateCollection": 119,
+                    "SplitShard": 120,
                     "CreatePartition": 200,
                     "DropPartition": 201,
                     "HasPartition": 202,
@@ -1785,7 +1851,9 @@ export default {
                     "GetRLSPrincipalTags": 2405,
                     "ListRLSPrincipals": 2406,
                     "DeleteRLSPrincipalTags": 2407,
-                    "GetExportSnapshotState": 2111
+                    "GetExportSnapshotState": 2111,
+                    "ListRunningRequests": 2500,
+                    "CancelRequests": 2501
                   }
                 },
                 "MsgBase": {
@@ -2033,7 +2101,9 @@ export default {
                     "PrivilegeSkipRLS": 91,
                     "PrivilegeViewRLS": 92,
                     "PrivilegeManageRLS": 93,
-                    "PrivilegeImportBinlog": 94
+                    "PrivilegeImportBinlog": 94,
+                    "PrivilegeListRunningRequests": 95,
+                    "PrivilegeCancelRequests": 96
                   }
                 },
                 "PrivilegeExt": {

@@ -122,6 +122,7 @@ export default defineConfig({
               label: 'Advanced Features',
             },
             { slug: 'advanced/http-client', label: 'HTTP Client' },
+            { slug: 'advanced/function-chains', label: 'Function Chains' },
             {
               slug: 'advanced/full-text-search',
               label: 'Full-Text Search',

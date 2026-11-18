@@ -38,6 +38,8 @@ import {
   HighlightResult,
 } from '../';
 import { SearchAggregationSpec } from '../types/SearchAggregation';
+import { FunctionChainSpec } from '../types/FunctionChain';
+import { serializeFunctionChains } from '../FunctionChain';
 import { buildSearchAggregation } from './SearchAggregation';
 
 /**
@@ -171,6 +173,7 @@ type FormatedSearchRequest = {
   expr_template_values?: keyValueObj;
   rank_params?: KeyValuePair[];
   function_score?: any;
+  function_chains?: FunctionChainSpec[];
   requests?: FormatedSearchRequest[];
   highlighter?: { type: number; params: KeyValuePair[] };
   search_aggregation?: SearchAggregationSpec;
@@ -288,6 +291,20 @@ export const buildSearchRequest = (
 
   // detect if the request is hybrid search request
   const isHybridSearch = isHybridSearchRequest(searchHybridReq);
+  const functionChains = serializeFunctionChains(params.function_chains);
+  const rerank = searchSimpleOrHybridReq.rerank ?? params.function_score;
+  if (
+    functionChains.length &&
+    (searchSimpleOrHybridReq.rerank != null || params.function_score != null)
+  ) {
+    throw new Error(
+      'function_chains cannot be used with rerank or function_score'
+    );
+  }
+  const functionChainParam = functionChains.length
+    ? { function_chains: functionChains }
+    : {};
+  const functionScore = createFunctionScore(rerank);
 
   const searchAggregation =
     searchSimpleReq.search_aggregation || searchReq.search_aggregation;
@@ -368,9 +385,19 @@ export const buildSearchRequest = (
     ? pkField.dataType || DataTypeMap[pkField.data_type]
     : undefined;
 
-  for (const userRequest of userRequests) {
+  for (const [index, userRequest] of userRequests.entries()) {
     const { data, anns_field } = userRequest;
     const annsField = collectionInfo.anns_fields[anns_field];
+    // HybridSearchRequest.requests contains SearchRequest messages. Milvus
+    // copies their chains to SubSearchRequest when it builds the internal plan.
+    const subChains = isHybridSearch
+      ? serializeFunctionChains(searchHybridReq.data[index].function_chains)
+      : [];
+    if (subChains.length && functionScore.function_score) {
+      throw new Error(
+        `function_score cannot be used with function_chains in sub-search[${index}]`
+      );
+    }
 
     if (!annsField) {
       throw new Error(ERROR_REASONS.NO_ANNS_FEILD_FOUND_IN_SEARCH);
@@ -465,6 +492,7 @@ export const buildSearchRequest = (
       ),
       consistency_level:
         params.consistency_level || (collectionInfo.consistency_level as any),
+      ...(subChains.length ? { function_chains: subChains } : {}),
       ...(searchAggregation
         ? { search_aggregation: buildSearchAggregation(searchAggregation) }
         : {}),
@@ -513,18 +541,11 @@ export const buildSearchRequest = (
     -1;
 
   // get rerank
-  const rerank = searchSimpleOrHybridReq.rerank;
   const isRerankerObj = !!(
     rerank &&
     typeof rerank === 'object' &&
     'strategy' in rerank
   );
-  const hasRerankFunction = !!(
-    rerank &&
-    typeof rerank === 'object' &&
-    'type' in rerank
-  );
-  const hasFunctionScore = isFunctionScore(rerank);
   const clusterIdParam = params.cluster_id
     ? [{ key: CLUSTER_ID, value: params.cluster_id }]
     : [];
@@ -538,6 +559,9 @@ export const buildSearchRequest = (
 
   return {
     isHybridSearch: isHybridSearch,
+    hasFunctionChains:
+      functionChains.length > 0 ||
+      requests.some(request => request.function_chains !== undefined),
     request: isHybridSearch
       ? {
           collection_name: params.collection_name,
@@ -547,14 +571,15 @@ export const buildSearchRequest = (
           consistency_level: requests[0]?.consistency_level,
 
           // if ranker is set and it is a hybrid search, add it to the request
-          ...createFunctionScore(rerank),
+          ...functionScore,
+          ...functionChainParam,
 
-          // if ranker is not exist, use RRFRanker ranker
+          // Fall back to RRF when the caller has not configured hybrid fusion.
           ...{
             rank_params: [
               ...(isRerankerObj
                 ? parseToKeyValue(convertRerankParams(rerank as RerankerObj))
-                : !hasRerankFunction && !hasFunctionScore
+                : !functionScore.function_score && !functionChains.length
                   ? parseToKeyValue(convertRerankParams(RRFRanker()))
                   : []),
               { key: 'round_decimal', value: round_decimal },
@@ -576,7 +601,8 @@ export const buildSearchRequest = (
         }
       : {
           ...requests[0],
-          ...createFunctionScore(rerank),
+          ...functionScore,
+          ...functionChainParam,
           ...highlighterParam,
         },
     // need for parsing the search results
@@ -591,6 +617,7 @@ export const buildSearchRequest = (
  * @param {SearchRes} searchRes - The search results returned by Milvus.
  * @param {Object} options - The options for formatting the search results.
  * @param {number} options.round_decimal - The number of decimal places to which to round the scores.
+ * @param {boolean} [options.preserveScore] - Keep the server score when a projected field is named score.
  *
  * @returns {any[]} The formatted search results.
  *
@@ -600,6 +627,7 @@ export const formatSearchResult = (
   options: {
     round_decimal: number;
     transformers?: OutputTransformers;
+    preserveScore?: boolean;
   }
 ) => {
   const { round_decimal } = options;
@@ -686,6 +714,10 @@ export const formatSearchResult = (
 
           result[field_name] = value;
         });
+
+        if (options.preserveScore) {
+          result.score = fixedScore;
+        }
 
         // attach highlight results if available
         if (hasHighlights) {

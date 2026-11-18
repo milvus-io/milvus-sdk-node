@@ -21,6 +21,7 @@ import {
   ProtoAggregationBucket,
   SearchAggregation,
 } from './SearchAggregation';
+import { FunctionChains } from './FunctionChain';
 
 // Highlighter types
 export enum HighlightType {
@@ -99,6 +100,8 @@ export interface SearchReq extends collectionNameReq {
   ids?: number[] | string[]; // primary keys for search by IDs
   highlighter?: Highlighter; // highlighter for search results
   search_aggregation?: SearchAggregation; // bucket aggregation configuration
+  function_chains?: FunctionChains; // server-side processing chains
+  function_score?: FunctionScore; // function-based reranker
 }
 
 export interface FunctionScore {
@@ -131,6 +134,8 @@ export interface SearchSimpleReq extends collectionNameReq {
   round_decimal?: number; // round decimal
   transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
   rerank?: RerankerObj | FunctionObject | FunctionScore; // reranker
+  function_score?: FunctionScore; // function-based reranker, also accepted via rerank
+  function_chains?: FunctionChains; // server-side processing chains
   nq?: number; // number of query vectors
   ids?: number[] | string[]; // primary keys for search by IDs
   highlighter?: Highlighter; // highlighter for search results
@@ -147,11 +152,17 @@ export type HybridSearchSingleReq = Pick<
     exprValues?: keyValueObj; // template values for filter expression, eg: {key: 'value'}
     params?: keyValueObj; // extra search parameters
     transformers?: OutputTransformers; // provide custom data transformer for specific data type like bf16 or f16 vectors
+    function_chains?: FunctionChains; // server-side chains for this ANN request
   };
 
 export interface SearchIteratorReq extends Omit<
   SearchSimpleReq,
-  'vectors' | 'offset' | 'limit' | 'topk' | 'search_aggregation'
+  | 'vectors'
+  | 'offset'
+  | 'limit'
+  | 'topk'
+  | 'search_aggregation'
+  | 'function_chains'
 > {
   limit?: number; // Optional. Specifies the maximum number of items. Default is no limit (-1 or if not set).
   batchSize: number; // Specifies the number of items to return in each batch. if it exceeds 16384, it will be set to 16384

@@ -638,6 +638,14 @@ export default {
                     "ListRefreshExternalCollectionJobs": {
                       "requestType": "ListRefreshExternalCollectionJobsRequest",
                       "responseType": "ListRefreshExternalCollectionJobsResponse"
+                    },
+                    "ListRunningRequests": {
+                      "requestType": "ListRunningRequestsRequest",
+                      "responseType": "ListRunningRequestsResponse"
+                    },
+                    "CancelRequests": {
+                      "requestType": "CancelRequestsRequest",
+                      "responseType": "CancelRequestsResponse"
                     }
                   }
                 },
@@ -1103,6 +1111,19 @@ export default {
                     "update_timestamp_str": {
                       "type": "string",
                       "id": 19
+                    },
+                    "shard_infos": {
+                      "rule": "repeated",
+                      "type": "schema.CollectionShardInfo",
+                      "id": 20
+                    },
+                    "shard_by": {
+                      "type": "string",
+                      "id": 21
+                    },
+                    "routing_modulus": {
+                      "type": "uint64",
+                      "id": 22
                     }
                   }
                 },
@@ -2714,6 +2735,10 @@ export default {
                     "skip_rls": {
                       "type": "bool",
                       "id": 13
+                    },
+                    "write_condition": {
+                      "type": "WriteCondition",
+                      "id": 14
                     }
                   }
                 },
@@ -3285,6 +3310,11 @@ export default {
                     "skip_rls": {
                       "type": "bool",
                       "id": 16
+                    },
+                    "function_chains": {
+                      "rule": "repeated",
+                      "type": "schema.FunctionChain",
+                      "id": 17
                     }
                   }
                 },
@@ -6755,6 +6785,10 @@ export default {
                     "compaction_protection_seconds": {
                       "type": "int64",
                       "id": 6
+                    },
+                    "skip_index": {
+                      "type": "bool",
+                      "id": 7
                     }
                   }
                 },
@@ -6877,6 +6911,10 @@ export default {
                     "s3_location": {
                       "type": "string",
                       "id": 7
+                    },
+                    "skip_index": {
+                      "type": "bool",
+                      "id": 8
                     }
                   }
                 },
@@ -6914,6 +6952,10 @@ export default {
                     "target_collection_name": {
                       "type": "string",
                       "id": 7
+                    },
+                    "skip_index": {
+                      "type": "bool",
+                      "id": 8
                     }
                   }
                 },
@@ -6955,6 +6997,10 @@ export default {
                     "external_spec": {
                       "type": "string",
                       "id": 5
+                    },
+                    "skip_index": {
+                      "type": "bool",
+                      "id": 6
                     }
                   }
                 },
@@ -7413,6 +7459,10 @@ export default {
                     "include_metrics": {
                       "type": "bool",
                       "id": 3
+                    },
+                    "command_id": {
+                      "type": "string",
+                      "id": 4
                     }
                   }
                 },
@@ -7751,6 +7801,196 @@ export default {
                     }
                   }
                 },
+                "RunningRequestInfo": {
+                  "fields": {
+                    "request_id": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "proxy_id": {
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "type": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 5
+                    },
+                    "user": {
+                      "type": "string",
+                      "id": 6
+                    },
+                    "client_addr": {
+                      "type": "string",
+                      "id": 7
+                    },
+                    "nq": {
+                      "type": "int64",
+                      "id": 8
+                    },
+                    "topk": {
+                      "type": "int64",
+                      "id": 9
+                    },
+                    "expr": {
+                      "type": "string",
+                      "id": 10
+                    },
+                    "start_time_ms": {
+                      "type": "int64",
+                      "id": 11
+                    },
+                    "queued_ms": {
+                      "type": "int64",
+                      "id": 12
+                    },
+                    "elapsed_ms": {
+                      "type": "int64",
+                      "id": 13
+                    },
+                    "state": {
+                      "type": "string",
+                      "id": 14
+                    },
+                    "task_ids": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 15
+                    },
+                    "trace_id": {
+                      "type": "string",
+                      "id": 16
+                    },
+                    "cancellable": {
+                      "type": "bool",
+                      "id": 17
+                    }
+                  }
+                },
+                "RunningRequestNodeResult": {
+                  "fields": {
+                    "node_id": {
+                      "type": "int64",
+                      "id": 1
+                    },
+                    "status": {
+                      "type": "common.Status",
+                      "id": 2
+                    },
+                    "unimplemented": {
+                      "type": "bool",
+                      "id": 3
+                    }
+                  }
+                },
+                "ListRunningRequestsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeListRunningRequests",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "db_name": {
+                      "type": "string",
+                      "id": 2
+                    },
+                    "collection_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "user": {
+                      "type": "string",
+                      "id": 4
+                    },
+                    "min_elapsed_ms": {
+                      "type": "int64",
+                      "id": 5
+                    }
+                  }
+                },
+                "ListRunningRequestsResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "requests": {
+                      "rule": "repeated",
+                      "type": "RunningRequestInfo",
+                      "id": 2
+                    },
+                    "node_results": {
+                      "rule": "repeated",
+                      "type": "RunningRequestNodeResult",
+                      "id": 3
+                    }
+                  }
+                },
+                "CancelRequestsRequest": {
+                  "options": {
+                    "(common.privilege_ext_obj).object_type": "Global",
+                    "(common.privilege_ext_obj).object_privilege": "PrivilegeCancelRequests",
+                    "(common.privilege_ext_obj).object_name_index": -1
+                  },
+                  "fields": {
+                    "base": {
+                      "type": "common.MsgBase",
+                      "id": 1
+                    },
+                    "request_ids": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 2
+                    },
+                    "reason": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "user": {
+                      "type": "string",
+                      "id": 4
+                    }
+                  }
+                },
+                "CancelRequestsResponse": {
+                  "fields": {
+                    "status": {
+                      "type": "common.Status",
+                      "id": 1
+                    },
+                    "canceled": {
+                      "rule": "repeated",
+                      "type": "RunningRequestInfo",
+                      "id": 2
+                    },
+                    "not_found": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 3
+                    },
+                    "node_results": {
+                      "rule": "repeated",
+                      "type": "RunningRequestNodeResult",
+                      "id": 4
+                    },
+                    "undetermined": {
+                      "rule": "repeated",
+                      "type": "int64",
+                      "id": 5
+                    }
+                  }
+                },
                 "SnapshotSummary": {
                   "fields": {
                     "name": {
@@ -7768,6 +8008,38 @@ export default {
                     "create_utc_ts": {
                       "type": "int64",
                       "id": 4
+                    }
+                  }
+                },
+                "WriteCondition": {
+                  "fields": {
+                    "field": {
+                      "type": "string",
+                      "id": 1
+                    },
+                    "op": {
+                      "type": "Op",
+                      "id": 2
+                    },
+                    "on_missing": {
+                      "type": "MissingRowPolicy",
+                      "id": 3
+                    }
+                  },
+                  "nested": {
+                    "Op": {
+                      "values": {
+                        "OP_UNSPECIFIED": 0,
+                        "GT": 1,
+                        "GTE": 2
+                      }
+                    },
+                    "MissingRowPolicy": {
+                      "values": {
+                        "INSERT_IF_MISSING": 0,
+                        "SKIP_IF_MISSING": 1,
+                        "ERROR_IF_MISSING": 2
+                      }
                     }
                   }
                 }
@@ -8037,6 +8309,7 @@ export default {
                     "AlterCollectionFunction": 117,
                     "DropCollectionFunction": 118,
                     "TruncateCollection": 119,
+                    "SplitShard": 120,
                     "CreatePartition": 200,
                     "DropPartition": 201,
                     "HasPartition": 202,
@@ -8163,7 +8436,9 @@ export default {
                     "GetRLSPrincipalTags": 2405,
                     "ListRLSPrincipals": 2406,
                     "DeleteRLSPrincipalTags": 2407,
-                    "GetExportSnapshotState": 2111
+                    "GetExportSnapshotState": 2111,
+                    "ListRunningRequests": 2500,
+                    "CancelRequests": 2501
                   }
                 },
                 "MsgBase": {
@@ -8411,7 +8686,9 @@ export default {
                     "PrivilegeSkipRLS": 91,
                     "PrivilegeViewRLS": 92,
                     "PrivilegeManageRLS": 93,
-                    "PrivilegeImportBinlog": 94
+                    "PrivilegeImportBinlog": 94,
+                    "PrivilegeListRunningRequests": 95,
+                    "PrivilegeCancelRequests": 96
                   }
                 },
                 "PrivilegeExt": {
@@ -9001,6 +9278,7 @@ export default {
                     "Date": 28,
                     "Time": 29,
                     "Decimal": 30,
+                    "UUID": 31,
                     "BinaryVector": 100,
                     "FloatVector": 101,
                     "Float16Vector": 102,
@@ -9179,7 +9457,8 @@ export default {
                     "FunctionChainStageL0Rerank": 3,
                     "FunctionChainStageL1Rerank": 4,
                     "FunctionChainStageL2Rerank": 5,
-                    "FunctionChainStagePostProcess": 6
+                    "FunctionChainStagePostProcess": 6,
+                    "FunctionChainStageQueryScan": 7
                   }
                 },
                 "FunctionChain": {
@@ -9196,6 +9475,11 @@ export default {
                       "rule": "repeated",
                       "type": "FunctionChainOp",
                       "id": 3
+                    },
+                    "output_columns": {
+                      "rule": "repeated",
+                      "type": "string",
+                      "id": 4
                     }
                   }
                 },
@@ -9496,6 +9780,15 @@ export default {
                     "data": {
                       "rule": "repeated",
                       "type": "string",
+                      "id": 1
+                    }
+                  }
+                },
+                "UUIDArray": {
+                  "fields": {
+                    "data": {
+                      "rule": "repeated",
+                      "type": "bytes",
                       "id": 1
                     }
                   }
@@ -9910,7 +10203,8 @@ export default {
                     "id_field": {
                       "oneof": [
                         "int_id",
-                        "str_id"
+                        "str_id",
+                        "uuid_id"
                       ]
                     }
                   },
@@ -9922,6 +10216,10 @@ export default {
                     "str_id": {
                       "type": "StringArray",
                       "id": 2
+                    },
+                    "uuid_id": {
+                      "type": "UUIDArray",
+                      "id": 3
                     }
                   }
                 },
@@ -10356,6 +10654,50 @@ export default {
                     "nullable": {
                       "type": "bool",
                       "id": 4
+                    }
+                  }
+                },
+                "ShardState": {
+                  "values": {
+                    "ShardNormal": 0,
+                    "ShardCreating": 1,
+                    "ShardSplitting": 2,
+                    "ShardDropped": 3
+                  }
+                },
+                "CollectionShardInfo": {
+                  "oneofs": {
+                    "routing": {
+                      "oneof": [
+                        "hash_routing"
+                      ]
+                    }
+                  },
+                  "fields": {
+                    "last_truncate_time_tick": {
+                      "type": "uint64",
+                      "id": 1
+                    },
+                    "state": {
+                      "type": "ShardState",
+                      "id": 2
+                    },
+                    "vchannel_name": {
+                      "type": "string",
+                      "id": 3
+                    },
+                    "hash_routing": {
+                      "type": "HashRouting",
+                      "id": 4
+                    }
+                  }
+                },
+                "HashRouting": {
+                  "fields": {
+                    "buckets": {
+                      "rule": "repeated",
+                      "type": "uint64",
+                      "id": 1
                     }
                   }
                 }

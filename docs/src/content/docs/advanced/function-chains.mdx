@@ -1,0 +1,129 @@
+---
+title: 'Function Chains'
+---
+
+Function chains run ordered processing steps on the Milvus server. Use them to rewrite search scores, fuse hybrid search results, or process query candidates. The gRPC `MilvusClient` accepts a single chain or an ordered array in `function_chains`.
+
+## Rerank search results
+
+This example uses a 2-dimensional `embedding` field, a Unix timestamp in `published_at`, and a numeric `popularity` field. Search retrieves up to 100 candidates. The chain computes a freshness score, blends it with the vector score and popularity, and keeps the first 10 rows after sorting. With function chains, `hit.score` always contains the server's score, even when the collection also has an output field named `score`.
+
+```ts
+import {
+  col,
+  fn,
+  FunctionChain,
+  FunctionChainStage,
+} from '@zilliz/milvus2-sdk-node';
+
+const chain = new FunctionChain(FunctionChainStage.L2_RERANK, {
+  name: 'fresh_popular',
+})
+  .map(
+    'freshness',
+    fn.decay(col('published_at'), {
+      function: 'exp',
+      origin: Math.floor(Date.now() / 1000),
+      scale: 86400,
+    })
+  )
+  .map(
+    '$score',
+    fn.numCombine([col('$score'), col('freshness'), col('popularity')], {
+      mode: 'weighted',
+      weights: [0.7, 0.2, 0.1],
+    })
+  )
+  .map('$score', fn.roundDecimal(col('$score'), { decimal: 4 }))
+  .sort(col('$score'), { tieBreakCol: col('$id') })
+  .limit(10);
+
+const { results } = await client.search({
+  collection_name: 'articles',
+  anns_field: 'embedding',
+  data: [0.1, 0.2],
+  limit: 100,
+  output_fields: ['id', 'title'],
+  function_chains: chain,
+});
+```
+
+Top-level `function_chains` is mutually exclusive with `rerank` and `function_score` in search and hybrid search.
+
+## Fuse hybrid search results
+
+Put the fusion chain at the top level of `hybridSearch()`. Each ANN request can also specify a chain that runs on its own candidates before fusion. RRF defaults to `k = 60`. `weighted`, `max`, `sum`, and `avg` normalize scores by default.
+
+```ts
+const fusion = new FunctionChain(FunctionChainStage.L2_RERANK)
+  .merge('rrf')
+  .sort('$score', { tieBreakCol: '$id' });
+
+const { results } = await client.hybridSearch({
+  collection_name: 'articles',
+  data: [
+    { anns_field: 'embedding', data: [0.1, 0.2] },
+    { anns_field: 'title_embedding', data: [0.2, 0.1] },
+  ],
+  limit: 10,
+  output_fields: ['id', 'title'],
+  function_chains: fusion,
+});
+```
+
+## Export columns from a query chain
+
+`query()` accepts one `QUERY_SCAN` chain. A named chain can export values through the builder's `outputColumns` option or the raw spec's `output_columns` field. The exported columns appear alongside ordinary fields in `response.data`. Use a Milvus server build with QueryScan support. Older servers may ignore the chain.
+
+```ts
+const response = await client.query({
+  collection_name: 'articles',
+  limit: 20,
+  output_fields: ['id', 'title'],
+  function_chains: {
+    stage: FunctionChainStage.QUERY_SCAN,
+    name: 'find_timeout',
+    output_columns: ['matches'],
+    ops: [
+      {
+        op: 'grep',
+        inputs: ['body'],
+        outputs: ['matches'],
+        params: { arguments: { string_value: '-i -e timeout' } },
+      },
+    ],
+  },
+});
+```
+
+Raw `FunctionChainSpec` objects also let you send server operators and expressions directly. Use protobuf field names and explicit `FunctionParamValue` variants such as `{ double_value: 1 }` or `{ int64_value: '9007199254740993' }`. The builder encodes known floating-point parameters such as weights and decay settings as doubles even when their values are whole numbers.
+
+## Rerank with XGBoost
+
+Use an XGBoost-enabled Milvus server. Train or obtain a tree model in UBJ format, upload it to the object-storage bucket Milvus uses, then register the bucket-relative object path as a file resource. Pass feature columns in the same order used during training. With `output: 'raw'`, Milvus uses the model's raw prediction margin as the score.
+
+```ts
+await client.addFileResource({
+  name: 'articles_ranker',
+  path: 'models/articles-ranker.ubj',
+});
+
+const xgb = new FunctionChain(FunctionChainStage.L0_RERANK).map(
+  '$score',
+  fn.xgboost([col('popularity'), col('click_rate')], {
+    modelResource: 'articles_ranker',
+    output: 'raw',
+  })
+);
+
+const { results } = await client.search({
+  collection_name: 'articles',
+  anns_field: 'embedding',
+  data: [0.1, 0.2],
+  limit: 10,
+  output_fields: ['id', 'popularity', 'click_rate'],
+  function_chains: xgb,
+});
+```
+
+For an external rerank provider, use `fn.rerankModel(col('body'), { queries: ['example query'], provider, model })` in a `map('$score', ...)` operation. The server handles the inference call using the provider settings you supply.
