@@ -1,10 +1,142 @@
 ---
-const PAGE_TITLE_ID = '_top';
+import sdk from '../../../package.json';
+
+const { title, description } = Astro.locals.starlightRoute.entry.data;
+const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus ${sdk.milvusVersion.replace(/^v/, '')}`;
 ---
 
-<h1 id={PAGE_TITLE_ID}>{Astro.locals.starlightRoute.entry.data.title}</h1>
+<div class="page-title">
+  <h1 id="_top">{title}</h1>
+  <div
+    class="agent-action"
+    data-description={description}
+    data-compatibility={compatibility}
+  >
+    <button type="button" data-copy-agent hidden>Copy for agent</button>
+    <span class="agent-status" role="status"></span>
+    <dialog aria-labelledby="agent-copy-title">
+      <form method="dialog">
+        <button type="submit">Close</button>
+      </form>
+      <h2 id="agent-copy-title">Copy for agent</h2>
+      <label for="agent-copy-text">Select and copy the Markdown below.</label>
+      <textarea id="agent-copy-text" rows="12" readonly spellcheck="false"
+      ></textarea>
+    </dialog>
+  </div>
+</div>
+
+<script>
+  import { documentationMarkdown, restMarkdown } from '../lib/agent-markdown';
+
+  const action = document.querySelector<HTMLElement>('.agent-action')!;
+  const button = action.querySelector<HTMLButtonElement>('[data-copy-agent]')!;
+  const status = action.querySelector<HTMLElement>('[role="status"]')!;
+  const dialog = action.querySelector<HTMLDialogElement>('dialog')!;
+  const textarea = dialog.querySelector('textarea')!;
+  const content = document.querySelector('.sl-markdown-content');
+  const canonical = document.querySelector<HTMLLinkElement>(
+    'link[rel="canonical"]'
+  );
+  const title = document.querySelector('#_top')?.textContent;
+
+  if (content && canonical && title) {
+    button.hidden = false;
+    button.addEventListener('click', async () => {
+      const url = new URL(canonical.href);
+      const { body, sections, description } =
+        restMarkdown(content, url, location.hash) ??
+        documentationMarkdown(content, url);
+      const markdown =
+        [
+          'Use this Milvus Node.js SDK documentation as a reference for the user’s task.',
+          `# ${title}`,
+          action.dataset.description || description,
+          action.dataset.compatibility,
+          `Canonical documentation: ${url.href}`,
+          sections.length ? '## Section links\n\n' + sections.join('\n') : '',
+          !action.dataset.description && body.startsWith(description)
+            ? body.slice(description.length).trimStart()
+            : body,
+        ]
+          .filter(Boolean)
+          .join('\n\n') + '\n';
+
+      status.textContent = '';
+      try {
+        await navigator.clipboard.writeText(markdown);
+        status.textContent = 'Markdown copied.';
+      } catch {
+        textarea.value = markdown;
+        if (!dialog.open) dialog.showModal();
+        textarea.focus();
+        textarea.select();
+      }
+    });
+  }
+</script>
 
 <style>
+  .page-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem 1rem;
+  }
+
+  .agent-action {
+    position: relative;
+  }
+
+  .agent-action button {
+    padding: 0.2rem 0.45rem;
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 0.25rem;
+    background: transparent;
+    color: var(--sl-color-gray-2);
+    font: inherit;
+    font-size: var(--sl-text-sm);
+    cursor: pointer;
+  }
+
+  .agent-action button:hover {
+    color: var(--sl-color-white);
+    border-color: currentColor;
+  }
+
+  .agent-status {
+    position: absolute;
+    inset-block-start: 100%;
+    inset-inline-end: 0;
+    white-space: nowrap;
+    font-size: var(--sl-text-xs);
+  }
+
+  .agent-action dialog {
+    width: min(42rem, calc(100% - 2rem));
+    padding: 1rem;
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 0.5rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+  }
+
+  .agent-action dialog::backdrop {
+    background: rgb(0 0 0 / 55%);
+  }
+
+  .agent-action form {
+    float: inline-end;
+  }
+
+  .agent-action textarea {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+    font: var(--sl-text-sm) var(--sl-font-mono);
+  }
+
   @layer starlight.core {
     h1 {
       margin-top: 1rem;

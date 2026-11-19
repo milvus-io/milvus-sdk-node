@@ -1,15 +1,23 @@
 ---
 import { operationPath, type Operation } from '../lib/rest-explorer';
 
-const { operation, title, request, response } = Astro.props as {
+const { operation, title, anchor, request, response } = Astro.props as {
   operation: Operation;
   title: string;
+  anchor: string;
   request: Record<string, unknown>;
   response: Record<string, unknown>;
 };
 ---
 
 <section class="rest-panel" data-operation={operation} aria-label={title}>
+  <template
+    data-agent-rest
+    data-anchor={anchor}
+    data-title={title}
+    data-route={operationPath(operation)}
+    data-request={JSON.stringify(request, null, 2)}
+    data-response={JSON.stringify(response, null, 2)}></template>
   <p class="rest-route">
     <strong>POST</strong>
     <code>{operationPath(operation)}</code>

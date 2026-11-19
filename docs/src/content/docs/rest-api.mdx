@@ -28,6 +28,7 @@ import RestExplorer from '../../components/RestExplorer.astro';
 <RestExplorer
   title="List collections"
   operation="listCollections"
+  anchor="list-collections"
   request={{ dbName: 'default' }}
   response={{ code: 0, data: ['books'] }}
 >
@@ -45,6 +46,7 @@ The response's `data` is an array of collection names. See [HttpClient.listColle
 <RestExplorer
   title="Describe collection"
   operation="describeCollection"
+  anchor="describe-collection"
   request={{ dbName: 'default', collectionName: 'books' }}
   response={{
     code: 0,
@@ -78,6 +80,7 @@ The response's `data` is a [collection description](https://milvus.io/api-refere
 <RestExplorer
   title="Query"
   operation="query"
+  anchor="query"
   request={{
     dbName: 'default',
     collectionName: 'books',
@@ -105,6 +108,7 @@ The response's `data` contains the matching rows. See [HttpClient.query](/milvus
 <RestExplorer
   title="Search"
   operation="search"
+  anchor="search"
   request={{
     dbName: 'default',
     collectionName: 'books',
