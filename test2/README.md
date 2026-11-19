@@ -65,6 +65,7 @@ The suite uses two Jest workers locally and four in CI on a single runner. Repro
 
 Local telemetry E2E runs by default. Set `MILVUS_TELEMETRY_E2E=false` only when the target lacks that endpoint.
 Text-embedding tests require `MILVUS_OPENAI_ENABLED=1` and a server configured with its model-service key.
+GitHub Actions passes the repository's `OPENAI_API_KEY` secret to the Milvus container and enables these tests. Missing credentials fail CI for repository PRs, pushes, merge groups, scheduled runs and manual runs. Fork and Dependabot PRs without access to secrets skip these tests with an explicit notice.
 Authorization-denial contracts live in `cloud/AuthDenial.spec.ts`; the default standalone has authorization disabled and cannot verify access rejection.
 
 `npm run test2:cloud` explicitly runs external contracts. Configure:
