@@ -74,6 +74,13 @@ export function documentationMarkdown(content: Element, canonical: URL) {
         '\n\n'
       );
     }
+    if (tag === 'dl') {
+      const entries = Array.from(node.children, (entry) => {
+        const value = children(entry).trim();
+        return entry.localName === 'dt' ? '- ' + value : '  ' + value;
+      });
+      return '\n\n' + entries.join('\n') + '\n\n';
+    }
     if (tag === 'ol' || tag === 'ul') {
       const start = Number(node.getAttribute('start') ?? 1);
       const items = Array.from(node.children, (item, index) => {
@@ -104,6 +111,12 @@ export function documentationMarkdown(content: Element, canonical: URL) {
     if (tag === 'p' && !description && !node.closest('li, blockquote, table')) {
       description = value.trim();
     }
+    if (tag === 'summary' && node.parentElement?.matches('[data-rest-group]')) {
+      const heading = value.trim();
+      const id = node.parentElement.id;
+      sections.push(`- [${heading}](${destination('#' + id)})`);
+      return `\n\n## ${heading}\n\n`;
+    }
     if (/^h[1-6]$/.test(tag)) {
       if (node.id)
         sections.push(`- [${value.trim()}](${destination('#' + node.id)})`);
@@ -128,7 +141,7 @@ export function documentationMarkdown(content: Element, canonical: URL) {
       );
     if (tag === 'br') return '\n';
     if (tag === 'hr') return '\n\n---\n\n';
-    if (['p', 'div', 'section', 'aside'].includes(tag))
+    if (['p', 'div', 'section', 'aside', 'details'].includes(tag))
       return '\n\n' + value.trim() + '\n\n';
     return value;
   }
@@ -138,33 +151,30 @@ export function documentationMarkdown(content: Element, canonical: URL) {
   return { body, sections, description };
 }
 
-export function restMarkdown(content: Element, canonical: URL, hash: string) {
-  const examples = Array.from(
-    content.querySelectorAll<HTMLTemplateElement>('template[data-agent-rest]')
+export function restMarkdown(content: Element, canonical: URL) {
+  const example = content.querySelector<HTMLTemplateElement>(
+    'template[data-agent-rest]'
   );
-  const operationLinks = examples.map((example) => {
-    const { title, anchor } = example.dataset;
-    return `- [${title}](${new URL('#' + anchor, canonical).href})`;
-  });
-  const selected =
-    examples.find((example) => '#' + example.dataset.anchor === hash) ??
-    examples[0];
-  if (!selected) return undefined;
+  const panel = content.querySelector('.rest-docs');
+  if (!example || !panel) return undefined;
 
-  const { title, anchor, route, exampleRequest, exampleResponse } =
-    selected.dataset;
-  const panel = selected.parentElement!.querySelector('.rest-docs')!;
+  const { route, exampleRequest, exampleResponse } = example.dataset;
   const notes = documentationMarkdown(panel, canonical);
+  const details = notes.body.startsWith(notes.description)
+    ? notes.body.slice(notes.description.length).trimStart()
+    : notes.body;
   return {
-    sections: operationLinks,
+    sections: notes.sections,
     description: notes.description,
     body: [
-      `## [${title}](${new URL('#' + anchor, canonical).href})`,
       `\`POST ${route}\``,
-      'Replace `https://your-cluster.example.com` with your Milvus endpoint. If authentication is enabled, send `Authorization: Bearer <MILVUS_TOKEN>`.',
+      'Replace \`https://your-cluster.example.com\` with your Milvus endpoint. If authentication is enabled, send \`Authorization: Bearer <MILVUS_TOKEN>\`.',
       '### Default request\n\n' + fenced(exampleRequest!, 'json'),
-      '### Sample response\n\n' + fenced(exampleResponse!, 'json'),
-      notes.body,
-    ].join('\n\n'),
+      exampleResponse &&
+        '### Sample response\n\n' + fenced(exampleResponse, 'json'),
+      details,
+    ]
+      .filter(Boolean)
+      .join('\n\n'),
   };
 }

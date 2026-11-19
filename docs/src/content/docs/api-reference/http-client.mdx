@@ -103,7 +103,7 @@ const { code, data } = await client.describeCollection({
 
 Returns a Milvus response envelope with collection metadata, including schema fields, indexes, and load state.
 
-[Try the REST operation](/milvus-sdk-node/rest-api#describe-collection).
+[Try the REST operation](/milvus-sdk-node/rest-api/collections/describe).
 
 ### dropCollection
 
@@ -149,7 +149,7 @@ const { code, data } = await client.listCollections({ dbName: 'default' });
 
 Returns a Milvus response envelope with collection names as a string array.
 
-[Try the REST operation](/milvus-sdk-node/rest-api#list-collections).
+[Try the REST operation](/milvus-sdk-node/rest-api/collections/list).
 
 ### hasCollection
 
@@ -263,7 +263,7 @@ const { code, data } = await client.query({
 
 Returns a Milvus response envelope with matching rows.
 
-[Try the REST operation](/milvus-sdk-node/rest-api#query).
+[Try the REST operation](/milvus-sdk-node/rest-api/entities/query).
 
 ### search
 
@@ -285,7 +285,7 @@ const { code, data } = await client.search({
 
 Returns a Milvus response envelope with search hits with IDs, distances, and requested fields. The aggregation overload takes `HttpVectorSearchAggregationReq` and returns `HttpVectorSearchAggregationResponse` with buckets.
 
-[Try the REST operation](/milvus-sdk-node/rest-api#search).
+[Try the REST operation](/milvus-sdk-node/rest-api/entities/search).
 
 ### hybridSearch
 

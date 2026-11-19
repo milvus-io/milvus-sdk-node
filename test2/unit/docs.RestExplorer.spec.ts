@@ -8,16 +8,22 @@ import {
 } from '../../docs/src/lib/rest-explorer';
 
 describe('REST explorer request helpers', () => {
-  it('uses the SDK v2 routes with an optional endpoint prefix', () => {
+  it('appends any v2 operation path after an optional endpoint prefix', () => {
     expect(
-      requestUrl('https://cluster.example.com/proxy/v2/', 'listCollections')
+      requestUrl(
+        'https://cluster.example.com/proxy/v2/',
+        '/v2/vectordb/collections/list'
+      )
     ).toBe('https://cluster.example.com/proxy/v2/vectordb/collections/list');
-    expect(requestUrl('http://127.0.0.1:19530', 'describeCollection')).toBe(
-      'http://127.0.0.1:19530/v2/vectordb/collections/describe'
-    );
-    expect(requestUrl('http://[::1]:19530', 'query')).toBe(
-      'http://[::1]:19530/v2/vectordb/entities/query'
-    );
+    expect(
+      requestUrl('http://127.0.0.1:19530', '/v2/vectordb/collections/describe')
+    ).toBe('http://127.0.0.1:19530/v2/vectordb/collections/describe');
+    expect(
+      requestUrl('http://[::1]:19530', '/v2/vectordb/entities/query')
+    ).toBe('http://[::1]:19530/v2/vectordb/entities/query');
+    expect(
+      requestUrl('https://cluster.example.com/v2', '/v2/vectordb/users/create')
+    ).toBe('https://cluster.example.com/v2/vectordb/users/create');
   });
 
   it.each([
@@ -27,7 +33,9 @@ describe('REST explorer request helpers', () => {
     'https://cluster.example.com/#fragment',
     'file:///tmp/endpoint',
   ])('rejects unsupported endpoints (%s)', endpoint => {
-    expect(() => requestUrl(endpoint, 'search')).toThrow();
+    expect(() =>
+      requestUrl(endpoint, '/v2/vectordb/entities/search')
+    ).toThrow();
   });
 
   it('quotes the URL and JSON as literal shell arguments', () => {

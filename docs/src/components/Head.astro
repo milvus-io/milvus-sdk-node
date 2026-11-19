@@ -1,8 +1,10 @@
 ---
 import '@fontsource-variable/geist/wght.css';
+import { ClientRouter } from 'astro:transitions';
 import '@fontsource-variable/geist-mono/wght.css';
 
 const { head, id } = Astro.locals.starlightRoute;
+const isRest = id === 'rest-api' || id.startsWith('rest-api/');
 ---
 
 {
@@ -11,7 +13,9 @@ const { head, id } = Astro.locals.starlightRoute;
   ))
 }
 {
-  id !== 'rest-api' && (
+  isRest ? (
+    <ClientRouter fallback="swap" />
+  ) : (
     <>
       <script
         is:inline

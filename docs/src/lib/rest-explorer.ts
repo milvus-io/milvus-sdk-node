@@ -1,15 +1,8 @@
 import { DEFAULT_HTTP_ENDPOINT_VERSION } from '../../../milvus/const/defaults';
-import { HTTP_READ_OPERATIONS } from '../../../milvus/http/readRoutes';
 
-export type Operation = keyof typeof HTTP_READ_OPERATIONS;
 export type JsonObject = Record<string, unknown>;
 
-export function operationPath(operation: Operation) {
-  const { prefix, action } = HTTP_READ_OPERATIONS[operation];
-  return `/${DEFAULT_HTTP_ENDPOINT_VERSION}${prefix}/${action}`;
-}
-
-export function requestUrl(endpoint: string, operation: Operation) {
+export function requestUrl(endpoint: string, path: string) {
   let url: URL;
   try {
     url = new URL(endpoint);
@@ -31,7 +24,7 @@ export function requestUrl(endpoint: string, operation: Operation) {
   const versionSuffix = `/${DEFAULT_HTTP_ENDPOINT_VERSION}`;
   if (prefix.endsWith(versionSuffix))
     prefix = prefix.slice(0, -versionSuffix.length);
-  return `${url.origin}${prefix}${operationPath(operation)}`;
+  return `${url.origin}${prefix}${path}`;
 }
 
 export function isObject(value: unknown): value is JsonObject {

@@ -1,30 +1,29 @@
 ---
 import { Icon } from '@astrojs/starlight/components';
-import { operationPath, type Operation } from '../lib/rest-explorer';
+import type { RestOperation } from '../lib/rest-catalog';
 
-const { operation, title, anchor, request, response } = Astro.props as {
-  operation: Operation;
-  title: string;
-  anchor: string;
-  request: Record<string, unknown>;
-  response: Record<string, unknown>;
-};
+const { operation } = Astro.props as { operation: RestOperation };
+const { slug, title, path, request, response } = operation;
+const anchor = slug.replaceAll('/', '-');
 ---
 
-<section class="rest-panel" data-operation={operation} aria-label={title}>
+<section
+  class="rest-panel"
+  data-operation={slug}
+  data-route={path}
+  aria-label={title}
+>
   <template
     data-agent-rest
-    data-anchor={anchor}
-    data-title={title}
-    data-route={operationPath(operation)}
+    data-route={path}
     data-example-request={JSON.stringify(request, null, 2)}
     data-example-response={JSON.stringify(response, null, 2)}></template>
   <p class="rest-route">
     <strong>POST</strong>
-    <code>{operationPath(operation)}</code>
+    <code>{path}</code>
   </p>
   <div class="rest-columns">
-    <div class="rest-operation not-content">
+    <div class="rest-operation not-content" data-pagefind-ignore>
       <div class="rest-actions rest-request-heading">
         <label for={`rest-body-${anchor}`}>Request JSON</label>
         <div class="rest-action-buttons">
@@ -43,10 +42,12 @@ const { operation, title, anchor, request, response } = Astro.props as {
         >
       </div>
       {
-        (operation === 'query' || operation === 'search') && (
+        (slug === 'entities/query' || slug === 'entities/search') && (
           <div data-schema hidden>
             <label>
-              {operation === 'query' ? 'Output field' : 'Dense vector field'}
+              {slug === 'entities/query'
+                ? 'Output field'
+                : 'Dense vector field'}
               <select data-field />
             </label>
             <button data-generate type="button">
@@ -57,19 +58,20 @@ const { operation, title, anchor, request, response } = Astro.props as {
       }
       <p role="status" data-feedback hidden></p>
       <div class="rest-actions rest-response-heading">
-        <p role="status" data-status>Example response</p>
-        <button data-copy-response type="button">Copy response</button>
+        <p role="status" data-status>
+          {response ? 'Example response' : 'Send a request to see the response'}
+        </p>
+        <button data-copy-response type="button" disabled={!response}
+          >Copy response</button
+        >
       </div>
       <pre
         aria-label="Raw response"
         tabindex="0"
+        hidden={!response}
         data-response>{JSON.stringify(response, null, 2)}</pre>
       <pre aria-label="cURL command" tabindex="0" data-command hidden></pre>
     </div>
     <div class="rest-docs"><slot /></div>
   </div>
 </section>
-
-<script>
-  import '../lib/rest-browser';
-</script>

@@ -3,6 +3,8 @@ import {
   type StarlightRouteData,
 } from '@astrojs/starlight/route-data';
 
+import { restGroups } from './lib/rest-navigation';
+
 type SidebarEntry = StarlightRouteData['sidebar'][number];
 type SidebarLink = Extract<SidebarEntry, { type: 'link' }>;
 
@@ -41,7 +43,7 @@ function isApiReferenceRoute(slug: string) {
   return slug === 'api-reference' || slug.startsWith('api-reference/');
 }
 
-function makeApiReferenceLink(
+function makeSidebarLink(
   currentSlug: string,
   { slug, label }: SidebarLinkConfig
 ): SidebarLink {
@@ -55,7 +57,7 @@ function makeApiReferenceLink(
   };
 }
 
-function getApiReferencePagination(links: SidebarLink[]) {
+function getPagination(links: SidebarLink[]) {
   const currentIndex = links.findIndex((link) => link.isCurrent);
 
   return {
@@ -88,12 +90,37 @@ export const onRequest = defineRouteMiddleware(async (context, next) => {
 
   const currentSlug = normalizeSlug(route.id);
 
+  if (currentSlug === 'rest-api' || currentSlug.startsWith('rest-api/')) {
+    const overview = makeSidebarLink(currentSlug, {
+      slug: 'rest-api',
+      label: 'Overview',
+    });
+    const groups = Array.from(
+      restGroups,
+      ([label, operations]): SidebarEntry => ({
+        type: 'group',
+        label,
+        collapsed: true,
+        badge: undefined,
+        entries: operations.map(({ slug, title }) =>
+          makeSidebarLink(currentSlug, {
+            slug: `rest-api/${slug}`,
+            label: title,
+          })
+        ),
+      })
+    );
+    route.sidebar = [overview, ...groups];
+    route.pagination = { prev: undefined, next: undefined };
+    return;
+  }
+
   if (!isApiReferenceRoute(currentSlug)) {
     return;
   }
 
   const links = API_REFERENCE_LINKS.map((link) =>
-    makeApiReferenceLink(currentSlug, link)
+    makeSidebarLink(currentSlug, link)
   );
 
   route.sidebar = [
@@ -106,5 +133,5 @@ export const onRequest = defineRouteMiddleware(async (context, next) => {
       badge: undefined,
     },
   ];
-  route.pagination = getApiReferencePagination(links);
+  route.pagination = getPagination(links);
 });

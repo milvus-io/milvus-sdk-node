@@ -1,0 +1,93 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { Icon } from '@astrojs/starlight/components';
+import {
+  legacyRestSlugs,
+  restGroups,
+  restHref,
+} from '../../lib/rest-navigation';
+
+const redirects = Object.fromEntries(
+  Object.entries(legacyRestSlugs).map(([anchor, slug]) => [
+    anchor,
+    restHref(slug),
+  ])
+);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Milvus REST API',
+    description:
+      'Browse the Milvus REST v2 API and send requests directly to your cluster.',
+    tableOfContents: false,
+    editUrl: false,
+  }}
+>
+  <div class="rest-explorer">
+    <p>
+      Browse the Milvus REST v2 API and send requests directly to your cluster.
+    </p>
+    <section
+      class="rest-directory"
+      data-pagefind-ignore
+      aria-label="REST operation directory"
+    >
+      <label hidden>
+        Filter operations
+        <input type="search" placeholder="Name or API path" data-rest-filter />
+      </label>
+      <p role="status" data-filter-status hidden></p>
+      <div class="rest-groups not-content">
+        {
+          Array.from(restGroups, ([group, operations]) => (
+            <details data-rest-group id={operations[0].slug.split('/')[0]}>
+              <summary>
+                <Icon name="right-caret" size="1rem" />
+                <span>{group}</span>
+                <span class="rest-group-count" data-agent-ignore>
+                  {operations.length} operations
+                </span>
+              </summary>
+              <ul>
+                {operations.map((operation) => (
+                  <li
+                    data-rest-item={`${operation.title} ${operation.path} ${group}`}
+                  >
+                    <a href={restHref(operation.slug)}>{operation.title}</a>{' '}
+                    <code>{operation.path}</code>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+    <noscript>
+      <p>
+        Enable JavaScript to send requests or copy commands. If you followed an
+        older link, choose its operation below.
+      </p>
+      <ul>
+        {
+          Object.entries(redirects).map(([anchor, href]) => (
+            <li id={anchor}>
+              <a href={href}>{anchor.replaceAll('-', ' ')}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </noscript>
+  </div>
+  <script is:inline define:vars={{ redirects }}>
+    const destination = Object.hasOwn(redirects, location.hash.slice(1))
+      ? redirects[location.hash.slice(1)]
+      : undefined;
+    if (destination) location.replace(destination);
+  </script>
+</StarlightPage>
+
+<script>
+  import '../../lib/rest-browser';
+</script>

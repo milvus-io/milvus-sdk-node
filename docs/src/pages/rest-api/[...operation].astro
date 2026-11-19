@@ -1,0 +1,95 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import RestConnection from '../../components/RestConnection.astro';
+import RestExplorer from '../../components/RestExplorer.astro';
+import { restOperations, type RestOperation } from '../../lib/rest-catalog';
+import { restHref, sdkMethods } from '../../lib/rest-navigation';
+
+export function getStaticPaths() {
+  return restOperations.map((operation) => ({
+    params: { operation: operation.slug },
+    props: { operation },
+  }));
+}
+
+const { operation } = Astro.props as { operation: RestOperation };
+const sdkMethod = sdkMethods[operation.slug];
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<StarlightPage
+  frontmatter={{
+    title: operation.title,
+    description: operation.description,
+    tableOfContents: false,
+    editUrl: false,
+  }}
+>
+  <div class="rest-explorer">
+    <RestConnection />
+    <noscript>Enable JavaScript to send requests or copy commands.</noscript>
+    <RestExplorer operation={operation}>
+      <p>{operation.description}</p>
+      {
+        operation.slug === 'collections/list' && (
+          <p>
+            Choose a returned collection to fill the Describe collection, Query,
+            and Search requests.
+          </p>
+        )
+      }
+      {
+        operation.slug === 'collections/describe' && (
+          <p>
+            A successful response makes its schema available in{' '}
+            <a href={restHref('entities/query')}>Query</a> and{' '}
+            <a href={restHref('entities/search')}>Search</a>.
+          </p>
+        )
+      }
+      {
+        operation.slug === 'entities/search' && (
+          <p>
+            You can apply a dense vector field from the described schema to fill
+            a sample vector with the correct dimension. Replace the sample with
+            your embedding before sending.
+          </p>
+        )
+      }
+      <h2 id="request-fields">Request fields</h2>
+      {
+        operation.fields.length ? (
+          <dl class="rest-fields">
+            {operation.fields.map((field) => (
+              <>
+                <dt>
+                  <code>{field.name}</code>{' '}
+                  <span>
+                    {field.type}
+                    {field.required && ' (required)'}
+                  </span>
+                </dt>
+                <dd>{field.description}</dd>
+              </>
+            ))}
+          </dl>
+        ) : (
+          <p>This operation accepts an empty JSON object.</p>
+        )
+      }
+      {
+        sdkMethod && (
+          <p>
+            See{' '}
+            <a
+              href={`${base}/api-reference/http-client#${sdkMethod.toLowerCase()}`}
+            >
+              <code>HttpClient.{sdkMethod}</code>
+            </a>{' '}
+            for the Node.js SDK method.
+          </p>
+        )
+      }
+    </RestExplorer>
+  </div>
+</StarlightPage>

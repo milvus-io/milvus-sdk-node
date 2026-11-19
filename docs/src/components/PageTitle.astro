@@ -25,6 +25,14 @@ const breadcrumbs: Array<{ label: string; href?: string }> =
             ? [{ label: sectionGroup.label }]
             : []),
         ];
+if (id.startsWith('rest-api/')) {
+  breadcrumbs.push({ label: 'REST API', href: base + '/rest-api' });
+  if (sectionGroup)
+    breadcrumbs.push({
+      label: sectionGroup.label,
+      href: `${base}/rest-api#${id.split('/')[1]}`,
+    });
+}
 const currentLabel = isHome ? 'Quickstart' : title;
 const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus ${sdk.milvusVersion.replace(/^v/, '')}`;
 ---
@@ -73,51 +81,58 @@ const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus
 <script>
   import { documentationMarkdown, restMarkdown } from '../lib/agent-markdown';
 
-  const action = document.querySelector<HTMLElement>('.agent-action')!;
-  const button = action.querySelector<HTMLButtonElement>('[data-copy-agent]')!;
-  const status = action.querySelector<HTMLElement>('[role="status"]')!;
-  const dialog = action.querySelector<HTMLDialogElement>('dialog')!;
-  const textarea = dialog.querySelector('textarea')!;
-  const content = document.querySelector('.sl-markdown-content');
-  const canonical = document.querySelector<HTMLLinkElement>(
-    'link[rel="canonical"]'
-  );
-  const title = document.querySelector('#_top')?.textContent;
+  function initializeAgentAction() {
+    const action = document.querySelector<HTMLElement>('.agent-action');
+    if (!action || action.dataset.ready !== undefined) return;
+    action.dataset.ready = '';
+    const button =
+      action.querySelector<HTMLButtonElement>('[data-copy-agent]')!;
+    const status = action.querySelector<HTMLElement>('[role="status"]')!;
+    const dialog = action.querySelector<HTMLDialogElement>('dialog')!;
+    const textarea = dialog.querySelector('textarea')!;
+    const content = document.querySelector('.sl-markdown-content');
+    const canonical = document.querySelector<HTMLLinkElement>(
+      'link[rel="canonical"]'
+    );
+    const title = document.querySelector('#_top')?.textContent;
 
-  if (content && canonical && title) {
-    button.hidden = false;
-    button.addEventListener('click', async () => {
-      const url = new URL(canonical.href);
-      const { body, sections, description } =
-        restMarkdown(content, url, location.hash) ??
-        documentationMarkdown(content, url);
-      const markdown =
-        [
-          'Use this Milvus Node.js SDK documentation as a reference for the user’s task.',
-          `# ${title}`,
-          action.dataset.description || description,
-          action.dataset.compatibility,
-          `Canonical documentation: ${url.href}`,
-          sections.length ? '## Section links\n\n' + sections.join('\n') : '',
-          !action.dataset.description && body.startsWith(description)
-            ? body.slice(description.length).trimStart()
-            : body,
-        ]
-          .filter(Boolean)
-          .join('\n\n') + '\n';
+    if (content && canonical && title) {
+      button.hidden = false;
+      button.addEventListener('click', async () => {
+        const url = new URL(canonical.href);
+        const { body, sections, description } =
+          restMarkdown(content, url) ?? documentationMarkdown(content, url);
+        const markdown =
+          [
+            'Use this Milvus Node.js SDK documentation as a reference for the user’s task.',
+            `# ${title}`,
+            action.dataset.description || description,
+            action.dataset.compatibility,
+            `Canonical documentation: ${url.href}`,
+            sections.length ? '## Section links\n\n' + sections.join('\n') : '',
+            !action.dataset.description && body.startsWith(description)
+              ? body.slice(description.length).trimStart()
+              : body,
+          ]
+            .filter(Boolean)
+            .join('\n\n') + '\n';
 
-      status.textContent = '';
-      try {
-        await navigator.clipboard.writeText(markdown);
-        status.textContent = 'Markdown copied.';
-      } catch {
-        textarea.value = markdown;
-        if (!dialog.open) dialog.showModal();
-        textarea.focus();
-        textarea.select();
-      }
-    });
+        status.textContent = '';
+        try {
+          await navigator.clipboard.writeText(markdown);
+          status.textContent = 'Markdown copied.';
+        } catch {
+          textarea.value = markdown;
+          if (!dialog.open) dialog.showModal();
+          textarea.focus();
+          textarea.select();
+        }
+      });
+    }
   }
+
+  initializeAgentAction();
+  document.addEventListener('astro:page-load', initializeAgentAction);
 </script>
 
 <style>

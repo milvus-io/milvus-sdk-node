@@ -47,7 +47,7 @@ const links = [
         {!hasSidebar && <ThemeSelect />}
       </nav>
     </details>
-    <Search />
+    <div class="docs-search" transition:persist="docs-search"><Search /></div>
     <a
       class="github-link"
       href="https://github.com/milvus-io/milvus-sdk-node"
@@ -60,17 +60,20 @@ const links = [
 </div>
 
 <script>
-  const sections =
-    document.querySelector<HTMLDetailsElement>('.mobile-sections');
+  function getSections() {
+    return document.querySelector<HTMLDetailsElement>('.mobile-sections');
+  }
 
   document.addEventListener('pointerdown', (event) => {
+    const sections = getSections();
     if (sections?.open && !event.composedPath().includes(sections)) {
       sections.open = false;
     }
   });
 
-  sections?.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && sections.open) {
+  document.addEventListener('keydown', (event) => {
+    const sections = getSections();
+    if (event.key === 'Escape' && sections?.open) {
       sections.open = false;
       sections.querySelector('summary')?.focus();
     }
@@ -78,6 +81,10 @@ const links = [
 </script>
 
 <style>
+  .docs-search {
+    display: contents;
+  }
+
   .docs-header,
   .desktop-navigation,
   .header-tools {
