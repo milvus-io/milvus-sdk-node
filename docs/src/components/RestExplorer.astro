@@ -1,4 +1,5 @@
 ---
+import { Icon } from '@astrojs/starlight/components';
 import { operationPath, type Operation } from '../lib/rest-explorer';
 
 const { operation, title, anchor, request, response } = Astro.props as {
@@ -24,16 +25,23 @@ const { operation, title, anchor, request, response } = Astro.props as {
   </p>
   <div class="rest-columns">
     <div class="rest-operation not-content">
-      <div class="rest-actions">
-        <button data-run type="button">Send request</button>
-        <button data-copy type="button">Copy cURL</button>
+      <div class="rest-actions rest-request-heading">
+        <label for={`rest-body-${anchor}`}>Request JSON</label>
+        <div class="rest-action-buttons">
+          <button data-copy type="button">Copy cURL</button>
+          <button data-run type="button">
+            Send request <Icon name="right-arrow" size="0.9rem" />
+          </button>
+        </div>
       </div>
-      <label>
-        Request JSON
-        <textarea data-body rows="7" spellcheck="false"
-          >{JSON.stringify(request, null, 2)}</textarea
+      <div>
+        <textarea
+          id={`rest-body-${anchor}`}
+          data-body
+          rows="6"
+          spellcheck="false">{JSON.stringify(request, null, 2)}</textarea
         >
-      </label>
+      </div>
       {
         (operation === 'query' || operation === 'search') && (
           <div data-schema hidden>

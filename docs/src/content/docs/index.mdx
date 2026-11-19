@@ -4,16 +4,21 @@ description: Connect a Node.js application to Milvus or Zilliz Cloud and list co
 tableOfContents: false
 ---
 
+import { Icon } from '@astrojs/starlight/components';
 import sdk from '../../../../package.json';
 
 <div class="sdk-home">
-<div>
+<div class="quickstart">
 
-Connect a Node.js application to Milvus or Zilliz Cloud.
+Connect a Node.js application to Milvus or Zilliz Cloud and list the collections in your database.
 
-```sh title="Terminal"
+## Install
+
+```sh title="npm"
 npm install @zilliz/milvus2-sdk-node
 ```
+
+## Connect and list collections
 
 ```js title="list-collections.mjs"
 import { MilvusClient } from '@zilliz/milvus2-sdk-node';
@@ -35,20 +40,34 @@ try {
 Run `node list-collections.mjs` against local Milvus, or set `MILVUS_ADDRESS` and `MILVUS_TOKEN` for your cluster.
 
 </div>
-<aside aria-label="Getting started and compatibility">
-
-## Start building
-
-- [Create a collection](/milvus-sdk-node/getting-started/getting-started#your-first-collection)
-- [Insert data](/milvus-sdk-node/operations/data-operations-insert)
-- [Search vectors](/milvus-sdk-node/operations/data-operations-query)
-- [Explore the REST API](/milvus-sdk-node/rest-api)
-
-## Compatibility
-
-- SDK {sdk.version}
-- Tested with Milvus {sdk.milvusVersion.replace(/^v/, '')}
-- Node.js 18+
-
+<aside class="quickstart-rail" aria-labelledby="start-building">
+  <h2 id="start-building">Start building</h2>
+  <ul>
+    <li>
+      <a href="/milvus-sdk-node/getting-started/getting-started#your-first-collection">
+        {'Create a collection'} <Icon name="right-arrow" size="0.825rem" />
+      </a>
+    </li>
+    <li>
+      <a href="/milvus-sdk-node/operations/data-operations-insert">
+        {'Insert data'} <Icon name="right-arrow" size="0.825rem" />
+      </a>
+    </li>
+    <li>
+      <a href="/milvus-sdk-node/operations/data-operations-query">
+        {'Search vectors'} <Icon name="right-arrow" size="0.825rem" />
+      </a>
+    </li>
+    <li>
+      <a href="/milvus-sdk-node/rest-api">
+        {'Explore the REST API'} <Icon name="right-arrow" size="0.825rem" />
+      </a>
+    </li>
+  </ul>
+  <div class="quickstart-compatibility">
+    <h2 id="compatibility">Compatibility</h2>
+    <p>SDK {sdk.version} · Node.js 18+</p>
+    <p>Tested with Milvus {sdk.milvusVersion.replace(/^v/, '')}</p>
+  </div>
 </aside>
 </div>
