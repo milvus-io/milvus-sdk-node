@@ -1,7 +1,15 @@
-# Simple workflow for deploying static content to GitHub Pages
+# Build documentation on PRs and deploy static content to GitHub Pages on main
 name: Deploy static content to Pages
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'docs/**'
+      - 'llms.txt'
+      - 'package.json'
+      - '.github/workflows/doc.yml'
+
   # Runs on pushes targeting the default branch
   push:
     branches: ['main']
@@ -9,6 +17,7 @@ on:
       - 'docs/**'
       - 'llms.txt'
       - 'package.json'
+      - '.github/workflows/doc.yml'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,47 +30,61 @@ on:
         options:
           - main
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: 'pages'
-  cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
+    concurrency:
+      group: docs-build-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.inputs.branch || github.ref }}
+          ref: ${{ github.event.inputs.branch || '' }}
           fetch-depth: 0
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+          cache: 'yarn'
+          cache-dependency-path: docs/yarn.lock
       - name: Install dependencies
         working-directory: ./docs
         run: yarn install --frozen-lockfile
+      - name: Check Astro and TypeScript types
+        working-directory: ./docs
+        run: yarn astro check
       - name: Build documentation
         working-directory: ./docs
         run: yarn build
       - name: Upload artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4
         with:
           path: './docs/out'
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    permissions:
+      pages: write
+      id-token: write
+    # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+    # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+    concurrency:
+      group: 'pages'
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

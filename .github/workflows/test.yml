@@ -3,9 +3,21 @@ name: Run tests and coverage
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - 'docs/**'
+      - 'llms.txt'
+      - '*.md'
+      - '.agents/**'
+      - '.github/workflows/doc.yml'
   merge_group:
   push:
     branches: [main, '2.4', '2.5']
+    paths-ignore:
+      - 'docs/**'
+      - 'llms.txt'
+      - '*.md'
+      - '.agents/**'
+      - '.github/workflows/doc.yml'
   workflow_dispatch:
   schedule:
     - cron: '17 19 * * *'
