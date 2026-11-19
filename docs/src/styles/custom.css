@@ -121,7 +121,7 @@ main > .content-panel > .sl-container {
   --ec-frm-edBg: var(--docs-surface);
   --ec-frm-edTabBarBg: var(--docs-code-toolbar);
   --ec-frm-edActTabBg: var(--docs-code-toolbar);
-  --ec-frm-edActTabIndHt: 0;
+  --ec-frm-edActTabIndHt: 0px;
   --ec-frm-trmBg: var(--docs-surface);
   --ec-frm-trmTtbBg: var(--docs-code-toolbar);
   --ec-frm-trmTtbBrdBtmCol: var(--sl-color-hairline);
@@ -181,10 +181,26 @@ site-search button[data-open-modal] {
 }
 
 @media (max-width: 49.99rem) {
-  [data-has-sidebar] .header {
+  [data-has-sidebar] header.header {
     padding-inline-end: calc(
       var(--sl-nav-pad-x) + var(--sl-menu-button-size) + 0.25rem
     );
+  }
+
+  :root {
+    --sl-mobile-toc-height: 2rem;
+  }
+
+  mobile-starlight-toc summary {
+    padding: 0 1.25rem;
+  }
+
+  mobile-starlight-toc .toggle {
+    gap: 0.25rem;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    font-weight: 500;
   }
 
   starlight-menu-button button,

@@ -6,6 +6,7 @@ const { id, entry, sidebar, siteTitleHref } = Astro.locals.starlightRoute;
 const { title, description } = entry.data;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const section = id.split('/')[0];
+const isHome = Astro.url.pathname.replace(/\/$/, '') === base;
 const sectionGroup = sidebar.find(
   (item) =>
     item.type === 'group' &&
@@ -16,7 +17,7 @@ const breadcrumbs: Array<{ label: string; href?: string }> =
     ? id === 'api-reference' || id === 'api-reference/index'
       ? []
       : [{ label: 'SDK Reference', href: base + '/api-reference' }]
-    : section === 'index' || section === 'rest-api'
+    : isHome || section === 'rest-api'
       ? []
       : [
           { label: 'Guides', href: base + '/getting-started/getting-started' },
@@ -24,7 +25,7 @@ const breadcrumbs: Array<{ label: string; href?: string }> =
             ? [{ label: sectionGroup.label }]
             : []),
         ];
-const currentLabel = section === 'index' ? 'Quickstart' : title;
+const currentLabel = isHome ? 'Quickstart' : title;
 const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus ${sdk.milvusVersion.replace(/^v/, '')}`;
 ---
 
