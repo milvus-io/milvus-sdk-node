@@ -1,3 +1,4 @@
+import { HTTP_COLLECTION_PREFIX, HTTP_READ_OPERATIONS } from './readRoutes';
 import { HttpBaseClient } from '../HttpClient';
 import { Constructor } from '../types/index';
 import {
@@ -88,7 +89,7 @@ const encodeExternalRefreshProgress = ({
 export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
     get collectionPrefix() {
-      return '/vectordb/collections';
+      return HTTP_COLLECTION_PREFIX;
     }
 
     /** Remove all data while preserving the collection schema and indexes. */
@@ -223,7 +224,7 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
       params: HttpBaseReq,
       options?: FetchOptions
     ): Promise<HttpCollectionDescribeResponse> {
-      const url = `${this.collectionPrefix}/describe`;
+      const url = `${this.collectionPrefix}/${HTTP_READ_OPERATIONS.describeCollection.action}`;
       return await this.POST<HttpCollectionDescribeResponse>(
         url,
         params,
@@ -294,7 +295,7 @@ export function Collection<T extends Constructor<HttpBaseClient>>(Base: T) {
       params: HttpCollectionListReq = { dbName: DEFAULT_DB },
       options?: FetchOptions
     ): Promise<HttpCollectionListResponse> {
-      const url = `${this.collectionPrefix}/list`;
+      const url = `${this.collectionPrefix}/${HTTP_READ_OPERATIONS.listCollections.action}`;
 
       return await this.POST<HttpCollectionListResponse>(url, params, options);
     }

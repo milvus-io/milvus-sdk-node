@@ -8,7 +8,7 @@ HTTP request fields use the REST API's camelCase naming convention, for example 
 
 ## Constructor
 
-```typescript
+```text
 new HttpClient(config: HttpClientConfig)
 ```
 
@@ -81,28 +81,137 @@ await client.search(
 
 ## Collection APIs
 
-| Method                                           | Description                                                                           |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `createCollection(data, options?)`               | Create a collection by dimension shortcut or explicit schema.                         |
-| `describeCollection(data, options?)`             | Describe collection schema, indexes, load status, and shard information.              |
-| `dropCollection(data, options?)`                 | Drop a collection.                                                                    |
-| `addCollectionField(data, options?)`             | Add a field to an existing collection.                                                |
-| `alterCollectionProperties(data, options?)`      | Add or update collection properties.                                                  |
-| `alterCollectionFieldProperties(data, options?)` | Alter field-level properties such as `max_length`, `max_capacity`, or `mmap_enabled`. |
-| `dropCollectionProperties(data, options?)`       | Remove collection properties by key.                                                  |
-| `listCollections(data?, options?)`               | List collections in a database.                                                       |
-| `hasCollection(data, options?)`                  | Check whether a collection exists.                                                    |
-| `renameCollection(data, options?)`               | Rename a collection, optionally into another database.                                |
-| `getCollectionStatistics(data, options?)`        | Get collection statistics such as row count.                                          |
-| `flushCollection(data, options?)`                | Flush a collection.                                                                   |
-| `loadCollection(data, options?)`                 | Load a collection into memory.                                                        |
-| `releaseCollection(data, options?)`              | Release a loaded collection.                                                          |
-| `getCollectionLoadState(data, options?)`         | Get load progress and load state.                                                     |
-| `compactCollection(data, options?)`              | Start collection compaction.                                                          |
-| `getCompactionState(data, options?)`             | Get compaction progress by compaction ID.                                             |
-| `refreshLoad(data, options?)`                    | Refresh an existing loaded collection.                                                |
+### createCollection
 
-Example:
+`createCollection(data, options?)`
+
+Create a collection by dimension shortcut or explicit schema.
+
+### describeCollection
+
+```text
+describeCollection(data: HttpBaseReq, options?: FetchOptions): Promise<HttpCollectionDescribeResponse>
+```
+
+Pass `collectionName`. Optionally set `dbName`.
+
+```ts
+const { code, data } = await client.describeCollection({
+  collectionName: 'books',
+});
+```
+
+Returns a Milvus response envelope with collection metadata, including schema fields, indexes, and load state.
+
+[Try the REST operation](/milvus-sdk-node/rest-api/collections/describe).
+
+### dropCollection
+
+`dropCollection(data, options?)`
+
+Drop a collection.
+
+### addCollectionField
+
+`addCollectionField(data, options?)`
+
+Add a field to an existing collection.
+
+### alterCollectionProperties
+
+`alterCollectionProperties(data, options?)`
+
+Add or update collection properties.
+
+### alterCollectionFieldProperties
+
+`alterCollectionFieldProperties(data, options?)`
+
+Alter field-level properties such as `max_length`, `max_capacity`, or `mmap_enabled`.
+
+### dropCollectionProperties
+
+`dropCollectionProperties(data, options?)`
+
+Remove collection properties by key.
+
+### listCollections
+
+```text
+listCollections(data?: HttpCollectionListReq, options?: FetchOptions): Promise<HttpCollectionListResponse>
+```
+
+All inputs are optional. Set `dbName` to choose the database.
+
+```ts
+const { code, data } = await client.listCollections({ dbName: 'default' });
+```
+
+Returns a Milvus response envelope with collection names as a string array.
+
+[Try the REST operation](/milvus-sdk-node/rest-api/collections/list).
+
+### hasCollection
+
+`hasCollection(data, options?)`
+
+Check whether a collection exists.
+
+### renameCollection
+
+`renameCollection(data, options?)`
+
+Rename a collection, optionally into another database.
+
+### getCollectionStatistics
+
+`getCollectionStatistics(data, options?)`
+
+Get collection statistics such as row count.
+
+### flushCollection
+
+`flushCollection(data, options?)`
+
+Flush a collection.
+
+### loadCollection
+
+`loadCollection(data, options?)`
+
+Load a collection into memory.
+
+### releaseCollection
+
+`releaseCollection(data, options?)`
+
+Release a loaded collection.
+
+### getCollectionLoadState
+
+`getCollectionLoadState(data, options?)`
+
+Get load progress and load state.
+
+### compactCollection
+
+`compactCollection(data, options?)`
+
+Start collection compaction.
+
+### getCompactionState
+
+`getCompactionState(data, options?)`
+
+Get compaction progress by compaction ID.
+
+### refreshLoad
+
+`refreshLoad(data, options?)`
+
+Refresh an existing loaded collection.
+
+### Collection maintenance example
 
 ```typescript
 await client.flushCollection({ collectionName: 'books' });
@@ -118,20 +227,54 @@ const compaction = await client.compactCollection({
 
 ## Data APIs
 
-| Method                         | Description                                                 |
-| ------------------------------ | ----------------------------------------------------------- |
-| `insert(data, options?)`       | Insert rows.                                                |
-| `upsert(data, options?)`       | Insert or update rows.                                      |
-| `get(data, options?)`          | Fetch rows by ID.                                           |
-| `query(data, options?)`        | Query rows by filter.                                       |
-| `search(data, options?)`       | Vector search.                                              |
-| `hybridSearch(data, options?)` | Hybrid search over multiple vector requests with reranking. |
-| `delete(data, options?)`       | Delete rows by filter.                                      |
+### insert
 
-Example:
+`insert(data, options?)`
 
-```typescript
-const results = await client.search({
+Insert rows.
+
+### upsert
+
+`upsert(data, options?)`
+
+Insert or update rows.
+
+### get
+
+`get(data, options?)`
+
+Fetch rows by ID.
+
+### query
+
+```text
+query(data: HttpVectorQueryReq, options?: FetchOptions): Promise<HttpVectorQueryResponse>
+```
+
+Pass `collectionName` and `outputFields`. Use `filter` to select rows or set a `limit` for an unfiltered query.
+
+```ts
+const { code, data } = await client.query({
+  collectionName: 'books',
+  outputFields: ['title'],
+  limit: 5,
+});
+```
+
+Returns a Milvus response envelope with matching rows.
+
+[Try the REST operation](/milvus-sdk-node/rest-api/entities/query).
+
+### search
+
+```text
+search(data: HttpVectorSearchReq | HttpVectorSearchByIdsReq, options?: FetchOptions): Promise<HttpVectorSearchResponse>
+```
+
+Pass `collectionName`, `outputFields`, and either a batch of search inputs in `data` or stored primary keys in `ids`. Specify `annsField` when the collection has multiple vector fields.
+
+```ts
+const { code, data } = await client.search({
   collectionName: 'books',
   data: [[0.1, 0.2, 0.3, 0.4]],
   annsField: 'vector',
@@ -139,6 +282,24 @@ const results = await client.search({
   limit: 5,
 });
 ```
+
+Returns a Milvus response envelope with search hits with IDs, distances, and requested fields. The aggregation overload takes `HttpVectorSearchAggregationReq` and returns `HttpVectorSearchAggregationResponse` with buckets.
+
+[Try the REST operation](/milvus-sdk-node/rest-api/entities/search).
+
+### hybridSearch
+
+`hybridSearch(data, options?)`
+
+Hybrid search over multiple vector requests with reranking.
+
+### delete
+
+`delete(data, options?)`
+
+Delete rows by filter.
+
+### Filtering, ordering, and grouping
 
 Use `exprParams` to bind filter placeholders such as `label in {labels}` in query, delete, search, or individual hybrid search requests. For query results, use `orderByFields` with keys such as `'price:desc'`. To group rows, pass scalar `groupByFields` and aggregation expressions such as `'count(*)'` in `outputFields`. These options were verified on Milvus 3.0.6.
 
@@ -150,59 +311,191 @@ Pass `searchAggregation` to `search()` to return buckets for each query vector. 
 
 ## Database APIs
 
-| Method                                    | Description                                |
-| ----------------------------------------- | ------------------------------------------ |
-| `createDatabase(data, options?)`          | Create a database.                         |
-| `dropDatabase(data, options?)`            | Drop a database.                           |
-| `describeDatabase(data, options?)`        | Describe database metadata and properties. |
-| `listDatabases(options?)`                 | List databases.                            |
-| `alterDatabaseProperties(data, options?)` | Add or update database properties.         |
-| `dropDatabaseProperties(data, options?)`  | Remove database properties by key.         |
+### createDatabase
+
+`createDatabase(data, options?)`
+
+Create a database.
+
+### dropDatabase
+
+`dropDatabase(data, options?)`
+
+Drop a database.
+
+### describeDatabase
+
+`describeDatabase(data, options?)`
+
+Describe database metadata and properties.
+
+### listDatabases
+
+`listDatabases(options?)`
+
+List databases.
+
+### alterDatabaseProperties
+
+`alterDatabaseProperties(data, options?)`
+
+Add or update database properties.
+
+### dropDatabaseProperties
+
+`dropDatabaseProperties(data, options?)`
+
+Remove database properties by key.
 
 ## Index APIs
 
-| Method                                 | Description                     |
-| -------------------------------------- | ------------------------------- |
-| `createIndex(data, options?)`          | Create one or more indexes.     |
-| `dropIndex(data, options?)`            | Drop an index.                  |
-| `describeIndex(data, options?)`        | Describe indexes.               |
-| `listIndexes(data, options?)`          | List index names.               |
-| `alterIndexProperties(data, options?)` | Add or update index properties. |
-| `dropIndexProperties(data, options?)`  | Remove index properties by key. |
+### createIndex
+
+`createIndex(data, options?)`
+
+Create one or more indexes.
+
+### dropIndex
+
+`dropIndex(data, options?)`
+
+Drop an index.
+
+### describeIndex
+
+`describeIndex(data, options?)`
+
+Describe indexes.
+
+### listIndexes
+
+`listIndexes(data, options?)`
+
+List index names.
+
+### alterIndexProperties
+
+`alterIndexProperties(data, options?)`
+
+Add or update index properties.
+
+### dropIndexProperties
+
+`dropIndexProperties(data, options?)`
+
+Remove index properties by key.
 
 ## Partition APIs
 
-| Method                                   | Description                                 |
-| ---------------------------------------- | ------------------------------------------- |
-| `listPartitions(data, options?)`         | List partitions.                            |
-| `createPartition(data, options?)`        | Create a partition.                         |
-| `dropPartition(data, options?)`          | Drop a partition.                           |
-| `loadPartitions(data, options?)`         | Load partitions.                            |
-| `releasePartitions(data, options?)`      | Release partitions.                         |
-| `hasPartition(data, options?)`           | Check whether a partition exists.           |
-| `getPartitionStatistics(data, options?)` | Get partition statistics such as row count. |
+### listPartitions
+
+`listPartitions(data, options?)`
+
+List partitions.
+
+### createPartition
+
+`createPartition(data, options?)`
+
+Create a partition.
+
+### dropPartition
+
+`dropPartition(data, options?)`
+
+Drop a partition.
+
+### loadPartitions
+
+`loadPartitions(data, options?)`
+
+Load partitions.
+
+### releasePartitions
+
+`releasePartitions(data, options?)`
+
+Release partitions.
+
+### hasPartition
+
+`hasPartition(data, options?)`
+
+Check whether a partition exists.
+
+### getPartitionStatistics
+
+`getPartitionStatistics(data, options?)`
+
+Get partition statistics such as row count.
 
 ## Alias APIs
 
-| Method                          | Description                               |
-| ------------------------------- | ----------------------------------------- |
-| `listAliases(data, options?)`   | List aliases in a database or collection. |
-| `createAlias(data, options?)`   | Create an alias for a collection.         |
-| `describeAlias(data, options?)` | Describe an alias.                        |
-| `alterAlias(data, options?)`    | Move an alias to another collection.      |
-| `dropAlias(data, options?)`     | Drop an alias.                            |
+### listAliases
+
+`listAliases(data, options?)`
+
+List aliases in a database or collection.
+
+### createAlias
+
+`createAlias(data, options?)`
+
+Create an alias for a collection.
+
+### describeAlias
+
+`describeAlias(data, options?)`
+
+Describe an alias.
+
+### alterAlias
+
+`alterAlias(data, options?)`
+
+Move an alias to another collection.
+
+### dropAlias
+
+`dropAlias(data, options?)`
+
+Drop an alias.
 
 ## Import APIs
 
 HTTP import APIs are separate from the gRPC `bulkInsert`, `getImportState`, and `listImportTasks` APIs.
 
-| Method                                 | Description                                |
-| -------------------------------------- | ------------------------------------------ |
-| `listImportJobs(data, options?)`       | List REST import jobs for a collection.    |
-| `createImportJobs(data, options?)`     | Create REST import jobs from staged files. |
-| `getImportJobProgress(data, options?)` | Get progress for a REST import job.        |
-| `commitImportJob(data, options?)`      | Commit an `Uncommitted` import job.        |
-| `abortImportJob(data, options?)`       | Abort an import job before it commits.     |
+### listImportJobs
+
+`listImportJobs(data, options?)`
+
+List REST import jobs for a collection.
+
+### createImportJobs
+
+`createImportJobs(data, options?)`
+
+Create REST import jobs from staged files.
+
+### getImportJobProgress
+
+`getImportJobProgress(data, options?)`
+
+Get progress for a REST import job.
+
+### commitImportJob
+
+`commitImportJob(data, options?)`
+
+Commit an `Uncommitted` import job.
+
+### abortImportJob
+
+`abortImportJob(data, options?)`
+
+Abort an import job before it commits.
+
+### Import job example
 
 ```typescript
 const job = await client.createImportJobs({
@@ -265,24 +558,91 @@ Describe returns the server's `resource_group` object. Query node IDs in this re
 
 ## User and Role APIs
 
-| Method                                    | Description                       |
-| ----------------------------------------- | --------------------------------- |
-| `createUser(data, options?)`              | Create a user.                    |
-| `updateUserPassword(data, options?)`      | Update a user's password.         |
-| `dropUser(data, options?)`                | Drop a user.                      |
-| `describeUser(data, options?)`            | Describe user details.            |
-| `listUsers(options?)`                     | List users.                       |
-| `grantRoleToUser(data, options?)`         | Grant a role to a user.           |
-| `revokeRoleFromUser(data, options?)`      | Revoke a role from a user.        |
-| `createRole(data, options?)`              | Create a role.                    |
-| `alterRole(data, options?)`               | Update the description of a role. |
-| `dropRole(data, options?)`                | Drop a role.                      |
-| `describeRole(data, options?)`            | Describe role privileges.         |
-| `listRoles(options?)`                     | List roles.                       |
-| `grantPrivilegeToRole(data, options?)`    | Grant a privilege to a role.      |
-| `revokePrivilegeFromRole(data, options?)` | Revoke a privilege from a role.   |
+### createUser
 
-Example:
+`createUser(data, options?)`
+
+Create a user.
+
+### updateUserPassword
+
+`updateUserPassword(data, options?)`
+
+Update a user's password.
+
+### dropUser
+
+`dropUser(data, options?)`
+
+Drop a user.
+
+### describeUser
+
+`describeUser(data, options?)`
+
+Describe user details.
+
+### listUsers
+
+`listUsers(options?)`
+
+List users.
+
+### grantRoleToUser
+
+`grantRoleToUser(data, options?)`
+
+Grant a role to a user.
+
+### revokeRoleFromUser
+
+`revokeRoleFromUser(data, options?)`
+
+Revoke a role from a user.
+
+### createRole
+
+`createRole(data, options?)`
+
+Create a role.
+
+### alterRole
+
+`alterRole(data, options?)`
+
+Update the description of a role.
+
+### dropRole
+
+`dropRole(data, options?)`
+
+Drop a role.
+
+### describeRole
+
+`describeRole(data, options?)`
+
+Describe role privileges.
+
+### listRoles
+
+`listRoles(options?)`
+
+List roles.
+
+### grantPrivilegeToRole
+
+`grantPrivilegeToRole(data, options?)`
+
+Grant a privilege to a role.
+
+### revokePrivilegeFromRole
+
+`revokePrivilegeFromRole(data, options?)`
+
+Revoke a privilege from a role.
+
+### Role privilege example
 
 ```typescript
 await client.grantPrivilegeToRole({
@@ -311,7 +671,7 @@ Use `getQuotaMetrics()` to inspect quota center metrics. The response's `data` i
 
 ## Errors
 
-Non-2xx responses throw `HttpError`.
+Non-2xx responses throw `HttpError`. For HTTP success responses, inspect the Milvus response envelope. A `code` of `0` indicates success.
 
 ```typescript
 try {

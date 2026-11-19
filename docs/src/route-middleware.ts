@@ -3,6 +3,8 @@ import {
   type StarlightRouteData,
 } from '@astrojs/starlight/route-data';
 
+import { restGroups } from './lib/rest-navigation';
+
 type SidebarEntry = StarlightRouteData['sidebar'][number];
 type SidebarLink = Extract<SidebarEntry, { type: 'link' }>;
 
@@ -31,7 +33,7 @@ const API_REFERENCE_LINKS: SidebarLinkConfig[] = [
 ];
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-const guidesHref = basePath || '/';
+const guidesHref = `${basePath}/getting-started/getting-started`;
 
 function normalizeSlug(slug: string) {
   return slug === 'api-reference/index' ? 'api-reference' : slug;
@@ -41,7 +43,7 @@ function isApiReferenceRoute(slug: string) {
   return slug === 'api-reference' || slug.startsWith('api-reference/');
 }
 
-function makeApiReferenceLink(
+function makeSidebarLink(
   currentSlug: string,
   { slug, label }: SidebarLinkConfig
 ): SidebarLink {
@@ -55,7 +57,7 @@ function makeApiReferenceLink(
   };
 }
 
-function getApiReferencePagination(links: SidebarLink[]) {
+function getPagination(links: SidebarLink[]) {
   const currentIndex = links.findIndex((link) => link.isCurrent);
 
   return {
@@ -70,7 +72,7 @@ function getApiReferencePagination(links: SidebarLink[]) {
 function getGuidesLink(): SidebarLink {
   return {
     type: 'link',
-    label: '← Guides',
+    label: 'Guides',
     href: guidesHref,
     isCurrent: false,
     badge: undefined,
@@ -88,23 +90,50 @@ export const onRequest = defineRouteMiddleware(async (context, next) => {
 
   const currentSlug = normalizeSlug(route.id);
 
+  if (currentSlug === 'rest-api' || currentSlug.startsWith('rest-api/')) {
+    const overview = makeSidebarLink(currentSlug, {
+      slug: 'rest-api',
+      label: 'Overview',
+    });
+    const groups = Array.from(
+      restGroups,
+      ([label, operations]): SidebarEntry => ({
+        type: 'group',
+        label,
+        collapsed: !operations.some(
+          ({ slug }) => currentSlug === 'rest-api/' + slug
+        ),
+        badge: undefined,
+        entries: operations.map(({ slug, title }) =>
+          makeSidebarLink(currentSlug, {
+            slug: `rest-api/${slug}`,
+            label: title,
+          })
+        ),
+      })
+    );
+    route.sidebar = [overview, ...groups];
+    route.pagination = { prev: undefined, next: undefined };
+    return;
+  }
+
   if (!isApiReferenceRoute(currentSlug)) {
     return;
   }
 
   const links = API_REFERENCE_LINKS.map((link) =>
-    makeApiReferenceLink(currentSlug, link)
+    makeSidebarLink(currentSlug, link)
   );
 
   route.sidebar = [
     getGuidesLink(),
     {
       type: 'group',
-      label: 'API Reference',
+      label: 'SDK Reference',
       entries: links,
       collapsed: false,
       badge: undefined,
     },
   ];
-  route.pagination = getApiReferencePagination(links);
+  route.pagination = getPagination(links);
 });

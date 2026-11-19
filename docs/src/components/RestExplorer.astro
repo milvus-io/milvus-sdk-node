@@ -1,0 +1,77 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+import type { RestOperation } from '../lib/rest-catalog';
+
+const { operation } = Astro.props as { operation: RestOperation };
+const { slug, title, path, request, response } = operation;
+const anchor = slug.replaceAll('/', '-');
+---
+
+<section
+  class="rest-panel"
+  data-operation={slug}
+  data-route={path}
+  aria-label={title}
+>
+  <template
+    data-agent-rest
+    data-route={path}
+    data-example-request={JSON.stringify(request, null, 2)}
+    data-example-response={JSON.stringify(response, null, 2)}></template>
+  <p class="rest-route">
+    <strong>POST</strong>
+    <code>{path}</code>
+  </p>
+  <div class="rest-columns">
+    <div class="rest-operation not-content" data-pagefind-ignore>
+      <div class="rest-actions rest-request-heading">
+        <label for={`rest-body-${anchor}`}>Request JSON</label>
+        <div class="rest-action-buttons">
+          <button data-copy type="button">Copy cURL</button>
+          <button data-run type="button">
+            Send request <Icon name="right-arrow" size="0.9rem" />
+          </button>
+        </div>
+      </div>
+      <div>
+        <textarea
+          id={`rest-body-${anchor}`}
+          data-body
+          rows="6"
+          spellcheck="false">{JSON.stringify(request, null, 2)}</textarea
+        >
+      </div>
+      {
+        (slug === 'entities/query' || slug === 'entities/search') && (
+          <div data-schema hidden>
+            <label>
+              {slug === 'entities/query'
+                ? 'Output field'
+                : 'Dense vector field'}
+              <select data-field />
+            </label>
+            <button data-generate type="button">
+              Apply schema field
+            </button>
+          </div>
+        )
+      }
+      <p role="status" data-feedback hidden></p>
+      <div class="rest-actions rest-response-heading">
+        <p role="status" data-status>
+          {response ? 'Example response' : 'Send a request to see the response'}
+        </p>
+        <button data-copy-response type="button" disabled={!response}
+          >Copy response</button
+        >
+      </div>
+      <pre
+        aria-label="Raw response"
+        tabindex="0"
+        hidden={!response}
+        data-response>{JSON.stringify(response, null, 2)}</pre>
+      <pre aria-label="cURL command" tabindex="0" data-command hidden></pre>
+    </div>
+    <div class="rest-docs"><slot /></div>
+  </div>
+</section>

@@ -2,6 +2,7 @@
 import EditLink from 'virtual:starlight/components/EditLink';
 import LastUpdated from 'virtual:starlight/components/LastUpdated';
 import Pagination from 'virtual:starlight/components/Pagination';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <footer class="sl-flex">
@@ -11,6 +12,17 @@ import Pagination from 'virtual:starlight/components/Pagination';
   </div>
   <Pagination />
 
+  <nav aria-label="Resources">
+    <a href={`${base}/reference/additional-resources`}>Resources</a>
+    <a href={`${base}/reference/release-notes`}>Release notes</a>
+    <a href={`${base}/reference/troubleshooting`}>Troubleshooting</a>
+    <a href={`${base}/reference/migration-compatibility`}>Compatibility</a>
+    <a href={`${base}/reference/contributing`}>Contributing</a>
+    <a href="https://github.com/milvus-io/milvus-sdk-node">GitHub</a>
+    <a href="https://milvus.io">Milvus</a>
+    <a href="https://cloud.zilliz.com">Zilliz Cloud</a>
+    <a href="https://github.com/zilliztech/attu/releases">Attu</a>
+  </nav>
   <p class="copyright">MIT {new Date().getFullYear()} © Milvus Node.js SDK.</p>
 </footer>
 
@@ -32,6 +44,14 @@ import Pagination from 'virtual:starlight/components/Pagination';
       margin-inline-start: auto;
     }
 
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      font-size: var(--sl-text-sm);
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--sl-color-hairline);
+    }
     .copyright {
       color: var(--sl-color-gray-3);
       font-size: var(--sl-text-xs);

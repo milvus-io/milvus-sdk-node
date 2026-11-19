@@ -1,17 +1,261 @@
 ---
-const PAGE_TITLE_ID = '_top';
+import { Icon } from '@astrojs/starlight/components';
+import sdk from '../../../package.json';
+
+const { id, entry, sidebar, siteTitleHref } = Astro.locals.starlightRoute;
+const { title, description } = entry.data;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const section = id.split('/')[0];
+const isHome = Astro.url.pathname.replace(/\/$/, '') === base;
+const sectionGroup = sidebar.find(
+  (item) =>
+    item.type === 'group' &&
+    item.entries.some((link) => link.type === 'link' && link.isCurrent)
+);
+const breadcrumbs: Array<{ label: string; href?: string }> =
+  section === 'api-reference'
+    ? id === 'api-reference' || id === 'api-reference/index'
+      ? []
+      : [{ label: 'SDK Reference', href: base + '/api-reference' }]
+    : isHome || section === 'rest-api'
+      ? []
+      : [
+          { label: 'Guides', href: base + '/getting-started/getting-started' },
+          ...(sectionGroup && sectionGroup.label !== title
+            ? [{ label: sectionGroup.label }]
+            : []),
+        ];
+if (id.startsWith('rest-api/')) {
+  breadcrumbs.push({ label: 'REST API', href: base + '/rest-api' });
+  if (sectionGroup)
+    breadcrumbs.push({
+      label: sectionGroup.label,
+      href: `${base}/rest-api#${id.split('/')[1]}`,
+    });
+}
+const currentLabel = isHome ? 'Quickstart' : title;
+const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus ${sdk.milvusVersion.replace(/^v/, '')}`;
 ---
 
-<h1 id={PAGE_TITLE_ID}>{Astro.locals.starlightRoute.entry.data.title}</h1>
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <ol>
+    <li><a href={siteTitleHref}>Node SDK</a></li>
+    {
+      breadcrumbs.map(({ label, href }) => (
+        <li>
+          <Icon name="right-caret" size="0.8rem" />
+          {href ? <a href={href}>{label}</a> : <span>{label}</span>}
+        </li>
+      ))
+    }
+    <li aria-current="page">
+      <Icon name="right-caret" size="0.8rem" />
+      <span>{currentLabel}</span>
+    </li>
+  </ol>
+</nav>
+<div class="page-title">
+  <h1 id="_top">{title}</h1>
+  <div
+    class="agent-action"
+    data-description={description}
+    data-compatibility={compatibility}
+  >
+    <button type="button" data-copy-agent hidden>
+      <Icon name="document" size="0.95rem" />
+      Copy for agent
+    </button>
+    <span class="agent-status" role="status"></span>
+    <dialog aria-labelledby="agent-copy-title">
+      <form method="dialog">
+        <button type="submit">Close</button>
+      </form>
+      <h2 id="agent-copy-title">Copy for agent</h2>
+      <label for="agent-copy-text">Select and copy the Markdown below.</label>
+      <textarea id="agent-copy-text" rows="12" readonly spellcheck="false"
+      ></textarea>
+    </dialog>
+  </div>
+</div>
+
+<script>
+  import { documentationMarkdown, restMarkdown } from '../lib/agent-markdown';
+
+  function initializeAgentAction() {
+    const action = document.querySelector<HTMLElement>('.agent-action');
+    if (!action || action.dataset.ready !== undefined) return;
+    action.dataset.ready = '';
+    const button =
+      action.querySelector<HTMLButtonElement>('[data-copy-agent]')!;
+    const status = action.querySelector<HTMLElement>('[role="status"]')!;
+    const dialog = action.querySelector<HTMLDialogElement>('dialog')!;
+    const textarea = dialog.querySelector('textarea')!;
+    const content = document.querySelector('.sl-markdown-content');
+    const canonical = document.querySelector<HTMLLinkElement>(
+      'link[rel="canonical"]'
+    );
+    const title = document.querySelector('#_top')?.textContent;
+
+    if (content && canonical && title) {
+      button.hidden = false;
+      button.addEventListener('click', async () => {
+        const url = new URL(canonical.href);
+        const { body, sections, description } =
+          restMarkdown(content, url) ?? documentationMarkdown(content, url);
+        const markdown =
+          [
+            'Use this Milvus Node.js SDK documentation as a reference for the user’s task.',
+            `# ${title}`,
+            action.dataset.description || description,
+            action.dataset.compatibility,
+            `Canonical documentation: ${url.href}`,
+            sections.length ? '## Section links\n\n' + sections.join('\n') : '',
+            !action.dataset.description && body.startsWith(description)
+              ? body.slice(description.length).trimStart()
+              : body,
+          ]
+            .filter(Boolean)
+            .join('\n\n') + '\n';
+
+        status.textContent = '';
+        try {
+          await navigator.clipboard.writeText(markdown);
+          status.textContent = 'Markdown copied.';
+        } catch {
+          textarea.value = markdown;
+          if (!dialog.open) dialog.showModal();
+          textarea.focus();
+          textarea.select();
+        }
+      });
+    }
+  }
+
+  initializeAgentAction();
+  document.addEventListener('astro:page-load', initializeAgentAction);
+</script>
 
 <style>
-  @layer starlight.core {
-    h1 {
-      margin-top: 1rem;
-      font-size: var(--sl-text-h1);
-      line-height: var(--sl-line-height-headings);
-      font-weight: 600;
-      color: var(--sl-color-white);
+  .breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 0.3rem;
+    padding: 0;
+    list-style: none;
+    color: var(--sl-color-gray-3);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .breadcrumbs li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .breadcrumbs li[aria-current] {
+    color: var(--sl-color-white);
+    font-weight: 500;
+  }
+
+  .breadcrumbs a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .breadcrumbs a:hover {
+    color: var(--sl-color-text-accent);
+  }
+
+  .page-title {
+    display: flex;
+    margin-top: 0.625rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.625rem 1rem;
+  }
+
+  .agent-action {
+    position: relative;
+  }
+
+  .agent-action button {
+    padding: 0.325rem 0.625rem;
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 0.45rem;
+    background: var(--docs-surface);
+    color: var(--sl-color-gray-3);
+    font: inherit;
+    font-size: var(--sl-text-xs);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  [data-copy-agent]:not([hidden]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .agent-action button:hover {
+    color: var(--sl-color-text-accent);
+    background: var(--sl-color-accent-low);
+  }
+
+  .agent-status {
+    position: absolute;
+    inset-block-start: calc(100% + 0.15rem);
+    inset-inline-start: 0;
+    white-space: nowrap;
+    color: var(--sl-color-text-accent);
+    font-size: var(--sl-text-xs);
+  }
+
+  .agent-action dialog {
+    width: min(42rem, calc(100% - 2rem));
+    padding: 1.25rem;
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 0.75rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+  }
+
+  .agent-action dialog::backdrop {
+    background: rgb(0 0 0 / 55%);
+  }
+
+  .agent-action form {
+    float: inline-end;
+  }
+
+  .agent-action textarea {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.65rem;
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 0.45rem;
+    background: var(--docs-surface);
+    color: var(--sl-color-text);
+    font: var(--sl-text-sm) / 1.5 var(--sl-font-mono);
+  }
+
+  h1 {
+    min-width: 0;
+    margin: 0;
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-h1);
+    font-weight: 500;
+    letter-spacing: -0.018em;
+    line-height: var(--sl-line-height-headings);
+    overflow-wrap: anywhere;
+  }
+
+  @media (min-width: 50rem) {
+    .agent-status {
+      inset-inline: auto 0;
     }
   }
 </style>

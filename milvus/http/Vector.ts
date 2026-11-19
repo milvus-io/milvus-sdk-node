@@ -1,3 +1,4 @@
+import { HTTP_ENTITY_PREFIX, HTTP_READ_OPERATIONS } from './readRoutes';
 import { HttpBaseClient } from '../HttpClient';
 import {
   Constructor,
@@ -36,7 +37,7 @@ import {
 export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
   return class extends Base {
     get vectorPrefix() {
-      return '/vectordb/entities';
+      return HTTP_ENTITY_PREFIX;
     }
 
     // GET get data
@@ -71,7 +72,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
       data: HttpVectorQueryReq,
       options?: FetchOptions
     ): Promise<HttpVectorQueryResponse> {
-      const url = `${this.vectorPrefix}/query`;
+      const url = `${this.vectorPrefix}/${HTTP_READ_OPERATIONS.query.action}`;
       return await this.POST<HttpVectorQueryResponse>(url, data, options);
     }
 
@@ -94,7 +95,7 @@ export function Vector<T extends Constructor<HttpBaseClient>>(Base: T) {
         | HttpVectorSearchAggregationReq,
       options?: FetchOptions
     ): Promise<HttpVectorSearchResponse | HttpVectorSearchAggregationResponse> {
-      const url = `${this.vectorPrefix}/search`;
+      const url = `${this.vectorPrefix}/${HTTP_READ_OPERATIONS.search.action}`;
       if (data.searchAggregation) {
         return this.POST<HttpVectorSearchAggregationResponse>(
           url,

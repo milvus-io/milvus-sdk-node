@@ -1,5 +1,10 @@
 ---
-const { head } = Astro.locals.starlightRoute;
+import '@fontsource-variable/geist/wght.css';
+import { ClientRouter } from 'astro:transitions';
+import '@fontsource-variable/geist-mono/wght.css';
+
+const { head, id } = Astro.locals.starlightRoute;
+const isRest = id === 'rest-api' || id.startsWith('rest-api/');
 ---
 
 {
@@ -7,21 +12,27 @@ const { head } = Astro.locals.starlightRoute;
     <Tag {...attrs} set:html={content} />
   ))
 }
-<script
-  is:inline
-  async
-  src="https://www.googletagmanager.com/gtag/js?id=G-HLMZXDSQYF"></script>
-<script is:inline>
+{
+  isRest ? (
+    <ClientRouter fallback="swap" />
+  ) : (
+    <>
+      <script
+        is:inline
+        async
+        src="https://www.googletagmanager.com/gtag/js?id=G-HLMZXDSQYF"
+      />
+      <script
+        is:inline
+        set:html={`
   window.dataLayer = window.dataLayer || [];
   function gtag() {
     dataLayer.push(arguments);
   }
   gtag('js', new Date());
   gtag('config', 'G-HLMZXDSQYF');
-</script>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-  href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap"
-  rel="stylesheet"
-/>
+`}
+      />
+    </>
+  )
+}
