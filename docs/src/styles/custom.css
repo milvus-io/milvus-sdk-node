@@ -253,6 +253,13 @@ html:has(.rest-explorer) .content-panel + .content-panel {
 .rest-docs table {
   width: 100%;
 }
+.rest-docs th {
+  white-space: nowrap;
+}
+.rest-connection :is(input, select),
+.rest-operation :is(textarea, select) {
+  font-weight: 400;
+}
 .rest-docs :is(td, th) {
   padding: 0.35rem 0.5rem;
 }
