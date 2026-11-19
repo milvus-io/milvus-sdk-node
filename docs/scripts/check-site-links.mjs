@@ -6,6 +6,7 @@ import { parse } from 'parse5';
 export async function checkSiteLinks(out, site) {
   const base = site.pathname;
   const outPath = fileURLToPath(out);
+  const notFound = new URL('404.html', site);
   const legacy = new URL('http-client/', site);
   const guide = new URL('advanced/http-client/', site);
   const outputFiles = await readdir(out, {
@@ -30,6 +31,7 @@ export async function checkSiteLinks(out, site) {
       ids: new Set(),
       links: [],
       canonicals: [],
+      noindex: new Set(),
       title: '',
       description: '',
       refresh: '',
@@ -50,8 +52,16 @@ export async function checkSiteLinks(out, site) {
       if (inHead && node.tagName === 'title')
         page.title = node.childNodes[0]?.value;
       if (inHead && node.tagName === 'meta') {
-        if (attributes.name === 'description')
-          page.description = attributes.content;
+        const name = attributes.name?.toLowerCase();
+        if (
+          (name === 'robots' || name === 'googlebot') &&
+          attributes.content
+            ?.toLowerCase()
+            .split(/[\s,]+/)
+            .some((rule) => rule === 'noindex' || rule === 'none')
+        )
+          page.noindex.add(name);
+        if (name === 'description') page.description = attributes.content;
         if (attributes['http-equiv'] === 'refresh')
           page.refresh = attributes.content;
       }
@@ -63,6 +73,7 @@ export async function checkSiteLinks(out, site) {
     pages.set(url.pathname, { ...page, url });
   }
 
+  if (!pages.has(notFound.pathname)) errors.add('Missing 404.html');
   if (!pages.has(legacy.pathname))
     errors.add(`Missing legacy redirect: ${legacy.pathname}`);
 
@@ -71,7 +82,14 @@ export async function checkSiteLinks(out, site) {
   const indexable = new Set();
   for (const page of pages.values()) {
     const { url, canonicals } = page;
-    if (url.href === legacy.href) {
+    if (url.href !== notFound.href && page.noindex.size)
+      errors.add(`${url.pathname} must allow indexing`);
+    if (url.href === notFound.href) {
+      if (!page.noindex.has('robots') || canonicals.length)
+        errors.add(
+          `${url.pathname} must have robots noindex and omit its canonical URL`
+        );
+    } else if (url.href === legacy.href) {
       if (
         canonicals.length !== 1 ||
         canonicals[0] !== guide.href ||

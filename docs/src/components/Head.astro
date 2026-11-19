@@ -15,6 +15,12 @@ const title =
 
 {
   head.map(({ tag: Tag, attrs, content }) => {
+    if (
+      id === '404' &&
+      ((Tag === 'link' && attrs?.rel === 'canonical') ||
+        (Tag === 'meta' && attrs?.property === 'og:url'))
+    )
+      return null;
     if (title && Tag === 'title') return <title>{title}</title>;
     if (title && Tag === 'meta' && attrs?.property === 'og:title')
       return <meta property="og:title" content={title} />;
