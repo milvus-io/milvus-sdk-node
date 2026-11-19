@@ -680,6 +680,9 @@ html:has(.rest-explorer) main > .content-panel > .sl-container {
 }
 
 @media (min-width: 40rem) {
+  .rest-connection-fields[data-collection-picker='hidden'] {
+    grid-template-columns: 1.5fr 1fr;
+  }
   .rest-connection-fields {
     grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
   }
@@ -695,4 +698,8 @@ html:has(.rest-explorer) main > .content-panel > .sl-container {
     grid-column: 1;
     grid-row: 1;
   }
+}
+
+.rest-connection label[hidden] {
+  display: none;
 }

@@ -25,17 +25,14 @@ let selectionRevision = 0;
 let selectionMessage = '';
 let pageRequests = new AbortController();
 
-const collectionOperations = new Set([
-  'collections/describe',
-  'entities/query',
-  'entities/search',
-]);
+// Only visited operation pages can have drafts. Remember which of them accept a database.
+const collectionOperations = new Map<string, boolean>();
 
-function applyCollection(json: string) {
+function applyCollection(json: string, slug: string) {
   try {
     const body = requestBody(json);
     body.collectionName = selectedCollection;
-    body.dbName = listDatabase;
+    if (collectionOperations.get(slug)) body.dbName = listDatabase;
     return JSON.stringify(body, null, 2);
   } catch {
     // Preserve invalid drafts for the user to correct.
@@ -134,6 +131,17 @@ function initializeExplorer() {
   const operation = panel?.dataset.operation;
   const body = panel?.querySelector<HTMLTextAreaElement>('[data-body]');
 
+  if (
+    operation &&
+    operation !== 'collections/list' &&
+    !collections.closest('label')!.hidden
+  ) {
+    collectionOperations.set(
+      operation,
+      collections.dataset.usesDatabase === 'true'
+    );
+  }
+
   let renderFields = () => {};
   function clearSchema() {
     selectionRevision++;
@@ -165,10 +173,10 @@ function initializeExplorer() {
     if (!selectedCollection) return;
     for (const [slug, draft] of drafts) {
       if (collectionOperations.has(slug))
-        drafts.set(slug, applyCollection(draft));
+        drafts.set(slug, applyCollection(draft, slug));
     }
     if (body && operation && collectionOperations.has(operation)) {
-      body.value = applyCollection(body.value);
+      body.value = applyCollection(body.value, operation);
       drafts.set(operation, body.value);
     }
     selectionMessage = `Selected ${selectedCollection}. Send Describe collection to load its schema.`;
@@ -196,7 +204,7 @@ function initializeExplorer() {
   body.value =
     drafts.get(operation) ??
     (selectedCollection && collectionOperations.has(operation)
-      ? applyCollection(body.value)
+      ? applyCollection(body.value, operation)
       : body.value);
 
   const feedback = panel.querySelector<HTMLElement>('[data-feedback]')!;

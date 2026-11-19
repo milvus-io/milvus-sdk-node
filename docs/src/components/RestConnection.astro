@@ -1,9 +1,20 @@
 ---
 import { restHref } from '../lib/rest-navigation';
+import type { RestOperation } from '../lib/rest-catalog';
+
+const { operation } = Astro.props as { operation: RestOperation };
+const showCollections =
+  operation.slug === 'collections/list' ||
+  (operation.slug !== 'collections/create' &&
+    operation.fields.some((f) => f.name === 'collectionName'));
+const useDatabase = operation.fields.some((f) => f.name === 'dbName');
 ---
 
 <div class="rest-connection" data-pagefind-ignore data-agent-ignore>
-  <div class="rest-connection-fields">
+  <div
+    class="rest-connection-fields"
+    data-collection-picker={showCollections ? 'enabled' : 'hidden'}
+  >
     <label>
       Endpoint
       <input
@@ -23,9 +34,13 @@ import { restHref } from '../lib/rest-navigation';
         autocapitalize="none"
       />
     </label>
-    <label>
+    <label hidden={!showCollections}>
       Collection
-      <select id="rest-collection" disabled>
+      <select
+        id="rest-collection"
+        data-uses-database={String(useDatabase)}
+        disabled
+      >
         <option value="">Run List collections</option>
       </select>
     </label>
@@ -34,10 +49,15 @@ import { restHref } from '../lib/rest-navigation';
     <summary>Connection and CORS help</summary>
     <p>
       Use HTTPS for remote clusters or HTTP on loopback. Requests go directly
-      from your browser to the endpoint. Run <a
-        href={restHref('collections/list')}>List collections</a
-      > to populate the collection selector. When copying an authenticated cURL command,
-      set <code>MILVUS_TOKEN</code> in your shell.
+      from your browser to the endpoint. {
+        showCollections && (
+          <>
+            Run <a href={restHref('collections/list')}>List collections</a> to
+            populate the collection selector.
+          </>
+        )
+      } When copying an authenticated cURL command, set <code>MILVUS_TOKEN</code
+      > in your shell.
     </p>
     <p>
       For cross-origin requests, configure the endpoint to answer OPTIONS and
@@ -45,7 +65,7 @@ import { restHref } from '../lib/rest-navigation';
       token. Try the copied cURL command to troubleshoot outside the browser.
     </p>
   </details>
-  <p role="status" id="rest-selection-status"></p>
+  <p role="status" id="rest-selection-status" hidden={!showCollections}></p>
 </div>
 
 <script>
