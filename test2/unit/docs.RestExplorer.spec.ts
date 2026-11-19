@@ -36,7 +36,7 @@ describe('REST explorer request helpers', () => {
     const json = JSON.stringify({
       filter: "name == '$(printf expanded)'; `printf expanded`",
     });
-    const command = curlCommand(url, json);
+    const command = curlCommand(url, json, true);
     expect(command).toContain('${MILVUS_TOKEN}');
     const output = execFileSync(
       'sh',
@@ -58,6 +58,12 @@ describe('REST explorer request helpers', () => {
       '--data-raw',
       json,
     ]);
+  });
+
+  it('omits the authorization header when there is no token', () => {
+    expect(curlCommand('https://cluster.example.com', '{}', false)).not.toMatch(
+      /Authorization|MILVUS_TOKEN/
+    );
   });
 
   it('accepts objects and rejects malformed or non-object JSON', () => {

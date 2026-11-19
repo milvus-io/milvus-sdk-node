@@ -1,27 +1,42 @@
 <div class="rest-connection">
-  <label>
-    Endpoint
-    <input
-      id="rest-endpoint"
-      type="url"
-      placeholder="https://your-cluster.example.com"
-      autocomplete="off"
-    />
-  </label>
-  <label>
-    Bearer token (optional)
-    <input
-      id="rest-token"
-      type="password"
-      autocomplete="off"
-      spellcheck="false"
-    />
-  </label>
-  <label>
-    Collection from list response
-    <select id="rest-collection" disabled>
-      <option value="">Run List collections to choose a collection</option>
-    </select>
-  </label>
+  <div class="rest-connection-fields">
+    <label>
+      Endpoint
+      <input
+        id="rest-endpoint"
+        type="url"
+        placeholder="https://your-cluster.example.com"
+        autocomplete="off"
+      />
+    </label>
+    <label>
+      Bearer token (optional)
+      <input
+        id="rest-token"
+        type="password"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </label>
+    <label>
+      Collection
+      <select id="rest-collection" disabled>
+        <option value="">Run List collections</option>
+      </select>
+    </label>
+  </div>
+  <details>
+    <summary>Connection and CORS help</summary>
+    <p>
+      Use HTTPS for remote clusters or HTTP on loopback. Requests go directly
+      from your browser to the endpoint. When copying an authenticated cURL
+      command, set <code>MILVUS_TOKEN</code> in your shell.
+    </p>
+    <p>
+      For cross-origin requests, configure the endpoint to answer OPTIONS and
+      allow the docs origin, POST, Content-Type, and Authorization if you use a
+      token. Try the copied cURL command to troubleshoot outside the browser.
+    </p>
+  </details>
   <p role="status" id="rest-selection-status"></p>
 </div>

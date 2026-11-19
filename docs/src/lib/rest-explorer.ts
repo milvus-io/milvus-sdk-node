@@ -49,11 +49,13 @@ function shellQuote(value: string) {
   return "'" + value.replace(/'/g, "'\"'\"'") + "'";
 }
 
-export function curlCommand(url: string, body: string) {
+export function curlCommand(url: string, body: string, authenticated: boolean) {
   return [
     `curl --request POST --url ${shellQuote(url)}`,
     "--header 'Content-Type: application/json'",
-    '--header "Authorization: Bearer ${MILVUS_TOKEN}"',
+    ...(authenticated
+      ? ['--header "Authorization: Bearer ${MILVUS_TOKEN}"']
+      : []),
     `--data-raw ${shellQuote(body)}`,
   ].join(' \\\n  ');
 }

@@ -88,21 +88,6 @@ export const onRequest = defineRouteMiddleware(async (context, next) => {
 
   const currentSlug = normalizeSlug(route.id);
 
-  if (currentSlug === 'rest-api') {
-    route.sidebar = [
-      makeApiReferenceLink(currentSlug, {
-        slug: 'rest-api',
-        label: 'REST explorer',
-      }),
-      makeApiReferenceLink(currentSlug, {
-        slug: 'api-reference/http-client',
-        label: 'HttpClient reference',
-      }),
-    ];
-    route.pagination = { prev: undefined, next: undefined };
-    return;
-  }
-
   if (!isApiReferenceRoute(currentSlug)) {
     return;
   }

@@ -13,7 +13,10 @@ const section = Astro.url.pathname.slice(base.length).split('/')[1];
 ---
 
 <div class="docs-header">
-  <a class="brand" href={siteTitleHref}>Milvus <span>Node SDK</span></a>
+  <a class="brand" href={siteTitleHref}
+    ><img src={base + '/milvus-logo.svg'} alt="Milvus" width="96" height="22" />
+    <span>Node SDK</span></a
+  >
   <nav aria-label="Documentation">
     {
       links.map(([label, href, group]) => (
@@ -60,6 +63,9 @@ const section = Astro.url.pathname.slice(base.length).split('/')[1];
     color: var(--sl-color-text-accent);
   }
   .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     font-size: 1rem;
     font-weight: 700;
     color: var(--sl-color-white);

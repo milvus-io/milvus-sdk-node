@@ -1,46 +1,58 @@
 ---
 import { operationPath, type Operation } from '../lib/rest-explorer';
 
-const { operation, request, response } = Astro.props as {
+const { operation, title, request, response } = Astro.props as {
   operation: Operation;
+  title: string;
   request: Record<string, unknown>;
   response: Record<string, unknown>;
 };
 ---
 
-<p class="rest-route"><code>POST {operationPath(operation)}</code></p>
-<div class="rest-operation" data-operation={operation}>
-  <label>
-    Request JSON
-    <textarea data-body rows="7" spellcheck="false"
-      >{JSON.stringify(request, null, 2)}</textarea
-    >
-  </label>
-  {
-    (operation === 'query' || operation === 'search') && (
-      <div data-schema hidden>
-        <label>
-          {operation === 'query' ? 'Output field' : 'Dense vector field'}
-          <select data-field />
-        </label>
-        <button data-generate type="button">
-          Apply schema field
-        </button>
+<section class="rest-panel" data-operation={operation} aria-label={title}>
+  <p class="rest-route">
+    <strong>POST</strong>
+    <code>{operationPath(operation)}</code>
+  </p>
+  <div class="rest-columns">
+    <div class="rest-operation not-content">
+      <div class="rest-actions">
+        <button data-run type="button">Send request</button>
+        <button data-copy type="button">Copy cURL</button>
       </div>
-    )
-  }
-  <div class="rest-actions">
-    <button data-run type="button">Send request</button>
-    <button data-copy type="button">Copy cURL</button>
+      <label>
+        Request JSON
+        <textarea data-body rows="7" spellcheck="false"
+          >{JSON.stringify(request, null, 2)}</textarea
+        >
+      </label>
+      {
+        (operation === 'query' || operation === 'search') && (
+          <div data-schema hidden>
+            <label>
+              {operation === 'query' ? 'Output field' : 'Dense vector field'}
+              <select data-field />
+            </label>
+            <button data-generate type="button">
+              Apply schema field
+            </button>
+          </div>
+        )
+      }
+      <p role="status" data-feedback hidden></p>
+      <div class="rest-actions rest-response-heading">
+        <p role="status" data-status>Example response</p>
+        <button data-copy-response type="button">Copy response</button>
+      </div>
+      <pre
+        aria-label="Raw response"
+        tabindex="0"
+        data-response>{JSON.stringify(response, null, 2)}</pre>
+      <pre aria-label="cURL command" tabindex="0" data-command hidden></pre>
+    </div>
+    <div class="rest-docs"><slot /></div>
   </div>
-  <p role="status" data-feedback hidden></p>
-  <p role="status" data-status>Example response</p>
-  <pre
-    aria-label="Raw response"
-    tabindex="0"
-    data-response>{JSON.stringify(response, null, 2)}</pre>
-  <pre aria-label="cURL command" tabindex="0" data-command hidden></pre>
-</div>
+</section>
 
 <script>
   import '../lib/rest-browser';

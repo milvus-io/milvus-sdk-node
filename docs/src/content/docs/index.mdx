@@ -1,14 +1,20 @@
 ---
 title: Milvus Node.js SDK
+tableOfContents: false
 ---
+
+import sdk from '../../../../package.json';
+
+<div class="sdk-home">
+<div>
 
 Connect a Node.js application to Milvus or Zilliz Cloud.
 
-```sh
+```sh title="Terminal"
 npm install @zilliz/milvus2-sdk-node
 ```
 
-```js
+```js title="list-collections.mjs"
 import { MilvusClient } from '@zilliz/milvus2-sdk-node';
 
 const client = new MilvusClient({
@@ -25,8 +31,23 @@ try {
 }
 ```
 
-Run the example against a local Milvus instance or set `MILVUS_ADDRESS` and `MILVUS_TOKEN` for your cluster.
+Run `node list-collections.mjs` against local Milvus, or set `MILVUS_ADDRESS` and `MILVUS_TOKEN` for your cluster.
 
-- [Getting started](/milvus-sdk-node/getting-started/getting-started) covers connection, collection creation, and your first search.
-- [SDK reference](/milvus-sdk-node/api-reference) documents TypeScript methods for `MilvusClient` and `HttpClient`.
-- [REST API](/milvus-sdk-node/rest-api) documents four REST operations you can run from your browser.
+</div>
+<aside aria-label="Getting started and compatibility">
+
+## Start building
+
+- [Create a collection](/milvus-sdk-node/getting-started/getting-started#your-first-collection)
+- [Insert data](/milvus-sdk-node/operations/data-operations-insert)
+- [Search vectors](/milvus-sdk-node/operations/data-operations-query)
+- [Explore the REST API](/milvus-sdk-node/rest-api)
+
+## Compatibility
+
+- SDK {sdk.version}
+- Tested with Milvus {sdk.milvusVersion.replace(/^v/, '')}
+- Node.js 18+
+
+</aside>
+</div>

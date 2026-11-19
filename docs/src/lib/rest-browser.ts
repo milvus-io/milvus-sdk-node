@@ -9,6 +9,23 @@ import {
 } from './rest-explorer';
 
 function explorer() {
+  const explorer = document.querySelector<HTMLElement>('.rest-explorer')!;
+  const links = [
+    ...explorer.querySelectorAll<HTMLAnchorElement>('.rest-navigation a'),
+  ];
+
+  function updateNavigation() {
+    const selected =
+      links.find((link) => link.hash === location.hash) ?? links[0];
+    for (const link of links) {
+      if (link === selected) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    }
+  }
+
+  updateNavigation();
+  window.addEventListener('hashchange', updateNavigation);
+
   const endpoint = document.querySelector<HTMLInputElement>('#rest-endpoint')!;
   const token = document.querySelector<HTMLInputElement>('#rest-token')!;
   const collections =
@@ -31,9 +48,7 @@ function explorer() {
   }
 
   function resetSelection() {
-    collections.replaceChildren(
-      new Option('Run List collections to choose a collection', '')
-    );
+    collections.replaceChildren(new Option('Run List collections', ''));
     collections.disabled = true;
     clearSchema();
   }
@@ -82,6 +97,9 @@ function explorer() {
     const output = panel.querySelector<HTMLElement>('[data-response]')!;
     const command = panel.querySelector<HTMLElement>('[data-command]')!;
     const send = panel.querySelector<HTMLButtonElement>('[data-run]')!;
+    const copyResponse = panel.querySelector<HTMLButtonElement>(
+      '[data-copy-response]'
+    )!;
     editors.set(operation, body);
 
     const feedback = panel.querySelector<HTMLElement>('[data-feedback]')!;
@@ -97,7 +115,11 @@ function explorer() {
           endpoint.value.trim() || 'https://your-cluster.example.com',
           operation
         );
-        command.textContent = curlCommand(url, body.value);
+        command.textContent = curlCommand(
+          url,
+          body.value,
+          Boolean(token.value.trim())
+        );
         command.hidden = false;
         try {
           await navigator.clipboard.writeText(command.textContent);
@@ -107,6 +129,16 @@ function explorer() {
         }
       } catch (error) {
         showFeedback(`Input error. ${(error as Error).message}`);
+      }
+    });
+
+    copyResponse.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(output.textContent ?? '');
+        showFeedback('Response copied.');
+      } catch {
+        output.focus();
+        showFeedback('Select and copy the response below.');
       }
     });
 
@@ -201,6 +233,7 @@ function explorer() {
       const signal = AbortSignal.timeout(30_000);
       send.disabled = true;
       output.textContent = '';
+      copyResponse.disabled = true;
       status.textContent = 'Sending live request…';
       if (operation === 'listCollections') resetSelection();
       if (operation === 'describeCollection') clearSchema();
@@ -210,7 +243,8 @@ function explorer() {
           method: 'POST',
           headers,
           body: json,
-          credentials: 'omit',
+          credentials:
+            new URL(url).origin === location.origin ? 'same-origin' : 'omit',
           redirect: 'error',
           cache: 'no-store',
           referrerPolicy: 'no-referrer',
@@ -229,6 +263,7 @@ function explorer() {
         const success = response.ok && code === 0;
         status.textContent = `${success ? 'Live response' : 'Live response error'} · HTTP ${response.status} · Milvus code ${typeof code === 'number' ? code : 'unavailable'} · ${elapsed} ms`;
         output.textContent = raw;
+        copyResponse.disabled = raw.length === 0;
 
         if (!success || revision !== connectionRevision) return;
         if (operation === 'listCollections' && Array.isArray(data)) {
@@ -266,6 +301,7 @@ function explorer() {
       }
     });
   }
+  explorer.dataset.ready = '';
 }
 
 explorer();
