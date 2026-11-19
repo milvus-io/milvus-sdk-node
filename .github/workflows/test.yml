@@ -32,7 +32,6 @@ jobs:
       MILVUS_ADDRESS: '127.0.0.1:19530'
       MILVUS_TELEMETRY_API: 'http://127.0.0.1:9091/api/v1/_telemetry'
       MILVUS_TELEMETRY_E2E: 'true'
-      MILVUS_OPENAI_ENABLED: '0'
       MILVUS_TEST_SEED: ${{ matrix.seed }}
       MILVUS_TEST_WORKERS: '4'
       MILVUS_TEST_GRPC_PORT: '19530'
@@ -58,7 +57,21 @@ jobs:
         run: node -e "require('fs').appendFileSync(process.env.GITHUB_ENV, 'MILVUS_VERSION=' + require('./package.json').milvusVersion + '\n')"
 
       - name: Start Milvus and MinIO and wait for health
-        run: npm run test:env:up
+        env:
+          MILVUS_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_TESTS_REQUIRED: ${{ github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        shell: bash
+        run: |
+          if [ -n "${MILVUS_OPENAI_API_KEY}" ]; then
+            echo "MILVUS_OPENAI_ENABLED=1" >> "$GITHUB_ENV"
+          elif [ "${OPENAI_TESTS_REQUIRED}" = "true" ]; then
+            echo "::error::OPENAI_API_KEY is required for text embedding integration tests."
+            exit 1
+          else
+            echo "MILVUS_OPENAI_ENABLED=0" >> "$GITHUB_ENV"
+            echo "::notice::OpenAI text embedding tests are skipped because secrets are unavailable to this fork or Dependabot PR."
+          fi
+          npm run test:env:up
 
       - name: Run SDK checks, full suite, package lifecycle and coverage gate
         shell: bash
