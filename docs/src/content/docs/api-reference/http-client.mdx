@@ -1,6 +1,6 @@
 ---
 title: 'HttpClient'
-description: "Look up the Node.js HttpClient constructor, camelCase request fields, HttpError, and TypeScript methods backed by the Milvus REST API."
+description: 'Look up the Node.js HttpClient constructor, camelCase request fields, HttpError, and TypeScript methods backed by the Milvus REST API.'
 ---
 
 `HttpClient` is the REST client exported by `@zilliz/milvus2-sdk-node`. Use it when an environment prefers HTTP over gRPC, such as serverless platforms, HTTP-only runtimes, or proxy-restricted deployments.
@@ -39,7 +39,7 @@ type HttpClientConfig =
     };
 ```
 
-`endpoint` is combined with the SDK HTTP API version. `baseURL` overrides that derived URL when provided.
+`endpoint` is the cluster origin, such as `https://your-cluster.example.com`. The SDK appends `/v2` automatically. If you set `baseURL` directly, include the full versioned base URL, such as `https://your-cluster.example.com/v2`. A base URL without `/v2` can produce 404 responses.
 
 Example:
 
@@ -47,7 +47,7 @@ Example:
 import { HttpClient, HttpError } from '@zilliz/milvus2-sdk-node';
 
 const client = new HttpClient({
-  baseURL: 'https://your-cluster.example.com/v2',
+  endpoint: 'https://your-cluster.example.com',
   token: process.env.MILVUS_TOKEN,
   database: 'default',
   timeout: 30_000,
@@ -515,13 +515,43 @@ For Zilliz Cloud import workflows, include `projectId` and `regionId` when requi
 
 ## Collection Schema Changes
 
-Use `addCollectionStructField()` to add a nullable StructArray. Use `dropCollectionField()` with either `fieldName` or `fieldId`. `addFunctionField()` adds a function, its output field, and the bound index together. `dropFunctionField()` removes them together, and `alterCollectionFunction()` updates the settings supported by the server for an existing function.
+These methods were verified on Milvus 3.0.6.
 
-`truncateCollection()` removes all rows while preserving the schema and indexes. These REST APIs were verified on Milvus 3.0.6.
+### addCollectionStructField
+
+Add a nullable StructArray field using `schema`.
+
+### dropCollectionField
+
+Remove a field by `fieldName` or `fieldId`.
+
+### addFunctionField
+
+Add a function, its output field, and the bound index together.
+
+### dropFunctionField
+
+Remove a function together with its output field and index.
+
+### alterCollectionFunction
+
+Update supported settings for an existing collection function.
+
+### truncateCollection
+
+Remove all rows while keeping the schema and indexes.
 
 ## External Collection Refresh
 
-Use `refreshExternalCollection()` to submit a refresh, `getRefreshExternalCollectionProgress()` to check its state, and `listRefreshExternalCollectionJobs()` to list jobs for a collection or database. This workflow was verified with Milvus 3.0.6.
+These methods were verified on Milvus 3.0.6.
+
+### refreshExternalCollection
+
+Submit a refresh for an external collection.
+
+### getRefreshExternalCollectionProgress
+
+Poll a refresh job. Pass the decimal job ID as returned by the SDK.
 
 ```typescript
 const {
@@ -532,11 +562,53 @@ const {
 const { data } = await client.getRefreshExternalCollectionProgress({ jobId });
 ```
 
-Return the decimal job ID as-is when polling to preserve its full precision.
+### listRefreshExternalCollectionJobs
+
+List refresh jobs for a collection or database.
 
 ## Snapshot APIs
 
-The REST snapshot lifecycle supports create, list, describe, drop, pin, and unpin. A snapshot restore returns a job ID for `getRestoreSnapshotState()` and `listRestoreSnapshotJobs()`. For portability, use `exportSnapshot()`, wait for `getExportSnapshotState()` to report completion, then pass the returned `snapshotMetadataURI` to `restoreExternalSnapshot()`.
+The SDK preserves snapshot job IDs, pin IDs, and int64 metadata as decimal strings. These methods were verified on Milvus 3.0.6.
+
+### createSnapshot
+
+Create a named snapshot of a collection.
+
+### listSnapshots
+
+List snapshot names and summary metadata for a collection.
+
+### describeSnapshot
+
+Read a named snapshot’s metadata and storage location.
+
+### dropSnapshot
+
+Delete a named collection snapshot.
+
+### pinSnapshotData
+
+Protect snapshot data for the requested lifetime and return a pin ID.
+
+### unpinSnapshotData
+
+Release protection using its pin ID.
+
+### restoreSnapshot
+
+Restore into a new collection. Omitted source and target database names default to the configured database.
+
+### getRestoreSnapshotState
+
+Get restore progress by job ID.
+
+### listRestoreSnapshotJobs
+
+List restore jobs for a collection or database.
+
+### exportSnapshot
+
+Copy a snapshot to an object storage destination and return a job ID.
 
 ```typescript
 const {
@@ -549,13 +621,41 @@ const {
 const { data } = await client.getExportSnapshotState({ jobId });
 ```
 
-Snapshot job IDs, pin IDs, and int64 metadata are decimal strings so they can be passed to later requests without losing precision. Snapshot restore defaults both source and target databases to the configured database. This workflow was verified with Milvus 3.0.6.
+### getExportSnapshotState
+
+Check export progress and retrieve `snapshotMetadataURI` when complete.
+
+### restoreExternalSnapshot
+
+Restore a portable snapshot using the exported `snapshotMetadataURI`.
 
 ## Resource Group APIs
 
-`createResourceGroup()`, `describeResourceGroup()`, `listResourceGroups()`, and `dropResourceGroup()` manage resource groups over REST. Use `updateResourceGroups({ resource_groups })` to update group requests, limits, transfer preferences, and node labels. `transferReplica()` accepts `sourceRgName`, `targetRgName`, `collectionName`, and `replicaNum`.
+These methods were verified on Milvus 3.0.6.
 
-Describe returns the server's `resource_group` object. Query node IDs in this response are decimal strings. These methods were verified on Milvus 3.0.6.
+### createResourceGroup
+
+Create a resource group with the requested node allocation.
+
+### describeResourceGroup
+
+Read the top-level `resource_group` object. The SDK returns query node IDs as decimal strings.
+
+### listResourceGroups
+
+List resource group names.
+
+### dropResourceGroup
+
+Drop a resource group.
+
+### updateResourceGroups
+
+Pass `{ resource_groups }` to update requests, limits, transfer preferences, and node labels.
+
+### transferReplica
+
+Transfer collection replicas with `sourceRgName`, `targetRgName`, `collectionName`, and `replicaNum`.
 
 ## User and Role APIs
 
@@ -654,21 +754,65 @@ await client.grantPrivilegeToRole({
 });
 ```
 
-Use `grantPrivilegeV2({ roleName, dbName, collectionName, privilege })` and `revokePrivilegeV2()` for v2 grants. The `privilege` argument accepts a single privilege or a privilege group name. Milvus requires an authenticated user for these v2 grants. Pass `dbName` to `describeRole()` to describe grants for that database. `createRole()` accepts an optional description, which `describeRole()` returns alongside grants.
+### grantPrivilegeV2
 
-Use `createPrivilegeGroup()`, `addPrivilegesToGroup()`, `removePrivilegesFromGroup()`, `listPrivilegeGroups()`, and `dropPrivilegeGroup()` to manage privilege groups. Group mutations take `privilegeGroupName`; adding or removing privileges also takes a `privileges` array. `listPrivilegeGroups()` returns each group's privilege names as a comma-separated string, matching the server response. These methods were verified on Milvus 3.0.6.
+Grant a privilege or privilege group by `roleName`, `dbName`, `collectionName`, and `privilege`. Milvus requires authentication for v2 grants.
+
+### revokePrivilegeV2
+
+Revoke a v2 grant using the same scope and privilege fields.
+
+### createPrivilegeGroup
+
+Create a group by `privilegeGroupName`.
+
+### addPrivilegesToGroup
+
+Pass `privilegeGroupName` and a `privileges` array to add permissions.
+
+### removePrivilegesFromGroup
+
+Pass `privilegeGroupName` and a `privileges` array to remove permissions.
+
+### listPrivilegeGroups
+
+List privilege groups. The server returns each group's privileges as a comma-separated string.
+
+### dropPrivilegeGroup
+
+Drop a group by `privilegeGroupName`.
 
 ## Analyzer and File Resource APIs
 
-Use `runAnalyzer({ text, analyzerParams })` to preview tokens for an array of strings. Pass `collectionName` and `fieldName` to use a field's analyzer. Set `withDetail` for token offsets and positions, or `withHash` for token hashes.
+These methods were verified on Milvus 3.0.6.
 
-Use `addFileResource({ name, path })` to register a path in the server's storage, `listFileResources()` to list registrations, and `removeFileResource({ name })` to remove one. File resource IDs are returned as decimal strings. These methods were verified on Milvus 3.0.6.
+### runAnalyzer
+
+Use `{ text, analyzerParams }` to preview tokens for strings, or pass `collectionName` and `fieldName` to reuse a field’s analyzer. Set `withDetail` for offsets and positions or `withHash` for token hashes.
+
+### addFileResource
+
+Register `{ name, path }` for a file in the server’s storage.
+
+### listFileResources
+
+List file resource registrations. File resource IDs are returned as decimal strings.
+
+### removeFileResource
+
+Remove a registration by `name`.
 
 ## Diagnostics APIs
 
-Use `getSegmentsInfo({ collectionID, segmentIDs })` for segment state, row counts, and binlog IDs. Pass large IDs as decimal strings. The response returns int64 IDs and row counts as decimal strings to preserve their precision.
+These methods were verified on Milvus 3.0.6.
 
-Use `getQuotaMetrics()` to inspect quota center metrics. The response's `data` is the server's JSON text. These methods were verified on Milvus 3.0.6.
+### getSegmentsInfo
+
+Pass `collectionID`, `segmentIDs`, or both to inspect segment state, row counts, and binlog IDs. Use decimal strings for large IDs. The SDK returns IDs and row counts as decimal strings.
+
+### getQuotaMetrics
+
+Inspect quota center metrics. The response’s `data` contains JSON text.
 
 ## Errors
 
@@ -683,6 +827,8 @@ try {
   }
 }
 ```
+
+Milvus 3.0.6 returns a top-level `resource_group` object on successful `describeResourceGroup()` calls. Handle that response shape directly.
 
 ## Related
 

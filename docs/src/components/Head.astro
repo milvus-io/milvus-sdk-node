@@ -2,15 +2,107 @@
 import '@fontsource-variable/geist/wght.css';
 import { ClientRouter } from 'astro:transitions';
 import '@fontsource-variable/geist-mono/wght.css';
+import sdk from '../../../package.json';
+import { pageBreadcrumbs } from '../lib/breadcrumbs';
+import { troubleshootingFaq } from '../lib/troubleshooting-faq';
 
-const { head, id, entry } = Astro.locals.starlightRoute;
+const route = Astro.locals.starlightRoute;
+const { head, id, entry, lastUpdated, siteTitle } = route;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const { items, current, isHome } = pageBreadcrumbs(
+  route,
+  base,
+  Astro.url.pathname
+);
 const isRestOperation = id.startsWith('rest-api/');
 const title =
-  Astro.url.pathname === import.meta.env.BASE_URL || id === 'rest-api'
+  isHome || id === 'rest-api'
     ? entry.data.title
     : isRestOperation
       ? `${entry.data.title} – Milvus REST API`
       : undefined;
+const canonical = head.find(
+  ({ tag, attrs }) => tag === 'link' && attrs?.rel === 'canonical'
+)?.attrs?.href;
+const site = Astro.site;
+const indexable = id !== '404' && typeof canonical === 'string' && site;
+const description = entry.data.description;
+const homeUrl = site && new URL(base + '/', site).href;
+const context = 'https://schema.org';
+const organization = {
+  '@type': 'Organization',
+  name: 'Milvus',
+  url: 'https://milvus.io/',
+};
+const imageAlt = 'Milvus Node.js SDK documentation';
+const image = site && new URL(base + '/og-image.png', site).href;
+const schemas = [];
+
+if (indexable && isHome) {
+  schemas.push(
+    {
+      '@context': context,
+      '@type': 'WebSite',
+      name: siteTitle,
+      url: homeUrl,
+      publisher: organization,
+    },
+    {
+      '@context': context,
+      '@type': 'SoftwareSourceCode',
+      name: sdk.name,
+      version: sdk.version,
+      programmingLanguage: ['TypeScript', 'JavaScript'],
+      runtimePlatform: 'Node.js 18+',
+      license: 'https://www.apache.org/licenses/LICENSE-2.0',
+      codeRepository: 'https://github.com/milvus-io/milvus-sdk-node',
+      url: canonical,
+      dateModified: lastUpdated?.toISOString(),
+      author: organization,
+      maintainer: organization,
+      description: `Official Node.js and TypeScript SDK (${sdk.name} v${sdk.version}) for Milvus 2.x, Milvus 3.0+, and Zilliz Cloud vector databases, providing MilvusClient (gRPC) and HttpClient (REST v2).`,
+    }
+  );
+} else if (indexable) {
+  schemas.push(
+    {
+      '@context': context,
+      '@type': 'TechArticle',
+      headline: entry.data.title,
+      description,
+      url: canonical,
+      dateModified: lastUpdated?.toISOString(),
+      author: organization,
+      publisher: organization,
+      isPartOf: { '@type': 'WebSite', name: siteTitle, url: homeUrl },
+    },
+    {
+      '@context': context,
+      '@type': 'BreadcrumbList',
+      itemListElement: [...items, current]
+        .filter(({ href }) => href)
+        .map(({ label, href }, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: label,
+          item: new URL(href!, canonical).href,
+        })),
+    }
+  );
+
+  if (id === 'reference/troubleshooting') {
+    schemas.push({
+      '@context': context,
+      '@type': 'FAQPage',
+      url: canonical,
+      mainEntity: troubleshootingFaq.map(({ question, answer }) => ({
+        '@type': 'Question',
+        name: question,
+        acceptedAnswer: { '@type': 'Answer', text: answer },
+      })),
+    });
+  }
+}
 ---
 
 {
@@ -21,11 +113,47 @@ const title =
         (Tag === 'meta' && attrs?.property === 'og:url'))
     )
       return null;
+    if (isHome && Tag === 'meta' && attrs?.property === 'og:type')
+      return <meta property="og:type" content="website" />;
     if (title && Tag === 'title') return <title>{title}</title>;
     if (title && Tag === 'meta' && attrs?.property === 'og:title')
       return <meta property="og:title" content={title} />;
     return <Tag {...attrs} set:html={content} />;
   })
+}
+{
+  indexable && (
+    <>
+      <link
+        rel="alternate"
+        type="text/markdown"
+        href={canonical + 'index.md'}
+        title="Markdown"
+      />
+      <link
+        rel="help"
+        type="text/plain"
+        href={new URL(base + '/llms.txt', site).href}
+        title="LLMs.txt"
+      />
+      <meta
+        name="robots"
+        content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+      />
+      <meta property="og:image" content={image} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content={imageAlt} />
+      <meta name="twitter:image" content={image} />
+      {schemas.map((schema) => (
+        <script
+          is:inline
+          type="application/ld+json"
+          set:html={JSON.stringify(schema).replace(/</g, '\\u003c')}
+        />
+      ))}
+    </>
+  )
 }
 {(id === 'rest-api' || isRestOperation) && <ClientRouter fallback="swap" />}
 <script is:inline>

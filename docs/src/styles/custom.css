@@ -466,7 +466,8 @@ html:has(.rest-explorer) main > .content-panel > .sl-container {
   }
 }
 
-.rest-explorer:not([data-ready]) button {
+.rest-explorer:not([data-ready]) button,
+.rest-operation [hidden] {
   display: none;
 }
 
@@ -585,7 +586,8 @@ html:has(.rest-explorer) main > .content-panel > .sl-container {
   overflow-wrap: anywhere;
 }
 
-.rest-connection details {
+.rest-connection details,
+.rest-operation [data-curl-example] {
   margin-top: 0.55rem;
   padding: 0;
   border: 0;
@@ -593,19 +595,22 @@ html:has(.rest-explorer) main > .content-panel > .sl-container {
   font-size: var(--sl-text-xs);
 }
 
-.rest-connection details summary {
+.rest-connection details summary,
+.rest-operation [data-curl-example] > summary {
   width: fit-content;
   margin: 0;
   padding: 0;
   color: var(--sl-color-gray-3);
   font-weight: 500;
+  cursor: pointer;
 }
 
 .rest-connection summary::before {
   margin-inline: -0.2rem 0.15rem;
 }
 
-.rest-connection details[open] > summary {
+.rest-connection details[open] > summary,
+.rest-operation [data-curl-example][open] > summary {
   margin-bottom: 0.4rem;
 }
 

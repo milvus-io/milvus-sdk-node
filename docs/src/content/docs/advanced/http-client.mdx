@@ -1,15 +1,19 @@
 ---
 title: 'Use the HttpClient for Milvus REST Requests'
-description: "Choose the REST-based HttpClient for HTTP-only and serverless runtimes. Connect to Milvus, configure timeouts, and handle HTTP errors."
+description: 'Choose the REST-based HttpClient for HTTP-only and serverless runtimes. Connect to Milvus, configure timeouts, and handle HTTP errors.'
 ---
+
+Use `HttpClient` to call Milvus REST v2 from runtimes with Fetch support, including HTTP-only edge and serverless platforms. Choose `MilvusClient` when your runtime supports gRPC and you need the SDK's streaming or gRPC administration APIs.
 
 ## HttpClient vs MilvusClient
 
-`HttpClient` uses the Milvus REST API and camelCase request fields. `MilvusClient` uses gRPC and snake_case request fields.
-
-## When to Use HTTP Client
-
-Use `HttpClient` in runtimes with Fetch support or on networks that require HTTP access.
+| Decision                           | MilvusClient (gRPC)                                                                                 | HttpClient (REST)                                                                        |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Protocol                           | gRPC over HTTP/2                                                                                    | Milvus REST v2 over HTTP with JSON                                                       |
+| Request field casing               | snake_case, such as `collection_name`                                                               | camelCase, such as `collectionName`                                                      |
+| Serverless and edge support        | Use in Node.js runtimes that support gRPC connections                                               | Use in Fetch-capable runtimes, including HTTP-only serverless and edge environments      |
+| Streaming and gRPC-only admin RPCs | Supports replication and WAL streams, plus proxy and telemetry administration                       | Supports REST management operations and returns JSON responses                           |
+| Response and error handling        | Inspect `error_code` on a status or `status.error_code` on a result. Transport failures can reject. | Inspect `code` where the REST response provides it. Non-2xx responses throw `HttpError`. |
 
 ## Creating HTTP Client
 

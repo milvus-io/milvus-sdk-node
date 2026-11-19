@@ -6,6 +6,7 @@ export type RestOperation = {
   group: string;
   title: string;
   path: string;
+  route: RestRoute;
   description: string;
   fields: {
     name: string;
@@ -14,11 +15,11 @@ export type RestOperation = {
     description: string;
   }[];
   request: Record<string, unknown>;
-  response?: Record<string, unknown>;
+  response: Record<string, unknown>;
 };
 
-type Route = keyof typeof bindings.routes;
-type Entry = [Route, string, string];
+export type RestRoute = keyof typeof bindings.routes;
+type Entry = [RestRoute, string, string];
 type Group = {
   title: string;
   slug: string;
@@ -709,6 +710,7 @@ export const restOperations: RestOperation[] = groups.flatMap((group) =>
       group: group.title,
       title,
       path: '/v2/vectordb' + route,
+      route,
       description,
       fields,
       request,

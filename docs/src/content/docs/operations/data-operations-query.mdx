@@ -1,9 +1,19 @@
 ---
 title: 'Query Entities and Search Vectors'
-description: "Query by scalar filter or primary key and run vector similarity searches in Milvus using Node.js."
+description: 'Query by scalar filter or primary key and run vector similarity searches in Milvus using Node.js.'
 ---
 
-This guide covers querying and searching data in Milvus collections.
+Use `get` to fetch known primary keys, `query` to match scalar filters, `search` to rank by vector similarity, and `hybridSearch` to combine similarity searches. Use an iterator when you need results in batches. Load the collection before reading it.
+
+| Method                             | Use it to                                             | Main input                                        |
+| ---------------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| `get`                              | Fetch entities by primary key                         | `ids`                                             |
+| `query`                            | Read rows matching a scalar expression                | `filter`, or `limit` for an unfiltered read       |
+| `search`                           | Return the nearest vector matches                     | Query vectors in `data`, optional scalar `filter` |
+| `hybridSearch`                     | Fuse multiple ANN searches and rerank the candidates  | Sub-searches in `data` and a `rerank` strategy    |
+| `queryIterator` / `searchIterator` | Read a large scalar query or vector search in batches | The query or search inputs and `batchSize`        |
+
+Use `filter` for scalar expressions in `query`, `search`, and iterators. Those APIs also accept `expr` as an alias.
 
 ## Query Operations
 
@@ -16,7 +26,7 @@ Query entities with a filter expression:
 ```javascript
 const results = await client.query({
   collection_name: 'my_collection',
-  expr: 'age > 25',
+  filter: 'age > 25',
   output_fields: ['id', 'vector', 'text'],
 });
 ```
@@ -38,7 +48,7 @@ const results = await client.query({
 ```javascript
 const results = await client.query({
   collection_name: 'my_collection',
-  expr: 'age > 25',
+  filter: 'age > 25',
   output_fields: ['id', 'text', 'price'],
   limit: 10,
   offset: 0,
@@ -51,14 +61,14 @@ const results = await client.query({
 ```javascript
 await client.query({
   collection_name: 'my_collection',
-  expr: 'age > 25',
+  filter: 'age > 25',
   output_fields: ['id', 'price', 'rating'],
   order_by_fields: 'price:asc,rating:desc',
 });
 
 await client.query({
   collection_name: 'my_collection',
-  expr: 'age > 25',
+  filter: 'age > 25',
   output_fields: ['id', 'price', 'rating'],
   order_by: ['price:asc', { field: 'rating', order: 'desc' }], // alias
 });
@@ -69,7 +79,7 @@ await client.query({
 ```javascript
 const results = await client.query({
   collection_name: 'my_collection',
-  expr: 'age > 25',
+  filter: 'age > 25',
   partition_names: ['partition_1', 'partition_2'],
   output_fields: ['id', 'text'],
 });
@@ -82,16 +92,13 @@ Iterate through large result sets:
 ```javascript
 const iterator = await client.queryIterator({
   collection_name: 'my_collection',
-  expr: 'age > 25',
+  filter: 'age > 25',
   output_fields: ['id', 'text'],
   batchSize: 100,
 });
 
-while (true) {
-  const batch = await iterator.next();
-  if (batch.done) break;
-
-  console.log('Batch:', batch.value);
+for await (const batch of iterator) {
+  console.log('Batch:', batch);
 }
 ```
 
@@ -114,7 +121,7 @@ Count entities matching a filter:
 ```javascript
 const result = await client.count({
   collection_name: 'my_collection',
-  expr: 'age > 25',
+  filter: 'age > 25',
 });
 
 console.log('Count:', result.data);
@@ -250,7 +257,7 @@ Combine vector search with scalar filters:
 const results = await client.search({
   collection_name: 'my_collection',
   data: [[0.1, 0.2, 0.3, 0.4]],
-  expr: 'age > 25 AND category == "tech"',
+  filter: 'age > 25 AND category == "tech"',
   limit: 10,
   output_fields: ['id', 'text', 'age'],
 });
@@ -320,16 +327,13 @@ Iterate through large search results:
 const iterator = await client.searchIterator({
   collection_name: 'my_collection',
   data: [[0.1, 0.2, 0.3, 0.4]],
-  expr: 'age > 25',
+  filter: 'age > 25',
   limit: 1000,
   batchSize: 100,
 });
 
-while (true) {
-  const batch = await iterator.next();
-  if (batch.done) break;
-
-  console.log('Batch:', batch.value);
+for await (const batch of iterator) {
+  console.log('Batch:', batch);
 }
 ```
 
@@ -580,7 +584,7 @@ await client.loadCollectionSync({
 // Query
 const queryResults = await client.query({
   collection_name: 'my_collection',
-  expr: 'age > 25',
+  filter: 'age > 25',
   output_fields: ['id', 'text', 'age'],
   limit: 10,
 });
@@ -591,7 +595,7 @@ console.log('Query results:', queryResults.data);
 const searchResults = await client.search({
   collection_name: 'my_collection',
   data: [Array.from({ length: 128 }, () => Math.random())],
-  expr: 'age > 25',
+  filter: 'age > 25',
   limit: 10,
   output_fields: ['id', 'text'],
   params: {

@@ -1,6 +1,6 @@
 ---
 title: 'Deploying to Vercel'
-description: "Connect a Vercel serverless function to Milvus using the Node.js HttpClient and configure the deployment endpoint and credentials."
+description: 'Connect a Vercel serverless function to Milvus using the Node.js HttpClient and configure the deployment endpoint and credentials.'
 ---
 
 This guide covers deploying the Milvus Node.js SDK to Vercel serverless functions using the HTTP client.
@@ -44,7 +44,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
       timeout: 10000, // Vercel Hobby: 10s, Pro: 60s
     });
@@ -137,7 +137,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
       timeout: 10000,
     });
@@ -191,7 +191,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
       timeout: 10000,
     });
@@ -232,7 +232,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
       timeout: 10000,
     });
@@ -271,7 +271,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
       timeout: 10000,
     });

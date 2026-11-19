@@ -8,9 +8,9 @@ Official Node.js SDK for [Milvus](https://github.com/milvus-io/milvus) vector da
 [![downloads](https://img.shields.io/npm/dw/@zilliz/milvus2-sdk-node)](https://www.npmjs.com/package/@zilliz/milvus2-sdk-node)
 [![codecov](https://codecov.io/gh/milvus-io/milvus-sdk-node/branch/main/graph/badge.svg?token=Zu5FwWstwI)](https://codecov.io/gh/milvus-io/milvus-sdk-node)
 
-Documentation: [Guides & API reference](https://milvus-io.github.io/milvus-sdk-node/) · [3.0.5 release notes](https://milvus-io.github.io/milvus-sdk-node/reference/release-notes/)
+Documentation: [Guides & API reference](https://milvus-io.github.io/milvus-sdk-node/) · [3.0.9 release notes](https://milvus-io.github.io/milvus-sdk-node/reference/release-notes/) · [llms.txt](https://milvus-io.github.io/milvus-sdk-node/llms.txt) · [llms-full.txt](https://milvus-io.github.io/milvus-sdk-node/llms-full.txt)
 
-The latest documented release is **3.0.5**. New features include Bloom/Roaring membership helpers, client telemetry (enabled by default), and six additional index enum values. SDK 3.0.4 also added Text fields and asynchronous function-field backfill.
+SDK **3.0.9** is tested with Milvus **3.0.6**. Changes since 3.0.5 include StructArray nesting and path-level partial upserts, function chains and search aggregation, portable snapshots, replication and WAL streams, new gRPC administration APIs, and expanded Milvus REST v2 coverage in `HttpClient`.
 
 ## Installation
 
@@ -404,18 +404,17 @@ for await (const batch of iterator) {
 Multi-vector search combining results from multiple vector fields with reranking.
 
 ```typescript
+import { RRFRanker } from '@zilliz/milvus2-sdk-node';
+
 const results = await client.hybridSearch({
-  collection_name: string;
-  rerank: WeightedReranker | RRFReranker;  // Reranking strategy
-  requests: Array<{
-    data: number[][];
-    anns_field: string;
-    params?: Record<string, any>;
-    limit?: number;
-    filter?: string;
-  }>;
-  limit: number;
-  output_fields?: string[];
+  collection_name: 'documents',
+  data: [
+    { data: [denseQueryVector], anns_field: 'dense_vector', params: { ef: 64 } },
+    { data: [sparseQueryVector], anns_field: 'sparse_vector' },
+  ],
+  rerank: RRFRanker(60),
+  limit: 10,
+  output_fields: ['text'],
 });
 ```
 
@@ -604,10 +603,13 @@ const batchFiles = await writer.close();
 
 ```typescript
 // Trigger bulk import (files must be on Milvus-accessible storage)
-await client.bulkInsert({ collection_name, files: ['data.json'] });
+const importRes = await client.bulkInsert({
+  collection_name,
+  files: ['data.json'],
+});
 
 // Check import status
-await client.getImportState({ taskId });
+await client.getImportState({ task: importRes.tasks[0] });
 await client.listImportTasks({ collection_name });
 ```
 
@@ -772,7 +774,7 @@ metadata["nested"]["field"] > 10
 await client.query({
   collection_name: 'test',
   filter: 'age > {min_age}',
-  filter_params: { min_age: 18 },
+  exprValues: { min_age: 18 },
 });
 ```
 
@@ -780,25 +782,25 @@ await client.query({
 
 ## HTTP Client
 
-For environments where gRPC is not available (Cloudflare Workers, Vercel Edge, AWS Lambda).
+Use `HttpClient` for Milvus REST v2 in HTTP-only environments. Request fields use camelCase. Set `endpoint` to the cluster origin and the SDK appends `/v2`. A custom `baseURL` must include `/v2`.
 
 ```typescript
 import { HttpClient } from '@zilliz/milvus2-sdk-node';
 
 const client = new HttpClient({
-  endpoint: 'localhost:19530',    // or Zilliz Cloud endpoint
-  username: 'root',               // optional
-  password: 'milvus',             // optional
-  token: 'your-api-key',          // optional (for Zilliz Cloud)
-  database: 'default',            // optional
-  timeout: 60000,                 // optional, ms
+  endpoint: 'http://localhost:19530', // or your Zilliz Cloud HTTPS endpoint
+  token: process.env.MILVUS_TOKEN,
+  database: 'default',
+  timeout: 60_000,
 });
 
-// Same API surface as MilvusClient for data operations
-await client.createCollection({ ... });
-await client.insert({ ... });
-await client.search({ ... });
-await client.query({ ... });
+const { code, data } = await client.query({
+  collectionName: 'books',
+  filter: 'year >= {minYear}',
+  exprParams: { minYear: 2024 },
+  limit: 10,
+});
+if (code === 0) console.log(data);
 ```
 
 ---

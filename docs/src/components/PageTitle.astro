@@ -1,56 +1,32 @@
 ---
 import { Icon } from '@astrojs/starlight/components';
+import { pageBreadcrumbs } from '../lib/breadcrumbs';
 import sdk from '../../../package.json';
 
-const { id, entry, sidebar, siteTitleHref } = Astro.locals.starlightRoute;
+const route = Astro.locals.starlightRoute;
+const { id, entry } = route;
 const { title, description } = entry.data;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const section = id.split('/')[0];
-const isHome = Astro.url.pathname.replace(/\/$/, '') === base;
-const sectionGroup = sidebar.find(
-  (item) =>
-    item.type === 'group' &&
-    item.entries.some((link) => link.type === 'link' && link.isCurrent)
-);
-const breadcrumbs: Array<{ label: string; href?: string }> =
-  section === 'api-reference'
-    ? id === 'api-reference' || id === 'api-reference/index'
-      ? []
-      : [{ label: 'SDK Reference', href: base + '/api-reference/' }]
-    : isHome || section === 'rest-api'
-      ? []
-      : [
-          { label: 'Guides', href: base + '/getting-started/getting-started/' },
-          ...(sectionGroup && sectionGroup.label !== title
-            ? [{ label: sectionGroup.label }]
-            : []),
-        ];
-if (id.startsWith('rest-api/')) {
-  breadcrumbs.push({ label: 'REST API', href: base + '/rest-api/' });
-  if (sectionGroup)
-    breadcrumbs.push({
-      label: sectionGroup.label,
-      href: `${base}/rest-api/#${id.split('/')[1]}`,
-    });
-}
-const currentLabel = isHome ? 'Quickstart' : title;
+const { items, current } = pageBreadcrumbs(route, base, Astro.url.pathname);
+const canonical = route.head.find(
+  ({ tag, attrs }) => tag === 'link' && attrs?.rel === 'canonical'
+)?.attrs?.href;
 const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus ${sdk.milvusVersion.replace(/^v/, '')}`;
 ---
 
 <nav class="breadcrumbs" aria-label="Breadcrumb">
   <ol>
-    <li><a href={siteTitleHref}>Node SDK</a></li>
     {
-      breadcrumbs.map(({ label, href }) => (
+      items.map(({ label, href }, index) => (
         <li>
-          <Icon name="right-caret" size="0.8rem" />
+          {index > 0 && <Icon name="right-caret" size="0.8rem" />}
           {href ? <a href={href}>{label}</a> : <span>{label}</span>}
         </li>
       ))
     }
     <li aria-current="page">
       <Icon name="right-caret" size="0.8rem" />
-      <span>{currentLabel}</span>
+      <span>{current.label}</span>
     </li>
   </ol>
 </nav>
@@ -65,6 +41,17 @@ const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus
       <Icon name="document" size="0.95rem" />
       Copy for agent
     </button>
+    {
+      id !== '404' && canonical && (
+        <a
+          class="markdown-link"
+          href={canonical + 'index.md'}
+          data-astro-reload
+        >
+          Markdown
+        </a>
+      )
+    }
     <span class="agent-status" role="status"></span>
     <dialog aria-labelledby="agent-copy-title">
       <form method="dialog">
@@ -79,7 +66,8 @@ const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus
 </div>
 
 <script>
-  import { documentationMarkdown, restMarkdown } from '../lib/agent-markdown';
+  import { pageMarkdown } from '../lib/agent-markdown';
+  import { fromDom } from '../lib/markdown-tree';
 
   function initializeAgentAction() {
     const action = document.querySelector<HTMLElement>('.agent-action');
@@ -99,23 +87,13 @@ const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus
     if (content && canonical && title) {
       button.hidden = false;
       button.addEventListener('click', async () => {
-        const url = new URL(canonical.href);
-        const { body, sections, description } =
-          restMarkdown(content, url) ?? documentationMarkdown(content, url);
-        const markdown =
-          [
-            'Use this Milvus Node.js SDK documentation as a reference for the user’s task.',
-            `# ${title}`,
-            action.dataset.description || description,
-            action.dataset.compatibility,
-            `Canonical documentation: ${url.href}`,
-            sections.length ? '## Section links\n\n' + sections.join('\n') : '',
-            !action.dataset.description && body.startsWith(description)
-              ? body.slice(description.length).trimStart()
-              : body,
-          ]
-            .filter(Boolean)
-            .join('\n\n') + '\n';
+        const markdown = pageMarkdown(
+          fromDom(content),
+          new URL(canonical.href),
+          title,
+          action.dataset.description ?? '',
+          action.dataset.compatibility ?? ''
+        );
 
         status.textContent = '';
         try {
@@ -179,6 +157,9 @@ const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus
 
   .agent-action {
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
   }
 
   .agent-action button {
@@ -197,6 +178,11 @@ const compatibility = `SDK: \`${sdk.name}@${sdk.version}\` · Tested with Milvus
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
+  }
+
+  .markdown-link {
+    font-size: var(--sl-text-xs);
+    color: var(--sl-color-text-accent);
   }
 
   .agent-action button:hover {

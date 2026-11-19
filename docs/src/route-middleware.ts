@@ -3,6 +3,7 @@ import {
   type StarlightRouteData,
 } from '@astrojs/starlight/route-data';
 
+import { lastModified } from './lib/page-freshness.mjs';
 import { restGroups } from './lib/rest-navigation';
 
 type SidebarEntry = StarlightRouteData['sidebar'][number];
@@ -89,6 +90,21 @@ export const onRequest = defineRouteMiddleware(async (context, next) => {
   }
 
   const currentSlug = normalizeSlug(route.id);
+  if (
+    currentSlug !== '404' &&
+    (!route.lastUpdated ||
+      currentSlug === '' ||
+      currentSlug === 'index' ||
+      currentSlug === 'reference/troubleshooting')
+  ) {
+    const slug = currentSlug || 'index';
+    const modified = lastModified(slug);
+    if (
+      modified &&
+      (!route.lastUpdated || Date.parse(modified) > route.lastUpdated.getTime())
+    )
+      route.lastUpdated = new Date(modified);
+  }
 
   if (currentSlug === 'rest-api' || currentSlug.startsWith('rest-api/')) {
     const overview = makeSidebarLink(currentSlug, {

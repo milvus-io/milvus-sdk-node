@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'parse5';
@@ -22,6 +22,25 @@ export async function checkSiteLinks(out, site) {
   const pages = new Map();
   const errors = new Set();
 
+  for (const file of ['llms.txt', 'llms-full.txt', 'og-image.png']) {
+    const info = await stat(new URL(file, out)).catch(() => undefined);
+    if (!info?.isFile() || !info.size) errors.add(`Missing or empty: ${file}`);
+  }
+
+  const indexedMarkdown = new Set();
+  if (files.includes('llms.txt')) {
+    const index = await readFile(new URL('llms.txt', out), 'utf8');
+    for (const [, href] of index.matchAll(/\]\(([^)]+)\)/g)) {
+      const target = new URL(href, site);
+      if (target.origin !== site.origin || !target.pathname.startsWith(base))
+        continue;
+      if (!assets.has(target.pathname))
+        errors.add(`llms.txt links to missing file: ${href}`);
+      if (target.pathname.endsWith('/index.md'))
+        indexedMarkdown.add(target.pathname);
+    }
+  }
+
   for (const file of files.filter((file) => file.endsWith('.html'))) {
     const url = new URL(file.replace(/(^|\/)index\.html$/, '$1'), site);
     const document = parse(await readFile(new URL(file, out), 'utf8'), {
@@ -32,6 +51,8 @@ export async function checkSiteLinks(out, site) {
       links: [],
       canonicals: [],
       noindex: new Set(),
+      markdownLinks: [],
+      schemas: new Set(),
       title: '',
       description: '',
       refresh: '',
@@ -48,6 +69,29 @@ export async function checkSiteLinks(out, site) {
       }
       if (inHead && node.tagName === 'link' && attributes.rel === 'canonical') {
         page.canonicals.push(attributes.href);
+      }
+      if (
+        inHead &&
+        node.tagName === 'link' &&
+        attributes.rel === 'alternate' &&
+        attributes.type === 'text/markdown'
+      )
+        page.markdownLinks.push(attributes.href);
+      if (
+        node.tagName === 'script' &&
+        attributes.type === 'application/ld+json'
+      ) {
+        try {
+          const schema = JSON.parse(
+            node.childNodes.map(({ value }) => value).join('')
+          );
+          if (typeof schema?.['@type'] === 'string')
+            page.schemas.add(schema['@type']);
+        } catch (error) {
+          errors.add(
+            `${url.pathname} contains invalid JSON-LD: ${error.message}`
+          );
+        }
       }
       if (inHead && node.tagName === 'title')
         page.title = node.childNodes[0]?.value;
@@ -101,6 +145,32 @@ export async function checkSiteLinks(out, site) {
       }
     } else if (url.pathname.endsWith('/')) {
       indexable.add(url.href);
+      const markdown = new URL('index.md', url);
+      if (
+        !assets.has(markdown.pathname) ||
+        !(await stat(new URL(markdown.pathname.slice(base.length), out))).size
+      )
+        errors.add(`${url.pathname} is missing a non-empty Markdown mirror`);
+      if (
+        page.markdownLinks.length !== 1 ||
+        page.markdownLinks[0] !== markdown.href
+      )
+        errors.add(
+          `${url.pathname} must have one Markdown alternate link to ${markdown.href}`
+        );
+      if (!indexedMarkdown.delete(markdown.pathname))
+        errors.add(`${markdown.href} is missing from llms.txt`);
+
+      const expectedSchemas =
+        url.href === site.href
+          ? ['WebSite', 'SoftwareSourceCode']
+          : ['TechArticle', 'BreadcrumbList'];
+      if (url.pathname === base + 'reference/troubleshooting/')
+        expectedSchemas.push('FAQPage');
+      for (const type of expectedSchemas) {
+        if (!page.schemas.has(type))
+          errors.add(`${url.pathname} is missing ${type} JSON-LD`);
+      }
       if (canonicals.length !== 1 || canonicals[0] !== url.href) {
         errors.add(
           `${url.pathname} must have one canonical URL matching its public URL`
@@ -146,11 +216,19 @@ export async function checkSiteLinks(out, site) {
     }
   }
 
+  for (const href of indexedMarkdown)
+    errors.add(`llms.txt lists Markdown for an excluded page: ${href}`);
+
   const sitemapUrls = new Set();
+  if (!files.includes('sitemap-0.xml')) errors.add('Missing sitemap-0.xml');
   for (const file of files.filter((file) => /^sitemap-\d+\.xml$/.test(file))) {
     const xml = await readFile(new URL(file, out), 'utf8');
-    for (const [, href] of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
-      sitemapUrls.add(href);
+    for (const [, entry] of xml.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
+      const href = entry.match(/<loc>([^<]+)<\/loc>/)?.[1];
+      const lastmod = entry.match(/<lastmod>([^<]+)<\/lastmod>/)?.[1];
+      if (!lastmod || !Number.isFinite(Date.parse(lastmod)))
+        errors.add(`Missing or invalid sitemap lastmod: ${href ?? entry}`);
+      if (href) sitemapUrls.add(href);
     }
   }
   for (const href of indexable) {

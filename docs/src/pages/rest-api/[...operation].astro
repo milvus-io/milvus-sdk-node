@@ -13,7 +13,13 @@ export function getStaticPaths() {
 }
 
 const { operation } = Astro.props as { operation: RestOperation };
-const sdkMethod = sdkMethods[operation.slug];
+const sdkMethod = sdkMethods[operation.route];
+const legacyFunctionMethod =
+  operation.route === '/collections/add_function'
+    ? 'addFunctionField'
+    : operation.route === '/collections/drop_function'
+      ? 'dropFunctionField'
+      : undefined;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
@@ -78,15 +84,17 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         )
       }
       {
-        sdkMethod && (
+        (sdkMethod || legacyFunctionMethod) && (
           <p>
-            See{' '}
+            {legacyFunctionMethod ? 'For new SDK code, use ' : 'See '}
             <a
-              href={`${base}/api-reference/http-client/#${sdkMethod.toLowerCase()}`}
+              href={`${base}/api-reference/http-client/#${(sdkMethod ?? legacyFunctionMethod)?.toLowerCase()}`}
             >
-              <code>HttpClient.{sdkMethod}</code>
-            </a>{' '}
-            for the Node.js SDK method.
+              <code>HttpClient.{sdkMethod ?? legacyFunctionMethod}</code>
+            </a>
+            {legacyFunctionMethod
+              ? ' to manage the function together with its output field and index.'
+              : ' for the Node.js SDK method.'}
           </p>
         )
       }

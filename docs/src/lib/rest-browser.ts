@@ -196,11 +196,19 @@ function initializeExplorer() {
   const status = panel.querySelector<HTMLElement>('[data-status]')!;
   const output = panel.querySelector<HTMLElement>('[data-response]')!;
   const command = panel.querySelector<HTMLElement>('[data-command]')!;
+  const curlExample = panel.querySelector<HTMLDetailsElement>(
+    '[data-curl-example]'
+  )!;
   const send = panel.querySelector<HTMLButtonElement>('[data-run]')!;
   const copyResponse = panel.querySelector<HTMLButtonElement>(
     '[data-copy-response]'
   )!;
 
+  curlExample.open = location.hash === '#curl-command';
+  body.hidden = false;
+  panel.querySelector<HTMLElement>('[data-static-request]')!.hidden = true;
+  panel.querySelector<HTMLElement>('[data-request-actions]')!.hidden = false;
+  copyResponse.hidden = false;
   body.value =
     drafts.get(operation) ??
     (selectedCollection && collectionOperations.has(operation)
@@ -212,6 +220,29 @@ function initializeExplorer() {
     feedback.hidden = false;
     feedback.textContent = message;
   }
+
+  const syncCurlPreview = () => {
+    if (!curlExample.open) return;
+    try {
+      requestBody(body.value);
+      const url = requestUrl(
+        endpoint.value.trim() || 'https://your-cluster.example.com',
+        path
+      );
+      command.textContent = curlCommand(
+        url,
+        body.value,
+        Boolean(token.value.trim())
+      );
+    } catch {
+      // Keep the last valid cURL preview while the draft or endpoint is incomplete.
+    }
+  };
+  curlExample.addEventListener('toggle', syncCurlPreview);
+  endpoint.addEventListener('input', syncCurlPreview);
+  token.addEventListener('input', syncCurlPreview);
+  collections.addEventListener('change', syncCurlPreview);
+  syncCurlPreview();
 
   panel.querySelector('[data-copy]')!.addEventListener('click', async () => {
     try {
@@ -225,7 +256,7 @@ function initializeExplorer() {
         body.value,
         Boolean(token.value.trim())
       );
-      command.hidden = false;
+      curlExample.open = true;
       try {
         await navigator.clipboard.writeText(command.textContent);
         showFeedback('cURL copied.');
@@ -297,6 +328,7 @@ function initializeExplorer() {
           }
           body.value = JSON.stringify(request, null, 2);
           drafts.set(operation, body.value);
+          syncCurlPreview();
           showFeedback(`Applied ${field.name} to request JSON.`);
         } catch (error) {
           showFeedback(`Input error. ${(error as Error).message}`);
@@ -305,6 +337,7 @@ function initializeExplorer() {
   }
   body.addEventListener('input', () => {
     drafts.set(operation, body.value);
+    syncCurlPreview();
     if (operation === 'collections/describe') clearSchema();
   });
 
@@ -373,7 +406,11 @@ function initializeExplorer() {
       const envelope = isObject(result) ? result : {};
       const { code, data } = envelope;
       const elapsed = Math.round(performance.now() - started);
-      const success = response.ok && code === 0;
+      const resourceGroupSuccess =
+        code === undefined &&
+        path.endsWith('/resource_groups/describe') &&
+        isObject(envelope.resource_group);
+      const success = response.ok && (code === 0 || resourceGroupSuccess);
       status.textContent = `${success ? 'Live response' : 'Live response error'} · HTTP ${response.status} · Milvus code ${typeof code === 'number' ? code : 'unavailable'} · ${elapsed} ms`;
       output.textContent = raw;
       output.hidden = raw.length === 0;

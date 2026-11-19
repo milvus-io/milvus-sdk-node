@@ -1,9 +1,9 @@
 ---
 title: 'Bloom and Roaring Membership Filters'
-description: "Encode large membership sets in Node.js with Bloom or Roaring filters and use them in Milvus Query and Search expressions."
+description: 'Encode large membership sets in Node.js with Bloom or Roaring filters and use them in Milvus Query and Search expressions.'
 ---
 
-SDK 3.0.5 exports helpers that encode large membership sets as binary filter parameters for the gRPC client. Your Milvus deployment must support `bloom_match` or `roaring_match`; upgrading the SDK alone does not add these server expressions.
+SDK 3.0.5 exports helpers that encode large membership sets as binary filter parameters for the gRPC client. Your Milvus deployment must support `membership_match` with the corresponding `type=bloom` or `type=roaring`; upgrading the SDK alone does not add these server expressions.
 
 ## Choose a filter
 
@@ -24,7 +24,7 @@ import { buildRoaringBitmap } from '@zilliz/milvus2-sdk-node';
 const ids = buildRoaringBitmap([1, 2, '9223372036854775807']);
 const result = await client.query({
   collection_name: 'documents',
-  filter: 'roaring_match(user_id, {ids})',
+  filter: 'membership_match(user_id, {ids}, type=roaring)',
   exprValues: { ids },
   output_fields: ['user_id'],
   limit: 100,
@@ -42,7 +42,7 @@ import { buildBloomFilter } from '@zilliz/milvus2-sdk-node';
 const members = buildBloomFilter(['alice', 'bob'], 0.005);
 const result = await client.query({
   collection_name: 'documents',
-  filter: 'bloom_match(owner, {members})',
+  filter: 'membership_match(owner, {members}, type=bloom)',
   exprValues: { members },
   output_fields: ['owner'],
   limit: 100,
