@@ -1,22 +1,22 @@
 ---
 title: 'Migration & Compatibility'
-description: "Check Milvus Node.js SDK and server compatibility, review breaking changes, and plan upgrades."
+description: 'Check Milvus Node.js SDK and server compatibility, review breaking changes, and plan upgrades.'
 ---
 
-This guide covers version compatibility, migration paths, and breaking changes.
+SDK **3.0.9** is tested with Milvus **3.0.6**. SDK 3.x supports core operations on compatible Milvus 2.x deployments and Zilliz Cloud. Check your server version before relying on features introduced in Milvus 3.0.
 
 ## Version Compatibility
 
 ### SDK and Milvus Compatibility
 
-| Milvus version |   Node SDK version   | Installation                               |
-| :------------: | :------------------: | :----------------------------------------- |
-|    v3.0.0+     | v3.0.0+ / **latest** | `yarn add @zilliz/milvus2-sdk-node@latest` |
-|    v2.6.0+     |        v2.6.x        | `yarn add @zilliz/milvus2-sdk-node@2.6`    |
-|    v2.5.0+     |        v2.5.x        | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
-|    v2.4.0+     |        v2.4.9        | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
-|    v2.3.0+     |        v2.3.5        | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
-|    v2.2.0+     |        v2.3.5        | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+| Milvus version |            Node SDK version            | Installation                               |
+| :------------: | :------------------------------------: | :----------------------------------------- |
+|    v3.0.0+     | 3.0.x (3.0.9 tested with Milvus 3.0.6) | `yarn add @zilliz/milvus2-sdk-node@3`      |
+|    v2.6.0+     |                 v2.6.x                 | `yarn add @zilliz/milvus2-sdk-node@2.6`    |
+|    v2.5.0+     |                 v2.5.x                 | `yarn add @zilliz/milvus2-sdk-node@2.5.12` |
+|    v2.4.0+     |                 v2.4.9                 | `yarn add @zilliz/milvus2-sdk-node@2.4.9`  |
+|    v2.3.0+     |                 v2.3.5                 | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
+|    v2.2.0+     |                 v2.3.5                 | `yarn add @zilliz/milvus2-sdk-node@2.3.5`  |
 
 ### Node.js Compatibility
 
@@ -82,8 +82,8 @@ yarn add @zilliz/milvus2-sdk-node@2.6
 
 The following SDK features require a Milvus 3.0 server. They are marked with the `Milvus 3.0` tag in the relevant guides and API reference pages.
 
-| Area                           | SDK surface                                                                                                                                                                                                                   | Docs                                                                                                                                                               |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Area                           | SDK surface                                                                                                                                                                                                                   | Docs                                                                                                                                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | External collections           | `external_source`, `external_spec`, `do_physical_backfill`, `file_resource_ids`, field-level `external_field`, `refreshExternalCollection()`, `getRefreshExternalCollectionProgress()`, `listRefreshExternalCollectionJobs()` | [Collection Management](/milvus-sdk-node/management/collection-management/), [Collection Operations](/milvus-sdk-node/api-reference/collections/)                                                |
 | Collection snapshots           | `createSnapshot()`, `dropSnapshot()`, `listSnapshots()`, `describeSnapshot()`, `restoreSnapshot()`, `getRestoreSnapshotState()`, `listRestoreSnapshotJobs()`, `pinSnapshotData()`, `unpinSnapshotData()`                      | [Collection Management](/milvus-sdk-node/management/collection-management/), [Collection Operations](/milvus-sdk-node/api-reference/collections/)                                                |
 | Advanced StructArray           | Struct child schemas, nullable rows, dynamic nullable fields, child-field indexes, `element_filter`, element-level query/search/iterator offsets                                                                              | [Data Types & Schemas](/milvus-sdk-node/core-concepts/data-types-schemas/#structarray), [Query & Search](/milvus-sdk-node/operations/data-operations-query/#structarray-element-filters)         |
@@ -95,7 +95,13 @@ The following SDK features require a Milvus 3.0 server. They are marked with the
 | MinHash function and index     | `FunctionType.MINHASH`, `IndexType.MINHASH_LSH`, `MetricType.MHJACCARD`, atomic function-field/index creation                                                                                                                 | [Collection Management](/milvus-sdk-node/management/collection-management/#add-a-function-output-field-and-index), [Index Management](/milvus-sdk-node/management/index-management/#minhash_lsh) |
 | Analyzer file resources        | `addFileResource()`, `listFileResources()`, `removeFileResource()`                                                                                                                                                            | [Full-Text Search](/milvus-sdk-node/advanced/full-text-search/#custom-dictionary-files), [System Operations](/milvus-sdk-node/api-reference/system/#file-resources)                              |
 
-Not all Milvus 3.0 proto additions are public Node SDK APIs yet. WAL dump/data-salvage APIs, `ComputePhraseMatchSlop`, `BatchUpdateManifest`, and full molecular data helpers are currently proto-level/internal surfaces unless explicitly exposed in a later SDK release.
+## SDK 3.0.6–3.0.9 additions
+
+- SDK 3.0.6 aligns [membership filter expressions](/milvus-sdk-node/advanced/membership-filters/) with Milvus. SDK 3.0.7 fixes core client behavior and moves CI to Milvus 3.0.6. SDK 3.0.8 adds StructArray support for nested Array sub-fields.
+- SDK 3.0.9 adds path replacement in partial upserts, function chains for gRPC search and query, and REST search aggregation alongside gRPC search aggregation. Use `exportSnapshot()`, `getExportSnapshotState()`, and `restoreExternalSnapshot()` for portable snapshots.
+- The public `MilvusClient` methods for replication and WAL on Milvus 3.0.6 are `updateReplicateConfiguration()`, `getReplicateConfiguration()`, `getReplicateInfo()`, `createReplicateStream()`, and `dumpMessages()`. The SDK also exposes `computePhraseMatchSlop()` and `batchUpdateManifest()`.
+- The [gRPC system reference](/milvus-sdk-node/api-reference/system/) documents the proxy APIs `allocTimestamp()`, `getComponentStates()`, `registerLink()`, and `dummy()` and the telemetry APIs `getClientTelemetry()`, `pushClientCommand()`, and `deleteClientCommand()`.
+- The [REST reference](/milvus-sdk-node/rest-api/) covers all Milvus 3.0.6 v2 server routes. [`HttpClient`](/milvus-sdk-node/api-reference/http-client/) exposes the canonical SDK operations for collection changes, external refresh, snapshots, imports, access control, resource groups, text analysis, and diagnostics. Use the atomic `addFunctionField()` and `dropFunctionField()` methods for function and output-field changes.
 
 ## SDK 3.0.4–3.0.5 additions
 

@@ -37,11 +37,11 @@ const redirects = Object.fromEntries(
       data-pagefind-ignore
       aria-label="REST operation directory"
     >
-      <label hidden>
+      <label hidden data-agent-ignore>
         Filter operations
         <input type="search" placeholder="Name or API path" data-rest-filter />
       </label>
-      <p role="status" data-filter-status hidden></p>
+      <p role="status" data-filter-status data-agent-ignore hidden></p>
       <div class="rest-groups not-content">
         {
           Array.from(restGroups, ([group, operations]) => (

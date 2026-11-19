@@ -1,3 +1,12 @@
+import {
+  attribute,
+  descendants,
+  findNode,
+  hasClass,
+  htmlText,
+  type HtmlNode,
+} from './markdown-tree';
+
 function backticks(value: string, minimum: number) {
   return '`'.repeat(
     Math.max(
@@ -12,16 +21,16 @@ function fenced(value: string, language: string) {
   return `${fence}${language}\n${value}\n${fence}`;
 }
 
-export function documentationMarkdown(content: Element, canonical: URL) {
+function documentationMarkdown(content: HtmlNode, canonical: URL) {
   const sections: string[] = [];
   let description = '';
   const destination = (href: string) =>
     new URL(href, canonical).href.replace(/\(/g, '%28').replace(/\)/g, '%29');
 
-  function children(element: Element) {
+  function children(element: HtmlNode, parents: HtmlNode[] = []) {
     let value = '';
-    for (const child of element.childNodes) {
-      const part = render(child);
+    for (const child of element.childNodes ?? []) {
+      const part = render(child, [element, ...parents]);
       if (/^\n\n/.test(part) && /\n\n *$/.test(value)) {
         value = value.trimEnd();
       }
@@ -30,38 +39,56 @@ export function documentationMarkdown(content: Element, canonical: URL) {
     return value;
   }
 
-  function render(node: Node): string {
-    if (node.nodeType === 3)
-      return (node.textContent ?? '').replace(/\s+/g, ' ');
-    if (!(node instanceof Element)) return '';
+  function render(node: HtmlNode, parents: HtmlNode[]): string {
+    if (node.nodeName === '#text') return htmlText(node).replace(/\s+/g, ' ');
+    const tag = node.tagName;
     if (
-      node.matches(
-        '.sl-anchor-link, [aria-hidden="true"], [data-agent-ignore], script, style, button, svg'
-      )
+      !tag ||
+      hasClass(node, 'sl-anchor-link') ||
+      attribute(node, 'aria-hidden') === 'true' ||
+      attribute(node, 'data-agent-ignore') !== undefined ||
+      [
+        'script',
+        'style',
+        'button',
+        'svg',
+        'noscript',
+        'template',
+        'textarea',
+      ].includes(tag)
     )
       return '';
 
-    const tag = node.localName;
     if (tag === 'pre') {
-      const lines = node.querySelectorAll('.ec-line .code');
+      const lines = [...descendants(node)].filter((child) =>
+        hasClass(child, 'ec-line')
+      );
       const source = lines.length
-        ? Array.from(lines, (line) => line.textContent).join('\n')
-        : (node.textContent ?? '').replace(/\n$/, '');
+        ? lines
+            .map((line) => {
+              const code = findNode(line, (child) => hasClass(child, 'code'));
+              // Expressive Code inserts a newline placeholder for an empty line.
+              return code ? htmlText(code).replace(/\n$/, '') : '';
+            })
+            .join('\n')
+        : htmlText(node).replace(/\n$/, '');
       return (
-        '\n\n' +
-        fenced(source, node.getAttribute('data-language') ?? '') +
-        '\n\n'
+        '\n\n' + fenced(source, attribute(node, 'data-language') ?? '') + '\n\n'
       );
     }
     if (tag === 'table') {
-      const rows = Array.from(node.querySelectorAll('tr'), (row) =>
-        Array.from(row.children, (cell) =>
-          children(cell)
-            .trim()
-            .replace(/(?<!\\)\|/g, '\\|')
-            .replace(/\n+/g, '<br>')
-        )
-      );
+      const rows = [...descendants(node)]
+        .filter((row) => row.tagName === 'tr')
+        .map((row) =>
+          (row.childNodes ?? [])
+            .filter((cell) => cell.tagName === 'th' || cell.tagName === 'td')
+            .map((cell) =>
+              children(cell)
+                .trim()
+                .replace(/(?<!\\)\|/g, '\\|')
+                .replace(/\n+/g, '<br>')
+            )
+        );
       if (!rows.length) return '';
       rows.splice(
         1,
@@ -75,60 +102,78 @@ export function documentationMarkdown(content: Element, canonical: URL) {
       );
     }
     if (tag === 'dl') {
-      const entries = Array.from(node.children, (entry) => {
-        const value = children(entry).trim();
-        return entry.localName === 'dt' ? '- ' + value : '  ' + value;
-      });
+      const entries = (node.childNodes ?? [])
+        .filter((entry) => entry.tagName === 'dt' || entry.tagName === 'dd')
+        .map((entry) => {
+          const value = children(entry).trim();
+          return entry.tagName === 'dt' ? '- ' + value : '  ' + value;
+        });
       return '\n\n' + entries.join('\n') + '\n\n';
     }
     if (tag === 'ol' || tag === 'ul') {
-      const start = Number(node.getAttribute('start') ?? 1);
-      const items = Array.from(node.children, (item, index) => {
-        const marker = tag === 'ol' ? `${start + index}. ` : '- ';
-        const indent = ' '.repeat(marker.length);
-        return (
-          marker +
-          children(item)
-            .trim()
-            .replace(/\n(?=\n*\S| +\S)/g, '\n' + indent)
-        );
-      });
+      const start = Number(attribute(node, 'start') ?? 1);
+      const items = (node.childNodes ?? [])
+        .filter((item) => item.tagName === 'li')
+        .map((item, index) => {
+          const marker = tag === 'ol' ? `${start + index}. ` : '- ';
+          const indent = ' '.repeat(marker.length);
+          return (
+            marker +
+            children(item)
+              .trim()
+              .replace(/\n(?=\n*\S| +\S)/g, '\n' + indent)
+          );
+        });
       return '\n\n' + items.join('\n') + '\n\n';
     }
 
-    if (tag === 'figure' && node.closest('.expressive-code')) {
-      const pre = node.querySelector('pre');
-      return pre ? render(pre) : '';
+    if (
+      tag === 'figure' &&
+      parents.some((parent) => hasClass(parent, 'expressive-code'))
+    ) {
+      const pre = findNode(node, (child) => child.tagName === 'pre');
+      return pre ? render(pre, [node, ...parents]) : '';
     }
     if (tag === 'code') {
-      const code = node.textContent ?? '';
+      const code = htmlText(node);
       const fence = backticks(code, 1);
       const padding = /^`|`$|^ | $/.test(code) ? ' ' : '';
       return fence + padding + code + padding + fence;
     }
 
-    const value = children(node);
-    if (tag === 'p' && !description && !node.closest('li, blockquote, table')) {
+    const value = children(node, parents);
+    if (
+      tag === 'p' &&
+      !description &&
+      !parents.some((parent) =>
+        ['li', 'blockquote', 'table'].includes(parent.tagName ?? '')
+      )
+    ) {
       description = value.trim();
     }
-    if (tag === 'summary' && node.parentElement?.matches('[data-rest-group]')) {
+    if (
+      tag === 'summary' &&
+      parents[0] &&
+      attribute(parents[0], 'data-rest-group') !== undefined
+    ) {
       const heading = value.trim();
-      const id = node.parentElement.id;
+      const id = attribute(parents[0], 'id');
       sections.push(`- [${heading}](${destination('#' + id)})`);
       return `\n\n## ${heading}\n\n`;
     }
     if (/^h[1-6]$/.test(tag)) {
-      if (node.id)
-        sections.push(`- [${value.trim()}](${destination('#' + node.id)})`);
+      const id = attribute(node, 'id');
+      if (id) sections.push(`- [${value.trim()}](${destination('#' + id)})`);
       return `\n\n${'#'.repeat(Number(tag[1]))} ${value.trim()}\n\n`;
     }
-    if (tag === 'a' && node.hasAttribute('href'))
-      return `[${value}](${destination(node.getAttribute('href')!)})`;
+    const href = attribute(node, 'href');
+    if (tag === 'a' && href) return `[${value}](${destination(href)})`;
     if (tag === 'strong' || tag === 'b') return `**${value}**`;
     if (tag === 'em' || tag === 'i') return `*${value}*`;
     if (tag === 'del') return `~~${value}~~`;
-    if (tag === 'img' && node.hasAttribute('src'))
-      return `![${node.getAttribute('alt') ?? ''}](${destination(node.getAttribute('src')!)})`;
+    const src = attribute(node, 'src');
+    if (tag === 'img' && src)
+      return `![${attribute(node, 'alt') ?? ''}](${destination(src)})`;
     if (tag === 'blockquote')
       return (
         '\n\n' +
@@ -151,30 +196,68 @@ export function documentationMarkdown(content: Element, canonical: URL) {
   return { body, sections, description };
 }
 
-export function restMarkdown(content: Element, canonical: URL) {
-  const example = content.querySelector<HTMLTemplateElement>(
-    'template[data-agent-rest]'
+function restMarkdown(content: HtmlNode, canonical: URL) {
+  const example = findNode(
+    content,
+    (node) => attribute(node, 'data-agent-rest') !== undefined
   );
-  const panel = content.querySelector('.rest-docs');
+  const panel = findNode(content, (node) => hasClass(node, 'rest-docs'));
   if (!example || !panel) return undefined;
 
-  const { route, exampleRequest, exampleResponse } = example.dataset;
+  const route = attribute(example, 'data-route');
+  const request = attribute(example, 'data-example-request')!;
+  const response = attribute(example, 'data-example-response')!;
+  const command = attribute(example, 'data-example-command')!;
   const notes = documentationMarkdown(panel, canonical);
   const details = notes.body.startsWith(notes.description)
     ? notes.body.slice(notes.description.length).trimStart()
     : notes.body;
   return {
-    sections: notes.sections,
+    sections: [
+      `- [cURL command](${new URL('#curl-command', canonical)})`,
+      `- [Default request](${new URL('#default-request', canonical)})`,
+      `- [Sample response](${new URL('#sample-response', canonical)})`,
+      ...notes.sections,
+    ],
     description: notes.description,
     body: [
       `\`POST ${route}\``,
-      'Replace \`https://your-cluster.example.com\` with your Milvus endpoint. If authentication is enabled, send \`Authorization: Bearer <MILVUS_TOKEN>\`.',
-      '### Default request\n\n' + fenced(exampleRequest!, 'json'),
-      exampleResponse &&
-        '### Sample response\n\n' + fenced(exampleResponse, 'json'),
+      'Replace \`https://your-cluster.example.com\` with your Milvus endpoint. Set \`MILVUS_TOKEN\` for authentication or omit the Authorization header on an unauthenticated cluster.',
+      '## cURL command\n\n' + fenced(command, 'bash'),
+      '## Default request\n\n' + fenced(request, 'json'),
+      '## Sample response\n\n' + fenced(response, 'json'),
       details,
+    ].join('\n\n'),
+  };
+}
+
+export function pageMarkdown(
+  content: HtmlNode,
+  canonical: URL,
+  title: string,
+  description: string,
+  compatibility: string
+) {
+  const rest = restMarkdown(content, canonical);
+  const page = rest ?? documentationMarkdown(content, canonical);
+  const summary = description || page.description;
+  const body =
+    !rest && summary && page.body.startsWith(summary + '\n')
+      ? page.body.slice(summary.length).trimStart()
+      : page.body;
+
+  return (
+    [
+      `# ${title}`,
+      summary,
+      compatibility,
+      `Canonical documentation: ${canonical.href}`,
+      page.sections.length
+        ? '## Section links\n\n' + page.sections.join('\n')
+        : '',
+      body,
     ]
       .filter(Boolean)
-      .join('\n\n'),
-  };
+      .join('\n\n') + '\n'
+  );
 }

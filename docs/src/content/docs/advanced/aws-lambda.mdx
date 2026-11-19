@@ -1,6 +1,6 @@
 ---
 title: 'Deploying to AWS Lambda'
-description: "Connect AWS Lambda functions to Milvus with the Node.js HttpClient and reuse the client across warm invocations."
+description: 'Connect AWS Lambda functions to Milvus with the Node.js HttpClient and reuse the client across warm invocations.'
 ---
 
 This guide covers deploying the Milvus Node.js SDK to AWS Lambda using the HTTP client.
@@ -44,7 +44,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
       timeout: 25000, // Leave buffer for Lambda timeout
     });
@@ -191,7 +191,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
       timeout: 25000,
     });
@@ -397,7 +397,7 @@ AWS Lambda supports up to 15 minutes timeout. Configure appropriately:
 
 ```javascript
 const client = new HttpClient({
-  baseURL: process.env.MILVUS_ENDPOINT,
+  endpoint: process.env.MILVUS_ENDPOINT,
   token: process.env.MILVUS_TOKEN,
   timeout: 25000, // Leave buffer for Lambda overhead
 });
@@ -452,7 +452,7 @@ async function getClient() {
   if (!client) {
     const { endpoint, token } = await getSecrets();
     client = new HttpClient({
-      baseURL: endpoint,
+      endpoint,
       token,
       timeout: 25000,
     });

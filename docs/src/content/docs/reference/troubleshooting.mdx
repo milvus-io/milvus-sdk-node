@@ -1,9 +1,21 @@
 ---
 title: 'Troubleshoot Milvus SDK Errors'
-description: "Diagnose Milvus Node.js SDK failures involving connections, authentication, schema validation, indexes, or search."
+description: 'Diagnose Milvus Node.js SDK failures involving connections, authentication, schema validation, indexes, or search.'
 ---
 
+import { troubleshootingFaq } from '../../../lib/troubleshooting-faq';
+
 This guide helps you troubleshoot common issues when using the Milvus Node.js SDK.
+
+## Frequently Asked Questions
+
+{troubleshootingFaq.map(({ id, question, answer }) => (
+
+  <>
+    <h3 id={id}>{question}</h3>
+    <p>{answer}</p>
+  </>
+))}
 
 ## Common Errors and Solutions
 
@@ -12,8 +24,9 @@ This guide helps you troubleshoot common issues when using the Milvus Node.js SD
 **Error**: `Collection my_collection does not exist`
 
 **Solutions**:
+
 - Check collection name spelling
-- List collections to verify: `await client.showCollections()`
+- List collections to verify: `await client.listCollections()`
 - Ensure you're using the correct database
 
 ### IllegalArgument
@@ -21,6 +34,7 @@ This guide helps you troubleshoot common issues when using the Milvus Node.js SD
 **Error**: `Invalid argument`
 
 **Solutions**:
+
 - Check parameter types and values
 - Verify schema matches collection definition
 - Ensure required fields are provided
@@ -30,6 +44,7 @@ This guide helps you troubleshoot common issues when using the Milvus Node.js SD
 **Error**: `Connection refused` or `ECONNREFUSED`
 
 **Solutions**:
+
 - Verify Milvus server is running
 - Check address and port: `localhost:19530`
 - Check firewall settings
@@ -40,6 +55,7 @@ This guide helps you troubleshoot common issues when using the Milvus Node.js SD
 **Error**: `Authentication failed`
 
 **Solutions**:
+
 - Verify username and password
 - Check token validity (for Zilliz Cloud)
 - Ensure user has necessary permissions
@@ -49,6 +65,7 @@ This guide helps you troubleshoot common issues when using the Milvus Node.js SD
 **Error**: `Schema mismatch`
 
 **Solutions**:
+
 - Verify field names match schema
 - Check data types match field definitions
 - Ensure vector dimensions are correct
@@ -62,12 +79,14 @@ This guide helps you troubleshoot common issues when using the Milvus Node.js SD
 **Solutions**:
 
 1. **Check Milvus Status**:
+
 ```bash
 # Check if Milvus is running
 docker ps | grep milvus
 ```
 
 2. **Verify Address**:
+
 ```javascript
 // Ensure address is correct
 const client = new MilvusClient({
@@ -76,6 +95,7 @@ const client = new MilvusClient({
 ```
 
 3. **Check Network**:
+
 ```javascript
 // Test connectivity
 try {
@@ -93,6 +113,7 @@ try {
 **Solutions**:
 
 1. **Verify Certificate**:
+
 ```javascript
 const client = new MilvusClient({
   address: 'milvus.example.com:443',
@@ -105,6 +126,7 @@ const client = new MilvusClient({
 ```
 
 2. **Skip Certificate Check** (development only):
+
 ```javascript
 const client = new MilvusClient({
   address: 'milvus.example.com:443',
@@ -124,6 +146,7 @@ const client = new MilvusClient({
 **Solutions**:
 
 1. **Check Index**:
+
 ```javascript
 const index = await client.describeIndex({
   collection_name: 'my_collection',
@@ -134,11 +157,14 @@ console.log('Index type:', index.index_type);
 ```
 
 2. **Tune Search Parameters**:
+
 ```javascript
 // Increase nprobe for better recall (slower)
 const results = await client.search({
   collection_name: 'my_collection',
-  data: [/* vector */],
+  data: [
+    /* vector */
+  ],
   params: {
     nprobe: 128, // Increase from default
   },
@@ -147,6 +173,7 @@ const results = await client.search({
 ```
 
 3. **Ensure Collection is Loaded**:
+
 ```javascript
 const state = await client.getLoadState({
   collection_name: 'my_collection',
@@ -166,6 +193,7 @@ if (state.state !== 'LoadStateLoaded') {
 **Solutions**:
 
 1. **Release Unused Collections**:
+
 ```javascript
 await client.releaseCollection({
   collection_name: 'unused_collection',
@@ -173,6 +201,7 @@ await client.releaseCollection({
 ```
 
 2. **Use Memory-Efficient Indexes**:
+
 ```javascript
 // Use IVF_SQ8 or IVF_PQ instead of HNSW
 await client.createIndex({
@@ -192,10 +221,13 @@ await client.createIndex({
 **Solutions**:
 
 1. **Flush After Insert**:
+
 ```javascript
 await client.insert({
   collection_name: 'my_collection',
-  data: [/* ... */],
+  data: [
+    /* ... */
+  ],
 });
 
 // Flush to persist data
@@ -205,6 +237,7 @@ await client.flush({
 ```
 
 2. **Check Collection State**:
+
 ```javascript
 const state = await client.getLoadState({
   collection_name: 'my_collection',
@@ -220,6 +253,7 @@ console.log('Load state:', state.state);
 **Solutions**:
 
 1. **Check Consistency Level**:
+
 ```javascript
 const info = await client.describeCollection({
   collection_name: 'my_collection',
@@ -229,6 +263,7 @@ console.log('Consistency level:', info.consistency_level);
 ```
 
 2. **Use Strong Consistency**:
+
 ```javascript
 await client.createCollection({
   collection_name: 'my_collection',
@@ -298,7 +333,7 @@ const info = await client.describeCollection({
   collection_name: 'my_collection',
 });
 
-info.schema.fields.forEach(field => {
+info.schema.fields.forEach((field) => {
   console.log(`${field.name}: ${field.data_type}`);
 });
 ```
@@ -346,6 +381,7 @@ const client = new MilvusClient({
 When reporting issues, include:
 
 1. **SDK Version**:
+
 ```javascript
 console.log(MilvusClient.sdkInfo);
 ```

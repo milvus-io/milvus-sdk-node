@@ -1,6 +1,6 @@
 ---
 title: 'Deploying to Cloudflare Workers'
-description: "Use the Milvus HttpClient in Cloudflare Workers with the Fetch API and store connection credentials as Worker secrets."
+description: 'Use the Milvus HttpClient in Cloudflare Workers with the Fetch API and store connection credentials as Worker secrets.'
 ---
 
 This guide covers deploying the Milvus Node.js SDK to Cloudflare Workers using the HTTP client.
@@ -37,7 +37,7 @@ import { HttpClient } from '@zilliz/milvus2-sdk-node';
 export default {
   async fetch(request, env, ctx) {
     const client = new HttpClient({
-      baseURL: env.MILVUS_ENDPOINT,
+      endpoint: env.MILVUS_ENDPOINT,
       token: env.MILVUS_TOKEN,
       timeout: 25000, // Cloudflare Workers free tier: 30s, paid: up to 15min
     });
@@ -149,7 +149,7 @@ let clientCache = null;
 function getClient(env) {
   if (!clientCache) {
     clientCache = new HttpClient({
-      baseURL: env.MILVUS_ENDPOINT,
+      endpoint: env.MILVUS_ENDPOINT,
       token: env.MILVUS_TOKEN,
       timeout: 25000,
     });
@@ -186,7 +186,7 @@ export default {
     }
 
     const client = new HttpClient({
-      baseURL: env.MILVUS_ENDPOINT,
+      endpoint: env.MILVUS_ENDPOINT,
       token: env.MILVUS_TOKEN,
       timeout: 25000,
     });
@@ -284,7 +284,7 @@ Set your timeout accordingly:
 
 ```javascript
 const client = new HttpClient({
-  baseURL: env.MILVUS_ENDPOINT,
+  endpoint: env.MILVUS_ENDPOINT,
   token: env.MILVUS_TOKEN,
   timeout: 25000, // Leave buffer for Worker overhead
 });

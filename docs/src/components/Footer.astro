@@ -18,12 +18,15 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <a href={`${base}/reference/troubleshooting/`}>Troubleshooting</a>
     <a href={`${base}/reference/migration-compatibility/`}>Compatibility</a>
     <a href={`${base}/reference/contributing/`}>Contributing</a>
+    <a href={`${base}/llms.txt`} data-astro-reload>LLMs.txt</a>
     <a href="https://github.com/milvus-io/milvus-sdk-node">GitHub</a>
     <a href="https://milvus.io">Milvus</a>
     <a href="https://cloud.zilliz.com">Zilliz Cloud</a>
     <a href="https://github.com/zilliztech/attu/releases">Attu</a>
   </nav>
-  <p class="copyright">MIT {new Date().getFullYear()} © Milvus Node.js SDK.</p>
+  <p class="copyright">
+    Apache-2.0 {new Date().getFullYear()} © Milvus Node.js SDK.
+  </p>
 </footer>
 
 <style>

@@ -1,9 +1,21 @@
 ---
 title: 'Configure the Milvus Client'
-description: "Configure the Milvus Node.js client with an address, credentials, TLS, timeouts, retries, and connection pooling."
+description: 'Configure the Milvus Node.js client with an address, credentials, TLS, timeouts, retries, and connection pooling.'
 ---
 
-The Milvus client can be configured with various options to suit your needs. This guide covers all available configuration options.
+Create a gRPC `MilvusClient` with your cluster's `address` and credentials if authentication is enabled. Use a [REST endpoint](/milvus-sdk-node/api-reference/http-client/#constructor) when configuring `HttpClient`.
+
+| Option                  | What it controls                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------ |
+| `address`               | Required Milvus gRPC address, for example `localhost:19530` or your Zilliz Cloud endpoint. |
+| `token`                 | Zilliz Cloud API key or a `username:password` token.                                       |
+| `username` / `password` | Separate credentials for an authenticated deployment.                                      |
+| `database`              | Database to use after connecting. Defaults to `default`.                                   |
+| `ssl` / `tls`           | Enable TLS and configure certificates or server identity.                                  |
+| `timeout`               | Request timeout in milliseconds.                                                           |
+| `pool`                  | gRPC connection pool settings, such as minimum and maximum sizes.                          |
+| `maxRetries`            | Maximum retry count for retryable gRPC failures. Defaults to 3.                            |
+| `telemetry`             | Client metrics, heartbeats, and server commands. Enabled by default.                       |
 
 ## Basic Configuration
 

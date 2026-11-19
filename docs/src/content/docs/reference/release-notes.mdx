@@ -1,9 +1,42 @@
 ---
 title: 'Release Notes'
-description: "Review Milvus Node.js SDK changes by version, including new features, fixes, and server compatibility notes."
+description: 'Review Milvus Node.js SDK changes by version, including new features, fixes, and server compatibility notes.'
 ---
 
-These docs cover **SDK 3.0.5**, published on **August 26, 2026**. Both the npm `latest` tag and the [GitHub release](https://github.com/milvus-io/milvus-sdk-node/releases/tag/v3.0.5) pointed to this version when checked on September 8, 2026. Server feature availability is separate from SDK version; see [Migration & Compatibility](/milvus-sdk-node/reference/migration-compatibility/).
+These docs cover **SDK 3.0.9**, tested with **Milvus 3.0.6**. Check [Migration & Compatibility](/milvus-sdk-node/reference/migration-compatibility/) for server requirements.
+
+## 3.0.9
+
+- [Function chains](/milvus-sdk-node/advanced/function-chains/) extend gRPC search, hybrid search, and query. REST search and hybrid search support `functionChains`.
+- [Search aggregation](/milvus-sdk-node/operations/data-operations-query/#search-aggregation) is available through gRPC and [HttpClient](/milvus-sdk-node/api-reference/http-client/#search). REST also supports search by ID, grouping, ordering, and expression parameters for query and search.
+- Partial upserts can [replace individual field paths](/milvus-sdk-node/operations/data-operations-insert/) through gRPC and REST.
+- Portable snapshot workflows use `exportSnapshot`, `getExportSnapshotState`, and `restoreExternalSnapshot`. Both clients support these methods.
+- `MilvusClient` adds replication configuration and checkpoint APIs, duplex `createReplicateStream`, and server-streaming `dumpMessages` for WAL messages.
+- `MilvusClient` adds `computePhraseMatchSlop`, `batchUpdateManifest`, and [proxy and telemetry administration](/milvus-sdk-node/api-reference/system/#proxy-administration) RPCs.
+- [HttpClient](/milvus-sdk-node/api-reference/http-client/) adds collection schema changes and truncation, external refresh, snapshot jobs, manual import commit/abort, resource and privilege groups, role management, analyzers, file resources, segment metadata, and quota metrics for Milvus 3.0.6. The [REST reference](/milvus-sdk-node/rest-api/) covers all 113 server routes, including compatibility aliases and the two legacy standalone function routes.
+
+[Full 3.0.9 changelog](https://github.com/milvus-io/milvus-sdk-node/compare/v3.0.8...v3.0.9)
+
+## 3.0.8
+
+- [StructArray schemas](/milvus-sdk-node/core-concepts/data-types-schemas/#structarray) support Array sub-fields. Partial upserts preserve the StructArray's type and schema.
+- The SDK pins the Milvus 3.0.6 protobuf definitions. The consolidated SDK test suite runs on pull requests.
+
+[Full 3.0.8 changelog](https://github.com/milvus-io/milvus-sdk-node/compare/v3.0.7...v3.0.8)
+
+## 3.0.7
+
+- Fixed VarChar primary-key escaping, count query options, typed vector insertion with dynamic fields, and score formatting for exponential notation.
+- Fixed sparse vector serialization, gRPC pool shutdown, and several dependency issues. CI tests against Milvus 3.0.6.
+
+[Full 3.0.7 changelog](https://github.com/milvus-io/milvus-sdk-node/compare/v3.0.6...v3.0.7)
+
+## 3.0.6
+
+- Aligned the documented Bloom and Roaring expressions with [`membership_match`](/milvus-sdk-node/advanced/membership-filters/).
+- Updated YAML dependencies.
+
+[Full 3.0.6 changelog](https://github.com/milvus-io/milvus-sdk-node/compare/v3.0.5...v3.0.6)
 
 ## 3.0.5
 

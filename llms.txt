@@ -1,6 +1,6 @@
 # @zilliz/milvus2-sdk-node
 
-> Official Node.js/TypeScript SDK for Milvus and Zilliz Cloud vector databases. Use it for semantic search, RAG retrieval, recommendation, hybrid dense+sparse retrieval, metadata filtering, and collection/index/user/resource management. Latest documented SDK release: `3.0.5`. Requires Node.js 18+.
+> Official Node.js/TypeScript SDK for Milvus and Zilliz Cloud vector databases. Use it for semantic search, RAG retrieval, recommendation, hybrid dense+sparse retrieval, metadata filtering, and collection/index/user/resource management. SDK `3.0.9` is tested with Milvus `3.0.6`. It requires Node.js 18+ and is licensed under Apache-2.0.
 
 ## Install
 
@@ -29,7 +29,7 @@ const cloudClient = new MilvusClient({
 await cloudClient.connectPromise;
 
 const httpClient = new HttpClient({
-  endpoint: 'localhost:19530',
+  endpoint: 'http://localhost:19530',
   token: 'optional-token',
 });
 ```
@@ -48,14 +48,15 @@ const httpClient = new HttpClient({
 
 ## Compatibility
 
-| Milvus version | Recommended SDK |
-| --- | --- |
-| v2.6.0+ | latest (`@zilliz/milvus2-sdk-node@latest`) |
-| v2.5.0+ | `@zilliz/milvus2-sdk-node@2.5.12` |
-| v2.4.0+ | `@zilliz/milvus2-sdk-node@2.4.9` |
-| v2.3.0+ | `@zilliz/milvus2-sdk-node@2.3.5` |
+| Milvus version | Recommended SDK                                               |
+| -------------- | ------------------------------------------------------------- |
+| v3.0.0+        | `@zilliz/milvus2-sdk-node@3` (3.0.9 tested with Milvus 3.0.6) |
+| v2.6.0+        | `@zilliz/milvus2-sdk-node@2.6` for a matching 2.x release     |
+| v2.5.0+        | `@zilliz/milvus2-sdk-node@2.5.12`                             |
+| v2.4.0+        | `@zilliz/milvus2-sdk-node@2.4.9`                              |
+| v2.3.0+        | `@zilliz/milvus2-sdk-node@2.3.5`                              |
 
-The proto files in this repo track Milvus 3.0 development, but only use APIs exported by the TypeScript SDK in `milvus/` and documented here/README.
+SDK 3.x provides core operations on compatible Milvus 2.x deployments and Zilliz Cloud. Check your deployment’s feature availability before using 3.0-only methods or options.
 
 ## Task: Basic Vector Search / RAG Retrieval
 
@@ -68,7 +69,12 @@ await client.connectPromise;
 await client.createCollection({
   collection_name: 'documents',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
     { name: 'vector', data_type: DataType.FloatVector, dim: 1536 },
     { name: 'text', data_type: DataType.VarChar, max_length: 4000 },
     { name: 'source', data_type: DataType.VarChar, max_length: 256 },
@@ -110,7 +116,8 @@ const res = await client.search({
   collection_name: 'products',
   data: [queryVector],
   limit: 20,
-  filter: 'category == "electronics" AND price < 500 AND brand IN ["Apple", "Samsung"]',
+  filter:
+    'category == "electronics" AND price < 500 AND brand IN ["Apple", "Samsung"]',
   output_fields: ['name', 'price', 'category', 'brand'],
 });
 ```
@@ -130,13 +137,13 @@ metadata["nested"]["field"] > 10
 NOT (status == "deleted")
 ```
 
-Parameterized filters are supported:
+Bind filter placeholders in `MilvusClient` with `exprValues`. For REST `HttpClient` calls, `exprParams` is the only supported field name for filter parameters. The server binding does not recognize `filterParams`.
 
 ```typescript
 await client.query({
   collection_name: 'documents',
   filter: 'year >= {min_year}',
-  filter_params: { min_year: 2024 },
+  exprValues: { min_year: 2024 },
   output_fields: ['text'],
 });
 ```
@@ -163,7 +170,10 @@ const count = await client.count({
 });
 
 await client.delete({ collection_name: 'documents', ids: [1, 2, 3] });
-await client.delete({ collection_name: 'documents', filter: 'source == "old.pdf"' });
+await client.delete({
+  collection_name: 'documents',
+  filter: 'source == "old.pdf"',
+});
 ```
 
 ## Task: Upsert and Partial Array Update
@@ -171,17 +181,20 @@ await client.delete({ collection_name: 'documents', filter: 'source == "old.pdf"
 Use `upsert` to insert or replace rows by primary key. For array fields, `field_ops` can do partial updates.
 
 ```typescript
-import {
-  DataType,
-  FieldPartialUpdateOpType,
-} from '@zilliz/milvus2-sdk-node';
+import { DataType, FieldPartialUpdateOpType } from '@zilliz/milvus2-sdk-node';
 
 await client.createCollection({
   collection_name: 'articles',
   fields: [
     { name: 'id', data_type: DataType.Int64, is_primary_key: true },
     { name: 'vector', data_type: DataType.FloatVector, dim: 128 },
-    { name: 'tags', data_type: DataType.Array, element_type: DataType.VarChar, max_length: 64, max_capacity: 20 },
+    {
+      name: 'tags',
+      data_type: DataType.Array,
+      element_type: DataType.VarChar,
+      max_length: 64,
+      max_capacity: 20,
+    },
   ],
 });
 
@@ -202,10 +215,21 @@ Valid partial array ops: `REPLACE`, `ARRAY_APPEND`, `ARRAY_REMOVE`.
 await client.createCollection({
   collection_name: 'articles',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
     { name: 'title', data_type: DataType.VarChar, max_length: 512 },
     { name: 'embedding', data_type: DataType.FloatVector, dim: 768 },
-    { name: 'tags', data_type: DataType.Array, element_type: DataType.VarChar, max_length: 64, max_capacity: 20 },
+    {
+      name: 'tags',
+      data_type: DataType.Array,
+      element_type: DataType.VarChar,
+      max_length: 64,
+      max_capacity: 20,
+    },
     { name: 'metadata', data_type: DataType.JSON },
   ],
   enable_dynamic_field: true,
@@ -243,8 +267,18 @@ Partition keys automatically route rows and filtered searches by tenant without 
 await client.createCollection({
   collection_name: 'tenant_data',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
-    { name: 'tenant_id', data_type: DataType.VarChar, max_length: 64, is_partition_key: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
+    {
+      name: 'tenant_id',
+      data_type: DataType.VarChar,
+      max_length: 64,
+      is_partition_key: true,
+    },
     { name: 'vector', data_type: DataType.FloatVector, dim: 128 },
     { name: 'content', data_type: DataType.VarChar, max_length: 2000 },
   ],
@@ -255,7 +289,9 @@ await client.loadCollection({ collection_name: 'tenant_data' });
 
 await client.insert({
   collection_name: 'tenant_data',
-  data: [{ tenant_id: 'user_123', vector: Array(128).fill(0.1), content: 'hello' }],
+  data: [
+    { tenant_id: 'user_123', vector: Array(128).fill(0.1), content: 'hello' },
+  ],
 });
 
 const res = await client.search({
@@ -275,7 +311,12 @@ Sparse vectors are objects mapping dimension index to weight.
 await client.createCollection({
   collection_name: 'sparse_docs',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
     { name: 'sparse_vector', data_type: DataType.SparseFloatVector },
     { name: 'text', data_type: DataType.VarChar, max_length: 5000 },
   ],
@@ -317,7 +358,12 @@ import { DataType, FunctionType, MetricType } from '@zilliz/milvus2-sdk-node';
 await client.createCollection({
   collection_name: 'text_search',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
     {
       name: 'text',
       data_type: DataType.VarChar,
@@ -354,17 +400,15 @@ import { WeightedRanker, RRFRanker } from '@zilliz/milvus2-sdk-node';
 
 const res = await client.hybridSearch({
   collection_name: 'hybrid_docs',
-  requests: [
+  data: [
     {
       anns_field: 'dense_vector',
       data: [denseQueryVector],
-      limit: 50,
       params: { ef: 64 },
     },
     {
       anns_field: 'sparse_vector',
       data: [sparseQueryVector],
-      limit: 50,
     },
   ],
   rerank: WeightedRanker([0.7, 0.3]), // or RRFRanker(60)
@@ -425,12 +469,14 @@ for (const row of largeDataset) {
 
 const batchFiles = await writer.close();
 
-const task = await client.bulkInsert({
+// Upload the files in batchFiles to storage accessible to Milvus.
+// Use their uploaded paths in the import request.
+const importRes = await client.bulkInsert({
   collection_name: 'my_collection',
-  files: ['data.parquet'],
+  files: ['imports/data.parquet'],
 });
 
-await client.getImportState({ taskId: task.task_id });
+const state = await client.getImportState({ task: importRes.tasks[0] });
 ```
 
 ## Task: External Collections (gRPC)
@@ -443,9 +489,24 @@ await client.createCollection({
   external_source: 's3://bucket/path/',
   external_spec: JSON.stringify({ format: 'parquet' }),
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, external_field: 'doc_id' },
-    { name: 'vector', data_type: DataType.FloatVector, dim: 768, external_field: 'embedding' },
-    { name: 'text', data_type: DataType.VarChar, max_length: 4000, external_field: 'body' },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      external_field: 'doc_id',
+    },
+    {
+      name: 'vector',
+      data_type: DataType.FloatVector,
+      dim: 768,
+      external_field: 'embedding',
+    },
+    {
+      name: 'text',
+      data_type: DataType.VarChar,
+      max_length: 4000,
+      external_field: 'body',
+    },
   ],
 });
 
@@ -454,7 +515,9 @@ const refresh = await client.refreshExternalCollection({
 });
 
 await client.getRefreshExternalCollectionProgress({ job_id: refresh.job_id });
-await client.listRefreshExternalCollectionJobs({ collection_name: 'external_docs' });
+await client.listRefreshExternalCollectionJobs({
+  collection_name: 'external_docs',
+});
 ```
 
 ## Task: Snapshot APIs (gRPC)
@@ -462,9 +525,15 @@ await client.listRefreshExternalCollectionJobs({ collection_name: 'external_docs
 Snapshot APIs are available for deployments that support Milvus snapshot management.
 
 ```typescript
-await client.createSnapshot({ collection_name: 'documents', snapshot_name: 'snap_001' });
+await client.createSnapshot({
+  collection_name: 'documents',
+  snapshot_name: 'snap_001',
+});
 await client.listSnapshots({ collection_name: 'documents' });
-await client.describeSnapshot({ collection_name: 'documents', snapshot_name: 'snap_001' });
+await client.describeSnapshot({
+  collection_name: 'documents',
+  snapshot_name: 'snap_001',
+});
 
 const restore = await client.restoreSnapshot({
   collection_name: 'documents_restored',
@@ -473,7 +542,10 @@ const restore = await client.restoreSnapshot({
 
 await client.getRestoreSnapshotState({ job_id: restore.job_id });
 await client.listRestoreSnapshotJobs();
-await client.dropSnapshot({ collection_name: 'documents', snapshot_name: 'snap_001' });
+await client.dropSnapshot({
+  collection_name: 'documents',
+  snapshot_name: 'snap_001',
+});
 ```
 
 Related methods include `pinSnapshotData` and `unpinSnapshotData`.
@@ -492,13 +564,28 @@ await client.renameCollection({ collection_name, new_collection_name });
 await client.truncateCollection({ collection_name });
 await client.dropCollection({ collection_name });
 
-await client.alterCollectionProperties({ collection_name, properties: { 'collection.ttl.seconds': 3600 } });
-await client.dropCollectionProperties({ collection_name, delete_keys: ['collection.ttl.seconds'] });
-await client.alterCollectionFieldProperties({ collection_name, field_name: 'vector', properties: { 'mmap.enabled': true } });
+await client.alterCollectionProperties({
+  collection_name,
+  properties: { 'collection.ttl.seconds': 3600 },
+});
+await client.dropCollectionProperties({
+  collection_name,
+  delete_keys: ['collection.ttl.seconds'],
+});
+await client.alterCollectionFieldProperties({
+  collection_name,
+  field_name: 'vector',
+  properties: { 'mmap.enabled': true },
+});
 await client.addCollectionFunction({ collection_name, functions });
 await client.dropCollectionFunction({ collection_name, functions });
 
-await client.createIndex({ collection_name, field_name: 'vector', index_type: 'HNSW', metric_type: 'COSINE' });
+await client.createIndex({
+  collection_name,
+  field_name: 'vector',
+  index_type: 'HNSW',
+  metric_type: 'COSINE',
+});
 await client.describeIndex({ collection_name, field_name: 'vector' });
 await client.listIndexes({ collection_name });
 await client.getIndexState({ collection_name, field_name: 'vector' });
@@ -524,7 +611,11 @@ await client.dropAlias({ alias: 'current_docs' });
 
 await client.createUser({ username: 'alice', password: 'secret' });
 await client.createRole({ roleName: 'reader' });
-await client.operateUserRole({ username: 'alice', roleName: 'reader', type: 'AddUserToRole' });
+await client.operateUserRole({
+  username: 'alice',
+  roleName: 'reader',
+  type: 'AddUserToRole',
+});
 
 await client.createResourceGroup({ resource_group: 'rg1' });
 await client.listResourceGroups();
@@ -533,54 +624,65 @@ await client.dropResourceGroup({ resource_group: 'rg1' });
 
 ## HTTP Client Notes
 
-`HttpClient` supports REST-oriented collection/vector/index/partition/alias/import/user/role operations and shares a similar data-operation style with `MilvusClient`.
+`HttpClient` uses the Milvus REST v2 API with camelCase request fields. Set `endpoint` to your cluster origin; the SDK appends `/v2`. If you specify `baseURL`, include `/v2` in the value.
 
 ```typescript
+import { HttpClient } from '@zilliz/milvus2-sdk-node';
+
 const client = new HttpClient({
-  endpoint: 'localhost:19530',
-  username: 'root',
-  password: 'milvus',
+  endpoint: 'http://localhost:19530',
   database: 'default',
-  timeout: 60000,
+  timeout: 60_000,
 });
 
-await client.createCollection({ collection_name: 'docs', dimension: 128, metric_type: 'COSINE' });
-await client.insert({ collection_name: 'docs', data: [{ id: 1, vector: Array(128).fill(0.1) }] });
-await client.search({ collection_name: 'docs', data: [Array(128).fill(0.1)], limit: 10 });
-await client.query({ collection_name: 'docs', filter: 'id > 0', limit: 100 });
+const created = await client.createCollection({
+  collectionName: 'docs',
+  dimension: 128,
+  metricType: 'COSINE',
+  primaryFieldName: 'id',
+  vectorFieldName: 'vector',
+});
+if (created.code !== 0) throw new Error(created.message);
+
+const vector = Array(128).fill(0.1);
+await client.insert({ collectionName: 'docs', data: [{ id: 1, vector }] });
+await client.search({ collectionName: 'docs', data: [vector], limit: 10 });
+await client.query({ collectionName: 'docs', filter: 'id > 0', limit: 100 });
 ```
 
-Some HTTP examples and types use camelCase REST fields (`collectionName`, `fieldName`, `metricType`) internally, while the SDK accepts the public SDK-style snake_case in many high-level methods. Prefer examples from `README.md` and `docs/src/content/docs/http-client.mdx` when targeting HTTP specifically.
+- [HttpClient guide](https://milvus-io.github.io/milvus-sdk-node/advanced/http-client/)
+- [HttpClient method reference](https://milvus-io.github.io/milvus-sdk-node/api-reference/http-client/)
+- [Milvus REST v2 operations](https://milvus-io.github.io/milvus-sdk-node/rest-api/)
 
 ## Quick Reference: Data Types
 
-| Use case | DataType | Notes |
-| --- | --- | --- |
-| Primary key | `DataType.Int64`, `DataType.VarChar` | Set `is_primary_key: true` |
-| Dense embedding | `DataType.FloatVector` | Set `dim` |
-| Binary embedding | `DataType.BinaryVector` | Set `dim`; binary metrics apply |
-| Half precision | `DataType.Float16Vector`, `DataType.BFloat16Vector` | Set `dim` |
-| Quantized dense | `DataType.Int8Vector` | Set `dim` |
-| Sparse embedding | `DataType.SparseFloatVector` | No `dim` |
-| Text | `DataType.VarChar` | Set `max_length` |
-| Metadata | `DataType.JSON` | Filter with `metadata["key"]` |
-| Lists | `DataType.Array` | Set `element_type` + `max_capacity` |
-| Numeric | `DataType.Int8`, `Int16`, `Int32`, `Int64`, `Float`, `Double` | Use string for unsafe Int64 |
-| Boolean | `DataType.Bool` |  |
-| Geo/time | `DataType.Geometry`, `DataType.Timestamptz` | Deployment/version dependent |
-| Advanced nested/vector arrays | `DataType.Struct`, `DataType.ArrayOfVector` | Deployment/version dependent |
+| Use case                      | DataType                                                      | Notes                               |
+| ----------------------------- | ------------------------------------------------------------- | ----------------------------------- |
+| Primary key                   | `DataType.Int64`, `DataType.VarChar`                          | Set `is_primary_key: true`          |
+| Dense embedding               | `DataType.FloatVector`                                        | Set `dim`                           |
+| Binary embedding              | `DataType.BinaryVector`                                       | Set `dim`; binary metrics apply     |
+| Half precision                | `DataType.Float16Vector`, `DataType.BFloat16Vector`           | Set `dim`                           |
+| Quantized dense               | `DataType.Int8Vector`                                         | Set `dim`                           |
+| Sparse embedding              | `DataType.SparseFloatVector`                                  | No `dim`                            |
+| Text                          | `DataType.VarChar`                                            | Set `max_length`                    |
+| Metadata                      | `DataType.JSON`                                               | Filter with `metadata["key"]`       |
+| Lists                         | `DataType.Array`                                              | Set `element_type` + `max_capacity` |
+| Numeric                       | `DataType.Int8`, `Int16`, `Int32`, `Int64`, `Float`, `Double` | Use string for unsafe Int64         |
+| Boolean                       | `DataType.Bool`                                               |                                     |
+| Geo/time                      | `DataType.Geometry`, `DataType.Timestamptz`                   | Deployment/version dependent        |
+| Advanced nested/vector arrays | `DataType.Struct`, `DataType.ArrayOfVector`                   | Deployment/version dependent        |
 
 ## Quick Reference: Metric Types
 
-| Metric | Best for | Score meaning |
-| --- | --- | --- |
-| `MetricType.COSINE` | Normalized embeddings | Higher = more similar |
-| `MetricType.L2` | Euclidean distance | Lower = more similar |
-| `MetricType.IP` | Inner product / normalized vectors | Higher = more similar |
-| `MetricType.BM25` | Sparse full-text relevance | Higher = more relevant |
-| `MetricType.HAMMING`, `MetricType.JACCARD` | Binary vectors | Lower/metric-specific |
-| `MetricType.TANIMOTO`, `SUBSTRUCTURE`, `SUPERSTRUCTURE`, `MHJACCARD` | Specialized similarity | Deployment/version dependent |
-| `MetricType.MAX_SIM*`, `DTW_*` | Advanced multi-vector/sequence search | Deployment/version dependent |
+| Metric                                                               | Best for                              | Score meaning                |
+| -------------------------------------------------------------------- | ------------------------------------- | ---------------------------- |
+| `MetricType.COSINE`                                                  | Normalized embeddings                 | Higher = more similar        |
+| `MetricType.L2`                                                      | Euclidean distance                    | Lower = more similar         |
+| `MetricType.IP`                                                      | Inner product / normalized vectors    | Higher = more similar        |
+| `MetricType.BM25`                                                    | Sparse full-text relevance            | Higher = more relevant       |
+| `MetricType.HAMMING`, `MetricType.JACCARD`                           | Binary vectors                        | Lower/metric-specific        |
+| `MetricType.TANIMOTO`, `SUBSTRUCTURE`, `SUPERSTRUCTURE`, `MHJACCARD` | Specialized similarity                | Deployment/version dependent |
+| `MetricType.MAX_SIM*`, `DTW_*`                                       | Advanced multi-vector/sequence search | Deployment/version dependent |
 
 ## Quick Reference: Index Types
 
@@ -588,11 +690,15 @@ Common values: `AUTOINDEX`, `HNSW`, `FLAT`, `IVF_FLAT`, `IVF_SQ8`, `IVF_PQ`, `DI
 
 ## Error Handling
 
+`MilvusClient` DDL methods such as `createCollection` return `ResStatus` directly with `error_code` and `reason`. Data methods such as `insert`, `search`, and `query` return their payload alongside `status.error_code` and `status.reason`. Transport and SDK errors can reject the promise. With `HttpClient`, catch `HttpError` for non-2xx responses and check the Milvus `code` when the response has a status envelope.
+
 ```typescript
 import { ErrorCode } from '@zilliz/milvus2-sdk-node';
 
 try {
-  const res = await client.createCollection({ /* ... */ });
+  const res = await client.createCollection({
+    /* ... */
+  });
   if (res.error_code !== ErrorCode.SUCCESS) {
     throw new Error(res.reason);
   }
@@ -603,13 +709,21 @@ try {
 
 ## Full API Reference
 
-See `README.md` for current method signatures and examples. Source lives under `milvus/`; handwritten Astro/Starlight documentation lives under `docs/src/content/docs/`.
+See the [SDK API reference](https://milvus-io.github.io/milvus-sdk-node/api-reference/) for current method signatures and examples. The source lives under `milvus/`.
 
+## SDK 3.0.6–3.0.9
+
+- Search and query accept gRPC `function_chains`; REST search and hybrid search accept `functionChains`. Search aggregation is available as gRPC `search_aggregation` or REST `searchAggregation`.
+- StructArray schemas support nested Array sub-fields. Partial upserts can replace a specific path using `field_ops` (gRPC) or `fieldOps` (REST) and the path-replacement operation.
+- Use `exportSnapshot`, `getExportSnapshotState`, and `restoreExternalSnapshot` for portable snapshot export and restore.
+- `MilvusClient` exposes `updateReplicateConfiguration`, `getReplicateConfiguration`, `getReplicateInfo`, `createReplicateStream`, and `dumpMessages` for replication and WAL streams.
+- `MilvusClient` exposes `computePhraseMatchSlop`, `batchUpdateManifest`, proxy RPCs (`allocTimestamp`, `getComponentStates`, `registerLink`, `dummy`), and telemetry RPCs (`getClientTelemetry`, `pushClientCommand`, `deleteClientCommand`).
+- `HttpClient` covers Milvus 3.0.6 REST v2 workflows including collection schema changes, external refresh, snapshot jobs, manual import commit/abort, resource and privilege groups, analyzer files, and diagnostics. The REST reference also covers compatibility aliases and the two legacy standalone function routes. Use `addFunctionField` and `dropFunctionField` for the SDK's atomic function-field operations.
 
 ## SDK 3.0.4–3.0.5
 
-- `buildBloomFilter(members, fpr = 0.005)` returns Uint8Array for `filter: 'bloom_match(field, {blob})', exprValues: { blob }`. Members must all be integers (`number`/`bigint`) or strings; decimal strings are UTF-8, not integer IDs. False positives are possible; this is not an authorization filter. FPR range: 0.0001–0.05.
-- `buildRoaringBitmap(members)` returns Uint8Array for `roaring_match(field, {blob})` with the same exprValues shape. Exact integer membership accepts safe numbers, bigint or decimal int64 strings. Reuse blobs; do not JSON/base64 encode them. Server expression support is required. Incremental builders: `BloomFilterBuilder`, `RoaringBitmapBuilder`.
+- `buildBloomFilter(members, fpr = 0.005)` returns Uint8Array for `filter: 'membership_match(field, {blob}, type=bloom)', exprValues: { blob }`. Members must all be integers (`number`/`bigint`) or strings; decimal strings are UTF-8, not integer IDs. False positives are possible; this is not an authorization filter. FPR range: 0.0001–0.05.
+- `buildRoaringBitmap(members)` returns Uint8Array for `membership_match(field, {blob}, type=roaring)` with the same exprValues shape. Exact integer membership accepts safe numbers, bigint or decimal int64 strings. Reuse blobs; do not JSON/base64 encode them. Server expression support is required. Incremental builders: `BloomFilterBuilder`, `RoaringBitmapBuilder`.
 - `ClientConfig.telemetry` defaults to `{ enabled: true, heartbeatIntervalMs: 10000, samplingRate: 1, errorMaxCount: 100 }`. Set `enabled: false` at construction to prevent startup. `client.getTelemetry().getConfig()` inspects effective settings; `closeConnection()` stops heartbeats. Telemetry is separate from `trace` and sends metrics/client metadata to the connected server.
 - `DataType.Text = 25` requires StorageV3, has no `max_length`, and cannot be a primary/partition key or array element. Values are JavaScript strings.
 - `addFunctionField` backfills existing sealed segments asynchronously. Check `getCollectionStatistics().data.schema_version_consistent_segments` against `schema_version_total_segments`, then bound index readiness. Success of the schema RPC does not mean completion. `do_physical_backfill` is not a function-field option.

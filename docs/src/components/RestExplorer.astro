@@ -1,9 +1,17 @@
 ---
 import { Icon } from '@astrojs/starlight/components';
+import { curlCommand, requestUrl } from '../lib/rest-explorer';
 import type { RestOperation } from '../lib/rest-catalog';
 
 const { operation } = Astro.props as { operation: RestOperation };
 const { slug, title, path, request, response } = operation;
+const requestJson = JSON.stringify(request, null, 2);
+const responseJson = JSON.stringify(response, null, 2);
+const command = curlCommand(
+  requestUrl('https://your-cluster.example.com', path),
+  requestJson,
+  true
+);
 const anchor = slug.replaceAll('/', '-');
 ---
 
@@ -16,17 +24,18 @@ const anchor = slug.replaceAll('/', '-');
   <template
     data-agent-rest
     data-route={path}
-    data-example-request={JSON.stringify(request, null, 2)}
-    data-example-response={JSON.stringify(response, null, 2)}></template>
+    data-example-request={requestJson}
+    data-example-command={command}
+    data-example-response={responseJson}></template>
   <p class="rest-route">
     <strong>POST</strong>
     <code>{path}</code>
   </p>
   <div class="rest-columns">
     <div class="rest-operation not-content" data-pagefind-ignore>
-      <div class="rest-actions rest-request-heading">
+      <div class="rest-actions rest-request-heading" id="default-request">
         <label for={`rest-body-${anchor}`}>Request JSON</label>
-        <div class="rest-action-buttons">
+        <div class="rest-action-buttons" data-request-actions hidden>
           <button data-copy type="button">Copy cURL</button>
           <button data-run type="button">
             Send request <Icon name="right-arrow" size="0.9rem" />
@@ -37,9 +46,14 @@ const anchor = slug.replaceAll('/', '-');
         <textarea
           id={`rest-body-${anchor}`}
           data-body
+          hidden
           rows="6"
-          spellcheck="false">{JSON.stringify(request, null, 2)}</textarea
+          spellcheck="false">{requestJson}</textarea
         >
+        <pre
+          data-static-request
+          aria-label="Default request JSON"
+          tabindex="0"><code>{requestJson}</code></pre>
       </div>
       {
         (slug === 'entities/query' || slug === 'entities/search') && (
@@ -57,20 +71,18 @@ const anchor = slug.replaceAll('/', '-');
         )
       }
       <p role="status" data-feedback hidden></p>
-      <div class="rest-actions rest-response-heading">
-        <p role="status" data-status>
-          {response ? 'Example response' : 'Send a request to see the response'}
-        </p>
-        <button data-copy-response type="button" disabled={!response}
-          >Copy response</button
-        >
+      <div class="rest-actions rest-response-heading" id="sample-response">
+        <p role="status" data-status>Example response</p>
+        <button data-copy-response type="button" hidden>Copy response</button>
       </div>
       <pre
         aria-label="Raw response"
         tabindex="0"
-        hidden={!response}
-        data-response>{JSON.stringify(response, null, 2)}</pre>
-      <pre aria-label="cURL command" tabindex="0" data-command hidden></pre>
+        data-response>{responseJson}</pre>
+      <details id="curl-command" data-curl-example open>
+        <summary>cURL command</summary>
+        <pre aria-label="cURL command" tabindex="0" data-command>{command}</pre>
+      </details>
     </div>
     <div class="rest-docs"><slot /></div>
   </div>

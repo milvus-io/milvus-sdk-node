@@ -1,34 +1,21 @@
 ---
 title: 'Deploy Applications with the Milvus SDK'
-description: "Choose gRPC or HTTP for Milvus Node.js deployments on servers, containers, serverless functions, and edge platforms."
+description: 'Choose gRPC or HTTP for Milvus Node.js deployments on servers, containers, serverless functions, and edge platforms.'
 ---
 
-This guide provides an overview of deploying applications using the Milvus Node.js SDK to various platforms.
+Use `MilvusClient` on Node.js servers with gRPC support. Choose `HttpClient` for HTTP-only environments such as Cloudflare Workers and Vercel Edge, or when a proxy requires REST.
 
 ## Choosing the Right Client
 
-The Milvus SDK provides two clients:
+| Decision                           | MilvusClient (gRPC)                                                                                 | HttpClient (REST)                                                                        |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Protocol                           | gRPC over HTTP/2                                                                                    | Milvus REST v2 over HTTP with JSON                                                       |
+| Request field casing               | snake_case, such as `collection_name`                                                               | camelCase, such as `collectionName`                                                      |
+| Serverless and edge support        | Use in Node.js runtimes that support gRPC connections                                               | Use in Fetch-capable runtimes, including HTTP-only serverless and edge environments      |
+| Streaming and gRPC-only admin RPCs | Supports replication and WAL streams, plus proxy and telemetry administration                       | Supports REST management operations and returns JSON responses                           |
+| Response and error handling        | Inspect `error_code` on a status or `status.error_code` on a result. Transport failures can reject. | Inspect `code` where the REST response provides it. Non-2xx responses throw `HttpError`. |
 
-- **MilvusClient** (gRPC): Default client, best for traditional server deployments
-- **HttpClient**: Recommended for serverless platforms
-
-### When to Use HTTP Client
-
-Use `HttpClient` when deploying to:
-
-- **Serverless platforms** (Vercel, AWS Lambda, Cloudflare Workers)
-- **Edge computing** environments
-- **Firewall-restricted** environments
-- **HTTP-only** infrastructures
-
-### When to Use gRPC Client
-
-Use `MilvusClient` (gRPC) for:
-
-- **Traditional servers** (Node.js, Express, NestJS)
-- **Long-lived connections**
-- **Maximum performance** requirements
-- **Dedicated infrastructure**
+Set the REST client's `endpoint` to your cluster origin. The SDK appends `/v2`. For a custom `baseURL`, include the full versioned URL ending in `/v2`.
 
 ## Serverless Platforms
 
@@ -47,7 +34,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
       timeout: 10000,
     });
@@ -81,7 +68,7 @@ import { HttpClient } from '@zilliz/milvus2-sdk-node';
 export default {
   async fetch(request, env) {
     const client = new HttpClient({
-      baseURL: env.MILVUS_ENDPOINT,
+      endpoint: env.MILVUS_ENDPOINT,
       token: env.MILVUS_TOKEN,
       timeout: 25000,
     });
@@ -118,7 +105,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
       timeout: 25000,
     });
@@ -164,7 +151,7 @@ await client.connectPromise;
 import { HttpClient } from '@zilliz/milvus2-sdk-node';
 
 const client = new HttpClient({
-  baseURL: 'http://localhost:19530',
+  endpoint: 'http://localhost:19530',
   token: 'your-token',
 });
 ```
@@ -200,7 +187,7 @@ MILVUS_TOKEN=your-api-token
 
 ```javascript
 const client = new HttpClient({
-  baseURL: process.env.MILVUS_ENDPOINT,
+  endpoint: process.env.MILVUS_ENDPOINT,
   token: process.env.MILVUS_TOKEN,
 });
 ```
@@ -226,7 +213,7 @@ let client;
 function getClient() {
   if (!client) {
     client = new HttpClient({
-      baseURL: process.env.MILVUS_ENDPOINT,
+      endpoint: process.env.MILVUS_ENDPOINT,
       token: process.env.MILVUS_TOKEN,
     });
   }
@@ -260,7 +247,7 @@ Set timeouts based on platform limits:
 
 ```javascript
 const client = new HttpClient({
-  baseURL: process.env.MILVUS_ENDPOINT,
+  endpoint: process.env.MILVUS_ENDPOINT,
   token: process.env.MILVUS_TOKEN,
   timeout: 10000, // Adjust based on platform
 });

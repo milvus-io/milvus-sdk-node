@@ -1,3 +1,5 @@
+import type { RestRoute } from './rest-catalog';
+
 type Body = Record<string, unknown>;
 
 const notes: Record<string, string> = {
@@ -129,6 +131,11 @@ export function fieldNotes(route: string, name: string): string | undefined {
     ['partialUpdate', 'fieldOps'].includes(name)
   )
     return;
+  if (
+    name === 'searchAggregation' &&
+    ['/entities/hybrid_search', '/entities/advanced_search'].includes(route)
+  )
+    return;
   if (route === '/entities/search' && name === 'data')
     return 'Query inputs, such as an array of vectors. Supply data or ids.';
   if (route === '/collections/add_function_field' && name === 'indexParams')
@@ -180,7 +187,7 @@ const requiredValues: Body = {
   indexName: 'vector_idx',
   indexParams: [index],
   filter: 'id in [101]',
-  id: [1, 2],
+  id: [101],
   fieldName: 'title',
   functionName: fn.name,
   FunctionName: fn.name,
@@ -281,7 +288,7 @@ const extras: Record<string, Body> = {
   '/snapshots/restore': { sourceDbName: 'default', targetDbName: 'default' },
   '/file_resources/add': { name: 'dictionary' },
   '/file_resources/remove': { name: 'dictionary' },
-  '/segments/describe': { collectionID: 123456789 },
+  '/segments/describe': { collectionID: 123456789, segmentIDs: [123456791] },
   '/common/run_analyzer': { analyzerParams: '{"tokenizer":"standard"}' },
 };
 
@@ -300,37 +307,363 @@ export function exampleRequest(
   return { ...example, ...extras[route] };
 }
 
-const responses: Record<string, Body> = {
-  '/collections/list': { code: 0, data: ['books'] },
+// These examples show the Milvus 3.0.6 wire response. HttpClient converts
+// selected numeric int64 fields to decimal strings when it decodes the response.
+const ok = (data: unknown) => ({ code: 0, data });
+const empty = ok({});
+const exists = ok({ has: true });
+const count = ok({ rowCount: 1 });
+const hit = { id: '101', title: row.title };
+const rows = { ...ok([hit]), cost: 0 };
+const searchHits = { ...ok([{ ...hit, distance: 0.98 }]), cost: 0, topks: [1] };
+const hybridHits = {
+  ...ok([{ ...hit, distance: 0.033 }]),
+  cost: 0,
+  topks: [1],
+};
+const importFile = {
+  fileName: 'imports/books.parquet',
+  fileSize: 4096,
+  progress: 100,
+  completeTime: '2026-11-19T12:01:00Z',
+  state: 'Completed',
+  importedRows: 1,
+  totalRows: 1,
+};
+const importJob = {
+  jobId: '123456789',
+  collectionName: 'books',
+  state: 'Completed',
+  progress: 100,
+};
+const importProgress = ok({
+  ...importJob,
+  createTime: '2026-11-19T12:00:00Z',
+  completeTime: importFile.completeTime,
+  importedRows: importFile.importedRows,
+  totalRows: importFile.totalRows,
+  fileSize: importFile.fileSize,
+  details: [importFile],
+});
+const snapshot = {
+  jobId: 123456789,
+  snapshotName: 'books_backup',
+  dbName: 'default',
+  collectionName: 'books',
+  progress: 100,
+  reason: '',
+  startTime: 1795099200000,
+  timeCost: 2000,
+};
+const restoredSnapshot = {
+  ...snapshot,
+  collectionName: 'books_restored',
+  state: 'RestoreSnapshotCompleted',
+};
+const externalRefresh = {
+  jobId: 123456789,
+  collectionName: 'books',
+  state: 'RefreshCompleted',
+  progress: 100,
+  externalSource: 's3://example-bucket/books/',
+  externalSpec: '{"format":"parquet"}',
+  startTime: 1795099200000,
+  endTime: 1795099202000,
+};
+const fieldDefaults = {
+  description: '',
+  primaryKey: false,
+  partitionKey: false,
+  clusteringKey: false,
+  autoId: false,
+  nullable: false,
+};
+
+const responses = {
+  '/collections/list': ok(['books']),
+  '/collections/has': exists,
   '/collections/describe': {
-    code: 0,
-    data: {
+    ...ok({
       collectionName: 'books',
+      collectionID: 123456789,
+      description: 'Book catalog',
+      autoId: false,
       fields: [
-        { name: 'id', type: 'Int64', primaryKey: true },
-        { name: 'title', type: 'VarChar' },
         {
+          ...fieldDefaults,
+          id: 100,
+          name: 'id',
+          type: 'Int64',
+          primaryKey: true,
+        },
+        {
+          ...fieldDefaults,
+          id: 101,
+          name: 'title',
+          type: 'VarChar',
+          params: [{ key: 'max_length', value: '256' }],
+        },
+        {
+          ...fieldDefaults,
+          id: 102,
           name: 'vector',
           type: 'FloatVector',
           params: [{ key: 'dim', value: '4' }],
         },
       ],
+      structFields: [],
+      functions: [],
+      aliases: ['current_books'],
+      indexes: [
+        { fieldName: 'vector', indexName: 'vector_idx', metricType: 'COSINE' },
+      ],
       load: 'LoadStateLoaded',
+      shardsNum: 1,
+      partitionsNum: 2,
+      consistencyLevel: 'Bounded',
+      enableDynamicField: false,
+      externalSource: '',
+      externalSpec: '',
+      properties: [],
+    }),
+    message: '',
+  },
+  '/collections/get_stats': count,
+  '/collections/get_load_state': {
+    ...ok({ loadState: 'LoadStateLoaded', loadProgress: 100 }),
+    message: '',
+  },
+  '/collections/create': empty,
+  '/collections/drop': empty,
+  '/collections/truncate': empty,
+  '/collections/rename': empty,
+  '/collections/load': empty,
+  '/collections/refresh_load': empty,
+  '/collections/release': empty,
+  '/collections/alter_properties': empty,
+  '/collections/add_function': empty,
+  '/collections/alter_function': empty,
+  '/collections/drop_function': empty,
+  '/collections/add_function_field': empty,
+  '/collections/drop_function_field': empty,
+  '/collections/drop_properties': empty,
+  '/collections/compact': ok({ compactionID: 123456789 }),
+  '/collections/get_compaction_state': ok({
+    compactionID: 123456789,
+    state: 'Completed',
+    executingPlanNumber: 0,
+    timeoutPlanNumber: 0,
+    completedPlanNumber: 1,
+  }),
+  '/collections/flush': empty,
+  '/collections/fields/alter_properties': empty,
+  '/collections/fields/add': empty,
+  '/collections/fields/drop': empty,
+  '/collections/struct_fields/add': empty,
+  '/databases/create': empty,
+  '/databases/drop': empty,
+  '/databases/drop_properties': empty,
+  '/databases/list': ok(['default', 'library']),
+  '/databases/describe': ok({
+    dbName: 'library',
+    dbID: 123456788,
+    properties: [{ key: 'database.replica.number', value: '1' }],
+  }),
+  '/databases/alter': empty,
+  '/databases/alter_properties': empty,
+  '/entities/query': rows,
+  '/entities/get': rows,
+  '/entities/delete': ok({ deleteCount: 1 }),
+  '/entities/insert': {
+    ...ok({ insertCount: 1, insertIds: ['101'] }),
+    cost: 0,
+  },
+  '/entities/upsert': {
+    ...ok({ upsertCount: 1, upsertIds: ['101'] }),
+    cost: 0,
+  },
+  '/entities/search': searchHits,
+  '/entities/advanced_search': hybridHits,
+  '/entities/hybrid_search': hybridHits,
+  '/partitions/list': ok(['_default', 'fiction']),
+  '/partitions/has': exists,
+  '/partitions/get_stats': count,
+  '/partitions/create': empty,
+  '/partitions/drop': empty,
+  '/partitions/load': empty,
+  '/partitions/release': empty,
+  '/users/list': ok(['root', 'catalog_user']),
+  '/users/describe': { ...ok(['catalog_reader']), description: '' },
+  '/users/create': empty,
+  '/users/update_password': empty,
+  '/users/drop': empty,
+  '/users/grant_role': empty,
+  '/users/revoke_role': empty,
+  '/roles/list': ok(['admin', 'public', 'catalog_reader']),
+  '/roles/describe': {
+    ...ok([
+      {
+        objectType: 'Collection',
+        objectName: 'books',
+        privilege: 'Search',
+        dbName: 'default',
+        grantor: 'root',
+      },
+    ]),
+    description: 'Read access for the catalog application',
+  },
+  '/roles/create': empty,
+  '/roles/alter': empty,
+  '/roles/drop': empty,
+  '/roles/grant_privilege': empty,
+  '/roles/revoke_privilege': empty,
+  '/roles/grant_privilege_v2': empty,
+  '/roles/revoke_privilege_v2': empty,
+  '/privilege_groups/create': empty,
+  '/privilege_groups/drop': empty,
+  '/privilege_groups/list': ok({
+    privilegeGroups: [
+      { privilegeGroupName: 'catalog_reads', privileges: 'Search,Query' },
+    ],
+  }),
+  '/privilege_groups/add_privileges_to_group': empty,
+  '/privilege_groups/remove_privileges_from_group': empty,
+  '/indexes/list': ok(['vector_idx']),
+  '/indexes/describe': ok([
+    {
+      indexName: 'vector_idx',
+      fieldName: 'vector',
+      indexType: 'AUTOINDEX',
+      metricType: 'COSINE',
+      indexState: 'Finished',
+      totalRows: 1,
+      pendingRows: 0,
+      indexedRows: 1,
+      failReason: '',
+      indexParams: [
+        { key: 'index_type', value: 'AUTOINDEX' },
+        { key: 'metric_type', value: 'COSINE' },
+      ],
+    },
+  ]),
+  '/indexes/create': empty,
+  '/indexes/drop': empty,
+  '/indexes/alter_properties': empty,
+  '/indexes/drop_properties': empty,
+  '/aliases/list': ok(['current_books']),
+  '/aliases/describe': ok({
+    dbName: 'default',
+    collectionName: 'books',
+    aliasName: 'current_books',
+  }),
+  '/aliases/create': empty,
+  '/aliases/drop': empty,
+  '/aliases/alter': empty,
+  '/jobs/import/list': ok({ records: [importJob] }),
+  '/jobs/import/create': ok({ jobId: importJob.jobId }),
+  '/jobs/import/get_progress': importProgress,
+  '/jobs/import/describe': importProgress,
+  '/jobs/import/commit': empty,
+  '/jobs/import/abort': empty,
+  '/jobs/snapshot/restore_external': ok({ jobId: snapshot.jobId }),
+  '/jobs/snapshot/export': ok({ jobId: snapshot.jobId }),
+  '/jobs/snapshot/export/describe': ok({
+    ...snapshot,
+    state: 'ExportSnapshotCompleted',
+    totalFiles: 1,
+    copiedFiles: 1,
+    totalBytes: 4096,
+    snapshotMetadataURI: requiredValues.snapshotMetadataURI,
+  }),
+  '/jobs/snapshot/describe': ok(restoredSnapshot),
+  '/jobs/snapshot/list': ok({ records: [restoredSnapshot] }),
+  '/snapshots/create': empty,
+  '/snapshots/drop': empty,
+  '/snapshots/list': {
+    ...ok(['books_backup']),
+    snapshotSummaries: [
+      {
+        name: 'books_backup',
+        description: 'Backup before migration',
+        createTs: '470574484684800000',
+        createUtcTs: '1795099200',
+      },
+    ],
+  },
+  '/snapshots/describe': ok({
+    snapshotName: 'books_backup',
+    description: 'Backup before migration',
+    collectionName: 'books',
+    partitionNames: ['_default', 'fiction'],
+    createTs: '470574484684800000',
+    s3Location: 's3://example-bucket/snapshots/books_backup/',
+  }),
+  '/snapshots/restore': ok({ jobId: '123456789' }),
+  '/snapshots/pin': ok({ pinId: '123456789' }),
+  '/snapshots/unpin': empty,
+  '/jobs/external_collection/refresh': ok({ jobId: externalRefresh.jobId }),
+  '/jobs/external_collection/describe': ok(externalRefresh),
+  '/jobs/external_collection/list': ok({ records: [externalRefresh] }),
+  '/resource_groups/create': empty,
+  '/resource_groups/drop': empty,
+  '/resource_groups/alter': empty,
+  '/resource_groups/describe': {
+    resource_group: {
+      name: 'catalog_queries',
+      capacity: 1,
+      num_available_node: 1,
+      num_loaded_replica: { books: 1 },
+      config: limits,
+      nodes: [
+        {
+          node_id: 12,
+          address: 'query-node-1:21123',
+          hostname: 'query-node-1',
+        },
+      ],
     },
   },
-  '/entities/query': {
-    code: 0,
-    data: [{ id: 1, title: 'The Left Hand of Darkness' }],
-  },
-  '/entities/search': {
-    code: 0,
-    data: [{ id: 1, distance: 0.98, title: 'The Left Hand of Darkness' }],
-  },
-  '/databases/list': { code: 0, data: ['default'] },
-  '/partitions/list': { code: 0, data: ['_default'] },
-  '/collections/has': { code: 0, data: { has: true } },
-  '/partitions/has': { code: 0, data: { has: true } },
-};
-export function exampleResponse(route: string): Body | undefined {
+  '/resource_groups/list': ok(['__default_resource_group', 'catalog_queries']),
+  '/resource_groups/transfer_replica': empty,
+  '/file_resources/add': empty,
+  '/file_resources/remove': empty,
+  '/file_resources/list': ok([
+    { id: '123456789', name: 'dictionary', path: requiredValues.path },
+  ]),
+  '/segments/describe': ok({
+    segmentInfos: [
+      {
+        segmentID: 123456791,
+        collectionID: 123456789,
+        partitionID: 123456790,
+        vChannel: 'by-dev-rootcoord-dml_0_123456789v0',
+        numRows: 1,
+        state: 4,
+        level: 2,
+        isSorted: true,
+        insertLogs: [{ fieldID: 100, logIDs: [123456792] }],
+        deltaLogs: [],
+        statsLogs: [{ fieldID: 100, logIDs: [123456793] }],
+      },
+    ],
+  }),
+  '/quotacenter/describe': ok(
+    '{"QueryNodeMetrics":{},"DataNodeMetrics":{},"ProxyMetrics":{},"DataCoordMetrics":null}'
+  ),
+  '/common/run_analyzer': ok({
+    results: [
+      {
+        tokens: [
+          { token: 'Vector' },
+          { token: 'search' },
+          { token: 'with' },
+          { token: 'Milvus' },
+        ],
+      },
+    ],
+  }),
+} satisfies Record<RestRoute, Body>;
+
+export function exampleResponse(route: RestRoute): Body {
   return responses[route];
 }
