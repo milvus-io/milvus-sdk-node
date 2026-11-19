@@ -16,8 +16,8 @@ const { operation, title, anchor, request, response } = Astro.props as {
     data-anchor={anchor}
     data-title={title}
     data-route={operationPath(operation)}
-    data-request={JSON.stringify(request, null, 2)}
-    data-response={JSON.stringify(response, null, 2)}></template>
+    data-example-request={JSON.stringify(request, null, 2)}
+    data-example-response={JSON.stringify(response, null, 2)}></template>
   <p class="rest-route">
     <strong>POST</strong>
     <code>{operationPath(operation)}</code>

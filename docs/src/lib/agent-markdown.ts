@@ -151,7 +151,8 @@ export function restMarkdown(content: Element, canonical: URL, hash: string) {
     examples[0];
   if (!selected) return undefined;
 
-  const { title, anchor, route, request, response } = selected.dataset;
+  const { title, anchor, route, exampleRequest, exampleResponse } =
+    selected.dataset;
   const panel = selected.parentElement!.querySelector('.rest-docs')!;
   const notes = documentationMarkdown(panel, canonical);
   return {
@@ -161,8 +162,8 @@ export function restMarkdown(content: Element, canonical: URL, hash: string) {
       `## [${title}](${new URL('#' + anchor, canonical).href})`,
       `\`POST ${route}\``,
       'Replace `https://your-cluster.example.com` with your Milvus endpoint. If authentication is enabled, send `Authorization: Bearer <MILVUS_TOKEN>`.',
-      '### Default request\n\n' + fenced(request!, 'json'),
-      '### Sample response\n\n' + fenced(response!, 'json'),
+      '### Default request\n\n' + fenced(exampleRequest!, 'json'),
+      '### Sample response\n\n' + fenced(exampleResponse!, 'json'),
       notes.body,
     ].join('\n\n'),
   };
