@@ -1,5 +1,6 @@
 ---
 title: 'Collection Management'
+description: "Create Milvus collections in Node.js, define and evolve their schemas, and manage loading, aliases, and collection functions."
 ---
 
 Collections are the primary data structure in Milvus, similar to tables in traditional databases. This guide covers all collection management operations.
@@ -828,7 +829,7 @@ await client.dropFunctionField({
 The older `dropCollectionFunction()` method does not provide this cascade and is
 deprecated for schema-evolution workflows.
 
-For more details on BM25 functions, see [Full-Text Search](/milvus-sdk-node/advanced/full-text-search).
+For more details on BM25 functions, see [Full-Text Search](/milvus-sdk-node/advanced/full-text-search/).
 
 ## Refresh Load
 
@@ -842,9 +843,9 @@ await client.refreshLoad({
 
 ## Next Steps
 
-- Learn about [Partition Management](./partition-management)
-- Explore [Index Management](./index-management)
-- Check out [Data Operations](/milvus-sdk-node/operations/data-operations-insert)
+- Learn about [Partition Management](/milvus-sdk-node/management/partition-management/)
+- Explore [Index Management](/milvus-sdk-node/management/index-management/)
+- Check out [Data Operations](/milvus-sdk-node/operations/data-operations-insert/)
 
 ## Function-field backfill
 

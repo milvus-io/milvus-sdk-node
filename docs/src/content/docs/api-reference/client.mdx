@@ -1,5 +1,6 @@
 ---
 title: 'MilvusClient'
+description: "Look up the MilvusClient constructor, authentication, connection options, database context, and client methods for gRPC in Node.js."
 ---
 
 `MilvusClient` is the main gRPC client for Milvus. It owns connection metadata, authentication, retry behavior, database context, and all high-level APIs exposed by the SDK.
@@ -264,10 +265,10 @@ const client = new MilvusClient({
 
 ## Related
 
-- [API Reference overview](/milvus-sdk-node/api-reference)
-- [Collection Operations](/milvus-sdk-node/api-reference/collections)
-- [Client Configuration](/milvus-sdk-node/core-concepts/client-configuration)
+- [API Reference overview](/milvus-sdk-node/api-reference/)
+- [Collection Operations](/milvus-sdk-node/api-reference/collections/)
+- [Client Configuration](/milvus-sdk-node/core-concepts/client-configuration/)
 
 ## Client telemetry (SDK 3.0.5)
 
-`telemetry` configures heartbeat reporting and is enabled by default. See [Client Telemetry](/milvus-sdk-node/advanced/client-telemetry) for defaults, collected information, disabling, and `getTelemetry()` inspection. `TelemetryConfig` is exported from the package root.
+`telemetry` configures heartbeat reporting and is enabled by default. See [Client Telemetry](/milvus-sdk-node/advanced/client-telemetry/) for defaults, collected information, disabling, and `getTelemetry()` inspection. `TelemetryConfig` is exported from the package root.

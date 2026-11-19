@@ -1,5 +1,6 @@
 ---
 title: "User & Role Operations"
+description: "Look up TypeScript methods for managing Milvus users and passwords, assigning roles, and granting or revoking privileges."
 ---
 
 User and role APIs manage Milvus authentication and RBAC authorization. Most methods return `ResStatus` directly or a response object with a `status` field. Check `error_code` before relying on the returned data.
@@ -636,6 +637,6 @@ revokeRoleFromUser(params: HttpUserRoleReq, options?: FetchOptions): Promise<Htt
 
 ## Related
 
-- [API Reference overview](/milvus-sdk-node/api-reference)
-- [User & Role Management guide](/milvus-sdk-node/management/user-role-management)
-- [Types & Enums](/milvus-sdk-node/api-reference/types-and-enums)
+- [API Reference overview](/milvus-sdk-node/api-reference/)
+- [User & Role Management guide](/milvus-sdk-node/management/user-role-management/)
+- [Types & Enums](/milvus-sdk-node/api-reference/types-and-enums/)

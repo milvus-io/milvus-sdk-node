@@ -614,4 +614,4 @@ See `README.md` for current method signatures and examples. Source lives under `
 - `DataType.Text = 25` requires StorageV3, has no `max_length`, and cannot be a primary/partition key or array element. Values are JavaScript strings.
 - `addFunctionField` backfills existing sealed segments asynchronously. Check `getCollectionStatistics().data.schema_version_consistent_segments` against `schema_version_total_segments`, then bound index readiness. Success of the schema RPC does not mean completion. `do_physical_backfill` is not a function-field option.
 - New index constants: `HNSW_SQ`, `HNSW_PQ`, `HNSW_PRQ`, `AISAQ`, `NGRAM`, `FMINDEX`; server availability varies.
-- Release details: https://milvus-io.github.io/milvus-sdk-node/reference/release-notes
+- Release details: https://milvus-io.github.io/milvus-sdk-node/reference/release-notes/

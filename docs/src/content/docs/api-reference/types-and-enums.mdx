@@ -1,5 +1,6 @@
 ---
 title: 'Types & Enums'
+description: "Look up Milvus Node.js SDK data types, consistency levels, error codes, and common request and response shapes."
 ---
 
 This page lists common SDK types and enums used across API requests and responses.
@@ -448,14 +449,14 @@ type PrivilegesTypes =
   | string;
 ```
 
-See [User & Role Operations](/milvus-sdk-node/api-reference/users-roles) for RBAC methods and examples.
+See [User & Role Operations](/milvus-sdk-node/api-reference/users-roles/) for RBAC methods and examples.
 
 ## Related
 
-- [API Reference overview](/milvus-sdk-node/api-reference)
-- [Data Types & Schemas guide](/milvus-sdk-node/core-concepts/data-types-schemas)
-- [Data Operations](/milvus-sdk-node/api-reference/data)
+- [API Reference overview](/milvus-sdk-node/api-reference/)
+- [Data Types & Schemas guide](/milvus-sdk-node/core-concepts/data-types-schemas/)
+- [Data Operations](/milvus-sdk-node/api-reference/data/)
 
 ## Membership-filter utilities (SDK 3.0.5)
 
-Package-root exports include `buildBloomFilter`, `BloomFilterBuilder`, `estimateBloomFilterSize`, the three `BLOOM_FILTER_*_FPR` constants, `buildRoaringBitmap`, `RoaringBitmapBuilder`, and the `RoaringBitmapMember` type. See [Membership Filters](../advanced/membership-filters) for signatures, binary `exprValues` examples, integer precision rules and approximate versus exact matching.
+Package-root exports include `buildBloomFilter`, `BloomFilterBuilder`, `estimateBloomFilterSize`, the three `BLOOM_FILTER_*_FPR` constants, `buildRoaringBitmap`, `RoaringBitmapBuilder`, and the `RoaringBitmapMember` type. See [Membership Filters](/milvus-sdk-node/advanced/membership-filters/) for signatures, binary `exprValues` examples, integer precision rules and approximate versus exact matching.

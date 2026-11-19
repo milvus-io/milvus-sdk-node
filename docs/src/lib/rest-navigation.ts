@@ -24,5 +24,5 @@ export const sdkMethods: Record<string, string> = {
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 export function restHref(slug?: string) {
-  return slug ? `${base}/rest-api/${slug}` : `${base}/rest-api`;
+  return `${base}/rest-api/${slug ? slug + '/' : ''}`;
 }

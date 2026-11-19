@@ -1,5 +1,6 @@
 ---
-title: Use HttpClient
+title: 'Use the HttpClient for Milvus REST Requests'
+description: "Choose the REST-based HttpClient for HTTP-only and serverless runtimes. Connect to Milvus, configure timeouts, and handle HTTP errors."
 ---
 
 ## HttpClient vs MilvusClient
@@ -27,23 +28,23 @@ console.log(data);
 
 ## Using HTTP Client in Serverless Environments
 
-See the deployment guides for [Cloudflare Workers](/milvus-sdk-node/advanced/cloudflare), [Vercel](/milvus-sdk-node/advanced/vercel), and [AWS Lambda](/milvus-sdk-node/advanced/aws-lambda).
+See the deployment guides for [Cloudflare Workers](/milvus-sdk-node/advanced/cloudflare/), [Vercel](/milvus-sdk-node/advanced/vercel/), and [AWS Lambda](/milvus-sdk-node/advanced/aws-lambda/).
 
 ## HTTP Client Configuration
 
-See the [constructor and per-request options](/milvus-sdk-node/api-reference/http-client#constructor) for database defaults, timeouts, and custom Fetch implementations.
+See the [constructor and per-request options](/milvus-sdk-node/api-reference/http-client/#constructor) for database defaults, timeouts, and custom Fetch implementations.
 
 ## Error Handling
 
-Catch [`HttpError`](/milvus-sdk-node/api-reference/http-client#errors) for non-2xx HTTP responses. Inspect the Milvus `code` in successful HTTP responses.
+Catch [`HttpError`](/milvus-sdk-node/api-reference/http-client/#errors) for non-2xx HTTP responses. Inspect the Milvus `code` in successful HTTP responses.
 
 ## Best Practices
 
-Use environment variables for credentials and reuse the client across requests in long-running services. See [Best Practices](/milvus-sdk-node/advanced/best-practices) for deployment advice.
+Use environment variables for credentials and reuse the client across requests in long-running services. See [Best Practices](/milvus-sdk-node/advanced/best-practices/) for deployment advice.
 
 ## Next Steps
 
-Use the [SDK reference](/milvus-sdk-node/api-reference/http-client) to look up TypeScript methods, or use the [REST explorer](/milvus-sdk-node/rest-api) to run a request directly.
+Use the [SDK reference](/milvus-sdk-node/api-reference/http-client/) to look up TypeScript methods, or use the [REST explorer](/milvus-sdk-node/rest-api/) to run a request directly.
 
 ## Operation shortcuts
 
@@ -53,16 +54,16 @@ Use the [SDK reference](/milvus-sdk-node/api-reference/http-client) to look up T
   >
     Why HTTP Client for Serverless?
   </a>
-- <a id="vercel-example" href="/milvus-sdk-node/advanced/vercel">
+- <a id="vercel-example" href="/milvus-sdk-node/advanced/vercel/">
     Vercel Example
   </a>
 - <a
     id="cloudflare-workers-example"
-    href="/milvus-sdk-node/advanced/cloudflare"
+    href="/milvus-sdk-node/advanced/cloudflare/"
   >
     Cloudflare Workers Example
   </a>
-- <a id="aws-lambda-example" href="/milvus-sdk-node/advanced/aws-lambda">
+- <a id="aws-lambda-example" href="/milvus-sdk-node/advanced/aws-lambda/">
     AWS Lambda Example
   </a>
 - <a id="serverless-best-practices" href="#best-practices">
@@ -70,178 +71,178 @@ Use the [SDK reference](/milvus-sdk-node/api-reference/http-client) to look up T
   </a>
 - <a
     id="collection-operations"
-    href="/milvus-sdk-node/api-reference/http-client#collection-apis"
+    href="/milvus-sdk-node/api-reference/http-client/#collection-apis"
   >
     Collection Operations
   </a>
 - <a
     id="create-collection"
-    href="/milvus-sdk-node/api-reference/http-client#createcollection"
+    href="/milvus-sdk-node/api-reference/http-client/#createcollection"
   >
     Create Collection
   </a>
-- <a id="list-collections" href="/milvus-sdk-node/rest-api/collections/list">
+- <a id="list-collections" href="/milvus-sdk-node/rest-api/collections/list/">
     List Collections
   </a>
 - <a
     id="describe-collection"
-    href="/milvus-sdk-node/rest-api/collections/describe"
+    href="/milvus-sdk-node/rest-api/collections/describe/"
   >
     Describe Collection
   </a>
 - <a
     id="drop-collection"
-    href="/milvus-sdk-node/api-reference/http-client#dropcollection"
+    href="/milvus-sdk-node/api-reference/http-client/#dropcollection"
   >
     Drop Collection
   </a>
 - <a
     id="vector-operations"
-    href="/milvus-sdk-node/api-reference/http-client#data-apis"
+    href="/milvus-sdk-node/api-reference/http-client/#data-apis"
   >
     Vector Operations
   </a>
 - <a
     id="insert-vectors"
-    href="/milvus-sdk-node/api-reference/http-client#insert"
+    href="/milvus-sdk-node/api-reference/http-client/#insert"
   >
     Insert Vectors
   </a>
-- <a id="search-vectors" href="/milvus-sdk-node/rest-api/entities/search">
+- <a id="search-vectors" href="/milvus-sdk-node/rest-api/entities/search/">
     Search Vectors
   </a>
-- <a id="query-vectors" href="/milvus-sdk-node/rest-api/entities/query">
+- <a id="query-vectors" href="/milvus-sdk-node/rest-api/entities/query/">
     Query Vectors
   </a>
 - <a
     id="delete-vectors"
-    href="/milvus-sdk-node/api-reference/http-client#delete"
+    href="/milvus-sdk-node/api-reference/http-client/#delete"
   >
     Delete Vectors
   </a>
 - <a
     id="index-operations"
-    href="/milvus-sdk-node/api-reference/http-client#index-apis"
+    href="/milvus-sdk-node/api-reference/http-client/#index-apis"
   >
     Index Operations
   </a>
 - <a
     id="create-index"
-    href="/milvus-sdk-node/api-reference/http-client#createindex"
+    href="/milvus-sdk-node/api-reference/http-client/#createindex"
   >
     Create Index
   </a>
 - <a
     id="describe-index"
-    href="/milvus-sdk-node/api-reference/http-client#describeindex"
+    href="/milvus-sdk-node/api-reference/http-client/#describeindex"
   >
     Describe Index
   </a>
 - <a
     id="list-indexes"
-    href="/milvus-sdk-node/api-reference/http-client#listindexes"
+    href="/milvus-sdk-node/api-reference/http-client/#listindexes"
   >
     List Indexes
   </a>
 - <a
     id="drop-index"
-    href="/milvus-sdk-node/api-reference/http-client#dropindex"
+    href="/milvus-sdk-node/api-reference/http-client/#dropindex"
   >
     Drop Index
   </a>
 - <a
     id="partition-operations"
-    href="/milvus-sdk-node/api-reference/http-client#partition-apis"
+    href="/milvus-sdk-node/api-reference/http-client/#partition-apis"
   >
     Partition Operations
   </a>
 - <a
     id="create-partition"
-    href="/milvus-sdk-node/api-reference/http-client#createpartition"
+    href="/milvus-sdk-node/api-reference/http-client/#createpartition"
   >
     Create Partition
   </a>
 - <a
     id="list-partitions"
-    href="/milvus-sdk-node/api-reference/http-client#listpartitions"
+    href="/milvus-sdk-node/api-reference/http-client/#listpartitions"
   >
     List Partitions
   </a>
 - <a
     id="drop-partition"
-    href="/milvus-sdk-node/api-reference/http-client#droppartition"
+    href="/milvus-sdk-node/api-reference/http-client/#droppartition"
   >
     Drop Partition
   </a>
 - <a
     id="alias-operations"
-    href="/milvus-sdk-node/api-reference/http-client#alias-apis"
+    href="/milvus-sdk-node/api-reference/http-client/#alias-apis"
   >
     Alias Operations
   </a>
 - <a
     id="create-alias"
-    href="/milvus-sdk-node/api-reference/http-client#createalias"
+    href="/milvus-sdk-node/api-reference/http-client/#createalias"
   >
     Create Alias
   </a>
 - <a
     id="list-aliases"
-    href="/milvus-sdk-node/api-reference/http-client#listaliases"
+    href="/milvus-sdk-node/api-reference/http-client/#listaliases"
   >
     List Aliases
   </a>
 - <a
     id="drop-alias"
-    href="/milvus-sdk-node/api-reference/http-client#dropalias"
+    href="/milvus-sdk-node/api-reference/http-client/#dropalias"
   >
     Drop Alias
   </a>
 - <a
     id="import-operations"
-    href="/milvus-sdk-node/api-reference/http-client#import-apis"
+    href="/milvus-sdk-node/api-reference/http-client/#import-apis"
   >
     Import Operations
   </a>
 - <a
     id="import-data"
-    href="/milvus-sdk-node/api-reference/http-client#createimportjobs"
+    href="/milvus-sdk-node/api-reference/http-client/#createimportjobs"
   >
     Import Data
   </a>
 - <a
     id="user-operations"
-    href="/milvus-sdk-node/api-reference/http-client#user-and-role-apis"
+    href="/milvus-sdk-node/api-reference/http-client/#user-and-role-apis"
   >
     User Operations
   </a>
 - <a
     id="create-user"
-    href="/milvus-sdk-node/api-reference/http-client#createuser"
+    href="/milvus-sdk-node/api-reference/http-client/#createuser"
   >
     Create User
   </a>
 - <a
     id="list-users"
-    href="/milvus-sdk-node/api-reference/http-client#listusers"
+    href="/milvus-sdk-node/api-reference/http-client/#listusers"
   >
     List Users
   </a>
 - <a
     id="role-operations"
-    href="/milvus-sdk-node/api-reference/http-client#user-and-role-apis"
+    href="/milvus-sdk-node/api-reference/http-client/#user-and-role-apis"
   >
     Role Operations
   </a>
 - <a
     id="create-role"
-    href="/milvus-sdk-node/api-reference/http-client#createrole"
+    href="/milvus-sdk-node/api-reference/http-client/#createrole"
   >
     Create Role
   </a>
 - <a
     id="list-roles"
-    href="/milvus-sdk-node/api-reference/http-client#listroles"
+    href="/milvus-sdk-node/api-reference/http-client/#listroles"
   >
     List Roles
   </a>

@@ -8,7 +8,7 @@ Official Node.js SDK for [Milvus](https://github.com/milvus-io/milvus) vector da
 [![downloads](https://img.shields.io/npm/dw/@zilliz/milvus2-sdk-node)](https://www.npmjs.com/package/@zilliz/milvus2-sdk-node)
 [![codecov](https://codecov.io/gh/milvus-io/milvus-sdk-node/branch/main/graph/badge.svg?token=Zu5FwWstwI)](https://codecov.io/gh/milvus-io/milvus-sdk-node)
 
-Documentation: [Guides & API reference](https://milvus-io.github.io/milvus-sdk-node/) · [3.0.5 release notes](https://milvus-io.github.io/milvus-sdk-node/reference/release-notes)
+Documentation: [Guides & API reference](https://milvus-io.github.io/milvus-sdk-node/) · [3.0.5 release notes](https://milvus-io.github.io/milvus-sdk-node/reference/release-notes/)
 
 The latest documented release is **3.0.5**. New features include Bloom/Roaring membership helpers, client telemetry (enabled by default), and six additional index enum values. SDK 3.0.4 also added Text fields and asynchronous function-field backfill.
 
@@ -945,7 +945,7 @@ For detailed guides on advanced features, visit the documentation:
 
 ## Links
 
-- [Full Documentation](https://milvus-io.github.io/milvus-sdk-node)
+- [Full Documentation](https://milvus-io.github.io/milvus-sdk-node/)
 - [Milvus Documentation](https://milvus.io/docs)
 - [GitHub Repository](https://github.com/milvus-io/milvus-sdk-node)
 - [Zilliz Cloud](https://cloud.zilliz.com/)

@@ -1,5 +1,6 @@
 ---
 title: 'Contributing'
+description: "Set up the Milvus Node.js SDK development environment, run tests, submit a signed-off pull request, and build the docs site."
 ---
 
 Thank you for your interest in contributing to the Milvus Node.js SDK!
@@ -82,9 +83,9 @@ Please follow the [Code of Conduct](https://github.com/milvus-io/milvus-sdk-node
 
 ## Next Steps
 
-- Read [Best Practices](/milvus-sdk-node/advanced/best-practices)
-- Check [API Reference](/milvus-sdk-node/api-reference)
-- Explore [Examples & Tutorials](/milvus-sdk-node/getting-started/examples-tutorials)
+- Read [Best Practices](/milvus-sdk-node/advanced/best-practices/)
+- Check [API Reference](/milvus-sdk-node/api-reference/)
+- Explore [Examples & Tutorials](/milvus-sdk-node/getting-started/examples-tutorials/)
 
 ## Build and preview the documentation site
 
@@ -98,4 +99,6 @@ npm run doc:dev
 
 The site uses Astro/Starlight and writes production output to `docs/out/`. Edit MDX under `docs/src/content/docs/`; `npm run doc` preserves these source files. For production preview, run `npm --prefix docs run preview` after building. Use Node.js 22.23.4 or newer for the current locked Astro version; the documentation toolchain can require a newer runtime than the SDK.
 
-When releasing, compare the published tag with the last documented version, update guides and API reference, add release notes, and synchronize README compatibility and `llms.txt`. Verify example imports against package exports and check site links after building.
+The production build checks internal links and heading fragments against the generated pages and verifies canonical URLs, metadata, and the sitemap.
+
+When releasing, compare the published tag with the last documented version, update guides and API reference, add release notes, and synchronize README compatibility and `llms.txt`. Verify example imports against package exports.

@@ -1,5 +1,6 @@
 ---
 title: 'HttpClient'
+description: "Look up the Node.js HttpClient constructor, camelCase request fields, HttpError, and TypeScript methods backed by the Milvus REST API."
 ---
 
 `HttpClient` is the REST client exported by `@zilliz/milvus2-sdk-node`. Use it when an environment prefers HTTP over gRPC, such as serverless platforms, HTTP-only runtimes, or proxy-restricted deployments.
@@ -103,7 +104,7 @@ const { code, data } = await client.describeCollection({
 
 Returns a Milvus response envelope with collection metadata, including schema fields, indexes, and load state.
 
-[Try the REST operation](/milvus-sdk-node/rest-api/collections/describe).
+[Try the REST operation](/milvus-sdk-node/rest-api/collections/describe/).
 
 ### dropCollection
 
@@ -149,7 +150,7 @@ const { code, data } = await client.listCollections({ dbName: 'default' });
 
 Returns a Milvus response envelope with collection names as a string array.
 
-[Try the REST operation](/milvus-sdk-node/rest-api/collections/list).
+[Try the REST operation](/milvus-sdk-node/rest-api/collections/list/).
 
 ### hasCollection
 
@@ -263,7 +264,7 @@ const { code, data } = await client.query({
 
 Returns a Milvus response envelope with matching rows.
 
-[Try the REST operation](/milvus-sdk-node/rest-api/entities/query).
+[Try the REST operation](/milvus-sdk-node/rest-api/entities/query/).
 
 ### search
 
@@ -285,7 +286,7 @@ const { code, data } = await client.search({
 
 Returns a Milvus response envelope with search hits with IDs, distances, and requested fields. The aggregation overload takes `HttpVectorSearchAggregationReq` and returns `HttpVectorSearchAggregationResponse` with buckets.
 
-[Try the REST operation](/milvus-sdk-node/rest-api/entities/search).
+[Try the REST operation](/milvus-sdk-node/rest-api/entities/search/).
 
 ### hybridSearch
 
@@ -685,6 +686,6 @@ try {
 
 ## Related
 
-- [HTTP Client guide](/milvus-sdk-node/advanced/http-client)
-- [MilvusClient](/milvus-sdk-node/api-reference/client)
-- [BulkWriter](/milvus-sdk-node/api-reference/bulk-writer)
+- [HTTP Client guide](/milvus-sdk-node/advanced/http-client/)
+- [MilvusClient](/milvus-sdk-node/api-reference/client/)
+- [BulkWriter](/milvus-sdk-node/api-reference/bulk-writer/)

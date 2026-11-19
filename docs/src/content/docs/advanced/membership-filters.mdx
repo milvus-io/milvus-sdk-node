@@ -1,5 +1,6 @@
 ---
 title: 'Bloom and Roaring Membership Filters'
+description: "Encode large membership sets in Node.js with Bloom or Roaring filters and use them in Milvus Query and Search expressions."
 ---
 
 SDK 3.0.5 exports helpers that encode large membership sets as binary filter parameters for the gRPC client. Your Milvus deployment must support `bloom_match` or `roaring_match`; upgrading the SDK alone does not add these server expressions.
@@ -83,4 +84,4 @@ const bloom = new BloomFilterBuilder(2).addInt64(1).addInt64(2).build();
 const roaring = new RoaringBitmapBuilder().addMany([1, 2]).build();
 ```
 
-See [Query & Search](/milvus-sdk-node/operations/data-operations-query) for combining these predicates with other filters.
+See [Query & Search](/milvus-sdk-node/operations/data-operations-query/) for combining these predicates with other filters.

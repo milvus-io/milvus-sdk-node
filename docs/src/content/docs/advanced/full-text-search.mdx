@@ -1,5 +1,6 @@
 ---
 title: 'Full-Text Search'
+description: "Build BM25 full-text search in Milvus by configuring an analyzer and a function that turns text into searchable sparse vectors."
 ---
 
 Full-text search enables keyword-based text retrieval using BM25 scoring. Milvus supports this through **collection functions** that automatically tokenize text and convert it to sparse vectors at insert and query time.
@@ -338,5 +339,5 @@ await client.dropFunctionField({
 
 ## Next Steps
 
-- Learn about [Hybrid Search](/milvus-sdk-node/operations/hybrid-search) for combining full-text with vector search
-- Explore [Data Types & Schemas](/milvus-sdk-node/core-concepts/data-types-schemas) for SparseFloatVector details
+- Learn about [Hybrid Search](/milvus-sdk-node/operations/hybrid-search/) for combining full-text with vector search
+- Explore [Data Types & Schemas](/milvus-sdk-node/core-concepts/data-types-schemas/) for SparseFloatVector details
