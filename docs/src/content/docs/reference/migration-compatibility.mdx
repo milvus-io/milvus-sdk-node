@@ -1,5 +1,6 @@
 ---
 title: 'Migration & Compatibility'
+description: "Check Milvus Node.js SDK and server compatibility, review breaking changes, and plan upgrades."
 ---
 
 This guide covers version compatibility, migration paths, and breaking changes.
@@ -83,22 +84,22 @@ The following SDK features require a Milvus 3.0 server. They are marked with the
 
 | Area                           | SDK surface                                                                                                                                                                                                                   | Docs                                                                                                                                                               |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| External collections           | `external_source`, `external_spec`, `do_physical_backfill`, `file_resource_ids`, field-level `external_field`, `refreshExternalCollection()`, `getRefreshExternalCollectionProgress()`, `listRefreshExternalCollectionJobs()` | [Collection Management](../management/collection-management), [Collection Operations](../api-reference/collections)                                                |
-| Collection snapshots           | `createSnapshot()`, `dropSnapshot()`, `listSnapshots()`, `describeSnapshot()`, `restoreSnapshot()`, `getRestoreSnapshotState()`, `listRestoreSnapshotJobs()`, `pinSnapshotData()`, `unpinSnapshotData()`                      | [Collection Management](../management/collection-management), [Collection Operations](../api-reference/collections)                                                |
-| Advanced StructArray           | Struct child schemas, nullable rows, dynamic nullable fields, child-field indexes, `element_filter`, element-level query/search/iterator offsets                                                                              | [Data Types & Schemas](../core-concepts/data-types-schemas#structarray), [Query & Search](../operations/data-operations-query#structarray-element-filters)         |
-| Query aggregation              | `group_by_fields`, aggregation expressions `count`, `min`, `max`, `sum`, and `avg` in `output_fields`                                                                                                                         | [Query & Search](../operations/data-operations-query#query-aggregation), [Data Operations](../api-reference/data#query-aggregation)                                |
-| Search aggregation             | `search_aggregation`, bucket metrics, ordering, top hits, nested aggregation, typed `agg_buckets`                                                                                                                             | [Query & Search](../operations/data-operations-query#search-aggregation), [Data Operations](../api-reference/data#search-aggregation)                              |
-| Partial array upsert           | `upsert({ field_ops })`, `FieldPartialUpdateOpType.REPLACE`, `ARRAY_APPEND`, `ARRAY_REMOVE`                                                                                                                                   | [Insert & Update](../operations/data-operations-insert), [Data Operations](../api-reference/data)                                                                  |
-| Element-level result metadata  | Query/search result `offset`; grouped search `group_by_field_values`                                                                                                                                                          | [Query & Search](../operations/data-operations-query), [Data Operations](../api-reference/data)                                                                    |
-| Schema and function management | `addCollectionField()`, `addCollectionFields()`, `dropCollectionField()`, `alterCollectionSchema()`, `addFunctionField()`, `dropFunctionField()`                                                                              | [Collection Management](../management/collection-management#dynamic-schema), [Collection Operations](../api-reference/collections#schema-mutation)                 |
-| MinHash function and index     | `FunctionType.MINHASH`, `IndexType.MINHASH_LSH`, `MetricType.MHJACCARD`, atomic function-field/index creation                                                                                                                 | [Collection Management](../management/collection-management#add-a-function-output-field-and-index), [Index Management](../management/index-management#minhash_lsh) |
-| Analyzer file resources        | `addFileResource()`, `listFileResources()`, `removeFileResource()`                                                                                                                                                            | [Full-Text Search](../advanced/full-text-search#custom-dictionary-files), [System Operations](../api-reference/system#file-resources)                              |
+| External collections           | `external_source`, `external_spec`, `do_physical_backfill`, `file_resource_ids`, field-level `external_field`, `refreshExternalCollection()`, `getRefreshExternalCollectionProgress()`, `listRefreshExternalCollectionJobs()` | [Collection Management](/milvus-sdk-node/management/collection-management/), [Collection Operations](/milvus-sdk-node/api-reference/collections/)                                                |
+| Collection snapshots           | `createSnapshot()`, `dropSnapshot()`, `listSnapshots()`, `describeSnapshot()`, `restoreSnapshot()`, `getRestoreSnapshotState()`, `listRestoreSnapshotJobs()`, `pinSnapshotData()`, `unpinSnapshotData()`                      | [Collection Management](/milvus-sdk-node/management/collection-management/), [Collection Operations](/milvus-sdk-node/api-reference/collections/)                                                |
+| Advanced StructArray           | Struct child schemas, nullable rows, dynamic nullable fields, child-field indexes, `element_filter`, element-level query/search/iterator offsets                                                                              | [Data Types & Schemas](/milvus-sdk-node/core-concepts/data-types-schemas/#structarray), [Query & Search](/milvus-sdk-node/operations/data-operations-query/#structarray-element-filters)         |
+| Query aggregation              | `group_by_fields`, aggregation expressions `count`, `min`, `max`, `sum`, and `avg` in `output_fields`                                                                                                                         | [Query & Search](/milvus-sdk-node/operations/data-operations-query/#query-aggregation), [Data Operations](/milvus-sdk-node/api-reference/data/#query-aggregation)                                |
+| Search aggregation             | `search_aggregation`, bucket metrics, ordering, top hits, nested aggregation, typed `agg_buckets`                                                                                                                             | [Query & Search](/milvus-sdk-node/operations/data-operations-query/#search-aggregation), [Data Operations](/milvus-sdk-node/api-reference/data/#search-aggregation)                              |
+| Partial array upsert           | `upsert({ field_ops })`, `FieldPartialUpdateOpType.REPLACE`, `ARRAY_APPEND`, `ARRAY_REMOVE`                                                                                                                                   | [Insert & Update](/milvus-sdk-node/operations/data-operations-insert/), [Data Operations](/milvus-sdk-node/api-reference/data/)                                                                  |
+| Element-level result metadata  | Query/search result `offset`; grouped search `group_by_field_values`                                                                                                                                                          | [Query & Search](/milvus-sdk-node/operations/data-operations-query/), [Data Operations](/milvus-sdk-node/api-reference/data/)                                                                    |
+| Schema and function management | `addCollectionField()`, `addCollectionFields()`, `dropCollectionField()`, `alterCollectionSchema()`, `addFunctionField()`, `dropFunctionField()`                                                                              | [Collection Management](/milvus-sdk-node/management/collection-management/#dynamic-schema), [Collection Operations](/milvus-sdk-node/api-reference/collections/#schema-mutation)                 |
+| MinHash function and index     | `FunctionType.MINHASH`, `IndexType.MINHASH_LSH`, `MetricType.MHJACCARD`, atomic function-field/index creation                                                                                                                 | [Collection Management](/milvus-sdk-node/management/collection-management/#add-a-function-output-field-and-index), [Index Management](/milvus-sdk-node/management/index-management/#minhash_lsh) |
+| Analyzer file resources        | `addFileResource()`, `listFileResources()`, `removeFileResource()`                                                                                                                                                            | [Full-Text Search](/milvus-sdk-node/advanced/full-text-search/#custom-dictionary-files), [System Operations](/milvus-sdk-node/api-reference/system/#file-resources)                              |
 
 Not all Milvus 3.0 proto additions are public Node SDK APIs yet. WAL dump/data-salvage APIs, `ComputePhraseMatchSlop`, `BatchUpdateManifest`, and full molecular data helpers are currently proto-level/internal surfaces unless explicitly exposed in a later SDK release.
 
 ## SDK 3.0.4–3.0.5 additions
 
-See [Release Notes](/milvus-sdk-node/reference/release-notes) for Text fields, asynchronous function-field backfill, membership-filter builders, additional index enums and public client telemetry.
+See [Release Notes](/milvus-sdk-node/reference/release-notes/) for Text fields, asynchronous function-field backfill, membership-filter builders, additional index enums and public client telemetry.
 
 ## Breaking Changes
 
@@ -229,12 +230,12 @@ client.alterCollectionProperties({
 
 If you encounter issues during migration:
 
-1. Check [Troubleshooting](./troubleshooting)
+1. Check [Troubleshooting](/milvus-sdk-node/reference/troubleshooting/)
 2. Review [GitHub Issues](https://github.com/milvus-io/milvus-sdk-node/issues)
 3. Consult [Milvus Documentation](https://milvus.io/docs)
 
 ## Next Steps
 
-- Review [Best Practices](../advanced/best-practices)
-- Check [API Reference](../api-reference)
-- Explore [Examples & Tutorials](../getting-started/examples-tutorials)
+- Review [Best Practices](/milvus-sdk-node/advanced/best-practices/)
+- Check [API Reference](/milvus-sdk-node/api-reference/)
+- Explore [Examples & Tutorials](/milvus-sdk-node/getting-started/examples-tutorials/)

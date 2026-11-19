@@ -1,5 +1,6 @@
 ---
 title: "Hybrid Search"
+description: "Combine multiple vector searches across different fields in Milvus and rerank the results with weighted or reciprocal rank fusion."
 ---
 
 Hybrid search combines multiple vector similarity searches across different vector fields and merges the results using a reranking strategy. This is useful when your data has multiple vector representations (e.g., dense + sparse vectors, or text + image embeddings).
@@ -227,6 +228,6 @@ await client.dropCollection({ collection_name: 'hybrid_demo' });
 
 ## Next Steps
 
-- Learn about [Full-Text Search](/milvus-sdk-node/advanced/full-text-search) for text-based hybrid search
-- Explore [Iterators](/milvus-sdk-node/operations/iterators) for paginating large result sets
-- Check [Query & Search](/milvus-sdk-node/operations/data-operations-query) for standard search operations
+- Learn about [Full-Text Search](/milvus-sdk-node/advanced/full-text-search/) for text-based hybrid search
+- Explore [Iterators](/milvus-sdk-node/operations/iterators/) for paginating large result sets
+- Check [Query & Search](/milvus-sdk-node/operations/data-operations-query/) for standard search operations

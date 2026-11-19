@@ -16,21 +16,21 @@ const breadcrumbs: Array<{ label: string; href?: string }> =
   section === 'api-reference'
     ? id === 'api-reference' || id === 'api-reference/index'
       ? []
-      : [{ label: 'SDK Reference', href: base + '/api-reference' }]
+      : [{ label: 'SDK Reference', href: base + '/api-reference/' }]
     : isHome || section === 'rest-api'
       ? []
       : [
-          { label: 'Guides', href: base + '/getting-started/getting-started' },
+          { label: 'Guides', href: base + '/getting-started/getting-started/' },
           ...(sectionGroup && sectionGroup.label !== title
             ? [{ label: sectionGroup.label }]
             : []),
         ];
 if (id.startsWith('rest-api/')) {
-  breadcrumbs.push({ label: 'REST API', href: base + '/rest-api' });
+  breadcrumbs.push({ label: 'REST API', href: base + '/rest-api/' });
   if (sectionGroup)
     breadcrumbs.push({
       label: sectionGroup.label,
-      href: `${base}/rest-api#${id.split('/')[1]}`,
+      href: `${base}/rest-api/#${id.split('/')[1]}`,
     });
 }
 const currentLabel = isHome ? 'Quickstart' : title;

@@ -3,36 +3,43 @@ import '@fontsource-variable/geist/wght.css';
 import { ClientRouter } from 'astro:transitions';
 import '@fontsource-variable/geist-mono/wght.css';
 
-const { head, id } = Astro.locals.starlightRoute;
-const isRest = id === 'rest-api' || id.startsWith('rest-api/');
+const { head, id, entry } = Astro.locals.starlightRoute;
+const isRestOperation = id.startsWith('rest-api/');
+const title =
+  Astro.url.pathname === import.meta.env.BASE_URL || id === 'rest-api'
+    ? entry.data.title
+    : isRestOperation
+      ? `${entry.data.title} – Milvus REST API`
+      : undefined;
 ---
 
 {
-  head.map(({ tag: Tag, attrs, content }) => (
-    <Tag {...attrs} set:html={content} />
-  ))
+  head.map(({ tag: Tag, attrs, content }) => {
+    if (
+      id === '404' &&
+      ((Tag === 'link' && attrs?.rel === 'canonical') ||
+        (Tag === 'meta' && attrs?.property === 'og:url'))
+    )
+      return null;
+    if (title && Tag === 'title') return <title>{title}</title>;
+    if (title && Tag === 'meta' && attrs?.property === 'og:title')
+      return <meta property="og:title" content={title} />;
+    return <Tag {...attrs} set:html={content} />;
+  })
 }
-{
-  isRest ? (
-    <ClientRouter fallback="swap" />
-  ) : (
-    <>
-      <script
-        is:inline
-        async
-        src="https://www.googletagmanager.com/gtag/js?id=G-HLMZXDSQYF"
-      />
-      <script
-        is:inline
-        set:html={`
-  window.dataLayer = window.dataLayer || [];
-  function gtag() {
-    dataLayer.push(arguments);
+{(id === 'rest-api' || isRestOperation) && <ClientRouter fallback="swap" />}
+<script is:inline>
+  // GA4 Enhanced Measurement records Astro's history navigation automatically.
+  if (!window.gtag) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () {
+      window.dataLayer.push(arguments);
+    };
+    window.gtag('js', new Date());
+    window.gtag('config', 'G-HLMZXDSQYF');
   }
-  gtag('js', new Date());
-  gtag('config', 'G-HLMZXDSQYF');
-`}
-      />
-    </>
-  )
-}
+</script>
+<script
+  is:inline
+  async
+  src="https://www.googletagmanager.com/gtag/js?id=G-HLMZXDSQYF"></script>

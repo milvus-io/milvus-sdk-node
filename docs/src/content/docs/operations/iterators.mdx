@@ -1,5 +1,6 @@
 ---
 title: "Iterators"
+description: "Read large Milvus result sets in batches with the Node.js query and search iterators, and close iterators when finished."
 ---
 
 Iterators allow you to paginate through large result sets that exceed the `topk` limit (16,384). Instead of retrieving all results at once, iterators fetch data in configurable batches.
@@ -155,8 +156,8 @@ await client.dropCollection({ collection_name: 'iterator_demo' });
 
 ## Next Steps
 
-- Learn about [Hybrid Search](/milvus-sdk-node/operations/hybrid-search) for multi-vector search
-- Explore [Query & Search](/milvus-sdk-node/operations/data-operations-query) for standard operations
+- Learn about [Hybrid Search](/milvus-sdk-node/operations/hybrid-search/) for multi-vector search
+- Explore [Query & Search](/milvus-sdk-node/operations/data-operations-query/) for standard operations
 
 ## Commit
 

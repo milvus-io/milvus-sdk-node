@@ -33,7 +33,7 @@ const API_REFERENCE_LINKS: SidebarLinkConfig[] = [
 ];
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-const guidesHref = `${basePath}/getting-started/getting-started`;
+const guidesHref = `${basePath}/getting-started/getting-started/`;
 
 function normalizeSlug(slug: string) {
   return slug === 'api-reference/index' ? 'api-reference' : slug;
@@ -50,7 +50,7 @@ function makeSidebarLink(
   return {
     type: 'link',
     label,
-    href: `${basePath}/${slug}`,
+    href: `${basePath}/${slug}/`,
     isCurrent: currentSlug === slug,
     badge: undefined,
     attrs: {},

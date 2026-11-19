@@ -1,0 +1,22 @@
+---
+const target = `${import.meta.env.BASE_URL}advanced/http-client/`;
+const canonical = new URL(target, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Use HttpClient – Milvus Node.js SDK</title>
+    <link rel="canonical" href={canonical} />
+    <script is:inline define:vars={{ target }}>
+      location.replace(target + location.hash);
+    </script>
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+  </head>
+  <body>
+    <p>
+      This guide has moved. <a href={target}>Open the HTTP client guide</a>.
+    </p>
+  </body>
+</html>

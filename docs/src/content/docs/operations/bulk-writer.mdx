@@ -1,5 +1,6 @@
 ---
 title: "BulkWriter & Bulk Import"
+description: "Generate JSON or Parquet files with BulkWriter, upload them to object storage, and submit a Milvus bulk import from Node.js."
 ---
 
 Generate Milvus-compatible files (JSON/Parquet) on the client side and import them via `bulkInsert`. This bypasses the WAL and real-time indexing pipeline, making it ideal for large-scale offline data loading.

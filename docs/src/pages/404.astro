@@ -8,12 +8,11 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
     description:
       'The requested page is unavailable. Start from the SDK documentation home.',
     pagefind: false,
+    head: [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex' } }],
   }}
 >
   <p>The page you are looking for could not be found.</p>
   <p>
-    <a href={`${import.meta.env.BASE_URL}/`}
-      >Go back to the documentation home</a
-    >.
+    <a href={import.meta.env.BASE_URL}>Go back to the documentation home</a>.
   </p>
 </StarlightPage>

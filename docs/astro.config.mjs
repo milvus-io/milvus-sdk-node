@@ -1,17 +1,22 @@
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 import starlight from '@astrojs/starlight';
+import { checkSiteLinks } from './scripts/check-site-links.mjs';
 
+const site = 'https://milvus-io.github.io';
 const docs = '/milvus-sdk-node';
 
 export default defineConfig({
-  site: 'https://milvus-io.github.io',
+  site,
   base: docs,
-  trailingSlash: 'never',
+  trailingSlash: 'always',
   outDir: './out',
   integrations: [
+    sitemap({
+      filter: (url) => new URL(url).pathname !== `${docs}/http-client/`,
+    }),
     starlight({
-      title: 'Node SDK',
-      description: 'The official Milvus client for Node.js',
+      title: 'Milvus Node.js SDK',
       social: [],
       favicon: '/icon.svg',
       logo: {
@@ -178,5 +183,16 @@ export default defineConfig({
         },
       ],
     }),
+    {
+      name: 'check-site-links',
+      hooks: {
+        'astro:build:done': async ({ dir, logger }) => {
+          const pages = await checkSiteLinks(dir, new URL(docs + '/', site));
+          logger.info(
+            `Verified ${pages} HTML pages, internal links, and sitemap URLs.`
+          );
+        },
+      },
+    },
   ],
 });

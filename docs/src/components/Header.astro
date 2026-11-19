@@ -7,9 +7,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const { siteTitleHref, hasSidebar } = Astro.locals.starlightRoute;
 const section = Astro.url.pathname.slice(base.length).split('/')[1];
 const links = [
-  ['Guides', '/getting-started/getting-started', 'guides'],
-  ['SDK Reference', '/api-reference', 'api-reference'],
-  ['REST API', '/rest-api', 'rest-api'],
+  ['Guides', '/getting-started/getting-started/', 'guides'],
+  ['SDK Reference', '/api-reference/', 'api-reference'],
+  ['REST API', '/rest-api/', 'rest-api'],
 ].map(([label, href, group]) => ({
   label,
   href: base + href,
