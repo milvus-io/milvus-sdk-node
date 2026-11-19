@@ -1,0 +1,27 @@
+<div class="rest-connection">
+  <label>
+    Endpoint
+    <input
+      id="rest-endpoint"
+      type="url"
+      placeholder="https://your-cluster.example.com"
+      autocomplete="off"
+    />
+  </label>
+  <label>
+    Bearer token (optional)
+    <input
+      id="rest-token"
+      type="password"
+      autocomplete="off"
+      spellcheck="false"
+    />
+  </label>
+  <label>
+    Collection from list response
+    <select id="rest-collection" disabled>
+      <option value="">Run List collections to choose a collection</option>
+    </select>
+  </label>
+  <p role="status" id="rest-selection-status"></p>
+</div>

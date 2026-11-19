@@ -31,7 +31,7 @@ const API_REFERENCE_LINKS: SidebarLinkConfig[] = [
 ];
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-const guidesHref = basePath || '/';
+const guidesHref = `${basePath}/getting-started/getting-started`;
 
 function normalizeSlug(slug: string) {
   return slug === 'api-reference/index' ? 'api-reference' : slug;
@@ -70,7 +70,7 @@ function getApiReferencePagination(links: SidebarLink[]) {
 function getGuidesLink(): SidebarLink {
   return {
     type: 'link',
-    label: '← Guides',
+    label: 'Guides',
     href: guidesHref,
     isCurrent: false,
     badge: undefined,
@@ -88,6 +88,21 @@ export const onRequest = defineRouteMiddleware(async (context, next) => {
 
   const currentSlug = normalizeSlug(route.id);
 
+  if (currentSlug === 'rest-api') {
+    route.sidebar = [
+      makeApiReferenceLink(currentSlug, {
+        slug: 'rest-api',
+        label: 'REST explorer',
+      }),
+      makeApiReferenceLink(currentSlug, {
+        slug: 'api-reference/http-client',
+        label: 'HttpClient reference',
+      }),
+    ];
+    route.pagination = { prev: undefined, next: undefined };
+    return;
+  }
+
   if (!isApiReferenceRoute(currentSlug)) {
     return;
   }
@@ -100,7 +115,7 @@ export const onRequest = defineRouteMiddleware(async (context, next) => {
     getGuidesLink(),
     {
       type: 'group',
-      label: 'API Reference',
+      label: 'SDK Reference',
       entries: links,
       collapsed: false,
       badge: undefined,

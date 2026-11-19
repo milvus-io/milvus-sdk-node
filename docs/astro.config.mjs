@@ -52,7 +52,7 @@ export default defineConfig({
         },
         {
           label: 'Core Concepts',
-          collapsed: false,
+          collapsed: true,
           items: [
             {
               slug: 'core-concepts/client-configuration',
@@ -66,7 +66,7 @@ export default defineConfig({
         },
         {
           label: 'Data Operations',
-          collapsed: false,
+          collapsed: true,
           items: [
             {
               slug: 'operations/database-operations',
@@ -89,7 +89,7 @@ export default defineConfig({
         },
         {
           label: 'Management',
-          collapsed: false,
+          collapsed: true,
           items: [
             {
               slug: 'management/collection-management',
@@ -115,7 +115,7 @@ export default defineConfig({
         },
         {
           label: 'Advanced Guides',
-          collapsed: false,
+          collapsed: true,
           items: [
             {
               slug: 'advanced/advanced-features',
@@ -140,7 +140,7 @@ export default defineConfig({
           ],
         },
         {
-          label: 'API Reference',
+          label: 'SDK Reference',
           collapsed: true,
           items: [
             { slug: 'api-reference', label: 'Overview' },
@@ -173,23 +173,6 @@ export default defineConfig({
             {
               slug: 'api-reference/types-and-enums',
               label: 'Types & Enums',
-            },
-          ],
-        },
-        {
-          label: 'Resources',
-          collapsed: false,
-          items: [
-            { slug: 'reference/release-notes', label: 'Release Notes' },
-            { slug: 'reference/troubleshooting', label: 'Troubleshooting' },
-            {
-              slug: 'reference/migration-compatibility',
-              label: 'Migration & Compatibility',
-            },
-            { slug: 'reference/contributing', label: 'Contributing' },
-            {
-              slug: 'reference/additional-resources',
-              label: 'Additional Resources',
             },
           ],
         },

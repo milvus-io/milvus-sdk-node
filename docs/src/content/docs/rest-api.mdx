@@ -1,0 +1,129 @@
+---
+title: Milvus REST API
+description: Run Milvus REST requests for listing collections, describing schemas, querying rows, and searching vectors.
+---
+
+import RestConnection from '../../components/RestConnection.astro';
+import RestExplorer from '../../components/RestExplorer.astro';
+
+Use these Milvus v2 REST operations to inspect collections and read data. Each example works as an editable request. Query and search require a loaded collection.
+
+- [List collections](#list-collections)
+- [Describe collection](#describe-collection)
+- [Query](#query)
+- [Search](#search)
+
+### Connect your cluster
+
+Requests go directly from your browser to the endpoint you enter. Use HTTPS for a remote cluster or HTTP on loopback for local development. The optional bearer token stays in the password field for the current page session. Set `MILVUS_TOKEN` in your shell before running copied cURL commands for an authenticated cluster.
+
+For cross-origin requests, your cluster must respond to the browser's OPTIONS preflight and allow the docs origin, POST, `Content-Type`, and `Authorization` when a token is used. A browser network error may indicate CORS, TLS, or a connection problem. Check the browser network panel or run the copied cURL to see the server response outside the browser.
+
+<RestConnection />
+
+## List collections
+
+List collection names in a database. Choose a returned collection to fill the describe, query, and search requests.
+
+| JSON field | Required | Meaning                               |
+| ---------- | -------- | ------------------------------------- |
+| `dbName`   | No       | Database name. Defaults to `default`. |
+
+The response's `data` is an array of collection names. See [HttpClient.listCollections](/milvus-sdk-node/api-reference/http-client#listcollections).
+
+<RestExplorer
+  operation="listCollections"
+  request={{ dbName: 'default' }}
+  response={{ code: 0, data: ['books'] }}
+/>
+
+## Describe collection
+
+Inspect field names, field types, indexes, and load state. A successful response can populate schema controls for Query and Search.
+
+| JSON field       | Required | Meaning                               |
+| ---------------- | -------- | ------------------------------------- |
+| `dbName`         | No       | Database name. Defaults to `default`. |
+| `collectionName` | Yes      | Collection to describe.               |
+
+The response's `data` is a [collection description](https://milvus.io/api-reference/restful/v3.0.x/v2/Collection%20%28v2%29/Describe.md). See [HttpClient.describeCollection](/milvus-sdk-node/api-reference/http-client#describecollection).
+
+<RestExplorer
+  operation="describeCollection"
+  request={{ dbName: 'default', collectionName: 'books' }}
+  response={{
+    code: 0,
+    data: {
+      collectionName: 'books',
+      fields: [
+        { name: 'id', type: 'Int64', primaryKey: true },
+        { name: 'title', type: 'VarChar' },
+        {
+          name: 'vector',
+          type: 'FloatVector',
+          params: [{ key: 'dim', value: '4' }],
+        },
+      ],
+      load: 'LoadStateLoaded',
+    },
+  }}
+/>
+
+## Query
+
+Read rows from a collection. Apply a scalar field from the described schema to fill `outputFields`.
+
+| JSON field        | Required | Meaning                                                        |
+| ----------------- | -------- | -------------------------------------------------------------- |
+| `dbName`          | No       | Database name. Defaults to `default`.                          |
+| `collectionName`  | Yes      | Collection to query.                                           |
+| `filter`          | No       | Scalar expression. Use a limit when querying without a filter. |
+| `outputFields`    | No       | Fields to return.                                              |
+| `limit`, `offset` | No       | Maximum rows and starting offset.                              |
+| `partitionNames`  | No       | Restrict the query to named partitions.                        |
+
+The response's `data` contains the matching rows. See [HttpClient.query](/milvus-sdk-node/api-reference/http-client#query).
+
+<RestExplorer
+  operation="query"
+  request={{
+    dbName: 'default',
+    collectionName: 'books',
+    outputFields: ['title'],
+    limit: 5,
+  }}
+  response={{ code: 0, data: [{ title: 'The Left Hand of Darkness' }] }}
+/>
+
+## Search
+
+Find nearest neighbors. Applying a dense vector field from the described schema sets `annsField` and fills one sample vector of the correct dimension. Replace its values with a real embedding. Enter binary, sparse, text, or other search inputs directly in the JSON editor.
+
+| JSON field       | Required    | Meaning                                                                                 |
+| ---------------- | ----------- | --------------------------------------------------------------------------------------- |
+| `dbName`         | No          | Database name. Defaults to `default`.                                                   |
+| `collectionName` | Yes         | Collection to search.                                                                   |
+| `data` or `ids`  | Yes         | Batch of search inputs or stored primary keys. Pass large int64 IDs as decimal strings. |
+| `annsField`      | When needed | Vector field to search. Specify it for collections with multiple vector fields.         |
+| `filter`         | No          | Scalar expression applied to candidates.                                                |
+| `outputFields`   | No          | Additional fields to return.                                                            |
+| `limit`          | No          | Maximum hits per search input.                                                          |
+| `searchParams`   | No          | Index-specific search options.                                                          |
+
+The response's `data` contains search hits with IDs, distances, and requested fields. See [HttpClient.search](/milvus-sdk-node/api-reference/http-client#search).
+
+<RestExplorer
+  operation="search"
+  request={{
+    dbName: 'default',
+    collectionName: 'books',
+    data: [[0.1, 0.2, 0.3, 0.4]],
+    annsField: 'vector',
+    outputFields: ['title'],
+    limit: 5,
+  }}
+  response={{
+    code: 0,
+    data: [{ id: 1, distance: 0.98, title: 'The Left Hand of Darkness' }],
+  }}
+/>

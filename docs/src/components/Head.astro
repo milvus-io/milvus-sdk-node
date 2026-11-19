@@ -1,5 +1,5 @@
 ---
-const { head } = Astro.locals.starlightRoute;
+const { head, id } = Astro.locals.starlightRoute;
 ---
 
 {
@@ -7,18 +7,28 @@ const { head } = Astro.locals.starlightRoute;
     <Tag {...attrs} set:html={content} />
   ))
 }
-<script
-  is:inline
-  async
-  src="https://www.googletagmanager.com/gtag/js?id=G-HLMZXDSQYF"></script>
-<script is:inline>
+{
+  id !== 'rest-api' && (
+    <>
+      <script
+        is:inline
+        async
+        src="https://www.googletagmanager.com/gtag/js?id=G-HLMZXDSQYF"
+      />
+      <script
+        is:inline
+        set:html={`
   window.dataLayer = window.dataLayer || [];
   function gtag() {
     dataLayer.push(arguments);
   }
   gtag('js', new Date());
   gtag('config', 'G-HLMZXDSQYF');
-</script>
+`}
+      />
+    </>
+  )
+}
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link

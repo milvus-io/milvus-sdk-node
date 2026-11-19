@@ -1,0 +1,47 @@
+---
+import { operationPath, type Operation } from '../lib/rest-explorer';
+
+const { operation, request, response } = Astro.props as {
+  operation: Operation;
+  request: Record<string, unknown>;
+  response: Record<string, unknown>;
+};
+---
+
+<p class="rest-route"><code>POST {operationPath(operation)}</code></p>
+<div class="rest-operation" data-operation={operation}>
+  <label>
+    Request JSON
+    <textarea data-body rows="7" spellcheck="false"
+      >{JSON.stringify(request, null, 2)}</textarea
+    >
+  </label>
+  {
+    (operation === 'query' || operation === 'search') && (
+      <div data-schema hidden>
+        <label>
+          {operation === 'query' ? 'Output field' : 'Dense vector field'}
+          <select data-field />
+        </label>
+        <button data-generate type="button">
+          Apply schema field
+        </button>
+      </div>
+    )
+  }
+  <div class="rest-actions">
+    <button data-run type="button">Send request</button>
+    <button data-copy type="button">Copy cURL</button>
+  </div>
+  <p role="status" data-feedback hidden></p>
+  <p role="status" data-status>Example response</p>
+  <pre
+    aria-label="Raw response"
+    tabindex="0"
+    data-response>{JSON.stringify(response, null, 2)}</pre>
+  <pre aria-label="cURL command" tabindex="0" data-command hidden></pre>
+</div>
+
+<script>
+  import '../lib/rest-browser';
+</script>
