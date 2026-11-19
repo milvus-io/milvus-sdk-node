@@ -100,7 +100,9 @@ export const onRequest = defineRouteMiddleware(async (context, next) => {
       ([label, operations]): SidebarEntry => ({
         type: 'group',
         label,
-        collapsed: true,
+        collapsed: !operations.some(
+          ({ slug }) => currentSlug === 'rest-api/' + slug
+        ),
         badge: undefined,
         entries: operations.map(({ slug, title }) =>
           makeSidebarLink(currentSlug, {

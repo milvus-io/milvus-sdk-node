@@ -1,6 +1,7 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { Icon } from '@astrojs/starlight/components';
+import bindings from '../../lib/rest-bindings.json';
 import {
   legacyRestSlugs,
   restGroups,
@@ -26,7 +27,10 @@ const redirects = Object.fromEntries(
 >
   <div class="rest-explorer">
     <p>
-      Browse the Milvus REST v2 API and send requests directly to your cluster.
+      Browse {Object.keys(bindings.routes).length} operations in {
+        restGroups.size
+      } categories for Milvus {bindings.milvusVersion.slice(1)}. Open an
+      operation to inspect its parameters and send a request to your cluster.
     </p>
     <section
       class="rest-directory"

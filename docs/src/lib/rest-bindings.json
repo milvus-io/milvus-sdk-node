@@ -1,0 +1,832 @@
+{
+  "milvusVersion": "v3.0.6",
+  "routes": {
+    "/collections/list": "DatabaseReq",
+    "/collections/has": "CollectionNameReq",
+    "/collections/describe": "CollectionNameReq",
+    "/collections/get_stats": "CollectionNameReq",
+    "/collections/get_load_state": "CollectionNameReq",
+    "/collections/create": "CollectionReq",
+    "/collections/drop": "CollectionNameReq",
+    "/collections/truncate": "CollectionNameReq",
+    "/collections/rename": "RenameCollectionReq",
+    "/collections/load": "CollectionNameReq",
+    "/collections/refresh_load": "CollectionNameReq",
+    "/collections/release": "CollectionNameReq",
+    "/collections/alter_properties": "CollectionReqWithProperties",
+    "/collections/add_function": "CollectionAddFunction",
+    "/collections/alter_function": "CollectionAlterFunction",
+    "/collections/drop_function": "CollectionDropFunction",
+    "/collections/add_function_field": "CollectionAddFunctionField",
+    "/collections/drop_function_field": "CollectionDropFunctionField",
+    "/collections/drop_properties": "DropCollectionPropertiesReq",
+    "/collections/compact": "CompactReq",
+    "/collections/get_compaction_state": "GetCompactionStateReq",
+    "/collections/flush": "FlushReq",
+    "/collections/fields/alter_properties": "CollectionFieldReqWithParams",
+    "/collections/fields/add": "CollectionFieldReqWithSchema",
+    "/collections/fields/drop": "CollectionDropField",
+    "/collections/struct_fields/add": "CollectionFieldReqWithSchema",
+    "/databases/create": "DatabaseReqWithProperties",
+    "/databases/drop": "DatabaseReqRequiredName",
+    "/databases/drop_properties": "DropDatabasePropertiesReq",
+    "/databases/list": "EmptyReq",
+    "/databases/describe": "DatabaseReqRequiredName",
+    "/databases/alter": "DatabaseReqWithProperties",
+    "/databases/alter_properties": "DatabaseReqWithProperties",
+    "/entities/query": "QueryReqV2",
+    "/entities/get": "CollectionIDReq",
+    "/entities/delete": "CollectionFilterReq",
+    "/entities/insert": "CollectionDataReq",
+    "/entities/upsert": "CollectionDataReq",
+    "/entities/search": "SearchReqV2",
+    "/entities/advanced_search": "HybridSearchReq",
+    "/entities/hybrid_search": "HybridSearchReq",
+    "/partitions/list": "CollectionNameReq",
+    "/partitions/has": "PartitionReq",
+    "/partitions/get_stats": "PartitionReq",
+    "/partitions/create": "PartitionReq",
+    "/partitions/drop": "PartitionReq",
+    "/partitions/load": "PartitionsReq",
+    "/partitions/release": "PartitionsReq",
+    "/users/list": "DatabaseReq",
+    "/users/describe": "UserReq",
+    "/users/create": "PasswordReq",
+    "/users/update_password": "NewPasswordReq",
+    "/users/drop": "UserReq",
+    "/users/grant_role": "UserRoleReq",
+    "/users/revoke_role": "UserRoleReq",
+    "/roles/list": "DatabaseReq",
+    "/roles/describe": "RoleReq",
+    "/roles/create": "RoleReq",
+    "/roles/alter": "RoleReq",
+    "/roles/drop": "RoleReq",
+    "/roles/grant_privilege": "GrantReq",
+    "/roles/revoke_privilege": "GrantReq",
+    "/roles/grant_privilege_v2": "GrantV2Req",
+    "/roles/revoke_privilege_v2": "GrantV2Req",
+    "/privilege_groups/create": "PrivilegeGroupReq",
+    "/privilege_groups/drop": "PrivilegeGroupReq",
+    "/privilege_groups/list": "DatabaseReq",
+    "/privilege_groups/add_privileges_to_group": "PrivilegeGroupReq",
+    "/privilege_groups/remove_privileges_from_group": "PrivilegeGroupReq",
+    "/indexes/list": "CollectionNameReq",
+    "/indexes/describe": "IndexReq",
+    "/indexes/create": "IndexParamReq",
+    "/indexes/drop": "IndexReq",
+    "/indexes/alter_properties": "IndexReqWithProperties",
+    "/indexes/drop_properties": "DropIndexPropertiesReq",
+    "/aliases/list": "OptionalCollectionNameReq",
+    "/aliases/describe": "AliasReq",
+    "/aliases/create": "AliasCollectionReq",
+    "/aliases/drop": "AliasReq",
+    "/aliases/alter": "AliasCollectionReq",
+    "/jobs/import/list": "OptionalCollectionNameReq",
+    "/jobs/import/create": "ImportReq",
+    "/jobs/import/get_progress": "JobIDReq",
+    "/jobs/import/describe": "JobIDReq",
+    "/jobs/import/commit": "JobIDReq",
+    "/jobs/import/abort": "JobIDReq",
+    "/jobs/snapshot/restore_external": "RestoreExternalSnapshotReq",
+    "/jobs/snapshot/export": "ExportSnapshotReq",
+    "/jobs/snapshot/export/describe": "JobIDReq",
+    "/jobs/snapshot/describe": "JobIDReq",
+    "/jobs/snapshot/list": "OptionalCollectionNameReq",
+    "/snapshots/create": "CreateSnapshotReq",
+    "/snapshots/drop": "SnapshotReq",
+    "/snapshots/list": "CollectionNameReq",
+    "/snapshots/describe": "SnapshotReq",
+    "/snapshots/restore": "RestoreSnapshotReq",
+    "/snapshots/pin": "PinSnapshotDataReq",
+    "/snapshots/unpin": "UnpinSnapshotDataReq",
+    "/jobs/external_collection/refresh": "RefreshExternalCollectionReq",
+    "/jobs/external_collection/describe": "RefreshExternalCollectionProgressReq",
+    "/jobs/external_collection/list": "OptionalCollectionNameReq",
+    "/resource_groups/create": "ResourceGroupReq",
+    "/resource_groups/drop": "ResourceGroupReq",
+    "/resource_groups/alter": "UpdateResourceGroupReq",
+    "/resource_groups/describe": "ResourceGroupReq",
+    "/resource_groups/list": "EmptyReq",
+    "/resource_groups/transfer_replica": "TransferReplicaReq",
+    "/file_resources/add": "FileResourceReq",
+    "/file_resources/remove": "FileResourceNameReq",
+    "/file_resources/list": "EmptyReq",
+    "/segments/describe": "GetSegmentsInfoReq",
+    "/quotacenter/describe": "GetQuotaMetricsReq",
+    "/common/run_analyzer": "RunAnalyzerReq"
+  },
+  "schemas": {
+    "DatabaseReq": {
+      "properties": {
+        "dbName": "string"
+      },
+      "required": []
+    },
+    "CollectionNameReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "partitionNames": "array of string"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "CollectionReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "dimension": "integer",
+        "idType": "string",
+        "autoID": "boolean",
+        "metricType": "string",
+        "vectorFieldType": "string",
+        "consistencyLevel": "string",
+        "primaryFieldName": "string",
+        "vectorFieldName": "string",
+        "schema": "object",
+        "indexParams": "array of object",
+        "params": "object",
+        "properties": "object",
+        "description": "string",
+        "externalSource": "string",
+        "externalSpec": "string"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "RenameCollectionReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "newCollectionName": "string",
+        "newDbName": "string"
+      },
+      "required": [
+        "collectionName",
+        "newCollectionName"
+      ]
+    },
+    "CollectionReqWithProperties": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "properties": "object"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "CollectionAddFunction": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "function": "object"
+      },
+      "required": [
+        "collectionName",
+        "function"
+      ]
+    },
+    "CollectionAlterFunction": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "functionName": "string",
+        "function": "object"
+      },
+      "required": [
+        "collectionName",
+        "functionName",
+        "function"
+      ]
+    },
+    "CollectionDropFunction": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "FunctionName": "string"
+      },
+      "required": [
+        "collectionName",
+        "FunctionName"
+      ]
+    },
+    "CollectionAddFunctionField": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "function": "object",
+        "outputField": "object",
+        "indexParams": "object"
+      },
+      "required": [
+        "collectionName",
+        "function",
+        "outputField"
+      ]
+    },
+    "CollectionDropFunctionField": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "functionName": "string"
+      },
+      "required": [
+        "collectionName",
+        "functionName"
+      ]
+    },
+    "DropCollectionPropertiesReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "propertyKeys": "array of string"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "CompactReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "isClustering": "boolean"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "GetCompactionStateReq": {
+      "properties": {
+        "jobID": "integer"
+      },
+      "required": []
+    },
+    "FlushReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "CollectionFieldReqWithParams": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "fieldName": "string",
+        "fieldParams": "object"
+      },
+      "required": [
+        "collectionName",
+        "fieldName"
+      ]
+    },
+    "CollectionFieldReqWithSchema": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "schema": "object"
+      },
+      "required": [
+        "collectionName",
+        "schema"
+      ]
+    },
+    "CollectionDropField": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "fieldName": "string",
+        "fieldId": "integer"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "DatabaseReqWithProperties": {
+      "properties": {
+        "dbName": "string",
+        "properties": "object"
+      },
+      "required": [
+        "dbName"
+      ]
+    },
+    "DatabaseReqRequiredName": {
+      "properties": {
+        "dbName": "string"
+      },
+      "required": [
+        "dbName"
+      ]
+    },
+    "DropDatabasePropertiesReq": {
+      "properties": {
+        "dbName": "string",
+        "propertyKeys": "array of string"
+      },
+      "required": [
+        "dbName"
+      ]
+    },
+    "EmptyReq": {
+      "properties": {},
+      "required": []
+    },
+    "QueryReqV2": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "partitionNames": "array of string",
+        "outputFields": "array of string",
+        "filter": "string",
+        "limit": "integer",
+        "offset": "integer",
+        "orderByFields": "array of string",
+        "groupByFields": "array of string",
+        "exprParams": "object",
+        "consistencyLevel": "string"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "CollectionIDReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "partitionName": "string",
+        "partitionNames": "array of string",
+        "outputFields": "array of string",
+        "id": "JSON value",
+        "consistencyLevel": "string"
+      },
+      "required": [
+        "collectionName",
+        "id"
+      ]
+    },
+    "CollectionFilterReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "partitionName": "string",
+        "filter": "string",
+        "exprParams": "object"
+      },
+      "required": [
+        "collectionName",
+        "filter"
+      ]
+    },
+    "CollectionDataReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "partitionName": "string",
+        "data": "array of object",
+        "partialUpdate": "boolean",
+        "fieldOps": "array of object"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "SearchReqV2": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "data": "array of JSON value",
+        "ids": "array of JSON value",
+        "annsField": "string",
+        "partitionNames": "array of string",
+        "filter": "string",
+        "groupingField": "string",
+        "groupSize": "integer",
+        "strictGroupSize": "boolean",
+        "limit": "integer",
+        "offset": "integer",
+        "outputFields": "array of string",
+        "searchParams": "object",
+        "consistencyLevel": "string",
+        "exprParams": "object",
+        "functionScore": "object",
+        "functionChains": "array of object",
+        "searchAggregation": "object",
+        "orderByFields": "array of string",
+        "params": "object"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "HybridSearchReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "partitionNames": "array of string",
+        "search": "array of object",
+        "rerank": "object",
+        "limit": "integer",
+        "offset": "integer",
+        "groupingField": "string",
+        "groupSize": "integer",
+        "strictGroupSize": "boolean",
+        "outputFields": "array of string",
+        "consistencyLevel": "string",
+        "functionScore": "object",
+        "functionChains": "array of object",
+        "searchAggregation": "object"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "PartitionReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "partitionName": "string"
+      },
+      "required": [
+        "collectionName",
+        "partitionName"
+      ]
+    },
+    "PartitionsReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "partitionNames": "array of string"
+      },
+      "required": [
+        "collectionName",
+        "partitionNames"
+      ]
+    },
+    "UserReq": {
+      "properties": {
+        "userName": "string"
+      },
+      "required": [
+        "userName"
+      ]
+    },
+    "PasswordReq": {
+      "properties": {
+        "userName": "string",
+        "password": "string",
+        "description": "string"
+      },
+      "required": [
+        "userName",
+        "password"
+      ]
+    },
+    "NewPasswordReq": {
+      "properties": {
+        "userName": "string",
+        "password": "string",
+        "newPassword": "string",
+        "description": "string"
+      },
+      "required": [
+        "userName"
+      ]
+    },
+    "UserRoleReq": {
+      "properties": {
+        "userName": "string",
+        "roleName": "string"
+      },
+      "required": [
+        "userName",
+        "roleName"
+      ]
+    },
+    "RoleReq": {
+      "properties": {
+        "dbName": "string",
+        "roleName": "string",
+        "description": "string"
+      },
+      "required": [
+        "roleName"
+      ]
+    },
+    "GrantReq": {
+      "properties": {
+        "roleName": "string",
+        "objectType": "string",
+        "objectName": "string",
+        "privilege": "string",
+        "dbName": "string"
+      },
+      "required": [
+        "roleName",
+        "objectType",
+        "objectName",
+        "privilege"
+      ]
+    },
+    "GrantV2Req": {
+      "properties": {
+        "roleName": "string",
+        "dbName": "string",
+        "collectionName": "string",
+        "privilege": "string"
+      },
+      "required": [
+        "roleName",
+        "privilege"
+      ]
+    },
+    "PrivilegeGroupReq": {
+      "properties": {
+        "privilegeGroupName": "string",
+        "privileges": "array of string"
+      },
+      "required": [
+        "privilegeGroupName"
+      ]
+    },
+    "IndexReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "indexName": "string",
+        "timestamp": "integer"
+      },
+      "required": [
+        "collectionName",
+        "indexName"
+      ]
+    },
+    "IndexParamReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "indexParams": "array of object"
+      },
+      "required": [
+        "collectionName",
+        "indexParams"
+      ]
+    },
+    "IndexReqWithProperties": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "indexName": "string",
+        "properties": "object"
+      },
+      "required": [
+        "collectionName",
+        "indexName"
+      ]
+    },
+    "DropIndexPropertiesReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "indexName": "string",
+        "propertyKeys": "array of string"
+      },
+      "required": [
+        "collectionName",
+        "indexName"
+      ]
+    },
+    "OptionalCollectionNameReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string"
+      },
+      "required": []
+    },
+    "AliasReq": {
+      "properties": {
+        "dbName": "string",
+        "aliasName": "string"
+      },
+      "required": [
+        "aliasName"
+      ]
+    },
+    "AliasCollectionReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "aliasName": "string"
+      },
+      "required": [
+        "collectionName",
+        "aliasName"
+      ]
+    },
+    "ImportReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "partitionName": "string",
+        "files": "array of array of string",
+        "options": "object"
+      },
+      "required": [
+        "collectionName",
+        "files"
+      ]
+    },
+    "JobIDReq": {
+      "properties": {
+        "jobId": "string"
+      },
+      "required": [
+        "jobId"
+      ]
+    },
+    "RestoreExternalSnapshotReq": {
+      "properties": {
+        "dbName": "string",
+        "targetCollectionName": "string",
+        "snapshotMetadataURI": "string",
+        "externalSpec": "string"
+      },
+      "required": [
+        "targetCollectionName",
+        "snapshotMetadataURI"
+      ]
+    },
+    "ExportSnapshotReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "snapshotName": "string",
+        "targetS3Path": "string",
+        "externalSpec": "string"
+      },
+      "required": [
+        "collectionName",
+        "snapshotName",
+        "targetS3Path"
+      ]
+    },
+    "CreateSnapshotReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "snapshotName": "string",
+        "description": "string",
+        "compactionProtectionSeconds": "integer"
+      },
+      "required": [
+        "collectionName",
+        "snapshotName"
+      ]
+    },
+    "SnapshotReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "snapshotName": "string"
+      },
+      "required": [
+        "collectionName",
+        "snapshotName"
+      ]
+    },
+    "RestoreSnapshotReq": {
+      "properties": {
+        "sourceDbName": "string",
+        "sourceCollectionName": "string",
+        "targetDbName": "string",
+        "targetCollectionName": "string",
+        "snapshotName": "string"
+      },
+      "required": [
+        "sourceCollectionName",
+        "targetCollectionName",
+        "snapshotName"
+      ]
+    },
+    "PinSnapshotDataReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "snapshotName": "string",
+        "ttlSeconds": "integer"
+      },
+      "required": [
+        "collectionName",
+        "snapshotName"
+      ]
+    },
+    "UnpinSnapshotDataReq": {
+      "properties": {
+        "pinId": "string"
+      },
+      "required": [
+        "pinId"
+      ]
+    },
+    "RefreshExternalCollectionReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionName": "string",
+        "externalSource": "string",
+        "externalSpec": "string"
+      },
+      "required": [
+        "collectionName"
+      ]
+    },
+    "RefreshExternalCollectionProgressReq": {
+      "properties": {
+        "jobId": "integer"
+      },
+      "required": [
+        "jobId"
+      ]
+    },
+    "ResourceGroupReq": {
+      "properties": {
+        "name": "string",
+        "config": "object"
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "UpdateResourceGroupReq": {
+      "properties": {
+        "resource_groups": "object"
+      },
+      "required": [
+        "resource_groups"
+      ]
+    },
+    "TransferReplicaReq": {
+      "properties": {
+        "sourceRgName": "string",
+        "targetRgName": "string",
+        "collectionName": "string",
+        "replicaNum": "integer"
+      },
+      "required": [
+        "sourceRgName",
+        "targetRgName",
+        "collectionName",
+        "replicaNum"
+      ]
+    },
+    "FileResourceReq": {
+      "properties": {
+        "name": "string",
+        "path": "string"
+      },
+      "required": [
+        "name",
+        "path"
+      ]
+    },
+    "FileResourceNameReq": {
+      "properties": {
+        "name": "string"
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "GetSegmentsInfoReq": {
+      "properties": {
+        "dbName": "string",
+        "collectionID": "integer",
+        "segmentIDs": "array of integer"
+      },
+      "required": []
+    },
+    "GetQuotaMetricsReq": {
+      "properties": {},
+      "required": []
+    },
+    "RunAnalyzerReq": {
+      "properties": {
+        "dbName": "string",
+        "analyzerParams": "string",
+        "text": "array of string",
+        "withDetail": "boolean",
+        "withHash": "boolean",
+        "collectionName": "string",
+        "fieldName": "string",
+        "analyzerNames": "array of string"
+      },
+      "required": [
+        "text"
+      ]
+    }
+  }
+}
