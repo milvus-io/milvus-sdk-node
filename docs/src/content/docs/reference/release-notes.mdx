@@ -3,7 +3,18 @@ title: 'Release Notes'
 description: 'Review Milvus Node.js SDK changes by version, including new features, fixes, and server compatibility notes.'
 ---
 
-These docs cover **SDK 3.0.9**, tested with **Milvus 3.0.6**. Check [Migration & Compatibility](/milvus-sdk-node/reference/migration-compatibility/) for server requirements.
+These docs cover **SDK 3.0.10**, tested with **Milvus 3.0.6**. Check [Migration & Compatibility](/milvus-sdk-node/reference/migration-compatibility/) for server requirements.
+
+## 3.0.10
+
+- [`count()`](/milvus-sdk-node/api-reference/data/#count) returns the original server error status with `data: 0` when a query fails, instead of throwing a `TypeError`. Check `status.error_code` before using the count. Fixes [#668](https://github.com/milvus-io/milvus-sdk-node/issues/668).
+- `flushSync()` handles streaming flush checkpoints when segment IDs are not yet available, preserves database and timeout options while polling, and returns server failures.
+- `HttpClient` invokes the built-in `fetch` with the global receiver required by edge runtimes.
+- Updated and verified documentation examples, search metadata, Markdown mirrors, and LLM documentation bundles.
+
+The target server remains Milvus **3.0.6**. These fixes introduce no new server version requirements.
+
+[Full 3.0.10 changelog](https://github.com/milvus-io/milvus-sdk-node/compare/v3.0.9...v3.0.10)
 
 ## 3.0.9
 
