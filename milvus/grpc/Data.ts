@@ -1489,6 +1489,14 @@ export class Data extends Collection {
     };
   }
 
+  /**
+   * Count rows matching a filter.
+   *
+   * @param {CountReq} data - The count query parameters.
+   * @returns {Promise<CountResult>} The query status and row count. A failed
+   * query returns its original status with data set to 0; check the status
+   * before using the count.
+   */
   async count(data: CountReq): Promise<CountResult> {
     const { filter, expr, ...options } = data;
     const req: QueryReq = {
@@ -1497,6 +1505,10 @@ export class Data extends Collection {
       output_fields: [DEFAULT_COUNT_QUERY_STRING],
     };
     const queryResult = await this.query(req);
+
+    if (queryResult.status.error_code !== ErrorCode.SUCCESS) {
+      return { status: queryResult.status, data: 0 };
+    }
 
     return {
       status: queryResult.status,

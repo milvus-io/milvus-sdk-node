@@ -77,6 +77,7 @@ export interface ElementIndices {
 }
 
 export interface CountResult extends resStatusResponse {
+  /** Row count on success, or 0 on query failure. Check status before using it. */
   data: number;
 }
 

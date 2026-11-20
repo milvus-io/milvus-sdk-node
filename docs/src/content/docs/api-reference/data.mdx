@@ -274,7 +274,10 @@ count(data: CountReq): Promise<CountResult>
 **Response**:
 
 - `status`: Response status.
-- `data`: Count as a number.
+- `data`: Count as a number, or `0` when the query fails.
+
+Check `status.error_code` before using `data`. When the server rejects the query,
+`count()` returns the original error status and reason with `data: 0`.
 
 ## search
 
