@@ -1,6 +1,6 @@
 # @zilliz/milvus2-sdk-node
 
-> Official Node.js/TypeScript SDK for Milvus and Zilliz Cloud vector databases. Use it for semantic search, RAG retrieval, recommendation, hybrid dense+sparse retrieval, metadata filtering, and collection/index/user/resource management. SDK `3.0.9` is tested with Milvus `3.0.6`. It requires Node.js 18+ and is licensed under Apache-2.0.
+> Official Node.js/TypeScript SDK for Milvus and Zilliz Cloud vector databases. Use it for semantic search, RAG retrieval, recommendation, hybrid dense+sparse retrieval, metadata filtering, and collection/index/user/resource management. SDK `3.0.10` is tested with Milvus `3.0.6`. It requires Node.js 18+ and is licensed under Apache-2.0.
 
 ## Install
 
@@ -50,7 +50,7 @@ const httpClient = new HttpClient({
 
 | Milvus version | Recommended SDK                                               |
 | -------------- | ------------------------------------------------------------- |
-| v3.0.0+        | `@zilliz/milvus2-sdk-node@3` (3.0.9 tested with Milvus 3.0.6) |
+| v3.0.0+        | `@zilliz/milvus2-sdk-node@3` (3.0.10 tested with Milvus 3.0.6) |
 | v2.6.0+        | `@zilliz/milvus2-sdk-node@2.6` for a matching 2.x release     |
 | v2.5.0+        | `@zilliz/milvus2-sdk-node@2.5.12`                             |
 | v2.4.0+        | `@zilliz/milvus2-sdk-node@2.4.9`                              |
@@ -708,6 +708,12 @@ try {
 ## Full API Reference
 
 See the [SDK API reference](https://milvus-io.github.io/milvus-sdk-node/api-reference/) for current method signatures and examples. The source lives under `milvus/`.
+
+## SDK 3.0.10
+
+- `count()` preserves the server error status with `data: 0` when a query fails. Check `status.error_code` before using the count.
+- `flushSync()` supports streaming flush checkpoints and preserves server errors, database selection, and polling timeouts.
+- `HttpClient` binds the built-in `fetch` to the global receiver for edge runtimes.
 
 ## SDK 3.0.6–3.0.9
 
