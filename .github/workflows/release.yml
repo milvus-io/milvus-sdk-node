@@ -1,4 +1,4 @@
-name: Stage package for npm
+name: Publish package to npm
 
 on:
   release:
@@ -11,7 +11,7 @@ on:
         default: true
         type: boolean
       npm_tag:
-        description: 'npm dist-tag to apply after approval of a manual submission'
+        description: 'npm dist-tag to use when publishing manually'
         required: true
         default: 'latest'
         type: string
@@ -58,7 +58,7 @@ jobs:
           npm pack --dry-run
           echo 'npm package contents checked (dry run).' >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Stage package for npm approval
+      - name: Publish to npm and verify public availability
         if: github.event_name == 'release' || !inputs.dry_run
         env:
           GH_TOKEN: ${{ github.token }}
@@ -83,21 +83,29 @@ jobs:
             fi
           fi
 
-          echo "Staging $PACKAGE@$VERSION with npm dist-tag $NPM_TAG"
-          if ! RESULT=$(npm stage publish --tag "$NPM_TAG" --json); then
-            printf '%s\n' "$RESULT" >&2
-            exit 1
-          fi
-          if ! STAGE_ID=$(jq -er --arg package "$PACKAGE" '.[$package].stageId | strings | select(length > 0)' <<< "$RESULT"); then
-            echo '::error::npm accepted the request without a Stage ID. Check Staged Packages before retrying.'
+          echo "Publishing $PACKAGE@$VERSION with npm dist-tag $NPM_TAG"
+          npm publish --tag "$NPM_TAG"
+
+          # npm may process the package asynchronously after accepting it.
+          # Retry reads only; never resubmit a package while it is processing.
+          for attempt in {1..18}; do
+            PUBLISHED_VERSION=$(npm view "$PACKAGE@$VERSION" version --prefer-online 2>/dev/null || true)
+            TAG_VERSION=$(npm view "$PACKAGE@$NPM_TAG" version --prefer-online 2>/dev/null || true)
+            if [ "$PUBLISHED_VERSION" = "$VERSION" ] && [ "$TAG_VERSION" = "$VERSION" ]; then
+              break
+            fi
+            if [ "$attempt" -lt 18 ]; then
+              sleep 10
+            fi
+          done
+          if [ "$PUBLISHED_VERSION" != "$VERSION" ] || [ "$TAG_VERSION" != "$VERSION" ]; then
+            echo "::error::Public npm verification failed for $PACKAGE@$VERSION with dist-tag $NPM_TAG. Inspect the registry and publish logs before retrying."
             exit 1
           fi
 
           {
-            echo '### npm package staged for approval'
+            echo '### npm package published and verified'
             echo
-            printf -- '- Package `%s@%s`\n- dist-tag `%s`\n- Stage ID `%s`\n' "$PACKAGE" "$VERSION" "$NPM_TAG" "$STAGE_ID"
-            echo
-            printf 'A package maintainer can approve this submission with `npm stage approve %s` and npm 2FA.\n' "$STAGE_ID"
-            printf 'After approval, check `npm view %s@%s version --prefer-online` and confirm `npm view %s@%s version --prefer-online` returns `%s`.\n' "$PACKAGE" "$VERSION" "$PACKAGE" "$NPM_TAG" "$VERSION"
+            printf -- '- Package `%s@%s`\n- dist-tag `%s`\n' "$PACKAGE" "$VERSION" "$NPM_TAG"
+            echo '- Exact version and dist-tag verified on the public registry.'
           } | tee -a "$GITHUB_STEP_SUMMARY"
