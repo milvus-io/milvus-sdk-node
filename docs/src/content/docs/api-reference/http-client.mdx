@@ -535,7 +535,8 @@ Remove a function together with its output field and index.
 
 ### alterCollectionFunction
 
-Update supported settings for an existing collection function.
+Update supported settings for an existing function, such as a text embedding
+function's description. Milvus 3.0.6 rejects BM25 function alterations.
 
 ### truncateCollection
 
@@ -655,7 +656,7 @@ Pass `{ resource_groups }` to update requests, limits, transfer preferences, and
 
 ### transferReplica
 
-Transfer collection replicas with `sourceRgName`, `targetRgName`, `collectionName`, and `replicaNum`.
+Transfer collection replicas in the default database with `sourceRgName`, `targetRgName`, `collectionName`, and `replicaNum`. The target group needs available query nodes.
 
 ## User and Role APIs
 

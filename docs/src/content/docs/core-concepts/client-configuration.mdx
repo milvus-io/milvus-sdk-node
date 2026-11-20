@@ -178,7 +178,7 @@ const client = new MilvusClient({
   channelOptions: {
     'grpc.keepalive_time_ms': 30000,
     'grpc.keepalive_timeout_ms': 5000,
-    'grpc.keepalive_permit_without_calls': true,
+    'grpc.keepalive_permit_without_calls': 1,
     'grpc.http2.max_pings_without_data': 0,
     'grpc.http2.min_time_between_pings_ms': 10000,
     'grpc.http2.min_ping_interval_without_data_ms': 300000,
@@ -325,16 +325,12 @@ All API requests support optional trace IDs for tracking and debugging:
 
 ```javascript
 // Add trace ID to any request
-await client.createCollection({
-  collection_name: 'my_collection',
-  fields: [...],
+await client.listCollections({
   client_request_id: 'trace-id-123', // Optional trace ID
 });
 
 // Alternative format (compatible with pymilvus)
-await client.createCollection({
-  collection_name: 'my_collection',
-  fields: [...],
+await client.listCollections({
   'client-request-id': 'trace-id-123',
 });
 ```

@@ -14,10 +14,10 @@ Iterators allow you to paginate through large result sets that exceed the `topk`
 ```javascript
 const iterator = await client.searchIterator({
   collection_name: 'my_collection',
-  data: [0.1, 0.2, 0.3, ...],  // search vector
+  data: [0.1, 0.2, 0.3, 0.4],
   batchSize: 100,
-  limit: 1000,  // total results to return (-1 or omit for no limit)
-  output_fields: ['id', 'text', 'score'],
+  limit: 1000, // total results to return (-1 or omit for no limit)
+  output_fields: ['id', 'text'],
   expr: 'age > 25',
 });
 
@@ -48,8 +48,9 @@ Use `external_filter_fn` to apply additional filtering on the client side after 
 ```javascript
 const iterator = await client.searchIterator({
   collection_name: 'my_collection',
-  data: [0.1, 0.2, 0.3, ...],
+  data: [0.1, 0.2, 0.3, 0.4],
   batchSize: 100,
+  output_fields: ['text'],
   external_filter_fn: (row) => {
     // Only keep results where the text length > 50
     return row.text && row.text.length > 50;
@@ -104,8 +105,14 @@ const client = new MilvusClient({ address: 'localhost:19530' });
 // Create and populate a collection
 await client.createCollection({
   collection_name: 'iterator_demo',
+  consistency_level: 'Strong',
   fields: [
-    { name: 'id', data_type: DataType.Int64, is_primary_key: true, autoID: true },
+    {
+      name: 'id',
+      data_type: DataType.Int64,
+      is_primary_key: true,
+      autoID: true,
+    },
     { name: 'category', data_type: DataType.VarChar, max_length: 64 },
     { name: 'vector', data_type: DataType.FloatVector, dim: 4 },
   ],
@@ -145,6 +152,7 @@ console.log(`Total matching entities: ${totalCount}`);
 
 // Cleanup
 await client.dropCollection({ collection_name: 'iterator_demo' });
+await client.closeConnection();
 ```
 
 ## Best Practices
@@ -158,10 +166,3 @@ await client.dropCollection({ collection_name: 'iterator_demo' });
 
 - Learn about [Hybrid Search](/milvus-sdk-node/operations/hybrid-search/) for multi-vector search
 - Explore [Query & Search](/milvus-sdk-node/operations/data-operations-query/) for standard operations
-
-## Commit
-
-```bash
-git add docs/src/content/docs/operations/iterators.mdx
-git commit --signoff -m "docs: add iterators documentation page"
-```

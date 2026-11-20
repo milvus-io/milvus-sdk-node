@@ -35,7 +35,8 @@ const notes: Record<string, string> = {
   outputField: 'Schema of the field created for the function output.',
   propertyKeys: 'Names of the properties to remove.',
   isClustering: 'Request clustering compaction.',
-  jobID: 'Numeric compaction job ID returned at submission.',
+  jobID:
+    'Unquoted int64 compaction ID. Paste the exact digits returned at submission.',
   fieldName: 'Name of the target field.',
   fieldParams: 'Updated field parameters as a key-value object.',
   fieldId: 'Numeric field ID, as an alternative to fieldName.',
@@ -157,6 +158,14 @@ const fn = {
   inputFieldNames: ['title'],
   outputFieldNames: ['title_sparse'],
 };
+const embedding = {
+  name: 'title_embedding',
+  description: 'Book title embeddings',
+  type: 'TextEmbedding',
+  inputFieldNames: ['title'],
+  outputFieldNames: ['title_dense'],
+  params: { provider: 'openai', model_name: 'text-embedding-3-small' },
+};
 const limits = { requests: { node_num: 1 }, limits: { node_num: 1 } };
 const field = {
   fieldName: 'category',
@@ -253,6 +262,18 @@ const extras: Record<string, Body> = {
     },
   },
   '/collections/get_compaction_state': { jobID: 123456789 },
+  '/collections/alter_function': {
+    collectionName: 'books_with_embeddings',
+    functionName: embedding.name,
+    function: embedding,
+  },
+  '/collections/add_function_field': {
+    indexParams: {
+      fieldName: 'title_sparse',
+      indexType: 'SPARSE_INVERTED_INDEX',
+      metricType: 'BM25',
+    },
+  },
   '/databases/alter': { properties: { 'database.replica.number': '1' } },
   '/databases/alter_properties': {
     properties: { 'database.replica.number': '1' },
@@ -313,7 +334,7 @@ const ok = (data: unknown) => ({ code: 0, data });
 const empty = ok({});
 const exists = ok({ has: true });
 const count = ok({ rowCount: 1 });
-const hit = { id: '101', title: row.title };
+const hit = { id: 101, title: row.title };
 const rows = { ...ok([hit]), cost: 0 };
 const searchHits = { ...ok([{ ...hit, distance: 0.98 }]), cost: 0, topks: [1] };
 const hybridHits = {
@@ -441,9 +462,17 @@ const responses = {
   '/collections/refresh_load': empty,
   '/collections/release': empty,
   '/collections/alter_properties': empty,
-  '/collections/add_function': empty,
+  '/collections/add_function': {
+    code: 1100,
+    message:
+      'AddCollectionFunction RPC is no longer supported; add BM25/MinHash via add_function_field, and define a TextEmbedding function at collection creation: invalid parameter',
+  },
   '/collections/alter_function': empty,
-  '/collections/drop_function': empty,
+  '/collections/drop_function': {
+    code: 1100,
+    message:
+      'DropCollectionFunction RPC is no longer supported; drop a function via drop_function_field: invalid parameter',
+  },
   '/collections/add_function_field': empty,
   '/collections/drop_function_field': empty,
   '/collections/drop_properties': empty,
@@ -475,11 +504,11 @@ const responses = {
   '/entities/get': rows,
   '/entities/delete': ok({ deleteCount: 1 }),
   '/entities/insert': {
-    ...ok({ insertCount: 1, insertIds: ['101'] }),
+    ...ok({ insertCount: 1, insertIds: [101] }),
     cost: 0,
   },
   '/entities/upsert': {
-    ...ok({ upsertCount: 1, upsertIds: ['101'] }),
+    ...ok({ upsertCount: 1, upsertIds: [101] }),
     cost: 0,
   },
   '/entities/search': searchHits,
@@ -533,8 +562,6 @@ const responses = {
     {
       indexName: 'vector_idx',
       fieldName: 'vector',
-      indexType: 'AUTOINDEX',
-      metricType: 'COSINE',
       indexState: 'Finished',
       totalRows: 1,
       pendingRows: 0,
@@ -585,8 +612,8 @@ const responses = {
       {
         name: 'books_backup',
         description: 'Backup before migration',
-        createTs: '470574484684800000',
-        createUtcTs: '1795099200',
+        createTs: snapshot.startTime * 2 ** 18,
+        createUtcTs: snapshot.startTime,
       },
     ],
   },
@@ -595,11 +622,11 @@ const responses = {
     description: 'Backup before migration',
     collectionName: 'books',
     partitionNames: ['_default', 'fiction'],
-    createTs: '470574484684800000',
+    createTs: snapshot.startTime * 2 ** 18,
     s3Location: 's3://example-bucket/snapshots/books_backup/',
   }),
-  '/snapshots/restore': ok({ jobId: '123456789' }),
-  '/snapshots/pin': ok({ pinId: '123456789' }),
+  '/snapshots/restore': ok({ jobId: 123456789 }),
+  '/snapshots/pin': ok({ pinId: 123456789 }),
   '/snapshots/unpin': empty,
   '/jobs/external_collection/refresh': ok({ jobId: externalRefresh.jobId }),
   '/jobs/external_collection/describe': ok(externalRefresh),

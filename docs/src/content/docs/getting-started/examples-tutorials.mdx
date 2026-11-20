@@ -58,7 +58,14 @@ const insertResult = await client.insert({
   ],
 });
 
-console.log('Inserted IDs:', insertResult.IDs);
+if (insertResult.status.error_code !== 'Success') {
+  throw new Error(insertResult.status.reason);
+}
+if (!('int_id' in insertResult.IDs)) {
+  throw new Error('Expected Int64 primary keys');
+}
+const ids = insertResult.IDs.int_id.data.map(String);
+console.log('Inserted IDs:', ids);
 
 // Create index
 await client.createIndex({
@@ -93,15 +100,17 @@ const queryResults = await client.query({
 console.log('Query results:', queryResults.data);
 
 // Delete
-await client.delete({
+const deleteResult = await client.delete({
   collection_name: 'my_collection',
-  ids: [insertResult.IDs[0]],
+  ids: [ids[0]],
 });
+console.log('Deleted rows:', deleteResult.delete_cnt);
 
 // Drop collection
 await client.dropCollection({
   collection_name: 'my_collection',
 });
+await client.closeConnection();
 ```
 
 ## Vector Similarity Search
@@ -175,6 +184,8 @@ const results = await client.search({
 });
 
 console.log('Similar images:', results.results);
+await client.dropCollection({ collection_name: 'image_collection' });
+await client.closeConnection();
 ```
 
 ## Hybrid Search
@@ -182,6 +193,16 @@ console.log('Similar images:', results.results);
 ### Multi-Vector Search
 
 ```javascript
+import {
+  ConsistencyLevelEnum,
+  DataType,
+  MilvusClient,
+} from '@zilliz/milvus2-sdk-node';
+
+const client = new MilvusClient({ address: 'localhost:19530' });
+const textVector = Array.from({ length: 768 }, () => Math.random());
+const imageVector = Array.from({ length: 512 }, () => Math.random());
+
 // Create collection with multiple vector fields
 await client.createCollection({
   collection_name: 'hybrid_collection',
@@ -204,6 +225,12 @@ await client.createCollection({
     },
   ],
 });
+
+await client.insert({
+  collection_name: 'hybrid_collection',
+  data: [{ text_vector: textVector, image_vector: imageVector }],
+});
+await client.flushSync({ collection_names: ['hybrid_collection'] });
 
 // Create indexes for both vectors
 await client.createIndex({
@@ -228,23 +255,24 @@ await client.loadCollectionSync({
 // Hybrid search
 const results = await client.hybridSearch({
   collection_name: 'hybrid_collection',
-  reqs: [
+  data: [
     {
-      data: [Array.from({ length: 768 }, () => Math.random())],
+      data: textVector,
       anns_field: 'text_vector',
-      param: { nprobe: 64 },
-      limit: 10,
     },
     {
-      data: [Array.from({ length: 512 }, () => Math.random())],
+      data: imageVector,
       anns_field: 'image_vector',
-      param: { nprobe: 64 },
-      limit: 10,
     },
   ],
-  ranker: 'rrf',
+  rerank: { strategy: 'rrf', params: { k: 60 } },
+  consistency_level: ConsistencyLevelEnum.Strong,
   limit: 10,
 });
+
+console.log('Hybrid search results:', results.results);
+await client.dropCollection({ collection_name: 'hybrid_collection' });
+await client.closeConnection();
 ```
 
 ## Dynamic Schema Usage
@@ -277,9 +305,10 @@ await client.insert({
   data: [
     {
       vector: Array.from({ length: 128 }, () => Math.random()),
-      category: 'tech',        // Dynamic field
-      tags: ['ai', 'ml'],      // Dynamic field
-      metadata: {               // Dynamic field
+      category: 'tech', // Dynamic field
+      tags: ['ai', 'ml'], // Dynamic field
+      metadata: {
+        // Dynamic field
         author: 'John Doe',
         date: '2024-01-01',
       },
@@ -347,12 +376,18 @@ const prodClient = new MilvusClient({
 // Create collection in production database
 await prodClient.createCollection({
   collection_name: 'prod_collection',
-  fields: [/* ... */],
+  fields: [
+    { name: 'id', data_type: DataType.Int64, is_primary_key: true },
+    { name: 'vector', data_type: DataType.FloatVector, dim: 4 },
+  ],
 });
 
 // List databases
 const databases = await client.listDatabases();
 console.log('Databases:', databases.db_names);
+await prodClient.dropCollection({ collection_name: 'prod_collection' });
+await prodClient.closeConnection();
+await client.dropDatabase({ db_name: 'production_db' });
 ```
 
 ## Authentication Examples
@@ -388,6 +423,7 @@ await client.connectPromise;
 ```javascript
 // app/api/search/route.ts
 import { MilvusClient } from '@zilliz/milvus2-sdk-node';
+import { NextResponse } from 'next/server';
 
 const client = new MilvusClient({
   address: process.env.MILVUS_ADDRESS,
@@ -403,7 +439,10 @@ export async function POST(request) {
     limit: 10,
   });
 
-  return Response.json({ results });
+  if (results.status.error_code !== 'Success') {
+    return NextResponse.json({ error: results.status.reason }, { status: 502 });
+  }
+  return NextResponse.json({ results: results.results });
 }
 ```
 
@@ -411,24 +450,33 @@ export async function POST(request) {
 
 ### LangChain.js Example
 
+Install `@langchain/community`, `@langchain/core`, and the Milvus SDK. This example uses deterministic vectors so you can test the integration locally without an embedding service. Use your embedding model for real documents.
+
 ```javascript
-import { MilvusClient } from '@zilliz/milvus2-sdk-node';
 import { Milvus } from '@langchain/community/vectorstores/milvus';
 
-const client = new MilvusClient({
-  address: 'localhost:19530',
-});
+const embed = (text) => (text.includes('vector') ? [1, 0] : [0, 1]);
+const embeddings = {
+  embedDocuments: async (texts) => texts.map(embed),
+  embedQuery: async (text) => embed(text),
+};
 
-const vectorStore = await Milvus.fromDocuments(
-  documents,
+const vectorStore = await Milvus.fromTexts(
+  [
+    'Milvus stores vector embeddings',
+    'LangChain connects application components',
+  ],
+  [{ topic: 'milvus' }, { topic: 'langchain' }],
   embeddings,
   {
-    client,
+    url: process.env.MILVUS_ADDRESS ?? 'localhost:19530',
+    clientConfig: { token: process.env.MILVUS_TOKEN },
     collectionName: 'langchain_collection',
   }
 );
 
-const results = await vectorStore.similaritySearch('query', 5);
+const results = await vectorStore.similaritySearch('vector search', 1);
+console.log(results.map((document) => document.pageContent));
 ```
 
 ## Cloud Deployment
@@ -446,8 +494,10 @@ const client = new MilvusClient({
 
 await client.connectPromise;
 
-// Use client as normal
-await client.createCollection({ /* ... */ });
+const { data, status } = await client.listCollections();
+if (status.error_code !== 'Success') throw new Error(status.reason);
+console.log(data.map((collection) => collection.name));
+await client.closeConnection();
 ```
 
 ## Error Handling Pattern

@@ -56,13 +56,14 @@ const results = await client.query({
 });
 ```
 
-`order_by_fields` can be a string, an array of strings, or an array of `{ field, order }` objects:
+`order_by_fields` can be a string, an array of strings, or an array of `{ field, order }` objects. Milvus requires an explicit `limit` for ordered queries:
 
 ```javascript
 await client.query({
   collection_name: 'my_collection',
   filter: 'age > 25',
   output_fields: ['id', 'price', 'rating'],
+  limit: 10,
   order_by_fields: 'price:asc,rating:desc',
 });
 
@@ -70,6 +71,7 @@ await client.query({
   collection_name: 'my_collection',
   filter: 'age > 25',
   output_fields: ['id', 'price', 'rating'],
+  limit: 10,
   order_by: ['price:asc', { field: 'rating', order: 'desc' }], // alias
 });
 ```
@@ -288,7 +290,7 @@ Configure search parameters for different index types:
 
 ```javascript
 // For IVF indexes
-const results = await client.search({
+const ivfResults = await client.search({
   collection_name: 'my_collection',
   data: [[0.1, 0.2, 0.3, 0.4]],
   params: {
@@ -298,7 +300,7 @@ const results = await client.search({
 });
 
 // For HNSW indexes
-const results = await client.search({
+const hnswResults = await client.search({
   collection_name: 'my_collection',
   data: [[0.1, 0.2, 0.3, 0.4]],
   params: {
@@ -344,21 +346,17 @@ Search with multiple vector fields:
 ```javascript
 const results = await client.hybridSearch({
   collection_name: 'my_collection',
-  reqs: [
+  data: [
     {
-      data: [[0.1, 0.2, 0.3, 0.4]],
+      data: [0.1, 0.2, 0.3, 0.4],
       anns_field: 'text_vector',
-      param: { nprobe: 64 },
-      limit: 10,
     },
     {
-      data: [[0.5, 0.6, 0.7, 0.8]],
+      data: [0.5, 0.6, 0.7, 0.8],
       anns_field: 'image_vector',
-      param: { nprobe: 64 },
-      limit: 10,
     },
   ],
-  ranker: 'rrf', // Reciprocal Rank Fusion
+  rerank: { strategy: 'rrf', params: { k: 60 } },
   limit: 10,
   output_fields: ['id', 'text'],
 });
@@ -552,7 +550,9 @@ await client.loadCollectionSync({
 
 // Now search
 const results = await client.search({
-  /* ... */
+  collection_name: 'my_collection',
+  data: [queryVector],
+  limit: 10,
 });
 ```
 
@@ -567,8 +567,12 @@ const results = await client.search({
 
 ## Complete Example
 
+Use a collection named `my_collection` with an indexed 128-dimensional vector
+field and scalar fields named `id`, `text`, and `age`. Insert rows with ages
+above and below 25 to see how the filter changes the results.
+
 ```javascript
-import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+import { MilvusClient } from '@zilliz/milvus2-sdk-node';
 
 const client = new MilvusClient({
   address: 'localhost:19530',
@@ -598,12 +602,10 @@ const searchResults = await client.search({
   filter: 'age > 25',
   limit: 10,
   output_fields: ['id', 'text'],
-  params: {
-    nprobe: 64,
-  },
 });
 
 console.log('Search results:', searchResults.results);
+await client.closeConnection();
 ```
 
 ## Next Steps

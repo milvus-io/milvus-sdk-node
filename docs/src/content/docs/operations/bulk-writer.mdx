@@ -19,7 +19,7 @@ Generate Milvus-compatible files (JSON/Parquet) on the client side and import th
 ## Quick Start
 
 ```javascript
-import { MilvusClient, BulkWriter, DataType } from '@zilliz/milvus2-sdk-node';
+import { BulkWriter, DataType } from '@zilliz/milvus2-sdk-node';
 
 // 1. Define schema (same as createCollection)
 const schema = {
@@ -44,30 +44,27 @@ const writer = new BulkWriter({
 });
 
 // 3. Append rows
-for (const item of data) {
-  await writer.append({
-    vector: item.embedding,
-    text: item.content,
-    metadata: { source: item.source },
-  });
-}
+const rows = [
+  {
+    vector: Array(128).fill(0.1),
+    text: 'A sample document',
+    metadata: { source: 'example.txt' },
+  },
+];
+for (const row of rows) await writer.append(row);
 
 // 4. Close and get file paths
 const files = await writer.close();
-// files = [['./bulk_output/<uuid>/chunk_0/data.parquet']]
+console.log(files);
 ```
 
 ## Options
 
-```typescript
-const writer = new BulkWriter({
-  schema: BulkWriterSchema, // required — field definitions
-  format: 'json' | 'parquet', // default: 'json'
-  localPath: string, // output directory, default: process.cwd()
-  chunkSize: number, // auto-flush threshold in bytes, default: 128MB
-  storage: Storage, // pluggable storage backend, default: LocalStorage
-});
-```
+- `schema` is required and defines the collection fields.
+- `format` accepts `'json'` (default) or `'parquet'`.
+- `localPath` selects the output directory and defaults to `process.cwd()`.
+- `chunkSize` controls the automatic flush threshold in bytes and defaults to 128 MB.
+- `storage` selects the storage backend and defaults to `LocalStorage`.
 
 ## JSON vs Parquet
 
@@ -84,17 +81,24 @@ const writer = new BulkWriter({
 
 ## Full Workflow: Write, Upload, Import
 
+Use the schema from Quick Start and an existing collection that matches it.
+Pass rows keyed by field name in `rows`. Install `minio` and ensure the Milvus
+server can read the bucket used for the upload.
+
 ```javascript
+import { relative, sep } from 'node:path';
 import * as Minio from 'minio';
+import { BulkWriter, MilvusClient } from '@zilliz/milvus2-sdk-node';
 
 // Step 1: Write files
+const localPath = './bulk_data';
 const writer = new BulkWriter({
-  schema: { fields: FIELDS },
+  schema,
   format: 'parquet',
-  localPath: './bulk_data',
+  localPath,
 });
 
-for (const row of data) {
+for (const row of rows) {
   await writer.append(row);
 }
 const batchFiles = await writer.close();
@@ -111,7 +115,7 @@ const minio = new Minio.Client({
 const remotePaths = [];
 for (const chunk of batchFiles) {
   for (const localFile of chunk) {
-    const remote = `imports/${path.basename(localFile)}`;
+    const remote = `imports/${relative(localPath, localFile).split(sep).join('/')}`;
     await minio.fPutObject('a-bucket', remote, localFile);
     remotePaths.push(remote);
   }
@@ -119,28 +123,48 @@ for (const chunk of batchFiles) {
 
 // Step 3: Trigger bulk import
 const client = new MilvusClient({ address: 'localhost:19530' });
-const importRes = await client.bulkInsert({
-  collection_name: 'my_collection',
-  files: remotePaths,
-});
+try {
+  const importRes = await client.bulkInsert({
+    collection_name: 'my_collection',
+    files: remotePaths,
+  });
+  if (importRes.status.error_code !== 'Success') {
+    throw new Error(importRes.status.reason);
+  }
 
-// Step 4: Wait for completion
-let state;
-do {
-  state = await client.getImportState({ task: importRes.tasks[0] });
-  await new Promise(r => setTimeout(r, 1000));
-} while (state.state !== 'ImportCompleted' && state.state !== 'ImportFailed');
-
-console.log('Import completed, rows:', state.row_count);
+  // Step 4: Wait for completion
+  const deadline = Date.now() + 5 * 60_000;
+  while (true) {
+    if (Date.now() >= deadline) throw new Error('Import timed out');
+    const state = await client.getImportState({ task: importRes.tasks[0] });
+    if (state.status.error_code !== 'Success')
+      throw new Error(state.status.reason);
+    if (state.state === 'ImportCompleted') {
+      console.log('Imported rows:', state.row_count);
+      break;
+    }
+    if (
+      state.state === 'ImportFailed' ||
+      state.state === 'ImportFailedAndCleaned'
+    ) {
+      throw new Error(JSON.stringify(state.infos));
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+} finally {
+  await client.closeConnection();
+}
 ```
 
 ## Streaming from Any Data Source
 
 BulkWriter supports `AsyncIterable` input via `writeFrom()`, enabling streaming from any source with constant memory:
+Use the same schema and a CSV header of `embedding,content,source`. Store each vector as a quoted JSON array in the `embedding` column.
 
 ```javascript
 import { parse } from 'csv-parse';
 import * as fs from 'fs';
+import { BulkWriter } from '@zilliz/milvus2-sdk-node';
 
 // Stream CSV → BulkWriter → Parquet files
 const csvStream = fs
@@ -200,7 +224,7 @@ const files = await writer.close();
 ## Progress Events
 
 ```javascript
-writer.on('flush', event => {
+writer.on('flush', (event) => {
   console.log(
     `Chunk ${event.chunkIndex}: ${event.rowCount} rows → ${event.files}`
   );

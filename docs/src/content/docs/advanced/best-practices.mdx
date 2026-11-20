@@ -49,14 +49,16 @@ const client = new MilvusClient({
 
 ```javascript
 try {
-  await client.createCollection({ /* ... */ });
-} catch (error) {
-  if (error.error_code === 'CollectionNotExists') {
-    // Handle specific error
-  } else {
-    // Handle generic error
-    console.error('Unexpected error:', error);
+  const { status } = await client.describeCollection({
+    collection_name: 'my_collection',
+  });
+  if (status.error_code === 'CollectionNotExists') {
+    console.error('Collection does not exist');
+  } else if (status.error_code !== 'Success') {
+    console.error(status.reason);
   }
+} catch (error) {
+  console.error('Transport or SDK error:', error);
 }
 ```
 
@@ -99,7 +101,11 @@ await client.loadCollectionSync({
 });
 
 // Now search
-const results = await client.search({ /* ... */ });
+const results = await client.search({
+  collection_name: 'my_collection',
+  data: [queryVector],
+  limit: 10,
+});
 ```
 
 ### Use Appropriate Index Types
@@ -237,7 +243,7 @@ Use iterators for large result sets:
 const iterator = await client.queryIterator({
   collection_name: 'my_collection',
   expr: 'age > 25',
-  batch_size: 100,
+  batchSize: 100,
 });
 ```
 
@@ -341,7 +347,12 @@ Track errors appropriately:
 
 ```javascript
 try {
-  await client.search({ /* ... */ });
+  const { status } = await client.search({
+    collection_name: 'my_collection',
+    data: [queryVector],
+    limit: 10,
+  });
+  if (status.error_code !== 'Success') throw new Error(status.reason);
 } catch (error) {
   // Log to your error tracking service
   errorTracker.captureException(error);
@@ -373,9 +384,11 @@ await client.createRole({
 });
 
 // Grant only necessary privileges
+import { RbacObjects } from '@zilliz/milvus2-sdk-node';
+
 await client.grantPrivilege({
   roleName: 'readonly',
-  object: 'Collection',
+  object: RbacObjects.Collection,
   objectName: '*',
   privilegeName: 'DescribeCollection',
 });

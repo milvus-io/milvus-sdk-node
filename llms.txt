@@ -536,7 +536,8 @@ await client.describeSnapshot({
 });
 
 const restore = await client.restoreSnapshot({
-  collection_name: 'documents_restored',
+  source_collection_name: 'documents',
+  target_collection_name: 'documents_restored',
   snapshot_name: 'snap_001',
 });
 
@@ -570,15 +571,13 @@ await client.alterCollectionProperties({
 });
 await client.dropCollectionProperties({
   collection_name,
-  delete_keys: ['collection.ttl.seconds'],
+  properties: ['collection.ttl.seconds'],
 });
 await client.alterCollectionFieldProperties({
   collection_name,
   field_name: 'vector',
   properties: { 'mmap.enabled': true },
 });
-await client.addCollectionFunction({ collection_name, functions });
-await client.dropCollectionFunction({ collection_name, functions });
 
 await client.createIndex({
   collection_name,
@@ -606,15 +605,14 @@ await client.loadPartitions({ collection_name, partition_names: ['p1'] });
 await client.dropPartition({ collection_name, partition_name: 'p1' });
 
 await client.createAlias({ collection_name, alias: 'current_docs' });
-await client.describeAlias({ alias: 'current_docs' });
+await client.describeAlias({ collection_name, alias: 'current_docs' });
 await client.dropAlias({ alias: 'current_docs' });
 
 await client.createUser({ username: 'alice', password: 'secret' });
 await client.createRole({ roleName: 'reader' });
-await client.operateUserRole({
+await client.addUserToRole({
   username: 'alice',
   roleName: 'reader',
-  type: 'AddUserToRole',
 });
 
 await client.createResourceGroup({ resource_group: 'rg1' });
@@ -646,8 +644,8 @@ if (created.code !== 0) throw new Error(created.message);
 
 const vector = Array(128).fill(0.1);
 await client.insert({ collectionName: 'docs', data: [{ id: 1, vector }] });
-await client.search({ collectionName: 'docs', data: [vector], limit: 10 });
-await client.query({ collectionName: 'docs', filter: 'id > 0', limit: 100 });
+await client.search({ collectionName: 'docs', data: [vector], limit: 10, outputFields: ['id'] });
+await client.query({ collectionName: 'docs', filter: 'id > 0', limit: 100, outputFields: ['id'] });
 ```
 
 - [HttpClient guide](https://milvus-io.github.io/milvus-sdk-node/advanced/http-client/)
@@ -696,11 +694,11 @@ Common values: `AUTOINDEX`, `HNSW`, `FLAT`, `IVF_FLAT`, `IVF_SQ8`, `IVF_PQ`, `DI
 import { ErrorCode } from '@zilliz/milvus2-sdk-node';
 
 try {
-  const res = await client.createCollection({
-    /* ... */
+  const { status } = await client.describeCollection({
+    collection_name: 'documents',
   });
-  if (res.error_code !== ErrorCode.SUCCESS) {
-    throw new Error(res.reason);
+  if (status.error_code !== ErrorCode.SUCCESS) {
+    throw new Error(status.reason);
   }
 } catch (err) {
   console.error('Milvus transport or SDK error:', err);

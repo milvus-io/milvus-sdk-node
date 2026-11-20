@@ -25,7 +25,8 @@ Update user password:
 ```javascript
 await client.updateUser({
   username: 'newuser',
-  password: 'newpassword',
+  oldPassword: 'securepassword',
+  newPassword: 'newpassword',
 });
 ```
 
@@ -69,7 +70,7 @@ Create a new role:
 
 ```javascript
 await client.createRole({
-  roleName: 'admin',
+  roleName: 'catalog_reader',
 });
 ```
 
@@ -79,7 +80,7 @@ Delete a role:
 
 ```javascript
 await client.dropRole({
-  roleName: 'admin',
+  roleName: 'catalog_reader',
 });
 ```
 
@@ -99,7 +100,7 @@ Get role information:
 
 ```javascript
 const role = await client.describeRole({
-  roleName: 'admin',
+  roleName: 'catalog_reader',
 });
 
 console.log('Role info:', role);
@@ -111,7 +112,7 @@ Check if a role exists:
 
 ```javascript
 const hasRole = await client.hasRole({
-  roleName: 'admin',
+  roleName: 'catalog_reader',
 });
 
 console.log('Role exists:', hasRole.hasRole);
@@ -126,7 +127,7 @@ Assign a user to a role:
 ```javascript
 await client.addUserToRole({
   username: 'newuser',
-  roleName: 'admin',
+  roleName: 'catalog_reader',
 });
 ```
 
@@ -137,20 +138,24 @@ Remove a user from a role:
 ```javascript
 await client.removeUserFromRole({
   username: 'newuser',
-  roleName: 'admin',
+  roleName: 'catalog_reader',
 });
 ```
 
 ## Privilege Management
+
+Connect as an administrator to a Milvus server with authorization enabled before granting or revoking privileges.
 
 ### Grant Privilege
 
 Grant privileges to a role:
 
 ```javascript
+import { RbacObjects } from '@zilliz/milvus2-sdk-node';
+
 await client.grantPrivilege({
-  roleName: 'admin',
-  object: 'Collection',
+  roleName: 'catalog_reader',
+  object: RbacObjects.Collection,
   objectName: 'my_collection',
   privilegeName: 'Load',
 });
@@ -161,9 +166,11 @@ await client.grantPrivilege({
 Revoke privileges from a role:
 
 ```javascript
+import { RbacObjects } from '@zilliz/milvus2-sdk-node';
+
 await client.revokePrivilege({
-  roleName: 'admin',
-  object: 'Collection',
+  roleName: 'catalog_reader',
+  object: RbacObjects.Collection,
   objectName: 'my_collection',
   privilegeName: 'Load',
 });
@@ -174,9 +181,11 @@ await client.revokePrivilege({
 Get granted privileges:
 
 ```javascript
+import { RbacObjects } from '@zilliz/milvus2-sdk-node';
+
 const grants = await client.selectGrant({
-  roleName: 'admin',
-  object: 'Collection',
+  roleName: 'catalog_reader',
+  object: RbacObjects.Collection,
   objectName: 'my_collection',
 });
 
@@ -189,7 +198,7 @@ List all grants for a role:
 
 ```javascript
 const grants = await client.listGrants({
-  roleName: 'admin',
+  roleName: 'catalog_reader',
 });
 
 console.log('Grants:', grants.entities);
@@ -203,7 +212,7 @@ Create a privilege group:
 
 ```javascript
 await client.createPrivilegeGroup({
-  groupName: 'readonly_group',
+  group_name: 'readonly_group',
 });
 ```
 
@@ -213,7 +222,7 @@ Delete a privilege group:
 
 ```javascript
 await client.dropPrivilegeGroup({
-  groupName: 'readonly_group',
+  group_name: 'readonly_group',
 });
 ```
 
@@ -224,7 +233,10 @@ List all privilege groups:
 ```javascript
 const groups = await client.listPrivilegeGroups();
 
-console.log('Groups:', groups.group_names);
+console.log(
+  'Groups:',
+  groups.privilege_groups.map((group) => group.group_name)
+);
 ```
 
 ### Add Privileges to Group
@@ -233,14 +245,8 @@ Add privileges to a group:
 
 ```javascript
 await client.addPrivilegesToGroup({
-  groupName: 'readonly_group',
-  privileges: [
-    {
-      object: 'Collection',
-      objectName: '*',
-      privilegeName: 'DescribeCollection',
-    },
-  ],
+  group_name: 'readonly_group',
+  privileges: ['DescribeCollection'],
 });
 ```
 
@@ -250,14 +256,8 @@ Remove privileges from a group:
 
 ```javascript
 await client.removePrivilegesFromGroup({
-  groupName: 'readonly_group',
-  privileges: [
-    {
-      object: 'Collection',
-      objectName: '*',
-      privilegeName: 'DescribeCollection',
-    },
-  ],
+  group_name: 'readonly_group',
+  privileges: ['DescribeCollection'],
 });
 ```
 
@@ -269,14 +269,10 @@ Grant privileges using RBAC v2:
 
 ```javascript
 await client.grantPrivilegeV2({
-  roleName: 'admin',
-  privileges: [
-    {
-      object: 'Collection',
-      objectName: '*',
-      privilegeName: 'Load',
-    },
-  ],
+  role: 'catalog_reader',
+  db_name: 'default',
+  collection_name: 'my_collection',
+  privilege: 'Load',
 });
 ```
 
@@ -286,14 +282,10 @@ Revoke privileges using RBAC v2:
 
 ```javascript
 await client.revokePrivilegeV2({
-  roleName: 'admin',
-  privileges: [
-    {
-      object: 'Collection',
-      objectName: '*',
-      privilegeName: 'Load',
-    },
-  ],
+  role: 'catalog_reader',
+  db_name: 'default',
+  collection_name: 'my_collection',
+  privilege: 'Load',
 });
 ```
 
@@ -313,7 +305,7 @@ Restore RBAC configuration:
 
 ```javascript
 await client.restoreRBAC({
-  backup: backupData,
+  RBAC_meta: backup.RBAC_meta,
 });
 ```
 
@@ -332,10 +324,8 @@ console.log('Dropped roles:', results);
 Supported privilege objects:
 
 - `Collection`
-- `Partition`
-- `Index`
-- `Database`
 - `Global`
+- `User`
 
 ## Privilege Names
 

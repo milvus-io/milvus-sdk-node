@@ -203,13 +203,15 @@ Some methods may be deprecated in newer versions:
 
 ```javascript
 // Old method (deprecated)
-client.alterCollection({
-  /* ... */
+await client.alterCollection({
+  collection_name: 'my_collection',
+  properties: { 'collection.ttl.seconds': 7200 },
 });
 
 // New method
-client.alterCollectionProperties({
-  /* ... */
+await client.alterCollectionProperties({
+  collection_name: 'my_collection',
+  properties: { 'collection.ttl.seconds': 7200 },
 });
 ```
 

@@ -97,6 +97,7 @@ const schema = [
 await client.createCollection({
   collection_name: collectionName,
   fields: schema,
+  consistency_level: 'Strong',
 });
 
 console.log('Collection created!');
@@ -142,6 +143,8 @@ const searchResults = await client.search({
 });
 
 console.log('Search results:', searchResults);
+await client.dropCollection({ collection_name: collectionName });
+await client.closeConnection();
 ```
 
 ## Connection Lifecycle

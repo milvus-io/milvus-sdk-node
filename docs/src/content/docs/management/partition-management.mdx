@@ -52,7 +52,7 @@ const stats = await client.getPartitionStatistics({
   partition_name: 'partition_1',
 });
 
-console.log('Row count:', stats.row_count);
+console.log('Row count:', stats.data.row_count);
 console.log('Statistics:', stats.stats);
 ```
 

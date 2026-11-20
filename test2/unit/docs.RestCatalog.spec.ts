@@ -36,4 +36,17 @@ describe('REST reference catalog', () => {
       }
     }
   });
+
+  it('shows the Milvus 3.0.6 error envelope for legacy function routes', () => {
+    for (const route of [
+      '/collections/add_function',
+      '/collections/drop_function',
+    ]) {
+      const op = restOperations.find(operation => operation.route === route);
+      expect(op?.response).toEqual({
+        code: 1100,
+        message: expect.stringContaining('RPC is no longer supported'),
+      });
+    }
+  });
 });

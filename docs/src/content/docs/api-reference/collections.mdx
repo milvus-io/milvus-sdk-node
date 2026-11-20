@@ -63,7 +63,7 @@ await client.createCollection({
 - `enable_dynamic_field?` / `enableDynamicField?`: Enable dynamic field.
 - `properties?`: Collection properties such as TTL or mmap settings.
 - `functions?`: Collection functions such as BM25 or text embedding.
-- `external_source?`, `external_spec?`, `do_physical_backfill?`, `file_resource_ids?`: External collection configuration.
+- `external_source?`, `external_spec?`, `file_resource_ids?`: External collection configuration.
 - `db_name?`: Database name.
 - `timeout?`: Request timeout in milliseconds.
 
@@ -507,9 +507,9 @@ await client.dropFunctionField({
 
 ### addCollectionFunction
 
-Add a function to a collection, such as BM25, text embedding, or rerank.
-This method is deprecated for schema-evolution workflows; use
-`addFunctionField` when the output field and index must be created atomically.
+Milvus 3.0.6 rejects this legacy method. Use `addFunctionField` to add a BM25 or
+MinHash function, its output field, and its index. Define text embedding
+functions when creating the collection.
 
 ```typescript
 addCollectionFunction(data: AddCollectionFunctionReq): Promise<ResStatus>
@@ -522,22 +522,10 @@ addCollectionFunction(data: AddCollectionFunctionReq): Promise<ResStatus>
 - `db_name?`: Database name.
 - `timeout?`: Request timeout in milliseconds.
 
-Example:
-
-```typescript
-await client.addCollectionFunction({
-  collection_name: 'books',
-  function: {
-    name: 'title_bm25',
-    type: FunctionType.BM25,
-    input_field_names: ['title'],
-    output_field_names: ['title_sparse'],
-    params: {},
-  },
-});
-```
-
 ### alterCollectionFunction
+
+Update supported settings on an existing function, such as a text embedding
+function's description. Milvus 3.0.6 rejects BM25 function alterations.
 
 ```typescript
 alterCollectionFunction(data: AlterCollectionFunctionReq): Promise<ResStatus>
@@ -545,8 +533,8 @@ alterCollectionFunction(data: AlterCollectionFunctionReq): Promise<ResStatus>
 
 ### dropCollectionFunction
 
-This method is deprecated for schema-evolution workflows. Use
-`dropFunctionField` to remove the function output fields and indexes as well.
+Milvus 3.0.6 rejects this legacy method. Use `dropFunctionField` to remove the
+function, its output field, and its bound index.
 
 ```typescript
 dropCollectionFunction(data: DropCollectionFunctionReq): Promise<ResStatus>
@@ -728,8 +716,6 @@ unpinSnapshotData(data: UnpinSnapshotDataReq): Promise<ResStatus>
 ## Function-field backfill
 
 In SDK 3.0.4+, `addFunctionField()` returns after the schema change is accepted. Milvus asynchronously backfills existing sealed segments through schema-bump compaction. The wrapper supports BM25 → SparseFloatVector and MINHASH → BinaryVector; provide an explicit bound `index_type` other than `AUTOINDEX`.
-
-`do_physical_backfill` is not an `addFunctionField` / `alterCollectionSchema` option. It remains a separate external-collection creation option.
 
 ```typescript
 const stats = await client.getCollectionStatistics({
