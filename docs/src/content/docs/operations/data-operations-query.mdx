@@ -126,6 +126,9 @@ const result = await client.count({
   filter: 'age > 25',
 });
 
+if (result.status.error_code !== 'Success') {
+  throw new Error(result.status.reason);
+}
 console.log('Count:', result.data);
 ```
 

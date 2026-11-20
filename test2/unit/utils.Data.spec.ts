@@ -424,6 +424,56 @@ describe('utils/Data', () => {
     ]);
   });
 
+  it('returns the server status when the count query fails', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const status = {
+      error_code: ErrorCode.IllegalArgument,
+      code: 1100,
+      reason: 'the value of expression template variable name {x} is not found',
+    };
+    const query = jest.fn((_request, _options, callback) =>
+      callback(null, { status, fields_data: [] })
+    );
+    (client as any).channelPool = {
+      acquire: jest.fn().mockResolvedValue({ Query: query }),
+      release: jest.fn(),
+    };
+
+    const result = await client.count({
+      collection_name: 'test_collection',
+      filter: 'id > {x}',
+    });
+
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ status, data: 0 });
+    expect(result.status).toBe(status);
+  });
+
+  it('returns zero with a successful status when count matches no rows', async () => {
+    const client = new MilvusClient({
+      address: 'localhost:19530',
+      __SKIP_CONNECT__: true,
+    });
+    const status = {
+      error_code: ErrorCode.SUCCESS,
+      reason: '',
+      extra_info: {},
+      retriable: false,
+      detail: '',
+    };
+    jest.spyOn(client, 'query').mockResolvedValue({
+      status,
+      data: [{ 'count(*)': '0' }],
+    });
+
+    await expect(
+      client.count({ collection_name: 'test_collection', filter: 'id < 0' })
+    ).resolves.toEqual({ status, data: 0 });
+  });
+
   it('should forward cluster_id through count query requests', async () => {
     const client = new MilvusClient({
       address: 'localhost:19530',
