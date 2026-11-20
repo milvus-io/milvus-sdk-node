@@ -57,6 +57,6 @@ CI builds the SDK, runs the suite and package lifecycle with coverage, and check
 
 ## Release the SDK
 
-The maintainer workflow is documented in the [milvus-node-release skill](.agents/skills/milvus-node-release/SKILL.md). Prepare and merge the version bump, publish the matching GitHub Release, approve the staged npm package with maintainer 2FA, and verify the exact version and dist-tag on the public registry. The [release workflow](.github/workflows/release.yml) builds on Node.js 24 and reports a Stage ID after submission.
+The maintainer workflow is documented in the [milvus-node-release skill](.agents/skills/milvus-node-release/SKILL.md). Prepare and merge the version bump, then publish the matching GitHub Release. The [release workflow](.github/workflows/release.yml) builds on Node.js 24, publishes directly to npm through OIDC Trusted Publishing, and verifies the exact version and dist-tag on the public registry. Use staged publishing only when explicitly requested; it adds a separate maintainer approval step.
 
 For documentation-site edits, install its dependencies using the [site build instructions](docs/src/content/docs/reference/contributing.mdx#build-and-preview-the-documentation-site). Format MDX with `yarn --cwd docs prettier --write src/content/docs/<file>.mdx` so Prettier can load the Astro plugin.
