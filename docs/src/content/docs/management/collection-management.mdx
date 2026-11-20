@@ -159,7 +159,10 @@ List all collections:
 ```javascript
 const result = await client.showCollections();
 
-console.log('Collections:', result.collection_names);
+console.log(
+  'Collections:',
+  result.data.map((collection) => collection.name)
+);
 // Output: ['collection1', 'collection2', 'my_collection']
 ```
 
@@ -224,7 +227,7 @@ Remove specific properties:
 ```javascript
 await client.dropCollectionProperties({
   collection_name: 'my_collection',
-  property_names: ['collection.ttl.seconds'],
+  properties: ['collection.ttl.seconds'],
 });
 ```
 
@@ -289,7 +292,7 @@ await client.alterCollectionFieldProperties({
   collection_name: 'my_collection',
   field_name: 'my_field',
   properties: {
-    'field.max_length': 512,
+    max_length: 512,
   },
 });
 ```
@@ -303,7 +306,7 @@ const stats = await client.getCollectionStatistics({
   collection_name: 'my_collection',
 });
 
-console.log('Row count:', stats.row_count);
+console.log('Row count:', stats.data.row_count);
 console.log('Statistics:', stats.stats);
 ```
 
@@ -384,6 +387,7 @@ Get information about an alias:
 
 ```javascript
 const result = await client.describeAlias({
+  collection_name: 'my_collection',
   alias: 'my_alias',
 });
 
@@ -467,19 +471,19 @@ console.log('Plans:', plans.mergeInfos);
 Get replica information:
 
 ```javascript
-const replicas = await client.getReplicas({
+const { collectionID } = await client.describeCollection({
   collection_name: 'my_collection',
 });
+const replicas = await client.getReplicas({ collectionID });
 
 console.log('Replicas:', replicas.replicas);
 ```
 
-Include shard node details or query by collection ID when needed:
+Pass the collection ID to include shard node details:
 
 ```javascript
 const replicas = await client.getReplicas({
-  collection_name: 'my_collection',
-  db_name: 'default',
+  collectionID,
   with_shard_nodes: true,
 });
 
@@ -565,7 +569,7 @@ const result = await client.batchDescribeCollections({
 });
 
 result.responses.forEach((col) => {
-  console.log(`Collection: ${col.collectionName}`);
+  console.log(`Collection: ${col.collection_name}`);
   console.log(`Fields: ${col.schema.fields.map((f) => f.name)}`);
 });
 ```
@@ -610,20 +614,17 @@ await client.dropCollectionProperties({
 
 ## External Collections <span className="version-tag">Milvus 3.0</span>
 
-External collections reference data stored outside Milvus. Use `external_source` and `external_spec` at collection creation time, and map Milvus fields to source fields with `external_field`.
+External collections reference data stored outside Milvus. Use `external_source` and `external_spec` at collection creation time, and map Milvus fields to source fields with `external_field`. Milvus supplies the primary key for the external collection.
 
 ```javascript
 await client.createCollection({
   collection_name: 'external_products',
   external_source: 's3://bucket/path/products/',
   external_spec: JSON.stringify({ format: 'parquet' }),
-  do_physical_backfill: false,
-  file_resource_ids: ['resource-id-1'],
   fields: [
     {
       name: 'id',
       data_type: DataType.Int64,
-      is_primary_key: true,
       external_field: 'product_id',
     },
     {
@@ -812,9 +813,7 @@ await client.addFunctionField({
 ```
 
 The lower-level `alterCollectionSchema()` API exposes the same schema mutation
-when you need to build the complete request yourself. The older
-`addCollectionFunction()` method remains available, but is deprecated for this
-schema-evolution workflow.
+when you need to build the complete request yourself.
 
 ### Drop a Function and Its Output Field
 
@@ -825,9 +824,7 @@ await client.dropFunctionField({
 });
 ```
 
-`dropFunctionField()` also removes the function output fields and bound indexes.
-The older `dropCollectionFunction()` method does not provide this cascade and is
-deprecated for schema-evolution workflows.
+`dropFunctionField()` also removes the function output field and bound index.
 
 For more details on BM25 functions, see [Full-Text Search](/milvus-sdk-node/advanced/full-text-search/).
 
@@ -850,8 +847,6 @@ await client.refreshLoad({
 ## Function-field backfill
 
 In SDK 3.0.4+, `addFunctionField()` returns after the schema change is accepted. Milvus asynchronously backfills existing sealed segments through schema-bump compaction. The wrapper supports BM25 → SparseFloatVector and MINHASH → BinaryVector; provide an explicit bound `index_type` other than `AUTOINDEX`.
-
-`do_physical_backfill` is not an `addFunctionField` / `alterCollectionSchema` option. It remains a separate external-collection creation option.
 
 ```typescript
 const stats = await client.getCollectionStatistics({

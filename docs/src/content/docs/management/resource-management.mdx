@@ -54,14 +54,11 @@ console.log('Resource group info:', info);
 Update resource group configuration:
 
 ```javascript
-await client.updateResourceGroup({
-  resource_group: 'rg1',
-  config: {
-    requests: {
-      node_num: 3,
-    },
-    limits: {
-      node_num: 6,
+await client.updateResourceGroups({
+  resource_groups: {
+    rg1: {
+      requests: { node_num: 3 },
+      limits: { node_num: 6 },
     },
   },
 });
@@ -72,9 +69,7 @@ await client.updateResourceGroup({
 Delete resource groups:
 
 ```javascript
-await client.dropResourceGroups({
-  resource_groups: ['rg1', 'rg2'],
-});
+await client.dropResourceGroup({ resource_group: 'rg1' });
 ```
 
 ## Node Management
@@ -126,7 +121,7 @@ await client.transferReplica({
 Resource group configuration can also define where to borrow missing nodes from, where to send redundant nodes, and which node labels are allowed in the group.
 
 ```javascript
-await client.updateResourceGroup({
+await client.updateResourceGroups({
   resource_groups: {
     rg1: {
       requests: { node_num: 2 },

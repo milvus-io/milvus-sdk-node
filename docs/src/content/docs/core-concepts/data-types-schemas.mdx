@@ -19,10 +19,10 @@ Milvus supports various data types for storing different kinds of data. Understa
 ```javascript
 import { DataType } from '@zilliz/milvus2-sdk-node';
 
-{
+const ageField = {
   name: 'age',
   data_type: DataType.Int64,
-}
+};
 ```
 
 #### Floating Point Types
@@ -76,13 +76,13 @@ import { DataType } from '@zilliz/milvus2-sdk-node';
 Geospatial data stored in WKT (Well-Known Text) format.
 
 ```javascript
-{
+const locationField = {
   name: 'location',
   data_type: DataType.Geometry,
-}
+};
 
 // Insert as WKT string
-{ location: 'POINT(121.47 31.23)' }
+const row = { location: 'POINT(121.47 31.23)' };
 ```
 
 #### Timestamptz
@@ -93,17 +93,6 @@ Timestamp with timezone information.
 {
   name: 'created_at',
   data_type: DataType.Timestamptz,
-}
-```
-
-#### Struct
-
-Nested structured data type for complex objects.
-
-```javascript
-{
-  name: 'metadata',
-  data_type: DataType.Struct,
 }
 ```
 
@@ -144,24 +133,24 @@ Sparse vectors store only non-zero values with their indices. Commonly used for 
 }
 ```
 
-Sparse vectors can be inserted in two formats:
+The SDK accepts sparse vectors as dictionaries, dense arrays with missing
+positions, CSR objects, or COO arrays of objects. For example:
 
 **Dictionary format** (recommended):
 
 ```javascript
 // Keys are indices, values are float weights
-{ 10: 0.5, 100: 0.3, 500: 0.8, 1200: 0.1 }
+const sparseVector = { 10: 0.5, 100: 0.3, 500: 0.8, 1200: 0.1 };
 ```
 
-**Array of tuples format:**
+**COO format:**
 
 ```javascript
-// [index, value] pairs
-[
-  [10, 0.5],
-  [100, 0.3],
-  [500, 0.8],
-  [1200, 0.1],
+const sparseVector = [
+  { index: 10, value: 0.5 },
+  { index: 100, value: 0.3 },
+  { index: 500, value: 0.8 },
+  { index: 1200, value: 0.1 },
 ];
 ```
 
@@ -208,17 +197,17 @@ BFloat16 vector:
 Vector fields can be marked as nullable. Insert or upsert `null` for rows that do not have an embedding yet; query and search results return `null` for those fields.
 
 ```javascript
-{
+const optionalEmbedding = {
   name: 'optional_embedding',
   data_type: DataType.FloatVector,
   dim: 128,
   nullable: true,
-}
+};
 
 await client.insert({
   collection_name: 'my_collection',
   data: [
-    { id: 1, optional_embedding: [/* 128 floats */] },
+    { id: 1, optional_embedding: Array(128).fill(0.1) },
     { id: 2, optional_embedding: null },
   ],
 });
@@ -238,37 +227,15 @@ Array of scalar values:
   data_type: DataType.Array,
   element_type: DataType.VarChar,
   max_capacity: 100,
+  max_length: 128,
 }
 ```
 
 #### ArrayOfVector
 
-`DataType.ArrayOfVector` stores multiple vectors in a single field value. This is useful for documents split into chunks, multi-vector embeddings, or struct array payloads that contain vector arrays.
-
-```javascript
-{
-  name: 'chunk_embeddings',
-  data_type: DataType.ArrayOfVector,
-  element_type: DataType.FloatVector,
-  dim: 128,
-  max_capacity: 32,
-}
-
-await client.insert({
-  collection_name: 'my_collection',
-  data: [
-    {
-      id: 1,
-      chunk_embeddings: [
-        [/* first 128-d vector */],
-        [/* second 128-d vector */],
-      ],
-    },
-  ],
-});
-```
-
-Supported element vector types include dense, binary, float16, bfloat16, sparse, and int8 vector payloads where supported by Milvus.
+Use a vector child field in a StructArray to store multiple vectors per entity.
+The SDK encodes that child as `ArrayOfVector` when sending the schema to Milvus.
+Declare each child with its vector type and dimension, as shown below.
 
 #### StructArray
 
@@ -306,9 +273,7 @@ await client.insert({
           label: 'title',
           score: 95,
           active: true,
-          embedding: [
-            /* 128 floats */
-          ],
+          embedding: Array(128).fill(0.1),
         },
       ],
     },
@@ -335,22 +300,6 @@ element. Separate StructArray fields may reuse the same child names.
 To add a StructArray to an existing collection with `addCollectionField()`, set
 `nullable: true` so existing rows remain valid. Nested `Array` children inside
 a StructArray are not currently accepted by the Milvus 3.0 server.
-
-#### Struct
-
-Nested structure:
-
-```javascript
-{
-  name: 'user_info',
-  data_type: DataType.Struct,
-  element_type: {
-    name: 'name',
-    data_type: DataType.VarChar,
-    max_length: 100,
-  },
-}
-```
 
 ## Field Schema Definition
 

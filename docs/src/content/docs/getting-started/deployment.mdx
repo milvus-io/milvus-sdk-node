@@ -48,6 +48,7 @@ export default async function handler(req, res) {
     collectionName: 'my_collection',
     data: req.body.vectors,
     limit: 10,
+    outputFields: [],
   });
   res.status(200).json({ results });
 }
@@ -63,10 +64,11 @@ Deploy to Cloudflare Workers for edge computing.
 
 ```javascript
 // worker.js
-import { HttpClient } from '@zilliz/milvus2-sdk-node';
+import { HttpClient } from '@zilliz/milvus2-sdk-node/dist/milvus/HttpClient.js';
 
 export default {
   async fetch(request, env) {
+    const { vector } = await request.json();
     const client = new HttpClient({
       endpoint: env.MILVUS_ENDPOINT,
       token: env.MILVUS_TOKEN,
@@ -75,10 +77,9 @@ export default {
 
     const results = await client.search({
       collectionName: 'my_collection',
-      data: [
-        /* vectors */
-      ],
+      data: [vector],
       limit: 10,
+      outputFields: [],
     });
 
     return new Response(JSON.stringify({ results }), {
@@ -119,6 +120,7 @@ export const handler = async (event) => {
     collectionName: 'my_collection',
     data: JSON.parse(event.body).vectors,
     limit: 10,
+    outputFields: [],
   });
 
   return {
@@ -223,21 +225,30 @@ function getClient() {
 
 ### Error Handling
 
-Always handle errors appropriately:
+Reuse the HTTP client from the previous example. Inspect the Milvus response
+code and catch errors from the HTTP request:
 
 ```javascript
-try {
-  const results = await client.search({
-    /* ... */
-  });
-  return { success: true, results };
-} catch (error) {
-  console.error('Milvus error:', error);
-  return {
-    success: false,
-    error: error.message,
-    status: error.status || 500,
-  };
+async function searchCollection(queryVector) {
+  try {
+    const results = await getClient().search({
+      collectionName: 'my_collection',
+      data: [queryVector],
+      limit: 10,
+      outputFields: [],
+    });
+    if (results.code !== 0) {
+      return { success: false, error: results.message, status: 502 };
+    }
+    return { success: true, results };
+  } catch (error) {
+    console.error('Milvus error:', error);
+    return {
+      success: false,
+      error: error.message,
+      status: error.status || 500,
+    };
+  }
 }
 ```
 

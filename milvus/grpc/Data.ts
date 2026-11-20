@@ -1266,34 +1266,36 @@ export class Data extends Collection {
    * ```
    */
   async flushSync(data: FlushReq): Promise<GetFlushStateResponse> {
-    if (
-      !data ||
-      !Array.isArray(data.collection_names) ||
-      !data.collection_names.length
-    ) {
-      throw new Error(ERROR_REASONS.COLLECTION_NAME_IS_REQUIRED);
-    }
-    // copy flushed collection names
-    const res = await promisify(
-      this.channelPool,
-      'Flush',
-      data,
-      data.timeout || this.timeout
-    );
-    // After flush will return collection segment ids, need use GetPersistentSegmentInfo to check segment flush status.
-    const segIDs = Object.keys(res.coll_segIDs)
-      .map(v => res.coll_segIDs[v].data)
-      .reduce((pre, cur) => [...pre, ...cur], []);
+    const res = await this.flush(data);
+    let flushState = { status: res.status, flushed: false };
+    if (res.status.error_code !== ErrorCode.SUCCESS) return flushState;
 
-    let isFlushed = false;
-    let flushRes = null;
-    while (!isFlushed) {
-      flushRes = await this.getFlushState({ segmentIDs: segIDs });
-      await sleep(100);
-      isFlushed = flushRes.flushed;
+    const options = { db_name: data.db_name, timeout: data.timeout };
+    const requests: GetFlushStateReq[] = [];
+    const segmentIDs: number[] = [];
+    for (const collection_name of data.collection_names) {
+      const segments = res.coll_segIDs?.[collection_name]?.data;
+      const flush_ts = res.coll_flush_ts?.[collection_name];
+      if (segments?.length) {
+        segmentIDs.push(...segments);
+      } else if (flush_ts && flush_ts !== '0') {
+        // Streaming Milvus can return the checkpoint before segments are registered.
+        requests.push({ ...options, collection_name, flush_ts });
+      }
     }
-    // Before Milvus pre-GA will throw error
-    return flushRes as GetFlushStateResponse;
+    if (segmentIDs.length || !requests.length) {
+      requests.push({ ...options, segmentIDs });
+    }
+
+    for (const request of requests) {
+      do {
+        flushState = await this.getFlushState(request);
+        if (flushState.status.error_code !== ErrorCode.SUCCESS)
+          return flushState;
+        if (!flushState.flushed) await sleep(100);
+      } while (!flushState.flushed);
+    }
+    return flushState;
   }
 
   /**

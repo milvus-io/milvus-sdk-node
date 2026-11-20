@@ -58,23 +58,14 @@ The SDK automatically retries on:
 import { ErrorCode } from '@zilliz/milvus2-sdk-node';
 
 try {
-  await client.createCollection({
-    /* ... */
+  const { status } = await client.describeCollection({
+    collection_name: 'my_collection',
   });
-} catch (error) {
-  switch (error.error_code) {
-    case ErrorCode.CollectionNotExists:
-      console.error('Collection does not exist');
-      break;
-    case ErrorCode.IllegalArgument:
-      console.error('Invalid argument');
-      break;
-    case ErrorCode.UnexpectedError:
-      console.error('Unexpected error');
-      break;
-    default:
-      console.error('Error:', error);
+  if (status.error_code !== ErrorCode.SUCCESS) {
+    console.error(status.error_code, status.reason);
   }
+} catch (error) {
+  console.error('Transport or SDK error:', error);
 }
 ```
 
@@ -144,9 +135,7 @@ Every request automatically includes a `client-request-unixmsec` timestamp:
 
 ```javascript
 // This request will have client-request-unixmsec automatically added
-await client.createCollection({
-  collection_name: 'my_collection',
-  fields: [...],
+await client.listCollections({
   // Timestamp is added automatically, no configuration needed
 });
 ```
@@ -158,16 +147,12 @@ Add a trace ID to track specific requests:
 ```javascript
 // Recommended: use client_request_id (JavaScript/TypeScript convention)
 const traceId = `trace-${Date.now()}`;
-await client.createCollection({
-  collection_name: 'my_collection',
-  fields: [...],
+await client.listCollections({
   client_request_id: traceId,
 });
 
 // Alternative: use client-request-id (compatible with pymilvus)
-await client.createCollection({
-  collection_name: 'my_collection',
-  fields: [...],
+await client.listCollections({
   'client-request-id': traceId,
 });
 ```
@@ -236,7 +221,7 @@ const iterator = await client.queryIterator({
   collection_name: 'my_collection',
   expr: 'age > 25',
   output_fields: ['id', 'text'],
-  batch_size: 100,
+  batchSize: 100,
 });
 
 while (true) {
@@ -256,7 +241,7 @@ const iterator = await client.searchIterator({
   collection_name: 'my_collection',
   data: [[0.1, 0.2, 0.3, 0.4]],
   limit: 10000,
-  batch_size: 100,
+  batchSize: 100,
 });
 
 while (true) {
@@ -323,7 +308,7 @@ await client.insert({
 Use transformers for Float16 and BFloat16 vectors:
 
 ```javascript
-import { f32ArrayToF16Bytes } from '@zilliz/milvus2-sdk-node';
+import { DataType, f32ArrayToF16Bytes } from '@zilliz/milvus2-sdk-node';
 
 await client.insert({
   collection_name: 'my_collection',
@@ -333,7 +318,7 @@ await client.insert({
     },
   ],
   transformers: {
-    vector: (data) => f32ArrayToF16Bytes(data),
+    [DataType.Float16Vector]: f32ArrayToF16Bytes,
   },
 });
 ```
@@ -400,9 +385,10 @@ console.log('Metrics:', metrics);
 Get replica information:
 
 ```javascript
-const replicas = await client.getReplicas({
+const { collectionID } = await client.describeCollection({
   collection_name: 'my_collection',
 });
+const replicas = await client.getReplicas({ collectionID });
 
 console.log('Replicas:', replicas.replicas);
 ```

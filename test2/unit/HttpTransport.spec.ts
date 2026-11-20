@@ -23,6 +23,17 @@ describe.each(['GET', 'POST'] as const)(
       jest.useRealTimers();
       jest.restoreAllMocks();
     });
+    it('invokes the runtime fetch with its global receiver', async () => {
+      const fetch = jest
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(async function (this: typeof globalThis) {
+          if (this !== globalThis) throw new TypeError('Illegal invocation');
+          return new Response('{"code":0}');
+        });
+      const client = new HttpBaseClient({ baseURL: endpoint });
+      await expect(client[method]('/probe')).resolves.toEqual({ code: 0 });
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
     it('propagates authentication, explicit database and abort signal', async () => {
       const { client, fetch } = transport();
       const abortController = new AbortController();

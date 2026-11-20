@@ -1,5 +1,6 @@
 import { createClient } from '../support/client';
 import { expectHttpSuccess, expectSuccess } from '../support/assertions';
+import { waitFor } from '../support/wait';
 import {
   HttpClient,
   MilvusClient,
@@ -191,10 +192,14 @@ describe(`Data.API`, () => {
   });
 
   it(`Flush Sync should success`, async () => {
-    const res = await milvusClient.flushSync({
-      collection_names: [COLLECTION_NAME],
-    });
+    const res = await waitFor(
+      'collection flush quota',
+      () => milvusClient.flushSync({ collection_names: [COLLECTION_NAME] }),
+      response => response.status.error_code !== ErrorCode.RateLimit,
+      { timeout: 15_000, interval: 1000 }
+    );
     expectSuccess(res.status);
+    expect(res.flushed).toBe(true);
   });
 
   it(

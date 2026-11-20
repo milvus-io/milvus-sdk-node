@@ -101,7 +101,7 @@ for (let i = 0; i < allData.length; i += batchSize) {
 
 ```javascript
 {
-  binary_vector: [1, 0, 1, 0, /* ... */], // Array of 0s and 1s, length = dim / 8
+  binary_vector: [0b10101010, 0b01010101], // Two bytes for dim = 16
 }
 ```
 
@@ -111,30 +111,30 @@ Multiple formats supported:
 
 ```javascript
 // Array format
-{
+const arrayRow = {
   sparse_vector: [1.0, undefined, undefined, 2.5, undefined],
-}
+};
 
 // Dictionary format
-{
-  sparse_vector: { '0': 1.0, '3': 2.5 },
-}
+const dictionaryRow = {
+  sparse_vector: { 0: 1.0, 3: 2.5 },
+};
 
 // CSR format
-{
+const csrRow = {
   sparse_vector: {
     indices: [0, 3],
     values: [1.0, 2.5],
   },
-}
+};
 
 // COO format
-{
+const cooRow = {
   sparse_vector: [
     { index: 0, value: 1.0 },
     { index: 3, value: 2.5 },
   ],
-}
+};
 ```
 
 #### Float16Vector / BFloat16Vector
@@ -271,7 +271,7 @@ With `HttpClient`, use `collectionName` and pass operations as `fieldOps: [{ fie
 For Float16 and BFloat16 vectors, use transformers:
 
 ```javascript
-import { f32ArrayToF16Bytes } from '@zilliz/milvus2-sdk-node';
+import { DataType, f32ArrayToF16Bytes } from '@zilliz/milvus2-sdk-node';
 
 await client.insert({
   collection_name: 'my_collection',
@@ -281,7 +281,7 @@ await client.insert({
     },
   ],
   transformers: {
-    vector: (data) => f32ArrayToF16Bytes(data), // Convert to f16 bytes
+    [DataType.Float16Vector]: f32ArrayToF16Bytes,
   },
 });
 ```
@@ -399,9 +399,10 @@ const result = await client.insert({
 console.log('Inserted IDs:', result.IDs);
 
 // Flush to ensure data is persisted
-await client.flush({
+await client.flushSync({
   collection_names: ['my_collection'],
 });
+await client.closeConnection();
 ```
 
 ## Next Steps

@@ -103,6 +103,9 @@ const client = new MilvusClient({
 Create separate clients for different databases:
 
 ```javascript
+await client.createDatabase({ db_name: 'database1' });
+await client.createDatabase({ db_name: 'database2' });
+
 const db1Client = new MilvusClient({
   address: 'localhost:19530',
   database: 'database1',
@@ -113,15 +116,10 @@ const db2Client = new MilvusClient({
   database: 'database2',
 });
 
-// Use db1Client for database1 operations
-await db1Client.createCollection({
-  /* ... */
-});
-
-// Use db2Client for database2 operations
-await db2Client.createCollection({
-  /* ... */
-});
+console.log('database1:', (await db1Client.listCollections()).data);
+console.log('database2:', (await db2Client.listCollections()).data);
+await db1Client.closeConnection();
+await db2Client.closeConnection();
 ```
 
 ### Database Isolation

@@ -38,12 +38,12 @@ await client.delete({
 });
 ```
 
-Or using `expr`:
+Combine conditions with `AND`:
 
 ```javascript
 await client.delete({
   collection_name: 'my_collection',
-  expr: 'age < 18 AND category == "old"',
+  filter: 'age < 18 AND category == "old"',
 });
 ```
 
@@ -189,8 +189,11 @@ try {
 
 ## Complete Example
 
+Use a collection named `my_collection` with an Int64 primary key and an integer
+`age` field. Load it before using `count()` to verify the deletion.
+
 ```javascript
-import { MilvusClient, DataType } from '@zilliz/milvus2-sdk-node';
+import { ConsistencyLevelEnum, MilvusClient } from '@zilliz/milvus2-sdk-node';
 
 const client = new MilvusClient({
   address: 'localhost:19530',
@@ -209,7 +212,7 @@ console.log('Deleted:', deleteResult.delete_cnt);
 // Delete by filter
 await client.delete({
   collection_name: 'my_collection',
-  expr: 'age < 18',
+  filter: 'age < 18',
 });
 
 // Flush to persist
@@ -220,10 +223,12 @@ await client.flush({
 // Verify deletion
 const count = await client.count({
   collection_name: 'my_collection',
-  expr: 'age < 18',
+  filter: 'age < 18',
+  consistency_level: ConsistencyLevelEnum.Strong,
 });
 
 console.log('Remaining entities:', count.data);
+await client.closeConnection();
 ```
 
 ## Next Steps

@@ -233,9 +233,14 @@ const indexInfo = await client.describeIndex({
   field_name: 'vector',
 });
 
-console.log('Index type:', indexInfo.index_type);
-console.log('Metric type:', indexInfo.metric_type);
-console.log('Parameters:', indexInfo.params);
+for (const index of indexInfo.index_descriptions) {
+  const params = Object.fromEntries(
+    index.params.map(({ key, value }) => [key, value])
+  );
+  console.log('Index type:', params.index_type);
+  console.log('Metric type:', params.metric_type);
+  console.log('Parameters:', params);
+}
 ```
 
 ### List Indexes
@@ -247,7 +252,7 @@ const indexes = await client.listIndexes({
   collection_name: 'my_collection',
 });
 
-console.log('Indexes:', indexes.index_descriptions);
+console.log('Indexes:', indexes.indexes);
 ```
 
 ### Get Index State
@@ -279,14 +284,14 @@ console.log('Total rows:', progress.total_rows);
 
 ### Alter Index Properties
 
-Modify index properties:
+Release the collection before modifying its index properties:
 
 ```javascript
 await client.alterIndexProperties({
   collection_name: 'my_collection',
-  field_name: 'vector',
-  properties: {
-    'index.params.ef': 100,
+  index_name: 'vector_idx',
+  params: {
+    'mmap.enabled': true,
   },
 });
 ```
@@ -298,8 +303,8 @@ Remove index properties:
 ```javascript
 await client.dropIndexProperties({
   collection_name: 'my_collection',
-  field_name: 'vector',
-  property_names: ['index.params.ef'],
+  index_name: 'vector_idx',
+  properties: ['mmap.enabled'],
 });
 ```
 

@@ -29,10 +29,10 @@ yarn add @zilliz/milvus2-sdk-node
 
 ### 1. Create Worker File
 
-Create `src/index.js` (or `worker.js`):
+Create `src/index.js` (or `worker.js`). Import the HTTP client directly so Wrangler can bundle it without the Node.js modules used by gRPC and BulkWriter.
 
 ```javascript
-import { HttpClient } from '@zilliz/milvus2-sdk-node';
+import { HttpClient } from '@zilliz/milvus2-sdk-node/dist/milvus/HttpClient.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -142,7 +142,7 @@ wrangler secret put MILVUS_TOKEN
 For better performance, reuse the client instance within the same request context:
 
 ```javascript
-import { HttpClient } from '@zilliz/milvus2-sdk-node';
+import { HttpClient } from '@zilliz/milvus2-sdk-node/dist/milvus/HttpClient.js';
 
 let clientCache = null;
 
@@ -170,7 +170,7 @@ export default {
 Here's a complete example for a vector search API:
 
 ```javascript
-import { HttpClient } from '@zilliz/milvus2-sdk-node';
+import { HttpClient } from '@zilliz/milvus2-sdk-node/dist/milvus/HttpClient.js';
 
 export default {
   async fetch(request, env) {

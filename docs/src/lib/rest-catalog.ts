@@ -196,23 +196,23 @@ const groups: Group[] = [
       ],
       [
         '/collections/add_function',
-        'Add function',
-        'Bind a function to input and output fields in the collection schema.',
+        'Add function (legacy)',
+        'Milvus 3.0.6 rejects this legacy route. Use add_function_field for BM25 or MinHash, or define a text embedding function when creating a collection.',
       ],
       [
         '/collections/alter_function',
         'Alter function',
-        'Replace the definition of a named collection function.',
+        'Update a supported function, such as an existing text embedding function. Milvus 3.0.6 rejects alterations to BM25 functions.',
       ],
       [
         '/collections/drop_function',
-        'Drop function',
-        'Remove a named function from the collection schema.',
+        'Drop function (legacy)',
+        'Milvus 3.0.6 rejects this legacy route. Use drop_function_field to remove the function and its output field.',
       ],
       [
         '/collections/add_function_field',
         'Add function and field',
-        'Add a function with its output field and optional index configuration.',
+        'Add a function with its output field and optional index configuration. The input field must already exist and have its analyzer enabled for BM25.',
       ],
       [
         '/collections/drop_function_field',
@@ -398,7 +398,7 @@ const groups: Group[] = [
       [
         '/jobs/import/commit',
         'Commit import',
-        'Commit a prepared import job using the job ID returned at submission.',
+        'Commit an import started with auto_commit set to false after its state reaches Uncommitted.',
       ],
       [
         '/jobs/import/abort',
@@ -633,7 +633,7 @@ const groups: Group[] = [
       [
         '/resource_groups/transfer_replica',
         'Transfer replicas',
-        'Move collection replicas between resource groups.',
+        'Move collection replicas between resource groups. The collection must be in the default database and the target group must have available query nodes.',
       ],
       [
         '/resource_groups/drop',

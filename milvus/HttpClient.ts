@@ -162,7 +162,10 @@ export class HttpBaseClient {
       }
 
       const fullUrl = `${this.baseURL}${url}`;
-      const response = await this.fetch(fullUrl, {
+      const fetch = this.fetch;
+      // Fetch implementations in edge runtimes require the global receiver.
+      const receiver = fetch === globalThis.fetch ? globalThis : this;
+      const response = await fetch.call(receiver, fullUrl, {
         method: 'post',
         headers: this.headers,
         body: encode ? encode(data) : JSON.stringify(data),
@@ -203,7 +206,9 @@ export class HttpBaseClient {
       const queryParams = new URLSearchParams(params);
       const fullUrl = `${this.baseURL}${url}?${queryParams}`;
 
-      const response = await this.fetch(fullUrl, {
+      const fetch = this.fetch;
+      const receiver = fetch === globalThis.fetch ? globalThis : this;
+      const response = await fetch.call(receiver, fullUrl, {
         method: 'get',
         headers: this.headers,
         signal: abortController.signal,

@@ -1,8 +1,10 @@
 import { createClient } from '../support/client';
 import { expectSuccess } from '../support/assertions';
+import { waitFor } from '../support/wait';
 import {
   ConsistencyLevelEnum,
   DataType,
+  ErrorCode,
   IndexType,
   MetricType,
   MilvusClient,
@@ -149,10 +151,14 @@ describe('Text data type', () => {
     });
     expectSuccess(upsert.status);
 
-    const flushUpsert = await milvusClient.flushSync({
-      collection_names: [COLLECTION_NAME],
-    });
+    const flushUpsert = await waitFor(
+      'collection flush quota after upsert',
+      () => milvusClient.flushSync({ collection_names: [COLLECTION_NAME] }),
+      response => response.status.error_code !== ErrorCode.RateLimit,
+      { timeout: 15_000, interval: 1000 }
+    );
     expectSuccess(flushUpsert.status);
+    expect(flushUpsert.flushed).toBe(true);
 
     const release = await milvusClient.releaseCollection({
       collection_name: COLLECTION_NAME,
