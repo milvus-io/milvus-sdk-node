@@ -210,6 +210,13 @@ export class Data extends Collection {
         .filter(({ op }) => op === 'PATH_REPLACE')
         .map(op => op.field_name)
     );
+    const childPathReplaceFields = new Set(
+      fieldOps
+        .filter(
+          ({ op, path }) => op === 'PATH_REPLACE' && /^\[\d+\]\[/.test(path!)
+        )
+        .map(op => op.field_name)
+    );
 
     const describeReq = { collection_name, cache: enable_cache };
     if (data.db_name) {
@@ -269,18 +276,30 @@ export class Data extends Collection {
                     elementType: convertToDataType(field.data_type),
                     dim: Number(field.dim),
                     data: [],
-                    nullable: field.nullable,
+                    nullable: v.nullable,
+                    elementNullable: field.nullable,
                     default_value: field.default_value,
                     fieldMap: new Map(),
-                    // Array sub-field: each element's value is itself an array.
-                    // Its described `nullable` is element-level; the column's
-                    // valid_data follows the struct row, as for other children
+                    // Child nullability is element-level; column validity follows
+                    // the parent row. Reuse typed-array encoding for nullable scalars.
                     ...(field.type_schema?.array_element?.array_element
                       ? {
                           typeSchema: field.type_schema,
-                          nullable: field.type_schema.nullable,
                         }
-                      : {}),
+                      : field.nullable &&
+                          !isVectorType(convertToDataType(field.data_type))
+                        ? {
+                            typeSchema: {
+                              nullable: !!v.nullable,
+                              type_params: [],
+                              array_element: {
+                                leaf_type: field.data_type,
+                                nullable: true,
+                                type_params: [],
+                              },
+                            },
+                          }
+                        : {}),
                   },
                 ])
               );
@@ -346,7 +365,13 @@ export class Data extends Collection {
           pathReplaceFields.has(name) &&
           rowData[name] === null
             ? Buffer.from('null')
-            : buildFieldData(rowData, field, data.transformers, rowIndex);
+            : buildFieldData(
+                rowData,
+                field,
+                data.transformers,
+                rowIndex,
+                childPathReplaceFields.has(name)
+              );
 
         if (field.type === DataType.BinaryVector && fieldData != null) {
           if ((fieldData as BinaryVector).length !== field.dim! / 8) {
@@ -521,7 +546,24 @@ export class Data extends Collection {
             keyValue = {
               [dataKey]: {
                 dim: field.dim,
-                data: vectorRows.map(buildVectorArrayData),
+                data: vectorRows.map(vector => {
+                  if (!field.elementNullable)
+                    return buildVectorArrayData(vector);
+                  const values = vector as FieldData[];
+                  const validData = values.map(
+                    value => value !== null && value !== undefined
+                  );
+                  const compact = values.filter((_, index) => validData[index]);
+                  const packed =
+                    field.elementType === DataType.FloatVector ||
+                    field.elementType === DataType.BinaryVector
+                      ? compact.flatMap(value => Array.from(value as number[]))
+                      : compact;
+                  return {
+                    ...buildVectorArrayData(packed),
+                    valid_data: validData,
+                  };
+                }),
                 element_type: field.elementType,
               },
             };
@@ -534,7 +576,7 @@ export class Data extends Collection {
               // A path operand carries only the children supplied by the caller.
               keyValue = {
                 fields: buildColumnData(
-                  pathReplaceFields.has(field.name)
+                  childPathReplaceFields.has(field.name)
                     ? children.filter(child =>
                         child.data.some(
                           row => Array.isArray(row) && row.length > 0
@@ -544,7 +586,7 @@ export class Data extends Collection {
                 ),
               };
             } else if (field.typeSchema) {
-              // Array sub-field of a struct: one nested array_data per row
+              // Struct child: encode scalar or nested Array values with element validity.
               keyValue = {
                 [dataKey]: {
                   data: field.data
@@ -556,7 +598,7 @@ export class Data extends Collection {
                         field.name
                       )
                     ),
-                  element_type: DataType.Array,
+                  element_type: field.elementType,
                 },
               };
             } else {
@@ -1836,7 +1878,10 @@ export class Data extends Collection {
     return await promisify(
       this.channelPool,
       'BatchUpdateManifest',
-      { ...data, db_name: data.db_name ?? this.metadata.get(METADATA.DATABASE) },
+      {
+        ...data,
+        db_name: data.db_name ?? this.metadata.get(METADATA.DATABASE),
+      },
       data.timeout ?? this.timeout
     );
   }

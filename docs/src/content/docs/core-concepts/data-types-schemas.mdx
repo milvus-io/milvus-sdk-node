@@ -1,6 +1,6 @@
 ---
 title: 'Data Types and Collection Schemas'
-description: "Design Milvus collection schemas in Node.js using scalar and vector data types, a primary key, and optional dynamic fields."
+description: 'Design Milvus collection schemas in Node.js using scalar and vector data types, a primary key, and optional dynamic fields.'
 ---
 
 Milvus supports various data types for storing different kinds of data. Understanding these types is essential for designing effective schemas.
@@ -298,8 +298,55 @@ query and search results include an `offset` for the matching StructArray
 element. Separate StructArray fields may reuse the same child names.
 
 To add a StructArray to an existing collection with `addCollectionField()`, set
-`nullable: true` so existing rows remain valid. Nested `Array` children inside
-a StructArray are not currently accepted by the Milvus 3.0 server.
+`nullable: true` so existing rows remain valid.
+
+On Milvus 3.0.6+, add a child to an existing StructArray with a `parent[child]`
+field name and `nullable: true`. The parent can be nullable or non-nullable;
+the server inherits its row nullability and capacity. Existing struct elements
+and new elements that omit the child receive a null child value.
+
+```typescript
+await client.addCollectionField({
+  collection_name: 'my_collection',
+  field: { name: 'items[score]', data_type: DataType.Int64, nullable: true },
+});
+
+await client.addCollectionField({
+  collection_name: 'my_collection',
+  field: {
+    name: 'items[tags]',
+    data_type: DataType.Array,
+    element_type: DataType.VarChar,
+    max_capacity: 8,
+    max_length: 64,
+    nullable: true,
+  },
+});
+
+await client.query({
+  collection_name: 'my_collection',
+  filter: 'MATCH_ANY(items, ARRAY_CONTAINS($[tags], "red"))',
+  output_fields: ['id', 'items'],
+});
+
+await client.dropCollectionField({
+  collection_name: 'my_collection',
+  field_name: 'items[tags]',
+});
+```
+
+This example assumes an existing `items` StructArray and an `id` primary key.
+For an Array child, `max_capacity` limits that child's Array and `max_length`
+limits each VarChar element. `nullable: true` allows the child itself to be
+missing or null; `element_nullable` describes null elements _inside_ that
+child's Array and does not replace `nullable: true` when adding a child.
+Array children are supported on Milvus 3.0.6+.
+
+Nullable vector children are also supported on Milvus 3.0.6+ for FloatVector,
+BinaryVector, Float16Vector, BFloat16Vector, and Int8Vector. Missing or null
+children retain their positions within each struct element. Create the child
+vector index before loading a collection that declares the child at creation.
+Milvus 3.0.6 rejects JSON children inside a StructArray.
 
 ## Field Schema Definition
 

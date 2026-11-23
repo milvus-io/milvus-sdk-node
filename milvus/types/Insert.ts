@@ -52,9 +52,10 @@ export interface _Field {
   data: FieldData[];
   dim?: number;
   nullable?: boolean;
+  elementNullable?: boolean; // validity of children within a StructArray row
   default_value?: FieldData;
   fieldMap: Map<string, _Field>; // for struct field
-  typeSchema?: TypeSchema; // for Array sub-fields of a struct field
+  typeSchema?: TypeSchema; // for nested Array or nullable scalar struct children
 }
 
 // because in javascript, there is no float16 and bfloat16 type
@@ -77,8 +78,7 @@ interface BaseInsertReq extends collectionNameReq {
 export type InsertReq = DataInsertReq | FieldsDataInsertReq;
 export type FieldPartialUpdateOpName = keyof typeof FieldPartialUpdateOpType;
 export type FieldPartialUpdateOpValue =
-  | FieldPartialUpdateOpType
-  | FieldPartialUpdateOpName;
+  FieldPartialUpdateOpType | FieldPartialUpdateOpName;
 
 export interface FieldPartialUpdateOp {
   field_name: string;

@@ -887,6 +887,219 @@ describe('utils/Data', () => {
     return insertParams;
   };
 
+  it.each([false, true])(
+    'serializes nullable scalar struct children with parent nullable=%s',
+    async nullable => {
+      const rows = [
+        { id: 1, items: [{ score: 1 }, {}, { score: null }, { score: 2 }] },
+        { id: 2, items: [] },
+        ...(nullable ? [{ id: 3, items: null }] : []),
+      ];
+      const request = await captureInsertParams(
+        {
+          status: { error_code: ErrorCode.SUCCESS, reason: '' },
+          properties: [],
+          schema: {
+            enable_dynamic_field: false,
+            fields: [
+              {
+                name: 'id',
+                data_type: DataType.Int64,
+                is_primary_key: true,
+                element_type: DataType.None,
+              },
+              {
+                name: 'items',
+                data_type: DataType.Array,
+                element_type: DataType.Struct,
+                nullable,
+                fields: [
+                  { name: 'score', data_type: DataType.Int64, nullable: true },
+                ],
+              },
+            ],
+          },
+        },
+        rows
+      );
+      const method = getGRPCService(
+        { serviceName: 'milvus.proto.milvus.MilvusService' },
+        LOADER_OPTIONS
+      ).service.Insert;
+      const decoded = method.requestDeserialize(
+        method.requestSerialize(request)
+      );
+      const items = decoded.fields_data.find(
+        (field: any) => field.field_name === 'items'
+      );
+      const score = items.struct_arrays.fields[0];
+      expect(score.valid_data).toEqual(nullable ? [true, true, false] : []);
+      expect(score.scalars.array_data).toMatchObject({
+        element_type: 'Int64',
+        data: [
+          {
+            long_data: { data: ['1', '2'] },
+            valid_data: [true, false, false, true],
+          },
+          { long_data: { data: [] }, valid_data: [] },
+        ],
+      });
+      expect(rows[0].items![1]).toEqual({});
+    }
+  );
+
+  it.each(['[0]', '[0][label]'])(
+    'encodes nullable struct children for PATH_REPLACE %s',
+    async path => {
+      const request = await captureUpsertParams(
+        {
+          status: { error_code: ErrorCode.SUCCESS },
+          properties: [],
+          schema: {
+            fields: [
+              {
+                name: 'id',
+                data_type: DataType.Int64,
+                element_type: DataType.None,
+                is_primary_key: true,
+              },
+              {
+                name: 'items',
+                data_type: DataType.Array,
+                element_type: DataType.Struct,
+                nullable: false,
+                fields: [
+                  { name: 'label', data_type: DataType.VarChar },
+                  { name: 'score', data_type: DataType.Int64, nullable: true },
+                ],
+              },
+            ],
+          },
+        },
+        [
+          {
+            id: 1,
+            items: [
+              path === '[0]' ? { label: 'a', score: 10 } : { label: 'a' },
+            ],
+          },
+          { id: 2, items: [{ label: 'b' }] },
+        ],
+        { field_ops: [{ field_name: 'items', op: 'PATH_REPLACE', path }] }
+      );
+      const method = getGRPCService(
+        { serviceName: 'milvus.proto.milvus.MilvusService' },
+        LOADER_OPTIONS
+      ).service.Upsert;
+      const decoded = method.requestDeserialize(
+        method.requestSerialize(request)
+      );
+      const children = decoded.fields_data.find(
+        (field: any) => field.field_name === 'items'
+      ).struct_arrays.fields;
+      expect(children.map((field: any) => field.field_name)).toEqual(
+        path === '[0]' ? ['label', 'score'] : ['label']
+      );
+      if (path === '[0]') {
+        expect(children[1].valid_data).toEqual([]);
+        expect(children[1].scalars.array_data.data).toMatchObject([
+          { long_data: { data: ['10'] }, valid_data: [true] },
+          { long_data: { data: [] }, valid_data: [false] },
+        ]);
+      }
+    }
+  );
+
+  it.each([
+    DataType.FloatVector,
+    DataType.BinaryVector,
+    DataType.Float16Vector,
+    DataType.BFloat16Vector,
+    DataType.Int8Vector,
+  ])(
+    'round-trips nullable vector struct children on the wire (%s)',
+    async data_type => {
+      const value = data_type === DataType.BinaryVector ? [1] : [1, -2];
+      const request = await captureInsertParams(
+        {
+          status: { error_code: ErrorCode.SUCCESS },
+          properties: [],
+          schema: {
+            fields: [
+              {
+                name: 'id',
+                data_type: DataType.Int64,
+                element_type: DataType.None,
+                is_primary_key: true,
+              },
+              {
+                name: 'items',
+                data_type: DataType.Array,
+                element_type: DataType.Struct,
+                nullable: true,
+                fields: [
+                  {
+                    name: 'embedding',
+                    data_type,
+                    dim: data_type === DataType.BinaryVector ? '8' : '2',
+                    nullable: true,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        [
+          {
+            id: 1,
+            items: [
+              { embedding: value },
+              {},
+              { embedding: null },
+              {
+                embedding:
+                  data_type === DataType.Int8Vector
+                    ? new Int8Array(value)
+                    : value,
+              },
+            ],
+          },
+          { id: 2, items: [] },
+          { id: 3, items: null },
+          { id: 4, items: [{}] },
+        ]
+      );
+      const method = getGRPCService(
+        { serviceName: 'milvus.proto.milvus.MilvusService' },
+        LOADER_OPTIONS
+      ).service.Insert;
+      const decoded = method.requestDeserialize(
+        method.requestSerialize(request)
+      );
+      const embedding = decoded.fields_data.find(
+        (field: any) => field.field_name === 'items'
+      ).struct_arrays.fields[0];
+      expect(embedding.vectors.vector_array.data[0].valid_data).toEqual([
+        true,
+        false,
+        false,
+        true,
+      ]);
+      expect(processVectorData(embedding)).toEqual([
+        [value, null, null, value],
+        [],
+        null,
+        [null],
+      ]);
+      expect(
+        processVectorData({
+          vectors: { valid_data: [false, false] },
+          valid_data: [false, false],
+        })
+      ).toEqual([null, null]);
+    }
+  );
+
   const captureInsertField = async (
     vectorType: DataType,
     rows: any[],

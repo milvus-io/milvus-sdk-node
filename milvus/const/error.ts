@@ -85,6 +85,8 @@ export const ERROR_REASONS = {
     'Adding a vector field to an existing collection requires nullable=true.',
   ADD_COLLECTION_STRUCT_FIELD_NULLABLE_REQUIRED:
     'Adding a struct array field to an existing collection requires nullable=true.',
+  ADD_COLLECTION_STRUCT_SUB_FIELD_NULLABLE_REQUIRED:
+    'Adding a struct sub-field requires nullable=true.',
   DROP_COLLECTION_FIELD_IDENTIFIER_IS_REQUIRED:
     'Specify exactly one valid `field_name` or `field_id`.',
   ALTER_COLLECTION_SCHEMA_STATUS_IS_REQUIRED:

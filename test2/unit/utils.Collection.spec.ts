@@ -133,6 +133,190 @@ describe('portable snapshot requests', () => {
 
 describe('collection schema alteration', () => {
   describe('addCollectionField', () => {
+    it.each([false, true])(
+      'preserves the sub-field schema in legacy fallback (Array=%s)',
+      async array => {
+        const { client, rpcClient } = createTestClient();
+        rpcClient.AlterCollectionSchema.mockImplementation(
+          failWith({ code: grpcStatus.UNIMPLEMENTED })
+        );
+        rpcClient.AddCollectionField.mockImplementation(
+          respondWith(successStatus)
+        );
+        await client.addCollectionField({
+          collection_name: COLLECTION_NAME,
+          field: array
+            ? {
+                name: 'items[extra]',
+                data_type: DataType.Array,
+                element_type: DataType.VarChar,
+                max_capacity: 8,
+                max_length: 64,
+                nullable: true,
+                element_nullable: true,
+              }
+            : {
+                name: 'items[extra]',
+                data_type: DataType.Int64,
+                nullable: true,
+              },
+        });
+        const schemaType = (client as any).schemaProto.lookupType(
+          (client as any).protoInternalPath.fieldSchema
+        );
+        const schema = schemaType.toObject(
+          schemaType.decode(
+            rpcClient.AddCollectionField.mock.calls[0][0].schema
+          )
+        );
+        expect(schema).toMatchObject({
+          name: 'items[extra]',
+          dataType: DataType.Array,
+          elementType: array ? DataType.Array : DataType.Int64,
+          nullable: false,
+          elementNullable: true,
+        });
+        expect(schema.typeParams || []).toEqual([]);
+        if (array) {
+          expect(schema.typeSchema).toMatchObject({
+            nullable: false,
+            arrayElement: {
+              nullable: true,
+              typeParams: [{ key: 'max_capacity', value: '8' }],
+              arrayElement: {
+                leafType: DataType.VarChar,
+                nullable: true,
+                typeParams: [{ key: 'max_length', value: '64' }],
+              },
+            },
+          });
+        } else {
+          expect(schema.typeSchema).toBeUndefined();
+        }
+      }
+    );
+
+    it.each([
+      { data_type: DataType.Int64 },
+      { data_type: 'VarChar' as const, max_length: 64 },
+      { data_type: DataType.FloatVector, dim: 8 },
+      {
+        data_type: 'Array' as const,
+        element_type: 'VarChar' as const,
+        type_params: { max_capacity: 8, max_length: 64 },
+        element_nullable: true,
+      },
+    ])('encodes an added StructArray sub-field: %j', async definition => {
+      const { client, rpcClient } = createTestClient();
+      rpcClient.AlterCollectionSchema.mockImplementation(
+        respondWith({ alter_status: successStatus })
+      );
+      const cache = seedCollectionCache(client, 'db1');
+      const field = { ...definition, name: 'items[extra]', nullable: true };
+      const original = JSON.parse(JSON.stringify(field));
+
+      expect(
+        await client.addCollectionField({
+          collection_name: COLLECTION_NAME,
+          db_name: 'db1',
+          field,
+        })
+      ).toEqual(successStatus);
+
+      const request = rpcClient.AlterCollectionSchema.mock.calls[0][0];
+      const service = getGRPCService(
+        { serviceName: 'milvus.proto.milvus.MilvusService' },
+        LOADER_OPTIONS
+      ) as any;
+      const method = service.service.AlterCollectionSchema;
+      const decoded = method.requestDeserialize(
+        method.requestSerialize(request)
+      );
+      const schema = decoded.action.add_request.field_infos[0].field_schema;
+      expect(decoded.db_name).toBe('db1');
+      expect(schema).toMatchObject({
+        name: 'items[extra]',
+        data_type:
+          definition.data_type === DataType.FloatVector
+            ? 'ArrayOfVector'
+            : 'Array',
+        element_type:
+          typeof definition.data_type === 'string'
+            ? definition.data_type
+            : DataType[definition.data_type],
+        nullable: false,
+        element_nullable: true,
+      });
+      if (definition.data_type === 'Array') {
+        expect(schema.type_params).toEqual([]);
+        expect(schema.type_schema).toMatchObject({
+          nullable: false,
+          type_params: [],
+          array_element: {
+            nullable: true,
+            type_params: [{ key: 'max_capacity', value: '8' }],
+            array_element: {
+              leaf_type: 'VarChar',
+              nullable: true,
+              type_params: [{ key: 'max_length', value: '64' }],
+            },
+          },
+        });
+      } else if (definition.data_type === 'VarChar') {
+        expect(schema.type_params).toContainEqual({
+          key: 'max_length',
+          value: '64',
+        });
+      } else if (definition.data_type === DataType.FloatVector) {
+        expect(schema.type_params).toContainEqual({ key: 'dim', value: '8' });
+      }
+      expect(field).toEqual(original);
+      expect(cache.has(cacheKey('db1'))).toBe(false);
+      expect(rpcClient.AddCollectionField).not.toHaveBeenCalled();
+    });
+
+    it.each([undefined, false])(
+      'rejects a sub-field with nullable=%s before an RPC',
+      async nullable => {
+        const { client, channelPool, rpcClient } = createTestClient();
+        rpcClient.AlterCollectionSchema.mockImplementation(
+          respondWith({ alter_status: successStatus })
+        );
+        await expect(
+          client.addCollectionField({
+            collection_name: COLLECTION_NAME,
+            field: {
+              name: 'items[score]',
+              data_type: DataType.Int64,
+              nullable,
+              element_nullable: true,
+            },
+          })
+        ).rejects.toThrow('Adding a struct sub-field requires nullable=true.');
+        expect(channelPool.acquire).not.toHaveBeenCalled();
+      }
+    );
+
+    it.each([
+      'items[]',
+      'items[score',
+      'items[score][nested]',
+      '[score]',
+      'items[score]extra',
+    ])('rejects malformed sub-field path %s before an RPC', async name => {
+      const { client, channelPool, rpcClient } = createTestClient();
+      rpcClient.AlterCollectionSchema.mockImplementation(
+        respondWith({ alter_status: successStatus })
+      );
+      await expect(
+        client.addCollectionField({
+          collection_name: COLLECTION_NAME,
+          field: { name, data_type: DataType.Int64, nullable: true },
+        })
+      ).rejects.toThrow(`Invalid struct sub-field path: ${name}`);
+      expect(channelPool.acquire).not.toHaveBeenCalled();
+    });
+
     it('uses AlterCollectionSchema and evicts the schema cache on success', async () => {
       const { client, rpcClient } = createTestClient();
       rpcClient.AlterCollectionSchema.mockImplementation(
@@ -285,7 +469,12 @@ describe('collection schema alteration', () => {
           max_capacity: 5,
           nullable: true,
           fields: [
-            { name: 'post_id', data_type: DataType.VarChar, max_length: 16 },
+            {
+              name: 'post_id',
+              data_type: DataType.VarChar,
+              max_length: 16,
+              nullable: true,
+            },
             {
               name: 'tags',
               data_type: DataType.Array,
@@ -303,6 +492,7 @@ describe('collection schema alteration', () => {
         .calls[0][0];
       const [postId, tags] = request.struct_array_field_schema.fields;
       expect(postId.type_schema).toBeUndefined();
+      expect(postId.element_nullable).toBe(true);
       expect(tags).toEqual(
         expect.objectContaining({
           name: 'tags',

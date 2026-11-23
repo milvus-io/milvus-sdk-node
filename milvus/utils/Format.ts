@@ -429,6 +429,7 @@ export const formatDescribedCol = (
         field.type_params = field.type_params || [];
         // if parent field's type_params already has max_capacity, don't add it again
         if (
+          childField.max_capacity !== undefined &&
           !field.type_params.find(
             (keyValuePair: any) => keyValuePair.key === 'max_capacity'
           )
@@ -439,7 +440,10 @@ export const formatDescribedCol = (
           });
         }
 
-        field.max_capacity = childField.max_capacity;
+        // Dynamically added children may omit the inherited parent capacity.
+        if (field.max_capacity === undefined) {
+          field.max_capacity = childField.max_capacity;
+        }
 
         // delete max_capacity in type_params array
         childField.type_params = childField.type_params.filter(
@@ -447,6 +451,7 @@ export const formatDescribedCol = (
         );
 
         // Array sub-field: expose its element type and own limits from type_schema
+        childField.nullable = !!childField.element_nullable;
         formatStructArraySubField(childField);
       });
     }
