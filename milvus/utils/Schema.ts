@@ -360,6 +360,64 @@ export const buildStructArraySubFieldTypeSchema = (
 };
 
 /**
+ * Wraps one StructArray child in its per-row Array or ArrayOfVector schema.
+ * When adding a child by path, omit the parent capacity and use rowNullable=false;
+ * the server resolves both properties from the existing parent.
+ */
+export const formatStructArraySubFieldSchema = (
+  field: FieldType,
+  schemaTypes: Record<string, Type>,
+  rowNullable: boolean,
+  maxCapacity?: TypeParam
+) => {
+  const childDataType = convertToDataType(field.data_type);
+  let childField: FieldType;
+  let typeSchema;
+
+  if (childDataType === DataType.Array) {
+    typeSchema = buildStructArraySubFieldTypeSchema(
+      field,
+      maxCapacity,
+      rowNullable
+    );
+    const { max_length, element_nullable, type_params, ...rest } = field;
+    const childTypeParams = { ...type_params };
+    delete childTypeParams.max_length;
+    delete childTypeParams.max_capacity;
+    childField = {
+      ...rest,
+      type_params: childTypeParams,
+      data_type: DataType.Array,
+      element_type: DataType.Array,
+      max_capacity: maxCapacity,
+      nullable: rowNullable,
+    };
+  } else {
+    childField = {
+      ...field,
+      element_type: childDataType,
+      data_type: isVectorType(childDataType)
+        ? DataType.ArrayOfVector
+        : DataType.Array,
+      max_capacity: maxCapacity,
+      nullable: rowNullable,
+    };
+  }
+
+  if (maxCapacity === undefined) {
+    delete childField.max_capacity;
+  }
+  const schema = formatFieldSchema(childField, schemaTypes);
+  if (typeSchema) {
+    schema.typeSchema = typeSchema;
+  }
+  if (field.nullable === true) {
+    schema.elementNullable = true;
+  }
+  return schema;
+};
+
+/**
  * Formats a struct array field schema by converting its properties to the appropriate types and adding additional properties.
  *
  * @param {FieldType} field - The field to format.
@@ -380,54 +438,14 @@ export const formatStructArrayFieldSchema = (
     description: field.description,
     nullable: field.nullable === true,
     typeParams: parseToKeyValue(structTypeParams),
-    fields: field.fields!.map((f: FieldType) => {
-      const childDataType = convertToDataType(f.data_type as DataType)!;
-
-      // Array sub-field: Array<Array<scalar>> on the wire, described by type_schema
-      if (childDataType === DataType.Array) {
-        const typeSchema = buildStructArraySubFieldTypeSchema(
-          f,
-          maxCapacity,
-          field.nullable === true
-        );
-        const {
-          max_length,
-          element_nullable,
-          type_params: childTypeParams,
-          ...childRest
-        } = f;
-        const restTypeParams = { ...childTypeParams };
-        delete restTypeParams.max_length;
-        delete restTypeParams.max_capacity;
-        const childField: FieldType = {
-          ...childRest,
-          type_params: restTypeParams,
-          data_type: DataType.Array,
-          element_type: DataType.Array,
-          max_capacity: maxCapacity,
-          nullable: field.nullable === true,
-        };
-        const schema = formatFieldSchema(childField, schemaTypes) as any;
-        schema.typeSchema = typeSchema;
-        if (f.nullable === true) {
-          schema.elementNullable = true;
-        }
-        return schema;
-      }
-
-      const childField: FieldType = {
-        ...f,
-        element_type: childDataType,
-        data_type: isVectorType(childDataType)
-          ? DataType.ArrayOfVector
-          : DataType.Array,
-        max_capacity: maxCapacity,
-        nullable: field.nullable === true,
-      };
-
-      // format schema
-      return formatFieldSchema(childField, schemaTypes);
-    }),
+    fields: field.fields!.map(f =>
+      formatStructArraySubFieldSchema(
+        f,
+        schemaTypes,
+        field.nullable === true,
+        maxCapacity
+      )
+    ),
   });
 };
 

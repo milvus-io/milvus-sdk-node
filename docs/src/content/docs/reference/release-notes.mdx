@@ -3,7 +3,18 @@ title: 'Release Notes'
 description: 'Review Milvus Node.js SDK changes by version, including new features, fixes, and server compatibility notes.'
 ---
 
-These docs cover **SDK 3.0.10**, tested with **Milvus 3.0.6**. Check [Migration & Compatibility](/milvus-sdk-node/reference/migration-compatibility/) for server requirements.
+These docs cover **SDK 3.0.11**, tested with **Milvus 3.0.6**. Check [Migration & Compatibility](/milvus-sdk-node/reference/migration-compatibility/) for server requirements.
+
+## 3.0.11
+
+- [`addCollectionField()`](/milvus-sdk-node/core-concepts/data-types-schemas/#structarray) accepts `parent[child]` paths to add nullable scalar, vector, and Array children to existing StructArray fields. Fixes [#672](https://github.com/milvus-io/milvus-sdk-node/issues/672).
+- StructArray schema descriptions preserve the parent capacity and distinguish child nullability from parent-row nullability. Inserts preserve missing and null child positions; `PATH_REPLACE` continues to update only the supplied child.
+- Nullable vector children preserve element validity on writes and reads across all five dense vector types. Whole-element `PATH_REPLACE` fills omitted nullable children with null, while child-level replacement preserves other children.
+- Added serialized-request and real-server regression coverage, plus a required StructArray test matrix for contributors and coding agents.
+
+The target server remains Milvus **3.0.6**. Adding StructArray children and using Array children require Milvus **3.0.6+**.
+
+[Full 3.0.11 changelog](https://github.com/milvus-io/milvus-sdk-node/compare/v3.0.10...v3.0.11)
 
 ## 3.0.10
 

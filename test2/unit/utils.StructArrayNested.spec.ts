@@ -94,6 +94,29 @@ const describedTypeSchema = (
 
 describe('StructArray Array sub-fields', () => {
   describe('create schema', () => {
+    it.each([false, true])(
+      'keeps scalar child nullability independent of parent nullable=%s',
+      nullable => {
+        const schema = encodeCreateSchema({
+          ...postsField(),
+          nullable,
+          fields: [
+            { name: 'score', data_type: DataType.Int64, nullable: true },
+            { name: 'required', data_type: DataType.Int32 },
+          ],
+        });
+        expect(schema.structArrayFields[0].fields[0]).toMatchObject({
+          nullable,
+          elementNullable: true,
+          dataType: 'Array',
+          elementType: 'Int64',
+          typeParams: [{ key: 'max_capacity', value: '5' }],
+        });
+        expect(
+          schema.structArrayFields[0].fields[1].elementNullable
+        ).toBeUndefined();
+      }
+    );
     it('sends a nested type_schema like pymilvus', () => {
       const schema = encodeCreateSchema(postsField());
       const [postId, tags] = schema.structArrayFields[0].fields;
@@ -223,6 +246,72 @@ describe('StructArray Array sub-fields', () => {
   });
 
   describe('describe', () => {
+    it.each([false, true])(
+      'preserves parent capacity and scalar child nullability after adding children (parent nullable=%s)',
+      nullable => {
+        const response = formatDescribedCol({
+          schema: {
+            fields: [],
+            struct_array_fields: [
+              {
+                name: 'items',
+                nullable,
+                type_params: [],
+                fields: [
+                  {
+                    name: 'label',
+                    data_type: 'Array',
+                    element_type: 'VarChar',
+                    nullable,
+                    type_params: [
+                      { key: 'max_capacity', value: '20' },
+                      { key: 'max_length', value: '64' },
+                    ],
+                  },
+                  {
+                    name: 'score',
+                    data_type: 'Array',
+                    element_type: 'Int64',
+                    nullable,
+                    element_nullable: true,
+                    type_params: [],
+                  },
+                  {
+                    name: 'tags',
+                    data_type: 'Array',
+                    element_type: 'Array',
+                    nullable,
+                    element_nullable: true,
+                    type_params: [],
+                    type_schema: {
+                      ...describedTypeSchema('VarChar', { inner: true }),
+                      type_params: [],
+                      nullable,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        } as any);
+        const items = response.schema.fields[0];
+        expect(items).toMatchObject({ max_capacity: '20', nullable });
+        expect(items.type_params).toContainEqual({
+          key: 'max_capacity',
+          value: '20',
+        });
+        expect(items.fields![0].nullable).toBe(false);
+        expect(items.fields![1]).toMatchObject({
+          name: 'score',
+          nullable: true,
+        });
+        expect(items.fields![2]).toMatchObject({
+          name: 'tags',
+          nullable: true,
+          max_capacity: '4',
+        });
+      }
+    );
     const describedTags = () => ({
       name: 'tags',
       data_type: 'Array',
@@ -462,6 +551,13 @@ describe('StructArray Array sub-fields', () => {
   });
 
   describe('read', () => {
+    it('expands an all-null child even when the server omits the data oneof', () => {
+      expect(decodeArrayScalarField({ valid_data: [false, false] })).toEqual([
+        null,
+        null,
+      ]);
+      expect(decodeArrayScalarField({})).toEqual([]);
+    });
     it('decodes nested array_data recursively', () => {
       expect(
         decodeArrayScalarField({

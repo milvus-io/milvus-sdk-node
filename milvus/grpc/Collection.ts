@@ -48,6 +48,7 @@ import {
   sleep,
   formatCollectionSchema,
   formatStructArrayFieldSchema,
+  formatStructArraySubFieldSchema,
   formatDescribedCol,
   getDataKey,
   validatePartitionNumbers,
@@ -142,9 +143,8 @@ const formatFormattedGrpcFieldSchema = (
   const typeSchema = formatGrpcTypeSchema(schema.typeSchema);
 
   return {
-    ...(typeSchema
-      ? { type_schema: typeSchema, element_nullable: !!schema.elementNullable }
-      : {}),
+    ...(typeSchema ? { type_schema: typeSchema } : {}),
+    element_nullable: !!schema.elementNullable,
     fieldID: schema.fieldID,
     name: schema.name,
     is_primary_key: schema.isPrimaryKey,
@@ -401,6 +401,9 @@ export class Collection extends Database {
 
   /**
    * Add a new field to an existing collection in Milvus.
+   * On Milvus 3.0.6+, use `parent[child]` with `nullable: true` to add a
+   * sub-field to an existing StructArray. The server inherits the parent's
+   * row nullability and capacity; Array sub-field limits describe the inner Array.
    *
    * @param {AddCollectionFieldReq} data - The request parameters.
    * @param {string} data.collection_name - The name of the collection to add the field to.
@@ -428,6 +431,22 @@ export class Collection extends Database {
   async addCollectionField(data: AddCollectionFieldReq): Promise<ResStatus> {
     checkCollectionName(data);
 
+    const isStructSubField = /[\[\]]/.test(data.field.name);
+    if (isStructSubField) {
+      if (
+        !/^[A-Za-z_][A-Za-z_0-9]*\[[A-Za-z_][A-Za-z_0-9]*\]$/.test(
+          data.field.name
+        )
+      ) {
+        throw new Error(`Invalid struct sub-field path: ${data.field.name}`);
+      }
+      if (data.field.nullable !== true) {
+        throw new Error(
+          ERROR_REASONS.ADD_COLLECTION_STRUCT_SUB_FIELD_NULLABLE_REQUIRED
+        );
+      }
+    }
+
     const dataType = convertToDataType(data.field.data_type);
     const elementType =
       typeof data.field.element_type === 'undefined'
@@ -436,7 +455,7 @@ export class Collection extends Database {
     const isStructArray =
       dataType === DataType.Array && elementType === DataType.Struct;
 
-    if (isStructArray) {
+    if (isStructArray && !isStructSubField) {
       if (data.field.nullable !== true) {
         throw new Error(
           ERROR_REASONS.ADD_COLLECTION_STRUCT_FIELD_NULLABLE_REQUIRED
@@ -484,13 +503,16 @@ export class Collection extends Database {
         this.protoInternalPath.fieldSchema
       ),
     };
+    const payload = isStructSubField
+      ? formatStructArraySubFieldSchema(data.field, schemaTypes, false)
+      : formatFieldSchema(data.field, schemaTypes);
 
     try {
       const result = await this.callAlterCollectionSchema(data, {
         add_request: {
           field_infos: [
             {
-              field_schema: formatGrpcFieldSchema(data.field, schemaTypes),
+              field_schema: formatFormattedGrpcFieldSchema(payload),
             },
           ],
         },
@@ -510,7 +532,6 @@ export class Collection extends Database {
 
     // Create the payload object with the collection_name, description, and fields.
     // it should follow CollectionSchema in schema.proto
-    const payload = formatFieldSchema(data.field, schemaTypes);
     const schema = schemaTypes.fieldSchemaType.create(payload);
     const schemaBytes = schemaTypes.fieldSchemaType.encode(schema).finish();
 

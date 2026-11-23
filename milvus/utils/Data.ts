@@ -74,7 +74,7 @@ export const processVectorData = (
   transformers?: OutputTransformers
 ): any => {
   const dataKey = item.vectors!.data;
-  let field_data: any;
+  let field_data: any = [];
 
   const applyValidData = (physicalData: any[]) => {
     if (!item.valid_data || !item.valid_data.length) {
@@ -179,11 +179,15 @@ export const processVectorData = (
       const vectorArrayValue = item.vectors![dataKey]!.data;
       vectorArrayValue.forEach((vector: any) => {
         field_data.push(
-          processVectorData({
-            vectors: {
-              ...vector,
+          processVectorData(
+            {
+              valid_data: vector.valid_data,
+              vectors: {
+                ...vector,
+              },
             },
-          })
+            transformers
+          )
         );
       });
       break;
@@ -218,7 +222,7 @@ const applyScalarValidData = (values: any[], validData?: boolean[]) => {
 export const decodeArrayScalarField = (f: any): any[] => {
   const dataKey = f?.data;
   if (!dataKey) {
-    return [];
+    return applyScalarValidData([], f?.valid_data);
   }
   const values =
     dataKey === 'array_data'
@@ -445,7 +449,8 @@ export const buildFieldData = (
   rowData: RowData,
   field: _Field,
   transformers?: InsertTransformers,
-  rowIndex?: number
+  rowIndex?: number,
+  preserveMissingStructFields = false
 ): FieldData => {
   const { type, elementType, name, fieldMap } = field;
   const isFloat32 = Array.isArray(rowData[name]);
@@ -513,6 +518,19 @@ export const buildFieldData = (
         (rowData[name] as Struct[]).forEach((structElement, elementIndex) => {
           // get field names
           const fieldNames = Object.keys(structElement);
+          // Missing nullable children still occupy a position in the struct row.
+          // PATH_REPLACE carries only supplied children, so leave those operands sparse.
+          if (!preserveMissingStructFields) {
+            fieldMap.forEach((child, childName) => {
+              if (
+                (child.elementNullable ||
+                  child.typeSchema?.array_element?.nullable) &&
+                !fieldNames.includes(childName)
+              ) {
+                fieldNames.push(childName);
+              }
+            });
+          }
 
           // loop through each field name
           fieldNames.forEach(fieldName => {
@@ -535,7 +553,12 @@ export const buildFieldData = (
             const dataArray = structField.data[rowIndex!] || [];
             structField.data[rowIndex!] = dataArray;
 
-            if (VectorDataTypes.includes(structField.type)) {
+            if (
+              structField.type === DataType.ArrayOfVector &&
+              structField.elementNullable
+            ) {
+              (dataArray as FieldData[]).push(fieldData);
+            } else if (VectorDataTypes.includes(structField.type)) {
               (dataArray as FieldData[]).push(
                 ...(Array.isArray(fieldData) ? fieldData : [fieldData])
               );
@@ -560,8 +583,8 @@ export const buildFieldData = (
         // Return the original data for Array of Struct
         return rowData[name];
       } else if (field.typeSchema) {
-        // Array sub-field of a struct field: keep the element's array as-is,
-        // it is encoded per row in buildColumnData (nulls are checked there)
+        // Typed struct child: keep its scalar or Array value as-is; per-element
+        // validity is encoded per row in buildColumnData.
         return rowData[name];
       } else {
         // Regular array field
