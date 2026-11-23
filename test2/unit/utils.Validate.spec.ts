@@ -163,6 +163,24 @@ describe('utils/validate', () => {
     );
   });
 
+  it('should throw an error if a partition key field is not int64 or varchar', () => {
+    const fields: FieldType[] = [
+      {
+        name: 'id',
+        data_type: DataType.Int64,
+        is_primary_key: true,
+      },
+      {
+        name: 'score',
+        data_type: DataType.Float,
+        is_partition_key: true,
+      },
+    ];
+    expect(() => checkCollectionFields(fields)).toThrowError(
+      ERROR_REASONS.INVALID_PARTITION_KEY_FIELD_TYPE
+    );
+  });
+
   it('should throw an error if a binary vector field has a dimension that is not a multiple of 8', () => {
     const fields: FieldType[] = [
       {

@@ -4,6 +4,7 @@ import {
   DataType,
   NO_LIMIT,
   SearchResultData,
+  ErrorCode,
 } from '../../milvus';
 import {
   IP,
@@ -434,6 +435,41 @@ describe(`Iterator API`, () => {
       idSet.add(result.id);
     });
     expect(idSet.size).toEqual(total);
+  });
+
+  it('search iterator should stop and report the reason when a page search fails', async () => {
+    const reason = 'collection has no vector field, search is not supported';
+    const searchSpy = jest.spyOn(milvusClient, 'search').mockResolvedValueOnce({
+      status: { error_code: ErrorCode.UnexpectedError, reason, code: 1100 },
+      results: [],
+    } as any);
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const iterator = await milvusClient.searchIterator({
+        collection_name: COLLECTION,
+        batchSize: 10,
+        data: data[0].vector,
+        expr: 'id > 0',
+        output_fields: ['id'],
+        limit: 30,
+      });
+
+      const results: any = [];
+      for await (const value of iterator) {
+        results.push(...value);
+      }
+
+      expect(results).toEqual([]);
+      expect(searchSpy).toHaveBeenCalledTimes(1);
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Error during search iteration:',
+        new Error(reason)
+      );
+    } finally {
+      searchSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
   });
 
   it('search iterator with batch size = total should success', async () => {
