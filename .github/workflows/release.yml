@@ -17,7 +17,6 @@ on:
         type: string
 
 permissions:
-  id-token: write # Required for OIDC
   contents: read
 
 concurrency:
@@ -27,6 +26,15 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write # Required for OIDC
+      contents: read
+    outputs:
+      published: ${{ steps.publish.outputs.published }}
+      package: ${{ steps.publish.outputs.package }}
+      version: ${{ steps.publish.outputs.version }}
+      npm_tag: ${{ steps.publish.outputs.npm_tag }}
     steps:
       - uses: actions/checkout@v5
 
@@ -58,7 +66,8 @@ jobs:
           npm pack --dry-run
           echo 'npm package contents checked (dry run).' >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Publish to npm and verify public availability
+      - name: Publish to npm
+        id: publish
         if: github.event_name == 'release' || !inputs.dry_run
         env:
           GH_TOKEN: ${{ github.token }}
@@ -86,25 +95,95 @@ jobs:
           echo "Publishing $PACKAGE@$VERSION with npm dist-tag $NPM_TAG"
           npm publish --tag "$NPM_TAG"
 
-          # npm may process the package asynchronously after accepting it.
-          # Retry reads only; never resubmit a package while it is processing.
-          for attempt in {1..18}; do
-            PUBLISHED_VERSION=$(npm view "$PACKAGE@$VERSION" version --prefer-online 2>/dev/null || true)
-            TAG_VERSION=$(npm view "$PACKAGE@$NPM_TAG" version --prefer-online 2>/dev/null || true)
+          {
+            echo "published=true"
+            echo "package=$PACKAGE"
+            echo "version=$VERSION"
+            echo "npm_tag=$NPM_TAG"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo '### npm package submitted'
+            echo
+            printf -- '- Package `%s@%s`\n- dist-tag `%s`\n' "$PACKAGE" "$VERSION" "$NPM_TAG"
+            echo '- Accepted by npm; verifying public availability in the `verify` job.'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+  verify:
+    needs: publish
+    if: needs.publish.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: {}
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Verify public npm availability
+        env:
+          PACKAGE: ${{ needs.publish.outputs.package }}
+          VERSION: ${{ needs.publish.outputs.version }}
+          NPM_TAG: ${{ needs.publish.outputs.npm_tag }}
+          MAX_ATTEMPTS: 60
+          POLL_INTERVAL_SECONDS: 15
+        run: |
+          REGISTRY="https://registry.npmjs.org"
+          STDERR_FILE=$(mktemp)
+          trap 'rm -f "$STDERR_FILE"' EXIT
+
+          PUBLISHED_VERSION=""
+          TAG_VERSION=""
+          VERSION_ERR=""
+          TAG_ERR=""
+
+          # npm may process newly published packages asynchronously before they
+          # appear on the public registry. Keep verification in a separate
+          # read-only job so re-running failed jobs never resubmits `npm publish`.
+          for ((attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)); do
+            if PUBLISHED_VERSION=$(npm view "$PACKAGE@$VERSION" version --registry="$REGISTRY" --prefer-online 2>"$STDERR_FILE"); then
+              PUBLISHED_VERSION=$(printf '%s' "$PUBLISHED_VERSION" | tr -d '[:space:]')
+              VERSION_ERR=""
+            else
+              PUBLISHED_VERSION=""
+              VERSION_ERR=$(cat "$STDERR_FILE")
+            fi
+
+            if TAG_VERSION=$(npm view "$PACKAGE@$NPM_TAG" version --registry="$REGISTRY" --prefer-online 2>"$STDERR_FILE"); then
+              TAG_VERSION=$(printf '%s' "$TAG_VERSION" | tr -d '[:space:]')
+              TAG_ERR=""
+            else
+              TAG_VERSION=""
+              TAG_ERR=$(cat "$STDERR_FILE")
+            fi
+
+            echo "Attempt ${attempt}/${MAX_ATTEMPTS} (${SECONDS}s elapsed): version='${PUBLISHED_VERSION:-<not found>}' dist-tag(${NPM_TAG})='${TAG_VERSION:-<not found>}'"
+
             if [ "$PUBLISHED_VERSION" = "$VERSION" ] && [ "$TAG_VERSION" = "$VERSION" ]; then
               break
             fi
-            if [ "$attempt" -lt 18 ]; then
-              sleep 10
+
+            if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+              sleep "$POLL_INTERVAL_SECONDS"
             fi
           done
+
           if [ "$PUBLISHED_VERSION" != "$VERSION" ] || [ "$TAG_VERSION" != "$VERSION" ]; then
-            echo "::error::Public npm verification failed for $PACKAGE@$VERSION with dist-tag $NPM_TAG. Inspect the registry and publish logs before retrying."
+            if [ -n "$VERSION_ERR" ]; then
+              echo "Last error checking $PACKAGE@$VERSION:"
+              printf '%s\n' "$VERSION_ERR"
+            fi
+            if [ -n "$TAG_ERR" ]; then
+              echo "Last error checking $PACKAGE@$NPM_TAG:"
+              printf '%s\n' "$TAG_ERR"
+            fi
+            echo "::error::Public npm verification timed out for $PACKAGE@$VERSION with dist-tag $NPM_TAG after ${SECONDS}s (observed version='${PUBLISHED_VERSION:-<none>}', tag='${TAG_VERSION:-<none>}'). Do not republish; re-run the failed verify job once npm finishes processing."
             exit 1
           fi
 
           {
-            echo '### npm package published and verified'
+            echo '### npm package verified on public registry'
             echo
             printf -- '- Package `%s@%s`\n- dist-tag `%s`\n' "$PACKAGE" "$VERSION" "$NPM_TAG"
             echo '- Exact version and dist-tag verified on the public registry.'
