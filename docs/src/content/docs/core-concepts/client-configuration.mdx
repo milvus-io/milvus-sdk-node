@@ -107,6 +107,19 @@ const client = new MilvusClient({
 });
 ```
 
+### gRPC message compression
+
+Set `grpcCompression` when creating the client to compress requests and accept compressed responses.
+
+```javascript
+const client = new MilvusClient({
+  address: 'localhost:19530',
+  grpcCompression: 'zstd',
+});
+```
+
+The default is `'identity'`. Use `'gzip'` or `'zstd'` with an endpoint that supports the selected encoding. Zstd uses Node's built-in codec on Node 22.15+, 23.8+, and 24+. Each client configures its own channels. Small messages can grow after compression.
+
 ### Timeout Settings
 
 Configure request timeouts:

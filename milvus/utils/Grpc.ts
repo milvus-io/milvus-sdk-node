@@ -169,11 +169,13 @@ export const getRetryInterceptor = ({
 
             // Keep the existing compatibility behavior for older RPCs, but
             // let AlterCollectionSchema observe UNIMPLEMENTED so add field can
-            // fall back to the legacy AddCollectionField RPC.
+            // fall back to the legacy AddCollectionField RPC. An unsupported
+            // wire encoding rejects the call before the server runs the method.
             if (
               status.code === grpcStatus.UNIMPLEMENTED &&
               methodName !== 'AlterCollectionSchema' &&
-              methodName !== 'ClientHeartbeat'
+              methodName !== 'ClientHeartbeat' &&
+              !/grpc-encoding/i.test(status.details)
             ) {
               savedReceiveMessage = {};
               status.code = grpcStatus.OK;
