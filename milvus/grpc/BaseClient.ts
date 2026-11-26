@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { configureCompression } from './ZstdChannel';
 import protobuf, { INamespace, Root } from 'protobufjs';
 import { readFileSync } from 'fs';
 import {
@@ -152,6 +153,10 @@ export class BaseClient {
       'grpc.enable_retries': 1, // enable retry
       ...this.config.channelOptions,
     };
+
+    if (config.grpcCompression !== undefined) {
+      configureCompression(this.channelOptions, config.grpcCompression);
+    }
 
     // overwrite if server name is provided.
     if (this.config.tls?.serverName) {

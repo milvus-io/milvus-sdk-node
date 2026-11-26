@@ -22,6 +22,8 @@ export interface ClientConfig {
   password?: string;
   // Additional options to pass to the gRPC channel.
   channelOptions?: ChannelOptions;
+  /** Outgoing gRPC message encoding. Defaults to identity. Zstd requires a Node runtime with native zstd. */
+  grpcCompression?: 'identity' | 'gzip' | 'zstd';
   // Reserved connection options sent in ConnectRequest client info.
   option?: Record<string, string>;
   // The timeout for requests, in milliseconds.
